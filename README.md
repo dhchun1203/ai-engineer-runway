@@ -2,6 +2,12 @@
 
 AI Engineer 교육과정 개강(2026-09-30) 전 사전학습을 위한 웹 사이트입니다. 커리큘럼 전체를 쉬운 개념 설명과 실무 적용 예제로 콘텐츠화하고, 레슨별 완료 체크와 섹션별 진행률, 개강 전 학습 일정표를 제공하는 것을 목표로 합니다.
 
+## 배포 주소
+
+https://ai-engineer-runway.vercel.app
+
+저장소 기본 브랜치인 `master`에 푸시할 때마다 위 프로덕션 URL이 자동으로 갱신됩니다 (Vercel Production Branch = `master`).
+
 ## 기술 스택
 
 - **Next.js 16** (App Router) + **React 19** + **TypeScript**
