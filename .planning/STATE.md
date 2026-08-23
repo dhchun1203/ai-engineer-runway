@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 01
 current_phase_name: deployed-curriculum-skeleton
 status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-08-23T23:24:12.677Z"
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-08-23T23:32:24.680Z"
 last_activity: 2026-08-24
 last_activity_desc: 로드맵 생성 (5 phases, v1 요구사항 20/20 매핑)
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 6
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 ## Current Position
 
 Phase: 01 (deployed-curriculum-skeleton) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 Status: Ready to execute
 Last activity: 2026-08-24 — Phase 01 execution started
 
-Progress: [███░░░░░░░] 33%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [███░░░░░░░] 33%
 |------|----------|-------|-------|
 | Phase 01 P01 | 20min | 3 tasks | 25 files |
 | Phase 01 P02 | unknown | 3 tasks | 2 files |
+| Phase 01 P03 | 20min | 2 tasks | 37 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [Phase ?]: 저장소 기본 브랜치가 main이 아닌 master로 생성됨 (init.defaultBranch 설정 이어받음) — Vercel import는 기본 브랜치 자동 감지라 영향 없음, 편차로만 기록
 - [Phase ?]: [Phase 1 Plan 2]: PR 머지 액션은 하네스 권한 게이트로 실행자가 자동화 못해 사용자가 직접 수행 (Rule 3 편차, gh pr merge 차단)
 - [Phase ?]: [Phase 1 Plan 2]: Vercel 대시보드 GitHub Import로 프로덕션 배포 연결, 프로젝트명 ai-engineer-runway로 명시 지정(D-15) — main(=master) push→프로덕션/PR→프리뷰 두 경로 모두 실증 완료(D-16)
+- [Phase ?]: [Phase 1 Plan 3]: 모듈 title은 curriculum.md 헤더 원문 그대로(Project 태그 포함) 사용, isProject 불리언으로 프로젝트 여부 별도 신호
+- [Phase ?]: [Phase 1 Plan 3]: check-manifest.mjs는 curriculum-helpers.ts를 import하지 않고 modules.ts를 독립적으로 정규식 재파싱 — 의존성 0 게이트 요구사항 유지
+- [Phase ?]: [Phase 1 Plan 3]: 2-3-react-components.mdx(파일럿 2)도 이번 Plan에서는 hasContent:false로 생성, Plan 06이 본문과 check-manifest.mjs 기대값(EXPECTED_HAS_CONTENT_COUNT=2)을 함께 갱신할 예정
 
 ### Pending Todos
 
@@ -99,6 +103,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-23T23:24:12.667Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-08-23T23:32:24.668Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None

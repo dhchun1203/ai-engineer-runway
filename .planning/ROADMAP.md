@@ -35,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. 아이패드 Safari 세로/가로 모드에서 레이아웃이 정상 동작하고(터치 타깃 44px+, 코드 블록 가로 스크롤, 한국어 keep-all 줄바꿈), 폰·데스크톱에서도 반응형으로 동작한다
   5. Making-of 페이지가 자료 수집 → 리서치 → 스택 선택 이유까지 기록하고 있으며, 이후 단계마다 갱신할 구조를 갖는다
 
-**Plans**: 2/6 plans executed (웨이브 1~6, 완전 직렬 — 단일 빌드 디렉터리·단일 git 워크트리 공유)
+**Plans**: 3/6 plans executed (웨이브 1~6, 완전 직렬 — 단일 빌드 디렉터리·단일 git 워크트리 공유)
 **Wave 1**
 
 - [x] 01-01-PLAN.md — Walking Skeleton: MDX 한 편이 Velite→Shiki→정적 라우트를 통과해 렌더되고 공개 저장소에 푸시된다
@@ -46,7 +46,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-03-PLAN.md — 커리큘럼 매니페스트: 19개 모듈 + 35개 레슨 메타데이터(깊이 배지·예상 소요시간)와 불변식 게이트
+- [x] 01-03-PLAN.md — 커리큘럼 매니페스트: 19개 모듈 + 35개 레슨 메타데이터(깊이 배지·예상 소요시간)와 불변식 게이트
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -132,7 +132,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. 배포된 커리큘럼 뼈대 | 2/6 | In Progress|  |
+| 1. 배포된 커리큘럼 뼈대 | 3/6 | In Progress|  |
 | 2. 진도 체크와 진행률 | 0/TBD | Not started | - |
 | 3. 학습 일정과 오늘의 학습 | 0/TBD | Not started | - |
 | 4. Step 1 심화 콘텐츠 | 0/TBD | Not started | - |

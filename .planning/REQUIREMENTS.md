@@ -7,10 +7,10 @@
 
 ### 콘텐츠 (CONT)
 
-- [ ] **CONT-01**: 학습자는 Step → 모듈 → 레슨 3단 구조로 전체 커리큘럼(3 Steps, 19 모듈)을 탐색할 수 있다
+- [x] **CONT-01**: 학습자는 Step → 모듈 → 레슨 3단 구조로 전체 커리큘럼(3 Steps, 19 모듈)을 탐색할 수 있다
 - [ ] **CONT-02**: 각 레슨 페이지는 쉬운 개념 설명(비유, 핵심 정리 포함)을 제공한다
 - [ ] **CONT-03**: 각 레슨 페이지는 커리큘럼 동일 스택의 실무 적용 예제 코드(언어별 문법 강조 포함)를 제공한다
-- [ ] **CONT-04**: Step 1·2 핵심 레슨은 심화 콘텐츠로, Step 3 레슨은 개념 훑기 콘텐츠로 작성되며 레슨마다 깊이 배지(심화/개요)가 표시된다
+- [x] **CONT-04**: Step 1·2 핵심 레슨은 심화 콘텐츠로, Step 3 레슨은 개념 훑기 콘텐츠로 작성되며 레슨마다 깊이 배지(심화/개요)가 표시된다
 - [ ] **CONT-05**: 커리큘럼 실습 프로젝트 5종은 개요·사전 준비 가이드 레슨으로 제공된다 (재현 아님)
 - [x] **CONT-06**: 학습자는 코드 블록을 복사 버튼으로 복사할 수 있다
 
@@ -71,8 +71,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONT-01 | Phase 1 | Pending |
-| CONT-04 | Phase 1 | Pending |
+| CONT-01 | Phase 1 | Complete |
+| CONT-04 | Phase 1 | Complete |
 | CONT-06 | Phase 1 | Complete |
 | PLAT-01 | Phase 1 | Complete |
 | PLAT-03 | Phase 1 | Pending |
