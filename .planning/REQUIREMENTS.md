@@ -12,7 +12,7 @@
 - [ ] **CONT-03**: 각 레슨 페이지는 커리큘럼 동일 스택의 실무 적용 예제 코드(언어별 문법 강조 포함)를 제공한다
 - [ ] **CONT-04**: Step 1·2 핵심 레슨은 심화 콘텐츠로, Step 3 레슨은 개념 훑기 콘텐츠로 작성되며 레슨마다 깊이 배지(심화/개요)가 표시된다
 - [ ] **CONT-05**: 커리큘럼 실습 프로젝트 5종은 개요·사전 준비 가이드 레슨으로 제공된다 (재현 아님)
-- [ ] **CONT-06**: 학습자는 코드 블록을 복사 버튼으로 복사할 수 있다
+- [x] **CONT-06**: 학습자는 코드 블록을 복사 버튼으로 복사할 수 있다
 
 ### 진도 추적 (TRACK)
 
@@ -38,7 +38,7 @@
 
 - [ ] **UX-01**: iPad(Safari) 최적화 — 태블릿 레이아웃, 터치 타깃 44px 이상, 세로/가로 모드 모두 지원 (주 학습 기기)
 - [ ] **UX-02**: 폰·데스크톱에서도 반응형으로 정상 동작한다
-- [ ] **UX-03**: 한국어 타이포그래피 최적화(Pretendard, `word-break: keep-all`)와 코드 블록 가로 스크롤이 적용된다
+- [x] **UX-03**: 한국어 타이포그래피 최적화(Pretendard, `word-break: keep-all`)와 코드 블록 가로 스크롤이 적용된다
 
 ## v2 Requirements
 
@@ -73,12 +73,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | CONT-01 | Phase 1 | Pending |
 | CONT-04 | Phase 1 | Pending |
-| CONT-06 | Phase 1 | Pending |
+| CONT-06 | Phase 1 | Complete |
 | PLAT-01 | Phase 1 | Pending |
 | PLAT-03 | Phase 1 | Pending |
 | UX-01 | Phase 1 | Pending |
 | UX-02 | Phase 1 | Pending |
-| UX-03 | Phase 1 | Pending |
+| UX-03 | Phase 1 | Complete |
 | TRACK-01 | Phase 2 | Pending |
 | TRACK-02 | Phase 2 | Pending |
 | TRACK-03 | Phase 2 | Pending |
@@ -93,6 +93,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONT-05 | Phase 5 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 20 total
 - Mapped to phases: 20
 - Unmapped: 0

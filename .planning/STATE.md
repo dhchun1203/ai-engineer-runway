@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 01
 current_phase_name: deployed-curriculum-skeleton
 status: executing
-stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-08-23T22:21:55.414Z"
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-08-23T23:11:28.366Z"
 last_activity: 2026-08-24
 last_activity_desc: 로드맵 생성 (5 phases, v1 요구사항 20/20 매핑)
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 6
-  completed_plans: 0
+  completed_plans: 1
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 ## Current Position
 
 Phase: 01 (deployed-curriculum-skeleton) — EXECUTING
-Plan: 1 of 6
-Status: Executing Phase 01
+Plan: 2 of 6
+Status: Ready to execute
 Last activity: 2026-08-24 — Phase 01 execution started
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░] 17%
 
 ## Performance Metrics
 
@@ -54,6 +54,11 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 01 P01 | 20min | 3 tasks | 25 files |
 
 ## Accumulated Context
 
@@ -67,6 +72,8 @@ Recent decisions affecting current work:
 - [Roadmap]: 콘텐츠를 Step 기준으로 분할(Phase 4 = Step 1, Phase 5 = Step 2·3) — Step 1 완성 즉시 실제 사전학습 시작, 나머지는 병행 집필
 - [Roadmap]: 레슨별 예상 소요시간·깊이 배지를 Phase 1 커리큘럼 매니페스트 메타데이터로 확정 — Phase 3 일정 배분의 입력값이 되므로 콘텐츠보다 먼저 필요
 - [Roadmap]: Making-of 페이지(PLAT-03)는 Phase 1에 스캐폴드하고 이후 모든 Phase에서 갱신하는 살아있는 문서로 취급
+- [Phase ?]: Task 3 저장소 생성/push는 하네스 권한 게이트로 실행자가 자동화 못해 사용자가 직접 실행 (gh repo create ai-engineer-runway --public)
+- [Phase ?]: 저장소 기본 브랜치가 main이 아닌 master로 생성됨 (init.defaultBranch 설정 이어받음) — Vercel import는 기본 브랜치 자동 감지라 영향 없음, 편차로만 기록
 
 ### Pending Todos
 
@@ -89,6 +96,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-23T18:21:19.957Z
-Stopped at: Phase 1 UI-SPEC approved
-Resume file: .planning/phases/01-deployed-curriculum-skeleton/01-UI-SPEC.md
+Last session: 2026-08-23T23:11:28.354Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None
