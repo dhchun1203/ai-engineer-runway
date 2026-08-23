@@ -32,7 +32,7 @@
 
 - [x] **PLAT-01**: 사이트는 Vercel에 배포되어 URL로 어디서든 접속 가능하다
 - [ ] **PLAT-02**: 진도 저장은 로그인 화면 없는 최소 마찰 방식(익명 세션 + RLS 등)으로 동작하되 외부인이 함부로 쓸 수 없게 보호된다
-- [ ] **PLAT-03**: Making-of 소개 페이지가 자료 수집 → 리서치 → 설계 → 구현 → 검증 → 배포 과정과 스택 선택 이유를 문서화하며, 작업 진행에 따라 계속 갱신된다 (포트폴리오)
+- [x] **PLAT-03**: Making-of 소개 페이지가 자료 수집 → 리서치 → 설계 → 구현 → 검증 → 배포 과정과 스택 선택 이유를 문서화하며, 작업 진행에 따라 계속 갱신된다 (포트폴리오)
 
 ### 사용자 경험 (UX)
 
@@ -75,7 +75,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONT-04 | Phase 1 | Complete |
 | CONT-06 | Phase 1 | Complete |
 | PLAT-01 | Phase 1 | Complete |
-| PLAT-03 | Phase 1 | Pending |
+| PLAT-03 | Phase 1 | Complete |
 | UX-01 | Phase 1 | Complete |
 | UX-02 | Phase 1 | Complete |
 | UX-03 | Phase 1 | Complete |
