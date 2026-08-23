@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 01
 current_phase_name: deployed-curriculum-skeleton
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-08-23T23:11:28.366Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-08-23T23:24:12.677Z"
 last_activity: 2026-08-24
 last_activity_desc: 로드맵 생성 (5 phases, v1 요구사항 20/20 매핑)
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 6
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 ## Current Position
 
 Phase: 01 (deployed-curriculum-skeleton) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-08-24 — Phase 01 execution started
 
-Progress: [██░░░░░░░░] 17%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [██░░░░░░░░] 17%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01 | 20min | 3 tasks | 25 files |
+| Phase 01 P02 | unknown | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - [Roadmap]: Making-of 페이지(PLAT-03)는 Phase 1에 스캐폴드하고 이후 모든 Phase에서 갱신하는 살아있는 문서로 취급
 - [Phase ?]: Task 3 저장소 생성/push는 하네스 권한 게이트로 실행자가 자동화 못해 사용자가 직접 실행 (gh repo create ai-engineer-runway --public)
 - [Phase ?]: 저장소 기본 브랜치가 main이 아닌 master로 생성됨 (init.defaultBranch 설정 이어받음) — Vercel import는 기본 브랜치 자동 감지라 영향 없음, 편차로만 기록
+- [Phase ?]: [Phase 1 Plan 2]: PR 머지 액션은 하네스 권한 게이트로 실행자가 자동화 못해 사용자가 직접 수행 (Rule 3 편차, gh pr merge 차단)
+- [Phase ?]: [Phase 1 Plan 2]: Vercel 대시보드 GitHub Import로 프로덕션 배포 연결, 프로젝트명 ai-engineer-runway로 명시 지정(D-15) — main(=master) push→프로덕션/PR→프리뷰 두 경로 모두 실증 완료(D-16)
 
 ### Pending Todos
 
@@ -96,6 +99,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-23T23:11:28.354Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-08-23T23:24:12.667Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
