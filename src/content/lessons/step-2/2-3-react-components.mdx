@@ -5,8 +5,147 @@ moduleId: "2-3"
 order: 2
 depth: "심화"
 estimatedMinutes: 270
-hasContent: false
+hasContent: true
 slug: "2-3-react-components"
 ---
 
-이 레슨은 아직 작성되지 않았습니다. Step 1 "Python 변수·자료형" 또는 Step 2 "React 컴포넌트" 파일럿 레슨에서 먼저 학습 형식을 확인해보세요.
+## 1. 학습 목표
+
+이 레슨을 마치면 다음을 할 수 있습니다.
+
+- 컴포넌트(component)가 무엇인지, 왜 화면을 컴포넌트 단위로 쪼개서 만드는지 설명할 수 있다
+- props로 컴포넌트에 값을 전달하고, `useState`로 컴포넌트 내부 상태(state)를 관리할 수 있다
+- props(부모가 넘겨준 값)와 state(컴포넌트가 스스로 기억하는 값)의 차이를 구분할 수 있다
+- 실제로 동작하는 React 컴포넌트를 TypeScript로 작성하고, Next.js App Router 프로젝트에서 실행해 확인할 수 있다
+- 컴포넌트와 페이지 라우팅(routing)이 어떻게 연결되는지, `Link` 컴포넌트로 페이지 이동이 어떻게 이루어지는지 설명할 수 있다
+
+## 2. 왜 배우나
+
+AI Engineer 교육과정의 프론트엔드 실습(AI 쇼핑몰 UI, 대시보드 화면 등)은 전부 React 컴포넌트를 조립해서 만듭니다. 지금 여러분이 아이패드로 보고 있는 이 사이트 자체도 "Step 카드", "레슨 목록", "다크모드 토글" 같은 React 컴포넌트들의 조합입니다. 컴포넌트를 이해하지 못하면 화면을 어디서부터 어떻게 나눠야 할지 감을 잡기 어렵고, 버튼 하나를 눌렀을 때 화면이 왜 바뀌는지(또는 왜 안 바뀌는지)도 설명할 수 없습니다. 지금 컴포넌트·props·state의 관계를 확실히 잡아두면, 개강 후 상태 관리 라이브러리나 서버 컴포넌트 같은 더 복잡한 주제로 넘어갈 때 훨씬 수월하게 따라갈 수 있습니다.
+
+## 3. 개념 설명
+
+### 컴포넌트는 레고 블록
+
+React 컴포넌트를 "레고 블록"이라고 생각하면 이해하기 쉽습니다. 블록 하나하나(버튼, 카드, 배지)는 작고 독립적이지만, 여러 개를 조합하면 복잡한 화면(레슨 목록 페이지, 대시보드)을 만들 수 있습니다. 블록을 만들 때 "이 블록에 어떤 값을 끼워 넣을 수 있는지"를 미리 정해두는데, 이것이 바로 **props**입니다. 예를 들어 "레고 인형" 블록은 옷 색깔을 바꿔 끼울 수 있게 만들 수 있는데, 그 옷 색깔이 props에 해당합니다.
+
+### props: 부모가 건네주는 값
+
+props는 부모 컴포넌트가 자식 컴포넌트에게 "이 값을 써서 그려줘"라고 건네주는 값입니다. 자식 컴포넌트는 props를 직접 바꿀 수 없습니다 — 마치 선물로 받은 상자를 열어볼 수는 있지만 상자 자체를 내 마음대로 다른 사람 것으로 바꿀 수는 없는 것과 같습니다. TypeScript에서는 `interface`로 컴포넌트가 어떤 props를 받는지 명확히 선언합니다.
+
+### state: 컴포넌트가 스스로 기억하는 값
+
+state는 컴포넌트가 "스스로 기억하고 스스로 바꾸는 값"입니다. 예를 들어 "좋아요" 버튼을 눌렀을 때 카운트가 올라가는 것은 그 버튼 컴포넌트가 자기 내부에 "지금까지 몇 번 눌렸는지"를 기억하고 있기 때문입니다. React에서는 `useState` 함수로 이 기억 상자를 만듭니다. state가 바뀌면 React가 자동으로 화면을 다시 그려줍니다 — 이것이 "컴포넌트를 다시 렌더링(re-render)한다"는 말의 의미입니다.
+
+### props와 state의 결정적 차이
+
+| 구분 | props | state |
+|------|-------|-------|
+| 누가 주는가 | 부모 컴포넌트 | 컴포넌트 자기 자신 |
+| 바꿀 수 있는가 | 자식이 직접 못 바꿈(읽기 전용) | 컴포넌트 스스로 바꿀 수 있음 |
+| 일상 비유 | 선물로 받은 상자 | 내가 직접 쓰는 메모장 |
+
+### 컴포넌트와 라우팅의 연결
+
+Next.js 같은 프레임워크에서는 폴더 구조가 곧 URL 경로가 됩니다(App Router 방식). 예를 들어 `app/about/page.tsx` 파일은 `/about` 경로의 페이지 컴포넌트가 됩니다. 페이지 사이를 이동할 때는 일반 HTML의 `<a>` 태그 대신 Next.js가 제공하는 `<Link>` 컴포넌트를 씁니다. `<Link>`는 페이지 전체를 새로고침하지 않고 필요한 부분만 바꿔치기해서 훨씬 빠르게 이동합니다 — 이 사이트의 상단 내비게이션도 전부 `<Link>`로 만들어져 있습니다.
+
+## 4. 실무 예제
+
+아래는 "좋아요 버튼"을 가진 카드 컴포넌트와, 그 컴포넌트를 실제로 사용하면서 페이지 이동까지 포함한 완결된 예제입니다. 두 파일을 그대로 복사해서 프로젝트에 붙여 넣으면 동작합니다.
+
+**파일 1 — 좋아요 버튼을 가진 카드 컴포넌트.** props로 이름과 초기 좋아요 수를 받고, state로 현재 좋아요 수와 눌림 여부를 관리합니다.
+
+```tsx
+// components/like-card.tsx
+"use client";
+// state(useState)를 쓰는 컴포넌트는 Next.js App Router에서
+// 반드시 파일 맨 위에 "use client"를 선언해야 브라우저에서 상호작용이 동작합니다.
+
+import { useState } from "react";
+
+// props 타입을 interface로 명확히 선언한다 — 부모가 반드시 넘겨야 하는 값의 계약서.
+interface LikeCardProps {
+  name: string;
+  initialLikeCount: number;
+}
+
+export function LikeCard({ name, initialLikeCount }: LikeCardProps) {
+  // state: 이 컴포넌트가 스스로 기억하는 값. 부모는 이 값을 모르고 간섭하지 않는다.
+  const [likeCount, setLikeCount] = useState(initialLikeCount);
+  const [isLiked, setIsLiked] = useState(false);
+
+  function handleLikeClick() {
+    // 상태를 바꾸는 방식에 따라 카운트를 올리거나 내린다.
+    if (isLiked) {
+      setLikeCount((count) => count - 1);
+    } else {
+      setLikeCount((count) => count + 1);
+    }
+    setIsLiked((prev) => !prev);
+  }
+
+  return (
+    <div style={{ border: "1px solid #ccc", borderRadius: 8, padding: 16 }}>
+      {/* props로 받은 값은 이 컴포넌트 안에서 직접 수정하지 않는다 — 읽기 전용 */}
+      <p>{name}님의 학습 카드</p>
+      <button type="button" onClick={handleLikeClick}>
+        {isLiked ? "❤️ 좋아요 취소" : "🤍 좋아요"} ({likeCount})
+      </button>
+    </div>
+  );
+}
+```
+
+**파일 2 — 카드 컴포넌트를 사용하는 페이지, 그리고 라우팅 연결.** props를 실제로 넘겨주고, `Link`로 다른 페이지로 이동하는 버튼도 함께 둡니다.
+
+```tsx
+// app/page.tsx
+import Link from "next/link";
+import { LikeCard } from "@/components/like-card";
+
+export default function HomePage() {
+  return (
+    <main style={{ display: "flex", flexDirection: "column", gap: 16, padding: 24 }}>
+      <h1>오늘의 학습 카드</h1>
+
+      {/* 같은 컴포넌트를 서로 다른 props로 여러 번 재사용한다 — 컴포넌트 재사용성의 핵심 */}
+      <LikeCard name="지현" initialLikeCount={3} />
+      <LikeCard name="민준" initialLikeCount={0} />
+
+      {/* <a> 태그 대신 Link를 쓰면 페이지 전체 새로고침 없이 빠르게 이동한다 */}
+      <Link href="/about">소개 페이지로 이동 →</Link>
+    </main>
+  );
+}
+```
+
+**실행 방법:** Next.js 프로젝트(App Router)의 `components/like-card.tsx`와 `app/page.tsx` 경로에 각각 파일을 저장한 뒤, 터미널에서 아래 명령으로 개발 서버를 띄웁니다.
+
+```bash
+npm run dev
+```
+
+`http://localhost:3000`에 접속하면 카드 두 장이 각각 독립적인 좋아요 상태를 가지고 있는 것을 확인할 수 있습니다 — 한 카드의 버튼을 눌러도 다른 카드의 카운트는 바뀌지 않습니다. 이것이 "각 컴포넌트 인스턴스는 자기만의 state를 가진다"는 원리를 눈으로 확인하는 지점입니다. 이어서 "소개 페이지로 이동" 링크를 눌러 `/about` 경로로 화면이 새로고침 없이 전환되는 것도 확인해보세요.
+
+## 5. 실무 팁
+
+- **상태를 최소한으로 유지합니다.** 계산으로 구할 수 있는 값(예: 좋아요 수의 두 배)은 별도 state로 만들지 않고 렌더링할 때 바로 계산합니다. state가 늘어날수록 "어떤 값이 어떤 값과 동기화되어야 하는지" 관리가 어려워집니다.
+- **props 이름은 그 값이 무엇인지 명확히 드러내야 합니다.** `data`, `value` 같은 모호한 이름 대신 `initialLikeCount`처럼 구체적으로 짓습니다. 특히 "초기값"과 "현재값"을 헷갈리기 쉬우므로 `initial` 접두사로 구분하는 습관이 유용합니다.
+- **`useState`의 갱신 함수(setter)를 호출한다고 값이 그 자리에서 즉시 바뀌지 않습니다.** React는 상태 변경을 모아서 처리한 뒤 컴포넌트를 다시 렌더링합니다. 이전 값을 기준으로 다음 값을 계산할 때는 `setLikeCount((count) => count + 1)`처럼 함수형 업데이트를 쓰는 것이 더 안전합니다.
+- **`<a>` 태그와 `<Link>`를 구분해서 씁니다.** 같은 사이트 안의 페이지 이동은 `<Link>`, 완전히 다른 외부 사이트로 나가는 링크는 `<a>`를 씁니다.
+
+## 6. 핵심 정리 및 스스로 점검
+
+**핵심 정리**
+
+- 컴포넌트는 화면을 재사용 가능한 단위로 쪼갠 것이며, 여러 컴포넌트를 조합해 하나의 페이지를 만든다
+- props는 부모가 자식에게 건네는 읽기 전용 값이고, state는 컴포넌트가 스스로 기억하고 바꾸는 값이다
+- state가 바뀌면 React가 해당 컴포넌트를 자동으로 다시 렌더링한다
+- state를 쓰는 컴포넌트는 Next.js App Router에서 `"use client"` 선언이 필요하다
+- 페이지 사이 이동은 `<a>` 대신 `<Link>`를 사용해 새로고침 없이 빠르게 전환한다
+
+**스스로 점검**
+
+1. 위 `LikeCard` 예제에서 `initialLikeCount`를 props로 받으면서도 왜 그 값을 그대로 화면에 쓰지 않고 `useState(initialLikeCount)`로 한 번 감싸서 별도의 state(`likeCount`)를 만들었을까요?
+2. `LikeCard`를 세 번째로 하나 더 추가해서 서로 다른 이름과 초기 좋아요 수로 렌더링해보세요. 세 카드의 상태가 서로 독립적인지 직접 눌러서 확인해보세요.
+3. `handleLikeClick` 함수 안에서 `setLikeCount`를 `setLikeCount(likeCount + 1)`처럼 함수형 업데이트가 아닌 방식으로 바꾸면 어떤 상황에서 문제가 생길 수 있을지 생각해보세요.

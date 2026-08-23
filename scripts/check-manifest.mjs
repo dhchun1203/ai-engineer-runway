@@ -3,10 +3,10 @@
 // 입력: .velite/lessons.json(빌드 산출물), src/content/modules.ts(정규식으로 모듈 id 리터럴 추출)
 // 하나라도 깨지면 비어 있지 않은 오류 메시지와 함께 비정상 종료(exit code != 0)한다.
 //
-// 기대값 상수: hasContent가 true인 레슨 수. 파일럿 1(1-3-python-variables-and-types)만
-// 존재하는 현재는 1. Plan 06이 파일럿 2(2-3-react-components)를 채우면 이 값을 2로 올릴 것.
-const EXPECTED_HAS_CONTENT_COUNT = 1;
-const EXPECTED_HAS_CONTENT_SLUGS = ['1-3-python-variables-and-types'];
+// 기대값 상수: hasContent가 true인 레슨 수. Plan 06이 파일럿 2(2-3-react-components)를
+// 채우면서 1에서 2로 올렸다 — Step 1과 Step 2에 하나씩, 두 파일럿 모두 실콘텐츠다.
+const EXPECTED_HAS_CONTENT_COUNT = 2;
+const EXPECTED_HAS_CONTENT_SLUGS = ['1-3-python-variables-and-types', '2-3-react-components'];
 
 import fs from 'node:fs';
 import path from 'node:path';
