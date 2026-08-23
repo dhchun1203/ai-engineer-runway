@@ -31,7 +31,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. 모든 레슨 카드·헤더에 깊이 배지(심화/개요)와 예상 소요시간이 표시되고, Step 3 레슨은 개요로 분류되어 있다
   4. 아이패드 Safari 세로/가로 모드에서 레이아웃이 정상 동작하고(터치 타깃 44px+, 코드 블록 가로 스크롤, 한국어 keep-all 줄바꿈), 폰·데스크톱에서도 반응형으로 동작한다
   5. Making-of 페이지가 자료 수집 → 리서치 → 스택 선택 이유까지 기록하고 있으며, 이후 단계마다 갱신할 구조를 갖는다
-**Plans**: TBD
+**Plans**: 6 plans (웨이브 1~6, 완전 직렬 — 단일 빌드 디렉터리·단일 git 워크트리 공유)
+- [ ] 01-01-PLAN.md — Walking Skeleton: MDX 한 편이 Velite→Shiki→정적 라우트를 통과해 렌더되고 공개 저장소에 푸시된다
+- [ ] 01-02-PLAN.md — Vercel 배포: 프로덕션 URL 개통, main 푸시 자동 배포와 PR 프리뷰 확인, Making-of 5단계 기록
+- [ ] 01-03-PLAN.md — 커리큘럼 매니페스트: 19개 모듈 + 35개 레슨 메타데이터(깊이 배지·예상 소요시간)와 불변식 게이트
+- [ ] 01-04-PLAN.md — 탐색 라우트: 홈 Step 카드 → 모듈 아코디언 → 레슨 목록 → 레슨 페이지(브레드크럼·이전/다음·준비 중 상태)
+- [ ] 01-05-PLAN.md — 글로벌 셸: 내비 4항목·다크모드 토글·사이트 메타데이터/OG, Making-of 소개 페이지, 브랜드 노출 게이트
+- [ ] 01-06-PLAN.md — 파일럿 레슨 2 실콘텐츠 + 실콘텐츠 기준 한국어 타이포·코드 블록·터치 타깃 확정 + Phase 최종 게이트
 **UI hint**: yes
 
 ### Phase 2: 진도 체크와 진행률
@@ -92,7 +98,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. 배포된 커리큘럼 뼈대 | 0/TBD | Not started | - |
+| 1. 배포된 커리큘럼 뼈대 | 0/6 | Planned | - |
 | 2. 진도 체크와 진행률 | 0/TBD | Not started | - |
 | 3. 학습 일정과 오늘의 학습 | 0/TBD | Not started | - |
 | 4. Step 1 심화 콘텐츠 | 0/TBD | Not started | - |
