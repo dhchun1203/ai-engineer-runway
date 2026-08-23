@@ -1,10 +1,27 @@
 import type { Metadata } from "next";
 import { pretendard } from "@/lib/fonts";
+import { SiteNav } from "@/components/site-nav";
 import "./globals.css";
 
+// D-15: 비밀이 아닌 값 — 환경변수가 없어도 빌드가 성공해야 한다.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ai-engineer-runway.vercel.app";
+const SITE_NAME = "AI Engineer Runway";
+const SITE_DESCRIPTION = "AI Engineer 교육과정 사전학습 사이트 — 커리큘럼을 읽고, 완료를 체크하고, 진행률과 일정을 확인합니다.";
+
 export const metadata: Metadata = {
-  title: "AI Engineer Runway",
-  description: "AI Engineer 교육과정 사전학습 사이트",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    locale: "ko_KR",
+    type: "website",
+  },
 };
 
 // FOUC/hydration-mismatch를 피하기 위해 React context 테마 프로바이더 대신
@@ -27,7 +44,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <SiteNav />
+        {children}
+      </body>
     </html>
   );
 }
