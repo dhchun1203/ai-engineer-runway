@@ -36,8 +36,8 @@
 
 ### 사용자 경험 (UX)
 
-- [ ] **UX-01**: iPad(Safari) 최적화 — 태블릿 레이아웃, 터치 타깃 44px 이상, 세로/가로 모드 모두 지원 (주 학습 기기)
-- [ ] **UX-02**: 폰·데스크톱에서도 반응형으로 정상 동작한다
+- [x] **UX-01**: iPad(Safari) 최적화 — 태블릿 레이아웃, 터치 타깃 44px 이상, 세로/가로 모드 모두 지원 (주 학습 기기)
+- [x] **UX-02**: 폰·데스크톱에서도 반응형으로 정상 동작한다
 - [x] **UX-03**: 한국어 타이포그래피 최적화(Pretendard, `word-break: keep-all`)와 코드 블록 가로 스크롤이 적용된다
 
 ## v2 Requirements
@@ -76,8 +76,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONT-06 | Phase 1 | Complete |
 | PLAT-01 | Phase 1 | Complete |
 | PLAT-03 | Phase 1 | Pending |
-| UX-01 | Phase 1 | Pending |
-| UX-02 | Phase 1 | Pending |
+| UX-01 | Phase 1 | Complete |
+| UX-02 | Phase 1 | Complete |
 | UX-03 | Phase 1 | Complete |
 | TRACK-01 | Phase 2 | Pending |
 | TRACK-02 | Phase 2 | Pending |

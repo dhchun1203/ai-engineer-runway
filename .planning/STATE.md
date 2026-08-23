@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 01
 current_phase_name: deployed-curriculum-skeleton
 status: executing
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-08-23T23:32:24.680Z"
+stopped_at: Completed 01-04-PLAN.md
+last_updated: "2026-08-23T23:42:23.149Z"
 last_activity: 2026-08-24
 last_activity_desc: 로드맵 생성 (5 phases, v1 요구사항 20/20 매핑)
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 6
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 ## Current Position
 
 Phase: 01 (deployed-curriculum-skeleton) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6
 Status: Ready to execute
 Last activity: 2026-08-24 — Phase 01 execution started
 
-Progress: [█████░░░░░] 50%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [█████░░░░░] 50%
 | Phase 01 P01 | 20min | 3 tasks | 25 files |
 | Phase 01 P02 | unknown | 3 tasks | 2 files |
 | Phase 01 P03 | 20min | 2 tasks | 37 files |
+| Phase 01 P04 | 약 15분 | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,8 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 1 Plan 3]: 모듈 title은 curriculum.md 헤더 원문 그대로(Project 태그 포함) 사용, isProject 불리언으로 프로젝트 여부 별도 신호
 - [Phase ?]: [Phase 1 Plan 3]: check-manifest.mjs는 curriculum-helpers.ts를 import하지 않고 modules.ts를 독립적으로 정규식 재파싱 — 의존성 0 게이트 요구사항 유지
 - [Phase ?]: [Phase 1 Plan 3]: 2-3-react-components.mdx(파일럿 2)도 이번 Plan에서는 hasContent:false로 생성, Plan 06이 본문과 check-manifest.mjs 기대값(EXPECTED_HAS_CONTENT_COUNT=2)을 함께 갱신할 예정
+- [Phase ?]: [Phase 1 Plan 4]: 레슨 목록 링크에 제목과 함께 Copywriting Contract Primary CTA 문구('레슨 시작하기')를 병기 — 제목만으로는 식별성 유지, CTA 문구는 계약대로 보조 텍스트로 표시
+- [Phase ?]: [Phase 1 Plan 4]: LessonBreadcrumb/LessonPager는 curriculum-helpers.ts를 확장하지 않고 modules.ts의 정적 배열을 직접 참조 — Plan 03 인터페이스 표면을 넓히지 않음
 
 ### Pending Todos
 
@@ -103,6 +106,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-23T23:32:24.668Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-08-23T23:42:15.457Z
+Stopped at: Completed 01-04-PLAN.md
 Resume file: None
