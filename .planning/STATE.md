@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 1
-current_phase_name: 배포된 커리큘럼 뼈대
+current_phase: 01
+current_phase_name: deployed-curriculum-skeleton
 status: executing
 stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-08-23T19:11:50.987Z"
+last_updated: "2026-08-23T22:21:55.414Z"
 last_activity: 2026-08-24
 last_activity_desc: 로드맵 생성 (5 phases, v1 요구사항 20/20 매핑)
 progress:
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-24)
 
 **Core value:** 개강 전까지 커리큘럼의 기초를 확실히 다질 수 있도록 — 콘텐츠를 읽고, 완료를 체크하고, 진행률과 일정을 한눈에 확인하는 흐름이 반드시 동작해야 한다.
-**Current focus:** Phase 1 — 배포된 커리큘럼 뼈대
+**Current focus:** Phase 01 — deployed-curriculum-skeleton
 
 ## Current Position
 
-Phase: 1 of 5 (배포된 커리큘럼 뼈대)
-Plan: 0 of TBD in current phase
-Status: Ready to execute
-Last activity: 2026-08-24 — 로드맵 생성 (5 phases, v1 요구사항 20/20 매핑)
+Phase: 01 (deployed-curriculum-skeleton) — EXECUTING
+Plan: 1 of 6
+Status: Executing Phase 01
+Last activity: 2026-08-24 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
