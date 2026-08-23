@@ -71,13 +71,39 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (roadmap 생성 시 채움) | — | — |
+| CONT-01 | Phase 1 | Pending |
+| CONT-04 | Phase 1 | Pending |
+| CONT-06 | Phase 1 | Pending |
+| PLAT-01 | Phase 1 | Pending |
+| PLAT-03 | Phase 1 | Pending |
+| UX-01 | Phase 1 | Pending |
+| UX-02 | Phase 1 | Pending |
+| UX-03 | Phase 1 | Pending |
+| TRACK-01 | Phase 2 | Pending |
+| TRACK-02 | Phase 2 | Pending |
+| TRACK-03 | Phase 2 | Pending |
+| TRACK-04 | Phase 2 | Pending |
+| PLAT-02 | Phase 2 | Pending |
+| SCHED-01 | Phase 3 | Pending |
+| SCHED-02 | Phase 3 | Pending |
+| SCHED-03 | Phase 3 | Pending |
+| SCHED-04 | Phase 3 | Pending |
+| CONT-02 | Phase 4 | Pending |
+| CONT-03 | Phase 4 | Pending |
+| CONT-05 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 20 total
-- Mapped to phases: 0
-- Unmapped: 20 ⚠️
+- Mapped to phases: 20
+- Unmapped: 0
+
+**교차 요구사항 메모:**
+
+CONT-02(개념 설명)와 CONT-03(예제 코드)는 모든 레슨에 걸치는 품질 기준이다. 중복 매핑을 피하기 위해
+기준이 처음 완전히 충족·검증되는 Phase 4(Step 1 콘텐츠)에 귀속시켰고, Phase 5(Step 2·3 콘텐츠)는
+동일 표준을 적용한다. CONT-04(깊이 배지)는 커리큘럼 매니페스트 메타데이터이므로 레슨 본문 집필
+이전에 Phase 1에서 전 레슨에 적용된다.
 
 ---
 *Requirements defined: 2026-08-24*
-*Last updated: 2026-08-24 after initial definition*
+*Last updated: 2026-08-24 after roadmap traceability mapping*
