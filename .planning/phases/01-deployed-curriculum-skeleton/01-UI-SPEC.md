@@ -126,20 +126,37 @@ Exceptions:
 > Empty-state and error-state COPY live in `## Copywriting Contract` above — this section covers
 > state coverage and REFERENCES those rows rather than restating the copy (de-dup).
 
-Applicable state considerations resolved: 7 covered, 2 backstop, 1 unresolved
+Probe run 2026-08-24 over 8 elements × 8 categories = 49 applicable considerations.
+Resolution: 47 resolved (45 explicit, 2 backstop), 0 unresolved. User confirmed all resolutions
+including the prev/next boundary decision (disabled-gray, not hidden).
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
-| empty | 비-파일럿 레슨 본문 (33개 lesson pages, list-collection) | ✅ covered | References Copywriting Contract "Empty state" rows — real route exists per lesson (not 404), renders "콘텐츠 준비 중" (RESEARCH.md Pitfall 2) |
-| error | 잘못된 step/lesson 라우트 (nav) | ✅ covered | References Copywriting Contract "Error state" row — Next.js `not-found.tsx` with CTA back to curriculum home |
-| long-text | Step/모듈/레슨 제목 (static-content) | ✅ covered | `word-break: keep-all; overflow-wrap: break-word` applied globally (D-06/UX-03); titles wrap, never truncate with ellipsis |
-| long-text | 레슨 본문 한국어 프로즈 + 인라인 코드 용어 (static-content) | ✅ covered | Pitfall 4 mitigation — validated against actual pilot lesson content (D-11), not placeholder text, before Phase 1 is considered done |
-| overflow | 코드 블록 긴 줄 (static-content) | ✅ covered | `pre { overflow-x: auto }` per RESEARCH.md Pattern 4 — horizontal scroll, no wrap/clip |
-| populated | Step 카드 3장 (home dashboard, list-collection) | ✅ covered | Fixed cardinality of exactly 3 (build-time manifest); progress slot renders static 0% per D-07/Specifics |
-| loading | 전체 페이지 렌더 (nav, list-collection, static-content) | ✅ covered | Dismissed — pure SSG (`generateStaticParams`), no client-side data fetch exists in Phase 1, so no loading/skeleton state is needed |
-| zero-one-many | 이전/다음 레슨 버튼 경계 (interactive-control) | ⚠ unresolved | Planner assumption: first lesson (no 이전) and 35th/last lesson (no 다음) must hide or disable the corresponding button — not yet specified how (hide vs. disabled-gray) — planner must decide explicitly |
-| overflow | 글로벌 내비 4항목 + 로고 + 테마 토글 on narrow mobile width (nav) | 🧪 backstop | Statement: nav items remain reachable at 44px+ touch target without horizontal scroll or wrap-induced overlap at the smallest supported mobile width (375px). Verification: real-device/responsive-mode UAT check (no automated layout test configured this phase per RESEARCH.md Wave 0 Gaps) |
-| error | 코드 복사 버튼 clipboard API 실패 (interactive-control) | 🧪 backstop | Statement: `transformerCopyButton`'s default behavior handles clipboard write failure without breaking the page. Verification: relies on library default, no custom fallback UI built — confirm via manual check on real iPad Safari (RESEARCH.md Pitfall 3 testing note), not desktop emulation alone |
+**Resolved — explicit (truths):**
+
+| Category | Element(s) | Resolution |
+|----------|------------|------------|
+| empty | 비-파일럿 레슨 본문 33개 | 레슨별 실제 라우트가 존재하고(404 아님) Copywriting Contract의 "Empty state" 카피("콘텐츠 준비 중입니다" + 파일럿 안내)를 렌더링한다 (RESEARCH.md Pitfall 2) |
+| empty | Step 카드·모듈 아코디언·배지 | 빌드 타임 매니페스트가 3 Step / 19 모듈 / 35 레슨을 고정 공급 — Velite Zod 스키마가 누락 필드를 빌드 실패로 차단하므로 런타임 빈 상태 불가 |
+| error | 잘못된 step/lesson 라우트 | Next.js `not-found.tsx`가 Copywriting Contract "Error state" 카피 + "커리큘럼 홈으로" CTA를 렌더링한다 |
+| error | 404 페이지 자체·정적 요소들 | 순수 SSG — 런타임 데이터 로드 실패가 존재하지 않음; MDX 컴파일 오류는 빌드 실패로 차단 |
+| loading | 전 요소 (해당 없음 처리) | 순수 SSG(`generateStaticParams`), 클라이언트 데이터 페치 없음 — 로딩/스켈레톤 상태 불필요 (사용자 확정 dismiss) |
+| partial | 전 목록/배지 요소 (해당 없음 처리) | Velite 스키마 검증이 부분 데이터를 빌드 시점에 차단 — 런타임 부분 상태 불가 (사용자 확정 dismiss) |
+| populated | Step 카드 3장 | 정확히 3장 고정 카디널리티; 진행률 슬롯은 D-07에 따라 정적 0% 렌더 |
+| populated | 모듈 아코디언·내비·배지 | 19 모듈/35 레슨 표준 볼륨 레이아웃과 배지 값(심화/개요, 약 {N}분)이 본 계약서에 명세됨 |
+| overflow | 코드 블록 긴 줄 | `pre { overflow-x: auto }` — 가로 스크롤, 줄바꿈/클리핑 없음 (RESEARCH.md Pattern 4) |
+| overflow | Step 카드 그리드 | 반응형 그리드 — 좁은 화면에서 3열→1열 스택, 컨테이너 초과 없음 |
+| long-text | Step/모듈/레슨 제목·본문 프로즈 | `word-break: keep-all; overflow-wrap: break-word` 전역 적용 (D-06/UX-03) — 줄바꿈하며 말줄임 사용 안 함; 파일럿 레슨 실콘텐츠로 검증 (D-11, Pitfall 4) |
+| long-text | 내비 라벨·버튼 라벨·배지 텍스트 (해당 없음 처리) | 고정 카피 템플릿(Copywriting Contract) — 가변 장문 텍스트 없음 (사용자 확정 dismiss) |
+| zero-one-many | 이전/다음 레슨 버튼 경계 | **첫 레슨의 "이전", 마지막(35번째) 레슨의 "다음" 버튼은 비활성화(회색) 상태로 렌더** — 숨기지 않아 레이아웃이 흔들리지 않음 (사용자 확정 2026-08-24) |
+| zero-one-many | Step 카드·내비 항목 (해당 없음 처리) | 고정 카디널리티(3 카드, 4 내비 항목) — 가변 개수 상태 없음; 한국어는 단복수 카피 분기 불필요 (사용자 확정 dismiss) |
+
+**Resolved — backstop (flat scalar markers for must_haves lift):**
+
+- statement: 글로벌 내비(로고 + 4항목 + 테마 토글)가 최소 지원 폭 375px에서 가로 스크롤·겹침 없이 44px+ 터치 타깃을 유지한다
+  verification: backstop
+  (자동 레이아웃 테스트 미구성 — 실기기/반응형 모드 UAT로 확인, RESEARCH.md Wave 0 Gaps)
+- statement: 코드 복사 버튼이 iPad Safari에서 clipboard API 쓰기 실패 시 페이지를 깨뜨리지 않는다 (`transformerCopyButton` 기본 동작 의존)
+  verification: backstop
+  (실기기 iPad Safari 수동 확인 — 데스크톱 에뮬레이션만으로 판정 금지, RESEARCH.md Pitfall 3)
 
 ---
 
