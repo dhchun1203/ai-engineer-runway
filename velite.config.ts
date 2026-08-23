@@ -39,5 +39,18 @@ export default defineConfig({
         })
         .transform((data) => ({ ...data, permalink: `/lesson/${data.slug}` })),
     },
+    // /about (Making-of) 소개 페이지 소스 — docs/making-of.md 단일 파일만 대상으로 한다.
+    // 글로브를 넓혀 GSD 계획 산출물 디렉터리를 빨아들이지 않는다 (PLAT-03 threat T-01-14).
+    pages: {
+      name: "Page",
+      pattern: "docs/making-of.md",
+      schema: s
+        .object({
+          title: s.string(),
+          slug: s.slug("pages"),
+          code: s.mdx(),
+        })
+        .transform((data) => ({ ...data, permalink: `/${data.slug}` })),
+    },
   },
 });
