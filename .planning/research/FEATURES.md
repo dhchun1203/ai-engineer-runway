@@ -179,5 +179,5 @@ Defer past 9/30 — either explicitly out of scope, or irrelevant to the pre-stu
 **Note on confidence:** Individual sources are uncurated web search results (LOW confidence per source hierarchy). Overall domain-pattern confidence is rated MEDIUM because the same structural pattern (hierarchy → completion toggle → derived progress %) appears independently across four distinct product categories (LMS platforms, roadmap.sh/freeCodeCamp, Notion study templates, dedicated study-planner apps), and these patterns also align directly with the explicit requirements already stated in PROJECT.md.
 
 ---
-*Feature research for: Personal curriculum-based learning site (pre-study tracker for Kant AI Engineer course, 2026-09-30 start)*
+*Feature research for: Personal curriculum-based learning site (pre-study tracker for AI Engineer course, 2026-09-30 start)*
 *Researched: 2026-08-24*

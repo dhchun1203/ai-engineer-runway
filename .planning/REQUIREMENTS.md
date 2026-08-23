@@ -1,4 +1,4 @@
-# Requirements: Kant AI 사전학습 사이트
+# Requirements: AI Engineer 사전학습 사이트
 
 **Defined:** 2026-08-24
 **Core Value:** 개강 전까지 커리큘럼의 기초를 확실히 다질 수 있도록 — 콘텐츠를 읽고, 완료를 체크하고, 진행률과 일정을 한눈에 확인하는 흐름이 반드시 동작해야 한다.
