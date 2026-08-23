@@ -1,0 +1,78 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Base surfaces (D-03 딥블루/청록) */
+  --color-background: #f8fafc;
+  --color-background-dark: #0b1220;
+  --color-surface: #e7ecf3;
+  --color-surface-dark: #131b2e;
+
+  /* Global functional accent (D-03) */
+  --color-accent: #0d9488;
+  --color-accent-dark: #2dd4bf;
+
+  /* Destructive (reserved for Phase 2's 진도 초기화) */
+  --color-destructive: #dc2626;
+  --color-destructive-dark: #f87171;
+
+  /* Step identity colors (D-04) */
+  --color-step-1: #3b82f6;
+  --color-step-1-dark: #60a5fa;
+  --color-step-2: #8b5cf6;
+  --color-step-2-dark: #a78bfa;
+  --color-step-3: #f59e0b;
+  --color-step-3-dark: #fbbf24;
+
+  /* 개요 배지 (neutral, not tied to any Step color) */
+  --color-badge-neutral-text: #64748b;
+  --color-badge-neutral-bg: #f1f5f9;
+  --color-badge-neutral-text-dark: #94a3b8;
+  --color-badge-neutral-bg-dark: #1e293b;
+
+  /* Typography: exactly 4 sizes / 2 weights (UI-SPEC) */
+  --font-size-label: 14px;
+  --font-size-body: 16px;
+  --font-size-heading: 20px;
+  --font-size-display: 28px;
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+}
+
+body {
+  background-color: var(--color-background);
+  color: #171717;
+  font-family: var(--font-pretendard), "Pretendard", ui-sans-serif, system-ui, sans-serif;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.dark body {
+  background-color: var(--color-background-dark);
+  color: #f1f5f9;
+}
+
+/* Code must never inherit the Korean body font (D-06) */
+code,
+pre {
+  font-family: ui-monospace, monospace;
+}
+
+/* rehype-pretty-code + Shiki dual theme (CONT-06, UX-03 가로 스크롤) */
+pre {
+  overflow-x: auto;
+  padding: 1rem 0;
+}
+
+code[data-theme*=" "],
+code[data-theme*=" "] span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+}
+
+.dark code[data-theme*=" "],
+.dark code[data-theme*=" "] span {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg);
+}
