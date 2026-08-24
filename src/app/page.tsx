@@ -1,14 +1,18 @@
 import { ProgressSummary } from "@/components/progress-summary";
 import { ProgressReadError } from "@/components/progress-error";
 import { DDayCountdown } from "@/components/dday-countdown";
-import { TodayLessonCard, type TodayCardState } from "@/components/today-lesson-card";
+import { TodayLessonCard, type TodayCardState, type TomorrowInfo } from "@/components/today-lesson-card";
+import { PaceStatusPanel } from "@/components/pace-status";
+import { BehindLessonsList, type BehindLessonRow } from "@/components/behind-lessons-list";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readCompletedLessonIds } from "@/lib/progress-store";
 import { overallProgress, nextIncompleteLesson } from "@/lib/progress";
 import { todayInSeoul, daysUntil } from "@/lib/today";
+import { computePace } from "@/lib/pace";
 import { SCHEDULE_START, COURSE_START_DATE } from "@/lib/schedule";
-import { getScheduleRows } from "@/lib/schedule-data";
+import { getScheduleRows, getLessonMinutesBySlug } from "@/lib/schedule-data";
 import { getLessonBySlug } from "@/content/curriculum-helpers";
+import type { StepId } from "@/content/modules";
 
 // 홈도 쿠키를 읽으므로 동적 렌더링이 필요하다 — 조건부 쿠키 접근이 캐시된
 // 응답을 내보내는 문제(RESEARCH Pitfall 4)를 원천 차단한다. `/unlock` 직후
@@ -39,6 +43,60 @@ export default async function Home() {
   }
   const todayLesson = todayRow?.lessonSlug ? (getLessonBySlug(todayRow.lessonSlug) ?? null) : null;
 
+  // 페이스 판정(D-40~D-43)은 completedIds가 non-null일 때만 수행한다 — 진도
+  // 파생 계산이므로 게이트 대상이다(D-37). computePace().missedSlugs가 밀린
+  // 레슨 목록의 유일한 출처다(별도 재계산 금지).
+  const minutesBySlug = getLessonMinutesBySlug();
+  const pace = completedIds ? computePace(rows, minutesBySlug, completedIds, today) : null;
+
+  const completedToday = completedIds && todayLesson ? completedIds.has(todayLesson.slug) : null;
+
+  // 오늘 배정 레슨을 완료했거나(D-38) 전체 페이스가 ahead면 축하 상태로 전환한다.
+  // 자동 이동은 걸지 않는다 — 카드 내부 CTA를 사용자가 직접 눌러야 이동한다.
+  if (state === "assigned" && (completedToday === true || pace?.status === "ahead")) {
+    state = "celebration";
+  }
+
+  // 내일 행은 rows 배열에서 오늘 행 바로 다음 요소로 구한다 — 일정이 항상
+  // 하루 간격 연속 행이므로 별도 날짜 산술 없이 인접 인덱스로 충분하다.
+  let tomorrow: TomorrowInfo = { kind: "none" };
+  if (todayRow) {
+    const todayIndex = rows.indexOf(todayRow);
+    const tomorrowRow = rows[todayIndex + 1];
+    if (tomorrowRow) {
+      if (tomorrowRow.isBuffer) {
+        tomorrow = { kind: "buffer" };
+      } else if (tomorrowRow.lessonSlug) {
+        const tomorrowLesson = getLessonBySlug(tomorrowRow.lessonSlug);
+        tomorrow = tomorrowLesson
+          ? { kind: "lesson", slug: tomorrowLesson.slug, title: tomorrowLesson.title }
+          : { kind: "none" };
+      }
+    }
+  }
+
+  // 밀린 레슨 행 데이터는 missedSlugs를 getLessonBySlug/rows와 조합해서만 만든다
+  // (별도 재계산 금지). 매니페스트/일정 불일치로 조회에 실패한 slug는 조용히
+  // 제외한다 — 계산 로직 결함이 아니라 방어적 필터링이다.
+  const behindRows: BehindLessonRow[] =
+    pace && pace.status === "behind" && pace.missedSlugs.length > 0
+      ? pace.missedSlugs
+          .map((slug) => {
+            const lesson = getLessonBySlug(slug);
+            const row = rows.find((r) => r.lessonSlug === slug);
+            if (!lesson || !row) return null;
+            return {
+              date: row.date,
+              slug: lesson.slug,
+              title: lesson.title,
+              depth: lesson.depth,
+              stepId: lesson.stepId as StepId,
+              estimatedMinutes: lesson.estimatedMinutes,
+            };
+          })
+          .filter((row): row is BehindLessonRow => row !== null)
+      : [];
+
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-2">
@@ -48,14 +106,25 @@ export default async function Home() {
         </p>
       </header>
       <DDayCountdown daysUntil={daysUntil(COURSE_START_DATE, today)} />
-      <TodayLessonCard todayLesson={todayLesson} state={state} />
+      <TodayLessonCard
+        todayLesson={todayLesson}
+        state={state}
+        completed={completedToday}
+        tomorrow={tomorrow}
+      />
+      {completedIds ? (
+        <>
+          {pace ? <PaceStatusPanel pace={pace} /> : null}
+          {behindRows.length > 0 ? <BehindLessonsList rows={behindRows} /> : null}
+        </>
+      ) : progressRead && !progressRead.ok ? (
+        <ProgressReadError />
+      ) : null}
       {completedIds ? (
         <ProgressSummary
           counts={overallProgress(completedIds)}
           nextLessonSlug={nextIncompleteLesson(completedIds)?.slug ?? null}
         />
-      ) : progressRead && !progressRead.ok ? (
-        <ProgressReadError />
       ) : null}
     </main>
   );
