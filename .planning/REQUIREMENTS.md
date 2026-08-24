@@ -16,8 +16,8 @@
 
 ### 진도 추적 (TRACK)
 
-- [ ] **TRACK-01**: 학습자는 레슨 완료 버튼을 눌러 완료 상태를 저장할 수 있고, 상태는 Supabase에 저장되어 새로고침·기기 전환 후에도 유지된다
-- [ ] **TRACK-02**: 학습자는 완료를 다시 눌러 취소(토글)할 수 있다
+- [x] **TRACK-01**: 학습자는 레슨 완료 버튼을 눌러 완료 상태를 저장할 수 있고, 상태는 Supabase에 저장되어 새로고침·기기 전환 후에도 유지된다
+- [x] **TRACK-02**: 학습자는 완료를 다시 눌러 취소(토글)할 수 있다
 - [ ] **TRACK-03**: 모듈별·Step별 진행률(% 및 완료/전체 개수)이 표시된다
 - [ ] **TRACK-04**: 대시보드에서 전체 진행률과 Step별 진행률을 한눈에 확인할 수 있다
 
@@ -79,8 +79,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UX-01 | Phase 1 | Complete |
 | UX-02 | Phase 1 | Complete |
 | UX-03 | Phase 1 | Complete |
-| TRACK-01 | Phase 2 | Pending |
-| TRACK-02 | Phase 2 | Pending |
+| TRACK-01 | Phase 2 | Complete |
+| TRACK-02 | Phase 2 | Complete |
 | TRACK-03 | Phase 2 | Pending |
 | TRACK-04 | Phase 2 | Pending |
 | PLAT-02 | Phase 2 | Pending |
