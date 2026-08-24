@@ -22,7 +22,7 @@ export default async function CurriculumPage() {
       <header className="flex flex-col gap-2">
         <h1 className="text-[28px] font-semibold leading-[1.2]">커리큘럼</h1>
       </header>
-      <section className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+      <section className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {steps.map((step) => (
           <StepCard
             key={step.id}

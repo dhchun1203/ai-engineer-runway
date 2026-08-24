@@ -30,8 +30,10 @@ export function StepCard({ step, progress }: { step: Step; progress?: ProgressCo
       className={`flex min-h-11 flex-col gap-3 rounded-lg border-l-4 bg-surface p-4 dark:bg-surface-dark ${STEP_BORDER_CLASSES[step.id]}`}
     >
       <div className="flex items-baseline gap-2">
-        <span className="text-[14px] font-semibold leading-[1.4]">Step {step.id}</span>
-        <h2 className="text-[20px] font-semibold leading-[1.3]">{step.shortTitle}</h2>
+        <span className="shrink-0 whitespace-nowrap text-[14px] font-semibold leading-[1.4]">
+          Step {step.id}
+        </span>
+        <h2 className="min-w-0 break-keep text-[20px] font-semibold leading-[1.3]">{step.shortTitle}</h2>
       </div>
       <p className="text-[14px] font-normal leading-[1.4] text-badge-neutral-text dark:text-badge-neutral-text-dark">
         {step.keywords.join(" · ")}
