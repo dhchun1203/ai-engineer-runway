@@ -4,16 +4,16 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 02
 current_phase_name: progress-tracking
-status: executing
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-08-24T09:31:07.704Z"
+status: verifying
+stopped_at: Completed 02-04-PLAN.md — Phase 2 all 4 plans done
+last_updated: "2026-08-24T09:45:12.435Z"
 last_activity: 2026-08-24
 last_activity_desc: Phase 1 검증·UAT·보안 게이트 통과, 완료 처리
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 10
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -29,10 +29,10 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 
 Phase: 02 (progress-tracking) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-24 — Phase 02 execution started
 
-Progress: [█████████░] 90%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Progress: [█████████░] 90%
 | Phase 02 P01 | 100min | 3 tasks | 8 files |
 | Phase 02 P02 | 35min | 3 tasks | 11 files |
 | Phase 02 P03 | 15min | 3 tasks | 8 files |
+| Phase 02 P04 | 55min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,9 @@ Recent decisions affecting current work:
 - [Phase ?]: tracer feedback gate 인터랙티브 정지 준수 — auto_advance/_auto_chain_active 둘 다 false라 mode:yolo와 무관하게 Task1 이후 체크포인트에서 정지, 사용자가 iPad 제약을 밝히고 자동화 증거로 승인
 - [Phase ?]: progress.ts는 '#site/content'를 직접 import하지 않고 Lesson 타입을 NonNullable<ReturnType<typeof getLessonBySlug>>로 파생 — G13(매니페스트 직접 import 금지)을 코드·타입 양쪽에서 지킴
 - [Phase ?]: e2e-progress.mjs의 배지 숫자 추출은 React SSR의 <!-- --> 코멘트 마커를 먼저 제거한 뒤 정규식 매칭 — 인접 JSX 표현식 사이에 코멘트가 삽입되는 것이 실행 중 실제로 확인됨
+- [Phase ?]: [Phase 2 Plan 4]: ProgressBadge always renders in the home summary block including empty state — only the 28px accent big percent number is suppressed at 0 completions (D-26 requires badge always, truths only forbid emphasizing the big number)
+- [Phase ?]: [Phase 2 Plan 4]: Step card progress bar/badge completely omitted (not 0%-rendered) when progress prop is absent — matches D-20's DOM-absence contract over Phase 1's always-0%-bar habit
+- [Phase ?]: [Phase 2 Plan 4]: e2e home scenario asserts non-probe Steps are unchanged via before/after delta, not literal zero — the shared Supabase table also backs production and will carry real progress after launch
 
 ### Pending Todos
 
@@ -123,6 +127,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-24T08:45:14.486Z
-Stopped at: Completed 02-03-PLAN.md
+Last session: 2026-08-24T09:45:12.419Z
+Stopped at: Completed 02-04-PLAN.md — Phase 2 all 4 plans done
 Resume file: None

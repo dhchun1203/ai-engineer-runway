@@ -18,8 +18,8 @@
 
 - [x] **TRACK-01**: 학습자는 레슨 완료 버튼을 눌러 완료 상태를 저장할 수 있고, 상태는 Supabase에 저장되어 새로고침·기기 전환 후에도 유지된다
 - [x] **TRACK-02**: 학습자는 완료를 다시 눌러 취소(토글)할 수 있다
-- [ ] **TRACK-03**: 모듈별·Step별 진행률(% 및 완료/전체 개수)이 표시된다
-- [ ] **TRACK-04**: 대시보드에서 전체 진행률과 Step별 진행률을 한눈에 확인할 수 있다
+- [x] **TRACK-03**: 모듈별·Step별 진행률(% 및 완료/전체 개수)이 표시된다
+- [x] **TRACK-04**: 대시보드에서 전체 진행률과 Step별 진행률을 한눈에 확인할 수 있다
 
 ### 학습 일정 (SCHED)
 
@@ -31,7 +31,7 @@
 ### 플랫폼 (PLAT)
 
 - [x] **PLAT-01**: 사이트는 Vercel에 배포되어 URL로 어디서든 접속 가능하다
-- [ ] **PLAT-02**: 진도 저장은 로그인 화면 없는 최소 마찰 방식(익명 세션 + RLS 등)으로 동작하되 외부인이 함부로 쓸 수 없게 보호된다
+- [x] **PLAT-02**: 진도 저장은 로그인 화면 없는 최소 마찰 방식(익명 세션 + RLS 등)으로 동작하되 외부인이 함부로 쓸 수 없게 보호된다
 - [x] **PLAT-03**: Making-of 소개 페이지가 자료 수집 → 리서치 → 설계 → 구현 → 검증 → 배포 과정과 스택 선택 이유를 문서화하며, 작업 진행에 따라 계속 갱신된다 (포트폴리오)
 
 ### 사용자 경험 (UX)
@@ -81,9 +81,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UX-03 | Phase 1 | Complete |
 | TRACK-01 | Phase 2 | Complete |
 | TRACK-02 | Phase 2 | Complete |
-| TRACK-03 | Phase 2 | Pending |
-| TRACK-04 | Phase 2 | Pending |
-| PLAT-02 | Phase 2 | Pending |
+| TRACK-03 | Phase 2 | Complete |
+| TRACK-04 | Phase 2 | Complete |
+| PLAT-02 | Phase 2 | Complete |
 | SCHED-01 | Phase 3 | Pending |
 | SCHED-02 | Phase 3 | Pending |
 | SCHED-03 | Phase 3 | Pending |

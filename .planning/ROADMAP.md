@@ -76,7 +76,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. 대시보드에서 전체 진행률과 Step별 진행률을 한 화면에서 확인할 수 있다
   5. 로그인 화면 없이 바로 진도를 기록할 수 있으면서도, 외부인이 URL만으로 내 진도를 읽거나 변경할 수 없다
 
-**Plans**: 3/4 plans executed (웨이브 1~4, 완전 직렬 — 단일 빌드 디렉터리·단일 git 워크트리 공유)
+**Plans**: 4/4 plans executed (웨이브 1~4, 완전 직렬 — 단일 빌드 디렉터리·단일 git 워크트리 공유)
 
 Plans:
 **Wave 1**
@@ -93,7 +93,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 02-04-PLAN.md — 홈 대시보드: 전체 진행률 요약 블록·이어서 학습하기 CTA·Step 카드 실데이터, Phase 종단 게이트
+- [x] 02-04-PLAN.md — 홈 대시보드: 전체 진행률 요약 블록·이어서 학습하기 CTA·Step 카드 실데이터, Phase 종단 게이트
 
 **UI hint**: yes
 
@@ -151,7 +151,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. 배포된 커리큘럼 뼈대 | 6/6 | Complete    | 2026-08-24 |
-| 2. 진도 체크와 진행률 | 3/4 | In Progress|  |
+| 2. 진도 체크와 진행률 | 4/4 | In Progress|  |
 | 3. 학습 일정과 오늘의 학습 | 0/TBD | Not started | - |
 | 4. Step 1 심화 콘텐츠 | 0/TBD | Not started | - |
 | 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 0/TBD | Not started | - |
