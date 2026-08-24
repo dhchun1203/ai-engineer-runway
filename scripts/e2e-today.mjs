@@ -4,6 +4,8 @@
 // 종단 게이트. 03-03이 쿠키 유/무 두 경로(t6~t8)를 추가했다 — 진도 파생 UI
 // (페이스 패널·밀린 레슨)가 쿠키 없이는 DOM에 존재하지 않고, 쿠키가 있으면
 // 실제 Supabase 완료 데이터로 behind 판정까지 왕복하는지 확인한다.
+// 03-04가 /schedule 시나리오(s1~s5)를 추가했다 — 36행 전량 렌더가 쿠키 유/무와
+// 무관함(D-37), 오늘 행 마커, 개강일 행 문구, 첫 행 링크의 매니페스트 정렬 일치를 확인한다.
 // 실행: node --env-file=.env.local scripts/e2e-today.mjs
 //
 // 앱 코드(curriculum-helpers.ts/schedule.ts/today.ts/pace.ts)를 import하지
@@ -409,8 +411,106 @@ async function main() {
       }
     }
 
+    // --- s1. 쿠키 없이 GET /schedule → 200, data-schedule-ui="row" 36건,
+    // data-progress-ui= 접두 속성 0건(완료 아이콘 마커 포함), 완료 마커(data-progress-ui="lesson-done")
+    // 0건 (03-04, D-37) ---
+    {
+      const res = await fetchWithTimeout(`${BASE_URL}/schedule`);
+      if (res.status !== 200) {
+        throw new FatalError(`시나리오 s1 실패 — 쿠키 없는 /schedule 요청이 200이 아닙니다 (status=${res.status})`);
+      }
+      const body = stripSsrComments(await res.text());
+      const rowCount = countOccurrences(body, 'data-schedule-ui="row"');
+      if (rowCount !== 36) {
+        throw new FatalError(`시나리오 s1 실패 — data-schedule-ui="row" 마커가 36건이 아닙니다 (got ${rowCount})`);
+      }
+      if (body.includes('data-progress-ui')) {
+        throw new FatalError('시나리오 s1 실패 — 쿠키 없는 /schedule 응답에 data-progress-ui 마커가 존재합니다 (D-37 위반)');
+      }
+    }
+    console.log('e2e-today: s1/5 /schedule 쿠키 없음 → 36행 + 진도 마커 0건 OK');
+
+    // --- s2. 쿠키 포함 GET /schedule → 200, 행 수는 여전히 36건 — 쿠키가 일정
+    // 데이터의 양을 바꾸지 않는다(D-37 핵심 어설션) ---
+    {
+      const cookieHeader = `${UNLOCK_COOKIE_NAME}=${UNLOCK_SECRET}`;
+      const res = await fetchWithTimeout(`${BASE_URL}/schedule`, { headers: { Cookie: cookieHeader } });
+      if (res.status !== 200) {
+        throw new FatalError(`시나리오 s2 실패 — 쿠키 포함 /schedule 요청이 200이 아닙니다 (status=${res.status})`);
+      }
+      const body = stripSsrComments(await res.text());
+      const rowCount = countOccurrences(body, 'data-schedule-ui="row"');
+      if (rowCount !== 36) {
+        throw new FatalError(`시나리오 s2 실패 — 쿠키 포함 응답의 data-schedule-ui="row" 마커가 36건이 아닙니다 (got ${rowCount})`);
+      }
+    }
+    console.log('e2e-today: s2/5 /schedule 쿠키 있음 → 여전히 36행 OK (D-37)');
+
+    // --- s3. 오늘이 일정 범위 안이면 data-schedule-ui="today-row" 1건과 그 행이
+    // 오늘 날짜 문자열을 담고 있는지 확인, 범위 밖이면 0건임을 확인한다 ---
+    {
+      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
+      const orderedSlugs = computeOrderedSlugs();
+      const rows = computeScheduleRows(orderedSlugs, SCHEDULE_START);
+      const todayRow = rows.find((r) => r.date === today) ?? null;
+
+      const res = await fetchWithTimeout(`${BASE_URL}/schedule`);
+      const body = stripSsrComments(await res.text());
+      const todayRowCount = countOccurrences(body, 'data-schedule-ui="today-row"');
+
+      if (todayRow) {
+        if (todayRowCount !== 1) {
+          throw new FatalError(
+            `시나리오 s3 실패 — 오늘이 일정 범위 안인데 data-schedule-ui="today-row" 마커가 1건이 아닙니다 (got ${todayRowCount})`,
+          );
+        }
+        const idIdx = body.indexOf('id="schedule-today"');
+        // 500자 윈도우 — <li id="schedule-today"> 다음에 today-row 마커 span과
+        // 리터럴 클래스 문자열이 긴 <Link>(border/bg 강조 클래스 포함)가 이어지므로
+        // 날짜 텍스트("2026-08-25")까지 200자로는 부족하다(실측 확인).
+        if (idIdx === -1 || !body.slice(idIdx, idIdx + 500).includes(today)) {
+          throw new FatalError('시나리오 s3 실패 — 오늘 행이 오늘 날짜 문자열을 담고 있지 않습니다');
+        }
+      } else if (todayRowCount !== 0) {
+        throw new FatalError(
+          `시나리오 s3 실패 — 오늘이 일정 범위 밖인데 data-schedule-ui="today-row" 마커가 0건이 아닙니다 (got ${todayRowCount})`,
+        );
+      }
+    }
+    console.log('e2e-today: s3/5 /schedule 오늘 행 마커(범위 안/밖) OK');
+
+    // --- s4. GET /schedule 본문에 2026-09-30 개강일 문구가 존재한다 ---
+    {
+      const res = await fetchWithTimeout(`${BASE_URL}/schedule`);
+      const body = stripSsrComments(await res.text());
+      if (!body.includes('2026-09-30') || !body.includes('개강일 — 여기서 본 과정이 시작됩니다')) {
+        throw new FatalError('시나리오 s4 실패 — /schedule 응답에 2026-09-30 개강일 행 문구가 없습니다');
+      }
+    }
+    console.log('e2e-today: s4/5 /schedule 개강일(9/30) 행 문구 존재 OK');
+
+    // --- s5. 매니페스트에서 독립 계산한 전역 정렬 첫 레슨 slug가 첫 일정 행의
+    // 링크와 일치한다 — 배정 순서가 커리큘럼 순서를 따른다는 D-32 확인 ---
+    {
+      const orderedSlugs = computeOrderedSlugs();
+      const firstSlug = orderedSlugs[0];
+
+      const res = await fetchWithTimeout(`${BASE_URL}/schedule`);
+      const body = stripSsrComments(await res.text());
+      const firstLessonHrefMatch = body.match(/href="\/lesson\/([^"]+)"/);
+      if (!firstLessonHrefMatch) {
+        throw new FatalError('시나리오 s5 실패 — /schedule 응답에서 레슨 링크를 하나도 찾지 못했습니다');
+      }
+      if (firstLessonHrefMatch[1] !== firstSlug) {
+        throw new FatalError(
+          `시나리오 s5 실패 — 첫 일정 행 링크(${firstLessonHrefMatch[1]})가 매니페스트 독립 계산 첫 레슨(${firstSlug})과 다릅니다`,
+        );
+      }
+    }
+    console.log('e2e-today: s5/5 /schedule 첫 행 링크가 매니페스트 독립 계산 첫 레슨과 일치 OK');
+
     console.log(
-      'e2e-today: 모든 시나리오 통과 — 매니페스트 → today.ts/schedule.ts/pace.ts → force-dynamic RSC → 렌더된 HTML까지 쿠키 유/무 두 경로 왕복 확인.',
+      'e2e-today: 모든 시나리오 통과 — 매니페스트 → today.ts/schedule.ts/pace.ts → force-dynamic RSC → 렌더된 HTML까지 쿠키 유/무 두 경로 왕복 확인. /schedule 5개 시나리오 포함 전체 통과.',
     );
   } finally {
     killServerTree(child);

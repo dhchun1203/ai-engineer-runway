@@ -250,6 +250,7 @@ const DYNAMIC_GATED_PAGES = [
   path.join(ROOT, 'src', 'app', 'step', '[stepId]', 'page.tsx'),
   path.join(ROOT, 'src', 'app', 'page.tsx'),
   path.join(ROOT, 'src', 'app', 'curriculum', 'page.tsx'),
+  path.join(ROOT, 'src', 'app', 'schedule', 'page.tsx'),
 ];
 
 for (const pagePath of DYNAMIC_GATED_PAGES) {
@@ -416,6 +417,7 @@ if (fs.existsSync(DASHBOARD_SEGMENT_PATH)) {
 const G17_GATED_PAGES = [
   path.join(ROOT, 'src', 'app', 'page.tsx'),
   path.join(ROOT, 'src', 'app', 'curriculum', 'page.tsx'),
+  path.join(ROOT, 'src', 'app', 'schedule', 'page.tsx'),
 ];
 
 for (const pagePath of G17_GATED_PAGES) {
@@ -488,6 +490,34 @@ for (const modulePath of G19_LAYER_SEPARATED_MODULES) {
   if (/supabase|progress-store/i.test(codeOnly)) {
     fail(
       `G19 failed: ${path.relative(ROOT, modulePath)} references Supabase/progress-store — this pure calculation layer must stay dependency-0 and receive completed sets as parameters only`,
+    );
+  }
+}
+
+// --- G20: src/components/schedule-auto-scroll.tsx가 "use client"로 시작하고
+// 진도·시크릿 계열 식별자(completedIds, progress-store, supabase, UNLOCK)를
+// 참조하지 않는다 — G2가 이미 클라이언트 파일의 서버 전용 모듈 import를 막고
+// 있으므로, 이 게이트는 props를 통한 데이터 유입까지 좁히는 보강이다(T-03-15,
+// 03-04). 주석은 stripJsLineComments()로 걷어낸 뒤 검사해 게이트가 자기 설명
+// 문장(예: "진도·시크릿 어떤 것도 받지 않는다")에 걸려 오탐하는 일을 막는다 ---
+
+const SCHEDULE_AUTO_SCROLL_PATH = path.join(ROOT, 'src', 'components', 'schedule-auto-scroll.tsx');
+const scheduleAutoScrollSource = readFileIfExists(SCHEDULE_AUTO_SCROLL_PATH);
+
+if (scheduleAutoScrollSource === null) {
+  fail(`G20 failed: ${path.relative(ROOT, SCHEDULE_AUTO_SCROLL_PATH)} not found`);
+} else {
+  if (!/^\s*['"]use client['"]/.test(scheduleAutoScrollSource)) {
+    fail(`G20 failed: ${path.relative(ROOT, SCHEDULE_AUTO_SCROLL_PATH)} does not start with "'use client'"`);
+  }
+  const codeOnly = stripJsLineComments(scheduleAutoScrollSource);
+  const FORBIDDEN_PROGRESS_IDENTIFIERS = ['completedIds', 'progress-store', 'supabase', 'UNLOCK'];
+  const foundIdentifiers = FORBIDDEN_PROGRESS_IDENTIFIERS.filter((identifier) =>
+    new RegExp(identifier, 'i').test(codeOnly),
+  );
+  if (foundIdentifiers.length > 0) {
+    fail(
+      `G20 failed: ${path.relative(ROOT, SCHEDULE_AUTO_SCROLL_PATH)} references progress/secret identifier(s): ${foundIdentifiers.join(', ')} — this island must only receive targetId (T-03-15)`,
     );
   }
 }

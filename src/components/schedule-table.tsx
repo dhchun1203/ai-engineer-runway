@@ -43,7 +43,11 @@ function ScheduleLessonRow({
   isDone: boolean;
 }) {
   return (
-    <li data-schedule-ui="row" id={isToday ? "schedule-today" : undefined}>
+    <li
+      data-schedule-ui="row"
+      id={isToday ? "schedule-today" : undefined}
+      {...(isDone ? { "data-progress-ui": "lesson-done" } : {})}
+    >
       {isToday ? <span data-schedule-ui="today-row" className="hidden" aria-hidden="true" /> : null}
       <Link
         href={`/lesson/${row.lessonSlug}`}
