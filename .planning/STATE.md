@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 3
-current_phase_name: 학습 일정과 오늘의 학습
+current_phase: 03
+current_phase_name: schedule-and-today
 status: executing
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-08-24T14:17:34.762Z"
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-08-24T14:56:13.729Z"
 last_activity: 2026-08-24
 last_activity_desc: Phase 1 검증·UAT·보안 게이트 통과, 완료 처리
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 14
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-24)
 
 **Core value:** 개강 전까지 커리큘럼의 기초를 확실히 다질 수 있도록 — 콘텐츠를 읽고, 완료를 체크하고, 진행률과 일정을 한눈에 확인하는 흐름이 반드시 동작해야 한다.
-**Current focus:** Phase 02 — progress-tracking
+**Current focus:** Phase 03 — schedule-and-today
 
 ## Current Position
 
-Phase: 3 — 학습 일정과 오늘의 학습
-Plan: Not started
+Phase: 03 (schedule-and-today) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-08-24 — Phase 02 complete, transitioned to Phase 3
+Last activity: 2026-08-24 — Phase 03 execution started
 
-Progress: [████████████████████] 10/10 plans (100%)
+Progress: [████████████████████] 10/10 plans ([████████░░] 79%)
 
 ## Performance Metrics
 
@@ -69,6 +69,7 @@ Progress: [████████████████████] 10/10 p
 | Phase 02 P02 | 35min | 3 tasks | 11 files |
 | Phase 02 P03 | 15min | 3 tasks | 8 files |
 | Phase 02 P04 | 55min | 3 tasks | 9 files |
+| Phase 03 P01 | 36min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,9 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 2 Plan 4]: ProgressBadge always renders in the home summary block including empty state — only the 28px accent big percent number is suppressed at 0 completions (D-26 requires badge always, truths only forbid emphasizing the big number)
 - [Phase ?]: [Phase 2 Plan 4]: Step card progress bar/badge completely omitted (not 0%-rendered) when progress prop is absent — matches D-20's DOM-absence contract over Phase 1's always-0%-bar habit
 - [Phase ?]: [Phase 2 Plan 4]: e2e home scenario asserts non-probe Steps are unchanged via before/after delta, not literal zero — the shared Supabase table also backs production and will carry real progress after launch
+- [Phase ?]: [Phase 3 Plan 1]: 홈을 '오늘의 학습'으로 재편, Step 대시보드는 /curriculum으로 분리 — 각 라우트가 hasUnlockCookie 게이트를 자체 복제(상속되지 않음, Pitfall 4)
+- [Phase ?]: [Phase 3 Plan 1]: today.ts/schedule.ts는 progress-math.ts와 같은 이유로 import 0 유지 — 게이트 스크립트가 Node 22.6+ 타입 스트리핑으로 트랜스파일러 없이 직접 로드
+- [Phase ?]: [Phase 3 Plan 1]: 일정 배정은 항상 getOrderedLessons() slug 순서에서 파생, 35개 날짜→레슨 하드코딩 상수를 쓰지 않음
 
 ### Pending Todos
 
@@ -125,6 +129,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-24T13:46:52.991Z
-Stopped at: Phase 3 UI-SPEC approved
-Resume file: .planning/phases/03-schedule-and-today/03-UI-SPEC.md
+Last session: 2026-08-24T14:56:13.685Z
+Stopped at: Completed 03-01-PLAN.md
+Resume file: None

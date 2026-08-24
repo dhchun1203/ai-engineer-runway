@@ -23,10 +23,10 @@
 
 ### 학습 일정 (SCHED)
 
-- [ ] **SCHED-01**: 2026-08-25 ~ 09-29, 하루 4~6시간 기준의 일자별 학습 일정표(날짜 → 레슨 매핑)가 제공된다
-- [ ] **SCHED-02**: "오늘의 학습" 뷰가 오늘 배정된 레슨과 완료 상태를 보여주며, 사이트의 기본 랜딩 화면이 된다
+- [x] **SCHED-01**: 2026-08-25 ~ 09-29, 하루 4~6시간 기준의 일자별 학습 일정표(날짜 → 레슨 매핑)가 제공된다
+- [x] **SCHED-02**: "오늘의 학습" 뷰가 오늘 배정된 레슨과 완료 상태를 보여주며, 사이트의 기본 랜딩 화면이 된다
 - [ ] **SCHED-03**: 레슨마다 예상 소요시간이 표시되고, 일정은 소요시간 기반으로 배분된다
-- [ ] **SCHED-04**: 개강일(9/30) D-day 카운트다운과 진도 기준 on-track/behind 상태가 표시된다
+- [x] **SCHED-04**: 개강일(9/30) D-day 카운트다운과 진도 기준 on-track/behind 상태가 표시된다
 
 ### 플랫폼 (PLAT)
 
@@ -84,10 +84,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TRACK-03 | Phase 2 | Complete |
 | TRACK-04 | Phase 2 | Complete |
 | PLAT-02 | Phase 2 | Complete |
-| SCHED-01 | Phase 3 | Pending |
-| SCHED-02 | Phase 3 | Pending |
+| SCHED-01 | Phase 3 | Complete |
+| SCHED-02 | Phase 3 | Complete |
 | SCHED-03 | Phase 3 | Pending |
-| SCHED-04 | Phase 3 | Pending |
+| SCHED-04 | Phase 3 | Complete |
 | CONT-02 | Phase 4 | Pending |
 | CONT-03 | Phase 4 | Pending |
 | CONT-05 | Phase 5 | Pending |
