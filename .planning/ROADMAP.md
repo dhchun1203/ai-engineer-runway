@@ -79,9 +79,20 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 4 plans (웨이브 1~4, 완전 직렬 — 단일 빌드 디렉터리·단일 git 워크트리 공유)
 
 Plans:
+**Wave 1**
+
 - [ ] 02-01-PLAN.md — 진도 저장소 개통: Supabase 프로젝트·progress 테이블(RLS 정책 0개)·서버 전용 접근 계층·시크릿/왕복 게이트
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 02-02-PLAN.md — 트레이서: 잠금 쿠키 → 게이트된 레슨 페이지 → 낙관적 완료 토글 → Server Action → Supabase 저장 → 새로고침 유지, `/unlock` 비밀 링크
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 02-03-PLAN.md — 모듈·Step 진행률: 의존성 0 순수 집계와 단위 게이트, 진행률 배지, 완료 표식 아코디언, Step 페이지 주입
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 02-04-PLAN.md — 홈 대시보드: 전체 진행률 요약 블록·이어서 학습하기 CTA·Step 카드 실데이터, Phase 종단 게이트
 
 **UI hint**: yes
