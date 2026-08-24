@@ -184,14 +184,19 @@ async function main() {
     }
 
     function extractHomeCtaLessonSlug(body) {
-      // 홈 페이지에는 이어서 학습하기 CTA 말고 다른 /lesson/ 링크가 없다
-      // (Step 카드는 /step/N을 가리킨다) — 유일한 href만 뽑으면 된다.
+      // Phase 3(03-01)부터 홈은 오늘 레슨 카드·밀린 레슨 목록에도 /lesson/ 링크를
+      // 렌더한다. 진행률 요약 섹션(data-progress-ui="summary") 안의 CTA href만 뽑는다.
       const stripped = body.replace(/<!--\s*-->/g, '');
-      const match = stripped.match(/href="\/lesson\/([a-z0-9-]+)"/);
+      const start = stripped.indexOf('data-progress-ui="summary"');
+      if (start === -1) return null;
+      const end = stripped.indexOf('</section>', start);
+      const section = stripped.slice(start, end === -1 ? undefined : end);
+      const match = section.match(/href="\/lesson\/([a-z0-9-]+)"/);
       return match ? match[1] : null;
     }
 
-    // i1. 쿠키 없이 홈 GET → 진도 UI 마커 0건, Step 링크 3개, 사이트 제목 존재 (D-18+D-20)
+    // i1. 쿠키 없이 홈·커리큘럼 GET → 진도 UI 마커 0건, Step 링크 3개, 사이트 제목 존재 (D-18+D-20)
+    // Phase 3(03-01)부터 Step 카드는 /curriculum으로 이동했다 — Step 링크는 거기서 확인한다.
     {
       const res = await fetchWithTimeout(`${BASE_URL}/`);
       if (res.status !== 200) {
@@ -201,16 +206,25 @@ async function main() {
       if (body.includes('data-progress-ui')) {
         throw new FatalError('시나리오 i1 실패 — 쿠키 없는 홈 응답에 data-progress-ui 마커가 존재합니다 (D-20 위반)');
       }
-      for (const stepId of [1, 2, 3]) {
-        if (!body.includes(`href="/step/${stepId}"`)) {
-          throw new FatalError(`시나리오 i1 실패 — 쿠키 없는 홈 응답에 /step/${stepId} 링크가 없습니다 (D-18 위반)`);
-        }
-      }
       if (!body.includes('AI Engineer Runway')) {
         throw new FatalError('시나리오 i1 실패 — 쿠키 없는 홈 응답에 사이트 제목이 없습니다 (D-18 위반)');
       }
+
+      const curRes = await fetchWithTimeout(`${BASE_URL}/curriculum`);
+      if (curRes.status !== 200) {
+        throw new FatalError(`시나리오 i1 실패 — 쿠키 없는 /curriculum 요청이 200이 아닙니다 (status=${curRes.status})`);
+      }
+      const curBody = await curRes.text();
+      if (curBody.includes('data-progress-ui')) {
+        throw new FatalError('시나리오 i1 실패 — 쿠키 없는 /curriculum 응답에 data-progress-ui 마커가 존재합니다 (D-20 위반)');
+      }
+      for (const stepId of [1, 2, 3]) {
+        if (!curBody.includes(`href="/step/${stepId}"`)) {
+          throw new FatalError(`시나리오 i1 실패 — 쿠키 없는 /curriculum 응답에 /step/${stepId} 링크가 없습니다 (D-18 위반)`);
+        }
+      }
     }
-    console.log('e2e-progress: i1/i 홈 쿠키 없음 → 진도 UI 마커 0건 + Step 링크 3개 + 사이트 제목 존재 OK');
+    console.log('e2e-progress: i1/i 홈·커리큘럼 쿠키 없음 → 진도 UI 마커 0건 + Step 링크 3개 + 사이트 제목 존재 OK');
 
     // i2. 잠금 쿠키로 홈 GET → 요약 블록 마커 + Step 진행률 바 마커 3개 존재.
     // 완료 0건이면(현재 실제 DB 상태) empty state 문구·퍼센트 0을 함께 확인한다.
@@ -226,16 +240,19 @@ async function main() {
       if (!body.includes('data-progress-ui="summary"')) {
         throw new FatalError('시나리오 i2 실패 — 잠금 쿠키 홈 응답에 요약 블록 마커가 없습니다');
       }
-      const stepBarCount = (body.match(/data-progress-ui="step-bar"/g) || []).length;
+      // Step 진행률 바는 /curriculum(03-01에서 홈과 분리)에서 확인한다.
+      const curRes = await fetchWithTimeout(`${BASE_URL}/curriculum`, { headers: { Cookie: cookieHeader } });
+      const curBody = await curRes.text();
+      const stepBarCount = (curBody.match(/data-progress-ui="step-bar"/g) || []).length;
       if (stepBarCount !== 3) {
-        throw new FatalError(`시나리오 i2 실패 — Step 진행률 바 마커가 3개가 아닙니다 (got ${stepBarCount})`);
+        throw new FatalError(`시나리오 i2 실패 — /curriculum의 Step 진행률 바 마커가 3개가 아닙니다 (got ${stepBarCount})`);
       }
       const percentAttrs = extractAttrs(body, 'data-progress-percent');
       if (percentAttrs.length !== 1) {
         throw new FatalError(`시나리오 i2 실패 — data-progress-percent 속성을 정확히 1개 찾지 못했습니다 (got ${percentAttrs.length})`);
       }
       beforeOverallPercent = Number(percentAttrs[0]);
-      beforeStepPercents = extractAttrs(body, 'data-step-percent').map(Number);
+      beforeStepPercents = extractAttrs(curBody, 'data-step-percent').map(Number);
       if (beforeStepPercents.length !== 3) {
         throw new FatalError(`시나리오 i2 실패 — data-step-percent 속성이 3개가 아닙니다 (got ${beforeStepPercents.length})`);
       }
@@ -267,7 +284,9 @@ async function main() {
       const body = await res.text();
       const percentAttrs = extractAttrs(body, 'data-progress-percent');
       afterOverallPercent = Number(percentAttrs[0]);
-      afterStepPercents = extractAttrs(body, 'data-step-percent').map(Number);
+      const curRes = await fetchWithTimeout(`${BASE_URL}/curriculum`, { headers: { Cookie: cookieHeader } });
+      const curBody = await curRes.text();
+      afterStepPercents = extractAttrs(curBody, 'data-step-percent').map(Number);
 
       if (!(afterOverallPercent > beforeOverallPercent)) {
         throw new FatalError(
