@@ -1,14 +1,18 @@
 #!/usr/bin/env node
-// 실제 개발 서버를 띄워 "오늘의 학습" 경로(매니페스트 → today.ts/schedule.ts →
-// force-dynamic RSC → 렌더된 HTML)가 실제로 왕복하는지 확인하는 종단 게이트.
+// 실제 개발 서버를 띄워 "오늘의 학습" 경로(매니페스트 → today.ts/schedule.ts/
+// pace.ts → force-dynamic RSC → 렌더된 HTML)가 실제로 왕복하는지 확인하는
+// 종단 게이트. 03-03이 쿠키 유/무 두 경로(t6~t8)를 추가했다 — 진도 파생 UI
+// (페이스 패널·밀린 레슨)가 쿠키 없이는 DOM에 존재하지 않고, 쿠키가 있으면
+// 실제 Supabase 완료 데이터로 behind 판정까지 왕복하는지 확인한다.
 // 실행: node --env-file=.env.local scripts/e2e-today.mjs
 //
-// 앱 코드(curriculum-helpers.ts/schedule.ts/today.ts)를 import하지 않고
-// .velite/lessons.json + src/content/modules.ts 정규식 재파싱으로 기대 일정을
-// 독립 계산한다 — 같은 함수를 재사용하면 계산이 틀려도 검증이 같이 틀린다.
+// 앱 코드(curriculum-helpers.ts/schedule.ts/today.ts/pace.ts)를 import하지
+// 않고 .velite/lessons.json + src/content/modules.ts 정규식 재파싱으로 기대
+// 일정을 독립 계산한다 — 같은 함수를 재사용하면 계산이 틀려도 검증이 같이 틀린다.
 //
 // 어떤 출력에도 쿠키 값·시크릿을 찍지 않는다.
 
+import { createClient } from '@supabase/supabase-js';
 import { spawn, execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -285,8 +289,128 @@ async function main() {
     }
     console.log('e2e-today: t5/5 내비 4개 href 전부 존재 OK');
 
+    // --- t6. 쿠키 포함 GET / → 200. 오늘이 일정 범위 안이면 data-schedule-ui="pace"
+    // 정확히 1건 + data-pace-status 값이 ahead/on-track/behind 중 하나. 범위
+    // 밖이면 페이스 패널 유무는 상관없지만 응답은 200이어야 한다 (T-03-01류 왕복) ---
+    {
+      const cookieHeader = `${UNLOCK_COOKIE_NAME}=${UNLOCK_SECRET}`;
+      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
+      const orderedSlugs = computeOrderedSlugs();
+      const rows = computeScheduleRows(orderedSlugs, SCHEDULE_START);
+      const todayRow = rows.find((r) => r.date === today) ?? null;
+
+      const res = await fetchWithTimeout(`${BASE_URL}/`, { headers: { Cookie: cookieHeader } });
+      if (res.status !== 200) {
+        throw new FatalError(`시나리오 t6 실패 — 쿠키 포함 홈 요청이 200이 아닙니다 (status=${res.status})`);
+      }
+      const body = stripSsrComments(await res.text());
+
+      if (todayRow) {
+        const paceCount = countOccurrences(body, 'data-schedule-ui="pace"');
+        if (paceCount !== 1) {
+          throw new FatalError(
+            `시나리오 t6 실패 — 일정 범위 안인데 data-schedule-ui="pace" 마커가 1건이 아닙니다 (got ${paceCount})`,
+          );
+        }
+        if (!/data-pace-status="(ahead|on-track|behind)"/.test(body)) {
+          throw new FatalError('시나리오 t6 실패 — data-pace-status 값이 ahead/on-track/behind 중 하나가 아닙니다');
+        }
+      }
+    }
+    console.log('e2e-today: t6/8 쿠키 포함 GET / → 200 + (일정 범위 안이면) 페이스 패널 1건·상태값 유효 OK');
+
+    // --- t7. 쿠키 없이 GET / → 페이스·밀린 레슨 마커 0건과 D-day·오늘 카드
+    // 마커 1건씩을 동시에 확인한다 — 둘 중 하나만 보는 검사가 아니다
+    // (D-37 공개/게이트 분리의 핵심 어설션) ---
+    {
+      const res = await fetchWithTimeout(`${BASE_URL}/`);
+      const body = stripSsrComments(await res.text());
+      const paceCount = countOccurrences(body, 'data-schedule-ui="pace"');
+      const behindListCount = countOccurrences(body, 'data-schedule-ui="behind-list"');
+      const ddayCount = countOccurrences(body, 'data-schedule-ui="dday"');
+      const todayCardCount = countOccurrences(body, 'data-schedule-ui="today-card"');
+      if (paceCount !== 0 || behindListCount !== 0) {
+        throw new FatalError(
+          `시나리오 t7 실패 — 쿠키 없는 응답에 진도 파생 마커가 존재합니다 (pace=${paceCount}, behind-list=${behindListCount})`,
+        );
+      }
+      if (ddayCount !== 1 || todayCardCount !== 1) {
+        throw new FatalError(
+          `시나리오 t7 실패 — 쿠키 없는 응답에 공개 마커(dday/today-card)가 1건씩이 아닙니다 (dday=${ddayCount}, today-card=${todayCardCount})`,
+        );
+      }
+    }
+    console.log('e2e-today: t7/8 쿠키 없음 → 페이스·밀린 레슨 마커 0건 + dday·today-card 마커 1건씩 동시 확인 OK');
+
+    // --- t8. 과거 배정분이 하나라도 존재하는 날에만 도는 조건부 시나리오.
+    // 과거 배정 레슨 하나를 service_role로 미완료로 만든 뒤 쿠키 포함 GET /가
+    // data-pace-status="behind"와 data-schedule-ui="behind-list" 1건을 내는지
+    // 확인하고, 끝나면 프로브 행을 원래 상태로 되돌린다. 과거 배정분이 없는
+    // 날에는 건너뛰되 조용히 넘어가지 않고 이유를 출력한다 ---
+    {
+      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
+      const orderedSlugs = computeOrderedSlugs();
+      const rows = computeScheduleRows(orderedSlugs, SCHEDULE_START);
+      const pastAssignedRows = rows.filter((r) => r.lessonSlug !== null && r.date < today);
+
+      if (pastAssignedRows.length === 0) {
+        console.log(`e2e-today: t8/8 건너뜀 — 오늘(${today}) 기준 어제까지 배정된 레슨이 아직 없습니다`);
+      } else {
+        const probeSlug = pastAssignedRows[0].lessonSlug;
+        const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
+
+        const { data: existingRows, error: selectError } = await admin
+          .from('progress')
+          .select('lesson_id')
+          .eq('lesson_id', probeSlug);
+        if (selectError) {
+          throw new FatalError(`시나리오 t8 준비(select) 실패 — Supabase 오류: ${selectError.message}`);
+        }
+        const wasCompleted = (existingRows ?? []).length > 0;
+
+        try {
+          if (wasCompleted) {
+            const { error: deleteError } = await admin.from('progress').delete().eq('lesson_id', probeSlug);
+            if (deleteError) {
+              throw new FatalError(`시나리오 t8 준비(delete) 실패 — Supabase 오류: ${deleteError.message}`);
+            }
+          }
+
+          const cookieHeader = `${UNLOCK_COOKIE_NAME}=${UNLOCK_SECRET}`;
+          const res = await fetchWithTimeout(`${BASE_URL}/`, { headers: { Cookie: cookieHeader } });
+          const body = stripSsrComments(await res.text());
+
+          if (!body.includes('data-pace-status="behind"')) {
+            throw new FatalError(
+              '시나리오 t8 실패 — 과거 배정 레슨을 미완료로 만들었는데 data-pace-status="behind"가 없습니다',
+            );
+          }
+          const behindListCount = countOccurrences(body, 'data-schedule-ui="behind-list"');
+          if (behindListCount !== 1) {
+            throw new FatalError(
+              `시나리오 t8 실패 — data-schedule-ui="behind-list" 마커가 1건이 아닙니다 (got ${behindListCount})`,
+            );
+          }
+        } finally {
+          // 정리 — 프로브가 원래 완료 상태였다면 되돌린다. 원래 미완료였다면
+          // 아무것도 만들지 않았으므로 정리할 것도 없다.
+          if (wasCompleted) {
+            const { error: restoreError } = await admin
+              .from('progress')
+              .upsert({ lesson_id: probeSlug, completed_at: new Date().toISOString() });
+            if (restoreError) {
+              throw new FatalError(`시나리오 t8 정리(restore) 실패 — Supabase 오류: ${restoreError.message}`);
+            }
+          }
+        }
+        console.log('e2e-today: t8/8 과거 배정 레슨 미완료 → behind + 밀린 레슨 목록 1건 확인, 프로브 원상 복구 OK');
+      }
+    }
+
     console.log(
-      'e2e-today: 모든 시나리오 통과 — 매니페스트 → today.ts/schedule.ts → force-dynamic RSC → 렌더된 HTML까지 왕복 확인.',
+      'e2e-today: 모든 시나리오 통과 — 매니페스트 → today.ts/schedule.ts/pace.ts → force-dynamic RSC → 렌더된 HTML까지 쿠키 유/무 두 경로 왕복 확인.',
     );
   } finally {
     killServerTree(child);

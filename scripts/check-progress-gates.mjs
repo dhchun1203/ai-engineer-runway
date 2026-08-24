@@ -437,13 +437,15 @@ for (const pagePath of G17_GATED_PAGES) {
   }
 }
 
-// --- G18: src/lib/today.ts와 src/lib/schedule.ts가 의존성 0 순수 모듈을
-// 유지한다 — 주석을 걷어낸 코드에 import 문이 한 건도 없어야 한다. 위반 시
-// check-schedule.mjs가 트랜스파일러 없이 로드하지 못하게 된다 (03-01) ---
+// --- G18: src/lib/today.ts·src/lib/schedule.ts·src/lib/pace.ts가 의존성 0
+// 순수 모듈을 유지한다 — 주석을 걷어낸 코드에 import 문이 한 건도 없어야 한다.
+// 위반 시 check-schedule.mjs/check-pace.mjs가 트랜스파일러 없이 로드하지
+// 못하게 된다 (03-01, 03-03이 pace.ts를 추가) ---
 
 const G18_PURE_MODULES = [
   path.join(ROOT, 'src', 'lib', 'today.ts'),
   path.join(ROOT, 'src', 'lib', 'schedule.ts'),
+  path.join(ROOT, 'src', 'lib', 'pace.ts'),
 ];
 
 for (const modulePath of G18_PURE_MODULES) {
@@ -456,6 +458,36 @@ for (const modulePath of G18_PURE_MODULES) {
   if (/^\s*import\s+.+$/m.test(codeOnly)) {
     fail(
       `G18 failed: ${path.relative(ROOT, modulePath)} contains an import statement — 의존성 0 순수 모듈이라야 게이트 스크립트가 트랜스파일러 없이 로드할 수 있다`,
+    );
+  }
+}
+
+// --- G19: src/lib/pace.ts와 src/lib/schedule.ts가 Supabase 계열·progress-store·
+// Velite 매니페스트 식별자를 참조하지 않는다 — G13이 progress.ts에 대해 하는
+// 것과 같은 형태의 계층 분리 검사. 주석은 stripJsLineComments()로 걷어낸 뒤
+// 검사해 게이트가 자기 설명 문장(예: "Supabase를 import하지 않는다")에 걸려
+// 오탐하는 일을 막는다 (03-03) ---
+
+const G19_LAYER_SEPARATED_MODULES = [
+  path.join(ROOT, 'src', 'lib', 'pace.ts'),
+  path.join(ROOT, 'src', 'lib', 'schedule.ts'),
+];
+
+for (const modulePath of G19_LAYER_SEPARATED_MODULES) {
+  const source = readFileIfExists(modulePath);
+  if (source === null) {
+    fail(`G19 failed: ${path.relative(ROOT, modulePath)} not found`);
+    continue;
+  }
+  const codeOnly = stripJsLineComments(source);
+  if (codeOnly.includes('#site/content')) {
+    fail(
+      `G19 failed: ${path.relative(ROOT, modulePath)} imports the Velite content manifest directly — must go through curriculum-helpers.ts instead (called at the page/route layer, not here)`,
+    );
+  }
+  if (/supabase|progress-store/i.test(codeOnly)) {
+    fail(
+      `G19 failed: ${path.relative(ROOT, modulePath)} references Supabase/progress-store — this pure calculation layer must stay dependency-0 and receive completed sets as parameters only`,
     );
   }
 }
