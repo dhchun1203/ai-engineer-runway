@@ -1,22 +1,26 @@
 ---
 phase: 01-deployed-curriculum-skeleton
 verified: 2026-08-24T00:18:14Z
-status: human_needed
+status: passed
 score: 4/5 must-haves verified
 behavior_unverified: 1
 overrides_applied: 0
 behavior_unverified_items:
+
   - truth: "아이패드 Safari 세로/가로 모드에서 레이아웃이 정상 동작하고(터치 타깃 44px+, 코드 블록 가로 스크롤, 한국어 keep-all 줄바꿈), 폰·데스크톱에서도 반응형으로 동작한다"
     test: "iPad Safari 실기기에서 홈 → Step 1 → 모듈 아코디언 → 레슨 → 이전/다음 → 소개까지 세로/가로, 라이트/다크 4조합으로 순회하고, 파일럿 레슨 2편에서 한국어 줄바꿈·코드 가로 스크롤·복사 버튼 hover-free 동작·실제 클립보드 복사가 되는지 확인. 375px 폭에서 글로벌 내비도 확인"
     expected: "레이아웃 붕괴·가로 스크롤·터치 타깃 미스·복사 실패가 하나도 없다"
     why_human: "코드는 44px 터치 타깃(min-h-11/min-w-11), keep-all, overflow-x:auto, hover 없이 항상 보이는 복사 버튼을 정적으로 모두 갖추고 있음을 확인했으나, 실제 iPad Safari의 hover-부재 렌더링·손가락 탭 정밀도·clipboard API 동작·에뮬레이터로는 재현되지 않는 hover 오탐(RESEARCH Pitfall 3)은 grep/정적 검사로 증명할 수 없다. 이 프로젝트의 human_verify_mode=end-of-phase 설정에 따라 6개 Plan의 <human-check> 항목이 이 검증 단계로 이월되었다"
 human_verification:
+
   - test: "iPad Safari(또는 Safari 375px 반응형 모드)에서 세로·가로 모두 열어 글로벌 내비 4항목 + 테마 토글이 가로 스크롤 없이 보이고 손가락으로 정확히 눌리는지 확인. 테마 토글 후 새로고침해 선택이 유지되고 첫 페인트에 잘못된 테마가 번쩍이지 않는지 확인 (01-05-PLAN Task 3)"
     expected: "내비·토글이 375px 폭에서 겹치거나 잘리지 않고, 테마 선택이 새로고침 후에도 유지되며 FOUC가 없다"
     why_human: "실기기 hover-부재 렌더링과 하이드레이션 타이밍은 정적 코드 검사로 확인 불가"
+
   - test: "iPad Safari 실기기에서 두 파일럿 레슨(Python 변수·자료형 / React 컴포넌트)을 연다. (a) 세로·가로에서 한국어 본문이 어절 중간에서 끊기지 않고 제목이 말줄임 없이 줄바꿈되는지 (b) 코드 블록 긴 줄이 가로 스크롤되며 줄바꿈·잘림이 없는지 (c) 복사 버튼이 hover 없이 항상 보이고 손가락으로 정확히 눌리며 실제로 복사되는지 (d) 라이트·다크 두 테마 모두에서 (a)~(c)가 성립하는지 확인. 데스크톱 모바일 에뮬레이션으로 대체하지 말 것(에뮬레이션은 hover 이벤트를 발생시켜 복사 버튼 함정을 가림) (01-06-PLAN Task 2)"
     expected: "네 조합(세로/가로 × 라이트/다크) 모두에서 (a)~(d)가 성립한다"
     why_human: "clipboard API 실제 쓰기 성공 여부와 hover-부재 환경에서의 버튼 가시성·탭 정밀도는 코드 정적 검사로 증명 불가"
+
   - test: "iPad Safari 실기기에서 홈 → Step 1 → 모듈 아코디언 → 레슨 → 이전/다음 → 소개까지 한 바퀴 돌며 세로·가로, 라이트·다크 네 조합 확인. 이어서 폰 폭·데스크톱 폭에서 같은 경로를 돌며 가로 스크롤·겹침이 없는지 확인. 소개 페이지가 자료 수집 → 리서치 → 요구사항 → 로드맵 → 구현·배포 단계를 실제로 읽히게 보여주는지 확인 (01-06-PLAN Task 3)"
     expected: "전 화면·전 뷰포트·전 테마 조합에서 레이아웃 붕괴나 가로 스크롤이 없고, 소개 페이지가 실제로 읽을 수 있는 단계별 기록을 보여준다"
     why_human: "실기기 반응형 렌더링은 grep/curl로 관찰할 수 없는 시각적 검증"

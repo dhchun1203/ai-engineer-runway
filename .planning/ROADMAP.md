@@ -13,7 +13,7 @@
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: 배포된 커리큘럼 뼈대** - Vercel URL에서 Step→모듈→레슨을 아이패드로 탐색하고 파일럿 레슨을 읽는다
+- [x] **Phase 1: 배포된 커리큘럼 뼈대** - Vercel URL에서 Step→모듈→레슨을 아이패드로 탐색하고 파일럿 레슨을 읽는다 (completed 2026-08-24)
 - [ ] **Phase 2: 진도 체크와 진행률** - 레슨 완료를 토글하고 모듈·Step·전체 진행률을 확인한다
 - [ ] **Phase 3: 학습 일정과 오늘의 학습** - 8/25~9/29 일정표와 오늘 배정 레슨, D-day·페이스 상태를 본다
 - [ ] **Phase 4: Step 1 심화 콘텐츠** - Python·Git·SQL·ML 기초 전 레슨을 개념 설명 + 실무 예제로 학습한다
@@ -132,7 +132,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. 배포된 커리큘럼 뼈대 | 6/6 | In Progress|  |
+| 1. 배포된 커리큘럼 뼈대 | 6/6 | Complete    | 2026-08-24 |
 | 2. 진도 체크와 진행률 | 0/TBD | Not started | - |
 | 3. 학습 일정과 오늘의 학습 | 0/TBD | Not started | - |
 | 4. Step 1 심화 콘텐츠 | 0/TBD | Not started | - |

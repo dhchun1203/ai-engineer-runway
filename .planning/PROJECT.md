@@ -12,7 +12,8 @@
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Vercel 배포로 URL 접속 가능 — Phase 1 (https://ai-engineer-runway.vercel.app)
+- ✓ 사이트 소개(Making-of) 페이지 — Phase 1 (/about, 1~5단계 기록 + 6~7단계 갱신 구조)
 
 ### Active
 
@@ -20,9 +21,7 @@
 - [ ] 각 레슨은 쉬운 개념 설명 + 커리큘럼 동일 스택의 실무 예제 코드를 포함한다
 - [ ] 레슨별 완료 버튼 → 완료 상태 저장(Supabase), 섹션(모듈/Step)별 진행률 표시
 - [ ] 9/30 이전(2026-08-25 ~ 09-29, 하루 4~6시간 기준) 학습 일정표 제공, 일정-레슨 연동
-- [ ] Vercel 배포로 URL 접속 가능
 - [ ] 모바일·아이패드 최적화 — 주 학습 기기가 아이패드(터치 UI, 태블릿 레이아웃, Safari 대응)
-- [ ] 사이트 소개(Making-of) 페이지 — 자료 수집 → 리서치 → 아키텍처 설계 → 구현 → 검증 → 배포 과정을 기록하고 작업 진행에 따라 계속 업데이트 (포트폴리오 역할)
 
 ### Out of Scope
 
@@ -74,4 +73,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-24 after initialization*
+*Last updated: 2026-08-24 after Phase 1*
