@@ -67,9 +67,18 @@ function ScheduleLessonRow({
             {row.title}
           </span>
         </span>
-        <span className="flex shrink-0 items-center gap-2">
-          <DepthBadge depth={row.depth as "심화" | "개요"} stepId={row.stepId as StepId} />
-          <EstimatedTime minutes={row.estimatedMinutes as number} />
+        {/* 배지·소요시간 각각을 고정폭 그리드 칸에 담는다 — "심화"/"개요" 배지는 폭이
+            거의 같지만 소요시간 문구("약 1시간"~"약 2.5시간")는 주차마다 길이가 달라,
+            flex shrink-to-content로 두면 그룹 전체 폭이 행마다 달라지고 그 결과 배지
+            시작 위치가 흔들린다(1·2주차처럼 소요시간이 우연히 균일한 주만 정렬돼
+            보이던 결함). 고정폭 칸이 이 흔들림을 원천 차단한다. */}
+        <span className="grid shrink-0 grid-cols-[64px_88px] items-center gap-2">
+          <span className="justify-self-start">
+            <DepthBadge depth={row.depth as "심화" | "개요"} stepId={row.stepId as StepId} />
+          </span>
+          <span className="justify-self-end">
+            <EstimatedTime minutes={row.estimatedMinutes as number} />
+          </span>
         </span>
       </Link>
     </li>
