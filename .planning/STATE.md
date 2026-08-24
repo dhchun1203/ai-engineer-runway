@@ -6,7 +6,7 @@ current_phase: 02
 current_phase_name: progress-tracking
 status: executing
 stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-08-24T08:45:14.500Z"
+last_updated: "2026-08-24T08:54:00.177Z"
 last_activity: 2026-08-24
 last_activity_desc: Phase 1 검증·UAT·보안 게이트 통과, 완료 처리
 progress:
@@ -110,6 +110,7 @@ None yet.
 - 리서치 Gap: 레슨 소요시간 추정치의 정확도는 Phase 3~4 실사용으로만 검증 가능 — 편차가 크면 v2의 CONV-03(자동 리밸런싱)이 필요해질 수 있음
 - 리서치 Gap: Step 3 "개요 훑기" 깊이 기준(rubric)을 Phase 5 착수 전에 구체화해야 범위가 팽창하지 않음
 - 사전학습 시작일(2026-08-25)이 임박 — Phase 1~3이 지연되면 학습 시간이 직접 잠식됨
+- 02-04 Task 3 blocked: Vercel production env vars (SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY/SUPABASE_ANON_KEY/UNLOCK_SECRET) not yet registered — precondition unmet, verified via read-only production /unlock probe (local UNLOCK_SECRET rejected in prod, no redirect/cookie issued). See 02-USER-SETUP.md Dashboard Configuration checklist.
 
 ## Deferred Items
 
