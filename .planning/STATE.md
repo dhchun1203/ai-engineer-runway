@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 Phase: 4 — Step 1 심화 콘텐츠
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-08-25 — Phase 03 complete, transitioned to Phase 4
+Last activity: 2026-08-25 - Completed quick task 260825-2xv: 소개 페이지 eli5 재작성 — docs/making-of.md를 아무것도 모르는 사람 눈높이로
 
 Progress: [████████████████████] 10/10 plans ([██████████] 100%)
 
@@ -135,6 +135,12 @@ None yet.
 - 리서치 Gap: 레슨 소요시간 추정치의 정확도는 Phase 3~4 실사용으로만 검증 가능 — 편차가 크면 v2의 CONV-03(자동 리밸런싱)이 필요해질 수 있음
 - 리서치 Gap: Step 3 "개요 훑기" 깊이 기준(rubric)을 Phase 5 착수 전에 구체화해야 범위가 팽창하지 않음
 - 사전학습 시작일(2026-08-25)이 임박 — Phase 1~3이 지연되면 학습 시간이 직접 잠식됨
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260825-2xv | 소개 페이지 eli5 재작성 — docs/making-of.md를 아무것도 모르는 사람 눈높이로 | 2026-08-25 | bc0e28c | [260825-2xv-eli5-docs-making-of-md](./quick/260825-2xv-eli5-docs-making-of-md/) |
 
 ## Deferred Items
 
