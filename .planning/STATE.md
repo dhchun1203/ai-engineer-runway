@@ -6,7 +6,7 @@ current_phase: 02
 current_phase_name: progress-tracking
 status: executing
 stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-08-24T08:54:00.177Z"
+last_updated: "2026-08-24T09:31:07.704Z"
 last_activity: 2026-08-24
 last_activity_desc: Phase 1 검증·UAT·보안 게이트 통과, 완료 처리
 progress:
@@ -111,6 +111,7 @@ None yet.
 - 리서치 Gap: Step 3 "개요 훑기" 깊이 기준(rubric)을 Phase 5 착수 전에 구체화해야 범위가 팽창하지 않음
 - 사전학습 시작일(2026-08-25)이 임박 — Phase 1~3이 지연되면 학습 시간이 직접 잠식됨
 - 02-04 Task 3 blocked: Vercel production env vars (SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY/SUPABASE_ANON_KEY/UNLOCK_SECRET) not yet registered — precondition unmet, verified via read-only production /unlock probe (local UNLOCK_SECRET rejected in prod, no redirect/cookie issued). See 02-USER-SETUP.md Dashboard Configuration checklist.
+- 02-04 Task 3 update: pushed 30 unpushed local commits to origin/master (Rule 3 fix, same pattern as Phase 1 Plan 6) — Vercel redeployed and /unlock route now exists (was 404, now 307). Remaining precondition gap: production /unlock?key=<local UNLOCK_SECRET> redirects to state=invalid — the UNLOCK_SECRET value registered in Vercel Production does not match local .env.local (or is unset). SUPABASE_* vars unverifiable until UNLOCK_SECRET matches (need a valid cookie to test the progress read path). User must re-check/re-paste UNLOCK_SECRET in Vercel Production env vars (watch for trailing whitespace/newline from copy-paste) and redeploy.
 
 ## Deferred Items
 
