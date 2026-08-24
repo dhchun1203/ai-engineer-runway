@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 03
 current_phase_name: schedule-and-today
 status: executing
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-08-24T15:06:58.934Z"
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-08-24T15:23:18.386Z"
 last_activity: 2026-08-24
 last_activity_desc: Phase 1 검증·UAT·보안 게이트 통과, 완료 처리
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 14
-  completed_plans: 12
+  completed_plans: 13
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 ## Current Position
 
 Phase: 03 (schedule-and-today) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-08-24 — Phase 03 execution started
 
-Progress: [████████████████████] 10/10 plans ([█████████░] 86%)
+Progress: [████████████████████] 10/10 plans ([█████████░] 93%)
 
 ## Performance Metrics
 
@@ -71,6 +71,7 @@ Progress: [████████████████████] 10/10 p
 | Phase 02 P04 | 55min | 3 tasks | 9 files |
 | Phase 03 P01 | 36min | 2 tasks | 11 files |
 | Phase 03 P02 | ~15min | 3 tasks | 39 files |
+| Phase 03 P03 | ~15min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,9 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 3 Plan 2]: estimatedMinutes 목표값은 (depth, 소속 모듈 isProject) 파생 계산으로 산출 — 원본 수치 기반 순차 치환은 값 공간이 겹쳐 이중 적용 위험이 있어 구조적으로 배제
 - [Phase ?]: [Phase 3 Plan 2]: check-manifest.mjs Invariant 6을 7200~10800 밴드 검사에서 총합 4200 등식 검사로 교체, 분포(Invariant 12)·파생 규칙(Invariant 13) 신설 — 13개 불변식으로 확장
 - [Phase ?]: [Phase 3 Plan 2]: ROADMAP/PROJECT/REQUIREMENTS의 페이스 기준을 '하루 4~6시간'에서 D-35 '하루 3시간 이내(하루 1레슨, 평균 약 2시간)'로 통일
+- [Phase ?]: [Phase 3 Plan 3]: computePace의 완료 분 합계 두 스코프(어제까지 vs 전체 배정)를 이름이 다른 변수로 강제 분리 -- Pitfall 3 오판 경로를 구조적으로 차단
+- [Phase ?]: [Phase 3 Plan 3]: today-lesson-card.tsx는 pace를 직접 받지 않고 celebration 전환 판단은 page.tsx가 미리 계산해 전달 -- 컴포넌트는 이미 결정된 값만 렌더
+- [Phase ?]: [Phase 3 Plan 3]: check-progress-gates.mjs에 G19 신설 -- pace.ts/schedule.ts가 Supabase.progress-store.Velite 매니페스트를 참조하지 않음을 상시 검사
 
 ### Pending Todos
 
@@ -133,6 +137,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-24T15:06:58.916Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-08-24T15:23:18.364Z
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None
