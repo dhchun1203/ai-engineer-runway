@@ -110,7 +110,7 @@ Plans:
   3. 모든 레슨에 예상 소요시간이 표시되고, 일정 배분이 그 수치를 근거로 계산된다
   4. 개강일(2026-09-30) D-day 카운트다운과 함께, 오늘까지 배정된 분량 대비 완료 진도를 비교한 on-track/behind 상태가 표시된다
 
-**Plans**: 3/4 plans executed (웨이브 1~4, 완전 직렬 — 단일 빌드 디렉터리·단일 git 워크트리 공유)
+**Plans**: 4/4 plans executed (웨이브 1~4, 완전 직렬 — 단일 빌드 디렉터리·단일 git 워크트리 공유)
 
 Plans:
 **Wave 1**
@@ -127,7 +127,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 03-04-PLAN.md — /schedule 36행 주 단위 일정표·오늘 행 자동 스크롤, phase 종단 게이트, 아이패드 실기기 UAT
+- [x] 03-04-PLAN.md — /schedule 36행 주 단위 일정표·오늘 행 자동 스크롤, phase 종단 게이트, 아이패드 실기기 UAT
 
 **UI hint**: yes
 
@@ -170,7 +170,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. 배포된 커리큘럼 뼈대 | 6/6 | Complete    | 2026-08-24 |
 | 2. 진도 체크와 진행률 | 4/4 | Complete    | 2026-08-24 |
-| 3. 학습 일정과 오늘의 학습 | 3/4 | In Progress|  |
+| 3. 학습 일정과 오늘의 학습 | 4/4 | In Progress|  |
 | 4. Step 1 심화 콘텐츠 | 0/TBD | Not started | - |
 | 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 0/TBD | Not started | - |
 
