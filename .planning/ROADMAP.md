@@ -173,6 +173,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. 학습 일정과 오늘의 학습 | 4/4 | Complete    | 2026-08-25 |
 | 4. Step 1 심화 콘텐츠 | 0/TBD | Not started | - |
 | 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 0/TBD | Not started | - |
+| 6. 전체 페이지 디자인 정리 | 0/TBD | Not started | - |
 
 ## Coverage Notes
 
@@ -191,6 +192,27 @@ Phase 5는 CONT-05를 단독 소유하지만 소요 시간 기준으로는 가�
 **타임박스 의도**
 
 Phase 1~3(플랫폼)은 합쳐서 약 1주가 목표다. 리서치가 지목한 최대 리스크는 "플랫폼을 다듬느라 콘텐츠를 못 쓰는 것"이므로, Phase 1~3에서 범위가 늘어나면 v2(CONV-01~04)로 밀어낸다.
+
+### Phase 6: 전체 페이지 디자인 정리
+
+**Goal**: 모든 화면이 존재하는 상태에서 `frontend-design` 스킬로 사이트 전체를 한 번에 다듬는다 — 디자인 토큰(색·타이포·간격)·셸(내비·카드)·페이지별 마감을 정리해 아이패드에서 "템플릿 같지 않은" 일관된 경험을 만든다
+**Mode:** mvp
+**Depends on**: Phase 5
+**Requirements**: TBD (PROJECT.md Active "모바일·아이패드 최적화" 귀속 후보; 초과 범위는 v2 CONV-01~04로)
+**Timebox**: 2일 — 개강(9/30) 전에 끝나도록 Phase 5 목표일을 9월 셋째 주 안으로 잡는다. 초과분은 v2로 밀어낸다
+**Inputs**: Phase 3 `/gsd-ui-review` 결과(있다면), 03-VERIFICATION.md 후속 항목(폰 폭 375px 오늘 카드 레이아웃 미확인), Phase 4·5 UI-SPEC
+**Success Criteria** (what must be TRUE):
+
+  1. `globals.css` `@theme` 토큰(색·타이포·간격)이 한 곳에서 정의되고 모든 페이지가 그 토큰만 쓴다 — 페이지별 하드코딩 색/크기 없음
+  2. 홈·커리큘럼·일정표·레슨·Step·소개 6종 화면이 아이패드 세로/가로에서 같은 셸(내비·카드·여백 체계)로 읽힌다
+  3. 폰 폭(375px)에서도 오늘 카드·일정표·레슨 본문이 깨지지 않는다 (Phase 3 검증 후속 항목 해소)
+  4. Phase 1~5의 자동 게이트(check-*.mjs, e2e-*.mjs)가 전부 통과한다 — 디자인 정리가 기능 회귀를 만들지 않는다
+
+**Plans**: TBD
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 6 to break down)
 
 ---
 *Roadmap created: 2026-08-24*

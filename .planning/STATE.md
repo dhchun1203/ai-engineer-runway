@@ -77,6 +77,11 @@ Progress: [████████████████████] 10/10 p
 
 ## Accumulated Context
 
+### Roadmap Evolution
+
+- Phase 6 added (2026-08-25): 전체 페이지 디자인 정리 — frontend-design 스킬로 토큰·셸·페이지별 마감을 Phase 5 이후 한 번에 적용, 타임박스 2일. 사용자 결정: 콘텐츠 phase보다 앞에 두지 않음(플랫폼 다듬기가 콘텐츠를 잠식하는 리스크 회피)
+- 결정 대기 (2026-08-25): 소개 페이지(docs/making-of.md)에 eli5 스킬을 적용한 결과를 사용자가 보고 마음에 들면, 레슨 전체(Phase 4·5 작성 표준)에도 eli5 적용을 검토 — Phase 4 discuss에서 확정
+
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
