@@ -15,12 +15,12 @@
 - ✓ Vercel 배포로 URL 접속 가능 — Phase 1 (https://ai-engineer-runway.vercel.app)
 - ✓ 사이트 소개(Making-of) 페이지 — Phase 1 (/about, 1~5단계 기록 + 6~7단계 갱신 구조)
 - ✓ 레슨별 완료 버튼 → 완료 상태 저장(Supabase), 섹션(모듈/Step)별 진행률 표시 — Phase 2 (UAT 6/6 통과: 기기 간 동기화·외부인 차단·조회 실패 배너·100% 축하 상태 포함)
+- ✓ 9/30 이전(2026-08-25 ~ 09-29, 하루 1레슨·총 70시간) 학습 일정표 제공, 일정-레슨 연동 + 홈 "오늘의 학습"(D-day·오늘 레슨·시간 가중 페이스 판정·밀린 레슨) — Phase 3 (검증 45/45, 아이패드 미니 실기기 UAT 승인; 일정표 열 정렬·Step 카드 넘침 2건 수정 포함)
 
 ### Active
 
 - [ ] 커리큘럼 3개 Step 전체가 모듈/레슨 구조로 콘텐츠화되어 있다
 - [ ] 각 레슨은 쉬운 개념 설명 + 커리큘럼 동일 스택의 실무 예제 코드를 포함한다
-- [ ] 9/30 이전(2026-08-25 ~ 09-29, 하루 3시간 이내·하루 1레슨·평균 약 2시간 기준) 학습 일정표 제공, 일정-레슨 연동
 - [ ] 모바일·아이패드 최적화 — 주 학습 기기가 아이패드(터치 UI, 태블릿 레이아웃, Safari 대응)
 
 ### Out of Scope
@@ -74,4 +74,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-24 after Phase 2*
+*Last updated: 2026-08-25 after Phase 3*
