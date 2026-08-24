@@ -53,13 +53,13 @@ export function CompleteButton({
         aria-label={optimisticDone ? '완료 취소하기' : '레슨 완료하기'}
         className={`flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 text-[16px] font-semibold leading-[1.6] ${
           optimisticDone
-            ? 'border-accent text-accent dark:border-accent-dark dark:text-accent-dark'
+            ? 'complete-ring-glow border-accent text-accent dark:border-accent-dark dark:text-accent-dark'
             : 'border-badge-neutral-bg dark:border-badge-neutral-bg-dark'
         }`}
       >
         {optimisticDone ? (
           <>
-            <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <CheckCircle2 className="complete-check-icon h-4 w-4 shrink-0" aria-hidden="true" />
             완료했어요 ✓
           </>
         ) : (

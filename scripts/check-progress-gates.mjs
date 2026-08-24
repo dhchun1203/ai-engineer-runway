@@ -6,7 +6,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import assert from 'node:assert/strict';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -31,6 +32,13 @@ function stripSqlComments(sql) {
   return sql
     .split('\n')
     .filter((line) => !line.trim().startsWith('--'))
+    .join('\n');
+}
+
+function stripJsLineComments(source) {
+  return source
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('//'))
     .join('\n');
 }
 
@@ -120,6 +128,33 @@ if (g3Violations.length > 0) {
   fail(`G3 failed: client-exposure-prefixed env var name(s) found: ${g3Violations.join('; ')}`);
 }
 
+// --- G4: actions.ts에 'use server'가 있고, hasUnlockCookie/getLessonBySlug가 등장하는
+// 문자 위치가 모두 setLessonCompletion 첫 등장보다 앞선다 (인가 검사가 쓰기 뒤로
+// 밀리는 회귀를 잡는다, T-02-02) ---
+
+const ACTIONS_TS_PATH = path.join(ROOT, 'src', 'app', 'lesson', '[lessonId]', 'actions.ts');
+const actionsSource = readFileIfExists(ACTIONS_TS_PATH);
+
+if (actionsSource === null) {
+  fail(`G4 failed: ${path.relative(ROOT, ACTIONS_TS_PATH)} not found`);
+} else {
+  if (!/^\s*['"]use server['"];/.test(actionsSource)) {
+    fail(`G4 failed: ${path.relative(ROOT, ACTIONS_TS_PATH)} does not start with "'use server';"`);
+  }
+  const hasUnlockIdx = actionsSource.indexOf('hasUnlockCookie');
+  const getLessonIdx = actionsSource.indexOf('getLessonBySlug');
+  const setCompletionIdx = actionsSource.indexOf('setLessonCompletion');
+  if (hasUnlockIdx === -1 || getLessonIdx === -1 || setCompletionIdx === -1) {
+    fail(
+      `G4 failed: expected hasUnlockCookie, getLessonBySlug, and setLessonCompletion to all appear in ${path.relative(ROOT, ACTIONS_TS_PATH)}`,
+    );
+  } else if (hasUnlockIdx >= setCompletionIdx || getLessonIdx >= setCompletionIdx) {
+    fail(
+      `G4 failed: hasUnlockCookie/getLessonBySlug must appear before the first setLessonCompletion reference in ${path.relative(ROOT, ACTIONS_TS_PATH)}`,
+    );
+  }
+}
+
 // --- G5: 마이그레이션 SQL에서 주석 제거 후 enable row level security 1회, create policy 0회 ---
 
 const MIGRATION_PATH = path.join(ROOT, 'supabase', 'migrations', '20260824120000_create_progress.sql');
@@ -207,6 +242,23 @@ if (packageJsonSource === null) {
   }
 }
 
+// --- G9: 잠금 게이트를 통과해야 하는 페이지들에 force-dynamic 선언이 있다.
+// 이번 태스크 시점에서는 레슨 페이지 하나를 검사하고, 02-03/02-04가 Step·홈을
+// 이 목록에 추가한다 ---
+
+const DYNAMIC_GATED_PAGES = [path.join(ROOT, 'src', 'app', 'lesson', '[lessonId]', 'page.tsx')];
+
+for (const pagePath of DYNAMIC_GATED_PAGES) {
+  const source = readFileIfExists(pagePath);
+  if (source === null) {
+    fail(`G9 failed: ${path.relative(ROOT, pagePath)} not found`);
+    continue;
+  }
+  if (!/export\s+const\s+dynamic\s*=\s*["']force-dynamic["']/.test(source)) {
+    fail(`G9 failed: ${path.relative(ROOT, pagePath)} missing "export const dynamic = 'force-dynamic'"`);
+  }
+}
+
 // --- G10: .next/static 존재 + 시크릿 env var가 채워져 있으면 그 값의 리터럴이 .next/static 아래 없어야 함 ---
 
 const NEXT_STATIC_DIR = path.join(ROOT, '.next', 'static');
@@ -235,6 +287,52 @@ if (!fs.existsSync(NEXT_STATIC_DIR) || secretEnvVars.length === 0) {
   }
   if (g10Violations.length > 0) {
     fail(`G10 failed: secret literal(s) found in .next/static: ${g10Violations.join('; ')}`);
+  }
+}
+
+// --- G11: src/lib/unlock-secret.ts의 isValidUnlockValue 다섯 판정을 node:assert로
+// 실제 실행 검증한다. 이 파일은 어떤 것도 import하지 않으므로 Node가 그대로
+// 로드할 수 있다(Node 22.6+ 타입 스트리핑, 별도 러너 도입 없음 — PITFALLS Pitfall 1) ---
+
+const UNLOCK_SECRET_TS_PATH = path.join(ROOT, 'src', 'lib', 'unlock-secret.ts');
+
+if (!fs.existsSync(UNLOCK_SECRET_TS_PATH)) {
+  fail(`G11 failed: ${path.relative(ROOT, UNLOCK_SECRET_TS_PATH)} not found`);
+} else {
+  try {
+    const { isValidUnlockValue } = await import(pathToFileURL(UNLOCK_SECRET_TS_PATH).href);
+    const LONG_SECRET = 'a'.repeat(32);
+
+    assert.strictEqual(isValidUnlockValue(undefined, undefined), false, '시크릿 미설정 + candidate 미설정');
+    assert.strictEqual(isValidUnlockValue(undefined, LONG_SECRET), false, 'candidate 미설정');
+    assert.strictEqual(isValidUnlockValue('wrong-value', LONG_SECRET), false, '불일치');
+    assert.strictEqual(isValidUnlockValue('short', 'short'), false, '짧은 시크릿(16자 미만)');
+    assert.strictEqual(isValidUnlockValue(LONG_SECRET, LONG_SECRET), true, '정상 일치');
+  } catch (e) {
+    fail(`G11 failed: isValidUnlockValue 실행 검증 실패 — ${e.message}`);
+  }
+}
+
+// --- G12: complete-button.tsx가 useOptimistic을 쓰고, 완료 여부를 담는 별도의
+// useState를 두지 않는다 (Task 1이 채택한 prop 수렴 방식의 회귀 방지) ---
+
+const COMPLETE_BUTTON_PATH = path.join(ROOT, 'src', 'components', 'complete-button.tsx');
+const completeButtonSource = readFileIfExists(COMPLETE_BUTTON_PATH);
+
+if (completeButtonSource === null) {
+  fail(`G12 failed: ${path.relative(ROOT, COMPLETE_BUTTON_PATH)} not found`);
+} else {
+  // 주석(예: Task 1이 남긴 "왜 useState(initialDone)을 쓰지 않는가" 설명)은
+  // 스캔에서 제외한다 — 그 설명 문장 자체가 금지 패턴의 리터럴을 담고 있어
+  // 주석까지 검사하면 게이트가 스스로를 오탐시킨다.
+  const codeOnly = stripJsLineComments(completeButtonSource);
+  if (!/useOptimistic\s*\(/.test(codeOnly)) {
+    fail(`G12 failed: ${path.relative(ROOT, COMPLETE_BUTTON_PATH)} does not call useOptimistic(...)`);
+  }
+  if (/useState\s*\(\s*initialDone\s*\)/.test(codeOnly)) {
+    fail(
+      `G12 failed: ${path.relative(ROOT, COMPLETE_BUTTON_PATH)} calls useState(initialDone) — a separate local "done" state reintroduces the cross-device staleness bug Task 1's prop-convergence design avoided`,
+    );
   }
 }
 

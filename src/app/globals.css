@@ -102,3 +102,76 @@ code[data-theme*=" "] span {
 .prose {
   line-height: 1.6;
 }
+
+/* 완료 전환 연출 (D-23) — CSS 전용, 새 애니메이션 라이브러리 도입 없음(UI-SPEC
+   Design System). 체크 아이콘 fade+scale-in과 버튼 둘레 accent ring/glow 확장이
+   각각 완료 버튼(complete-button.tsx)이 완료 상태일 때만 적용된다. --complete-glow-color는
+   라이트/다크 accent 토큰을 그대로 재사용한다(새 색 없음). */
+@keyframes complete-check-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes complete-ring-glow {
+  0% {
+    box-shadow: 0 0 0 0 var(--complete-glow-color);
+    opacity: 1;
+  }
+  100% {
+    box-shadow: 0 0 0 12px var(--complete-glow-color);
+    opacity: 0;
+  }
+}
+
+.complete-check-icon {
+  animation: complete-check-pop 450ms ease-out;
+}
+
+.complete-ring-glow {
+  --complete-glow-color: var(--color-accent);
+  position: relative;
+}
+
+.dark .complete-ring-glow {
+  --complete-glow-color: var(--color-accent-dark);
+}
+
+.complete-ring-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: complete-ring-glow 450ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .complete-check-icon,
+  .complete-ring-glow::after {
+    animation: none;
+  }
+}
+
+/* 완료 직후 다음 레슨 CTA 강조 (D-22) — 자동 이동 없음, 강조만. Phase 1이 남긴
+   data-pager="next" DOM 계약을 그대로 활용해 lesson-nav.tsx는 손대지 않는다.
+   :has()를 지원하지 않는 브라우저에서는 강조만 빠지고 나머지는 정상 동작한다
+   (점진적 향상). */
+[data-progress-controls]:has([data-complete-state="done"]) [data-pager="next"] {
+  border-color: var(--color-accent);
+  background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+
+.dark [data-progress-controls]:has([data-complete-state="done"]) [data-pager="next"] {
+  border-color: var(--color-accent-dark);
+  background-color: color-mix(in srgb, var(--color-accent-dark) 15%, transparent);
+}

@@ -4,6 +4,7 @@ import { DepthBadge } from "@/components/depth-badge";
 import { EstimatedTime } from "@/components/estimated-time";
 import { LessonBreadcrumb, LessonPager } from "@/components/lesson-nav";
 import { CompleteButton } from "@/components/complete-button";
+import { ProgressReadError } from "@/components/progress-error";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readCompletedLessonIds } from "@/lib/progress-store";
 import {
@@ -63,13 +64,21 @@ export default async function LessonPage(
           </p>
         </div>
       )}
-      {progressRead && progressRead.ok ? (
-        <CompleteButton
-          lessonId={lesson.slug}
-          initialDone={progressRead.completedIds.has(lesson.slug)}
-        />
-      ) : null}
-      <LessonPager prev={prev} next={next} />
+      {progressRead ? (
+        <div data-progress-controls className="flex flex-col gap-6">
+          {progressRead.ok ? (
+            <CompleteButton
+              lessonId={lesson.slug}
+              initialDone={progressRead.completedIds.has(lesson.slug)}
+            />
+          ) : (
+            <ProgressReadError />
+          )}
+          <LessonPager prev={prev} next={next} />
+        </div>
+      ) : (
+        <LessonPager prev={prev} next={next} />
+      )}
     </article>
   );
 }
