@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 03
 current_phase_name: schedule-and-today
 status: executing
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-08-24T14:56:13.729Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-08-24T15:06:58.934Z"
 last_activity: 2026-08-24
 last_activity_desc: Phase 1 검증·UAT·보안 게이트 통과, 완료 처리
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 14
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 ## Current Position
 
 Phase: 03 (schedule-and-today) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-08-24 — Phase 03 execution started
 
-Progress: [████████████████████] 10/10 plans ([████████░░] 79%)
+Progress: [████████████████████] 10/10 plans ([█████████░] 86%)
 
 ## Performance Metrics
 
@@ -70,6 +70,7 @@ Progress: [████████████████████] 10/10 p
 | Phase 02 P03 | 15min | 3 tasks | 8 files |
 | Phase 02 P04 | 55min | 3 tasks | 9 files |
 | Phase 03 P01 | 36min | 2 tasks | 11 files |
+| Phase 03 P02 | ~15min | 3 tasks | 39 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,9 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 3 Plan 1]: 홈을 '오늘의 학습'으로 재편, Step 대시보드는 /curriculum으로 분리 — 각 라우트가 hasUnlockCookie 게이트를 자체 복제(상속되지 않음, Pitfall 4)
 - [Phase ?]: [Phase 3 Plan 1]: today.ts/schedule.ts는 progress-math.ts와 같은 이유로 import 0 유지 — 게이트 스크립트가 Node 22.6+ 타입 스트리핑으로 트랜스파일러 없이 직접 로드
 - [Phase ?]: [Phase 3 Plan 1]: 일정 배정은 항상 getOrderedLessons() slug 순서에서 파생, 35개 날짜→레슨 하드코딩 상수를 쓰지 않음
+- [Phase ?]: [Phase 3 Plan 2]: estimatedMinutes 목표값은 (depth, 소속 모듈 isProject) 파생 계산으로 산출 — 원본 수치 기반 순차 치환은 값 공간이 겹쳐 이중 적용 위험이 있어 구조적으로 배제
+- [Phase ?]: [Phase 3 Plan 2]: check-manifest.mjs Invariant 6을 7200~10800 밴드 검사에서 총합 4200 등식 검사로 교체, 분포(Invariant 12)·파생 규칙(Invariant 13) 신설 — 13개 불변식으로 확장
+- [Phase ?]: [Phase 3 Plan 2]: ROADMAP/PROJECT/REQUIREMENTS의 페이스 기준을 '하루 4~6시간'에서 D-35 '하루 3시간 이내(하루 1레슨, 평균 약 2시간)'로 통일
 
 ### Pending Todos
 
@@ -129,6 +133,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-24T14:56:13.685Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-08-24T15:06:58.916Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None
