@@ -4,17 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-// 내비 항목 4개는 D-09가 고정한 구조다 — Phase 3에서 "오늘의 학습"·"일정표"가 켜질
-// 자리를 지금부터 잡아 두므로, 비활성 두 항목도 숨기지 않고 "준비 중" 배지로 렌더한다.
+// 내비 항목 4개는 D-09가 고정한 구조다 — Phase 3가 "오늘의 학습"("/")과 "커리큘럼"
+// ("/curriculum")을 켰다. "일정표"("/schedule")는 Plan 04가 라우트를 채우기
+// 전까지 404이지만, D-09 배치를 그대로 지키기 위해 미리 활성 링크로 켜 둔다.
 type NavItem = {
   label: string;
   href: string | null; // null = 비활성(준비 중)
 };
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { label: "오늘의 학습", href: null },
-  { label: "커리큘럼", href: "/" },
-  { label: "일정표", href: null },
+  { label: "오늘의 학습", href: "/" },
+  { label: "커리큘럼", href: "/curriculum" },
+  { label: "일정표", href: "/schedule" },
   { label: "소개", href: "/about" },
 ];
 
