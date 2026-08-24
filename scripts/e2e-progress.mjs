@@ -205,8 +205,89 @@ async function main() {
     }
     console.log('e2e-progress: e/f DB 삭제 → todo 복귀 OK (TRACK-02)');
 
+    // g. /unlock 발급 경로 — 리다이렉트를 따라가지 않고 응답 헤더를 직접 본다.
+    let issuedUnlockCookiePair = null;
+    {
+      const res = await fetchWithTimeout(
+        `${BASE_URL}/unlock?key=${encodeURIComponent(UNLOCK_SECRET)}`,
+        { redirect: 'manual' },
+      );
+      if (res.status < 300 || res.status >= 400) {
+        throw new FatalError(`시나리오 g1 실패 — 올바른 key인데 3xx가 아닙니다 (status=${res.status})`);
+      }
+      const location = res.headers.get('location') ?? '';
+      if (!location.includes('state=ok')) {
+        throw new FatalError(`시나리오 g1 실패 — Location이 성공 상태를 가리키지 않습니다`);
+      }
+      const setCookie = res.headers.get('set-cookie') ?? '';
+      if (!setCookie.includes(`${UNLOCK_COOKIE_NAME}=`) || !/HttpOnly/i.test(setCookie)) {
+        throw new FatalError('시나리오 g1 실패 — 잠금 쿠키에 HttpOnly 속성이 없거나 쿠키가 발급되지 않았습니다');
+      }
+      issuedUnlockCookiePair = setCookie.split(';')[0];
+    }
+    console.log('e2e-progress: g1/f /unlock?key=<올바른 값> → HttpOnly 잠금 쿠키 발급 OK');
+
+    {
+      const lastChar = UNLOCK_SECRET.slice(-1);
+      const wrongKey = `${UNLOCK_SECRET.slice(0, -1)}${lastChar === 'a' ? 'b' : 'a'}`;
+      const res = await fetchWithTimeout(`${BASE_URL}/unlock?key=${encodeURIComponent(wrongKey)}`, {
+        redirect: 'manual',
+      });
+      if (res.status < 300 || res.status >= 400) {
+        throw new FatalError(`시나리오 g2 실패 — 틀린 key인데 3xx가 아닙니다 (status=${res.status})`);
+      }
+      const location = res.headers.get('location') ?? '';
+      if (!location.includes('state=invalid')) {
+        throw new FatalError('시나리오 g2 실패 — Location이 실패 상태를 가리키지 않습니다');
+      }
+      if (res.headers.get('set-cookie')) {
+        throw new FatalError('시나리오 g2 실패 — 틀린 key인데 Set-Cookie가 응답에 섞였습니다');
+      }
+    }
+    console.log('e2e-progress: g2/f /unlock?key=<틀린 값> → 쿠키 미발급 OK');
+
+    {
+      const res = await fetchWithTimeout(`${BASE_URL}/unlock`, { redirect: 'manual' });
+      const location = res.headers.get('location') ?? '';
+      if (!location.includes('state=invalid') || res.headers.get('set-cookie')) {
+        throw new FatalError('시나리오 g3 실패 — key 없는 /unlock 요청이 실패 상태로 처리되지 않습니다');
+      }
+    }
+    console.log('e2e-progress: g3/f /unlock(key 없음) → 실패 상태 처리 OK');
+
+    // 발급된 쿠키를 재사용해 레슨 페이지에 진도 UI가 렌더되는지 확인 — 발급된
+    // 쿠키가 실제로 게이트를 통과한다는 증거.
+    {
+      if (!issuedUnlockCookiePair) {
+        throw new FatalError('시나리오 g4 실패 — g1에서 쿠키를 확보하지 못했습니다');
+      }
+      const res = await fetchWithTimeout(`${BASE_URL}/lesson/${PROBE_SLUG}`, {
+        headers: { Cookie: issuedUnlockCookiePair },
+      });
+      const body = await res.text();
+      if (!body.includes('data-progress-ui')) {
+        throw new FatalError('시나리오 g4 실패 — /unlock이 발급한 쿠키로 요청해도 진도 UI가 렌더되지 않습니다');
+      }
+    }
+    console.log('e2e-progress: g4/f /unlock 발급 쿠키 재사용 → 레슨 페이지 진도 UI 렌더 OK');
+
+    // /unlock/done 두 상태 화면이 각각 UI-SPEC 제목을 담고 있는지 확인.
+    {
+      const okRes = await fetchWithTimeout(`${BASE_URL}/unlock/done?state=ok`);
+      const okBody = await okRes.text();
+      if (!okBody.includes('잠금 해제됐어요')) {
+        throw new FatalError('시나리오 g5 실패 — /unlock/done?state=ok에 성공 제목이 없습니다');
+      }
+      const invalidRes = await fetchWithTimeout(`${BASE_URL}/unlock/done?state=invalid`);
+      const invalidBody = await invalidRes.text();
+      if (!invalidBody.includes('유효하지 않은 링크예요')) {
+        throw new FatalError('시나리오 g5 실패 — /unlock/done?state=invalid에 실패 제목이 없습니다');
+      }
+    }
+    console.log('e2e-progress: g5/f /unlock/done 성공·실패 화면 문구 OK');
+
     console.log(
-      'e2e-progress: 모든 시나리오 통과 — 완료 토글이 브라우저 → 쿠키 게이트 → Supabase → 서버 재렌더까지 왕복합니다.',
+      'e2e-progress: 모든 시나리오 통과 — 완료 토글과 /unlock 잠금 해제 흐름이 브라우저 → 쿠키 게이트 → Supabase → 서버 재렌더까지 왕복합니다.',
     );
   } finally {
     // f. 정리 — 프로브 행 삭제, 서버 프로세스 트리 종료
