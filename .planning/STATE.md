@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 02
-current_phase_name: progress-tracking
-status: verifying
+current_phase: 3
+current_phase_name: 학습 일정과 오늘의 학습
+status: planning
 stopped_at: Completed 02-04-PLAN.md — Phase 2 all 4 plans done
-last_updated: "2026-08-24T09:45:12.435Z"
+last_updated: "2026-08-24T11:42:33.252Z"
 last_activity: 2026-08-24
 last_activity_desc: Phase 1 검증·UAT·보안 게이트 통과, 완료 처리
 progress:
@@ -27,18 +27,18 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 
 ## Current Position
 
-Phase: 02 (progress-tracking) — EXECUTING
-Plan: 4 of 4
-Status: Phase complete — ready for verification
-Last activity: 2026-08-24 — Phase 02 execution started
+Phase: 3 — 학습 일정과 오늘의 학습
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-08-24 — Phase 02 complete, transitioned to Phase 3
 
-Progress: [██████████] 100%
+Progress: [████████████████████] 10/10 plans (100%)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 6
+- Total plans completed: 10
 - Average duration: —
 - Total execution time: 0 hours
 
@@ -47,6 +47,7 @@ Progress: [██████████] 100%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 6 | - | - |
+| 02 | 4 | - | - |
 
 **Recent Trend:**
 
@@ -110,12 +111,9 @@ None yet.
 
 ### Blockers/Concerns
 
-- 진도 저장 방식(익명 세션 + RLS)의 구체 설계가 Phase 2 계획 시점에 확정되어야 함 (PROJECT.md Key Decisions에 Pending으로 남아 있음)
 - 리서치 Gap: 레슨 소요시간 추정치의 정확도는 Phase 3~4 실사용으로만 검증 가능 — 편차가 크면 v2의 CONV-03(자동 리밸런싱)이 필요해질 수 있음
 - 리서치 Gap: Step 3 "개요 훑기" 깊이 기준(rubric)을 Phase 5 착수 전에 구체화해야 범위가 팽창하지 않음
 - 사전학습 시작일(2026-08-25)이 임박 — Phase 1~3이 지연되면 학습 시간이 직접 잠식됨
-- 02-04 Task 3 blocked: Vercel production env vars (SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY/SUPABASE_ANON_KEY/UNLOCK_SECRET) not yet registered — precondition unmet, verified via read-only production /unlock probe (local UNLOCK_SECRET rejected in prod, no redirect/cookie issued). See 02-USER-SETUP.md Dashboard Configuration checklist.
-- 02-04 Task 3 update: pushed 30 unpushed local commits to origin/master (Rule 3 fix, same pattern as Phase 1 Plan 6) — Vercel redeployed and /unlock route now exists (was 404, now 307). Remaining precondition gap: production /unlock?key=<local UNLOCK_SECRET> redirects to state=invalid — the UNLOCK_SECRET value registered in Vercel Production does not match local .env.local (or is unset). SUPABASE_* vars unverifiable until UNLOCK_SECRET matches (need a valid cookie to test the progress read path). User must re-check/re-paste UNLOCK_SECRET in Vercel Production env vars (watch for trailing whitespace/newline from copy-paste) and redeploy.
 
 ## Deferred Items
 
@@ -128,5 +126,5 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-08-24T09:45:12.419Z
-Stopped at: Completed 02-04-PLAN.md — Phase 2 all 4 plans done
+Stopped at: Phase 02 complete (UAT 6/6 + security verified), ready to plan Phase 3
 Resume file: None

@@ -14,12 +14,12 @@
 
 - ✓ Vercel 배포로 URL 접속 가능 — Phase 1 (https://ai-engineer-runway.vercel.app)
 - ✓ 사이트 소개(Making-of) 페이지 — Phase 1 (/about, 1~5단계 기록 + 6~7단계 갱신 구조)
+- ✓ 레슨별 완료 버튼 → 완료 상태 저장(Supabase), 섹션(모듈/Step)별 진행률 표시 — Phase 2 (UAT 6/6 통과: 기기 간 동기화·외부인 차단·조회 실패 배너·100% 축하 상태 포함)
 
 ### Active
 
 - [ ] 커리큘럼 3개 Step 전체가 모듈/레슨 구조로 콘텐츠화되어 있다
 - [ ] 각 레슨은 쉬운 개념 설명 + 커리큘럼 동일 스택의 실무 예제 코드를 포함한다
-- [ ] 레슨별 완료 버튼 → 완료 상태 저장(Supabase), 섹션(모듈/Step)별 진행률 표시
 - [ ] 9/30 이전(2026-08-25 ~ 09-29, 하루 4~6시간 기준) 학습 일정표 제공, 일정-레슨 연동
 - [ ] 모바일·아이패드 최적화 — 주 학습 기기가 아이패드(터치 UI, 태블릿 레이아웃, Safari 대응)
 
@@ -53,7 +53,7 @@
 | Next.js + Supabase + Vercel 배포 | 커리큘럼 동일 스택으로 구축 자체가 학습, 어디서든 접속 | — Pending |
 | 콘텐츠 깊이: 기초 심화 + Step 3 개념 훑기 | 개강 후 깊게 배울 내용에 사전학습 시간을 과투자하지 않음 | — Pending |
 | 일정표: 8/25~9/29, 하루 4~6시간 기준 5주 설계 | 사용자 가용 시간 기준 | — Pending |
-| 진도 저장 방식(익명 vs 간단 로그인) | 1인용이므로 최소 마찰 방식 선택 — Phase 계획 시 확정 | — Pending |
+| 진도 저장 방식(익명 vs 간단 로그인) | 1인용이므로 최소 마찰 방식 선택 — Phase 계획 시 확정 | ✓ Phase 2: 공유 시크릿 쿠키(D-17/D-19) — Supabase Auth 미사용, 모든 읽기/쓰기는 서버 전용 service_role 경로, RLS 기본 차단(정책 0개) |
 
 ## Evolution
 
@@ -73,4 +73,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-24 after Phase 1*
+*Last updated: 2026-08-24 after Phase 2*
