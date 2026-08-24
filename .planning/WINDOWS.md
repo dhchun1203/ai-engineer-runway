@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 3
+open_count: 4
 waived_count: 0
 fixed_count: 0
-total_count: 3
-last_updated: 2026-08-24T09:41:06.787Z
+total_count: 4
+last_updated: 2026-08-24T15:22:31.715Z
 ---
 
 # Broken Windows Ledger
@@ -18,6 +18,7 @@ last_updated: 2026-08-24T09:41:06.787Z
 | 1 | 02 | unrun-verify | src/components/complete-button.tsx |  | Task 3 human-check (완료 애니메이션 체감·다음 레슨 강조·reduced-motion·iPad 히트영역) — workflow.human_verify_mode=end-of-phase로 지금 실행되지 않음, /gsd-verify-work의 end-of-phase UAT에서 harvest 예정 | open |  | 2026-08-24T08:25:20.047Z |  |
 | 2 | 02 | unrun-verify | src/app/step/[stepId]/page.tsx |  | 02-03 Task 3 human-check (Step 헤더/모듈 배지 육안 확인, iPad 44px 히트영역, 시크릿창 마커 0건) — workflow.human_verify_mode=end-of-phase에 따라 미실행, /gsd-verify-work end-of-phase UAT에서 harvest 예정 | open |  | 2026-08-24T08:42:45.349Z |  |
 | 3 | 02 | unrun-verify | src/app/page.tsx |  | 02-04 Task 3 human-check A-D (기기 전환, 진행률 표시, 외부인 차단, 아이패드 경험 — 12개 항목) — workflow.human_verify_mode=end-of-phase에 따라 미실행, /gsd-verify-work end-of-phase UAT에서 harvest 예정 | open |  | 2026-08-24T09:41:06.787Z |  |
+| 4 | 03 | unrun-verify | scripts/e2e-today.mjs |  | t8(과거 배정 미완료 -> behind + 밀린 레슨 목록 실제 화면 왕복)이 실행일(2026-08-25, 사전학습 첫날)에 어제까지 배정분이 없어 스킵됨 -- 과거 배정분이 쌓이는 날 재실행 필요 | open |  | 2026-08-24T15:22:31.715Z |  |
 
 ````json
 [
@@ -55,6 +56,18 @@ last_updated: 2026-08-24T09:41:06.787Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-08-24T09:41:06.787Z",
+    "resolved_at": null
+  },
+  {
+    "id": 4,
+    "kind": "unrun-verify",
+    "phase": "03",
+    "file": "scripts/e2e-today.mjs",
+    "line": null,
+    "description": "t8(과거 배정 미완료 -> behind + 밀린 레슨 목록 실제 화면 왕복)이 실행일(2026-08-25, 사전학습 첫날)에 어제까지 배정분이 없어 스킵됨 -- 과거 배정분이 쌓이는 날 재실행 필요",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-08-24T15:22:31.715Z",
     "resolved_at": null
   }
 ]
