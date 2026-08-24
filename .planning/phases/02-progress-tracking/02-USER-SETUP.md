@@ -2,10 +2,12 @@
 
 **Generated:** 2026-08-24
 **Phase:** 02-progress-tracking
-**Status:** Partially Complete
+**Status:** Complete
 
-Local development is fully configured and verified working end-to-end against the live
-database. One item remains for production (Vercel) deploys of this phase's features to work.
+Local development and production (Vercel) are both fully configured and verified working
+end-to-end against the live database, including a full round trip through the production
+`/unlock` route and the production home page's progress summary (02-04 Task 3 precondition
+re-check, confirmed via a read-only production probe on 2026-08-24).
 
 ## Environment Variables
 
@@ -15,10 +17,10 @@ database. One item remains for production (Vercel) deploys of this phase's featu
 | [x] | `SUPABASE_SERVICE_ROLE_KEY` | Supabase Dashboard → Project Settings → API Keys → `service_role` (secret) | `.env.local` (done — verified) |
 | [x] | `SUPABASE_ANON_KEY` | Supabase Dashboard → Project Settings → API Keys → `anon`/`publishable` | `.env.local` (done — verified, RLS default-deny confirmed) |
 | [x] | `UNLOCK_SECRET` | Generated locally via `openssl rand -hex 24` | `.env.local` (done) |
-| [ ] | `SUPABASE_URL` | Same value as above | Vercel → `ai-engineer-runway` → Settings → Environment Variables (Production + Preview) |
-| [ ] | `SUPABASE_SERVICE_ROLE_KEY` | Same value as above | Vercel → `ai-engineer-runway` → Settings → Environment Variables (Production + Preview) |
-| [ ] | `SUPABASE_ANON_KEY` | Same value as above | Vercel → `ai-engineer-runway` → Settings → Environment Variables (Production + Preview) |
-| [ ] | `UNLOCK_SECRET` | Same value as above | Vercel → `ai-engineer-runway` → Settings → Environment Variables (Production + Preview) |
+| [x] | `SUPABASE_URL` | Same value as above | Vercel → `ai-engineer-runway` → Settings → Environment Variables (Production + Preview) — registered and redeployed, confirmed working (progress summary/step bars render correctly for a valid unlock cookie against production) |
+| [x] | `SUPABASE_SERVICE_ROLE_KEY` | Same value as above | Vercel → `ai-engineer-runway` → Settings → Environment Variables (Production + Preview) — registered and redeployed, confirmed working |
+| [x] | `SUPABASE_ANON_KEY` | Same value as above | Vercel → `ai-engineer-runway` → Settings → Environment Variables (Production + Preview) — registered and redeployed |
+| [x] | `UNLOCK_SECRET` | Same value as above | Vercel → `ai-engineer-runway` → Settings → Environment Variables (Production + Preview) — registered and redeployed, confirmed via production `/unlock?key=...` returning `state=ok` + issuing the HttpOnly cookie |
 
 ## Account Setup
 
@@ -26,11 +28,10 @@ database. One item remains for production (Vercel) deploys of this phase's featu
 
 ## Dashboard Configuration
 
-- [ ] **Register the 4 env vars in Vercel** (Production + Preview environments)
+- [x] **Register the 4 env vars in Vercel** (Production + Preview environments) — done
   - Location: https://vercel.com → `ai-engineer-runway` → Settings → Environment Variables
   - Values: same as local `.env.local`
-  - Why this matters: without this, the deployed site's Server Actions/Server Components will throw the descriptive `src/lib/supabase/admin.ts` startup errors ("SUPABASE_URL 환경 변수가 비어 있습니다" / "SUPABASE_SERVICE_ROLE_KEY 환경 변수가 비어 있습니다") on every request that touches progress data, once 02-02 wires the first Server Action/page into this layer.
-  - Not required to complete 02-01 itself (this plan's own verification runs entirely against `.env.local`), but should be done before 02-02's tracer is deployed/verified in production.
+  - Note (02-04 Task 3): the first attempt hit a stale-deployment issue unrelated to the env vars themselves — `origin/master` was 30 commits behind local (`02-01` through `02-04` Tasks 1-2 had never been pushed), so the "redeploy" just rebuilt the old Phase-1-era commit and `/unlock` 404'd regardless of key. Fixed by `git push origin master`; after that, a second `UNLOCK_SECRET` mismatch surfaced (production value didn't match `.env.local`, likely a copy-paste whitespace issue) and was fixed by re-saving the value in the Vercel dashboard. Both are resolved as of this plan's completion.
 
 ## Verification
 
@@ -41,16 +42,19 @@ node --env-file=.env.local scripts/check-supabase-progress.mjs
 node scripts/check-progress-gates.mjs
 ```
 
-Expected: both exit 0. (Confirmed in this session.)
+Expected: both exit 0. (Confirmed.)
 
-After Vercel env vars are registered, verify with:
+Production (confirmed working as of 02-04 Task 3, via a read-only probe — no secrets printed):
 
 ```bash
-vercel env ls
+node --env-file=.env.local -e "
+fetch('https://ai-engineer-runway.vercel.app/unlock?key=' + encodeURIComponent(process.env.UNLOCK_SECRET), { redirect: 'manual' })
+  .then(r => console.log(r.status, r.headers.get('location'), !!r.headers.get('set-cookie')));
+"
 ```
 
-Expected: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, `UNLOCK_SECRET` each listed for Production and Preview.
+Expected: `307 .../unlock/done?state=ok true` (cookie issued). Confirmed passing.
 
 ---
 
-**Once the Vercel env vars are registered:** Mark status as "Complete" at top of file.
+Status: Complete — no outstanding manual setup remains for this phase.

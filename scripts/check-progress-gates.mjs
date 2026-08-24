@@ -243,11 +243,12 @@ if (packageJsonSource === null) {
 }
 
 // --- G9: 잠금 게이트를 통과해야 하는 페이지들에 force-dynamic 선언이 있다.
-// 02-03이 Step 페이지를 이 목록에 추가한다. 02-04가 홈을 추가한다 ---
+// 02-03이 Step 페이지를 이 목록에 추가했다. 02-04가 홈을 추가한다 ---
 
 const DYNAMIC_GATED_PAGES = [
   path.join(ROOT, 'src', 'app', 'lesson', '[lessonId]', 'page.tsx'),
   path.join(ROOT, 'src', 'app', 'step', '[stepId]', 'page.tsx'),
+  path.join(ROOT, 'src', 'app', 'page.tsx'),
 ];
 
 for (const pagePath of DYNAMIC_GATED_PAGES) {
@@ -381,6 +382,30 @@ if (stepPageSource === null) {
       `G14 failed: hasUnlockCookie must appear before readCompletedLessonIds in ${path.relative(ROOT, STEP_PAGE_PATH)} (cookie gate must run before progress read)`,
     );
   }
+}
+
+// --- G15: src/components/step-card.tsx에 하드코딩된 0 진행률 상수가 없다
+// (Phase 1이 남긴 progressPercent = 0 placeholder의 회귀 방지, 02-04) ---
+
+const STEP_CARD_PATH = path.join(ROOT, 'src', 'components', 'step-card.tsx');
+const stepCardSource = readFileIfExists(STEP_CARD_PATH);
+
+if (stepCardSource === null) {
+  fail(`G15 failed: ${path.relative(ROOT, STEP_CARD_PATH)} not found`);
+} else if (/progressPercent\s*=\s*0/.test(stepCardSource)) {
+  fail(
+    `G15 failed: ${path.relative(ROOT, STEP_CARD_PATH)} still hardcodes a zero progress value — must render from a real progress prop or omit the bar entirely`,
+  );
+}
+
+// --- G16: src/app/ 아래에 dashboard 세그먼트가 없다 — D-25가 별도 대시보드
+// 페이지를 만들지 않기로 한 결정의 회귀 방지 (02-04) ---
+
+const DASHBOARD_SEGMENT_PATH = path.join(ROOT, 'src', 'app', 'dashboard');
+if (fs.existsSync(DASHBOARD_SEGMENT_PATH)) {
+  fail(
+    `G16 failed: ${path.relative(ROOT, DASHBOARD_SEGMENT_PATH)} exists — D-25 decided against a separate dashboard route in favor of enhancing the home page`,
+  );
 }
 
 // --- 결과 ---

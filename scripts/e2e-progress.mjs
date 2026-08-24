@@ -60,6 +60,33 @@ function readLessonsManifest() {
   return JSON.parse(fs.readFileSync(lessonsPath, 'utf8'));
 }
 
+// 홈의 '이어서 학습하기' CTA 검증용 — 앱 코드(curriculum-helpers.ts/progress.ts)를
+// 재사용하지 않고 매니페스트에서 독립적으로 전역 정렬 첫 미완료 slug를 계산한다.
+// 같은 함수를 재사용하면 계산 로직 자체가 틀려도 검증이 같이 틀린다 (Task 3 지시).
+// check-manifest.mjs와 같은 방식으로 modules.ts를 정규식으로 재파싱한다.
+function readModuleOrderMap() {
+  const modulesTsPath = path.join(ROOT, 'src', 'content', 'modules.ts');
+  const source = fs.readFileSync(modulesTsPath, 'utf8');
+  const map = new Map();
+  for (const match of source.matchAll(/id:\s*'([0-9]-[0-9])'[^}]*?order:\s*(\d+)/g)) {
+    map.set(match[1], Number(match[2]));
+  }
+  return map;
+}
+
+function computeExpectedFirstIncompleteSlug(completedSlugSet) {
+  const moduleOrderMap = readModuleOrderMap();
+  const ordered = [...LESSONS].sort((a, b) => {
+    if (a.stepId !== b.stepId) return a.stepId - b.stepId;
+    const am = moduleOrderMap.get(a.moduleId) ?? 0;
+    const bm = moduleOrderMap.get(b.moduleId) ?? 0;
+    if (am !== bm) return am - bm;
+    return a.order - b.order;
+  });
+  const firstIncomplete = ordered.find((l) => !completedSlugSet.has(l.slug));
+  return firstIncomplete ? firstIncomplete.slug : null;
+}
+
 const LESSONS = readLessonsManifest();
 const PROBE_LESSON = LESSONS.find((l) => l.hasContent) ?? LESSONS[0];
 if (!PROBE_LESSON) {
@@ -141,6 +168,163 @@ async function main() {
     }
     console.log(`e2e-progress: 개발 서버 기동 완료 (probe lesson: ${PROBE_SLUG})`);
 
+    const cookieHeader = `${UNLOCK_COOKIE_NAME}=${UNLOCK_SECRET}`;
+    // 프로브 레슨이 속한 stepId는 매니페스트에서 읽는다(하드코딩 금지) — 02-03이
+    // h1-h4에서 이미 확립한 관례를 02-04 홈 시나리오도 그대로 따른다.
+    const PROBE_STEP_ID = PROBE_LESSON.stepId;
+
+    // --- i. 홈 시나리오 (02-04, TRACK-04) ---
+    // scenario a가 이미 프로브 행을 삭제했다. 나머지 lesson/step 시나리오(b~h)가
+    // 아직 어떤 완료도 만들지 않은 이 시점에 홈 시나리오를 실행해, i2의 "완료 0건"
+    // 판정이 다른 시나리오의 부수 효과와 섞이지 않게 한다.
+
+    function extractAttrs(body, attr) {
+      const stripped = body.replace(/<!--\s*-->/g, '');
+      return [...stripped.matchAll(new RegExp(`${attr}="([^"]*)"`, 'g'))].map((m) => m[1]);
+    }
+
+    function extractHomeCtaLessonSlug(body) {
+      // 홈 페이지에는 이어서 학습하기 CTA 말고 다른 /lesson/ 링크가 없다
+      // (Step 카드는 /step/N을 가리킨다) — 유일한 href만 뽑으면 된다.
+      const stripped = body.replace(/<!--\s*-->/g, '');
+      const match = stripped.match(/href="\/lesson\/([a-z0-9-]+)"/);
+      return match ? match[1] : null;
+    }
+
+    // i1. 쿠키 없이 홈 GET → 진도 UI 마커 0건, Step 링크 3개, 사이트 제목 존재 (D-18+D-20)
+    {
+      const res = await fetchWithTimeout(`${BASE_URL}/`);
+      if (res.status !== 200) {
+        throw new FatalError(`시나리오 i1 실패 — 쿠키 없는 홈 요청이 200이 아닙니다 (status=${res.status})`);
+      }
+      const body = await res.text();
+      if (body.includes('data-progress-ui')) {
+        throw new FatalError('시나리오 i1 실패 — 쿠키 없는 홈 응답에 data-progress-ui 마커가 존재합니다 (D-20 위반)');
+      }
+      for (const stepId of [1, 2, 3]) {
+        if (!body.includes(`href="/step/${stepId}"`)) {
+          throw new FatalError(`시나리오 i1 실패 — 쿠키 없는 홈 응답에 /step/${stepId} 링크가 없습니다 (D-18 위반)`);
+        }
+      }
+      if (!body.includes('AI Engineer Runway')) {
+        throw new FatalError('시나리오 i1 실패 — 쿠키 없는 홈 응답에 사이트 제목이 없습니다 (D-18 위반)');
+      }
+    }
+    console.log('e2e-progress: i1/i 홈 쿠키 없음 → 진도 UI 마커 0건 + Step 링크 3개 + 사이트 제목 존재 OK');
+
+    // i2. 잠금 쿠키로 홈 GET → 요약 블록 마커 + Step 진행률 바 마커 3개 존재.
+    // 완료 0건이면(현재 실제 DB 상태) empty state 문구·퍼센트 0을 함께 확인한다.
+    let beforeOverallPercent;
+    let beforeStepPercents;
+    {
+      const { data: rows, error } = await admin.from('progress').select('lesson_id');
+      if (error) throw new FatalError(`시나리오 i2 준비(select) 실패 — Supabase 오류: ${error.message}`);
+      const actualCompletedCount = rows.length;
+
+      const res = await fetchWithTimeout(`${BASE_URL}/`, { headers: { Cookie: cookieHeader } });
+      const body = await res.text();
+      if (!body.includes('data-progress-ui="summary"')) {
+        throw new FatalError('시나리오 i2 실패 — 잠금 쿠키 홈 응답에 요약 블록 마커가 없습니다');
+      }
+      const stepBarCount = (body.match(/data-progress-ui="step-bar"/g) || []).length;
+      if (stepBarCount !== 3) {
+        throw new FatalError(`시나리오 i2 실패 — Step 진행률 바 마커가 3개가 아닙니다 (got ${stepBarCount})`);
+      }
+      const percentAttrs = extractAttrs(body, 'data-progress-percent');
+      if (percentAttrs.length !== 1) {
+        throw new FatalError(`시나리오 i2 실패 — data-progress-percent 속성을 정확히 1개 찾지 못했습니다 (got ${percentAttrs.length})`);
+      }
+      beforeOverallPercent = Number(percentAttrs[0]);
+      beforeStepPercents = extractAttrs(body, 'data-step-percent').map(Number);
+      if (beforeStepPercents.length !== 3) {
+        throw new FatalError(`시나리오 i2 실패 — data-step-percent 속성이 3개가 아닙니다 (got ${beforeStepPercents.length})`);
+      }
+
+      if (actualCompletedCount === 0) {
+        if (beforeOverallPercent !== 0) {
+          throw new FatalError(`시나리오 i2 실패 — 완료 0건인데 data-progress-percent가 0이 아닙니다 (got ${beforeOverallPercent})`);
+        }
+        if (!body.includes('학습을 시작해볼까요?')) {
+          throw new FatalError('시나리오 i2 실패 — 완료 0건 상태의 empty state 제목 문구가 없습니다');
+        }
+      }
+    }
+    console.log(
+      `e2e-progress: i2/i 홈 잠금 쿠키 → 요약 마커 + Step 바 3개 존재 OK (overall=${beforeOverallPercent}%, steps=${beforeStepPercents.join('/')}%)`,
+    );
+
+    // i3. service_role로 프로브 레슨 완료 처리 → 전체 퍼센트 증가, 프로브가 속한
+    // Step의 바 값만 증가, 나머지 두 Step 바는 불변 (UI-SPEC #21 부분 진행 확인).
+    let afterOverallPercent;
+    let afterStepPercents;
+    {
+      const { error } = await admin
+        .from('progress')
+        .upsert({ lesson_id: PROBE_SLUG, completed_at: new Date().toISOString() });
+      if (error) throw new FatalError(`시나리오 i3 준비(upsert) 실패 — Supabase 오류: ${error.message}`);
+
+      const res = await fetchWithTimeout(`${BASE_URL}/`, { headers: { Cookie: cookieHeader } });
+      const body = await res.text();
+      const percentAttrs = extractAttrs(body, 'data-progress-percent');
+      afterOverallPercent = Number(percentAttrs[0]);
+      afterStepPercents = extractAttrs(body, 'data-step-percent').map(Number);
+
+      if (!(afterOverallPercent > beforeOverallPercent)) {
+        throw new FatalError(
+          `시나리오 i3 실패 — 프로브 완료 후 전체 퍼센트가 증가하지 않았습니다 (before=${beforeOverallPercent}, after=${afterOverallPercent})`,
+        );
+      }
+      const probeIndex = PROBE_STEP_ID - 1;
+      if (!(afterStepPercents[probeIndex] > beforeStepPercents[probeIndex])) {
+        throw new FatalError(
+          `시나리오 i3 실패 — 프로브가 속한 Step ${PROBE_STEP_ID}의 바 값이 증가하지 않았습니다 (before=${beforeStepPercents[probeIndex]}, after=${afterStepPercents[probeIndex]})`,
+        );
+      }
+      for (let i = 0; i < 3; i++) {
+        if (i === probeIndex) continue;
+        if (afterStepPercents[i] !== beforeStepPercents[i]) {
+          throw new FatalError(
+            `시나리오 i3 실패 — 프로브와 무관한 Step ${i + 1}의 바 값이 변했습니다 (before=${beforeStepPercents[i]}, after=${afterStepPercents[i]})`,
+          );
+        }
+      }
+
+      // i4. '이어서 학습하기' CTA 대상이 매니페스트 기반 독립 계산과 일치하는지 확인.
+      const { data: rows, error: selError } = await admin.from('progress').select('lesson_id');
+      if (selError) throw new FatalError(`시나리오 i4 준비(select) 실패 — Supabase 오류: ${selError.message}`);
+      const completedSlugSet = new Set(rows.map((r) => r.lesson_id));
+      const expectedNextSlug = computeExpectedFirstIncompleteSlug(completedSlugSet);
+      const actualCtaSlug = extractHomeCtaLessonSlug(body);
+      if (expectedNextSlug === null) {
+        if (actualCtaSlug !== null) {
+          throw new FatalError('시나리오 i4 실패 — 전건 완료로 계산됐는데 홈에 /lesson/ CTA가 남아 있습니다');
+        }
+      } else if (actualCtaSlug !== expectedNextSlug) {
+        throw new FatalError(
+          `시나리오 i4 실패 — CTA 대상(${actualCtaSlug})이 독립 계산한 첫 미완료 slug(${expectedNextSlug})와 다릅니다`,
+        );
+      }
+    }
+    console.log(
+      `e2e-progress: i3-i4/i 프로브 완료 → 전체·Step 퍼센트 증가 + 나머지 Step 불변 + CTA 대상 일치 OK (overall=${afterOverallPercent}%, steps=${afterStepPercents.join('/')}%)`,
+    );
+
+    // i5. 프로브 삭제(원상 복구) → 전체 퍼센트가 i2 관측값으로 복귀.
+    {
+      const { error } = await admin.from('progress').delete().eq('lesson_id', PROBE_SLUG);
+      if (error) throw new FatalError(`시나리오 i5 준비(delete) 실패 — Supabase 오류: ${error.message}`);
+
+      const res = await fetchWithTimeout(`${BASE_URL}/`, { headers: { Cookie: cookieHeader } });
+      const body = await res.text();
+      const restoredOverallPercent = Number(extractAttrs(body, 'data-progress-percent')[0]);
+      if (restoredOverallPercent !== beforeOverallPercent) {
+        throw new FatalError(
+          `시나리오 i5 실패 — 프로브 삭제 후 전체 퍼센트가 원래 값(${beforeOverallPercent})으로 복귀하지 않았습니다 (got ${restoredOverallPercent})`,
+        );
+      }
+    }
+    console.log('e2e-progress: i5/i 프로브 삭제 → 홈 전체 퍼센트 원상 복구 OK (TRACK-04)');
+
     // b. 쿠키 없이 GET — 진도 UI 마커 0건 + 레슨 제목은 존재 (D-18/D-20)
     {
       const res = await fetchWithTimeout(`${BASE_URL}/lesson/${PROBE_SLUG}`);
@@ -156,8 +340,6 @@ async function main() {
       }
     }
     console.log('e2e-progress: b/f 쿠키 없음 → 진도 UI 마커 0건 + 레슨 제목 존재 OK');
-
-    const cookieHeader = `${UNLOCK_COOKIE_NAME}=${UNLOCK_SECRET}`;
 
     // c. 올바른 쿠키 + DB 미완료 → todo
     {
@@ -205,9 +387,7 @@ async function main() {
     }
     console.log('e2e-progress: e/f DB 삭제 → todo 복귀 OK (TRACK-02)');
 
-    // h. Step 페이지 시나리오 (02-03, TRACK-03) — 프로브 레슨이 속한 stepId는
-    // 매니페스트에서 읽는다(하드코딩 금지).
-    const PROBE_STEP_ID = PROBE_LESSON.stepId;
+    // h. Step 페이지 시나리오 (02-03, TRACK-03)
 
     function extractHeaderBadgeCount(body) {
       // React SSR은 인접한 JSX 표현식 사이에 <!-- --> 마커를 끼워 넣는다
