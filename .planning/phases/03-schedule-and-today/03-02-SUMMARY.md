@@ -201,3 +201,7 @@ None - no external service configuration required.
 ---
 *Phase: 03-schedule-and-today*
 *Completed: 2026-08-25*
+
+## Self-Check: PASSED
+
+All key files (scripts/check-manifest.mjs, .planning/ROADMAP.md, this SUMMARY.md) confirmed present on disk; all 4 commits (eb74e04, 42b8c4c, 7ee930b, a70b158) confirmed in git log.
