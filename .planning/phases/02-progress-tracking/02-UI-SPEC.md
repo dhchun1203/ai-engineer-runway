@@ -1,7 +1,7 @@
 ---
 phase: 2
 slug: progress-tracking
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-08-24
@@ -126,6 +126,7 @@ Inherited unchanged from Phase 1 — same hex values, no new color tokens. Phase
 | `/unlock` invalid-key heading | 유효하지 않은 링크예요 |
 | `/unlock` invalid-key body | 링크를 다시 확인해주세요. |
 | `/unlock` invalid-key CTA | 홈으로 돌아가기 |
+| 진행률 조회 실패 배너 (읽기 장애, D-31) | 진행률을 불러오지 못했어요. 새로고침 후 다시 확인해주세요. — 홈에서는 진행률 요약 블록 자리, 레슨 페이지에서는 완료 버튼 자리에 렌더. 인라인 배지/바/완료 마커는 이 상태에서 렌더하지 않음 |
 | Destructive confirmation | 해당 없음 — Phase 2에 파괴적 액션 없음 (완료 취소는 되돌릴 수 있는 일반 토글이지 삭제가 아님, D-24). Destructive 토큰은 계속 미사용 예약 상태. |
 | Completion animation note (D-23, Claude's Discretion) | CSS-only 연출: 체크 아이콘 fade+scale-in(0 → 1.15 → 1, ~450ms) + 버튼 주변 accent 색 ring/glow가 한 번 확장하며 사라짐. 새 라이브러리(Framer Motion 등) 도입 없이 Tailwind `@keyframes`로 구현. `prefers-reduced-motion: reduce`에서는 트랜지션 없이 즉시 상태만 바뀐다. |
 
@@ -139,24 +140,51 @@ Inherited unchanged from Phase 1 — same hex values, no new color tokens. Phase
 > Empty-state and error-state COPY live in `## Copywriting Contract` above — this section covers
 > state coverage and REFERENCES those rows rather than restating the copy (de-dup).
 
-Applicable state considerations resolved: 12 covered, 1 backstop, 1 unresolved (14 total).
+Probe run 2026-08-24 (ui-consideration-probe, 6 elements × applicable categories = 35 items).
+User-confirmed: element list complete (no missed surfaces); read-failure fallback decided (D-31, error banner);
+remaining items batch-confirmed against existing UI-SPEC/CONTEXT decisions.
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
-| empty | 진행률 요약 블록 (완료 0건) | ✅ covered | Copywriting Contract의 empty-state 카피("학습을 시작해볼까요?")를 렌더 — 0%도 숫자로만 보여주지 않고 친근한 문구를 붙인다 (D-27 근거 유지) |
-| empty | 모듈/Step 진행률 배지 (완료 0건) | ✅ covered | "완료 0/N · 0%"를 그대로 표시 — 모듈은 항상 ≥1개 레슨을 포함하므로 목록 자체가 비는 경우는 없음 |
-| loading | 진행률 요약/배지/Step 카드 값 렌더 | ✅ covered | Server Component가 요청 시점에 Supabase 조회를 마친 값을 렌더하므로 클라이언트 로딩/스켈레톤 상태 불필요 (ARCHITECTURE.md Pattern 1, Phase 1과 동일 원칙 계승) |
-| loading | 완료 버튼 저장 중(네트워크 지연) | 🧪 backstop | 낙관적 업데이트로 시각 상태는 즉시 바뀌고, 저장 확정 전까지 버튼이 짧게 비활성화되어 중복 클릭을 막는다 — 별도 스피너 없음. 자동 테스트로 느린 네트워크를 재현하기 어려워 backstop 처리 (수동 UAT로 확인) |
-| error | 완료 버튼 저장 실패 | ✅ covered | D-29 + Copywriting Contract "Save error" 행 — 체크 상태 롤백, 인라인 에러+재시도 버튼 |
-| error | `/unlock` 잘못된/만료된 key | ✅ covered | Copywriting Contract "invalid-key" 행 |
-| error | 진행률 조회 자체 실패(Supabase 장애) | ⚠ unresolved | 사이트 전체 진행률 표시가 실패하는 경우의 폴백(0%로 표시 vs 에러 배너 vs 진행률 UI 자체를 숨기고 콘텐츠만 렌더)이 CONTEXT.md/RESEARCH.md 어디에도 명시되지 않음 — planner가 가정으로 처리해야 함 |
-| populated | Step 카드 진행률 바(D-07 placeholder → 실데이터) | ✅ covered | 기존 컴포넌트(`step-card.tsx`)에 실제 `progressPercent`만 주입, 레이아웃 변경 없음 |
-| populated | 모듈 아코디언 진행률 배지 | ✅ covered | "완료 {n}/{total} · {percent}%" 포맷이 본 계약서에 확정됨 |
-| overflow | 진행률 요약 블록, 좁은 화면(375px) | ✅ covered | 기존 홈 반응형 레이아웃(세로 스택) 안에 들어가며 Step 카드 그리드와 동일한 컨테이너 규칙을 따름 — 겹침 없음 |
-| overflow | 완료/전체 숫자 표기(예: "35/35") | ✅ covered | `whitespace-nowrap` 적용, 두 자리 숫자에서도 줄바꿈 없이 표시 |
-| zero-one-many | 전체 완료 100% (모든 레슨 완료) | ✅ covered | Copywriting Contract "all-complete" 행 — CTA가 "이어서 학습하기"에서 "커리큘럼 처음으로"로 교체됨 (진짜로 이동할 미완료 레슨이 없는 상태를 명시적으로 처리) |
-| zero-one-many | 첫 완료(1레슨만 완료된 상태) | ✅ covered | 요약 블록은 empty→populated 전환만 하고 숫자만 갱신 — "첫 완료"만을 위한 별도 특수 카피는 없음 (Claude's Discretion 범위, 과설계 방지) |
-| long-text | Phase 2 신규 요소 전반(버튼/배지/요약 카피) | ⚠ dismissed — 해당 없음 | 모두 고정 짧은 카피 템플릿(본 계약서 Copywriting Contract) — 가변 장문 텍스트가 들어가는 요소 없음, Phase 1과 동일하게 dismiss 처리 |
+Resolved: 35/35 — 30 explicit, 1 backstop, 4 dismissed (reasoned), 0 unresolved.
+
+Elements: E1 완료 토글 버튼 · E2 홈 진행률 요약 블록 · E3 모듈/Step 진행률 배지 · E4 Step 카드 진행률 바 · E5 `/unlock` 페이지 · E6 완료된 레슨 목록 아이템
+
+| # | Category | Element | Status | Resolution / Reason |
+|---|----------|---------|--------|---------------------|
+| 1 | empty | E1 | ✅ explicit | 미완료(unchecked)가 곧 empty 상태 — Copywriting Contract "레슨 완료하기" 행이 그 상태의 전부를 정의 |
+| 2 | loading | E1 | 🧪 backstop | { statement: 저장 중에는 낙관적 업데이트로 시각 상태가 즉시 바뀌고 저장 확정 전까지 버튼이 비활성화되어 중복 클릭을 막는다 (스피너 없음), verification: backstop } — 느린 네트워크 자동 재현이 어려워 수동 UAT로 확인 |
+| 3 | error | E1 (저장 실패) | ✅ explicit | D-29 + Copywriting Contract "Save error" 행 — 체크 상태 롤백, 인라인 에러 + "다시 시도" 버튼 |
+| 4 | populated | E1 | ✅ explicit | 체크 상태 "완료했어요 ✓" + `CheckCircle2` accent 아이콘 + 완료 애니메이션 (Copywriting Contract 애니메이션 행) |
+| 5 | long-text | E1 | ⚠ dismissed | 고정 카피 2종만 사용 — 가변 텍스트 없음 |
+| 6 | loading | E2 | ✅ explicit | Server Component가 조회 완료된 값을 렌더 — 클라이언트 로딩/스켈레톤 불필요 (ARCHITECTURE.md Pattern 1) |
+| 7 | error | E2 (조회 실패) | ✅ explicit | **D-31 (본 세션 사용자 결정): 에러 배너 표시** — 요약 블록 자리에 Copywriting Contract "진행률 조회 실패 배너" 행을 렌더, 진행률 수치는 표시하지 않음 (0% 오해 방지) |
+| 8 | overflow | E2 (375px) | ✅ explicit | 기존 홈 반응형 세로 스택 레이아웃 준수, Step 카드 그리드와 동일 컨테이너 규칙 — 겹침 없음 |
+| 9 | long-text | E2 | ⚠ dismissed | 고정 카피 템플릿만 사용 ({n}/{total} 숫자 치환) — 가변 장문 없음 |
+| 10 | empty | E3 (완료 0건) | ✅ explicit | "완료 0/N · 0%" 그대로 표시, 퍼센트 숫자는 neutral 색 (0%일 때 accent 미적용) |
+| 11 | loading | E3 | ✅ explicit | 서버 렌더 — 로딩 상태 없음 (#6과 동일 원칙) |
+| 12 | error | E3 (조회 실패) | ✅ explicit | D-31 — 조회 실패 시 인라인 배지는 렌더하지 않음 (페이지 상단 배너가 실패를 전달, 배지별 에러 표시는 하지 않음) |
+| 13 | populated | E3 | ✅ explicit | "완료 {n}/{total} · {percent}%" 포맷 확정, >0%면 퍼센트 accent 색 |
+| 14 | partial | E3 | ✅ explicit | 배지마다 독립 계산 — 일부 모듈만 진행된 상태는 각 배지의 n/total이 자연히 표현, 특수 처리 없음 |
+| 15 | overflow | E3 | ✅ explicit | `whitespace-nowrap` — "35/35" 등 두 자리에서도 줄바꿈 없음 |
+| 16 | zero-one-many | E3 | ✅ explicit | 0/1/다수 완료 모두 동일 포맷 — 한국어 카피라 단복수 분기 불필요 |
+| 17 | empty | E4 (0%) | ✅ explicit | 0% = 빈 트랙만 표시 (Phase 1 placeholder와 동일한 시각), 값만 실데이터 |
+| 18 | loading | E4 | ✅ explicit | 서버 렌더 — 로딩 상태 없음 |
+| 19 | error | E4 (조회 실패) | ✅ explicit | D-31 — 조회 실패 시 바 미렌더 (Phase 1 정적 모습으로 폴백), 상단 배너가 상태 전달 |
+| 20 | populated | E4 | ✅ explicit | 기존 `step-card.tsx`에 실제 `progressPercent` 주입, 해당 Step identity 색 사용, 레이아웃 변경 없음 |
+| 21 | partial | E4 | ✅ explicit | Step별 독립 계산 — 일부 Step만 진행된 상태는 각 바의 % 값으로 자연 표현 |
+| 22 | overflow | E4 | ✅ explicit | `progressPercent`는 0–100으로 클램프 — 바 fill이 트랙을 넘지 않음 |
+| 23 | zero-one-many | E4 | ✅ explicit | 3개 Step 카드 항상 고정 렌더 — 항목 수 가변성 없음 |
+| 24 | loading | E5 | ✅ explicit | 서버에서 key 검증 후 성공/실패 완성 페이지를 렌더 — 클라이언트 로딩 상태 없음 |
+| 25 | error | E5 (invalid key) | ✅ explicit | Copywriting Contract "invalid-key" heading/body/CTA 행 |
+| 26 | overflow | E5 | ⚠ dismissed | 고정 카피 한 단락 + 버튼 1개 — 컨테이너 초과 시나리오 없음 |
+| 27 | long-text | E5 | ⚠ dismissed | 고정 카피만 사용 — 가변 텍스트 없음 |
+| 28 | empty | E6 (완료 0건) | ✅ explicit | 모든 행이 Phase 1과 동일한 미완료 스타일("레슨 시작하기")로 렌더 — 완료 마커 없음이 곧 empty 표현 |
+| 29 | loading | E6 | ✅ explicit | 서버 렌더 — 로딩 상태 없음 |
+| 30 | error | E6 (조회 실패) | ✅ explicit | D-31 — 완료 마커/"다시 보기" 전환을 렌더하지 않고 전 행을 미완료 기본형으로 표시, 상단 배너가 상태 전달 |
+| 31 | populated | E6 | ✅ explicit | 완료 행: neutral 텍스트 톤다운 + accent `CheckCircle2` + "다시 보기" CTA (D-24) |
+| 32 | partial | E6 | ✅ explicit | 완료/미완료 행이 한 목록에 혼재 — 행 단위 독립 스타일이라 특수 처리 불필요 |
+| 33 | overflow | E6 | ✅ explicit | 레슨 제목은 Phase 1 목록과 동일하게 줄바꿈(wrap) — 말줄임 없음, 아이콘은 `shrink-0` |
+| 34 | zero-one-many | E6 | ✅ explicit | 0/1/다수 완료 모두 행 단위 규칙으로 동일 처리 — 목록 구조 불변 |
+| 35 | long-text | E6 (레슨 제목) | ✅ explicit | 긴 제목은 여러 줄로 wrap, `CheckCircle2` 아이콘은 첫 줄 기준 상단 정렬 유지 |
 
 ---
 
@@ -171,11 +199,11 @@ Applicable state considerations resolved: 12 covered, 1 backstop, 1 unresolved (
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** APPROVED (gsd-ui-checker, 2026-08-24 — 6/6 PASS, no blockers)
