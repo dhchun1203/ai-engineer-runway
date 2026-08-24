@@ -249,6 +249,7 @@ const DYNAMIC_GATED_PAGES = [
   path.join(ROOT, 'src', 'app', 'lesson', '[lessonId]', 'page.tsx'),
   path.join(ROOT, 'src', 'app', 'step', '[stepId]', 'page.tsx'),
   path.join(ROOT, 'src', 'app', 'page.tsx'),
+  path.join(ROOT, 'src', 'app', 'curriculum', 'page.tsx'),
 ];
 
 for (const pagePath of DYNAMIC_GATED_PAGES) {
@@ -406,6 +407,57 @@ if (fs.existsSync(DASHBOARD_SEGMENT_PATH)) {
   fail(
     `G16 failed: ${path.relative(ROOT, DASHBOARD_SEGMENT_PATH)} exists — D-25 decided against a separate dashboard route in favor of enhancing the home page`,
   );
+}
+
+// --- G17: /와 /curriculum 각각에서 hasUnlockCookie 첫 등장 위치가
+// readCompletedLessonIds 첫 등장보다 앞선다 (G14가 Step 페이지에 대해 하는 것과
+// 동일한 형태) — 게이트를 건너뛰고 조회하는 회귀를 잡는다 (03-01, T-03-01) ---
+
+const G17_GATED_PAGES = [
+  path.join(ROOT, 'src', 'app', 'page.tsx'),
+  path.join(ROOT, 'src', 'app', 'curriculum', 'page.tsx'),
+];
+
+for (const pagePath of G17_GATED_PAGES) {
+  const source = readFileIfExists(pagePath);
+  if (source === null) {
+    fail(`G17 failed: ${path.relative(ROOT, pagePath)} not found`);
+    continue;
+  }
+  const hasUnlockIdx = source.indexOf('hasUnlockCookie');
+  const readCompletedIdx = source.indexOf('readCompletedLessonIds');
+  if (hasUnlockIdx === -1 || readCompletedIdx === -1) {
+    fail(
+      `G17 failed: expected hasUnlockCookie and readCompletedLessonIds to both appear in ${path.relative(ROOT, pagePath)}`,
+    );
+  } else if (hasUnlockIdx >= readCompletedIdx) {
+    fail(
+      `G17 failed: hasUnlockCookie must appear before readCompletedLessonIds in ${path.relative(ROOT, pagePath)} (cookie gate must run before progress read)`,
+    );
+  }
+}
+
+// --- G18: src/lib/today.ts와 src/lib/schedule.ts가 의존성 0 순수 모듈을
+// 유지한다 — 주석을 걷어낸 코드에 import 문이 한 건도 없어야 한다. 위반 시
+// check-schedule.mjs가 트랜스파일러 없이 로드하지 못하게 된다 (03-01) ---
+
+const G18_PURE_MODULES = [
+  path.join(ROOT, 'src', 'lib', 'today.ts'),
+  path.join(ROOT, 'src', 'lib', 'schedule.ts'),
+];
+
+for (const modulePath of G18_PURE_MODULES) {
+  const source = readFileIfExists(modulePath);
+  if (source === null) {
+    fail(`G18 failed: ${path.relative(ROOT, modulePath)} not found`);
+    continue;
+  }
+  const codeOnly = stripJsLineComments(source);
+  if (/^\s*import\s+.+$/m.test(codeOnly)) {
+    fail(
+      `G18 failed: ${path.relative(ROOT, modulePath)} contains an import statement — 의존성 0 순수 모듈이라야 게이트 스크립트가 트랜스파일러 없이 로드할 수 있다`,
+    );
+  }
 }
 
 // --- 결과 ---
