@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 2
-current_phase_name: 진도 체크와 진행률
+current_phase: 02
+current_phase_name: progress-tracking
 status: executing
-stopped_at: Phase 2 UI-SPEC approved
-last_updated: "2026-08-24T05:12:26.057Z"
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-08-24T07:51:22.477Z"
 last_activity: 2026-08-24
 last_activity_desc: Phase 1 검증·UAT·보안 게이트 통과, 완료 처리
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 10
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 # Project State
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-24)
 
 **Core value:** 개강 전까지 커리큘럼의 기초를 확실히 다질 수 있도록 — 콘텐츠를 읽고, 완료를 체크하고, 진행률과 일정을 한눈에 확인하는 흐름이 반드시 동작해야 한다.
-**Current focus:** Phase 2 — 진도 체크와 진행률
+**Current focus:** Phase 02 — progress-tracking
 
 ## Current Position
 
-Phase: 2 — 진도 체크와 진행률
-Plan: Not started
+Phase: 02 (progress-tracking) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-08-24 — Phase 01 complete, transitioned to Phase 2
+Last activity: 2026-08-24 — Phase 02 execution started
 
-Progress: [██████████] 100%
+Progress: [███████░░░] 70%
 
 ## Performance Metrics
 
@@ -64,6 +64,7 @@ Progress: [██████████] 100%
 | Phase 01 P04 | 약 15분 | 3 tasks | 9 files |
 | Phase 01 P05 | 약 15분 | 3 tasks | 7 files |
 | Phase 01 P06 | 약 20분 | 3 tasks | 3 files |
+| Phase 02 P01 | 100min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,8 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 1 Plan 6]: 파일럿 2 실무 예제를 좋아요 버튼 카드(props+state+Link 라우팅)로 설계해 사이트 자체의 실제 컴포넌트 패턴을 참조하게 함
 - [Phase ?]: [Phase 1 Plan 6]: 복사 버튼 44px 오버라이드는 min-width/min-height는 충돌 없이 적용되지만 top/margin/background는 selector specificity(.prose 접두사)로 강제해야 함을 확인
 - [Phase ?]: [Phase 1 Plan 6]: Plan 03~05가 로컬 커밋만 하고 push하지 않았던 것을 발견 — Task 3 프로덕션 검증 전 git push origin master로 15개 미반영 커밋을 배포에 반영(Rule 3)
+- [Phase ?]: Exact-pinned @supabase/supabase-js@2.112.3 and server-only@0.0.1 (no caret) per SUS/ASSUMED package audit flags — Prevents unverified patch versions from silently entering a flagged dependency
+- [Phase ?]: Reused existing Supabase project (ai-news-briefing) for public.progress instead of a new dedicated project — Free-tier constraint, user decision; existing tables (subscribers, search_articles) left untouched
 
 ### Pending Todos
 
@@ -113,6 +116,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-24T04:12:19.116Z
-Stopped at: Phase 2 UI-SPEC approved
-Resume file: C:/Users/dhchu/dev/aiEngineerCourse/.planning/phases/02-progress-tracking/02-UI-SPEC.md
+Last session: 2026-08-24T07:51:22.460Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None
