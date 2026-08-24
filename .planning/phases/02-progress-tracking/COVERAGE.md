@@ -25,7 +25,7 @@
 
 | capability | decision | reason |
 |---|---|---|
-| `createClient(url, service_role, { auth: { persistSession:false, autoRefreshToken:false } })` — 서버 전용 클라이언트 | INTEGRATE | D-17이 지정한 유일한 애플리케이션 접근 경로 |
+| `createClient(url, service_role)` — 서버 전용 클라이언트(세션 옵션 전부 off) | INTEGRATE | D-17이 지정한 유일한 애플리케이션 접근 경로 |
 | 브라우저용 anon/publishable 클라이언트 | OPT-OUT | D-17 — 클라이언트에 Supabase 키를 두지 않는다 |
 | `@supabase/ssr` 쿠키 세션 연동 | OPT-OUT | Supabase Auth 세션 자체가 없으므로 동기화할 세션이 없다 (D-17) |
 | `auth.signInAnonymously()` / `signUp` / `signInWithOtp` | OPT-OUT | D-17이 익명 세션을 명시적으로 기각(기기마다 ID가 달라져 성공 기준 1과 충돌) |
