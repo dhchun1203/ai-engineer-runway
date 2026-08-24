@@ -243,10 +243,12 @@ if (packageJsonSource === null) {
 }
 
 // --- G9: 잠금 게이트를 통과해야 하는 페이지들에 force-dynamic 선언이 있다.
-// 이번 태스크 시점에서는 레슨 페이지 하나를 검사하고, 02-03/02-04가 Step·홈을
-// 이 목록에 추가한다 ---
+// 02-03이 Step 페이지를 이 목록에 추가한다. 02-04가 홈을 추가한다 ---
 
-const DYNAMIC_GATED_PAGES = [path.join(ROOT, 'src', 'app', 'lesson', '[lessonId]', 'page.tsx')];
+const DYNAMIC_GATED_PAGES = [
+  path.join(ROOT, 'src', 'app', 'lesson', '[lessonId]', 'page.tsx'),
+  path.join(ROOT, 'src', 'app', 'step', '[stepId]', 'page.tsx'),
+];
 
 for (const pagePath of DYNAMIC_GATED_PAGES) {
   const source = readFileIfExists(pagePath);
@@ -332,6 +334,51 @@ if (completeButtonSource === null) {
   if (/useState\s*\(\s*initialDone\s*\)/.test(codeOnly)) {
     fail(
       `G12 failed: ${path.relative(ROOT, COMPLETE_BUTTON_PATH)} calls useState(initialDone) — a separate local "done" state reintroduces the cross-device staleness bug Task 1's prop-convergence design avoided`,
+    );
+  }
+}
+
+// --- G13: src/lib/progress.ts가 Velite 콘텐츠 매니페스트와 Supabase 계열
+// 모듈을 import하지 않는다 (집계 계층의 순수성 유지, 02-03) ---
+
+const PROGRESS_TS_PATH = path.join(ROOT, 'src', 'lib', 'progress.ts');
+const progressSource = readFileIfExists(PROGRESS_TS_PATH);
+
+if (progressSource === null) {
+  fail(`G13 failed: ${path.relative(ROOT, PROGRESS_TS_PATH)} not found`);
+} else {
+  const codeOnly = stripJsLineComments(progressSource);
+  if (codeOnly.includes('#site/content')) {
+    fail(
+      `G13 failed: ${path.relative(ROOT, PROGRESS_TS_PATH)} imports the Velite content manifest directly — must go through curriculum-helpers.ts instead`,
+    );
+  }
+  if (/supabase|progress-store/i.test(codeOnly)) {
+    fail(
+      `G13 failed: ${path.relative(ROOT, PROGRESS_TS_PATH)} references Supabase/progress-store — the aggregation layer must stay pure (no data access)`,
+    );
+  }
+}
+
+// --- G14: src/app/step/[stepId]/page.tsx에서 hasUnlockCookie 첫 등장 위치가
+// readCompletedLessonIds 첫 등장보다 앞선다 — 게이트를 건너뛰고 조회하는
+// 회귀를 잡는다 (02-03) ---
+
+const STEP_PAGE_PATH = path.join(ROOT, 'src', 'app', 'step', '[stepId]', 'page.tsx');
+const stepPageSource = readFileIfExists(STEP_PAGE_PATH);
+
+if (stepPageSource === null) {
+  fail(`G14 failed: ${path.relative(ROOT, STEP_PAGE_PATH)} not found`);
+} else {
+  const hasUnlockIdx = stepPageSource.indexOf('hasUnlockCookie');
+  const readCompletedIdx = stepPageSource.indexOf('readCompletedLessonIds');
+  if (hasUnlockIdx === -1 || readCompletedIdx === -1) {
+    fail(
+      `G14 failed: expected hasUnlockCookie and readCompletedLessonIds to both appear in ${path.relative(ROOT, STEP_PAGE_PATH)}`,
+    );
+  } else if (hasUnlockIdx >= readCompletedIdx) {
+    fail(
+      `G14 failed: hasUnlockCookie must appear before readCompletedLessonIds in ${path.relative(ROOT, STEP_PAGE_PATH)} (cookie gate must run before progress read)`,
     );
   }
 }

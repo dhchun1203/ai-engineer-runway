@@ -205,6 +205,95 @@ async function main() {
     }
     console.log('e2e-progress: e/f DB 삭제 → todo 복귀 OK (TRACK-02)');
 
+    // h. Step 페이지 시나리오 (02-03, TRACK-03) — 프로브 레슨이 속한 stepId는
+    // 매니페스트에서 읽는다(하드코딩 금지).
+    const PROBE_STEP_ID = PROBE_LESSON.stepId;
+
+    function extractHeaderBadgeCount(body) {
+      // React SSR은 인접한 JSX 표현식 사이에 <!-- --> 마커를 끼워 넣는다
+      // ("완료 <!-- -->0<!-- -->/<!-- -->10") — 정규식 매칭 전에 제거한다.
+      const stripped = body.replace(/<!--\s*-->/g, '');
+      const match = stripped.match(/완료\s*(\d+)\s*\/\s*(\d+)/);
+      return match ? { completed: Number(match[1]), total: Number(match[2]) } : null;
+    }
+
+    // h1. 쿠키 없이 Step 페이지 GET → 진도 UI 마커 0건 + 모듈 아코디언(<details)은
+    // 그대로 존재 (D-18 + D-20 동시 확인)
+    {
+      const res = await fetchWithTimeout(`${BASE_URL}/step/${PROBE_STEP_ID}`);
+      if (res.status !== 200) {
+        throw new FatalError(`시나리오 h1 실패 — 쿠키 없는 Step 요청이 200이 아닙니다 (status=${res.status})`);
+      }
+      const body = await res.text();
+      if (body.includes('data-progress-ui')) {
+        throw new FatalError('시나리오 h1 실패 — 쿠키 없는 Step 응답에 data-progress-ui 마커가 존재합니다 (D-20 위반)');
+      }
+      if (!body.includes('<details')) {
+        throw new FatalError('시나리오 h1 실패 — 쿠키 없는 Step 응답에 모듈 아코디언(<details)이 없습니다 (D-18 위반)');
+      }
+    }
+    console.log('e2e-progress: h1/f Step 쿠키 없음 → 진도 UI 마커 0건 + 아코디언 존재 OK');
+
+    // h2. 잠금 쿠키로 GET → 진행률 배지 마커 존재, "완료 " 접두 + "%" 포함
+    let beforeStepCount;
+    {
+      const res = await fetchWithTimeout(`${BASE_URL}/step/${PROBE_STEP_ID}`, {
+        headers: { Cookie: cookieHeader },
+      });
+      const body = await res.text();
+      if (!body.includes('data-progress-ui="badge"') || !body.includes('완료 ') || !body.includes('%')) {
+        throw new FatalError('시나리오 h2 실패 — 잠금 쿠키 보유 Step 응답에 진행률 배지 마커/텍스트가 없습니다');
+      }
+      beforeStepCount = extractHeaderBadgeCount(body);
+      if (!beforeStepCount) {
+        throw new FatalError('시나리오 h2 실패 — Step 헤더 배지에서 "완료 n/total" 형식을 찾지 못했습니다');
+      }
+    }
+    console.log(
+      `e2e-progress: h2/f Step 잠금 쿠키 → 배지 마커 존재 OK (완료 ${beforeStepCount.completed}/${beforeStepCount.total})`,
+    );
+
+    // h3. service_role로 프로브 레슨 완료 처리 → Step 헤더 배지의 완료 개수가 1 증가
+    {
+      const { error } = await admin
+        .from('progress')
+        .upsert({ lesson_id: PROBE_SLUG, completed_at: new Date().toISOString() });
+      if (error) throw new FatalError(`시나리오 h3 준비(upsert) 실패 — Supabase 오류: ${error.message}`);
+
+      const res = await fetchWithTimeout(`${BASE_URL}/step/${PROBE_STEP_ID}`, {
+        headers: { Cookie: cookieHeader },
+      });
+      const body = await res.text();
+      if (!body.includes('data-progress-ui="lesson-done"')) {
+        throw new FatalError('시나리오 h3 실패 — 완료 처리 후 완료 행 마커(data-progress-ui="lesson-done")가 없습니다');
+      }
+      const afterStepCount = extractHeaderBadgeCount(body);
+      if (!afterStepCount || afterStepCount.completed !== beforeStepCount.completed + 1) {
+        throw new FatalError(
+          `시나리오 h3 실패 — Step 헤더 배지의 완료 개수가 1 증가하지 않았습니다 (before=${beforeStepCount.completed}, after=${afterStepCount?.completed})`,
+        );
+      }
+    }
+    console.log('e2e-progress: h3/f 프로브 완료 처리 → Step 헤더 배지 완료 개수 +1 OK (TRACK-03)');
+
+    // h4. 프로브 행 삭제(원상 복구) → 완료 개수가 원래 값으로 돌아옴
+    {
+      const { error } = await admin.from('progress').delete().eq('lesson_id', PROBE_SLUG);
+      if (error) throw new FatalError(`시나리오 h4 준비(delete) 실패 — Supabase 오류: ${error.message}`);
+
+      const res = await fetchWithTimeout(`${BASE_URL}/step/${PROBE_STEP_ID}`, {
+        headers: { Cookie: cookieHeader },
+      });
+      const body = await res.text();
+      const restoredStepCount = extractHeaderBadgeCount(body);
+      if (!restoredStepCount || restoredStepCount.completed !== beforeStepCount.completed) {
+        throw new FatalError(
+          `시나리오 h4 실패 — 프로브 삭제 후 완료 개수가 원래 값(${beforeStepCount.completed})으로 복귀하지 않았습니다 (got ${restoredStepCount?.completed})`,
+        );
+      }
+    }
+    console.log('e2e-progress: h4/f 프로브 삭제 → Step 헤더 배지 완료 개수 원상 복구 OK');
+
     // g. /unlock 발급 경로 — 리다이렉트를 따라가지 않고 응답 헤더를 직접 본다.
     let issuedUnlockCookiePair = null;
     {
