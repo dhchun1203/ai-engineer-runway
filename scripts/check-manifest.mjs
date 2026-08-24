@@ -8,6 +8,12 @@
 const EXPECTED_HAS_CONTENT_COUNT = 2;
 const EXPECTED_HAS_CONTENT_SLUGS = ['1-3-python-variables-and-types', '2-3-react-components'];
 
+// 기대값 상수: estimatedMinutes 총합·분포 (D-31 — Phase 3 Plan 2에서 일괄 하향 확정).
+// 심화·비프로젝트 150×20 + 개요·비프로젝트 90×10 + 프로젝트 준비 가이드 60×5 = 4,200분(70시간).
+const EXPECTED_TOTAL_MINUTES = 4200;
+const EXPECTED_MINUTES_DISTRIBUTION = { 150: 20, 90: 10, 60: 5 };
+const EXPECTED_PROJECT_MODULE_COUNT = 5;
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -57,6 +63,20 @@ const moduleIdMatches = [...modulesSource.matchAll(/id:\s*'([0-9]-[0-9])'/g)].ma
 if (moduleIdMatches.length === 0) {
   console.error(
     `check-manifest: no module id literals (id: '<n>-<n>') extracted from ${MODULES_TS_PATH} — parsing regex may be stale`,
+  );
+  process.exit(1);
+}
+
+// 모듈 id -> isProject 맵 (같은 소스 문자열, e2e-progress.mjs readModuleOrderMap()과 같은 경계 방식:
+// 모듈 항목 하나의 중괄호 경계를 넘지 않도록 [^}]*?로 non-greedy 매칭).
+const moduleIsProjectById = new Map();
+for (const match of modulesSource.matchAll(/id:\s*'([0-9]-[0-9])'[^}]*?isProject:\s*(true|false)/g)) {
+  moduleIsProjectById.set(match[1], match[2] === 'true');
+}
+const projectModuleIds = [...moduleIsProjectById.entries()].filter(([, v]) => v).map(([id]) => id);
+if (projectModuleIds.length !== EXPECTED_PROJECT_MODULE_COUNT) {
+  console.error(
+    `check-manifest: expected exactly ${EXPECTED_PROJECT_MODULE_COUNT} isProject:true module(s) extracted from ${MODULES_TS_PATH}, got ${projectModuleIds.length} (${projectModuleIds.join(', ')}) — parsing regex may be stale`,
   );
   process.exit(1);
 }
@@ -117,10 +137,10 @@ if (invalidMinutes.length > 0) {
   );
 }
 
-// --- 6. estimatedMinutes 총합이 7200~10800 ---
+// --- 6. estimatedMinutes 총합이 정확히 4200 (D-31) ---
 const totalMinutes = lessons.reduce((sum, l) => sum + (l.estimatedMinutes || 0), 0);
-if (totalMinutes < 7200 || totalMinutes > 10800) {
-  fail(`Invariant 6 failed: estimatedMinutes total ${totalMinutes} is outside the 7200-10800 band`);
+if (totalMinutes !== EXPECTED_TOTAL_MINUTES) {
+  fail(`Invariant 6 failed: estimatedMinutes total ${totalMinutes} does not equal expected ${EXPECTED_TOTAL_MINUTES}`);
 }
 
 // --- 7. 레슨의 moduleId 집합 == 모듈 id 집합 (양방향 차집합 공집합) ---
@@ -206,6 +226,43 @@ if (actualLast !== EXPECTED_LAST_SLUG) {
   fail(`Invariant 11 failed: expected last ordered lesson slug "${EXPECTED_LAST_SLUG}", got "${actualLast}"`);
 }
 
+// --- 12. estimatedMinutes 값 분포가 정확히 {150: 20, 90: 10, 60: 5} (D-31) ---
+const minutesDistribution = {};
+for (const l of lessons) {
+  minutesDistribution[l.estimatedMinutes] = (minutesDistribution[l.estimatedMinutes] || 0) + 1;
+}
+const expectedDistKeys = Object.keys(EXPECTED_MINUTES_DISTRIBUTION);
+const actualDistKeys = Object.keys(minutesDistribution);
+const distMismatch =
+  actualDistKeys.length !== expectedDistKeys.length ||
+  expectedDistKeys.some((k) => minutesDistribution[k] !== EXPECTED_MINUTES_DISTRIBUTION[k]);
+if (distMismatch) {
+  fail(
+    `Invariant 12 failed: estimatedMinutes distribution ${JSON.stringify(minutesDistribution)} does not equal expected ${JSON.stringify(EXPECTED_MINUTES_DISTRIBUTION)}`,
+  );
+}
+
+// --- 13. estimatedMinutes가 (depth, 소속 모듈 isProject) 파생 규칙과 일치 ---
+// 규칙: 프로젝트 모듈이면 60 / 심화·비프로젝트면 150 / 개요·비프로젝트면 90 (D-31).
+// Invariant 12보다 강한 검사 — 개수만 맞고 레슨별 배정이 뒤바뀐 경우까지 잡는다.
+function expectedMinutesFor(lesson) {
+  const isProject = moduleIsProjectById.get(lesson.moduleId) === true;
+  if (isProject) return 60;
+  if (lesson.depth === '심화') return 150;
+  if (lesson.depth === '개요') return 90;
+  return null;
+}
+const derivationMismatches = lessons
+  .map((l) => ({ slug: l.slug, actual: l.estimatedMinutes, expected: expectedMinutesFor(l) }))
+  .filter((r) => r.expected !== null && r.actual !== r.expected);
+if (derivationMismatches.length > 0) {
+  fail(
+    `Invariant 13 failed: ${derivationMismatches.length} lesson(s) violate the (depth, isProject) derivation rule: ${derivationMismatches
+      .map((r) => `${r.slug}=${r.actual} (expected ${r.expected})`)
+      .join(', ')}`,
+  );
+}
+
 // --- 결과 ---
 if (errors.length > 0) {
   console.error(`check-manifest: ${errors.length} invariant(s) failed:\n`);
@@ -216,6 +273,6 @@ if (errors.length > 0) {
 }
 
 console.log(
-  `check-manifest: all 11 invariants passed (35 lessons, 19 modules, total ${totalMinutes} minutes)`,
+  `check-manifest: all 13 invariants passed (35 lessons, 19 modules, total ${totalMinutes} minutes)`,
 );
 process.exit(0);
