@@ -122,3 +122,7 @@ None — 외부 서비스 설정 필요 없음. 학습자가 실습할 때는 �
 ---
 *Phase: 04-step-1*
 *Completed: 2026-08-25*
+
+## Self-Check: PASSED
+
+All created files verified present on disk; all three commits (`ec5faac`, `d18586e`, `5e69966`) verified present in git log.
