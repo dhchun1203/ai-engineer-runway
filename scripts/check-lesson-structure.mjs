@@ -9,9 +9,13 @@
 // hasContent: true인 파일만. false인 스텁은 건너뛴다(아직 본문이 없으므로 구조를
 // 검사할 대상이 아니다). Phase 5(D-71)가 Step 1 전용 스코프를 세 디렉터리
 // 전체로 확대했다 — 심화(Step 1·2)·개요(Step 3)·프로젝트 준비 가이드 세 형식
-// 모두에 예외 없이 같은 6개 검사(L1~L6)를 적용한다(D-69, 형식 예외 없음).
+// 모두에 예외 없이 같은 7개 검사(L1~L7)를 적용한다(D-69, 형식 예외 없음).
 // 허용 코드펜스 언어는 D-72로 13개(python/sql/bash/powershell/text +
 // typescript/tsx/javascript/jsx/json/html/css/yaml)로 확장됐다.
+// L7(Phase 5 05-01 사용자 리뷰 재작업)은 본문 단락 길이 상한을 검사한다 — 사용자가
+// "지금 구현된 모든 레슨"이 문단 구분 없이 장문으로 나열돼 읽기 어렵다고 지적했다.
+// CSS 문단 간격을 고쳐도 단락 자체가 200자를 넘으면 여전히 벽처럼 읽히므로, 앞으로
+// 쓰는 22편이 같은 문제를 반복하지 않도록 자동 게이트로 상시 강제한다.
 
 const EXPECTED_HEADINGS = [
   '## 1. 학습 목표',
@@ -35,6 +39,7 @@ const ALLOWED_FENCE_LANG_PREFIXES = [
   'python', 'sql', 'bash', 'powershell', 'text',
   'typescript', 'tsx', 'javascript', 'jsx', 'json', 'html', 'css', 'yaml',
 ];
+const PARAGRAPH_CHAR_MAX = 200;
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -203,6 +208,65 @@ function checkFenceLanguages(slug, lines) {
   });
 }
 
+// --- L7: 본문 단락(연속된 non-blank 줄 묶음) 길이가 PARAGRAPH_CHAR_MAX(200자) 이하 ---
+// "본문 단락"이 아닌 것: `## `/`### ` 헤딩, 목록 항목(`- `/`* `/`1. `), 표 행(`|`),
+// 인용문(`>`), 코드펜스 내부, HTML 태그 줄(`<details>`/`<summary>`/`</details>` 등),
+// 프론트매터 블록 내부. 그 외 연속된 non-blank 줄은 하나의 단락으로 이어붙여 길이를 잰다.
+function checkParagraphLength(slug, lines) {
+  let inFence = false;
+  let inFrontmatter = false;
+  let paragraphLines = [];
+
+  function flushParagraph() {
+    if (paragraphLines.length === 0) return;
+    const text = paragraphLines.join(' ');
+    if (text.length > PARAGRAPH_CHAR_MAX) {
+      fail(
+        `L7 (${slug}): body paragraph is ${text.length} chars (max ${PARAGRAPH_CHAR_MAX}), starts with "${text.slice(0, 30)}"`,
+      );
+    }
+    paragraphLines = [];
+  }
+
+  lines.forEach((line, idx) => {
+    const trimmed = line.trim();
+
+    if (idx === 0 && trimmed === '---') {
+      inFrontmatter = true;
+      return;
+    }
+    if (inFrontmatter) {
+      if (trimmed === '---') inFrontmatter = false;
+      return;
+    }
+    if (trimmed.startsWith('```')) {
+      flushParagraph();
+      inFence = !inFence;
+      return;
+    }
+    if (inFence) return;
+
+    const isNonParagraphLine =
+      trimmed === '' ||
+      trimmed.startsWith('## ') ||
+      trimmed.startsWith('### ') ||
+      trimmed.startsWith('- ') ||
+      trimmed.startsWith('* ') ||
+      /^\d+\.\s/.test(trimmed) ||
+      trimmed.startsWith('|') ||
+      trimmed.startsWith('>') ||
+      trimmed.startsWith('<');
+
+    if (isNonParagraphLine) {
+      flushParagraph();
+      return;
+    }
+
+    paragraphLines.push(trimmed);
+  });
+  flushParagraph();
+}
+
 let checkedCount = 0;
 
 for (const absPath of allFiles) {
@@ -222,6 +286,7 @@ for (const absPath of allFiles) {
   checkBlankLineRule(slug, lines);
   checkTermTable(slug, lines);
   checkFenceLanguages(slug, lines);
+  checkParagraphLength(slug, lines);
 }
 
 // 검사 대상이 0개면 그 자체가 오류다 — 게이트가 아무것도 검사하지 않고 조용히
@@ -238,5 +303,5 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log(`check-lesson-structure: ${checkedCount}개 레슨, 6개 검사 통과`);
+console.log(`check-lesson-structure: ${checkedCount}개 레슨, 7개 검사 통과`);
 process.exit(0);
