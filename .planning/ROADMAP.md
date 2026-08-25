@@ -183,7 +183,7 @@ Plans:
   3. 커리큘럼 실습 프로젝트 5종이 각각 개요·사전 준비 가이드 레슨으로 제공된다 (본 과정 재현이 아닌 준비 안내)
   4. 전체 커리큘럼 진행률이 100%까지 도달 가능한 상태가 되고, Making-of 페이지가 구현→검증→배포 과정까지 기록을 마친다
 
-**Plans**: 8/13 plans executed (5 waves)
+**Plans**: 12/13 plans executed (5 waves)
 
 Plans:
 **Wave 1**
@@ -205,10 +205,10 @@ Plans:
 **Wave 4** *(blocked on Wave 3 completion)*
 
 - [x] 05-08-PLAN.md — [wave 4] 3-1-hybrid 개요 + 3-2 프로젝트 가이드
-- [ ] 05-09-PLAN.md — [wave 4] 3-3 모듈 2편 (PEFT·LoRA·QLoRA, 튜닝 전후 비교)
-- [ ] 05-10-PLAN.md — [wave 4] 3-4 모듈 3편 (멀티 에이전트 구조, Webhook·스케줄·HITL, n8n·LangGraph)
-- [ ] 05-11-PLAN.md — [wave 4] 3-5 + 3-7 프로젝트 가이드 — CONT-05 완성
-- [ ] 05-12-PLAN.md — [wave 4] 3-6 모듈 3편 (프롬프트 버전관리·평가, 모니터링·거버넌스, 구조화 출력·카나리)
+- [x] 05-09-PLAN.md — [wave 4] 3-3 모듈 2편 (PEFT·LoRA·QLoRA, 튜닝 전후 비교)
+- [x] 05-10-PLAN.md — [wave 4] 3-4 모듈 3편 (멀티 에이전트 구조, Webhook·스케줄·HITL, n8n·LangGraph)
+- [x] 05-11-PLAN.md — [wave 4] 3-5 + 3-7 프로젝트 가이드 — CONT-05 완성
+- [x] 05-12-PLAN.md — [wave 4] 3-6 모듈 3편 (프롬프트 버전관리·평가, 모니터링·거버넌스, 구조화 출력·카나리)
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
@@ -235,7 +235,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. 진도 체크와 진행률 | 4/4 | Complete    | 2026-08-24 |
 | 3. 학습 일정과 오늘의 학습 | 4/4 | Complete    | 2026-08-25 |
 | 4. Step 1 심화 콘텐츠 | 6/7 | In Progress|  |
-| 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 8/13 | In Progress|  |
+| 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 12/13 | In Progress|  |
 | 6. 전체 페이지 디자인 정리 | 0/TBD | Not started | - |
 
 ## Coverage Notes
