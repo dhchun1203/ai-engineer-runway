@@ -5,8 +5,261 @@ moduleId: "2-2"
 order: 1
 depth: "심화"
 estimatedMinutes: 150
-hasContent: false
+hasContent: true
 slug: "2-2-html-css-js"
 ---
 
-이 레슨은 아직 작성되지 않았습니다. Step 1 "Python 변수·자료형" 또는 Step 2 "React 컴포넌트" 파일럿 레슨에서 먼저 학습 형식을 확인해보세요.
+## 1. 학습 목표
+
+이 레슨을 마치면 다음을 할 수 있습니다.
+
+- HTML 태그와 속성으로 화면의 뼈대를 만들 수 있다
+- CSS 선택자와 flex 배치로 뼈대에 옷을 입힐 수 있다
+- JavaScript로 DOM 요소를 찾아 이벤트에 반응하는 동작을 붙일 수 있다
+- HTML·CSS·JavaScript 세 언어가 각각 어떤 역할을 나누어 맡는지 설명할 수 있다
+
+## 2. 왜 배우나
+
+React·Next.js로 화면을 만들어도 결국 브라우저에 도착하는 것은 HTML·CSS·JavaScript입니다. 프레임워크는 이 셋을 더 편하게 다루도록 도와주는 도구일 뿐입니다.
+
+그래서 프레임워크를 배우기 전에 밑바닥이 어떻게 동작하는지 한 번 보고 넘어가는 것이 이 레슨의 목적입니다.
+
+## 3. 개념 설명
+
+### 🦴 HTML은 뼈대
+
+HTML(HyperText Markup Language)은 화면의 구조를 짜는 뼈대입니다. `<div>`, `<button>`처럼 태그(tag)로 요소를 만들고, `class`나 `id` 같은 속성(attribute)으로 이름표를 붙입니다.
+
+`<header>`, `<nav>`, `<button>`처럼 의미가 담긴 태그를 시맨틱 태그(semantic tag)라고 부릅니다. 뼈대만 봐도 이 부분이 무엇인지 짐작할 수 있게 해줍니다.
+
+### 👗 CSS는 옷
+
+CSS(Cascading Style Sheets)는 뼈대에 색깔·크기·배치를 입히는 옷입니다. 선택자(selector)로 "어떤 태그에 옷을 입힐지" 고르고, 속성으로 어떤 옷인지 정합니다.
+
+요소 하나는 내용을 중심으로 안쪽 여백(padding)·테두리(border)·바깥 여백(margin)이 감싸는 상자 모양인데, 이를 박스 모델(box model)이라 부릅니다.
+
+flex 배치를 쓰면 상자 여러 개를 가로나 세로로 나란히 정렬할 수 있습니다. 이번 예제의 카드 배치도 flex로 만듭니다.
+
+### 🏃 JavaScript는 움직임
+
+JavaScript는 멈춰 있는 화면에 움직임을 붙입니다. 변수(variable)에 값을 저장하고 함수(function)로 동작을 묶어둔 뒤, 특정 순간에 그 함수가 실행되게 합니다.
+
+`document.querySelector`로 화면 속 요소를 찾아 DOM(Document Object Model, 화면 구조를 다루는 객체 모형)에 접근합니다. `addEventListener`로 클릭 같은 이벤트(event)에 반응하는 코드를 붙입니다.
+
+### 📐 세 역할을 한 표로
+
+| 언어 | 비유 | 담당 |
+|------|------|------|
+| HTML | 뼈대 | 구조와 의미 |
+| CSS | 옷 | 배치와 스타일 |
+| JavaScript | 움직임 | 동작과 반응 |
+
+## 4. 실무 예제
+
+**실행: PC 로컬 VS Code, 설치는 필요 없습니다.** 아래 코드를 `shop-card.html` 파일 하나에 그대로 저장하면 예제가 완성됩니다.
+
+```html
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>상품 카드</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        display: flex;
+        justify-content: center;
+        padding: 40px;
+      }
+      .card {
+        width: 220px;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .thumbnail {
+        height: 120px;
+        border-radius: 8px;
+        background-color: #a7c7e7;
+      }
+      .like-button {
+        border: none;
+        border-radius: 8px;
+        padding: 8px;
+        background-color: #eee;
+        cursor: pointer;
+      }
+      .like-button.liked {
+        background-color: #ffd6d6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="thumbnail"></div>
+      <p class="title">무선 이어폰</p>
+      <p class="price">59,000원</p>
+      <button class="like-button" id="likeButton">🤍 좋아요 0</button>
+    </div>
+    <script>
+      let likeCount = 0;
+      const button = document.querySelector("#likeButton");
+      button.addEventListener("click", () => {
+        likeCount += 1;
+        button.textContent = `🤍 좋아요 ${likeCount}`;
+        button.classList.add("liked");
+      });
+    </script>
+  </body>
+</html>
+```
+
+이 파일 하나에 마크업(HTML)과 스타일(`<style>`)과 동작(`<script>`)이 모두 들어 있습니다. 상품 카드 하나가 flex로 배치되고, 좋아요 버튼을 누르면 숫자가 올라갑니다.
+
+스타일 부분만 따로 보면 카드가 세로로 쌓이는 flex 배치와, 눌렀을 때 색이 바뀌는 클래스를 확인할 수 있습니다.
+
+```css
+.card {
+  width: 220px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.like-button.liked {
+  background-color: #ffd6d6;
+}
+```
+
+동작 부분만 따로 보면 버튼을 찾아 클릭 이벤트를 붙이고, 누를 때마다 숫자를 1씩 올려 화면 문구를 바꾸는 흐름을 볼 수 있습니다.
+
+```javascript
+let likeCount = 0;
+const button = document.querySelector("#likeButton");
+button.addEventListener("click", () => {
+  likeCount += 1;
+  button.textContent = `🤍 좋아요 ${likeCount}`;
+  button.classList.add("liked");
+});
+```
+
+저장한 뒤 `shop-card.html` 파일을 더블클릭하면 기본 브라우저에서 바로 열립니다. 명령으로 열고 싶다면 아래처럼 실행합니다.
+
+```powershell
+start shop-card.html
+```
+
+macOS에서는 터미널에서 `open shop-card.html`을 실행하면 같은 방식으로 열립니다.
+
+### 해보기
+
+`.card`를 3개로 늘리고 `body`를 flex 컨테이너로 만들어 가로로 나란히 배치해보세요. 카드 사이 간격은 `gap`으로 조절합니다.
+
+<details>
+<summary>정답 보기</summary>
+
+`body` 선택자에 `flex-direction: row`와 `gap: 20px`를 추가하고, `.card` 블록을 `<body>` 안에 3번 반복해서 넣으면 카드 3개가 가로로 나란히 줄지어 배치됩니다. 각 카드는 독립된 상품이므로 버튼도 각자 따로 동작합니다.
+
+</details>
+
+### 해보기
+
+`likeCount`가 10을 넘으면 버튼 문구가 "🎉 인기 상품!"으로 바뀌도록 클릭 이벤트 코드를 고쳐보세요.
+
+<details>
+<summary>정답 보기</summary>
+
+```javascript
+button.addEventListener("click", () => {
+  likeCount += 1;
+  if (likeCount > 10) {
+    button.textContent = "🎉 인기 상품!";
+  } else {
+    button.textContent = `🤍 좋아요 ${likeCount}`;
+  }
+  button.classList.add("liked");
+});
+```
+
+조건문(`if`)으로 숫자에 따라 다른 문구를 보여줍니다. DOM 갱신(`textContent` 재할당)은 매 클릭마다 다시 실행됩니다.
+
+</details>
+
+### 해보기
+
+`.card`에서 쓰는 `border-radius`와 좋아요 색을 CSS 변수(`--radius`, `--like-color`)로 빼서 한 곳에서만 관리하도록 고쳐보세요.
+
+<details>
+<summary>정답 보기</summary>
+
+```css
+:root {
+  --radius: 12px;
+  --like-color: #ffd6d6;
+}
+
+.card {
+  border-radius: var(--radius);
+}
+
+.like-button.liked {
+  background-color: var(--like-color);
+}
+```
+
+`:root`에 변수를 선언해두면 값을 한 번만 바꿔도 그 변수를 쓰는 모든 곳에 적용됩니다. 색이나 간격을 통일할 때 유용합니다.
+
+</details>
+
+## 5. 실무 팁
+
+- **개발자도구(DevTools) Elements 탭에서 CSS를 실시간으로 만져볼 수 있습니다.** 값을 바꿔보고 마음에 들면 그때 파일에 옮겨 적으면 됩니다.
+- **시맨틱 태그를 쓰면 접근성과 검색에 유리합니다.** `<div>`만 쓰는 것보다 `<button>`, `<nav>` 같은 의미 있는 태그가 스크린리더와 검색 엔진에 더 잘 읽힙니다.
+- **인라인 스타일보다 클래스를 씁니다.** 태그마다 직접 스타일을 쓰면 나중에 색 하나 바꿀 때 모든 태그를 찾아다녀야 합니다.
+
+## 6. 핵심 정리 및 스스로 점검
+
+**핵심 정리**
+
+- HTML은 구조(뼈대), CSS는 스타일(옷), JavaScript는 동작(움직임)을 담당한다
+- 선택자로 CSS 스타일을 적용할 태그를 고르고, 박스 모델로 요소의 여백·테두리를 계산한다
+- `document.querySelector`로 DOM 요소를 찾고 `addEventListener`로 이벤트를 붙인다
+- 세 언어 모두 설치 없이 브라우저 하나로 실행하고 확인할 수 있다
+
+**이 레슨의 단어**
+
+| 단어 | 뜻 |
+|------|-----|
+| 태그(tag) | HTML에서 요소를 만드는 기본 단위, `<div>`처럼 표기 |
+| 속성(attribute) | 태그에 붙이는 추가 정보, `class`·`id` 등 |
+| 선택자(selector) | CSS에서 스타일을 적용할 태그를 고르는 규칙 |
+| 박스 모델(box model) | 내용·안쪽 여백·테두리·바깥 여백으로 이루어진 요소의 상자 모양 |
+| DOM(Document Object Model) | 브라우저가 화면 구조를 객체로 표현한 모형 |
+| 이벤트(event) | 클릭처럼 화면에서 일어나는 사건 |
+| 시맨틱 태그(semantic tag) | 의미가 담긴 HTML 태그, `<header>`·`<nav>` 등 |
+
+**스스로 점검**
+
+1. 이 레슨 예제에서 상품 이미지를 이미지 태그 대신 배경색 상자(`.thumbnail`)로 표현한 이유는 무엇일까요?
+
+<details>
+<summary>정답 보기</summary>
+
+이미지 태그는 실제 이미지 파일 경로가 있어야 하는데, 이 예제는 파일 하나만으로 완결되도록 만들어졌기 때문입니다. 배경색 상자는 이미지 파일 없이도 카드의 레이아웃을 그대로 보여줄 수 있어서 실습 목적에 더 적합합니다.
+
+</details>
+
+2. `.like-button`에 `liked`라는 별도 클래스를 클릭 시점에 추가한 이유는 무엇일까요?
+
+<details>
+<summary>정답 보기</summary>
+
+기본 상태와 "눌린 뒤" 상태를 서로 다른 스타일로 보여주고 싶기 때문입니다. JavaScript가 클릭 시 `liked` 클래스를 추가하면, CSS가 그 클래스를 가진 버튼에만 다른 배경색을 적용합니다. 상태에 따라 모양이 달라지는 가장 기본적인 패턴입니다.
+
+</details>
