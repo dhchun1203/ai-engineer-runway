@@ -144,12 +144,12 @@ Plans:
   3. 각 레슨이 커리큘럼 동일 스택(Python, SQL/PostgreSQL, Git)의 실행 가능한 실무 예제 코드를 언어별 하이라이팅과 함께 제공한다
   4. Step 1 레슨을 진행하면 Step 1 진행률과 오늘의 학습 뷰가 실제로 채워지며 학습 루프가 끝까지 동작한다
 
-**Plans**: 7 plans (Wave 1: 파일럿 + 승인 / Wave 2: 9편 병렬 집필 / Wave 3: 게이트·카피·배포)
+**Plans**: 1/7 plans executed (Wave 1: 파일럿 + 승인 / Wave 2: 9편 병렬 집필 / Wave 3: 게이트·카피·배포)
 
 Plans:
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — 파일럿 레슨 eli5 재작성 + `<details>` 스타일 + 구조 게이트 신설 + 아이패드 승인 (tracer, wave 1)
+- [x] 04-01-PLAN.md — 파일럿 레슨 eli5 재작성 + `<details>` 스타일 + 구조 게이트 신설 + 아이패드 승인 (tracer, wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -195,7 +195,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. 배포된 커리큘럼 뼈대 | 6/6 | Complete    | 2026-08-24 |
 | 2. 진도 체크와 진행률 | 4/4 | Complete    | 2026-08-24 |
 | 3. 학습 일정과 오늘의 학습 | 4/4 | Complete    | 2026-08-25 |
-| 4. Step 1 심화 콘텐츠 | 0/TBD | Not started | - |
+| 4. Step 1 심화 콘텐츠 | 1/7 | In Progress|  |
 | 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 0/TBD | Not started | - |
 | 6. 전체 페이지 디자인 정리 | 0/TBD | Not started | - |
 
