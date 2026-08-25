@@ -147,13 +147,28 @@ Plans:
 **Plans**: 7 plans (Wave 1: 파일럿 + 승인 / Wave 2: 9편 병렬 집필 / Wave 3: 게이트·카피·배포)
 
 Plans:
+**Wave 1**
+
 - [ ] 04-01-PLAN.md — 파일럿 레슨 eli5 재작성 + `<details>` 스타일 + 구조 게이트 신설 + 아이패드 승인 (tracer, wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 04-02-PLAN.md — 1-1 모듈 2편: 커리큘럼 지도·하루 루틴 / 개발 환경 세팅 (wave 2)
 - [ ] 04-03-PLAN.md — 1-2 모듈 2편: Git 브랜치·PR / 생성형 AI 개념·활용 윤리 (wave 2)
 - [ ] 04-04-PLAN.md — 1-3 모듈 1편: Python 함수·예외·파일 입출력 (wave 2)
 - [ ] 04-05-PLAN.md — 1-4 모듈 2편: 관계형 DB 구조 / SQL 쿼리·JOIN·집계 (wave 2)
 - [ ] 04-06-PLAN.md — 1-5 모듈 2편: 분류·회귀·군집 / 평가 지표·Pipeline (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 04-07-PLAN.md — 매니페스트 상수 갱신·빈 상태 카피·making-of·종단 e2e·배포 (wave 3)
+
+**Cross-cutting constraints:**
+
+- 두 레슨 모두 6개 헤딩이 원문 그대로 순서대로 있고, `### 해보기` 2~3개와 접힌 `<details><summary>정답 보기</summary>` 정답 블록, `**이 레슨의 단어**` 5~8행 표를 갖는다 (D-47, D-49, D-50, D-61)
+- 두 레슨의 `hasContent`가 `false`에서 `true`로 바뀌고, 그 외 프론트매터 7개 필드는 바이트 단위로 동일하다 (D-13)
+- `node scripts/check-lesson-structure.mjs`와 `node scripts/check-brand.mjs`가 exit 0이고, `npm run build`가 성공한다
+- 두 레슨의 읽기 산문이 30분 안쪽으로 읽히고 나머지 시간은 해보기 과제가 채운다 (D-49)
 
 ### Phase 5: Step 2·3 콘텐츠와 프로젝트 가이드
 
