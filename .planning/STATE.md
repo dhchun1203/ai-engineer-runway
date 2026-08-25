@@ -4,16 +4,16 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 04
 current_phase_name: step-1
-status: executing
-stopped_at: Phase 4 context gathered
-last_updated: "2026-08-25T02:40:51.128Z"
+status: awaiting-uat
+stopped_at: Phase 4 executed 7/7 and deployed — awaiting UAT (04-UAT.md, 2 items)
+last_updated: "2026-08-25T04:59:39.851Z"
 last_activity: 2026-08-25
-last_activity_desc: Phase 03 complete, transitioned to Phase 4
+last_activity_desc: Phase 04 execution complete (7/7 plans, Step 1 10편 배포됨); verification=human_needed
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 21
-  completed_plans: 14
+  completed_plans: 21
 ---
 
 # Project State
@@ -27,12 +27,34 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 
 ## Current Position
 
-Phase: 04 (step-1) — EXECUTING
-Plan: 1 of 7
-Status: Executing Phase 04
-Last activity: 2026-08-25 — Phase 04 execution started
+Phase: 04 (step-1) — AWAITING UAT
+Plan: 7 of 7 (all executed, all SUMMARYs written)
+Status: awaiting-uat — 검증자가 human_needed 판정, UAT 2건 미해결
+Last activity: 2026-08-25 — Phase 04 실행 완료, Step 1 10편 프로덕션 배포
 
-Progress: [████████████████████] 10/10 plans ([██████████] 100%)
+Progress: [████████████████████] 7/7 plans ([██████████] 100%)
+
+### 다음에 할 일 (이 순서대로)
+
+Phase 4는 **아직 완료로 표시되지 않았다.** UAT를 먼저 닫아야 한다.
+
+1. `/gsd-verify-work 04` — `04-UAT.md`의 2건을 안내하고, 통과 시 phase를 완료 처리한다.
+   그 시점에 `REQUIREMENTS.md`의 CONT-02/CONT-03도 정산된다.
+   - UAT 1: SQL 레슨 2편을 Supabase SQL 에디터에서 실제 실행 — 실행자·게이트·검증자 모두
+     자격증명 없는 격리 환경이라 아무도 실행하지 못했다. 성공 기준 3번이 "실행 가능한 예제"를
+     요구하므로 추론으로 대체 불가.
+   - UAT 2: 아직 사람이 안 본 5편 훑어보기. 파일럿의 렌더 결함 2종은 10편 전부에서
+     기계적으로 배제 완료(`<pre>` data-theme 누락 0, `<details>` 마크다운 누출 0,
+     1줄 블록 프로덕션 실측 완료) — 남은 건 결함 사냥이 아니라 "읽을 만한가" 판단.
+2. `/gsd-ui-review` — 구현된 프론트엔드의 6-pillar 시각 감사. UI-SPEC 계약 위반을 싸게 잡는다.
+3. (2번 후에도 "템플릿 같다"가 남으면) `frontend-design` 스킬 — 미감 방향 잡기.
+   스코프는 **레슨 읽기 화면**으로 제한하고 시간 제한을 둘 것.
+
+**왜 이 순서인가:** frontend-design은 Phase 4가 끝난 지금이 최적기다 — 실제 한국어 장문 10편이
+생겨서 타이포그래피·프로즈 리듬을 진짜 콘텐츠에 대고 설계할 수 있고, Phase 5의 나머지 25편이
+개선된 읽기 화면을 물려받는다. 다만 UAT보다 먼저 하면 안 된다: 스타일을 바꾸면 UAT에서
+확인하려는 화면이 발밑에서 달라진다. 로드맵의 남은 Phase 4·5는 둘 다 콘텐츠 페이즈라
+UI 작업을 끼워 넣을 자리가 없으므로, frontend-design은 페이즈 스텝이 아니라 독립 패스로 돈다.
 
 ## Performance Metrics
 
