@@ -5,8 +5,259 @@ moduleId: "1-4"
 order: 2
 depth: "심화"
 estimatedMinutes: 150
-hasContent: false
+hasContent: true
 slug: "1-4-sql-queries-and-joins"
 ---
 
-이 레슨은 아직 작성되지 않았습니다. Step 1 "Python 변수·자료형" 또는 Step 2 "React 컴포넌트" 파일럿 레슨에서 먼저 학습 형식을 확인해보세요.
+## 1. 학습 목표
+
+이 레슨을 마치면 다음을 할 수 있습니다.
+
+- 조건을 걸어 원하는 행만 뽑을 수 있다
+- 두 표를 JOIN으로 이어 한 결과로 볼 수 있다
+- GROUP BY로 묶어 개수 · 합계 · 평균을 낼 수 있다
+- 서브쿼리로 다른 쿼리의 결과를 조건에 쓸 수 있다
+
+## 2. 왜 배우나
+
+데이터베이스에 데이터를 넣는 일보다 꺼내는 일이 실무의 대부분을 차지합니다. 원하는 조건으로 걸러내고, 여러 표를 이어 붙이고, 묶어서 세는 방법을 알아야 화면에 보여줄 데이터를 정확히 뽑아낼 수 있습니다. 이 레슨도 앞 레슨과 마찬가지로 Supabase SQL 에디터에서 전부 실습하므로 브라우저만 있으면 됩니다.
+
+## 3. 개념 설명
+
+### 🔍 SELECT의 뼈대
+
+`SELECT 무엇을 FROM 어디서 WHERE 어떤 조건으로 ORDER BY 어떤 순서로`가 조회 쿼리(query, 데이터베이스에 데이터를 요청하는 명령문)의 기본 뼈대입니다.
+
+| 자리 | 하는 일 | 예시 |
+|------|---------|------|
+| `SELECT` | 가져올 열을 고른다 | `name, grade` |
+| `FROM` | 어느 표에서 가져올지 정한다 | `practice.students` |
+| `WHERE` | 조건에 맞는 행만 남긴다 | `grade > 1` |
+| `ORDER BY` | 결과 순서를 정한다 | `grade DESC` |
+
+### 🔗 JOIN — 두 표를 겹쳐 놓기
+
+JOIN(공통 열을 기준으로 두 표를 이어 붙이는 연산)은 두 표에서 같은 값을 가진 열끼리 짝을 맞춰 나란히 붙이는 것입니다. `INNER JOIN`은 양쪽 모두에 짝이 있는 행만 남기고, `LEFT JOIN`은 왼쪽 표의 행을 짝이 없어도 남깁니다 — "짝이 없는 행을 버리느냐, 남기느냐"의 차이입니다.
+
+### 🧮 집계 — 같은 것끼리 접기
+
+집계 함수(COUNT · SUM · AVG처럼 여러 행을 하나의 값으로 계산하는 함수)는 `GROUP BY`(같은 값을 가진 행끼리 묶는 절)와 짝을 이뤄 씁니다. `WHERE`는 묶기 전에 개별 행을 거르고, `HAVING`(그룹으로 묶은 뒤 결과를 거르는 조건절)은 묶어서 계산한 뒤의 결과를 거릅니다.
+
+### ❓ 서브쿼리 — 질문 안의 질문
+
+서브쿼리(쿼리 안에 들어있는 또 다른 쿼리)는 `WHERE` 조건 안에 넣어 "이 값보다 큰 것만" 같은 조건을 만들거나, `FROM` 자리에 넣어 미리 정리된 결과를 다시 조회하는 데 씁니다.
+
+## 4. 실무 예제
+
+앞 레슨을 건너뛰었어도 이 블록 하나로 준비가 끝납니다. `IF NOT EXISTS`를 쓰기 때문에 두 번 실행해도 안전합니다.
+
+```sql
+-- Supabase 대시보드 → SQL 에디터에서 실행합니다. 앞 레슨을 안 했어도 이 블록 하나로 준비가 끝납니다.
+CREATE SCHEMA IF NOT EXISTS practice;
+
+CREATE TABLE IF NOT EXISTS practice.students (
+  id serial PRIMARY KEY,
+  name text NOT NULL,
+  grade int
+);
+
+CREATE TABLE IF NOT EXISTS practice.subjects (
+  id serial PRIMARY KEY,
+  name text NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS practice.enrollments (
+  id serial PRIMARY KEY,
+  student_id int NOT NULL REFERENCES practice.students(id),
+  subject_id int NOT NULL REFERENCES practice.subjects(id),
+  score int
+);
+
+INSERT INTO practice.students (name, grade) VALUES
+  ('김지현', 2),
+  ('이민준', 1),
+  ('박서연', 3);
+
+INSERT INTO practice.subjects (name) VALUES
+  ('수학'),
+  ('영어'),
+  ('과학');
+
+INSERT INTO practice.enrollments (student_id, subject_id, score) VALUES
+  (1, 1, 88),
+  (1, 2, 95),
+  (2, 1, 72),
+  (3, 3, 91),
+  (3, 1, 60);
+```
+
+`CREATE SCHEMA/TABLE IF NOT EXISTS`가 있어 이미 표가 있으면 건드리지 않습니다. 다만 `INSERT`는 실행할 때마다 새 행이 추가되니, 처음 한 번만 실행하는 걸 권장합니다.
+
+```sql
+-- 조회: 학년이 2 이상인 학생을 학년 내림차순으로 본다
+SELECT name, grade
+FROM practice.students
+WHERE grade >= 2
+ORDER BY grade DESC;
+```
+
+박서연(3학년), 김지현(2학년) 순서로 2행이 나옵니다.
+
+```sql
+-- JOIN: 학생과 과목을 수강 표로 이어 붙인다
+SELECT s.name AS 학생, sub.name AS 과목, e.score AS 점수
+FROM practice.enrollments e
+INNER JOIN practice.students s ON s.id = e.student_id
+INNER JOIN practice.subjects sub ON sub.id = e.subject_id
+ORDER BY e.id;
+
+-- LEFT JOIN 비교: 수강 기록이 없는 학생도 남긴다
+SELECT s.name AS 학생, sub.name AS 과목
+FROM practice.students s
+LEFT JOIN practice.enrollments e ON e.student_id = s.id
+LEFT JOIN practice.subjects sub ON sub.id = e.subject_id
+ORDER BY s.id;
+```
+
+첫 번째 `INNER JOIN`은 수강 기록 개수만큼 5행이 나옵니다. 두 번째 `LEFT JOIN`은 모든 학생이 최소 1행씩 나오는데, 위 준비 데이터에서는 학생 3명 모두 수강 기록이 있어 결과 행 수가 같습니다 — 수강 기록이 없는 학생을 넣으면 그 학생의 과목 자리가 빈 채로(`NULL`) 남는 것이 `LEFT JOIN`의 차이입니다.
+
+```sql
+-- 집계: 학생별 평균 점수, 60점 이상만 남긴다
+SELECT s.name AS 학생, COUNT(e.id) AS 수강수, AVG(e.score) AS 평균점수
+FROM practice.students s
+JOIN practice.enrollments e ON e.student_id = s.id
+GROUP BY s.name
+HAVING AVG(e.score) >= 60
+ORDER BY 평균점수 DESC;
+```
+
+학생별로 한 줄씩(3행) 나오되, `WHERE`가 아니라 `HAVING`으로 평균을 거르므로 평균이 60점 미만인 학생이 있었다면 그 학생만 결과에서 빠졌을 것입니다.
+
+```sql
+-- 서브쿼리: 전체 평균 점수보다 높은 점수를 받은 수강 기록만 본다
+SELECT s.name AS 학생, sub.name AS 과목, e.score AS 점수
+FROM practice.enrollments e
+JOIN practice.students s ON s.id = e.student_id
+JOIN practice.subjects sub ON sub.id = e.subject_id
+WHERE e.score > (SELECT AVG(score) FROM practice.enrollments)
+ORDER BY e.score DESC;
+```
+
+괄호 안 `(SELECT AVG(score) FROM practice.enrollments)`가 먼저 계산되어 하나의 숫자(전체 평균)가 되고, 바깥 쿼리의 `WHERE`가 그 숫자보다 높은 점수만 남깁니다.
+
+### 해보기
+
+위 JOIN 예제에서 `INNER JOIN`을 `LEFT JOIN`으로 바꿔 실행해보세요(첫 번째 쿼리). 결과 행 수가 달라지는지, 왜 그런지 확인합니다.
+
+<details>
+<summary>정답 보기</summary>
+
+```sql
+SELECT s.name AS 학생, sub.name AS 과목, e.score AS 점수
+FROM practice.enrollments e
+LEFT JOIN practice.students s ON s.id = e.student_id
+LEFT JOIN practice.subjects sub ON sub.id = e.subject_id
+ORDER BY e.id;
+```
+
+이 예제에서는 `enrollments`가 기준(왼쪽) 표이고 모든 수강 기록이 이미 학생 · 과목을 가리키고 있어 결과 행 수는 그대로 5행입니다. `LEFT JOIN`의 효과는 왼쪽 표에는 있지만 오른쪽 표에 짝이 없는 행이 있을 때 드러납니다 — 이번엔 그런 행이 없었을 뿐입니다.
+
+</details>
+
+### 해보기
+
+집계 쿼리의 `GROUP BY s.name`을 `GROUP BY sub.name`(과목 기준)으로 바꿔, 과목별 평균 점수를 다시 뽑아보세요.
+
+<details>
+<summary>정답 보기</summary>
+
+```sql
+SELECT sub.name AS 과목, COUNT(e.id) AS 수강수, AVG(e.score) AS 평균점수
+FROM practice.subjects sub
+JOIN practice.enrollments e ON e.subject_id = sub.id
+GROUP BY sub.name
+ORDER BY 평균점수 DESC;
+```
+
+수학 · 영어 · 과학 세 과목이 한 줄씩 나오고, 각 과목을 들은 학생들의 평균 점수가 계산됩니다. `GROUP BY` 기준을 바꾸면 "누구 기준으로 묶을지"가 바뀌어 완전히 다른 표가 나옵니다.
+
+</details>
+
+### 해보기
+
+수학 과목의 평균 점수보다 높은 점수를 받은 수강 기록만 뽑는 서브쿼리를 직접 작성해보세요.
+
+<details>
+<summary>정답 보기</summary>
+
+```sql
+SELECT s.name AS 학생, e.score AS 점수
+FROM practice.enrollments e
+JOIN practice.students s ON s.id = e.student_id
+WHERE e.subject_id = (SELECT id FROM practice.subjects WHERE name = '수학')
+  AND e.score > (
+    SELECT AVG(score)
+    FROM practice.enrollments e2
+    WHERE e2.subject_id = (SELECT id FROM practice.subjects WHERE name = '수학')
+  );
+```
+
+서브쿼리를 두 곳에서 씁니다 — 하나는 "수학" 과목의 `id`를 찾는 데, 다른 하나는 수학 과목만의 평균 점수를 계산하는 데. 준비 데이터에서 수학 점수는 88 · 72 · 60이고 평균은 약 73.3이므로, 88점을 받은 학생만 결과에 남습니다.
+
+</details>
+
+## 5. 실무 팁
+
+- 이 레슨의 실습은 SQL 에디터에 값을 직접 타이핑하지만, 실제 애플리케이션 코드에서는 사용자 입력을 문자열로 이어 붙여 쿼리를 만들지 않습니다 — 값을 따로 넘기는 파라미터 바인딩 방식을 쓰며, 이는 Step 2에서 다룹니다.
+- `SELECT *` 대신 필요한 열만 골라 조회하는 습관을 들입니다 — 나중에 표에 열이 늘어나도 코드가 덜 흔들립니다.
+- JOIN을 걸기 전에 각 표를 따로 조회해 행 수를 확인해두면, JOIN 결과가 예상과 다를 때 원인을 빨리 찾을 수 있습니다.
+- 데이터가 큰 표에서는 `WHERE` 없이 전체 조회를 하지 않습니다.
+
+```sql
+-- 실습을 되돌립니다. practice 서랍(스키마)을 통째로 지웁니다.
+-- 이 문장은 practice 스키마만 대상으로 하므로 사이트 진도 데이터에는 아무 영향이 없습니다.
+DROP SCHEMA IF EXISTS practice CASCADE;
+```
+
+## 6. 핵심 정리 및 스스로 점검
+
+**핵심 정리**
+
+- `SELECT ~ FROM ~ WHERE ~ ORDER BY`가 조회의 기본 뼈대다
+- `INNER JOIN`은 짝이 없는 행을 버리고, `LEFT JOIN`은 왼쪽 표의 행을 남긴다
+- `GROUP BY`는 같은 값끼리 묶고, `WHERE`는 묶기 전에, `HAVING`은 묶은 뒤에 거른다
+- 서브쿼리는 쿼리 안에 다른 쿼리를 넣어 그 결과를 조건이나 값으로 쓴다
+- 애플리케이션 코드에서는 문자열 결합 대신 파라미터 바인딩으로 쿼리를 만든다
+
+**이 레슨의 단어**
+
+| 단어 | 뜻 |
+|------|-----|
+| 쿼리 | 데이터베이스에 데이터를 요청하는 명령문 |
+| JOIN | 공통 열을 기준으로 두 표를 이어 붙이는 연산 |
+| INNER JOIN | 두 표 모두에 짝이 있는 행만 남기는 JOIN |
+| LEFT JOIN | 왼쪽 표의 행은 짝이 없어도 남기는 JOIN |
+| 집계 함수 | COUNT · SUM · AVG처럼 여러 행을 하나의 값으로 계산하는 함수 |
+| GROUP BY | 같은 값을 가진 행끼리 묶는 절 |
+| HAVING | 그룹으로 묶은 뒤 결과를 거르는 조건절 |
+| 서브쿼리 | 쿼리 안에 들어있는 또 다른 쿼리 |
+
+**스스로 점검**
+
+1. `WHERE`와 `HAVING`의 차이를 한 문장으로 설명해보세요.
+
+<details>
+<summary>정답 보기</summary>
+
+`WHERE`는 `GROUP BY`로 묶기 전에 개별 행을 거르고, `HAVING`은 묶어서 집계한 뒤의 결과(그룹)를 거릅니다. `AVG`·`COUNT` 같은 집계 함수의 결과로 조건을 걸고 싶으면 `HAVING`을 써야 합니다.
+
+</details>
+
+2. `INNER JOIN` 대신 `LEFT JOIN`을 쓰면 결과 행 수가 늘어날 수 있는 이유는 무엇일까요?
+
+<details>
+<summary>정답 보기</summary>
+
+`LEFT JOIN`은 왼쪽 표를 기준으로, 오른쪽 표에 짝이 없는 행도 남기고 오른쪽 값 자리를 `NULL`로 채웁니다. `INNER JOIN`이라면 버려졌을 "짝 없는 행"까지 결과에 포함되므로, 행 수가 `INNER JOIN`과 같거나 더 많아집니다.
+
+</details>
