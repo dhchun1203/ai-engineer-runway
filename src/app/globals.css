@@ -61,19 +61,28 @@ pre {
 
 /* rehype-pretty-code + Shiki dual theme (CONT-06, UX-03 가로 스크롤).
    padding-top는 복사 버튼(44px 히트 영역)이 첫 줄 코드를 가리지 않도록 여유를 둔다.
-   min-height는 빈 코드 블록·한 줄짜리 코드 블록에서도 레이아웃이 무너지지 않게 한다. */
+   좌우 1rem padding은 코드 첫 글자가 박스 경계에 바로 붙어 잘려 보이지 않게 한다.
+   min-height는 빈 코드 블록·한 줄짜리 코드 블록에서도 레이아웃이 무너지지 않게 한다.
+   overflow-x: auto는 유지되어 긴 줄도 가로 스크롤로 전체를 볼 수 있다. */
 pre {
   overflow-x: auto;
-  padding: 3.25rem 0 1rem 0;
+  padding: 3.25rem 1rem 1rem 1rem;
   min-height: 4.5rem;
 }
 
+/* Shiki 배경은 code뿐 아니라 pre[data-theme*=" "]에도 똑같이 걸어야 한다.
+   code는 display:grid로 pre의 콘텐츠 박스만 채우므로, pre 자체에 배경이 없으면
+   위 padding-top/padding-bottom 띠에 typography 플러그인의 기본 dark pre 배경이
+   그대로 드러나 code 배경과 다른 색으로 보인다(복사 버튼만 떠 있는 빈 다크 밴드 +
+   code 흰 배경이 겹쳐 보이는 렌더링 결함의 원인). */
+pre[data-theme*=" "],
 code[data-theme*=" "],
 code[data-theme*=" "] span {
   color: var(--shiki-light);
   background-color: var(--shiki-light-bg);
 }
 
+.dark pre[data-theme*=" "],
 .dark code[data-theme*=" "],
 .dark code[data-theme*=" "] span {
   color: var(--shiki-dark);
