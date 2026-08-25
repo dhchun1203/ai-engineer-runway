@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: complete
 phase: 04-step-1
 source: [04-VERIFICATION.md]
 started: 2026-08-25T04:51:48Z
-updated: 2026-08-25T07:28:06Z
+updated: 2026-08-25T07:50:19Z
 ---
 
 ## Current Test
@@ -36,7 +36,12 @@ Supabase SQL 에디터 접근이 없는 격리 환경에서 돌았다. 세 번 �
    (모든 예제가 `practice.` 스키마 안에만 있으므로 진도 데이터에는 영향이 없다 — grep으로 확인됨)
 
 expected: 각 블록이 설명대로 동작한다. 실패하는 블록이 있으면 그 블록의 SQL과 에러 메시지를 적어 주세요.
-result: issue
+result: pass
+result_history: |
+  최초 실행(2026-08-25): issue — 1편 → 2편 순서로 이어서 실습하면 2편 준비 블록이
+  42703(column "score" does not exist)으로 실패했다. → G-04-1
+  수정 후 재검증(commit f750017): 같은 경로를 Supabase에서 다시 실행해 통과 확인.
+  블록 16개 전부 본문 주장과 일치, 2회 연속 실행해도 중복 없음.
 source: automated (Supabase MCP — execute_sql, project wxqteqiuihrgtxmztauc)
 reported: "블록 자체는 16개 전부 본문대로 동작. 단, 1편 → 2편 순서로 이어서 실습하면 2편 준비 블록이 column \"score\" of relation \"enrollments\" does not exist 에러로 실패한다. 2편 본문은 오히려 '두 번 실행해도 안전합니다'라고 안심시킨다."
 severity: major
@@ -145,13 +150,24 @@ issues: 1
 pending: 0
 skipped: 0
 blocked: 0
-gaps_open: 2   # G-04-1 (major, 테스트 1), G-04-2 (cosmetic, 테스트 2 자동 검사)
+gaps_open: 0   # G-04-1, G-04-2 모두 resolved (commit f750017)
 
 ## Gaps
 
 - gap_id: G-04-1
   truth: "SQL 레슨 두 편의 모든 SQL 블록이 본문 설명대로 실행된다 — 레슨을 순서대로 따라가는 학습자 기준"
-  status: failed
+  status: resolved
+  resolved_by: 260825-n7v-PLAN.md (commit f750017)
+  resolved_at: 2026-08-25
+  resolution: |
+    2편 준비 블록을 'DROP SCHEMA IF EXISTS practice CASCADE;'로 시작하게 바꾸고,
+    이어지는 CREATE TABLE에서 IF NOT EXISTS를 뗐다. 52행·96행 서술도 새 동작에 맞게 교체.
+    1편 정리 SQL을 필수로 격상하는 대안은 채택하지 않음 — 학습자가 그 한 줄을 건너뛰면
+    다시 깨지므로 근본 수정이 아니다.
+    Supabase 재검증: 1편 잔재(score 없는 enrollments) 상태에서 새 준비 블록 실행 → 성공
+    (예전에는 42703). 같은 블록 2회 연속 실행 후에도 students/subjects/enrollments =
+    3/3/5 유지(중복 INSERT 없음). 하위 9개 쿼리 행 수 2/5/5/3/3/3, 수학 평균 73.3333 —
+    전부 본문 주장과 일치. 정리 후 practice 잔여 0, public.progress 무영향.
   reason: |
     자동 실행으로 확인. 1편(1-4-relational-db-basics)의 마지막 정리 블록
     'DROP SCHEMA IF EXISTS practice CASCADE;'는 본문 170행에서 "실습이 끝나면 ... 치워둡니다"라는
@@ -183,7 +199,17 @@ gaps_open: 2   # G-04-1 (major, 테스트 1), G-04-2 (cosmetic, 테스트 2 자�
 
 - gap_id: G-04-2
   truth: "레슨 코드 블록의 코드가 가려지지 않고 전부 보인다"
-  status: failed
+  status: resolved
+  resolved_by: 260825-n7v-PLAN.md (commit f750017)
+  resolved_at: 2026-08-25
+  resolution: |
+    해당 블록의 첫 줄 주석을 두 줄로 나눠 655px 예산 안으로 넣었다 (첫 줄 실측 350px,
+    버튼 시작점 714px — 305px 여유).
+    Playwright 로컬 프로덕션 빌드 실측: Step 1 10편 39개 코드 블록 전부 겹침 0건.
+    증거: .planning/ui-reviews/04-uat/after-fix-portrait-light.png
+    남은 것: 근본 원인(코드 블록 첫 줄에 버튼 폭만큼의 우측 여유가 없는 globals.css 구조)은
+    Phase 06 site-wide-design-polish로 이월. 지금은 콘텐츠가 예산 안에 있어 발현되지 않는다.
+    콘텐츠 길이에만 의존하는 상태이므로, 앞으로 첫 줄이 긴 코드 블록을 추가하면 재발한다.
   reason: |
     Playwright 자동 검사로 발견. 코드 블록 우상단 복사 버튼(44×44, position: absolute,
     opacity 1로 항상 표시)이 코드 첫 줄 위에 겹친다. 첫 줄이 버튼 앞 여유 폭(655px)보다

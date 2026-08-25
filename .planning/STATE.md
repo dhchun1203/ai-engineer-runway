@@ -163,6 +163,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260825-2xv | 소개 페이지 eli5 재작성 — docs/making-of.md를 아무것도 모르는 사람 눈높이로 | 2026-08-25 | bc0e28c | [260825-2xv-eli5-docs-making-of-md](./quick/260825-2xv-eli5-docs-making-of-md/) |
+| 260825-n7v | Phase 04 UAT 결함 2건 수정 — SQL 2편 준비 블록 스키마 충돌(G-04-1), 복사 버튼이 코드 첫 줄 가림(G-04-2) | 2026-08-25 | f750017 | [260825-n7v-phase-04-uat-gap-fixes-g-04-1-sql-lesson](./quick/260825-n7v-phase-04-uat-gap-fixes-g-04-1-sql-lesson/) |
 
 ## Deferred Items
 

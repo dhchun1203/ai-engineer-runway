@@ -1,10 +1,11 @@
 ---
 phase: 04-step-1
 verified: 2026-08-25T04:48:49Z
-status: human_needed
-score: 4/4 must-haves verified (roadmap success criteria) — 2 items require human confirmation
+status: passed
+score: 4/4 must-haves verified (roadmap success criteria) — 2 human items closed by UAT 2026-08-25
 behavior_unverified: 0
 overrides_applied: 0
+human_verification_resolved: 2026-08-25 (see 04-UAT.md)
 human_verification:
   - test: "Step 1 두 SQL 레슨(`1-4-relational-db-basics`, `1-4-sql-queries-and-joins`)의 모든 SQL 블록을 실제 Supabase SQL 에디터(아이패드 브라우저 포함)에 순서대로 붙여넣어 문법 오류 없이 실행되는지 확인한다"
     expected: "각 블록이 에러 없이 실행되고, 본문이 설명한 행 수·결과가 실제 출력과 일치한다 (예: 외래키 위반 에러 메시지, JOIN 결과 4행 등)"
@@ -16,9 +17,34 @@ human_verification:
 
 # Phase 4: Step 1 심화 콘텐츠 Verification Report
 
+> **[2026-08-25 갱신] 두 human_verification 항목 종결 — status: human_needed → passed**
+>
+> `/gsd-verify-work 04` 세션에서 두 항목 모두 실제로 수행됐다. 원래 "격리 환경이라
+> 접근 권한이 없다"는 이유로 사람에게 넘겨진 항목이었으나, 해당 세션에는 Supabase MCP와
+> Playwright MCP가 붙어 있어 그 전제가 깨졌다.
+>
+> **항목 1 (SQL 라이브 실행) — 통과, 단 결함 1건 발견 후 수정.**
+> 두 레슨의 SQL 16블록을 Supabase에 순서대로 실제 실행했다. 블록 자체는 전부 본문 주장과
+> 일치했고 외래키 위반 에러 메시지까지 글자 그대로 맞았다. 다만 **1편 → 2편 순서로 이어서
+> 실습하면 2편 준비 블록이 42703으로 실패**하는 결함을 찾았다 (G-04-1, major).
+> commit `f750017`에서 준비 블록을 `DROP SCHEMA ... CASCADE` 선행으로 바꿔 수정하고
+> 같은 경로를 재실행해 통과 확인. 성공 기준 3의 "실행 가능한"은 이제 실측으로 충족된다.
+>
+> **항목 2 (5편 시각 확인) — 통과, 단 결함 1건 발견 후 수정.**
+> 기계 검사(가로 넘침·`data-theme`·`<details>` 누출·터치 타깃·다크모드 대비·콘솔 에러)는
+> 5편 전부 통과했고, 사람이 프로덕션에서 읽힘·톤을 확인해 승인했다. 자동 검사가 추가로
+> **복사 버튼이 코드 첫 줄을 가리는 결함**을 잡아냈다 (G-04-2, cosmetic) — 같은 commit에서 수정.
+>
+> **이월:** G-04-2의 근본 원인(코드 블록 첫 줄에 버튼 폭만큼의 우측 여유가 없는
+> `globals.css` 구조)은 콘텐츠 길이로만 회피된 상태다. 첫 줄이 긴 코드 블록을 새로 추가하면
+> 재발한다. Phase 06(site-wide-design-polish)에서 구조적으로 해결할 것.
+>
+> **함께 관찰된 것 (Phase 06 후보, 이번 범위 밖):** 레슨 페이지에 `<main>` 랜드마크 없음;
+> 상단 내비 링크 3개(`일정표` 36px, `소개` 24px, `Step 1` 39px)의 가로 폭이 44px 미만.
+
 **Phase Goal:** 학습자가 Step 1(개발 기반 구축) 전체를 사이트에서 실제로 학습하고 완료 체크할 수 있다 — 사전학습이 여기서 시작된다
 **Verified:** 2026-08-25T04:48:49Z
-**Status:** human_needed
+**Status:** passed
 **Re-verification:** No — initial verification
 
 ## Goal Achievement
