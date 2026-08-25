@@ -51,7 +51,7 @@ Exceptions:
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Label | 14px | 400 (regular) | 1.4 |
-| Body | 16px | 400 (regular) | 1.6 |
+| Body | 16px | 400 (regular) | 1.8 |
 | Heading | 20px | 600 (semibold) | 1.3 |
 | Display | 28px | 600 (semibold) | 1.2 |
 
@@ -59,7 +59,11 @@ Exceptions:
 
 **Sizes:** exactly 4 — 14 / 16 / 20 / 28px. Do not introduce intermediate sizes (e.g. 18px) without updating this contract.
 
-**Line height rationale:** Body uses 1.6 (not the generic 1.5 default) because Korean prose with `word-break: keep-all` reads more comfortably with slightly more vertical breathing room, especially in long-form lesson content mixing Korean text and inline English/code terms (Pitfall 4).
+**Line height rationale (UX-03, revised — D-79/05-13):** Body `.prose` line-height is **1.8** (28.8px line gap at 16px), not the 1.6 this table originally specified. The original 1.6 override was recorded against a comment claiming "@tailwindcss/typography's default(1.5)" — that default does not exist; the plugin's actual default is **1.75**, so the original 1.6 value had actually *tightened* spacing relative to the plugin default, in direct contradiction of its own stated intent (more breathing room for Korean prose, Pitfall 4).
+
+**Root-caused during Phase 5 Plan 01 (05-01-SUMMARY.md):** the user reported the 1.6 value read as an undifferentiated wall of text ("없던 난독증도 올 것 같다" — even someone without dyslexia would start seeing text swim together) because `.prose > p` had **no explicit paragraph margin**, so the gap *between* paragraphs (browser default ~20px) was smaller than the gap *within* a paragraph's own lines (25.6px at the old 1.6). Fixed by raising line-height to 1.8 (28.8px line gap) **and** adding an explicit `.prose > p { margin-block: 2.4em }` (38.4px paragraph gap) — giving a paragraph-to-line gap ratio of **1.33**, so paragraph breaks read as visibly larger gaps than line breaks within a paragraph. User confirmed the fix reads well ("만족스러워").
+
+**L7 paragraph-length rule (content contract, added alongside the CSS fix):** `scripts/check-lesson-structure.mjs` enforces a 200-character-per-paragraph ceiling on lesson body prose (a "paragraph" = a maximal run of non-blank lines; headings/lists/tables/blockquotes/code fences/HTML tags/frontmatter are excluded from the count). This is now an enforced, permanent part of the lesson content contract — long, undifferentiated paragraphs are rejected at the same gate as structural violations, not just caught by spacing CSS.
 
 **Application map:**
 - Display (28px/600) → page `<h1>` (Step page title, lesson title, "AI Engineer Runway" home hero, Making-of title)
@@ -115,6 +119,10 @@ Exceptions:
 | Depth badge text | 심화 / 개요 |
 | Estimated time badge text | 약 {N}분 (60분 미만) 또는 약 {N}시간 (60분 이상) — 예: "약 45분", "약 2시간" |
 | Making-of page CTA (GitHub link) | GitHub에서 코드 보기 |
+| Empty state heading (v1 완성 후 — D-79/05-13) | 콘텐츠 준비 중입니다 (문구 불변, 상태만 재분류) |
+| Empty state body (v1 완성 후 — D-79/05-13) | 이 레슨은 아직 작성되지 않았습니다. 커리큘럼 목록에서 다른 레슨을 먼저 골라 학습해보세요. |
+
+**Empty state 재분류 기록 (D-79/05-13, 2026-08-26 추가):** Phase 5 완료 시점에 35편 전부가 `hasContent: true`가 되어, 위 두 행("Empty state heading/body (24 non-pilot lessons)")이 가리키던 원래 카피는 이제 **도달 불가** 상태다 — 현재 배포에서는 어떤 학습자도 이 화면에 진입할 수 없다. 그러나 `hasContent` 분기 코드는 삭제하지 않고 나중에 레슨이 추가될 때를 위한 **안전망**으로 유지한다(D-79). 실제 배포 중인 카피는 위에 새로 추가한 두 행("v1 완성 후")으로 교체됐다 — 특정 레슨 수·레슨 이름을 언급하지 않는 문구로 바꿔, 도달 불가 상태에서 벗어나 다시 노출되더라도 시간이 지나도 틀리지 않게 했다. 원래 두 행은 삭제하지 않고 그대로 보존한다 — 이 문서가 결정의 이력을 남기는 계약서이기 때문이다.
 
 ---
 
