@@ -186,20 +186,43 @@ Plans:
 **Plans**: 13 plans (5 waves)
 
 Plans:
+**Wave 1**
 
 - [ ] 05-01-PLAN.md — [wave 1] 파일럿 3편(2-3 재작성·3-1 개요 신규·2-4 프로젝트 가이드 신규) + 게이트 Step 2·3 확대 + 아이패드 승인 체크포인트
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 05-02-PLAN.md — [wave 2] 2-1 모듈 2편 (PostgreSQL·Supabase, AI 데이터 구조 설계)
 - [ ] 05-03-PLAN.md — [wave 2] 2-2 모듈 2편 (HTML·CSS·JS, 브라우저 동작 원리)
 - [ ] 05-04-PLAN.md — [wave 2] 2-5 모듈 2편 (Express REST API, 인증·인가·Prisma)
 - [ ] 05-05-PLAN.md — [wave 2] 2-3-typescript-setup + 2-6 프로젝트 가이드
 - [ ] 05-06-PLAN.md — [wave 2] 2-7 모듈 2편 (프롬프트 패턴·구조화 출력, PromptOps)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 05-07-PLAN.md — [wave 3] Step 2 배치 마감 — 매니페스트 상수 실측 갱신 + 12편 배포
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 05-08-PLAN.md — [wave 4] 3-1-hybrid 개요 + 3-2 프로젝트 가이드
 - [ ] 05-09-PLAN.md — [wave 4] 3-3 모듈 2편 (PEFT·LoRA·QLoRA, 튜닝 전후 비교)
 - [ ] 05-10-PLAN.md — [wave 4] 3-4 모듈 3편 (멀티 에이전트 구조, Webhook·스케줄·HITL, n8n·LangGraph)
 - [ ] 05-11-PLAN.md — [wave 4] 3-5 + 3-7 프로젝트 가이드 — CONT-05 완성
 - [ ] 05-12-PLAN.md — [wave 4] 3-6 모듈 3편 (프롬프트 버전관리·평가, 모니터링·거버넌스, 구조화 출력·카나리)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
 - [ ] 05-13-PLAN.md — [wave 5] Phase 마감 — 최종 상수 35 + 준비 중 카피·UI-SPEC + Making-of + 진행률 100% e2e
+
+**Cross-cutting constraints:**
+
+- 두 레슨의 프론트매터에서 `hasContent: false → true` 한 줄 외에는 어떤 필드도 바뀌지 않았다 (D-13)
+- 읽기 산문이 150분을 채우지 않고, 늘어난 분량은 해보기·정답 블록·단어 표가 차지한다 (D-49 승계)
+- 두 레슨 모두 `### 해보기` 2~3개 + 해보기 개수 + 2 이상의 접힌 정답 블록 + `**이 레슨의 단어**` 표 5~8행을 갖고 `node scripts/check-lesson-structure.mjs`를 통과한다 (D-69)
+- 두 레슨 모두 6단 헤딩 원문 유지 + `### 해보기` 2~3개 + 해보기 개수 + 2 이상의 접힌 정답 블록 + `**이 레슨의 단어**` 표 5~8행을 갖고 `node scripts/check-lesson-structure.mjs`를 통과한다 (D-65, D-69)
+- 세 레슨 모두 코드가 읽기용 스니펫 하나씩뿐이고 '지금 실행할 필요 없습니다' 취지의 안내가 붙어 있으며 설치·실행 명령이 0건이다 (D-63)
+- 세 레슨 모두 6단 헤딩 원문 유지 + `### 해보기` 2~3개 + 해보기 개수 + 2 이상의 접힌 정답 블록 + `**이 레슨의 단어**` 표 5~8행을 갖고 `node scripts/check-lesson-structure.mjs`를 통과한다 (D-65, D-69)
+- 세 레슨의 프론트매터에서 `hasContent: false → true` 한 줄 외에는 어떤 필드도 바뀌지 않았다 (D-13)
 
 ## Progress
 
