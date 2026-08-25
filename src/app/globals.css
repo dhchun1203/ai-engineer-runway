@@ -145,13 +145,38 @@ code[data-theme*=" "] span {
   border-color: var(--color-destructive-dark);
 }
 
-/* prose 본문 line-height 1.6 — keep-all 한국어 장문 + 영어 기술 용어 혼용 시
-   기본값(1.5)보다 수직 여백이 더 필요하다는 UI-SPEC 근거를 따른다 (UX-03, Pitfall 4).
-   Tailwind v4는 @import 뒤 unlayered 규칙이 @plugin이 주입한 레이어드 유틸리티보다
-   캐스케이드 우선순위가 높으므로, 이 선언이 typography 플러그인의 기본값을 덮어쓴다.
-   말줄임(ellipsis)은 어디에도 쓰지 않는다 — 넘치면 줄바꿈한다 (UI-SPEC long-text 결정). */
+/* prose 본문 line-height 1.8 + 문단 사이 여백 2.4em (Phase 5 05-01 사용자 리뷰 재작업,
+   UX-03 재적용). `@tailwindcss/typography` 플러그인의 실제 기본값은 16px 본문에서
+   line-height 1.75(28px)이고 문단 margin은 위아래 각 1.25em(20px)이다 — 이 파일이
+   과거에 달았던 "기본값(1.5)"라는 주석은 틀렸다. 실측: 이전 오버라이드(line-height: 1.6)는
+   줄 사이 간격을 25.6px로 만들었는데, 이는 플러그인 기본 문단 간격 20px보다 오히려 커서
+   "문단이 끝나고 새 문단이 시작"하는 경계가 "문단 안에서 줄이 바뀌는" 경계보다 시각적으로
+   더 좁아 보이는 역전이 발생했다(20px < 25.6px). 그 결과 장문이 문단 구분 없이 하나의
+   덩어리로 읽혔다(사용자 리포트: "문단 띄어쓰기가 너무 소극적"). 수정: line-height를
+   1.8(28.8px)로 올려 플러그인 기본값(1.75/28px)보다 명확히 크게 하고, 문단 margin을
+   `.prose > p`에서만 2.4em(38.4px)으로 키워 줄 간격(28.8px)의 약 1.33배가 되게 한다 —
+   문단 경계가 줄 경계보다 뚜렷하게 넓어야 한 눈에 단락이 갈라져 보인다. `> p`로 직계
+   자식만 한정한 이유는 `<li>`·`<details>`·`<blockquote>` 안에 중첩된 `<p>`까지 38.4px
+   여백을 먹으면 정답 블록·목록이 과도하게 벌어지기 때문이다 — 그 안의 문단은 플러그인
+   기본값을 그대로 쓴다. 말줄임(ellipsis)은 어디에도 쓰지 않는다 — 넘치면 줄바꿈한다
+   (UI-SPEC long-text 결정). */
 .prose {
-  line-height: 1.6;
+  line-height: 1.8;
+}
+
+.prose > p {
+  margin-block: 2.4em;
+}
+
+/* 문단 간격이 커진 만큼 섹션(heading) 경계는 그보다 더 크게 유지해야 위계가 뒤집히지
+   않는다 — h2(3.2em ≈ 문단 간격의 1.33배)가 h3(2.6em)보다 크고, 둘 다 문단 간격
+   2.4em보다 크다. */
+.prose > h2 {
+  margin-top: 3.2em;
+}
+
+.prose > h3 {
+  margin-top: 2.6em;
 }
 
 /* <details>/<summary> 정답 접기 UI 터치 타깃·다크모드 (D-61, RESEARCH Pitfall 3).
