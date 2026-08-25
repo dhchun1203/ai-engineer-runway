@@ -107,8 +107,8 @@ Exceptions:
 | Primary CTA | 레슨 시작하기 — lesson list item primary link text; pilot lesson cards |
 | Secondary CTA (next lesson) | 다음 레슨 → |
 | Secondary CTA (previous lesson) | ← 이전 레슨 |
-| Empty state heading (33 non-pilot lessons) | 콘텐츠 준비 중입니다 |
-| Empty state body | 이 레슨은 아직 작성되지 않았습니다. Step 1 "Python 변수·자료형" 또는 Step 2 "React 컴포넌트" 파일럿 레슨에서 먼저 학습 형식을 확인해보세요. |
+| Empty state heading (24 non-pilot lessons) | 콘텐츠 준비 중입니다 |
+| Empty state body | 이 레슨은 아직 작성되지 않았습니다. Step 1의 레슨 10편과 Step 2 "React 컴포넌트" 파일럿 레슨은 모두 작성되어 있으니 먼저 그쪽부터 학습해보세요. |
 | Error state (invalid step/lesson route) | 페이지를 찾을 수 없습니다 / 요청하신 콘텐츠가 존재하지 않습니다. 아래 버튼으로 커리큘럼 홈에서 다시 탐색해보세요. → CTA: "커리큘럼 홈으로" |
 | Destructive confirmation | 해당 없음 — Phase 1에는 파괴적 액션이 없다 (삭제/초기화 없음). Phase 2의 "진도 초기화" 기능 도입 시 이 행을 갱신할 것. |
 | Nav placeholder badge (D-09, 오늘의 학습·일정표) | 준비 중 |
@@ -134,7 +134,7 @@ including the prev/next boundary decision (disabled-gray, not hidden).
 
 | Category | Element(s) | Resolution |
 |----------|------------|------------|
-| empty | 비-파일럿 레슨 본문 33개 | 레슨별 실제 라우트가 존재하고(404 아님) Copywriting Contract의 "Empty state" 카피("콘텐츠 준비 중입니다" + 파일럿 안내)를 렌더링한다 (RESEARCH.md Pitfall 2) |
+| empty | 비-파일럿 레슨 본문 24개 | 레슨별 실제 라우트가 존재하고(404 아님) Copywriting Contract의 "Empty state" 카피("콘텐츠 준비 중입니다" + 파일럿 안내)를 렌더링한다 (RESEARCH.md Pitfall 2) |
 | empty | Step 카드·모듈 아코디언·배지 | 빌드 타임 매니페스트가 3 Step / 19 모듈 / 35 레슨을 고정 공급 — Velite Zod 스키마가 누락 필드를 빌드 실패로 차단하므로 런타임 빈 상태 불가 |
 | error | 잘못된 step/lesson 라우트 | Next.js `not-found.tsx`가 Copywriting Contract "Error state" 카피 + "커리큘럼 홈으로" CTA를 렌더링한다 |
 | error | 404 페이지 자체·정적 요소들 | 순수 SSG — 런타임 데이터 로드 실패가 존재하지 않음; MDX 컴파일 오류는 빌드 실패로 차단 |

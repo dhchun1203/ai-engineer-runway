@@ -3,10 +3,23 @@
 // 입력: .velite/lessons.json(빌드 산출물), src/content/modules.ts(정규식으로 모듈 id 리터럴 추출)
 // 하나라도 깨지면 비어 있지 않은 오류 메시지와 함께 비정상 종료(exit code != 0)한다.
 //
-// 기대값 상수: hasContent가 true인 레슨 수. Plan 06이 파일럿 2(2-3-react-components)를
-// 채우면서 1에서 2로 올렸다 — Step 1과 Step 2에 하나씩, 두 파일럿 모두 실콘텐츠다.
-const EXPECTED_HAS_CONTENT_COUNT = 2;
-const EXPECTED_HAS_CONTENT_SLUGS = ['1-3-python-variables-and-types', '2-3-react-components'];
+// 기대값 상수: hasContent가 true인 레슨 수. Phase 4가 Step 1 레슨 10편을 모두 채워
+// 2에서 11로 올렸다 — Step 1 10편(1-1~1-5 모듈, 파일럿 포함) + Step 2 파일럿
+// (2-3-react-components) 1편 = 11.
+const EXPECTED_HAS_CONTENT_COUNT = 11;
+const EXPECTED_HAS_CONTENT_SLUGS = [
+  '1-1-course-orientation',
+  '1-1-dev-environment-setup',
+  '1-2-git-branch-and-pr',
+  '1-2-generative-ai-basics',
+  '1-3-python-variables-and-types',
+  '1-3-python-functions-and-io',
+  '1-4-relational-db-basics',
+  '1-4-sql-queries-and-joins',
+  '1-5-ml-model-types',
+  '1-5-ml-metrics-and-pipeline',
+  '2-3-react-components',
+];
 
 // 기대값 상수: estimatedMinutes 총합·분포 (D-31 — Phase 3 Plan 2에서 일괄 하향 확정).
 // 심화·비프로젝트 150×20 + 개요·비프로젝트 90×10 + 프로젝트 준비 가이드 60×5 = 4,200분(70시간).
