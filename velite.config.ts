@@ -1,12 +1,13 @@
 import { defineConfig, s } from "velite";
 import rehypePrettyCode from "rehype-pretty-code";
-import { transformerCopyButton } from "@rehype-pretty/transformers";
 
+// 복사 버튼은 여기서 만들지 않는다. @rehype-pretty/transformers의
+// transformerCopyButton은 인라인 onclick을 *문자열*로 내보내는데, 컴파일된 MDX가
+// React 엘리먼트로 렌더되는 이 프로젝트에서는 React가 문자열 핸들러를 거부해
+// 버튼이 아무 일도 하지 않았다 (04-UI-REVIEW Priority Fix 1).
+// 대신 src/components/code-block.tsx가 <pre>를 감싸 실제 핸들러를 붙인다.
 const rehypePrettyCodeOptions = {
   theme: { dark: "github-dark-dimmed", light: "github-light" },
-  transformers: [
-    transformerCopyButton({ visibility: "always", feedbackDuration: 3_000 }),
-  ],
 };
 
 export default defineConfig({

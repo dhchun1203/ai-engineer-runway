@@ -60,19 +60,32 @@ pre {
 }
 
 /* rehype-pretty-code + Shiki dual theme (CONT-06, UX-03 가로 스크롤).
-   복사 버튼은 pre에 이미 position:absolute로 떠 있으므로(라이브러리 기본 동작) 코드 위에
-   겹쳐 뜨게 두고, padding-top으로 버튼 자리를 미리 비워두지 않는다 — 그렇게 하면 버튼이
-   우상단 한 곳에만 있는데도 모든 코드 블록의 전체 폭에서 위쪽 공간이 낭비되기 때문이다.
-   대신 세로 padding은 위/아래 1rem으로 대칭을 맞추고, 오른쪽 padding만 3.5rem으로 넓혀
-   버튼(44px 폭 + 4px 우측 margin ≈ 48px) 아래로 긴 코드 첫 줄이 밀려들어가지 않게 한다.
-   왼쪽 padding은 코드 첫 글자가 박스 경계에 바로 붙어 잘려 보이지 않도록 1rem 유지한다.
-   min-height는 버튼이 top:0 + margin-top 4px + 44px 높이만큼(≈52px) 차지하므로, 빈
-   코드 블록·한 줄짜리 코드 블록에서도 버튼이 박스 아래로 넘치지 않을 최소 높이를 보장한다.
-   overflow-x: auto는 유지되어 긴 줄도 가로 스크롤로 전체를 볼 수 있다. */
+   복사 버튼은 <pre> 안이 아니라 <pre>를 감싼 래퍼(code-block.tsx)에 position:absolute로
+   떠 있다 — <pre>가 overflow-x:auto라서 그 안에 두면 긴 코드를 가로 스크롤할 때 버튼이
+   코드와 함께 밀려 나가기 때문이다. 버튼이 코드 위에 겹쳐 뜨므로 padding-top으로 버튼
+   자리를 미리 비워두지 않는다 — 그렇게 하면 버튼이 우상단 한 곳에만 있는데도 모든 코드
+   블록의 전체 폭에서 위쪽 공간이 낭비된다. 대신 세로 padding은 위/아래 1rem으로 대칭을
+   맞추고, 오른쪽 padding만 3.5rem으로 넓혀 버튼(44px 폭 + 4px 우측 여백 ≈ 48px) 아래로
+   긴 코드 첫 줄이 밀려들어가지 않게 한다(G-04-2 재발 방지). 왼쪽 padding은 코드 첫 글자가
+   박스 경계에 붙어 잘려 보이지 않도록 1rem 유지한다. min-height는 버튼이 top 4px + 44px
+   높이만큼(≈52px) 차지하므로 한 줄짜리 코드 블록에서도 버튼이 박스 아래로 넘치지 않을
+   최소 높이를 보장한다. overflow-x: auto는 유지되어 긴 줄도 가로 스크롤로 볼 수 있다. */
 pre {
   overflow-x: auto;
   padding: 1rem 3.5rem 1rem 1rem;
   min-height: 3.25rem;
+}
+
+/* 래퍼가 생기면서 prose가 <pre>에 주던 상하 여백이 래퍼 밖으로 새지 않도록 여백의
+   주인을 래퍼로 옮긴다. 1.5rem은 기존 prose 기본값(pre 폰트 14px × 1.7143em ≈ 24px)과
+   같은 값이라 코드 블록 간격이 이전과 동일하게 유지된다. */
+.prose [data-code-block] {
+  margin: 1.5rem 0;
+}
+
+.prose [data-code-block] > pre {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 /* Shiki 배경은 code뿐 아니라 pre[data-theme*=" "]에도 똑같이 걸어야 한다.
@@ -94,18 +107,42 @@ code[data-theme*=" "] span {
   background-color: var(--shiki-dark-bg);
 }
 
-/* 코드 복사 버튼 터치 타깃 44px 이상 (UX-01, CONT-06, RESEARCH Pitfall 3).
-   라이브러리 기본값(width/height 24px, top 미지정)을 덮어써 히트 영역을 키우고
-   top:0으로 pre 우상단에 확정 고정한다 — visibility:"always"(velite.config.ts)와
-   결합해 hover 없는 iPad Safari에서도 항상 보인다.
-   선택자를 `.prose` 하위로 한정해 specificity를 라이브러리가 <code> 안에 주입하는
-   동일 선택자(pre button.rehype-pretty-copy)의 인라인 <style>보다 높여 top/margin
-   덮어쓰기가 DOM 순서와 무관하게 항상 적용되게 한다. */
-.prose pre button.rehype-pretty-copy { min-width: 44px; min-height: 44px; top: 0; margin-top: 4px; margin-right: 4px; background-color: rgba(248, 250, 252, 0.9); border: 1px solid var(--color-badge-neutral-bg); }
+/* 코드 복사 버튼 (src/components/code-block.tsx).
+   크기·위치는 컴포넌트의 Tailwind 클래스(h-11 w-11 = 44px, absolute right-1 top-1)가
+   갖고, 여기서는 색만 준다 — 버튼이 Shiki 배경 위에 겹쳐 뜨므로 반투명 페이지 배경으로
+   코드와 분리하고, 테두리는 기존 중성 토큰을 재사용한다(새 색 없음).
+   글자색은 지정하지 않는다 — .prose 본문색을 그대로 상속받아 양쪽 테마에서 대비가 맞는다.
+   hover 없이 항상 보인다 — 아이패드 Safari에는 hover가 없다. */
+.prose [data-code-block] > button {
+  background-color: rgba(248, 250, 252, 0.9);
+  border-color: var(--color-badge-neutral-bg);
+}
 
-.dark .prose pre button.rehype-pretty-copy {
+.dark .prose [data-code-block] > button {
   background-color: rgba(11, 18, 32, 0.9);
   border-color: var(--color-badge-neutral-bg-dark);
+}
+
+/* 복사 결과 피드백 — 성공은 accent, 실패는 destructive. 아이콘 교체(Copy -> Check)와
+   함께 색으로도 상태가 드러나야 아이패드에서 탭했을 때 결과가 확실해진다. */
+.prose [data-code-block] > button[data-copy-state="copied"] {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.dark .prose [data-code-block] > button[data-copy-state="copied"] {
+  color: var(--color-accent-dark);
+  border-color: var(--color-accent-dark);
+}
+
+.prose [data-code-block] > button[data-copy-state="failed"] {
+  color: var(--color-destructive);
+  border-color: var(--color-destructive);
+}
+
+.dark .prose [data-code-block] > button[data-copy-state="failed"] {
+  color: var(--color-destructive-dark);
+  border-color: var(--color-destructive-dark);
 }
 
 /* prose 본문 line-height 1.6 — keep-all 한국어 장문 + 영어 기술 용어 혼용 시
@@ -118,7 +155,7 @@ code[data-theme*=" "] span {
 }
 
 /* <details>/<summary> 정답 접기 UI 터치 타깃·다크모드 (D-61, RESEARCH Pitfall 3).
-   `.prose pre button.rehype-pretty-copy` 규칙 쌍(라이트 기본 + `.dark` 오버라이드)과
+   `.prose [data-code-block] > button` 규칙 쌍(라이트 기본 + `.dark` 오버라이드)과
    같은 형태로 쓴다 — 선택자를 `.prose` 하위로 한정하고, 새 색은 만들지 않고
    기존 토큰(--color-surface, --color-badge-neutral-bg*, --color-accent)만 재사용한다.
    summary의 min-height 44px는 아이패드 터치 타깃 기준이고, cursor: pointer +
