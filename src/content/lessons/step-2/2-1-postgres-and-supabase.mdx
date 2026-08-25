@@ -5,8 +5,204 @@ moduleId: "2-1"
 order: 1
 depth: "심화"
 estimatedMinutes: 150
-hasContent: false
+hasContent: true
 slug: "2-1-postgres-and-supabase"
 ---
 
-이 레슨은 아직 작성되지 않았습니다. Step 1 "Python 변수·자료형" 또는 Step 2 "React 컴포넌트" 파일럿 레슨에서 먼저 학습 형식을 확인해보세요.
+## 1. 학습 목표
+
+이 레슨을 마치면 다음을 할 수 있습니다.
+
+- PostgreSQL이 파일 저장과 어떻게 다른지, 왜 서버로 동작하는 데이터베이스가 필요한지 설명할 수 있다
+- Supabase가 관리형 PostgreSQL 위에 무엇을 자동으로 얹어주는지 말할 수 있다
+- 스키마로 테이블을 구분해서 만들고, 진도 데이터와 연습 데이터를 안전하게 분리할 수 있다
+- 행 수준 보안(RLS)이 왜 필요한지 설명하고, 어떤 상황에서 켜야 하는지 판단할 수 있다
+
+## 2. 왜 배우나
+
+1-4에서 배운 SQL은 실제 서비스에서도 그대로 씁니다. 다만 지금까지는 브라우저 SQL 에디터에서 연습했다면, 실제 서비스는 관리형 PostgreSQL 위에서 이 쿼리들이 돌아갑니다.
+
+Step 2 뒤쪽에서 만들 AI 쇼핑몰 프로젝트(2-4·2-5·2-6)는 전부 이 데이터베이스 위에 데이터를 쌓습니다. 지금 스키마와 보안 개념을 잡아두면 프로젝트에서 헤매지 않습니다.
+
+## 3. 개념 설명
+
+### 🐘 PostgreSQL은 서버로 도는 데이터베이스
+
+PostgreSQL(포스트그레스, 오픈소스 관계형 데이터베이스)은 컴퓨터 한 대에 계속 켜져 있는 프로그램입니다. 파일과 달리 여러 사람·여러 서비스가 동시에 접속해 데이터를 읽고 씁니다.
+
+1-4에서 이미 테이블·행·열·기본키를 다뤘으므로 여기서는 반복하지 않습니다. 이 레슨은 그 위에서 "어디에 놓고 어떻게 관리하는가"를 다룹니다.
+
+### ☁️ Supabase = 관리형 Postgres + API + 인증
+
+Supabase(서비스형 백엔드 플랫폼)는 PostgreSQL 서버를 대신 운영해주고, 테이블을 만들면 자동으로 API와 인증 기능까지 붙여줍니다.
+
+직접 서버를 설치하고 백업하고 보안 패치를 챙기는 대신, 대시보드에서 테이블만 설계하면 나머지는 Supabase가 관리합니다.
+
+### 🗄️ 스키마 — 테이블을 담는 서랍
+
+스키마(schema, 여러 테이블을 묶어 담는 이름 붙은 서랍)는 1-4에서 이미 다룬 개념입니다.
+
+이 사이트의 진도 데이터는 `public` 스키마에, 이 레슨의 연습용 테이블은 `practice` 스키마에 나눠 둡니다.
+
+### 🔒 행 수준 보안(RLS) 소개
+
+행 수준 보안(RLS, Row Level Security)은 테이블의 행 하나하나에 "누가 이 행을 볼 수 있는가"라는 규칙을 거는 기능입니다.
+
+RLS를 켜지 않으면 접속 권한이 있는 모두가 모든 행을 볼 수 있습니다. 실제 서비스 테이블을 공개하기 전에는 반드시 RLS부터 켭니다.
+
+## 4. 실무 예제
+
+**실행: 브라우저의 Supabase SQL 에디터.** 이 레슨은 2-1 모듈만의 예외로 PC 로컬 설치 없이 브라우저에서 전부 실습합니다 — Step 2의 다른 레슨은 PC 로컬 VS Code에서 실행합니다.
+
+⚠️ 이 레슨의 모든 SQL은 `practice` 스키마 안에서만 실행합니다 — 이 사이트의 진도 데이터가 들어 있는 `public.progress`는 건드리지 않습니다.
+
+```sql
+create schema if not exists practice;
+
+create table practice.ai_products (
+  id serial primary key,
+  name text not null,
+  price int not null,
+  category text,
+  created_at timestamptz default now()
+);
+```
+
+이 블록을 실행하면 `practice` 서랍 안에 `ai_products` 표가 생깁니다. 진도 데이터가 있는 `public` 스키마는 전혀 건드리지 않습니다.
+
+```sql
+insert into practice.ai_products (name, price, category) values
+  ('AI 스피커', 89000, '전자기기'),
+  ('무선 이어폰', 129000, '전자기기'),
+  ('원두 커피 500g', 18000, '식품'),
+  ('요가 매트', 32000, '생활용품'),
+  ('스마트워치', 259000, '전자기기');
+```
+
+각 `insert`문이 성공하면 몇 행이 추가됐는지 메시지로 알려줍니다.
+
+```sql
+select name, price, category
+from practice.ai_products
+where category = '전자기기'
+order by price desc
+limit 5;
+
+select category, count(*) as 상품수, avg(price) as 평균가격
+from practice.ai_products
+group by category
+order by 평균가격 desc;
+```
+
+첫 번째 조회는 전자기기 중 비싼 순으로 상품을 보여줍니다. 두 번째 조회는 카테고리별 상품 수와 평균 가격을 계산합니다.
+
+### 해보기
+
+전자기기 카테고리만 골라 평균 가격을 구하는 쿼리를 작성해보세요.
+
+<details>
+<summary>정답 보기</summary>
+
+```sql
+select avg(price) as 평균가격
+from practice.ai_products
+where category = '전자기기';
+```
+
+`where`로 먼저 전자기기만 걸러낸 뒤 `avg`로 평균을 계산합니다. 준비 데이터 기준 약 159,000원이 나옵니다.
+
+</details>
+
+### 해보기
+
+`practice.ai_products`에 `discount_rate`(할인율, int) 컬럼을 추가하고 전체 상품에 10을 채워보세요.
+
+<details>
+<summary>정답 보기</summary>
+
+```sql
+alter table practice.ai_products add column discount_rate int;
+
+update practice.ai_products set discount_rate = 10;
+```
+
+`alter table`로 컬럼을 먼저 추가한 뒤, `update`로 기존 행 전체에 같은 값을 채웁니다. `where` 없이 실행하면 모든 행이 대상이 됩니다.
+
+</details>
+
+### 해보기
+
+가격이 비싼 순으로 상위 3개 상품만 조회해보세요.
+
+<details>
+<summary>정답 보기</summary>
+
+```sql
+select name, price
+from practice.ai_products
+order by price desc
+limit 3;
+```
+
+`order by price desc`로 비싼 순 정렬한 뒤 `limit 3`으로 앞의 3행만 남깁니다. 스마트워치·무선 이어폰·AI 스피커 순으로 나옵니다.
+
+</details>
+
+## 5. 실무 팁
+
+- 실제 애플리케이션 코드에서는 사용자 입력을 문자열로 이어 붙여 쿼리를 만들지 않습니다 — 값을 따로 넘기는 파라미터 바인딩 방식을 씁니다.
+- 테이블을 공개 API로 열기 전에는 반드시 행 수준 보안(RLS)부터 켭니다. 나중에 켜면 그 사이 데이터가 이미 노출됐을 수 있습니다.
+- Supabase 무료 티어는 일정 기간 접속이 없으면 프로젝트가 일시정지될 수 있고, 저장 용량에도 한도가 있습니다.
+- 연습이 끝나면 아래 정리 SQL로 `practice` 서랍을 비워둡니다.
+
+```sql
+drop schema if exists practice cascade;
+```
+
+이 문장은 `practice` 스키마만 대상으로 하므로 사이트 진도 데이터에는 아무 영향이 없습니다.
+
+## 6. 핵심 정리 및 스스로 점검
+
+**핵심 정리**
+
+- PostgreSQL은 파일이 아니라 서버로 계속 켜져 있는 관계형 데이터베이스다
+- Supabase는 PostgreSQL을 관리해주고 API·인증까지 자동으로 붙여준다
+- 스키마로 진도 데이터(`public`)와 연습 데이터(`practice`)를 분리한다
+- 행 수준 보안(RLS)은 행 단위로 접근 권한을 거는 기능이며, 공개 전 반드시 켠다
+- 애플리케이션 코드는 문자열 결합 대신 파라미터 바인딩으로 쿼리를 만든다
+
+**이 레슨의 단어**
+
+| 단어 | 뜻 |
+|------|-----|
+| 관리형 데이터베이스 | 서버 설치·백업·보안 패치를 대신 관리해주는 데이터베이스 서비스 |
+| 스키마 | 여러 테이블을 묶어 담는 이름 붙은 서랍 |
+| 행 수준 보안(RLS) | 행 단위로 누가 볼 수 있는지 규칙을 거는 기능 |
+| 집계 함수 | COUNT·AVG처럼 여러 행을 하나의 값으로 계산하는 함수 |
+| 파라미터 바인딩 | 쿼리와 사용자 입력값을 분리해서 안전하게 넘기는 방식 |
+| 커넥션 | 애플리케이션과 데이터베이스 사이의 연결 하나 |
+| 무료 티어 | 비용 없이 쓸 수 있는 제한된 사용량 구간 |
+
+**스스로 점검**
+
+1. 이 레슨의 모든 SQL 앞에 `practice.` 접두사를 붙이는 이유는 무엇일까요?
+
+<details>
+<summary>정답 보기</summary>
+
+접두사가 없으면 테이블이 `public` 스키마에 만들어져, 이 사이트의 진도 데이터가 담긴 표들과 같은 공간에 섞입니다.
+
+`practice.` 접두사는 연습용 테이블을 별도 서랍에 가둬, 실수로 진도 데이터를 건드리거나 이름이 겹치는 사고를 막습니다.
+
+</details>
+
+2. RLS를 켜지 않은 테이블을 공개 API로 노출하면 어떤 문제가 생길 수 있을까요?
+
+<details>
+<summary>정답 보기</summary>
+
+Supabase는 테이블을 만들면 자동으로 API를 붙여주므로, RLS 없이 공개하면 그 API에 접근할 수 있는 누구나 테이블의 모든 행을 읽거나 바꿀 수 있습니다.
+
+행 단위 권한 규칙이 없다는 뜻이라, 다른 사용자의 데이터까지 그대로 노출되는 정보 유출로 이어질 수 있습니다.
+
+</details>
