@@ -3,10 +3,13 @@
 // 입력: .velite/lessons.json(빌드 산출물), src/content/modules.ts(정규식으로 모듈 id 리터럴 추출)
 // 하나라도 깨지면 비어 있지 않은 오류 메시지와 함께 비정상 종료(exit code != 0)한다.
 //
-// 기대값 상수: hasContent가 true인 레슨 수. Phase 4가 Step 1 레슨 10편을 모두 채워
-// 2에서 11로 올렸다 — Step 1 10편(1-1~1-5 모듈, 파일럿 포함) + Step 2 파일럿
-// (2-3-react-components) 1편 = 11.
-const EXPECTED_HAS_CONTENT_COUNT = 11;
+// 기대값 상수: hasContent가 true인 레슨 수. Phase 4가 11까지 올렸고(Step 1 10편 +
+// Step 2 파일럿 2-3-react-components), Phase 5 Wave 1이 신규 형식 2편
+// (3-1-vector-search-basics, 2-4-project-ai-shop-frontend)을 추가해 13이 됐다.
+// 이 값은 `.velite/lessons.json` 실측으로 확정한 것이다 — CONTEXT.md D-78 원문의
+// "11 → 14(Wave 1)"는 이 세션의 실측(13)과 다르다. RESEARCH.md Open Question 1이
+// 이미 예견한 산수 재검증이며, 실측이 원문 수치보다 우선한다(05-01-SUMMARY.md 참고).
+const EXPECTED_HAS_CONTENT_COUNT = 13;
 const EXPECTED_HAS_CONTENT_SLUGS = [
   '1-1-course-orientation',
   '1-1-dev-environment-setup',
@@ -19,6 +22,8 @@ const EXPECTED_HAS_CONTENT_SLUGS = [
   '1-5-ml-model-types',
   '1-5-ml-metrics-and-pipeline',
   '2-3-react-components',
+  '2-4-project-ai-shop-frontend',
+  '3-1-vector-search-basics',
 ];
 
 // 기대값 상수: estimatedMinutes 총합·분포 (D-31 — Phase 3 Plan 2에서 일괄 하향 확정).
