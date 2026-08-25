@@ -183,7 +183,7 @@ Plans:
   3. 커리큘럼 실습 프로젝트 5종이 각각 개요·사전 준비 가이드 레슨으로 제공된다 (본 과정 재현이 아닌 준비 안내)
   4. 전체 커리큘럼 진행률이 100%까지 도달 가능한 상태가 되고, Making-of 페이지가 구현→검증→배포 과정까지 기록을 마친다
 
-**Plans**: 1/13 plans executed (5 waves)
+**Plans**: 6/13 plans executed (5 waves)
 
 Plans:
 **Wave 1**
@@ -192,11 +192,11 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 05-02-PLAN.md — [wave 2] 2-1 모듈 2편 (PostgreSQL·Supabase, AI 데이터 구조 설계)
-- [ ] 05-03-PLAN.md — [wave 2] 2-2 모듈 2편 (HTML·CSS·JS, 브라우저 동작 원리)
-- [ ] 05-04-PLAN.md — [wave 2] 2-5 모듈 2편 (Express REST API, 인증·인가·Prisma)
-- [ ] 05-05-PLAN.md — [wave 2] 2-3-typescript-setup + 2-6 프로젝트 가이드
-- [ ] 05-06-PLAN.md — [wave 2] 2-7 모듈 2편 (프롬프트 패턴·구조화 출력, PromptOps)
+- [x] 05-02-PLAN.md — [wave 2] 2-1 모듈 2편 (PostgreSQL·Supabase, AI 데이터 구조 설계)
+- [x] 05-03-PLAN.md — [wave 2] 2-2 모듈 2편 (HTML·CSS·JS, 브라우저 동작 원리)
+- [x] 05-04-PLAN.md — [wave 2] 2-5 모듈 2편 (Express REST API, 인증·인가·Prisma)
+- [x] 05-05-PLAN.md — [wave 2] 2-3-typescript-setup + 2-6 프로젝트 가이드
+- [x] 05-06-PLAN.md — [wave 2] 2-7 모듈 2편 (프롬프트 패턴·구조화 출력, PromptOps)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -235,7 +235,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. 진도 체크와 진행률 | 4/4 | Complete    | 2026-08-24 |
 | 3. 학습 일정과 오늘의 학습 | 4/4 | Complete    | 2026-08-25 |
 | 4. Step 1 심화 콘텐츠 | 6/7 | In Progress|  |
-| 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 1/13 | In Progress|  |
+| 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 6/13 | In Progress|  |
 | 6. 전체 페이지 디자인 정리 | 0/TBD | Not started | - |
 
 ## Coverage Notes
