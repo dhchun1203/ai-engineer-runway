@@ -1,15 +1,17 @@
 #!/usr/bin/env node
-// Step 1 레슨 구조 자동 게이트 — D-59가 9편(Wave 2)의 사람 검토를 없앤 대가로
-// 필요해진 유일한 자동 안전망(RESEARCH.md, 04-VALIDATION.md §Wave 0). 외부 의존성 0,
-// Node 표준 모듈만 사용, `.velite/` 빌드 산출물이 아니라 원본 `.mdx` 파일을 직접
-// 읽는다 — `<details>` 마크업과 빈 줄 규칙은 컴파일 후 HTML에서는 확인할 수 없다.
+// 레슨 구조 자동 게이트 — D-59가 사람 검토를 없앤 대가로 필요해진 유일한 자동
+// 안전망(RESEARCH.md, 04-VALIDATION.md §Wave 0). 외부 의존성 0, Node 표준 모듈만
+// 사용, `.velite/` 빌드 산출물이 아니라 원본 `.mdx` 파일을 직접 읽는다 —
+// `<details>` 마크업과 빈 줄 규칙은 컴파일 후 HTML에서는 확인할 수 없다.
 //
-// 검사 대상: src/content/lessons/step-1/*.mdx 중 프론트매터 hasContent: true인
-// 파일만. false인 스텁은 건너뛴다(아직 본문이 없으므로 구조를 검사할 대상이
-// 아니다). Step 2·3 디렉터리는 검사하지 않는다 — Step 2 파일럿
-// (2-3-react-components.mdx)은 이 phase 이전(구 표준)에 쓰였고 해보기·<details>가
-// 없어 이 게이트를 오탐으로 걸리게 만든다. 이 게이트는 D-47/D-50/D-61 eli5 × 6단
-// 표준이 확정된 Step 1에만 적용된다.
+// 검사 대상: src/content/lessons/step-1/2/3 세 디렉터리 전체(순회 순서: step-1 →
+// step-2 → step-3, 각 디렉터리 안에서는 파일명 정렬) 중 프론트매터
+// hasContent: true인 파일만. false인 스텁은 건너뛴다(아직 본문이 없으므로 구조를
+// 검사할 대상이 아니다). Phase 5(D-71)가 Step 1 전용 스코프를 세 디렉터리
+// 전체로 확대했다 — 심화(Step 1·2)·개요(Step 3)·프로젝트 준비 가이드 세 형식
+// 모두에 예외 없이 같은 6개 검사(L1~L6)를 적용한다(D-69, 형식 예외 없음).
+// 허용 코드펜스 언어는 D-72로 13개(python/sql/bash/powershell/text +
+// typescript/tsx/javascript/jsx/json/html/css/yaml)로 확장됐다.
 
 const EXPECTED_HEADINGS = [
   '## 1. 학습 목표',
@@ -29,7 +31,10 @@ const TERM_TABLE_LABEL = '**이 레슨의 단어**';
 const TERM_TABLE_HEADER = '| 단어 | 뜻 |';
 const TERM_ROWS_MIN = 5;
 const TERM_ROWS_MAX = 8;
-const ALLOWED_FENCE_LANG_PREFIXES = ['python', 'sql', 'bash', 'powershell', 'text'];
+const ALLOWED_FENCE_LANG_PREFIXES = [
+  'python', 'sql', 'bash', 'powershell', 'text',
+  'typescript', 'tsx', 'javascript', 'jsx', 'json', 'html', 'css', 'yaml',
+];
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -37,22 +42,30 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const STEP1_DIR = path.join(ROOT, 'src', 'content', 'lessons', 'step-1');
+const LESSON_DIRS = ['step-1', 'step-2', 'step-3'].map((d) =>
+  path.join(ROOT, 'src', 'content', 'lessons', d),
+);
 
 const errors = [];
 function fail(message) {
   errors.push(message);
 }
 
-if (!fs.existsSync(STEP1_DIR)) {
-  console.error(`check-lesson-structure: ${STEP1_DIR} not found`);
-  process.exit(1);
+for (const dir of LESSON_DIRS) {
+  if (!fs.existsSync(dir)) {
+    console.error(`check-lesson-structure: ${dir} not found`);
+    process.exit(1);
+  }
 }
 
-const allFiles = fs
-  .readdirSync(STEP1_DIR)
-  .filter((f) => f.endsWith('.mdx'))
-  .sort();
+// 디렉터리 순(step-1 → step-2 → step-3), 각 디렉터리 안에서는 파일명 정렬.
+const allFiles = LESSON_DIRS.flatMap((dir) =>
+  fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.mdx'))
+    .sort()
+    .map((f) => path.join(dir, f)),
+);
 
 function extractFrontmatter(content) {
   const match = content.match(/^---\n([\s\S]*?)\n---\n?/);
@@ -192,15 +205,14 @@ function checkFenceLanguages(slug, lines) {
 
 let checkedCount = 0;
 
-for (const file of allFiles) {
-  const absPath = path.join(STEP1_DIR, file);
+for (const absPath of allFiles) {
   // CRLF(Windows 체크아웃)와 LF를 모두 다뤄야 한다 — 정규화하지 않으면 이 게이트가
   // CRLF로 저장된 파일을 조용히 건너뛰고 통과시켜버린다(구조 검증 0건).
   const content = fs.readFileSync(absPath, 'utf8').replace(/\r\n/g, '\n');
   const frontmatter = extractFrontmatter(content);
   if (!hasContentTrue(frontmatter)) continue; // hasContent: false 스텁은 건너뛴다
 
-  const slug = extractSlug(frontmatter) || file;
+  const slug = extractSlug(frontmatter) || path.basename(absPath);
   checkedCount += 1;
 
   const lines = content.split('\n');
@@ -215,7 +227,7 @@ for (const file of allFiles) {
 // 검사 대상이 0개면 그 자체가 오류다 — 게이트가 아무것도 검사하지 않고 조용히
 // 통과하는 경로를 막는다.
 if (checkedCount === 0) {
-  fail('no Step 1 lesson with hasContent: true was found — the gate checked nothing');
+  fail('no lesson with hasContent: true was found in step-1/2/3 — the gate checked nothing');
 }
 
 if (errors.length > 0) {

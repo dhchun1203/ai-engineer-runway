@@ -119,13 +119,99 @@ export default function HomePage() {
 }
 ```
 
-**실행 방법:** Next.js 프로젝트(App Router)의 `components/like-card.tsx`와 `app/page.tsx` 경로에 각각 파일을 저장한 뒤, 터미널에서 아래 명령으로 개발 서버를 띄웁니다.
+**실행: PC 로컬 VS Code.** Next.js 프로젝트(App Router)의 `components/like-card.tsx`와 `app/page.tsx` 경로에 각각 파일을 저장한 뒤, 터미널에서 아래 명령으로 개발 서버를 띄웁니다.
 
 ```bash
 npm run dev
 ```
 
 `http://localhost:3000`에 접속하면 카드 두 장이 각각 독립적인 좋아요 상태를 가지고 있는 것을 확인할 수 있습니다 — 한 카드의 버튼을 눌러도 다른 카드의 카운트는 바뀌지 않습니다. 이것이 "각 컴포넌트 인스턴스는 자기만의 state를 가진다"는 원리를 눈으로 확인하는 지점입니다. 이어서 "소개 페이지로 이동" 링크를 눌러 `/about` 경로로 화면이 새로고침 없이 전환되는 것도 확인해보세요.
+
+### 해보기
+
+`LikeCard`가 좋아요 수뿐 아니라 상품 카테고리(category)도 함께 보여주도록 고쳐보세요. `LikeCardProps`에 `category: string`을 추가하고, 카드 안에 카테고리를 표시하는 문장을 한 줄 추가한 뒤, `HomePage`에서 두 카드에 서로 다른 카테고리 값을 넘겨보세요.
+
+<details>
+<summary>정답 보기</summary>
+
+```tsx
+interface LikeCardProps {
+  name: string;
+  initialLikeCount: number;
+  category: string; // 새로 추가한 props
+}
+
+export function LikeCard({ name, initialLikeCount, category }: LikeCardProps) {
+  // ...state 선언은 그대로...
+  return (
+    <div style={{ border: "1px solid #ccc", borderRadius: 8, padding: 16 }}>
+      <p>{name}님의 학습 카드</p>
+      <p style={{ fontSize: 12, color: "#666" }}>카테고리: {category}</p>
+      {/* 버튼은 그대로 */}
+    </div>
+  );
+}
+```
+
+`category`는 부모가 넘겨준 값을 그대로 화면에 표시하기만 하므로 state가 아니라 props로 충분합니다. 호출하는 쪽은 `<LikeCard name="지현" initialLikeCount={3} category="Step 2" />`처럼 값을 하나 더 넘겨주면 됩니다.
+
+</details>
+
+### 해보기
+
+지금 `LikeCard`는 좋아요를 눌렀는지 여부(`isLiked`)를 항상 `false`로 시작합니다. 부모가 `initialIsLiked` props를 내려주면 그 값을 `useState`의 초기값으로 쓰도록 고쳐서, 처음부터 "이미 좋아요를 누른" 카드를 만들어보세요.
+
+<details>
+<summary>정답 보기</summary>
+
+```tsx
+interface LikeCardProps {
+  name: string;
+  initialLikeCount: number;
+  initialIsLiked: boolean; // 새로 추가한 props
+}
+
+export function LikeCard({ name, initialLikeCount, initialIsLiked }: LikeCardProps) {
+  const [likeCount, setLikeCount] = useState(initialLikeCount);
+  const [isLiked, setIsLiked] = useState(initialIsLiked); // 부모가 내려준 값으로 초기화
+  // ...나머지는 그대로...
+}
+```
+
+`initialLikeCount`를 `useState`의 초기값으로 썼던 것과 똑같은 패턴을 `isLiked`에도 적용한 것입니다 — 부모는 "시작할 때 어떤 값이어야 하는가"만 정해주고, 그 이후 값이 바뀌는 것은 전부 컴포넌트 스스로(state)가 책임집니다.
+
+</details>
+
+### 해보기
+
+`LikeCard` 카드를 눌렀을 때 상세 페이지로 이동하는 링크를 추가해보세요. 각 카드가 `slug`라는 props(예: `"jihyun"`)를 추가로 받고, 카드 하단에 `<Link href={`/lesson/${slug}`}>자세히 보기 →</Link>`를 넣어 클릭 시 이동하는지 확인합니다.
+
+<details>
+<summary>정답 보기</summary>
+
+```tsx
+import Link from "next/link";
+
+interface LikeCardProps {
+  name: string;
+  initialLikeCount: number;
+  slug: string; // 새로 추가한 props
+}
+
+export function LikeCard({ name, initialLikeCount, slug }: LikeCardProps) {
+  // ...state와 handleLikeClick은 그대로...
+  return (
+    <div style={{ border: "1px solid #ccc", borderRadius: 8, padding: 16 }}>
+      {/* 기존 내용 */}
+      <Link href={`/lesson/${slug}`}>자세히 보기 →</Link>
+    </div>
+  );
+}
+```
+
+`"use client"` 컴포넌트 안에서도 `Link`는 똑같이 쓸 수 있습니다 — state를 다루는 것과 페이지 이동은 서로 다른 관심사이고, 둘 다 같은 컴포넌트 안에 자연스럽게 공존할 수 있습니다.
+
+</details>
 
 ## 5. 실무 팁
 
@@ -144,8 +230,34 @@ npm run dev
 - state를 쓰는 컴포넌트는 Next.js App Router에서 `"use client"` 선언이 필요하다
 - 페이지 사이 이동은 `<a>` 대신 `<Link>`를 사용해 새로고침 없이 빠르게 전환한다
 
+**이 레슨의 단어**
+
+| 단어 | 뜻 |
+|------|-----|
+| 컴포넌트 | 화면을 재사용 가능한 단위로 쪼갠 조각 |
+| props | 부모 컴포넌트가 자식에게 건네는 읽기 전용 값 |
+| 상태(state) | 컴포넌트가 스스로 기억하고 스스로 바꾸는 값 |
+| 훅(hook) | `useState`처럼 컴포넌트에 상태·생명주기 기능을 붙여주는 함수 |
+| 클라이언트 컴포넌트 | 브라우저에서 상호작용(클릭 등)을 처리하는 컴포넌트, `"use client"`로 선언 |
+| 라우팅 | URL 경로와 화면을 연결하는 것 |
+| 리렌더 | state가 바뀔 때 React가 컴포넌트를 다시 그리는 것 |
+
 **스스로 점검**
 
 1. 위 `LikeCard` 예제에서 `initialLikeCount`를 props로 받으면서도 왜 그 값을 그대로 화면에 쓰지 않고 `useState(initialLikeCount)`로 한 번 감싸서 별도의 state(`likeCount`)를 만들었을까요?
-2. `LikeCard`를 세 번째로 하나 더 추가해서 서로 다른 이름과 초기 좋아요 수로 렌더링해보세요. 세 카드의 상태가 서로 독립적인지 직접 눌러서 확인해보세요.
-3. `handleLikeClick` 함수 안에서 `setLikeCount`를 `setLikeCount(likeCount + 1)`처럼 함수형 업데이트가 아닌 방식으로 바꾸면 어떤 상황에서 문제가 생길 수 있을지 생각해보세요.
+
+<details>
+<summary>정답 보기</summary>
+
+props는 읽기 전용이라 버튼을 눌러도 `initialLikeCount` 자체를 바꿀 수 없기 때문입니다. "버튼을 누르면 숫자가 바뀌어야 한다"는 요구사항을 만족하려면 컴포넌트가 스스로 바꿀 수 있는 값(state)이 별도로 필요하고, 그 state의 시작값만 부모가 넘겨준 `initialLikeCount`에서 가져오는 것입니다.
+
+</details>
+
+2. `handleLikeClick` 함수 안에서 `setLikeCount`를 `setLikeCount(likeCount + 1)`처럼 함수형 업데이트가 아닌 방식으로 바꾸면 어떤 상황에서 문제가 생길 수 있을지 생각해보세요.
+
+<details>
+<summary>정답 보기</summary>
+
+React가 여러 상태 변경을 한꺼번에 모아 처리(batching)할 때, `likeCount + 1`은 아직 갱신되지 않은 "이전 렌더링 시점"의 `likeCount` 값을 기준으로 계산됩니다. 같은 클릭 안에서 `setLikeCount`를 두 번 이상 호출하면 두 번째 호출도 같은 이전 값을 기준으로 계산되어 의도한 만큼 증가하지 않을 수 있습니다. `setLikeCount((count) => count + 1)`처럼 함수형 업데이트를 쓰면 React가 "가장 최신 값"을 인자로 넘겨주므로 이 문제가 생기지 않습니다.
+
+</details>
