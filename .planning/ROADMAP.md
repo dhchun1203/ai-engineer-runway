@@ -183,7 +183,23 @@ Plans:
   3. 커리큘럼 실습 프로젝트 5종이 각각 개요·사전 준비 가이드 레슨으로 제공된다 (본 과정 재현이 아닌 준비 안내)
   4. 전체 커리큘럼 진행률이 100%까지 도달 가능한 상태가 되고, Making-of 페이지가 구현→검증→배포 과정까지 기록을 마친다
 
-**Plans**: TBD
+**Plans**: 13 plans (5 waves)
+
+Plans:
+
+- [ ] 05-01-PLAN.md — [wave 1] 파일럿 3편(2-3 재작성·3-1 개요 신규·2-4 프로젝트 가이드 신규) + 게이트 Step 2·3 확대 + 아이패드 승인 체크포인트
+- [ ] 05-02-PLAN.md — [wave 2] 2-1 모듈 2편 (PostgreSQL·Supabase, AI 데이터 구조 설계)
+- [ ] 05-03-PLAN.md — [wave 2] 2-2 모듈 2편 (HTML·CSS·JS, 브라우저 동작 원리)
+- [ ] 05-04-PLAN.md — [wave 2] 2-5 모듈 2편 (Express REST API, 인증·인가·Prisma)
+- [ ] 05-05-PLAN.md — [wave 2] 2-3-typescript-setup + 2-6 프로젝트 가이드
+- [ ] 05-06-PLAN.md — [wave 2] 2-7 모듈 2편 (프롬프트 패턴·구조화 출력, PromptOps)
+- [ ] 05-07-PLAN.md — [wave 3] Step 2 배치 마감 — 매니페스트 상수 실측 갱신 + 12편 배포
+- [ ] 05-08-PLAN.md — [wave 4] 3-1-hybrid 개요 + 3-2 프로젝트 가이드
+- [ ] 05-09-PLAN.md — [wave 4] 3-3 모듈 2편 (PEFT·LoRA·QLoRA, 튜닝 전후 비교)
+- [ ] 05-10-PLAN.md — [wave 4] 3-4 모듈 3편 (멀티 에이전트 구조, Webhook·스케줄·HITL, n8n·LangGraph)
+- [ ] 05-11-PLAN.md — [wave 4] 3-5 + 3-7 프로젝트 가이드 — CONT-05 완성
+- [ ] 05-12-PLAN.md — [wave 4] 3-6 모듈 3편 (프롬프트 버전관리·평가, 모니터링·거버넌스, 구조화 출력·카나리)
+- [ ] 05-13-PLAN.md — [wave 5] Phase 마감 — 최종 상수 35 + 준비 중 카피·UI-SPEC + Making-of + 진행률 100% e2e
 
 ## Progress
 
@@ -196,7 +212,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. 진도 체크와 진행률 | 4/4 | Complete    | 2026-08-24 |
 | 3. 학습 일정과 오늘의 학습 | 4/4 | Complete    | 2026-08-25 |
 | 4. Step 1 심화 콘텐츠 | 6/7 | In Progress|  |
-| 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 0/TBD | Not started | - |
+| 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 0/13 | Planned | - |
 | 6. 전체 페이지 디자인 정리 | 0/TBD | Not started | - |
 
 ## Coverage Notes
