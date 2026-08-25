@@ -5,13 +5,13 @@ milestone_name: milestone
 current_phase: 04
 current_phase_name: step-1
 status: awaiting-uat
-stopped_at: Phase 4 executed 7/7 and deployed — awaiting UAT (04-UAT.md, 2 items)
-last_updated: "2026-08-25T04:59:39.851Z"
+stopped_at: Phase 5 context gathered
+last_updated: "2026-08-25T12:29:09.223Z"
 last_activity: 2026-08-25
 last_activity_desc: Phase 04 execution complete (7/7 plans, Step 1 10편 배포됨); verification=human_needed
 progress:
-  total_phases: 5
-  completed_phases: 3
+  total_phases: 6
+  completed_phases: 4
   total_plans: 21
   completed_plans: 21
 ---
@@ -40,12 +40,15 @@ Phase 4는 **아직 완료로 표시되지 않았다.** UAT를 먼저 닫아야 
 
 1. `/gsd-verify-work 04` — `04-UAT.md`의 2건을 안내하고, 통과 시 phase를 완료 처리한다.
    그 시점에 `REQUIREMENTS.md`의 CONT-02/CONT-03도 정산된다.
+
    - UAT 1: SQL 레슨 2편을 Supabase SQL 에디터에서 실제 실행 — 실행자·게이트·검증자 모두
      자격증명 없는 격리 환경이라 아무도 실행하지 못했다. 성공 기준 3번이 "실행 가능한 예제"를
      요구하므로 추론으로 대체 불가.
+
    - UAT 2: 아직 사람이 안 본 5편 훑어보기. 파일럿의 렌더 결함 2종은 10편 전부에서
      기계적으로 배제 완료(`<pre>` data-theme 누락 0, `<details>` 마크다운 누출 0,
      1줄 블록 프로덕션 실측 완료) — 남은 건 결함 사냥이 아니라 "읽을 만한가" 판단.
+
 2. `/gsd-ui-review` — 구현된 프론트엔드의 6-pillar 시각 감사. UI-SPEC 계약 위반을 싸게 잡는다.
 3. (2번 후에도 "템플릿 같다"가 남으면) `frontend-design` 스킬 — 미감 방향 잡기.
    스코프는 **레슨 읽기 화면**으로 제한하고 시간 제한을 둘 것.
@@ -176,6 +179,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-25T01:38:50.551Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-step-1/04-CONTEXT.md
+Last session: 2026-08-25T12:29:09.201Z
+Stopped at: Phase 5 context gathered
+Resume file: .planning/phases/05-step-2-3/05-CONTEXT.md
