@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 05
 current_phase_name: step-2-3
 status: executing
-stopped_at: Completed 05-08-PLAN.md (Step 3 depth trim + hybrid-search lesson + RAG project guide)
-last_updated: "2026-08-25T16:17:26.747Z"
-last_activity: 2026-08-25
-last_activity_desc: Phase 04 execution complete (7/7 plans, Step 1 10편 배포됨); verification=human_needed
+stopped_at: Completed 05-13-PLAN.md (Phase 5 마감 — Step 3 배포, 매니페스트 최종화, 진행률 100% 확인)
+last_updated: "2026-08-25T16:41:05.768Z"
+last_activity: 2026-08-26
+last_activity_desc: Plan 05-08 complete (Step 3 depth re-trim/re-approval + 2 lessons)
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 34
-  completed_plans: 29
+  completed_plans: 34
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 ## Current Position
 
 Phase: 05 (step-2-3) — EXECUTING
-Plan: 08 of 13 complete (Plans 01-08 done; Wave 3 plans 09-12 executing in parallel worktrees as of this update — their completion is not confirmed from this vantage point; Plan 13 does wave-close manifest reconciliation)
+Plan: 13 of 13 complete (Plans 01-08 done; Wave 3 plans 09-12 executing in parallel worktrees as of this update — their completion is not confirmed from this vantage point; Plan 13 does wave-close manifest reconciliation)
 Status: Executing (Wave 3 in progress)
 Last activity: 2026-08-26 — Plan 05-08 complete (Step 3 depth re-trim/re-approval + 2 lessons)
 
-Progress: [█████████████████░░░] 8/13 plans in phase 05 ([█████████░] 85% project-wide)
+Progress: [█████████████████░░░] 8/13 plans in phase 05 ([██████████] 100% project-wide)
 
 ### 다음에 할 일 (이 순서대로)
 
@@ -102,6 +102,7 @@ UI 작업을 끼워 넣을 자리가 없으므로, frontend-design은 페이즈 
 | Phase 05 P01 | 49min | 3 tasks | 16 files |
 | Phase 05 P07 | 25min | 2 tasks | 1 files |
 | Phase 05 P08 | 45min | 3 tasks | 3 files |
+| Phase 05 P13 | session | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -162,6 +163,9 @@ Recent decisions affecting current work:
 - [Phase ?]: 05-07: Step 2 12편 프로덕션 배포 완료, 12/12 200 확인, e2e-today·e2e-progress 통과
 - [Phase ?]: Step 3 depth bar re-approved post-trim (이제 맞다, 2026-08-26) — trimmed 3-1-vector-search-basics.mdx is now the reference standard for the remaining 12 Step 3 lessons
 - [Phase ?]: 05-08: 3-1-hybrid-search-reranking + 3-2-project-rag-agent written at the re-approved depth bar (CONT-05)
+- [Phase ?]: 매니페스트 최종 상수(35) 실측 확정 — CONTEXT.md D-78 원문 최종값과 정확히 일치, Wave 1·2의 불일치 이력과 대비
+- [Phase ?]: UI-SPEC UX-03 line-height 근거 정정(1.8/2.4em, 비율 1.33) — 기존 '기본값 1.5' 주장이 오류였음을 확인하고 실측치로 갱신
+- [Phase ?]: D-81 진행률 100% 검증을 실제 progress-math.ts aggregate() 함수로 직접 실행 — 전체·Step·19개 모듈 전부 100%, 반올림 결함 0건
 
 ### Pending Todos
 
@@ -194,6 +198,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-25T16:17:19.077Z
-Stopped at: Completed 05-08-PLAN.md (Step 3 depth trim + hybrid-search lesson + RAG project guide)
+Last session: 2026-08-25T16:41:05.740Z
+Stopped at: Completed 05-13-PLAN.md (Phase 5 마감 — Step 3 배포, 매니페스트 최종화, 진행률 100% 확인)
 Resume file: None
