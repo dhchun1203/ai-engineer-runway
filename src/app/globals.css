@@ -60,14 +60,19 @@ pre {
 }
 
 /* rehype-pretty-code + Shiki dual theme (CONT-06, UX-03 가로 스크롤).
-   padding-top는 복사 버튼(44px 히트 영역)이 첫 줄 코드를 가리지 않도록 여유를 둔다.
-   좌우 1rem padding은 코드 첫 글자가 박스 경계에 바로 붙어 잘려 보이지 않게 한다.
-   min-height는 빈 코드 블록·한 줄짜리 코드 블록에서도 레이아웃이 무너지지 않게 한다.
+   복사 버튼은 pre에 이미 position:absolute로 떠 있으므로(라이브러리 기본 동작) 코드 위에
+   겹쳐 뜨게 두고, padding-top으로 버튼 자리를 미리 비워두지 않는다 — 그렇게 하면 버튼이
+   우상단 한 곳에만 있는데도 모든 코드 블록의 전체 폭에서 위쪽 공간이 낭비되기 때문이다.
+   대신 세로 padding은 위/아래 1rem으로 대칭을 맞추고, 오른쪽 padding만 3.5rem으로 넓혀
+   버튼(44px 폭 + 4px 우측 margin ≈ 48px) 아래로 긴 코드 첫 줄이 밀려들어가지 않게 한다.
+   왼쪽 padding은 코드 첫 글자가 박스 경계에 바로 붙어 잘려 보이지 않도록 1rem 유지한다.
+   min-height는 버튼이 top:0 + margin-top 4px + 44px 높이만큼(≈52px) 차지하므로, 빈
+   코드 블록·한 줄짜리 코드 블록에서도 버튼이 박스 아래로 넘치지 않을 최소 높이를 보장한다.
    overflow-x: auto는 유지되어 긴 줄도 가로 스크롤로 전체를 볼 수 있다. */
 pre {
   overflow-x: auto;
-  padding: 3.25rem 1rem 1rem 1rem;
-  min-height: 4.5rem;
+  padding: 1rem 3.5rem 1rem 1rem;
+  min-height: 3.25rem;
 }
 
 /* Shiki 배경은 code뿐 아니라 pre[data-theme*=" "]에도 똑같이 걸어야 한다.
