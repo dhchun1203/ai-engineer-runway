@@ -9,8 +9,12 @@
 // 이 값은 `.velite/lessons.json` 실측으로 확정한 것이다 — CONTEXT.md D-78 원문의
 // "11 → 14(Wave 1)"는 이 세션의 실측(13)과 다르다. RESEARCH.md Open Question 1이
 // 이미 예견한 산수 재검증이며, 실측이 원문 수치보다 우선한다(05-01-SUMMARY.md 참고).
-const EXPECTED_HAS_CONTENT_COUNT = 13;
+// Phase 5 Wave 2(Plan 02~06)가 Step 2 잔여 10편을 채워 13에서 23이 됐다. 이 값도
+// `.velite/lessons.json` 실측(Plan 07)이다 — CONTEXT.md D-78 원문의 "→ 24(Wave 2)"와도
+// 다르다(실측이 우선, 05-07-SUMMARY.md 참고).
+const EXPECTED_HAS_CONTENT_COUNT = 23;
 const EXPECTED_HAS_CONTENT_SLUGS = [
+  // Step 1 (Phase 4)
   '1-1-course-orientation',
   '1-1-dev-environment-setup',
   '1-2-git-branch-and-pr',
@@ -21,8 +25,20 @@ const EXPECTED_HAS_CONTENT_SLUGS = [
   '1-4-sql-queries-and-joins',
   '1-5-ml-model-types',
   '1-5-ml-metrics-and-pipeline',
+  // Step 2 (Phase 4 파일럿 1편 + Phase 5 Wave 1 파일럿 1편 + Wave 2 신규 10편)
+  '2-1-ai-data-modeling',
+  '2-1-postgres-and-supabase',
+  '2-2-browser-and-ui',
+  '2-2-html-css-js',
   '2-3-react-components',
+  '2-3-typescript-setup',
   '2-4-project-ai-shop-frontend',
+  '2-5-auth-and-prisma',
+  '2-5-express-rest-api',
+  '2-6-project-ai-shop-backend',
+  '2-7-prompt-patterns',
+  '2-7-promptops',
+  // Step 3 (Phase 5 Wave 1 파일럿 1편)
   '3-1-vector-search-basics',
 ];
 
