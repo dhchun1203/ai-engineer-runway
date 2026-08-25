@@ -184,7 +184,7 @@ export function LikeCard({ name, initialLikeCount, initialIsLiked }: LikeCardPro
 
 ### 해보기
 
-`LikeCard` 카드를 눌렀을 때 상세 페이지로 이동하는 링크를 추가해보세요. 각 카드가 `slug`라는 props(예: `"jihyun"`)를 추가로 받고, 카드 하단에 `<Link href={`/lesson/${slug}`}>자세히 보기 →</Link>`를 넣어 클릭 시 이동하는지 확인합니다.
+`LikeCard` 카드를 눌렀을 때 상세 페이지로 이동하는 링크를 추가해보세요. 각 카드가 `slug`라는 props(예: `"jihyun"`)를 추가로 받고, 카드 하단에 `Link`로 `/lesson/` 뒤에 `slug`를 붙인 경로로 이동하는 "자세히 보기 →" 링크를 넣어 클릭 시 이동하는지 확인합니다.
 
 <details>
 <summary>정답 보기</summary>
