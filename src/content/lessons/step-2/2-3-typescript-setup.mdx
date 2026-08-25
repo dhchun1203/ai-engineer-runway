@@ -5,8 +5,245 @@ moduleId: "2-3"
 order: 1
 depth: "심화"
 estimatedMinutes: 150
-hasContent: false
+hasContent: true
 slug: "2-3-typescript-setup"
 ---
 
-이 레슨은 아직 작성되지 않았습니다. Step 1 "Python 변수·자료형" 또는 Step 2 "React 컴포넌트" 파일럿 레슨에서 먼저 학습 형식을 확인해보세요.
+## 1. 학습 목표
+
+이 레슨을 마치면 다음을 할 수 있습니다.
+
+- Node.js와 npm이 무엇인지, 왜 둘이 항상 짝으로 다니는지 설명할 수 있다
+- `npm init`으로 새 프로젝트를 초기화할 수 있다
+- TypeScript를 설치하고 `tsconfig.json`으로 기본 설정을 구성할 수 있다
+- `.ts` 파일을 작성하고 실제로 실행해 결과를 확인할 수 있다
+
+## 2. 왜 배우나
+
+Step 1에서 Python·Git·VS Code·GitHub·Supabase 계정까지 다섯 공구를 갖췄지만, Node 계열은 아직 한 번도 설치하지 않았습니다.
+
+이 레슨이 그 첫 설치 지점입니다. 여기서 막히면 React·Express·Prisma까지 이어지는 Step 2의 모든 실습이 전부 막힙니다.
+
+지금 환경을 확실히 갖춰두면 뒤 레슨들은 "이 위에 무엇을 더 쌓는가"에만 집중할 수 있습니다.
+
+## 3. 개념 설명
+
+### 🏃 Node.js — 브라우저 밖에서 JavaScript를 돌리는 실행기
+
+JavaScript는 원래 브라우저 안에서만 동작하던 언어입니다. Node.js(runtime, 코드를 실제로 돌리는 실행 환경)는 브라우저 없이도 컴퓨터에서 직접 JavaScript를 실행할 수 있게 해주는 프로그램입니다.
+
+Python을 설치했을 때 `py` 명령으로 `.py` 파일을 실행했던 것과 같은 역할을, Node.js는 `.js`·`.ts` 파일에 대해 해줍니다.
+
+### 📦 npm과 package.json — 부품 창고와 부품 목록
+
+npm(패키지 매니저, package manager, 남이 만든 코드 부품을 내려받고 관리하는 도구)은 Node.js를 설치하면 함께 딸려오는 도구입니다. 전 세계 개발자가 올려둔 부품(패키지)을 명령 한 줄로 내 프로젝트에 가져올 수 있습니다.
+
+`package.json`은 그 부품 목록을 적어두는 장부입니다. 어떤 부품을 몇 번 버전으로 쓰는지, 프로젝트를 실행하는 명령이 무엇인지가 여기 적힙니다.
+
+### 🏷️ TypeScript — 상자에 이름표를 붙이는 것
+
+TypeScript는 JavaScript에 타입(type, 값이 어떤 종류인지 나타내는 표시)이라는 안전장치를 붙인 언어입니다. 상자 겉면에 "이 상자에는 사과만 담습니다"라고 써 붙이면, 누가 실수로 배를 넣으려 할 때 그 자리에서 바로 알아챌 수 있는 것과 같습니다.
+
+JavaScript는 이런 이름표가 없어서 잘못된 값이 들어가도 실행해봐야 문제를 알 수 있습니다. TypeScript는 코드를 작성하는 순간 에디터가 바로 빨간 줄로 알려줍니다.
+
+### ⚙️ 컴파일과 바로 실행 — 두 가지 실행 방식
+
+TypeScript 파일(`.ts`)은 브라우저나 Node.js가 직접 이해하지 못합니다. 원래 방식은 `tsc`라는 컴파일러(compiler, 코드를 다른 언어로 변환하는 도구)로 `.js` 파일로 먼저 변환한 뒤 그 결과를 실행하는 것입니다.
+
+이 레슨에서는 `tsx`라는 도구로 컴파일 단계를 생략하고 `.ts` 파일을 바로 실행합니다. 실습 중에는 이 방식이 훨씬 빠르고 편합니다.
+
+### 🔧 개발 의존성과 실행 의존성
+
+`package.json`의 부품 목록은 두 칸으로 나뉩니다. `dependencies`는 서비스가 실제로 동작할 때 필요한 부품이고, `devDependencies`는 개발할 때만 필요하고 서비스 운영에는 안 쓰이는 부품입니다.
+
+TypeScript·`tsx`·타입 정의 파일들은 전부 개발 도구이므로 `devDependencies`에 들어갑니다. 설치할 때 `-D` 옵션을 붙이면 이 칸으로 들어갑니다.
+
+## 4. 실무 예제
+
+**실행: PC 로컬 VS Code.** 아래 순서를 새 폴더 하나에서 그대로 따라가면 첫 TypeScript 파일 실행까지 도달합니다.
+
+**1단계 — 설치 확인.** 터미널을 열고 아래 두 명령으로 Node.js와 npm이 이미 설치되어 있는지 확인합니다.
+
+```powershell
+node --version
+npm --version
+```
+
+버전 번호가 출력되면 설치되어 있는 것입니다. 아무 반응이 없거나 오류가 나오면 Node.js 공식 사이트([nodejs.org](https://nodejs.org))에서 LTS(Long Term Support, 장기 지원) 버전 설치본을 받아 설치합니다.
+
+macOS는 Homebrew 같은 패키지 관리자로도 설치할 수 있습니다. 이 레슨이 안내하는 기준은 **LTS 24.x 이상**입니다.
+
+**2단계 — 프로젝트 초기화.** 실습용 새 폴더를 만들고 그 안에서 아래 명령을 실행합니다.
+
+```powershell
+npm init -y
+```
+
+`-y` 옵션은 모든 질문에 기본값으로 답하고 바로 `package.json`을 만들어줍니다.
+
+**3단계 — TypeScript 설치.** 아래 명령으로 필요한 부품 세 가지를 한 번에 설치합니다.
+
+```powershell
+npm install -D typescript tsx @types/node
+```
+
+`typescript`는 TypeScript 언어 자체, `tsx`는 컴파일 없이 바로 실행해주는 도구, `@types/node`는 Node.js 자체 기능(파일 읽기 등)에도 타입 이름표를 붙여주는 부품입니다.
+
+**4단계 — 설정 생성.** 아래 명령으로 TypeScript 설정 파일을 만듭니다.
+
+```powershell
+npx tsc --init
+```
+
+**5단계 — 첫 파일 실행.** 아래 코드를 `hello.ts` 파일로 저장한 뒤 실행합니다.
+
+```typescript
+// hello.ts
+interface Product {
+  name: string;
+  price: number;
+}
+
+function calculateTotal(products: Product[]): string {
+  const total = products.reduce((sum, p) => sum + p.price, 0);
+  return `총액: ${total}원`;
+}
+
+const cart: Product[] = [
+  { name: "노트북", price: 1200000 },
+  { name: "마우스", price: 30000 },
+];
+
+console.log(calculateTotal(cart));
+```
+
+```powershell
+npx tsx hello.ts
+```
+
+터미널에 `총액: 1230000원`이 출력되면 성공입니다.
+
+이제 방금 만든 파일과 설정을 살펴봅니다. `package.json`에서 방금 설치한 부품이 어디 적혔는지 확인합니다.
+
+```json
+{
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "tsx": "^4.0.0",
+    "@types/node": "^24.0.0"
+  }
+}
+```
+
+`devDependencies` 칸에 세 부품이 들어간 것이 3단계에서 `-D` 옵션을 붙인 결과입니다. `scripts` 칸에는 실행 명령을 짧게 등록해둘 수 있습니다.
+
+`tsconfig.json`에서는 자주 쓰는 두 옵션만 짚어봅니다.
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "es2022",
+    "module": "esnext"
+  }
+}
+```
+
+`strict`는 타입 검사를 얼마나 엄격하게 할지 정합니다. `true`면 이름표 없이 방치된 값도 잡아냅니다. `target`은 결과 코드가 어떤 JavaScript 버전 문법을 쓸지, `module`은 부품을 서로 불러오는 방식을 정합니다.
+
+`Product`의 `price`에 문자열을 넣어보면 에디터가 그 줄에 빨간 줄을 긋고 "string 형식은 number 형식에 할당할 수 없습니다" 같은 메시지를 보여줍니다. 실행하지 않고도 실수를 미리 잡을 수 있다는 것이 TypeScript가 주는 가장 큰 이득입니다.
+
+### 해보기
+
+`calculateTotal` 함수를 호출할 때 `cart` 배열의 한 상품에서 `price` 값을 `"삼만원"`처럼 문자열로 바꿔보세요. 에디터에 어떤 빨간 줄이 뜨는지 확인합니다.
+
+<details>
+<summary>정답 보기</summary>
+
+`price: "삼만원"`으로 바꾸면 `Product` interface가 `price: number`로 선언해뒀기 때문에 그 자리에 바로 빨간 줄이 뜹니다. 메시지는 대략 "'string' 형식은 'number' 형식에 할당할 수 없습니다"입니다.
+
+`npx tsx hello.ts`로 실행해도 같은 오류가 터미널에 그대로 출력되어 실행 자체가 되지 않습니다.
+
+</details>
+
+### 해보기
+
+`package.json`의 `scripts` 칸에 `"start": "tsx hello.ts"`를 추가하고, `npx tsx hello.ts` 대신 `npm run start`로 실행해보세요.
+
+<details>
+<summary>정답 보기</summary>
+
+`scripts` 칸에 아래 한 줄을 추가합니다.
+
+```json
+{
+  "scripts": {
+    "start": "tsx hello.ts"
+  }
+}
+```
+
+이제 `npm run start`만 입력해도 같은 결과(`총액: 1230000원`)가 출력됩니다. 매번 긴 명령을 치는 대신 짧은 이름으로 등록해두는 것이 `scripts`의 역할입니다.
+
+</details>
+
+### 해보기
+
+`tsconfig.json`의 `strict` 값을 `false`로 바꾼 뒤, 첫 번째 해보기에서 만든 타입 오류(`price: "삼만원"`)가 여전히 빨간 줄로 잡히는지 다시 확인해보세요.
+
+<details>
+<summary>정답 보기</summary>
+
+`strict: false`로 바꿔도 `Product` interface에 `price: number`라고 명시적으로 선언해뒀다면 여전히 오류로 잡힙니다. `strict` 옵션은 타입을 아예 적지 않은 값(암시적 `any`)까지 검사할지를 결정하는 것입니다.
+
+이미 명시한 타입 검사를 꺼버리는 옵션이 아니므로, `strict: true`로 되돌려 두는 것을 권장합니다.
+
+</details>
+
+## 5. 실무 팁
+
+- **`node_modules` 폴더는 저장소에 올리지 않습니다.** 설치한 부품이 실제 파일로 담기는 폴더인데 용량이 크고 `npm install`만 다시 실행하면 언제든 복원됩니다. `.gitignore`에 반드시 포함합니다.
+- **전역 설치보다 프로젝트 안 설치를 기본으로 합니다.** `npm install -g`로 전역에 깔면 프로젝트마다 버전이 달라졌을 때 충돌이 납니다. 이번 레슨처럼 프로젝트 폴더 안에 설치해두면 `npx` 명령으로 그 프로젝트의 버전만 정확히 씁니다.
+- **VS Code가 프로젝트의 TypeScript 버전을 쓰도록 설정해둡니다.** VS Code는 자체 내장 TypeScript를 기본으로 쓰는데, 프로젝트에 설치한 버전과 다를 수 있습니다. `.ts` 파일을 열고 우측 하단 버전 표시를 클릭해 "워크스페이스 버전 사용"을 선택하면 일치시킬 수 있습니다.
+
+## 6. 핵심 정리 및 스스로 점검
+
+**핵심 정리**
+
+- Node.js는 브라우저 밖에서 JavaScript를 실행하는 런타임이고, npm은 그와 함께 설치되는 패키지 매니저다
+- `npm init -y`로 프로젝트를 초기화하고 `package.json`에 부품 목록을 관리한다
+- TypeScript는 JavaScript에 타입이라는 안전장치를 붙인 언어이며, `strict` 옵션으로 검사 강도를 정한다
+- `tsx`를 쓰면 컴파일 단계 없이 `.ts` 파일을 바로 실행할 수 있다
+- 개발 도구는 `-D` 옵션으로 `devDependencies`에 설치한다
+
+**이 레슨의 단어**
+
+| 단어 | 뜻 |
+|------|-----|
+| 런타임 | 코드를 실제로 돌리는 실행 환경 |
+| 패키지 매니저 | 남이 만든 코드 부품을 내려받고 관리하는 도구 |
+| 의존성 | 프로젝트가 동작하는 데 필요한 외부 부품 |
+| 개발 의존성 | 개발할 때만 필요하고 서비스 운영에는 쓰이지 않는 부품 |
+| 컴파일 | 코드를 다른 언어나 형태로 변환하는 것 |
+| 타입 | 값이 어떤 종류인지 나타내는 표시 |
+| 트랜스파일 | TypeScript처럼 비슷한 수준의 언어끼리 코드를 변환하는 것 |
+
+**스스로 점검**
+
+1. Python 실습에서는 `.py` 파일을 바로 `py hello.py`로 실행했는데, 이 레슨에서는 왜 `.ts` 파일을 바로 실행하지 않고 `tsx`라는 도구를 거칠까요?
+
+<details>
+<summary>정답 보기</summary>
+
+Node.js는 원래 `.ts` 파일의 타입 문법을 이해하지 못합니다. 원칙대로라면 `tsc`로 먼저 `.js`로 변환한 뒤 그 결과를 실행해야 하는데, `tsx`는 이 변환과 실행을 한 번에 처리해주는 도구입니다. Python은 애초에 타입 문법이 언어 자체에 내장되어 있어 별도 변환 단계가 필요 없었던 것과 대조됩니다.
+
+</details>
+
+2. `typescript`와 `tsx`를 `dependencies`가 아니라 `devDependencies`에 설치하는 이유는 무엇일까요?
+
+<details>
+<summary>정답 보기</summary>
+
+이 두 부품은 코드를 작성하고 실행 파일로 준비하는 개발 단계에서만 필요합니다. 실제 서비스가 사용자에게 배포된 뒤에는 이미 변환이 끝난 결과물만 동작하면 되므로 이 부품들이 서버에까지 따라갈 필요가 없습니다. `devDependencies`로 분리해두면 배포 시 불필요한 부품을 걷어내기가 쉬워집니다.
+
+</details>
