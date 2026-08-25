@@ -11,7 +11,7 @@
 - [ ] **CONT-02**: 각 레슨 페이지는 쉬운 개념 설명(비유, 핵심 정리 포함)을 제공한다
 - [ ] **CONT-03**: 각 레슨 페이지는 커리큘럼 동일 스택의 실무 적용 예제 코드(언어별 문법 강조 포함)를 제공한다
 - [x] **CONT-04**: Step 1·2 핵심 레슨은 심화 콘텐츠로, Step 3 레슨은 개념 훑기 콘텐츠로 작성되며 레슨마다 깊이 배지(심화/개요)가 표시된다
-- [ ] **CONT-05**: 커리큘럼 실습 프로젝트 5종은 개요·사전 준비 가이드 레슨으로 제공된다 (재현 아님)
+- [x] **CONT-05**: 커리큘럼 실습 프로젝트 5종은 개요·사전 준비 가이드 레슨으로 제공된다 (재현 아님)
 - [x] **CONT-06**: 학습자는 코드 블록을 복사 버튼으로 복사할 수 있다
 
 ### 진도 추적 (TRACK)
@@ -90,7 +90,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCHED-04 | Phase 3 | Complete |
 | CONT-02 | Phase 4 | Pending |
 | CONT-03 | Phase 4 | Pending |
-| CONT-05 | Phase 5 | Pending |
+| CONT-05 | Phase 5 | Complete |
 
 **Coverage:**
 

@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 04
-current_phase_name: step-1
-status: awaiting-uat
-stopped_at: Phase 5 context gathered
-last_updated: "2026-08-25T13:50:04.559Z"
+current_phase: 05
+current_phase_name: step-2-3
+status: executing
+stopped_at: "Completed 05-01-PLAN.md (checkpoint approved: 세 형식 승인, Step 3 깊이 하향(c), 패키지 3종 확인)"
+last_updated: "2026-08-25T15:12:54.422Z"
 last_activity: 2026-08-25
 last_activity_desc: Phase 04 execution complete (7/7 plans, Step 1 10편 배포됨); verification=human_needed
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 34
-  completed_plans: 21
+  completed_plans: 22
 ---
 
 # Project State
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-24)
 
 **Core value:** 개강 전까지 커리큘럼의 기초를 확실히 다질 수 있도록 — 콘텐츠를 읽고, 완료를 체크하고, 진행률과 일정을 한눈에 확인하는 흐름이 반드시 동작해야 한다.
-**Current focus:** Phase 04 — step-1
+**Current focus:** Phase 05 — step-2-3
 
 ## Current Position
 
-Phase: 04 (step-1) — AWAITING UAT
-Plan: 7 of 7 (all executed, all SUMMARYs written)
-Status: awaiting-uat — 검증자가 human_needed 판정, UAT 2건 미해결
-Last activity: 2026-08-25 — Phase 04 실행 완료, Step 1 10편 프로덕션 배포
+Phase: 05 (step-2-3) — EXECUTING
+Plan: 2 of 13
+Status: Ready to execute
+Last activity: 2026-08-25 — Phase 05 execution started
 
-Progress: [████████████████████] 7/7 plans ([██████████] 100%)
+Progress: [████████████████████] 7/7 plans ([███████░░░] 65%)
 
 ### 다음에 할 일 (이 순서대로)
 
@@ -99,6 +99,7 @@ UI 작업을 끼워 넣을 자리가 없으므로, frontend-design은 페이즈 
 | Phase 03 P02 | ~15min | 3 tasks | 39 files |
 | Phase 03 P03 | ~15min | 3 tasks | 8 files |
 | Phase 03 P04 | ~40min | 3 tasks | 7 files |
+| Phase 05 P01 | 49min | 3 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -150,6 +151,11 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 3 Plan 3]: check-progress-gates.mjs에 G19 신설 -- pace.ts/schedule.ts가 Supabase.progress-store.Velite 매니페스트를 참조하지 않음을 상시 검사
 - [Phase ?]: [Phase 3 Plan 4]: 일정표 행의 배지/소요시간 그룹을 고정 폭 grid(64px+88px)로 묶어 레슨 제목 줄바꿈에도 열 정렬이 흔들리지 않게 함 -- 아이패드 UAT 1라운드 실측 결함(3~5주차 정렬 흔들림)을 구조적으로 재발 방지
 - [Phase ?]: [Phase 3 Plan 4]: Step 카드 3열 그리드 전환 브레이크포인트를 sm(640px)에서 lg(1024px)로 올림 -- 아이패드 세로 폭(744px)에서 3열로 눌려 헤더가 넘치던 UAT 2라운드 실측 결함을 2열 유지로 해결
+- [Phase ?]: [Phase 5 Plan 1]: 세 형식(심화 승계·개요 신규·프로젝트 가이드 신규) 사용자 승인 — 22편 집필 표준으로 확정
+- [Phase ?]: [Phase 5 Plan 1]: Step 3 개요 깊이 판정 = (c) 너무 깊다, 더 줄여도 된다 — D-62 기준 하향, 3-1 파일럿 트림은 Wave 4 착수 직전, 나머지 Step 3 12편은 낮아진 기준(개념+비유1개, 실무 판단 레이어 제외)으로 저작
+- [Phase ?]: [Phase 5 Plan 1]: npm 패키지 3종(prisma, @prisma/client, @anthropic-ai/sdk) 정당성 사용자 확인 완료 — Plan 04·06 착수 조건 충족
+- [Phase ?]: [Phase 5 Plan 1]: EXPECTED_HAS_CONTENT_COUNT 실측 13 확정 — CONTEXT.md D-78 원문(14)과 불일치, 실측이 우선
+- [Phase ?]: [Phase 5 Plan 1]: L7 단락 길이(200자) 게이트 신설 + .prose line-height 1.6→1.8·문단 margin 2.4em 신설 — 가독성 사용자 피드백 대응, UI-SPEC UX-03 갱신은 Plan 05-13이 담당
 
 ### Pending Todos
 
@@ -160,6 +166,9 @@ None yet.
 - 리서치 Gap: 레슨 소요시간 추정치의 정확도는 Phase 3~4 실사용으로만 검증 가능 — 편차가 크면 v2의 CONV-03(자동 리밸런싱)이 필요해질 수 있음
 - 리서치 Gap: Step 3 "개요 훑기" 깊이 기준(rubric)을 Phase 5 착수 전에 구체화해야 범위가 팽창하지 않음
 - 사전학습 시작일(2026-08-25)이 임박 — Phase 1~3이 지연되면 학습 시간이 직접 잠식됨
+- Plan 05-08~05-12 착수 전 필독: Phase 5 Plan 1 SUMMARY의 Deviation 4(Step 3 깊이 하향, D-62 재조정) 반영 필요 — 개념+비유1개만, 실무 판단 레이어 제외
+- 3-1-vector-search-basics.mdx를 낮아진 깊이 기준으로 트림 필요 — Wave 4 착수 직전, 아직 Plan/Task 미배정
+- Plan 05-13 착수 시 UI-SPEC UX-03 항목의 line-height 근거 수치 정정 필요(1.5 오기 → 1.75 실제 기본값, 최종값 1.8 반영)
 
 ### Quick Tasks Completed
 
@@ -179,6 +188,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-25T12:29:09.201Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-step-2-3/05-CONTEXT.md
+Last session: 2026-08-25T15:12:54.388Z
+Stopped at: Completed 05-01-PLAN.md (checkpoint approved: 세 형식 승인, Step 3 깊이 하향(c), 패키지 3종 확인)
+Resume file: None
