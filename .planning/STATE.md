@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 05
 current_phase_name: step-2-3
 status: executing
-stopped_at: "Completed 05-01-PLAN.md (checkpoint approved: 세 형식 승인, Step 3 깊이 하향(c), 패키지 3종 확인)"
-last_updated: "2026-08-25T15:12:54.422Z"
+stopped_at: Completed 05-07-PLAN.md (매니페스트 실측 갱신 + Step 2 12편 프로덕션 배포, 4게이트 green)
+last_updated: "2026-08-25T15:43:27.963Z"
 last_activity: 2026-08-25
 last_activity_desc: Phase 04 execution complete (7/7 plans, Step 1 10편 배포됨); verification=human_needed
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 34
-  completed_plans: 22
+  completed_plans: 28
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 ## Current Position
 
 Phase: 05 (step-2-3) — EXECUTING
-Plan: 2 of 13
+Plan: 3 of 13
 Status: Ready to execute
 Last activity: 2026-08-25 — Phase 05 execution started
 
-Progress: [████████████████████] 7/7 plans ([███████░░░] 65%)
+Progress: [████████████████████] 7/7 plans ([████████░░] 82%)
 
 ### 다음에 할 일 (이 순서대로)
 
@@ -100,6 +100,7 @@ UI 작업을 끼워 넣을 자리가 없으므로, frontend-design은 페이즈 
 | Phase 03 P03 | ~15min | 3 tasks | 8 files |
 | Phase 03 P04 | ~40min | 3 tasks | 7 files |
 | Phase 05 P01 | 49min | 3 tasks | 16 files |
+| Phase 05 P07 | 25min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -156,6 +157,8 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 5 Plan 1]: npm 패키지 3종(prisma, @prisma/client, @anthropic-ai/sdk) 정당성 사용자 확인 완료 — Plan 04·06 착수 조건 충족
 - [Phase ?]: [Phase 5 Plan 1]: EXPECTED_HAS_CONTENT_COUNT 실측 13 확정 — CONTEXT.md D-78 원문(14)과 불일치, 실측이 우선
 - [Phase ?]: [Phase 5 Plan 1]: L7 단락 길이(200자) 게이트 신설 + .prose line-height 1.6→1.8·문단 margin 2.4em 신설 — 가독성 사용자 피드백 대응, UI-SPEC UX-03 갱신은 Plan 05-13이 담당
+- [Phase ?]: 05-07: EXPECTED_HAS_CONTENT_COUNT/SLUGS를 빌드 실측(23)으로 확정 — CONTEXT.md D-78 원문(24)과 재차 불일치, 실측 우선
+- [Phase ?]: 05-07: Step 2 12편 프로덕션 배포 완료, 12/12 200 확인, e2e-today·e2e-progress 통과
 
 ### Pending Todos
 
@@ -188,6 +191,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-25T15:12:54.388Z
-Stopped at: Completed 05-01-PLAN.md (checkpoint approved: 세 형식 승인, Step 3 깊이 하향(c), 패키지 3종 확인)
+Last session: 2026-08-25T15:43:27.845Z
+Stopped at: Completed 05-07-PLAN.md (매니페스트 실측 갱신 + Step 2 12편 프로덕션 배포, 4게이트 green)
 Resume file: None

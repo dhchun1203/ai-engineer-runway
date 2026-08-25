@@ -183,7 +183,7 @@ Plans:
   3. 커리큘럼 실습 프로젝트 5종이 각각 개요·사전 준비 가이드 레슨으로 제공된다 (본 과정 재현이 아닌 준비 안내)
   4. 전체 커리큘럼 진행률이 100%까지 도달 가능한 상태가 되고, Making-of 페이지가 구현→검증→배포 과정까지 기록을 마친다
 
-**Plans**: 6/13 plans executed (5 waves)
+**Plans**: 7/13 plans executed (5 waves)
 
 Plans:
 **Wave 1**
@@ -200,7 +200,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 05-07-PLAN.md — [wave 3] Step 2 배치 마감 — 매니페스트 상수 실측 갱신 + 12편 배포
+- [x] 05-07-PLAN.md — [wave 3] Step 2 배치 마감 — 매니페스트 상수 실측 갱신 + 12편 배포
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -235,7 +235,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. 진도 체크와 진행률 | 4/4 | Complete    | 2026-08-24 |
 | 3. 학습 일정과 오늘의 학습 | 4/4 | Complete    | 2026-08-25 |
 | 4. Step 1 심화 콘텐츠 | 6/7 | In Progress|  |
-| 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 6/13 | In Progress|  |
+| 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 7/13 | In Progress|  |
 | 6. 전체 페이지 디자인 정리 | 0/TBD | Not started | - |
 
 ## Coverage Notes
