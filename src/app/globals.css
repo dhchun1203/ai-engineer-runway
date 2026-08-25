@@ -103,6 +103,58 @@ code[data-theme*=" "] span {
   line-height: 1.6;
 }
 
+/* <details>/<summary> 정답 접기 UI 터치 타깃·다크모드 (D-61, RESEARCH Pitfall 3).
+   `.prose pre button.rehype-pretty-copy` 규칙 쌍(라이트 기본 + `.dark` 오버라이드)과
+   같은 형태로 쓴다 — 선택자를 `.prose` 하위로 한정하고, 새 색은 만들지 않고
+   기존 토큰(--color-surface, --color-badge-neutral-bg*, --color-accent)만 재사용한다.
+   summary의 min-height 44px는 아이패드 터치 타깃 기준이고, cursor: pointer +
+   기본 마커 유지로 펼침 가능 여부가 시각적으로 드러난다. details 배경/테두리는
+   접힌 상태와 펼친 상태 모두에서 본문과 구분되도록 항상 적용된다. */
+.prose details {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-badge-neutral-bg);
+}
+
+.prose summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent);
+}
+
+/* 기본 마커(브라우저별 삼각형/화살표)를 지우고 직접 그린다 — 펼침/접힘 상태가
+   눈에 보여야 한다는 요구를 display:flex로도 유지하기 위함. */
+.prose summary::-webkit-details-marker {
+  display: none;
+}
+
+.prose summary::before {
+  content: "▶";
+  display: inline-block;
+  font-size: 0.75em;
+  transition: transform 150ms ease;
+}
+
+.prose details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.dark .prose details {
+  background-color: var(--color-surface-dark);
+  border-color: var(--color-badge-neutral-bg-dark);
+}
+
+.dark .prose summary {
+  color: var(--color-accent-dark);
+}
+
 /* 완료 전환 연출 (D-23) — CSS 전용, 새 애니메이션 라이브러리 도입 없음(UI-SPEC
    Design System). 체크 아이콘 fade+scale-in과 버튼 둘레 accent ring/glow 확장이
    각각 완료 버튼(complete-button.tsx)이 완료 상태일 때만 적용된다. --complete-glow-color는
