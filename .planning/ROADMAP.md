@@ -144,7 +144,16 @@ Plans:
   3. 각 레슨이 커리큘럼 동일 스택(Python, SQL/PostgreSQL, Git)의 실행 가능한 실무 예제 코드를 언어별 하이라이팅과 함께 제공한다
   4. Step 1 레슨을 진행하면 Step 1 진행률과 오늘의 학습 뷰가 실제로 채워지며 학습 루프가 끝까지 동작한다
 
-**Plans**: TBD
+**Plans**: 7 plans (Wave 1: 파일럿 + 승인 / Wave 2: 9편 병렬 집필 / Wave 3: 게이트·카피·배포)
+
+Plans:
+- [ ] 04-01-PLAN.md — 파일럿 레슨 eli5 재작성 + `<details>` 스타일 + 구조 게이트 신설 + 아이패드 승인 (tracer, wave 1)
+- [ ] 04-02-PLAN.md — 1-1 모듈 2편: 커리큘럼 지도·하루 루틴 / 개발 환경 세팅 (wave 2)
+- [ ] 04-03-PLAN.md — 1-2 모듈 2편: Git 브랜치·PR / 생성형 AI 개념·활용 윤리 (wave 2)
+- [ ] 04-04-PLAN.md — 1-3 모듈 1편: Python 함수·예외·파일 입출력 (wave 2)
+- [ ] 04-05-PLAN.md — 1-4 모듈 2편: 관계형 DB 구조 / SQL 쿼리·JOIN·집계 (wave 2)
+- [ ] 04-06-PLAN.md — 1-5 모듈 2편: 분류·회귀·군집 / 평가 지표·Pipeline (wave 2)
+- [ ] 04-07-PLAN.md — 매니페스트 상수 갱신·빈 상태 카피·making-of·종단 e2e·배포 (wave 3)
 
 ### Phase 5: Step 2·3 콘텐츠와 프로젝트 가이드
 
