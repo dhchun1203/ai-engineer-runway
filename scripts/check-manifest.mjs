@@ -12,7 +12,15 @@
 // Phase 5 Wave 2(Plan 02~06)가 Step 2 잔여 10편을 채워 13에서 23이 됐다. 이 값도
 // `.velite/lessons.json` 실측(Plan 07)이다 — CONTEXT.md D-78 원문의 "→ 24(Wave 2)"와도
 // 다르다(실측이 우선, 05-07-SUMMARY.md 참고).
-const EXPECTED_HAS_CONTENT_COUNT = 23;
+// Phase 5 Wave 3(Plan 08~12)이 Step 3 잔여 12편을 채워 23에서 최종 35(전 레슨)가 됐다.
+// 이 값도 `npm run build` 직후 `.velite/lessons.json` 실측(Plan 13)이며, 이번에는
+// CONTEXT.md D-78 원문의 최종값(35)과 정확히 일치한다 — Wave 1(13 vs 14)·Wave 2(23 vs 24)
+// 두 중간 단계에서는 실측과 원문이 어긋났지만, 전 레슨이 채워진 최종 시점에는 손계산이
+// 산수 오차 없이 실측과 맞아떨어졌다(05-01/05-07-SUMMARY.md 참고, RESEARCH Open Question 1 종결).
+// 배열은 D-78이 허용한 "전체 슬러그와 동일" 단순화를 적용하지 않고 명시 배열을 유지한다 —
+// 동적 비교(매니페스트 전체와 자기 자신을 비교)로 바꾸면 Invariant 10이 아무것도 검사하지
+// 않게 되는 위험이 있기 때문이다(05-13-SUMMARY.md 참고).
+const EXPECTED_HAS_CONTENT_COUNT = 35;
 const EXPECTED_HAS_CONTENT_SLUGS = [
   // Step 1 (Phase 4)
   '1-1-course-orientation',
@@ -38,8 +46,20 @@ const EXPECTED_HAS_CONTENT_SLUGS = [
   '2-6-project-ai-shop-backend',
   '2-7-prompt-patterns',
   '2-7-promptops',
-  // Step 3 (Phase 5 Wave 1 파일럿 1편)
+  // Step 3 (Phase 5 Wave 1 파일럿 1편 + Wave 3 신규 12편)
   '3-1-vector-search-basics',
+  '3-1-hybrid-search-reranking',
+  '3-2-project-rag-agent',
+  '3-3-peft-lora-qlora',
+  '3-3-tuning-evaluation',
+  '3-4-multi-agent-structure',
+  '3-4-webhook-schedule-hitl',
+  '3-4-n8n-langgraph',
+  '3-5-project-orchestration',
+  '3-6-prompt-versioning-eval',
+  '3-6-monitoring-governance',
+  '3-6-structured-output-canary',
+  '3-7-project-ax-launch',
 ];
 
 // 기대값 상수: estimatedMinutes 총합·분포 (D-31 — Phase 3 Plan 2에서 일괄 하향 확정).
