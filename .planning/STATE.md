@@ -164,6 +164,7 @@ None yet.
 |---|-------------|------|--------|-----------|
 | 260825-2xv | 소개 페이지 eli5 재작성 — docs/making-of.md를 아무것도 모르는 사람 눈높이로 | 2026-08-25 | bc0e28c | [260825-2xv-eli5-docs-making-of-md](./quick/260825-2xv-eli5-docs-making-of-md/) |
 | 260825-n7v | Phase 04 UAT 결함 2건 수정 — SQL 2편 준비 블록 스키마 충돌(G-04-1), 복사 버튼이 코드 첫 줄 가림(G-04-2) | 2026-08-25 | f750017 | [260825-n7v-phase-04-uat-gap-fixes-g-04-1-sql-lesson](./quick/260825-n7v-phase-04-uat-gap-fixes-g-04-1-sql-lesson/) |
+| 260825-r4k | 코드블록 복사 버튼이 모든 레슨에서 동작하지 않던 [Critical] 결함 수정 (04-UI-REVIEW Priority Fix 1) — 문자열 onclick을 실제 React 핸들러로 교체 | 2026-08-25 | 920741e | [260825-r4k-lesson-reading-screen-design-pass](./quick/260825-r4k-lesson-reading-screen-design-pass/) |
 
 ## Deferred Items
 
