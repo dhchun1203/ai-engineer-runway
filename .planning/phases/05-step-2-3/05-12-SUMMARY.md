@@ -174,3 +174,12 @@ None - 외부 서비스 설정 불필요.
 ---
 *Phase: 05-step-2-3*
 *Completed: 2026-08-25*
+
+## Self-Check: PASSED
+
+- FOUND: src/content/lessons/step-3/3-6-prompt-versioning-eval.mdx
+- FOUND: src/content/lessons/step-3/3-6-monitoring-governance.mdx
+- FOUND: src/content/lessons/step-3/3-6-structured-output-canary.mdx
+- FOUND: commit 4700ac5 (Task 1)
+- FOUND: commit 6c60bd1 (Task 2)
+- FOUND: commit 304cd2b (Task 3)
