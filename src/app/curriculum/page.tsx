@@ -20,7 +20,7 @@ export default async function CurriculumPage() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-[28px] font-semibold leading-[1.2]">커리큘럼</h1>
+        <h1 className="text-display font-bold">커리큘럼</h1>
       </header>
       <section className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {steps.map((step) => (

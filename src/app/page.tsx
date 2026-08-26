@@ -100,8 +100,8 @@ export default async function Home() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-[28px] font-semibold leading-[1.2]">오늘의 학습</h1>
-        <p className="text-[14px] font-normal leading-[1.4] text-badge-neutral-text dark:text-badge-neutral-text-dark">
+        <h1 className="text-display font-bold">오늘의 학습</h1>
+        <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
           AI Engineer 교육과정 사전학습 · 2026-09-30 개강
         </p>
       </header>
