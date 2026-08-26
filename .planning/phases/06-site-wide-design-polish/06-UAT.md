@@ -1,0 +1,183 @@
+---
+status: pending
+phase: 06-site-wide-design-polish
+source: [06-VALIDATION.md, 06-UI-SPEC.md, 06-CONTEXT.md D-93, 06-D97-MEASUREMENT.md]
+started: 2026-08-26T00:00:00Z
+updated: 2026-08-26T00:00:00Z
+---
+
+## Current Test
+
+number: 1
+name: 실기기 iPad Safari 확인 (D-93)
+expected: |
+  6종 화면이 세로/가로 모두에서 정상 렌더되고, 구간 테이프 탭 이동·코드 블록 가로
+  스크롤·터치 히트박스가 실제 손가락으로 문제없이 동작한다.
+awaiting: user
+
+## Tests
+
+이 파일은 계획(06-08-PLAN.md Task 3)이 정의한 세 그룹으로 나뉜다: **UAT-1**(테스트 1,
+실기기 iPad Safari), **UAT-2**(테스트 2~7, backstop 시각 확인 6건), **UAT-3**(테스트 8,
+쿠키 있는 홈 재확인).
+
+### 1. [UAT-1] 실기기 iPad Safari 확인 (D-93)
+
+**왜 사람이 해야 하나:** 이 Phase의 모든 측정(e2e-typography.mjs, e2e-mobile-overflow.mjs)은
+Playwright Chromium으로 돌았다. Safari의 `-webkit-` 렌더링 차이, 실제 손가락 터치 히트박스,
+100vh와 주소창 겹침 문제는 원리적으로 Chromium이 볼 수 없다 — 자동화 불가 항목이라 계획
+태스크가 아니라 UAT로만 남긴다.
+
+**할 일 (아이패드 Safari로 아래 6개 URL을 순서대로 연다):**
+
+- [ ] https://ai-engineer-runway.vercel.app/
+- [ ] https://ai-engineer-runway.vercel.app/curriculum
+- [ ] https://ai-engineer-runway.vercel.app/schedule
+- [ ] https://ai-engineer-runway.vercel.app/lesson/1-1-course-orientation
+- [ ] https://ai-engineer-runway.vercel.app/step/1
+- [ ] https://ai-engineer-runway.vercel.app/about
+
+**세로 모드에서 확인 (통과 기준을 각 줄에 명시):**
+
+- [ ] 6개 화면이 전부 깨짐 없이 렌더된다 — 통과 기준: 텍스트/이미지 겹침이나 잘림이 없다
+- [ ] `/lesson/1-1-course-orientation`에서 구간 테이프의 칸 하나를 손가락으로 탭하면
+      해당 구간으로 부드럽게 이동한다 — 통과 기준: 탭한 칸의 구간 제목이 화면에 나타난다
+- [ ] 같은 레슨의 코드 블록을 손가락으로 좌우로 밀면 가로 스크롤된다 — 통과 기준: 스와이프
+      방향대로 코드가 이동하고, 페이지 전체가 함께 밀리지 않는다
+- [ ] 완료 버튼(`CompleteButton`)과 상단 내비 항목을 손가락으로 눌러본다 — 통과 기준:
+      의도한 항목이 오탭 없이 정확히 눌린다(터치 타깃 44px 계약이 실기기에서도 유효한지)
+
+**가로 모드로 전환해 같은 6개 화면을 다시 훑는다:**
+
+- [ ] 세로에서 괜찮던 것이 가로에서 깨지지 않는다 — 통과 기준: 위 4개 확인 항목이 가로
+      모드에서도 동일하게 통과한다(특히 100vh 관련 레이아웃이 주소창과 겹치지 않는지)
+
+expected: 6종 화면이 세로/가로 모두에서 깨짐 없이 렌더되고, 구간 테이프 탭 이동·코드 블록
+가로 스크롤·터치 정확도가 전부 통과 기준을 만족한다.
+result: pending
+
+### 2. [UAT-2a] Section Tape — 현재 구간 제목이 칸 폭을 넘칠 때의 처리
+
+**왜 사람이 해야 하나:** 실제 레슨 h2 제목 길이 분포에 의존하는 시각 확인 대상이라
+픽셀 assert로 환원되지 않는다(06-UI-SPEC.md § UI Considerations backstop 목록 1번).
+
+- [ ] https://ai-engineer-runway.vercel.app/lesson/1-1-course-orientation — 이 레슨의 6번째
+      구간 제목("6. 핵심 정리 및 스스로 점검", 이 코스에서 가장 긴 h2 제목)이 대상이다
+
+**할 일:** 브라우저 폭을 375px로 맞추고 구간 테이프의 마지막 칸을 탭한다.
+
+expected: 현재 구간 제목이 테이프 칸 밖(그 아래)에 자연스럽게 표시된다 — 문서 수준
+가로 오버플로는 e2e-mobile-overflow.mjs가 이미 0으로 확인했으므로(D-91), 여기서는
+줄바꿈/말줄임 처리가 시각적으로 어색하지 않은지만 본다.
+result: pending
+
+### 3. [UAT-2b] 그리드 카드 — 긴 레슨 제목의 줄바꿈 (StepCard / TodayLessonCard)
+
+**왜 사람이 해야 하나:** truncate 클래스를 새로 도입하지 않는다는 것이 이 Phase의 계약이라
+(카드 높이만 늘어나야 한다), 실제 최장 제목 렌더는 시각 확인 대상이다.
+
+이 코스의 최장 레슨 제목: **"[Project 1] AI 쇼핑몰 프론트엔드 준비 가이드"**
+(slug: `2-4-project-ai-shop-frontend`, 31자).
+
+- [ ] https://ai-engineer-runway.vercel.app/ — 홈의 "오늘의 학습" 카드(`TodayLessonCard`)를 연다.
+      오늘 배정된 레슨 제목이 카드 폭보다 길면 줄바꿈되고 카드 높이만 늘어나는지 확인한다
+      (잘리거나 가로로 넘치면 실패)
+- [ ] 오늘 배정 레슨이 위 최장 제목이 **아니라서** 판단하기 애매하면, 참고용으로
+      https://ai-engineer-runway.vercel.app/lesson/2-4-project-ai-shop-frontend 를 직접 열어
+      제목 길이를 눈으로 가늠한 뒤, 이 레슨이 실제 배정일이 되는 날(또는 아무 날이나 카드
+      제목이 두 줄 이상으로 자연스럽게 줄바꿈되는 것을 관찰할 수 있는 날) 다시 확인한다
+
+expected: 레슨 제목이 아무리 길어도 카드 안에서 줄바꿈되고, 카드 높이만 늘어난다 —
+텍스트가 잘리거나(truncate) 카드 밖으로 넘치지 않는다.
+result: pending
+
+### 4. [UAT-2c] 375px에서 카드 내부 요소 오버플로 (시각 재확인)
+
+**왜 사람이 해야 하나:** e2e-mobile-overflow.mjs가 문서 수준 가로 오버플로 0을 이미
+자동으로 확인했다(D-91) — 여기서는 카드 *내부* 요소(배지·제목·소요시간)의 배치가
+시각적으로 자연스러운지만 본다(자동 게이트가 못 보는 "보기 좋음" 판단).
+
+- [ ] https://ai-engineer-runway.vercel.app/curriculum — 브라우저 폭을 375px로 맞추고
+      Step 카드 3장 안의 배지·제목·모듈/레슨 수·소요시간이 카드 테두리를 넘지 않는지 확인
+- [ ] https://ai-engineer-runway.vercel.app/ — 같은 폭에서 "오늘의 학습" 카드 안의
+      깊이 배지·소요시간 배지가 줄바꿈되며 카드 안에 머무는지 확인
+
+expected: 카드 내부 어떤 요소도 카드 테두리를 가로로 넘지 않는다.
+result: pending
+
+### 5. [UAT-2d] 레슨 페이저 — 인접 레슨 제목과 라벨 줄바꿈
+
+**왜 사람이 해야 하나:** 리터럴 화살표 제거(D-R4K-7) 후 chevron과 라벨 조합의 줄바꿈
+지점이 바뀔 수 있어 시각 확인 대상이다.
+
+- [ ] https://ai-engineer-runway.vercel.app/lesson/2-3-react-components — "다음 레슨" 버튼이
+      가리키는 레슨이 이 코스의 최장 제목 레슨(`2-4-project-ai-shop-frontend`)이다
+
+**참고:** 06-06에서 페이저 라벨이 실제 다음/이전 레슨 제목이 아니라 고정 문구
+("이전 레슨"/"다음 레슨" + 화살표 아이콘 1개)로 확정됐다(D-R4K-7) — 그래서 인접 레슨
+제목이 아무리 길어도 페이저 버튼 라벨 자체의 줄바꿈에는 영향을 주지 않는다. 이 항목은
+그 구조적 사실을 전제로, 375px에서 두 버튼이 정상적으로 쌓이는지만 확인한다.
+
+- [ ] 브라우저 폭을 375px로 맞춘다 — 이전/다음 버튼 2개가 겹치거나 잘리지 않고
+      세로로 자연스럽게 쌓이는지 확인
+
+expected: 페이저 라벨이 고정 문구("이전 레슨"/"다음 레슨")로 깨끗하게 표시되고,
+375px에서 두 버튼이 겹치지 않는다.
+result: pending
+
+### 6. [UAT-2e] 375px에서 진행률 바·페이스 패널 오버플로 (시각 재확인)
+
+**왜 사람이 해야 하나:** e2e-mobile-overflow.mjs가 홈 라우트에서 문서 수준 가로
+오버플로 0을 이미 확인했다(D-91) — 여기서는 진행률 바(퍼센트 숫자·막대)와 페이스
+패널의 실제 렌더가 시각적으로 자연스러운지만 본다.
+
+- [ ] https://ai-engineer-runway.vercel.app/ — 잠금 해제된(10년 유효 쿠키를 가진) 상태로
+      접속해 브라우저 폭을 375px로 맞춘다. 전체 진행률 요약(퍼센트·막대)과 페이스 패널이
+      카드 밖으로 넘치지 않는지 확인
+
+expected: 진행률 바와 페이스 패널의 숫자·막대·문구가 375px에서 카드 밖으로 넘치지 않는다.
+result: pending
+
+### 7. [UAT-2f] 밀린 레슨 목록 — 긴 제목 줄바꿈
+
+**왜 사람이 해야 하나:** 카드 리스트 행 계약(06-03)을 따르는지와 함께, 실제 긴 제목의
+줄바꿈이 시각적으로 자연스러운지는 시각 확인 대상이다.
+
+- [ ] https://ai-engineer-runway.vercel.app/ — 잠금 해제된 상태로 접속해 "밀린 레슨" 목록이
+      보이면(실제로 밀린 레슨이 있을 때만 렌더된다), 각 행의 제목이 잘리지 않고 줄바꿈되며
+      행 높이만 늘어나는지 확인한다. 참고용 최장 제목: `2-4-project-ai-shop-frontend`
+      ("[Project 1] AI 쇼핑몰 프론트엔드 준비 가이드")
+- [ ] 목록이 비어 있으면(현재 밀린 레슨이 없으면) 이 항목은 "해당 없음"으로 표시하고
+      넘어간다 — 05-UAT.md의 선례와 같은 이유로, 진도 데이터를 인위적으로 조작해 밀린
+      상태를 만들지 않는다(실제 진도 데이터 오염 방지)
+
+expected: 밀린 레슨이 있다면 각 행의 제목이 잘리지 않고 자연스럽게 줄바꿈된다.
+없으면 "해당 없음"으로 통과 처리한다.
+result: pending
+
+### 8. [UAT-3] 쿠키 있는 홈의 빈 캔버스 재확인 (D-97 후속)
+
+**왜 사람이 해야 하나:** 06-D97-MEASUREMENT.md의 판정(쿠키 있는 실사용 상태 빈 영역
+0%)이 자동 스크립트 실측이었다 — Phase 종료 시 사람이 실제 화면으로 한 번 승인한다.
+06-07이 `/curriculum`은 재배치했지만 홈(`/`)은 판정에 따라 손대지 않았다.
+
+- [ ] https://ai-engineer-runway.vercel.app/ — 잠금 해제된 상태로 768×1024(아이패드
+      세로) 창 크기에서 열어본다. D-day·오늘 카드·페이스 패널·밀린 레슨·전체 진행률
+      5개 섹션이 뷰포트를 넘겨 렌더되어 빈 영역이 보이지 않는지 확인
+- [ ] https://ai-engineer-runway.vercel.app/curriculum — 같은 크기에서 전체 진행률과
+      D-day가 Step 카드 3장 위에 함께 보이는지 확인(06-07이 추가한 재배치)
+
+expected: 홈은 06-D97-MEASUREMENT.md가 실측한 대로 5개 섹션이 뷰포트를 넘겨 빈 캔버스가
+보이지 않는다. `/curriculum`은 전체 진행률·D-day가 Step 카드 위에 함께 렌더된다.
+result: pending
+
+## Summary
+
+total: 8
+passed: 0
+issues: 0
+pending: 8
+skipped: 0
+blocked: 0
+
+## Gaps
