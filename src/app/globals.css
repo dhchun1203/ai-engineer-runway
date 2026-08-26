@@ -52,6 +52,20 @@
   --text-body--line-height: 1.6;
   --text-label: 0.875rem; /* 14px */
   --text-label--line-height: 1.4;
+
+  /* 옥스포드 노트 색(D-7, R-6) — 종이가 가장 밝고, 괘선은 겨우 보일 정도,
+     세로 여백선이 그보다 한 단계 진하다. 이 순서를 라이트/다크 양쪽에서
+     동일하게 유지한다. 다크 종이는 라이트를 그대로 어둡게 만든 값이 아니라
+     별도로 고른 값이다(#151d2b) — 저녁 아이패드 화면에서 밝은 종이가
+     뷰포트 40%로 뜨면 화면에서 가장 눈부신 물체가 되는 것을 피한다. */
+  --color-note-paper: #fbf8f1;
+  --color-note-paper-dark: #151d2b;
+  --color-note-rule: #ccd8e6;
+  --color-note-rule-dark: #24334a;
+  --color-note-margin: #dd9aa2;
+  --color-note-margin-dark: #7a4750;
+  --color-note-ink: #1f2430;
+  --color-note-ink-dark: #eef2f7;
 }
 
 /* 구간 테이프(Section Tape) 기하 단일 소스 (06-09, G-06-9). 테이프 높이(44px,
@@ -71,6 +85,38 @@
 :root {
   --section-tape-height: 44px;
   --section-tape-scroll-offset: calc(var(--section-tape-height) + 8px);
+}
+
+/* 메모장(Lesson Notepad) 기하 단일 소스 (Task 2, G-06-9 재발 방지 조항). 이 파일은
+   이 사이트가 두 번째로 겪는 "합의해야 하는 상수를 두 곳에 적어 어긋나는" 결함
+   클래스다 — Section Tape의 첫 사례(위 --section-tape-height)와 같은 패턴을
+   그대로 적용한다: --note-line-height 하나가 .note-paper의 line-height와 괘선
+   repeating-linear-gradient의 주기를 동시에 결정하고, 두 숫자를 따로 적는 경로가
+   코드에 존재하지 않는다.
+   --note-visible-height/--note-keyboard-inset은 기본값(100dvh/0px)으로 시작하고
+   lesson-notepad.tsx의 visualViewport 리스너가 px 문자열로 덮어쓴다 —
+   visualViewport가 없는 브라우저에서는 이 기본값이 그대로 유지되어 고정 바텀시트로
+   점진적 열화한다. */
+:root {
+  --note-paper: var(--color-note-paper);
+  --note-rule: var(--color-note-rule);
+  --note-margin: var(--color-note-margin);
+  --note-ink: var(--color-note-ink);
+
+  --note-line-height: 1.75rem; /* R-5 — college ruled(7.1mm)에 가장 가까운 화면 값 */
+  --note-rule-width: 1px;
+  --note-margin-offset: 2.75rem; /* R-5 — 종이 32mm를 화면 폭에 맞춰 축소 */
+  --note-handle-height: 44px;
+  --note-visible-height: 100dvh;
+  --note-keyboard-inset: 0px;
+  --note-sheet-open-height: clamp(11rem, calc(var(--note-visible-height) * 0.4), 26rem);
+}
+
+.dark {
+  --note-paper: var(--color-note-paper-dark);
+  --note-rule: var(--color-note-rule-dark);
+  --note-margin: var(--color-note-margin-dark);
+  --note-ink: var(--color-note-ink-dark);
 }
 
 body {
@@ -120,6 +166,94 @@ body {
    따로 박혀 있어 :root 변수와 별개로 어긋날 수 있었다. */
 .section-tape {
   height: var(--section-tape-height);
+}
+
+/* 메모장 시트(Task 2) — 하단 고정, 상단 Section Tape(z-10)와 겹칠 일이 없다
+   (하나는 하단, 하나는 상단). transform만 키보드 인셋을 따라가고 트랜지션이
+   없다 — 키보드 추적이 한 박자 늦으면 그게 "시트가 튄다"는 증상이므로 transform에
+   트랜지션을 걸지 않는다(높이 변경에만 건다, 아래 .note-sheet-panel). */
+.note-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background-color: var(--note-paper);
+  border-top: 1px solid var(--note-rule);
+  transform: translateY(calc(-1 * var(--note-keyboard-inset)));
+}
+
+.note-handle {
+  height: var(--note-handle-height);
+}
+
+.note-sheet-panel {
+  transition: height 200ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note-sheet-panel {
+    transition: none;
+  }
+}
+
+/* 옥스포드 노트 표면(D-7) — textarea 자체에 붙는다. 두 겹 배경: 위(첫 번째
+   layer)는 no-repeat linear-gradient로 왼쪽 세로 여백선 1회만 그리고, 아래(두
+   번째 layer)는 repeating-linear-gradient로 가로 괘선을 반복한다. 괘선의 색
+   정지점은 --note-line-height에서만 계산된다(주기가 곧 줄 높이) — line-height와
+   숫자를 따로 적는 경로가 없으므로 어긋날 수 없다(G-06-9). background-attachment:
+   local이 괘선을 textarea의 스크롤 콘텐츠에 붙인다 — 이 줄이 빠지면 글만 흐르고
+   괘선은 뒤에 멈춘다. padding-top은 반드시 0이어야 첫 괘선이 첫 줄 바로 아래에
+   놓인다. */
+.note-paper {
+  font-family: inherit;
+  font-size: var(--text-body);
+  line-height: var(--note-line-height);
+  color: var(--note-ink);
+  background-color: var(--note-paper);
+  background-image:
+    linear-gradient(
+      to right,
+      transparent 0,
+      transparent var(--note-margin-offset),
+      var(--note-margin) var(--note-margin-offset),
+      var(--note-margin) calc(var(--note-margin-offset) + var(--note-rule-width)),
+      transparent calc(var(--note-margin-offset) + var(--note-rule-width)),
+      transparent 100%
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(var(--note-line-height) - var(--note-rule-width)),
+      var(--note-rule) calc(var(--note-line-height) - var(--note-rule-width)),
+      var(--note-rule) var(--note-line-height)
+    );
+  background-repeat: no-repeat, repeat;
+  background-attachment: local, local;
+  padding-top: 0;
+  padding-bottom: 1rem;
+  padding-left: calc(var(--note-margin-offset) + 0.75rem);
+  padding-right: 1rem;
+  border: 0;
+  resize: none;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  outline-offset: -2px;
+}
+
+.note-paper:focus-visible {
+  outline: 2px solid var(--color-accent);
+}
+
+.dark .note-paper:focus-visible {
+  outline-color: var(--color-accent-dark);
+}
+
+/* 하단 핸들이 마지막 콘텐츠를 덮지 않도록 여유를 준다(Task 1이 <main>에 붙여
+   두고 Task 2가 정의한다). 핸들 높이(44px) + 여유 3rem. */
+.note-page-spacer {
+  padding-bottom: calc(var(--note-handle-height) + 3rem);
 }
 
 /* Code must never inherit the Korean body font (D-06) */
