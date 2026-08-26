@@ -42,43 +42,58 @@ export default async function LessonPage(
   const progressRead = unlocked ? await readCompletedLessonIds() : null;
 
   return (
-    <article className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-12 sm:px-6 lg:px-8">
-      <LessonBreadcrumb lesson={lesson} />
-      <header className="flex flex-col gap-3">
-        <h1 className="text-display font-bold">{lesson.title}</h1>
-        <div className="flex items-center gap-2">
-          <DepthBadge depth={lesson.depth} stepId={lesson.stepId as StepId} />
-          <EstimatedTime minutes={lesson.estimatedMinutes} />
-        </div>
-      </header>
-      {lesson.hasContent ? (
-        <div className="prose dark:prose-invert max-w-none">
-          <MDXContent code={lesson.code} />
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          <h2 className="text-heading font-bold">콘텐츠 준비 중입니다</h2>
-          <p className="text-body font-normal">
-            이 레슨은 아직 작성되지 않았습니다. 커리큘럼 목록에서 다른 레슨을 먼저
-            골라 학습해보세요.
-          </p>
-        </div>
-      )}
-      {progressRead ? (
-        <div data-progress-controls className="flex flex-col gap-6">
-          {progressRead.ok ? (
-            <CompleteButton
-              lessonId={lesson.slug}
-              initialDone={progressRead.completedIds.has(lesson.slug)}
-            />
-          ) : (
-            <ProgressReadError />
-          )}
-          <LessonPager prev={prev} next={next} />
-        </div>
-      ) : (
-        <LessonPager prev={prev} next={next} />
-      )}
-    </article>
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
+      <article className="flex flex-col gap-8">
+        <LessonBreadcrumb lesson={lesson} />
+        <header className="flex flex-col gap-3">
+          <h1 className="text-display font-bold">{lesson.title}</h1>
+          <div className="flex items-center gap-2">
+            <DepthBadge depth={lesson.depth} stepId={lesson.stepId as StepId} />
+            <EstimatedTime minutes={lesson.estimatedMinutes} />
+          </div>
+        </header>
+        {lesson.hasContent ? (
+          <div className="prose dark:prose-invert max-w-none">
+            <MDXContent code={lesson.code} />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <h2 className="text-heading font-bold">콘텐츠 준비 중입니다</h2>
+            <p className="text-body font-normal">
+              이 레슨은 아직 작성되지 않았습니다. 커리큘럼 목록에서 다른 레슨을 먼저
+              골라 학습해보세요.
+            </p>
+          </div>
+        )}
+        {progressRead ? (
+          <div data-progress-controls className="flex flex-col gap-6">
+            {progressRead.ok ? (
+              <CompleteButton
+                lessonId={lesson.slug}
+                initialDone={progressRead.completedIds.has(lesson.slug)}
+              />
+            ) : (
+              <ProgressReadError />
+            )}
+            <LessonPager prev={prev} next={next} />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {/* 잠금 상태 문구 (D-R4K-8) — 완료 체크와 진행률 기록이 잠금 해제 후
+                사용 가능하다는 사실만 말한다. /unlock은 ?key= 시크릿이 필요한
+                route.ts라 링크를 걸지 않는다(unlock/route.ts:16). 상수 문자열이라
+                길이가 변하지 않고, truncate/고정폭 없이 375px에서도 줄바꿈으로
+                흡수된다. */}
+            <p
+              data-locked-notice
+              className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark"
+            >
+              완료 체크와 진행률 기록은 잠금 해제 후에 사용할 수 있습니다.
+            </p>
+            <LessonPager prev={prev} next={next} />
+          </div>
+        )}
+      </article>
+    </main>
   );
 }
