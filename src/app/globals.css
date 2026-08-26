@@ -181,6 +181,10 @@ body {
   background-color: var(--note-paper);
   border-top: 1px solid var(--note-rule);
   transform: translateY(calc(-1 * var(--note-keyboard-inset)));
+  /* 홈 인디케이터가 있는 기기에서 배경이 화면 최하단까지 닿게 한다. 이게 없으면
+     시트 아래 안전 영역이 비어 스크롤하는 본문이 그 틈으로 비친다. 지원하지
+     않는 브라우저에서는 0px로 해석돼 아무 영향이 없다. */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .note-handle {

@@ -13,6 +13,10 @@ import { saveLessonNoteAction } from '@/app/lesson/[lessonId]/note-actions';
 // 잘게 쪼개지고, 1500ms 위는 탭을 갑자기 닫았을 때 잃는 꼬리가 길어진다.
 const SAVE_DEBOUNCE_MS = 1000;
 
+// 키보드로 인정할 최소 높이. 아이패드 화면 키보드는 250px을 넘고, Safari 하단
+// 툴바는 60px 미만이라 그 사이 어디를 잘라도 되지만 여유를 두어 120px로 둔다.
+const KEYBOARD_MIN_INSET_PX = 120;
+
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'failed';
 
 export function LessonNotepad({
@@ -109,16 +113,39 @@ export function LessonNotepad({
     function sync() {
       const viewport = vv as VisualViewport;
       root.style.setProperty('--note-visible-height', `${viewport.height}px`);
-      const inset = Math.max(0, root.clientHeight - (viewport.height + viewport.offsetTop));
+
+      // clientHeight와 visualViewport.height의 차이는 키보드만 만드는 게 아니다.
+      // 아이패드 Safari는 하단 툴바가 보이는 동안에도 키보드 없이 40~50px 차이를
+      // 만든다. 그 차이를 그대로 보정하면 시트가 그만큼 떠올라 화면 최하단에 틈이
+      // 생기고, 스크롤할 때 그 틈으로 본문이 지나간다(실기기에서 확인된 결함).
+      // PC에는 그런 툴바가 없어 차이가 0이라 재현되지 않았다.
+      //
+      // 그래서 두 조건을 모두 만족할 때만 보정한다:
+      //   (1) 이 시트 안의 입력 요소에 포커스가 있다 — 포커스 없이는 키보드가 뜰 수 없다
+      //   (2) 차이가 키보드 크기다 — 아이패드 키보드는 250px 이상, 툴바는 60px 미만이라
+      //       120px 임계값이 둘을 안전하게 가른다
+      const active = document.activeElement;
+      const typingHere =
+        active instanceof HTMLElement &&
+        (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT') &&
+        active.closest('.note-sheet') !== null;
+      const raw = Math.max(0, root.clientHeight - (viewport.height + viewport.offsetTop));
+      const inset = typingHere && raw >= KEYBOARD_MIN_INSET_PX ? raw : 0;
       root.style.setProperty('--note-keyboard-inset', `${inset}px`);
     }
 
     sync();
     vv.addEventListener('resize', sync);
     vv.addEventListener('scroll', sync);
+    // 포커스 전환만으로는 visualViewport 이벤트가 보장되지 않는다 — 포커스를 잃는
+    // 순간 보정을 0으로 되돌리기 위해 직접 듣는다.
+    document.addEventListener('focusin', sync);
+    document.addEventListener('focusout', sync);
     return () => {
       vv.removeEventListener('resize', sync);
       vv.removeEventListener('scroll', sync);
+      document.removeEventListener('focusin', sync);
+      document.removeEventListener('focusout', sync);
       root.style.removeProperty('--note-visible-height');
       root.style.removeProperty('--note-keyboard-inset');
     };
