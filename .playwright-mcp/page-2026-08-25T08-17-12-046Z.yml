@@ -1,0 +1,32 @@
+- generic [active] [ref=f15e1]:
+  - banner [ref=f15e2]:
+    - navigation "주요 내비게이션" [ref=f15e3]:
+      - link "AI Engineer Runway" [ref=f15e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f15e5]:
+        - link "오늘의 학습" [ref=f15e6] [cursor=pointer]:
+          - /url: /
+        - link "커리큘럼" [ref=f15e7] [cursor=pointer]:
+          - /url: /curriculum
+        - link "일정표" [ref=f15e8] [cursor=pointer]:
+          - /url: /schedule
+        - link "소개" [ref=f15e9] [cursor=pointer]:
+          - /url: /about
+      - button "다크 모드로 전환" [ref=f15e10]
+  - main [ref=f15e13]:
+    - generic [ref=f15e14]:
+      - heading "오늘의 학습" [level=1] [ref=f15e15]
+      - paragraph [ref=f15e16]: AI Engineer 교육과정 사전학습 · 2026-09-30 개강
+    - generic [ref=f15e17]:
+      - generic [ref=f15e18]: 개강까지
+      - generic [ref=f15e19]: D-36
+    - generic [ref=f15e20]:
+      - generic [ref=f15e21]:
+        - paragraph [ref=f15e23]: 과정 운영 방식과 학습 준비
+        - generic [ref=f15e24]:
+          - generic [ref=f15e25]: 심화
+          - generic [ref=f15e26]: 약 2.5시간
+      - link "레슨 시작하기" [ref=f15e27] [cursor=pointer]:
+        - /url: /lesson/1-1-course-orientation
+  - button "Open Next.js Dev Tools" [ref=f15e33] [cursor=pointer]
+  - alert [ref=f15e37]

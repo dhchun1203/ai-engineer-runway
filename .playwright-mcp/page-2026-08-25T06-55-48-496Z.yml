@@ -1,0 +1,247 @@
+- generic [active] [ref=f4e1]:
+  - banner [ref=f4e2]:
+    - navigation "주요 내비게이션" [ref=f4e3]:
+      - link "AI Engineer Runway" [ref=f4e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f4e5]:
+        - link "오늘의 학습" [ref=f4e6] [cursor=pointer]:
+          - /url: /
+        - link "커리큘럼" [ref=f4e7] [cursor=pointer]:
+          - /url: /curriculum
+        - link "일정표" [ref=f4e8] [cursor=pointer]:
+          - /url: /schedule
+        - link "소개" [ref=f4e9] [cursor=pointer]:
+          - /url: /about
+      - button "다크 모드로 전환" [ref=f4e10]
+  - article [ref=f4e13]:
+    - navigation "브레드크럼" [ref=f4e14]:
+      - link "Step 1" [ref=f4e15] [cursor=pointer]:
+        - /url: /step/1
+      - generic [ref=f4e16]: ">"
+      - link "머신러닝 기초 모델링" [ref=f4e17] [cursor=pointer]:
+        - /url: /step/1
+    - generic [ref=f4e18]:
+      - heading "평가 지표와 Scikit-learn Pipeline" [level=1] [ref=f4e19]
+      - generic [ref=f4e20]:
+        - generic [ref=f4e21]: 심화
+        - generic [ref=f4e22]: 약 2.5시간
+    - generic [ref=f4e23]:
+      - heading "1. 학습 목표" [level=2] [ref=f4e24]
+      - paragraph [ref=f4e25]: 이 레슨을 마치면 다음을 할 수 있습니다.
+      - list [ref=f4e26]:
+        - listitem [ref=f4e27]: 모델의 성적을 지표로 재고 그 숫자가 무엇을 뜻하는지 설명할 수 있다
+        - listitem [ref=f4e28]: 정확도만으로 판단하면 안 되는 경우를 말할 수 있다
+        - listitem [ref=f4e29]: 학습용과 평가용 데이터를 나눠 정직하게 평가할 수 있다
+        - listitem [ref=f4e30]: 전처리와 모델을 Pipeline 하나로 묶어 실행할 수 있다
+      - heading "2. 왜 배우나" [level=2] [ref=f4e31]
+      - paragraph [ref=f4e32]: 모델을 만드는 것 자체는 몇 줄이면 끝나지만, 실무에서 진짜 중요한 질문은 "이 모델을 믿어도 되는가"입니다. 성적을 재는 방법을 모르면 엉터리 모델도 잘 만든 것처럼 착각하기 쉽습니다. 오늘은 앞 레슨에서 만든 분류기의 성적을 정직하게 재는 법과, 전처리·모델을 한 덩어리로 묶어 실수를 줄이는 법을 배웁니다.
+      - heading "3. 개념 설명" [level=2] [ref=f4e33]
+      - heading "📝 시험지를 미리 보면 안 된다" [level=3] [ref=f4e34]
+      - paragraph [ref=f4e35]:
+        - text: 시험 문제를 미리 보고 그대로 시험을 치면 100점을 받아도 실력이 늘었다고 할 수 없습니다. 모델도 똑같습니다 — 학습에 쓴 데이터로 그대로 성적을 매기면 실제보다 항상 좋게 나옵니다. 그래서 데이터를 학습용(train)과 평가용(test)으로 미리 나눠두고, 모델은 학습용만 보고 배우게 하고 점수는 평가용으로만 매깁니다. 앞 레슨(
+        - code [ref=f4e36]: "`1-5-ml-model-types`"
+        - text: )의 예제는 이 구분 없이 전체 데이터로 학습과 채점을 같이 했는데, 이번 레슨부터는 이 구분을 반드시 지킵니다.
+      - heading "📊 성적표 읽는 법" [level=3] [ref=f4e37]
+      - paragraph [ref=f4e38]:
+        - text: 이번에는 앞 레슨에서 쓴 그 꽃 데이터(
+        - code [ref=f4e39]: "`load_iris`"
+        - text: )와 같은 분류기를 그대로 씁니다. 성적을 재는 지표는 여러 개가 있고, 지표마다 보는 게 다릅니다.
+      - table [ref=f4e40]:
+        - rowgroup [ref=f4e41]:
+          - row [ref=f4e42]:
+            - columnheader "지표" [ref=f4e43]
+            - columnheader "무엇을 재나" [ref=f4e44]
+            - columnheader "언제 중요한가" [ref=f4e45]
+            - columnheader "일상 비유" [ref=f4e46]
+        - rowgroup [ref=f4e47]:
+          - row [ref=f4e48]:
+            - cell "정확도(accuracy, 전체 중 맞힌 비율)" [ref=f4e49]
+            - cell "전체 예측 중 맞힌 비율" [ref=f4e50]
+            - cell "정답 종류가 고르게 섞여 있을 때" [ref=f4e51]
+            - cell "전체 문제 중 맞힌 문제 수" [ref=f4e52]
+          - row [ref=f4e53]:
+            - cell "정밀도(precision, \"맞다\"고 한 것 중 실제로 맞은 비율)" [ref=f4e54]
+            - cell "\"맞다\"고 한 것 중 진짜 맞은 비율" [ref=f4e55]
+            - 'cell "잘못 \"맞다\"고 하면 손해가 클 때(예: 스팸 오탐)" [ref=f4e56]'
+            - cell "\"합격\"이라 부른 사람 중 진짜 합격자 비율" [ref=f4e57]
+          - row [ref=f4e58]:
+            - cell "재현율(recall, 실제 정답 중 놓치지 않고 맞힌 비율)" [ref=f4e59]
+            - cell "실제 정답 중 놓치지 않고 맞힌 비율" [ref=f4e60]
+            - 'cell "진짜를 놓치면 손해가 클 때(예: 질병 검사)" [ref=f4e61]'
+            - cell "실제 환자 중 검사로 찾아낸 비율" [ref=f4e62]
+      - paragraph [ref=f4e63]: 정확도 하나만 보면 위험한 상황이 있습니다. 100명 중 1명만 병에 걸린 데이터에서 "전부 정상"이라고만 찍어도 정확도는 99%가 나옵니다. 이런 데이터를 불균형 데이터(imbalanced data, 정답 종류의 비율이 한쪽으로 크게 치우친 데이터)라고 부르는데, 이때는 정밀도·재현율을 함께 봐야 모델이 실제로 쓸모 있는지 알 수 있습니다.
+      - heading "🏭 조립 라인 — Pipeline" [level=3] [ref=f4e64]
+      - paragraph [ref=f4e65]:
+        - text: 전처리(스케일 맞추기)와 모델을 따로 실행하면 문제가 생길 수 있습니다. 스케일러를 전체 데이터로 먼저 맞춰버리면, 평가용 데이터의 정보가 학습 단계에 몰래 새어 들어가 버립니다 — 이를 데이터 누수(data leakage, 평가용 정보가 학습 과정에 섞여 들어가는 문제)라고 합니다. Pipeline(파이프라인, 전처리와 모델을 순서대로 묶어 하나처럼 다루는 도구)은 공장 조립 라인처럼
+        - code [ref=f4e66]: "`재료 → 전처리 → 모델 → 결과`"
+        - text: 를 한 덩어리로 묶어서, 항상 학습용 데이터로만 전처리 기준을 정하고 평가용 데이터에는 그 기준을 적용만 하도록 강제합니다.
+      - heading "4. 실무 예제" [level=2] [ref=f4e67]
+      - figure [ref=f4e68]:
+        - code [ref=f4e70]:
+          - generic [ref=f4e71]: "# ml_metrics_pipeline.py"
+          - generic [ref=f4e72]: "# 앞 레슨과 같은 붓꽃(iris) 데이터로, 이번엔 성적을 정직하게 매기고"
+          - generic [ref=f4e73]: "# 전처리+모델을 Pipeline 하나로 묶는다"
+          - generic [ref=f4e75]: from sklearn.datasets import load_iris
+          - generic [ref=f4e76]: from sklearn.model_selection import train_test_split
+          - generic [ref=f4e77]: from sklearn.pipeline import Pipeline
+          - generic [ref=f4e78]: from sklearn.preprocessing import StandardScaler
+          - generic [ref=f4e79]: from sklearn.linear_model import LogisticRegression
+          - generic [ref=f4e80]: from sklearn.metrics import accuracy_score, classification_report
+          - generic [ref=f4e82]: "# 1) 앞 레슨과 같은 데이터"
+          - generic [ref=f4e83]: iris = load_iris()
+          - generic [ref=f4e84]: X, y = iris.data, iris.target
+          - generic [ref=f4e86]: "# 2) 학습용/평가용 분리 — 시험 문제를 미리 보고 시험을 치지 않기 위해"
+          - generic [ref=f4e87]: X_train, X_test, y_train, y_test = train_test_split(
+          - generic [ref=f4e88]: X, y, test_size=0.3, random_state=0
+          - generic [ref=f4e89]: )
+          - generic [ref=f4e91]: "# 3) 전처리(스케일러) + 모델을 한 덩어리로 묶어 학습용 데이터에만 fit"
+          - generic [ref=f4e92]: pipeline = Pipeline([
+          - generic [ref=f4e93]: ("scaler", StandardScaler()),
+          - generic [ref=f4e94]: ("classifier", LogisticRegression(max_iter=200)),
+          - generic [ref=f4e95]: "])"
+          - generic [ref=f4e96]: pipeline.fit(X_train, y_train)
+          - generic [ref=f4e98]: "# 4) 평가용 데이터로만 예측하고 지표를 계산 — 학습에 쓴 데이터로 채점하지 않는다"
+          - generic [ref=f4e99]: y_pred = pipeline.predict(X_test)
+          - generic [ref=f4e100]: "print(f\"정확도: {accuracy_score(y_test, y_pred):.2f}\")"
+          - generic [ref=f4e101]: print("클래스별 리포트:")
+          - generic [ref=f4e102]: print(classification_report(y_test, y_pred, target_names=iris.target_names))
+          - button "Copy code" [ref=f4e103]
+      - paragraph [ref=f4e105]:
+        - strong [ref=f4e106]: "실행 방법:"
+        - text: 위 코드를
+        - code [ref=f4e107]: "`ml_metrics_pipeline.py`"
+        - text: 파일로 저장한 뒤, PowerShell에서 아래 명령을 실행합니다. (앞 레슨에서 이미
+        - code [ref=f4e108]: "`scikit-learn`"
+        - text: 을 설치했다면 이 단계는 건너뛰어도 됩니다.)
+      - figure [ref=f4e109]:
+        - code [ref=f4e111]:
+          - generic [ref=f4e112]: pip install scikit-learn
+          - generic [ref=f4e113]: py ml_metrics_pipeline.py
+          - button "Copy code" [ref=f4e114]
+      - paragraph [ref=f4e116]:
+        - text: macOS는
+        - code [ref=f4e117]: "`python3 ml_metrics_pipeline.py`"
+        - text: 로 실행합니다.
+      - paragraph [ref=f4e118]:
+        - text: "실행하면 정확도가 소수점 둘째 자리 숫자(예:"
+        - code [ref=f4e119]: "`0.98`"
+        - text: 처럼 1에 가까운 값)로 먼저 출력됩니다. 이어서 품종별로 정밀도(precision)·재현율(recall)·f1-score·support(그 품종의 평가용 샘플 수)가 표 형태로 출력됩니다. 붓꽃 데이터는 품종 구분이 뚜렷해서 세 품종 모두 지표가 1에 가깝게 나오는 경우가 많습니다.
+      - heading "해보기" [level=3] [ref=f4e120]
+      - paragraph [ref=f4e121]:
+        - text: Pipeline에서
+        - code [ref=f4e122]: "`(\"scaler\", StandardScaler())`"
+        - text: 단계를 빼고
+        - code [ref=f4e123]: "`LogisticRegression`"
+        - text: 만 바로 학습시켜 결과를 비교해보세요.
+      - group [ref=f4e124]:
+        - generic "▶ 정답 보기" [ref=f4e125] [cursor=pointer]
+      - heading "해보기" [level=3] [ref=f4e126]
+      - paragraph [ref=f4e127]:
+        - code [ref=f4e128]: "`train_test_split`"
+        - text: 의
+        - code [ref=f4e129]: "`test_size`"
+        - text: 를
+        - code [ref=f4e130]: "`0.3`"
+        - text: 에서
+        - code [ref=f4e131]: "`0.5`"
+        - text: 로, 또는
+        - code [ref=f4e132]: "`random_state`"
+        - text: 를
+        - code [ref=f4e133]: "`0`"
+        - text: 에서 다른 숫자로 바꿔가며 정확도가 어떻게 변하는지 관찰해보세요.
+      - group [ref=f4e134]:
+        - generic "▶ 정답 보기" [ref=f4e135] [cursor=pointer]
+        - text: "````"
+      - heading "해보기" [level=3] [ref=f4e136]
+      - paragraph [ref=f4e137]:
+        - code [ref=f4e138]: "`classification_report`"
+        - text: 대신
+        - code [ref=f4e139]: "`sklearn.metrics`"
+        - text: "의 다른 지표 함수(예:"
+        - code [ref=f4e140]: "`precision_score`"
+        - text: ","
+        - code [ref=f4e141]: "`recall_score`"
+        - text: ","
+        - code [ref=f4e142]: "`average=\"macro\"`"
+        - text: 옵션)를 하나 더 출력해보세요.
+      - group [ref=f4e143]:
+        - generic "▶ 정답 보기" [ref=f4e144] [cursor=pointer]
+        - text: "````"
+      - heading "5. 실무 팁" [level=2] [ref=f4e145]
+      - list [ref=f4e146]:
+        - listitem [ref=f4e147]:
+          - strong [ref=f4e148]: 정확도 하나만 보고 판단하지 않습니다.
+          - text: 불균형 데이터에서는 정확도가 높아도 실제로 쓸모없는 모델일 수 있습니다.
+        - listitem [ref=f4e149]:
+          - strong [ref=f4e150]: 평가용 데이터로는 절대 학습하지 않습니다.
+          - code [ref=f4e151]: "`fit`"
+          - text: 에는 학습용 데이터만, 지표 계산에는 평가용 데이터만 씁니다.
+        - listitem [ref=f4e152]:
+          - strong [ref=f4e153]: 전처리는 Pipeline 안에 넣습니다.
+          - text: 스케일러를 Pipeline 밖에서 전체 데이터에 미리 적용하면 데이터 누수가 생길 수 있습니다.
+        - listitem [ref=f4e154]:
+          - strong [ref=f4e155]: 한 번의 분할로 나온 점수는 운이 섞여 있습니다.
+          - text: 소수점 여러 자리까지 믿지 말고,
+          - code [ref=f4e156]: "`random_state`"
+          - text: 를 바꿔가며 여러 번 확인하는 습관을 들입니다.
+      - heading "6. 핵심 정리 및 스스로 점검" [level=2] [ref=f4e157]
+      - paragraph [ref=f4e158]:
+        - strong [ref=f4e159]: 핵심 정리
+      - list [ref=f4e160]:
+        - listitem [ref=f4e161]: 학습에 쓴 데이터로 채점하면 실제보다 항상 좋게 나오므로 학습용/평가용을 나눈다
+        - listitem [ref=f4e162]: 정확도·정밀도·재현율은 서로 다른 것을 재며, 데이터 상황에 따라 봐야 할 지표가 다르다
+        - listitem [ref=f4e163]: 불균형 데이터에서는 정확도만으로 판단하면 안 된다
+        - listitem [ref=f4e164]: Pipeline은 전처리와 모델을 한 덩어리로 묶어 데이터 누수를 막는다
+        - listitem [ref=f4e165]: 한 번의 분할·평가 점수는 운이 섞여 있어 소수점까지 과신하면 안 된다
+      - paragraph [ref=f4e166]:
+        - strong [ref=f4e167]: 이 레슨의 단어
+      - table [ref=f4e168]:
+        - rowgroup [ref=f4e169]:
+          - row [ref=f4e170]:
+            - columnheader "단어" [ref=f4e171]
+            - columnheader "뜻" [ref=f4e172]
+        - rowgroup [ref=f4e173]:
+          - row [ref=f4e174]:
+            - cell "학습용 데이터" [ref=f4e175]
+            - cell "모델이 배우는 데 쓰는 데이터" [ref=f4e176]
+          - row [ref=f4e177]:
+            - cell "평가용 데이터" [ref=f4e178]
+            - cell "모델의 성적을 매기는 데만 쓰는, 학습에 쓰지 않은 데이터" [ref=f4e179]
+          - row [ref=f4e180]:
+            - cell "정확도" [ref=f4e181]
+            - cell "전체 예측 중 맞힌 비율" [ref=f4e182]
+          - row [ref=f4e183]:
+            - cell "정밀도" [ref=f4e184]
+            - cell "\"맞다\"고 한 것 중 실제로 맞은 비율" [ref=f4e185]
+          - row [ref=f4e186]:
+            - cell "재현율" [ref=f4e187]
+            - cell "실제 정답 중 놓치지 않고 맞힌 비율" [ref=f4e188]
+          - row [ref=f4e189]:
+            - cell "스케일링" [ref=f4e190]
+            - cell "특징들의 크기 단위를 비슷하게 맞추는 전처리" [ref=f4e191]
+          - row [ref=f4e192]:
+            - cell "Pipeline" [ref=f4e193]
+            - cell "전처리와 모델을 순서대로 묶어 하나처럼 다루는 도구" [ref=f4e194]
+          - row [ref=f4e195]:
+            - cell "데이터 누수" [ref=f4e196]
+            - cell "평가용 정보가 학습 과정에 섞여 들어가는 문제" [ref=f4e197]
+      - paragraph [ref=f4e198]:
+        - strong [ref=f4e199]: 스스로 점검
+      - list [ref=f4e200]:
+        - listitem [ref=f4e201]: 100명 중 1명만 해당하는 것을 찾는 문제에서 정확도 99%는 좋은 성적인가요?
+      - group [ref=f4e202]:
+        - generic "▶ 정답 보기" [ref=f4e203] [cursor=pointer]
+      - list [ref=f4e204]:
+        - listitem [ref=f4e205]:
+          - text: 전처리(스케일러)를 Pipeline 밖에서 전체 데이터에 먼저 적용한 뒤
+          - code [ref=f4e206]: "`train_test_split`"
+          - text: 으로 나누면 어떤 문제가 생길 수 있나요?
+      - group [ref=f4e207]:
+        - generic "▶ 정답 보기" [ref=f4e208] [cursor=pointer]
+        - text: "``"
+    - navigation "레슨 페이저" [ref=f4e209]:
+      - link "← 이전 레슨" [ref=f4e210] [cursor=pointer]:
+        - /url: /lesson/1-5-ml-model-types
+      - link "다음 레슨 →" [ref=f4e213] [cursor=pointer]:
+        - /url: /lesson/2-1-postgres-and-supabase
+  - alert [ref=f4e216]

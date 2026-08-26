@@ -1,0 +1,330 @@
+- generic [active] [ref=f12e1]:
+  - banner [ref=f12e2]:
+    - navigation "주요 내비게이션" [ref=f12e3]:
+      - link "AI Engineer Runway" [ref=f12e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f12e5]:
+        - link "오늘의 학습" [ref=f12e6] [cursor=pointer]:
+          - /url: /
+        - link "커리큘럼" [ref=f12e7] [cursor=pointer]:
+          - /url: /curriculum
+        - link "일정표" [ref=f12e8] [cursor=pointer]:
+          - /url: /schedule
+        - link "소개" [ref=f12e9] [cursor=pointer]:
+          - /url: /about
+      - button "다크 모드로 전환" [ref=f12e10]
+  - article [ref=f12e13]:
+    - navigation "브레드크럼" [ref=f12e14]:
+      - link "Step 1" [ref=f12e15] [cursor=pointer]:
+        - /url: /step/1
+      - generic [ref=f12e16]: ">"
+      - link "SQL & 데이터베이스 기초" [ref=f12e17] [cursor=pointer]:
+        - /url: /step/1
+    - generic [ref=f12e18]:
+      - heading "SQL 쿼리·JOIN·집계" [level=1] [ref=f12e19]
+      - generic [ref=f12e20]:
+        - generic [ref=f12e21]: 심화
+        - generic [ref=f12e22]: 약 2.5시간
+    - generic [ref=f12e23]:
+      - heading "1. 학습 목표" [level=2] [ref=f12e24]
+      - paragraph [ref=f12e25]: 이 레슨을 마치면 다음을 할 수 있습니다.
+      - list [ref=f12e26]:
+        - listitem [ref=f12e27]: 조건을 걸어 원하는 행만 뽑을 수 있다
+        - listitem [ref=f12e28]: 두 표를 JOIN으로 이어 한 결과로 볼 수 있다
+        - listitem [ref=f12e29]: GROUP BY로 묶어 개수 · 합계 · 평균을 낼 수 있다
+        - listitem [ref=f12e30]: 서브쿼리로 다른 쿼리의 결과를 조건에 쓸 수 있다
+      - heading "2. 왜 배우나" [level=2] [ref=f12e31]
+      - paragraph [ref=f12e32]: 데이터베이스에 데이터를 넣는 일보다 꺼내는 일이 실무의 대부분을 차지합니다. 원하는 조건으로 걸러내고, 여러 표를 이어 붙이고, 묶어서 세는 방법을 알아야 화면에 보여줄 데이터를 정확히 뽑아낼 수 있습니다. 이 레슨도 앞 레슨과 마찬가지로 Supabase SQL 에디터에서 전부 실습하므로 브라우저만 있으면 됩니다.
+      - heading "3. 개념 설명" [level=2] [ref=f12e33]
+      - heading "🔍 SELECT의 뼈대" [level=3] [ref=f12e34]
+      - paragraph [ref=f12e35]:
+        - code [ref=f12e36]: "`SELECT 무엇을 FROM 어디서 WHERE 어떤 조건으로 ORDER BY 어떤 순서로`"
+        - text: 가 조회 쿼리(query, 데이터베이스에 데이터를 요청하는 명령문)의 기본 뼈대입니다.
+      - table [ref=f12e37]:
+        - rowgroup [ref=f12e38]:
+          - row [ref=f12e39]:
+            - columnheader "자리" [ref=f12e40]
+            - columnheader "하는 일" [ref=f12e41]
+            - columnheader "예시" [ref=f12e42]
+        - rowgroup [ref=f12e43]:
+          - row [ref=f12e44]:
+            - cell [ref=f12e45]:
+              - code [ref=f12e46]: "`SELECT`"
+            - cell "가져올 열을 고른다" [ref=f12e47]
+            - cell [ref=f12e48]:
+              - code [ref=f12e49]: "`name, grade`"
+          - row [ref=f12e50]:
+            - cell [ref=f12e51]:
+              - code [ref=f12e52]: "`FROM`"
+            - cell "어느 표에서 가져올지 정한다" [ref=f12e53]
+            - cell [ref=f12e54]:
+              - code [ref=f12e55]: "`practice.students`"
+          - row [ref=f12e56]:
+            - cell [ref=f12e57]:
+              - code [ref=f12e58]: "`WHERE`"
+            - cell "조건에 맞는 행만 남긴다" [ref=f12e59]
+            - cell [ref=f12e60]:
+              - code [ref=f12e61]: "`grade > 1`"
+          - row [ref=f12e62]:
+            - cell [ref=f12e63]:
+              - code [ref=f12e64]: "`ORDER BY`"
+            - cell "결과 순서를 정한다" [ref=f12e65]
+            - cell [ref=f12e66]:
+              - code [ref=f12e67]: "`grade DESC`"
+      - heading "🔗 JOIN — 두 표를 겹쳐 놓기" [level=3] [ref=f12e68]
+      - paragraph [ref=f12e69]:
+        - text: JOIN(공통 열을 기준으로 두 표를 이어 붙이는 연산)은 두 표에서 같은 값을 가진 열끼리 짝을 맞춰 나란히 붙이는 것입니다.
+        - code [ref=f12e70]: "`INNER JOIN`"
+        - text: 은 양쪽 모두에 짝이 있는 행만 남기고,
+        - code [ref=f12e71]: "`LEFT JOIN`"
+        - text: 은 왼쪽 표의 행을 짝이 없어도 남깁니다 — "짝이 없는 행을 버리느냐, 남기느냐"의 차이입니다.
+      - heading "🧮 집계 — 같은 것끼리 접기" [level=3] [ref=f12e72]
+      - paragraph [ref=f12e73]:
+        - text: 집계 함수(COUNT · SUM · AVG처럼 여러 행을 하나의 값으로 계산하는 함수)는
+        - code [ref=f12e74]: "`GROUP BY`"
+        - text: (같은 값을 가진 행끼리 묶는 절)와 짝을 이뤄 씁니다.
+        - code [ref=f12e75]: "`WHERE`"
+        - text: 는 묶기 전에 개별 행을 거르고,
+        - code [ref=f12e76]: "`HAVING`"
+        - text: (그룹으로 묶은 뒤 결과를 거르는 조건절)은 묶어서 계산한 뒤의 결과를 거릅니다.
+      - heading "❓ 서브쿼리 — 질문 안의 질문" [level=3] [ref=f12e77]
+      - paragraph [ref=f12e78]:
+        - text: 서브쿼리(쿼리 안에 들어있는 또 다른 쿼리)는
+        - code [ref=f12e79]: "`WHERE`"
+        - text: 조건 안에 넣어 "이 값보다 큰 것만" 같은 조건을 만들거나,
+        - code [ref=f12e80]: "`FROM`"
+        - text: 자리에 넣어 미리 정리된 결과를 다시 조회하는 데 씁니다.
+      - heading "4. 실무 예제" [level=2] [ref=f12e81]
+      - paragraph [ref=f12e82]: 앞 레슨을 건너뛰었어도 이 블록 하나로 준비가 끝납니다. 연습용 서랍을 먼저 비우고 새로 만들기 때문에, 앞 레슨을 했든 안 했든 · 몇 번을 실행하든 항상 같은 상태에서 시작합니다.
+      - figure [ref=f12e83]:
+        - code [ref=f12e85]:
+          - generic [ref=f12e86]: "-- Supabase 대시보드 → SQL 에디터에서 실행합니다."
+          - generic [ref=f12e87]: "-- 연습용 practice 서랍을 통째로 비우고 새로 만듭니다."
+          - generic [ref=f12e88]: DROP SCHEMA IF EXISTS practice CASCADE;
+          - generic [ref=f12e89]: CREATE SCHEMA practice;
+          - generic [ref=f12e91]: CREATE TABLE practice.students (
+          - generic [ref=f12e92]: id serial PRIMARY KEY,
+          - generic [ref=f12e93]: name text NOT NULL,
+          - generic [ref=f12e94]: grade int
+          - generic [ref=f12e95]: );
+          - generic [ref=f12e97]: CREATE TABLE practice.subjects (
+          - generic [ref=f12e98]: id serial PRIMARY KEY,
+          - generic [ref=f12e99]: name text NOT NULL
+          - generic [ref=f12e100]: );
+          - generic [ref=f12e102]: CREATE TABLE practice.enrollments (
+          - generic [ref=f12e103]: id serial PRIMARY KEY,
+          - generic [ref=f12e104]: student_id int NOT NULL REFERENCES practice.students(id),
+          - generic [ref=f12e105]: subject_id int NOT NULL REFERENCES practice.subjects(id),
+          - generic [ref=f12e106]: score int
+          - generic [ref=f12e107]: );
+          - generic [ref=f12e109]: INSERT INTO practice.students (name, grade) VALUES
+          - generic [ref=f12e110]: ('김지현', 2),
+          - generic [ref=f12e111]: ('이민준', 1),
+          - generic [ref=f12e112]: ('박서연', 3);
+          - generic [ref=f12e114]: INSERT INTO practice.subjects (name) VALUES
+          - generic [ref=f12e115]: ('수학'),
+          - generic [ref=f12e116]: ('영어'),
+          - generic [ref=f12e117]: ('과학');
+          - generic [ref=f12e119]: INSERT INTO practice.enrollments (student_id, subject_id, score) VALUES
+          - generic [ref=f12e120]: (1, 1, 88),
+          - generic [ref=f12e121]: (1, 2, 95),
+          - generic [ref=f12e122]: (2, 1, 72),
+          - generic [ref=f12e123]: (3, 3, 91),
+          - generic [ref=f12e124]: (3, 1, 60);
+          - button "Copy code" [ref=f12e125]
+      - paragraph [ref=f12e127]:
+        - text: 맨 앞의
+        - code [ref=f12e128]: "`DROP SCHEMA ... CASCADE`"
+        - text: 가
+        - code [ref=f12e129]: "`practice`"
+        - text: 서랍을 통째로 비우고 시작하므로, 앞 레슨에서 만든 표가 남아 있어도 충돌하지 않고
+        - code [ref=f12e130]: "`INSERT`"
+        - text: 가 중복으로 쌓이지도 않습니다. 지워지는 것은
+        - code [ref=f12e131]: "`practice`"
+        - text: 서랍뿐이라 사이트 진도 데이터에는 아무 영향이 없습니다.
+      - figure [ref=f12e132]:
+        - code [ref=f12e134]:
+          - generic [ref=f12e135]: "-- 조회: 학년이 2 이상인 학생을 학년 내림차순으로 본다"
+          - generic [ref=f12e136]: SELECT name, grade
+          - generic [ref=f12e137]: FROM practice.students
+          - generic [ref=f12e138]: WHERE grade >= 2
+          - generic [ref=f12e139]: ORDER BY grade DESC;
+          - button "Copy code" [ref=f12e140]
+      - paragraph [ref=f12e142]: 박서연(3학년), 김지현(2학년) 순서로 2행이 나옵니다.
+      - figure [ref=f12e143]:
+        - code [ref=f12e145]:
+          - generic [ref=f12e146]: "-- JOIN: 학생과 과목을 수강 표로 이어 붙인다"
+          - generic [ref=f12e147]: SELECT s.name AS 학생, sub.name AS 과목, e.score AS 점수
+          - generic [ref=f12e148]: FROM practice.enrollments e
+          - generic [ref=f12e149]: INNER JOIN practice.students s ON s.id = e.student_id
+          - generic [ref=f12e150]: INNER JOIN practice.subjects sub ON sub.id = e.subject_id
+          - generic [ref=f12e151]: ORDER BY e.id;
+          - generic [ref=f12e153]: "-- LEFT JOIN 비교: 수강 기록이 없는 학생도 남긴다"
+          - generic [ref=f12e154]: SELECT s.name AS 학생, sub.name AS 과목
+          - generic [ref=f12e155]: FROM practice.students s
+          - generic [ref=f12e156]: LEFT JOIN practice.enrollments e ON e.student_id = s.id
+          - generic [ref=f12e157]: LEFT JOIN practice.subjects sub ON sub.id = e.subject_id
+          - generic [ref=f12e158]: ORDER BY s.id;
+          - button "Copy code" [ref=f12e159]
+      - paragraph [ref=f12e161]:
+        - text: 첫 번째
+        - code [ref=f12e162]: "`INNER JOIN`"
+        - text: 은 수강 기록 개수만큼 5행이 나옵니다. 두 번째
+        - code [ref=f12e163]: "`LEFT JOIN`"
+        - text: 은 모든 학생이 최소 1행씩 나오는데, 위 준비 데이터에서는 학생 3명 모두 수강 기록이 있어 결과 행 수가 같습니다 — 수강 기록이 없는 학생을 넣으면 그 학생의 과목 자리가 빈 채로(
+        - code [ref=f12e164]: "`NULL`"
+        - text: ) 남는 것이
+        - code [ref=f12e165]: "`LEFT JOIN`"
+        - text: 의 차이입니다.
+      - figure [ref=f12e166]:
+        - code [ref=f12e168]:
+          - generic [ref=f12e169]: "-- 집계: 학생별 평균 점수, 60점 이상만 남긴다"
+          - generic [ref=f12e170]: SELECT s.name AS 학생, COUNT(e.id) AS 수강수, AVG(e.score) AS 평균점수
+          - generic [ref=f12e171]: FROM practice.students s
+          - generic [ref=f12e172]: JOIN practice.enrollments e ON e.student_id = s.id
+          - generic [ref=f12e173]: GROUP BY s.name
+          - generic [ref=f12e174]: HAVING AVG(e.score) >= 60
+          - generic [ref=f12e175]: ORDER BY 평균점수 DESC;
+          - button "Copy code" [ref=f12e176]
+      - paragraph [ref=f12e178]:
+        - text: 학생별로 한 줄씩(3행) 나오되,
+        - code [ref=f12e179]: "`WHERE`"
+        - text: 가 아니라
+        - code [ref=f12e180]: "`HAVING`"
+        - text: 으로 평균을 거르므로 평균이 60점 미만인 학생이 있었다면 그 학생만 결과에서 빠졌을 것입니다.
+      - figure [ref=f12e181]:
+        - code [ref=f12e183]:
+          - generic [ref=f12e184]: "-- 서브쿼리: 전체 평균 점수보다 높은 점수를 받은 수강 기록만 본다"
+          - generic [ref=f12e185]: SELECT s.name AS 학생, sub.name AS 과목, e.score AS 점수
+          - generic [ref=f12e186]: FROM practice.enrollments e
+          - generic [ref=f12e187]: JOIN practice.students s ON s.id = e.student_id
+          - generic [ref=f12e188]: JOIN practice.subjects sub ON sub.id = e.subject_id
+          - generic [ref=f12e189]: WHERE e.score > (SELECT AVG(score) FROM practice.enrollments)
+          - generic [ref=f12e190]: ORDER BY e.score DESC;
+          - button "Copy code" [ref=f12e191]
+      - paragraph [ref=f12e193]:
+        - text: 괄호 안
+        - code [ref=f12e194]: "`(SELECT AVG(score) FROM practice.enrollments)`"
+        - text: 가 먼저 계산되어 하나의 숫자(전체 평균)가 되고, 바깥 쿼리의
+        - code [ref=f12e195]: "`WHERE`"
+        - text: 가 그 숫자보다 높은 점수만 남깁니다.
+      - heading "해보기" [level=3] [ref=f12e196]
+      - paragraph [ref=f12e197]:
+        - text: 위 JOIN 예제에서
+        - code [ref=f12e198]: "`INNER JOIN`"
+        - text: 을
+        - code [ref=f12e199]: "`LEFT JOIN`"
+        - text: 으로 바꿔 실행해보세요(첫 번째 쿼리). 결과 행 수가 달라지는지, 왜 그런지 확인합니다.
+      - group [ref=f12e200]:
+        - generic "▶ 정답 보기" [ref=f12e201] [cursor=pointer]
+        - text: "````"
+      - heading "해보기" [level=3] [ref=f12e202]
+      - paragraph [ref=f12e203]:
+        - text: 집계 쿼리의
+        - code [ref=f12e204]: "`GROUP BY s.name`"
+        - text: 을
+        - code [ref=f12e205]: "`GROUP BY sub.name`"
+        - text: (과목 기준)으로 바꿔, 과목별 평균 점수를 다시 뽑아보세요.
+      - group [ref=f12e206]:
+        - generic "▶ 정답 보기" [ref=f12e207] [cursor=pointer]
+        - text: "``"
+      - heading "해보기" [level=3] [ref=f12e208]
+      - paragraph [ref=f12e209]: 수학 과목의 평균 점수보다 높은 점수를 받은 수강 기록만 뽑는 서브쿼리를 직접 작성해보세요.
+      - group [ref=f12e210]:
+        - generic "▶ 정답 보기" [ref=f12e211] [cursor=pointer]
+        - text: "``"
+      - heading "5. 실무 팁" [level=2] [ref=f12e212]
+      - list [ref=f12e213]:
+        - listitem [ref=f12e214]: 이 레슨의 실습은 SQL 에디터에 값을 직접 타이핑하지만, 실제 애플리케이션 코드에서는 사용자 입력을 문자열로 이어 붙여 쿼리를 만들지 않습니다 — 값을 따로 넘기는 파라미터 바인딩 방식을 쓰며, 이는 Step 2에서 다룹니다.
+        - listitem [ref=f12e215]:
+          - code [ref=f12e216]: "`SELECT *`"
+          - text: 대신 필요한 열만 골라 조회하는 습관을 들입니다 — 나중에 표에 열이 늘어나도 코드가 덜 흔들립니다.
+        - listitem [ref=f12e217]: JOIN을 걸기 전에 각 표를 따로 조회해 행 수를 확인해두면, JOIN 결과가 예상과 다를 때 원인을 빨리 찾을 수 있습니다.
+        - listitem [ref=f12e218]:
+          - text: 데이터가 큰 표에서는
+          - code [ref=f12e219]: "`WHERE`"
+          - text: 없이 전체 조회를 하지 않습니다.
+      - figure [ref=f12e220]:
+        - code [ref=f12e222]:
+          - generic [ref=f12e223]: "-- 실습을 되돌립니다. practice 서랍(스키마)을 통째로 지웁니다."
+          - generic [ref=f12e224]: "-- 이 문장은 practice 스키마만 대상으로 하므로 사이트 진도 데이터에는 아무 영향이 없습니다."
+          - generic [ref=f12e225]: DROP SCHEMA IF EXISTS practice CASCADE;
+          - button "Copy code" [ref=f12e226]
+      - heading "6. 핵심 정리 및 스스로 점검" [level=2] [ref=f12e228]
+      - paragraph [ref=f12e229]:
+        - strong [ref=f12e230]: 핵심 정리
+      - list [ref=f12e231]:
+        - listitem [ref=f12e232]:
+          - code [ref=f12e233]: "`SELECT ~ FROM ~ WHERE ~ ORDER BY`"
+          - text: 가 조회의 기본 뼈대다
+        - listitem [ref=f12e234]:
+          - code [ref=f12e235]: "`INNER JOIN`"
+          - text: 은 짝이 없는 행을 버리고,
+          - code [ref=f12e236]: "`LEFT JOIN`"
+          - text: 은 왼쪽 표의 행을 남긴다
+        - listitem [ref=f12e237]:
+          - code [ref=f12e238]: "`GROUP BY`"
+          - text: 는 같은 값끼리 묶고,
+          - code [ref=f12e239]: "`WHERE`"
+          - text: 는 묶기 전에,
+          - code [ref=f12e240]: "`HAVING`"
+          - text: 은 묶은 뒤에 거른다
+        - listitem [ref=f12e241]: 서브쿼리는 쿼리 안에 다른 쿼리를 넣어 그 결과를 조건이나 값으로 쓴다
+        - listitem [ref=f12e242]: 애플리케이션 코드에서는 문자열 결합 대신 파라미터 바인딩으로 쿼리를 만든다
+      - paragraph [ref=f12e243]:
+        - strong [ref=f12e244]: 이 레슨의 단어
+      - table [ref=f12e245]:
+        - rowgroup [ref=f12e246]:
+          - row [ref=f12e247]:
+            - columnheader "단어" [ref=f12e248]
+            - columnheader "뜻" [ref=f12e249]
+        - rowgroup [ref=f12e250]:
+          - row [ref=f12e251]:
+            - cell "쿼리" [ref=f12e252]
+            - cell "데이터베이스에 데이터를 요청하는 명령문" [ref=f12e253]
+          - row [ref=f12e254]:
+            - cell "JOIN" [ref=f12e255]
+            - cell "공통 열을 기준으로 두 표를 이어 붙이는 연산" [ref=f12e256]
+          - row [ref=f12e257]:
+            - cell "INNER JOIN" [ref=f12e258]
+            - cell "두 표 모두에 짝이 있는 행만 남기는 JOIN" [ref=f12e259]
+          - row [ref=f12e260]:
+            - cell "LEFT JOIN" [ref=f12e261]
+            - cell "왼쪽 표의 행은 짝이 없어도 남기는 JOIN" [ref=f12e262]
+          - row [ref=f12e263]:
+            - cell "집계 함수" [ref=f12e264]
+            - cell "COUNT · SUM · AVG처럼 여러 행을 하나의 값으로 계산하는 함수" [ref=f12e265]
+          - row [ref=f12e266]:
+            - cell "GROUP BY" [ref=f12e267]
+            - cell "같은 값을 가진 행끼리 묶는 절" [ref=f12e268]
+          - row [ref=f12e269]:
+            - cell "HAVING" [ref=f12e270]
+            - cell "그룹으로 묶은 뒤 결과를 거르는 조건절" [ref=f12e271]
+          - row [ref=f12e272]:
+            - cell "서브쿼리" [ref=f12e273]
+            - cell "쿼리 안에 들어있는 또 다른 쿼리" [ref=f12e274]
+      - paragraph [ref=f12e275]:
+        - strong [ref=f12e276]: 스스로 점검
+      - list [ref=f12e277]:
+        - listitem [ref=f12e278]:
+          - code [ref=f12e279]: "`WHERE`"
+          - text: 와
+          - code [ref=f12e280]: "`HAVING`"
+          - text: 의 차이를 한 문장으로 설명해보세요.
+      - group [ref=f12e281]:
+        - generic "▶ 정답 보기" [ref=f12e282] [cursor=pointer]
+        - text: "````````````"
+      - list [ref=f12e283]:
+        - listitem [ref=f12e284]:
+          - code [ref=f12e285]: "`INNER JOIN`"
+          - text: 대신
+          - code [ref=f12e286]: "`LEFT JOIN`"
+          - text: 을 쓰면 결과 행 수가 늘어날 수 있는 이유는 무엇일까요?
+      - group [ref=f12e287]:
+        - generic "▶ 정답 보기" [ref=f12e288] [cursor=pointer]
+        - text: "````````"
+    - navigation "레슨 페이저" [ref=f12e289]:
+      - link "← 이전 레슨" [ref=f12e290] [cursor=pointer]:
+        - /url: /lesson/1-4-relational-db-basics
+      - link "다음 레슨 →" [ref=f12e293] [cursor=pointer]:
+        - /url: /lesson/1-5-ml-model-types

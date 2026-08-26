@@ -1,0 +1,6 @@
+[     393ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1e8vcs8._.js:776
+[     414ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1e8vcs8._.js:776
+[     516ms] [ERROR] Expected `%s` listener to be a function, instead got a value of `%s` type. onClick string @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1e8vcs8._.js:1052
+[     567ms] [ERROR] Expected `%s` listener to be a function, instead got a value of `%s` type. onClick string @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1e8vcs8._.js:1052
+[     567ms] [ERROR] Expected `%s` listener to be a function, instead got a value of `%s` type. onClick string @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1e8vcs8._.js:1052
+[     572ms] [ERROR] Expected `%s` listener to be a function, instead got a value of `%s` type. onClick string @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1e8vcs8._.js:1052

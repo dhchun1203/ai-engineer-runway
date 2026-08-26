@@ -1,0 +1,342 @@
+- generic [active] [ref=f13e1]:
+  - banner [ref=f13e2]:
+    - navigation "주요 내비게이션" [ref=f13e3]:
+      - link "AI Engineer Runway" [ref=f13e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f13e5]:
+        - link "오늘의 학습" [ref=f13e6] [cursor=pointer]:
+          - /url: /
+        - link "커리큘럼" [ref=f13e7] [cursor=pointer]:
+          - /url: /curriculum
+        - link "일정표" [ref=f13e8] [cursor=pointer]:
+          - /url: /schedule
+        - link "소개" [ref=f13e9] [cursor=pointer]:
+          - /url: /about
+      - button "다크 모드로 전환" [ref=f13e10]
+  - article [ref=f13e13]:
+    - navigation "브레드크럼" [ref=f13e14]:
+      - link "Step 1" [ref=f13e15] [cursor=pointer]:
+        - /url: /step/1
+      - generic [ref=f13e16]: ">"
+      - link "Python 프로그래밍 기초" [ref=f13e17] [cursor=pointer]:
+        - /url: /step/1
+    - generic [ref=f13e18]:
+      - heading "Python 변수·자료형" [level=1] [ref=f13e19]
+      - generic [ref=f13e20]:
+        - generic [ref=f13e21]: 심화
+        - generic [ref=f13e22]: 약 2.5시간
+    - generic [ref=f13e23]:
+      - heading "1. 학습 목표" [level=2] [ref=f13e24]
+      - paragraph [ref=f13e25]: 이 레슨을 마치면 다음을 할 수 있습니다.
+      - list [ref=f13e26]:
+        - listitem [ref=f13e27]: Python 변수에 값을 저장하고, 이름을 짓는 규칙을 지켜 변수를 선언할 수 있다
+        - listitem [ref=f13e28]:
+          - text: 정수(
+          - code [ref=f13e29]: "`int`"
+          - text: )·실수(
+          - code [ref=f13e30]: "`float`"
+          - text: )·문자열(
+          - code [ref=f13e31]: "`str`"
+          - text: )·불리언(
+          - code [ref=f13e32]: "`bool`"
+          - text: ) 네 가지 기본 자료형을 구분하고
+          - code [ref=f13e33]: "`type()`"
+          - text: 으로 직접 확인할 수 있다
+        - listitem [ref=f13e34]:
+          - code [ref=f13e35]: "`if`"
+          - text: /
+          - code [ref=f13e36]: "`elif`"
+          - text: /
+          - code [ref=f13e37]: "`else`"
+          - text: 로 조건에 따라 다른 코드를 실행하는 조건문을 작성할 수 있다
+        - listitem [ref=f13e38]:
+          - code [ref=f13e39]: "`for`"
+          - text: 로 리스트를 순서대로 순회하며 각 항목을 처리하는 반복문을 작성할 수 있다
+      - heading "2. 왜 배우나" [level=2] [ref=f13e40]
+      - paragraph [ref=f13e41]: 변수·자료형·조건문·반복문은 이후 배울 함수·API 응답 처리·데이터 전처리 전부의 재료입니다. 값을 상자에 담고(변수), 상자 안 내용에 따라 갈림길을 타고(조건문), 여러 개를 한 번에 처리하는(반복문) 이 네 가지 없이는 어떤 실무 코드도 짜기 어렵습니다. 지금 확실히 다져두면 나중에 만나는 에러 메시지의 절반을 스스로 진단할 수 있습니다.
+      - heading "3. 개념 설명" [level=2] [ref=f13e42]
+      - heading "📦 변수는 이름표 붙은 상자" [level=3] [ref=f13e43]
+      - paragraph [ref=f13e44]: 변수(variable, 값을 담아두는 이름 붙은 공간)를 상자라고 생각하면 쉽습니다. 상자 안에 값을 넣고, 상자에 이름표를 붙이는 것이 변수 선언입니다. Python은 상자를 만들기 전에 "이 상자엔 숫자만 담는다" 같은 선언을 하지 않습니다. 값을 넣는 순간 Python이 자동으로 자료형을 정합니다. 이를 동적 타이핑(dynamic typing, 값을 넣는 순간 자료형이 자동으로 정해지는 방식)이라고 부릅니다.
+      - figure [ref=f13e45]:
+        - code [ref=f13e47]:
+          - generic [ref=f13e48]: "age = 25 # 정수 상자"
+          - generic [ref=f13e49]: "name = \"지현\" # 문자열 상자"
+          - button "Copy code" [ref=f13e50]
+      - heading "🎨 자료형 4종 — 상자마다 다른 내용물" [level=3] [ref=f13e52]
+      - table [ref=f13e53]:
+        - rowgroup [ref=f13e54]:
+          - row [ref=f13e55]:
+            - columnheader "자료형" [ref=f13e56]
+            - columnheader "이름" [ref=f13e57]
+            - columnheader "예시" [ref=f13e58]
+            - columnheader "일상 비유" [ref=f13e59]
+        - rowgroup [ref=f13e60]:
+          - row [ref=f13e61]:
+            - cell [ref=f13e62]:
+              - code [ref=f13e63]: "`int`"
+            - cell "정수" [ref=f13e64]
+            - cell [ref=f13e65]:
+              - code [ref=f13e66]: "`25`"
+              - text: ","
+              - code [ref=f13e67]: "`-3`"
+              - text: ","
+              - code [ref=f13e68]: "`0`"
+            - cell "사람 수를 셀 때 — \"3.5명\"은 없다" [ref=f13e69]
+          - row [ref=f13e70]:
+            - cell [ref=f13e71]:
+              - code [ref=f13e72]: "`float`"
+            - cell "실수(소수)" [ref=f13e73]
+            - cell [ref=f13e74]:
+              - code [ref=f13e75]: "`175.5`"
+              - text: ","
+              - code [ref=f13e76]: "`3.14`"
+            - cell "체중계 숫자 — 소수점이 자연스럽다" [ref=f13e77]
+          - row [ref=f13e78]:
+            - cell [ref=f13e79]:
+              - code [ref=f13e80]: "`str`"
+            - cell "문자열" [ref=f13e81]
+            - cell [ref=f13e82]:
+              - code [ref=f13e83]: "`\"지현\"`"
+              - text: ","
+              - code [ref=f13e84]: "`\"안녕\"`"
+            - cell "이름표에 적힌 글자" [ref=f13e85]
+          - row [ref=f13e86]:
+            - cell [ref=f13e87]:
+              - code [ref=f13e88]: "`bool`"
+            - cell "불리언(참/거짓)" [ref=f13e89]
+            - cell [ref=f13e90]:
+              - code [ref=f13e91]: "`True`"
+              - text: ","
+              - code [ref=f13e92]: "`False`"
+            - cell "스위치의 켜짐/꺼짐 상태" [ref=f13e93]
+      - paragraph [ref=f13e94]:
+        - text: 문자열은 반드시 따옴표로 감싸야 합니다 —
+        - code [ref=f13e95]: "`name = 지현`"
+        - text: 은 에러가 나지만
+        - code [ref=f13e96]: "`name = \"지현\"`"
+        - text: 은 정상 동작합니다. 숫자와 문자열은 자동으로 섞이지 않으므로(
+        - code [ref=f13e97]: "`\"나이: \" + 25`"
+        - text: 는 에러), f-string(
+        - code [ref=f13e98]: "`f\"나이: {25}\"`"
+        - text: )으로 조합해야 합니다.
+      - heading "🚦 조건문은 갈림길" [level=3] [ref=f13e99]
+      - paragraph [ref=f13e100]:
+        - text: 갈림길 앞에 서 있다고 상상해보세요 — 표지판(조건)을 보고 어느 길로 갈지 정합니다. 조건문(conditional statement, 조건에 따라 다른 코드를 실행하는 문법)이 하는 일이 정확히 이것입니다.
+        - code [ref=f13e101]: "`if 조건:`"
+        - text: 이 참이면 그 아래 코드가 실행되고, 참이 아니면
+        - code [ref=f13e102]: "`elif 다른 조건:`"
+        - text: 을 차례로 검사하다가, 전부 거짓이면 마지막
+        - code [ref=f13e103]: "`else:`"
+        - text: 가 실행됩니다. 갈림길은 한 번에 딱 한 길로만 들어섭니다.
+      - heading "🎢 반복문은 컨베이어벨트" [level=3] [ref=f13e104]
+      - paragraph [ref=f13e105]:
+        - text: 공장 컨베이어벨트 위로 상자가 하나씩 흘러오고, 작업자는 상자마다 똑같은 작업을 반복합니다. 반복문(loop statement, 여러 값을 순서대로 처리하는 문법)이 이 역할을 합니다.
+        - code [ref=f13e106]: "`for 항목 in 리스트:`"
+        - text: 는 리스트의 값을 하나씩 꺼내 같은 코드를 반복 실행합니다. 몇 번 반복할지 미리 정해져 있지 않고 "조건이 참인 동안" 계속 반복하고 싶을 땐
+        - code [ref=f13e107]: "`while 조건:`"
+        - text: 을 씁니다.
+      - heading "4. 실무 예제" [level=2] [ref=f13e108]
+      - paragraph [ref=f13e109]: 아래 스크립트는 회원 정보를 변수에 저장하고, 자료형을 확인하고, 등급에 따라 조건 분기하고, 회원 리스트를 반복문으로 순회하는 완결된 예제입니다. 그대로 복사해서 실행할 수 있습니다.
+      - figure [ref=f13e110]:
+        - code [ref=f13e112]:
+          - generic [ref=f13e113]: "# variables.py"
+          - generic [ref=f13e114]: "# 회원 정보를 변수로 관리하고, 조건문·반복문까지 활용하는 예제"
+          - generic [ref=f13e116]: name = "김지현"
+          - generic [ref=f13e117]: age = 27
+          - generic [ref=f13e118]: height = 168.3
+          - generic [ref=f13e119]: "membership_status = \"premium\" # \"premium\" / \"regular\" / \"dormant\" 중 하나"
+          - generic [ref=f13e121]: "# 1) 각 변수의 자료형을 직접 확인한다"
+          - generic [ref=f13e122]: "print(f\"{name}의 자료형: {type(name)}\")"
+          - generic [ref=f13e123]: "print(f\"{age}의 자료형: {type(age)}\")"
+          - generic [ref=f13e124]: "print(f\"{height}의 자료형: {type(height)}\")"
+          - generic [ref=f13e125]: "print(f\"{membership_status}의 자료형: {type(membership_status)}\")"
+          - generic [ref=f13e127]: print("---")
+          - generic [ref=f13e129]: "# 2) f-string으로 숫자와 문자열을 함께 출력한다"
+          - generic [ref=f13e130]: "print(f\"회원명: {name}, 나이: {age}세, 키: {height}cm\")"
+          - generic [ref=f13e132]: "# 3) 조건문 — 회원 등급에 따라 다른 메시지를 보여준다 (갈림길)"
+          - generic [ref=f13e133]: "if membership_status == \"premium\":"
+          - generic [ref=f13e134]: discount_rate = 0.2
+          - generic [ref=f13e135]: "print(f\"프리미엄 회원 할인율: {discount_rate * 100}%\")"
+          - generic [ref=f13e136]: "elif membership_status == \"regular\":"
+          - generic [ref=f13e137]: print("일반 회원입니다. 다음 구매부터 포인트가 적립됩니다.")
+          - generic [ref=f13e138]: "else:"
+          - generic [ref=f13e139]: print("휴면 회원입니다. 로그인하면 계정이 다시 활성화됩니다.")
+          - generic [ref=f13e141]: print("---")
+          - generic [ref=f13e143]: "# 4) 반복문 — 회원 리스트를 순서대로 처리한다 (컨베이어벨트)"
+          - generic [ref=f13e144]: members = ["김지현", "이민준", "박서연"]
+          - generic [ref=f13e145]: "for member in members:"
+          - generic [ref=f13e146]: "print(f\"{member}님, 안녕하세요!\")"
+          - button "Copy code" [ref=f13e147]
+      - paragraph [ref=f13e149]:
+        - strong [ref=f13e150]: "실행 방법:"
+        - text: 위 코드를
+        - code [ref=f13e151]: "`variables.py`"
+        - text: 파일로 저장한 뒤, PowerShell에서 아래 명령을 실행합니다.
+      - figure [ref=f13e152]:
+        - code [ref=f13e154]:
+          - generic [ref=f13e155]: "# variables.py 실행 — python 대신 py 런처를 씁니다"
+          - generic [ref=f13e156]: py variables.py
+          - button "Copy code" [ref=f13e157]
+      - paragraph [ref=f13e159]:
+        - text: macOS는
+        - code [ref=f13e160]: "`python3 variables.py`"
+        - text: 로 실행합니다.
+      - paragraph [ref=f13e161]:
+        - text: 실행하면 각 변수의 자료형(
+        - code [ref=f13e162]: "`<class 'str'>`"
+        - text: ","
+        - code [ref=f13e163]: "`<class 'int'>`"
+        - text: 등)이 먼저 출력되고, 이어서 회원 정보 문장, 프리미엄 회원 할인율 메시지가 나옵니다. 마지막으로 회원 3명의 이름이 담긴 인사말이 한 줄씩 순서대로 출력됩니다.
+      - heading "해보기" [level=3] [ref=f13e164]
+      - paragraph [ref=f13e165]:
+        - code [ref=f13e166]: "`membership_status`"
+        - text: 값을
+        - code [ref=f13e167]: "`\"regular\"`"
+        - text: 로, 그다음
+        - code [ref=f13e168]: "`\"dormant\"`"
+        - text: 로 바꿔가며 각각 실행해보세요. 어떤 메시지가 출력될지 먼저 예측한 뒤 실제 출력과 비교합니다.
+      - group [ref=f13e169]:
+        - generic "▶ 정답 보기" [ref=f13e170] [cursor=pointer]
+        - text: "````````````"
+      - heading "해보기" [level=3] [ref=f13e171]
+      - paragraph [ref=f13e172]:
+        - code [ref=f13e173]: "`members`"
+        - text: 리스트에 회원 두 명(
+        - code [ref=f13e174]: "`\"최유진\"`"
+        - text: ","
+        - code [ref=f13e175]: "`\"정하늘\"`"
+        - text: )을 더 추가해 총 5명으로 만든 뒤 다시 실행해보세요. 출력되는 인사말 줄 수가 리스트 길이와 어떻게 맞아떨어지는지 확인합니다.
+      - group [ref=f13e176]:
+        - generic "▶ 정답 보기" [ref=f13e177] [cursor=pointer]
+        - text: "``"
+      - heading "해보기" [level=3] [ref=f13e178]
+      - paragraph [ref=f13e179]:
+        - code [ref=f13e180]: "`age + \"세\"`"
+        - text: 처럼 정수(
+        - code [ref=f13e181]: "`int`"
+        - text: )와 문자열(
+        - code [ref=f13e182]: "`str`"
+        - text: )을
+        - code [ref=f13e183]: "`+`"
+        - text: 로 직접 이어 붙이는 코드를 예제 아래에 추가해 실행해보세요. 어떤 에러가 나는지 읽어봅니다.
+      - group [ref=f13e184]:
+        - generic "▶ 정답 보기" [ref=f13e185] [cursor=pointer]
+        - text: "``````"
+      - heading "5. 실무 팁" [level=2] [ref=f13e186]
+      - list [ref=f13e187]:
+        - listitem [ref=f13e188]:
+          - strong [ref=f13e189]: 변수 이름은 의미를 담아서 짓습니다.
+          - code [ref=f13e190]: "`a`"
+          - text: ","
+          - code [ref=f13e191]: "`temp1`"
+          - text: 대신
+          - code [ref=f13e192]: "`membership_status`"
+          - text: 처럼 무엇을 담고 있는지 알 수 있게 짓습니다.
+        - listitem [ref=f13e193]:
+          - strong [ref=f13e194]: 숫자를 문자열에 직접 이어 붙이지 않습니다.
+          - code [ref=f13e195]: "`\"나이: \" + str(25)`"
+          - text: 보다
+          - code [ref=f13e196]: "`f\"나이: {25}\"`"
+          - text: (f-string)가 더 짧고 안전합니다.
+        - listitem [ref=f13e197]:
+          - strong [ref=f13e198]:
+            - code [ref=f13e199]: "`type()`"
+            - text: 을 디버깅 도구로 활용합니다.
+          - code [ref=f13e200]: "`TypeError`"
+          - text: 가 뜨면 관련 변수에
+          - code [ref=f13e201]: "`print(type(변수명))`"
+          - text: 을 추가해 실제 자료형부터 확인합니다.
+        - listitem [ref=f13e202]:
+          - strong [ref=f13e203]:
+            - text: Windows에서는
+            - code [ref=f13e204]: "`python`"
+            - text: 대신
+            - code [ref=f13e205]: "`py`"
+            - text: 를 씁니다.
+          - code [ref=f13e206]: "`python`"
+          - text: 을 치면 Microsoft Store 화면이 열리거나 아무 반응이 없을 수 있습니다 — 실제 설치된 Python은
+          - code [ref=f13e207]: "`py`"
+          - text: 런처로 찾습니다.
+      - heading "6. 핵심 정리 및 스스로 점검" [level=2] [ref=f13e208]
+      - paragraph [ref=f13e209]:
+        - strong [ref=f13e210]: 핵심 정리
+      - list [ref=f13e211]:
+        - listitem [ref=f13e212]: Python은 동적 타이핑이라 값을 넣는 순간 자료형이 자동으로 정해진다
+        - listitem [ref=f13e213]:
+          - text: "기본 자료형 네 가지:"
+          - code [ref=f13e214]: "`int`"
+          - text: (정수),
+          - code [ref=f13e215]: "`float`"
+          - text: (실수),
+          - code [ref=f13e216]: "`str`"
+          - text: (문자열),
+          - code [ref=f13e217]: "`bool`"
+          - text: (불리언)
+        - listitem [ref=f13e218]:
+          - text: 조건문(
+          - code [ref=f13e219]: "`if`"
+          - text: /
+          - code [ref=f13e220]: "`elif`"
+          - text: /
+          - code [ref=f13e221]: "`else`"
+          - text: )은 조건에 따라 다른 코드를 실행하는 갈림길이다
+        - listitem [ref=f13e222]:
+          - text: 반복문(
+          - code [ref=f13e223]: "`for`"
+          - text: )은 리스트의 값을 하나씩 꺼내 같은 코드를 반복하는 컨베이어벨트다
+        - listitem [ref=f13e224]: 숫자와 문자열은 자동으로 섞이지 않으며 f-string으로 안전하게 합쳐야 한다
+      - paragraph [ref=f13e225]:
+        - strong [ref=f13e226]: 이 레슨의 단어
+      - table [ref=f13e227]:
+        - rowgroup [ref=f13e228]:
+          - row [ref=f13e229]:
+            - columnheader "단어" [ref=f13e230]
+            - columnheader "뜻" [ref=f13e231]
+        - rowgroup [ref=f13e232]:
+          - row [ref=f13e233]:
+            - cell "변수" [ref=f13e234]
+            - cell "값을 담아두는 이름 붙은 공간" [ref=f13e235]
+          - row [ref=f13e236]:
+            - cell "동적 타이핑" [ref=f13e237]
+            - cell "값을 넣는 순간 자료형이 자동으로 정해지는 방식" [ref=f13e238]
+          - row [ref=f13e239]:
+            - cell "자료형" [ref=f13e240]
+            - cell "값의 종류(정수·실수·문자열·불리언 등)" [ref=f13e241]
+          - row [ref=f13e242]:
+            - cell "조건문" [ref=f13e243]
+            - cell "조건에 따라 다른 코드를 실행하는 문법" [ref=f13e244]
+          - row [ref=f13e245]:
+            - cell "반복문" [ref=f13e246]
+            - cell "여러 값을 순서대로 처리하는 문법" [ref=f13e247]
+          - row [ref=f13e248]:
+            - cell "f-string" [ref=f13e249]
+            - cell "문자열 안에 변수 값을 바로 넣어 조합하는 문법" [ref=f13e250]
+          - row [ref=f13e251]:
+            - cell "불리언" [ref=f13e252]
+            - cell "참/거짓 두 값만 갖는 자료형" [ref=f13e253]
+      - paragraph [ref=f13e254]:
+        - strong [ref=f13e255]: 스스로 점검
+      - list [ref=f13e256]:
+        - listitem [ref=f13e257]:
+          - code [ref=f13e258]: "`age = \"27\"`"
+          - text: 처럼 나이를 문자열로 저장했다면
+          - code [ref=f13e259]: "`age + 3`"
+          - text: 을 실행했을 때 어떤 일이 일어날까요? 왜 그럴까요?
+      - group [ref=f13e260]:
+        - generic "▶ 정답 보기" [ref=f13e261] [cursor=pointer]
+        - text: "````````````"
+      - list [ref=f13e262]:
+        - listitem [ref=f13e263]:
+          - code [ref=f13e264]: "`for`"
+          - text: 가 아니라
+          - code [ref=f13e265]: "`while`"
+          - text: 을 사용해 1부터 5까지의 숫자를 한 줄씩 출력하는 코드를 직접 작성해보세요.
+      - group [ref=f13e266]:
+        - generic "▶ 정답 보기" [ref=f13e267] [cursor=pointer]
+        - text: "``````"
+    - navigation "레슨 페이저" [ref=f13e268]:
+      - link "← 이전 레슨" [ref=f13e269] [cursor=pointer]:
+        - /url: /lesson/1-2-generative-ai-basics
+      - link "다음 레슨 →" [ref=f13e272] [cursor=pointer]:
+        - /url: /lesson/1-3-python-functions-and-io
+  - button "Open Next.js Dev Tools" [ref=f13e280] [cursor=pointer]

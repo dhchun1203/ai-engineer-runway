@@ -8,7 +8,7 @@ status: executing
 stopped_at: Phase 6 실행+UAT 완료, 실기기 iPad Safari 확인 대기(06-UAT.md 테스트 1)
 last_updated: "2026-08-26T03:42:21.213Z"
 last_activity: 2026-08-26
-last_activity_desc: 클로즈 필사 기능 완료(quick 260826-uig) — 빈칸 111개, 게이트 16종 통과, 배포
+last_activity_desc: 학습 시작일 8/28 이동 완료(quick 260826-tbx) — 35개 레슨 재배정, 게이트 14종 통과
 progress:
   total_phases: 7
   completed_phases: 5  # Phase 6은 실기기 UAT 대기로 미포함
@@ -191,9 +191,21 @@ None yet.
 | 260825-n7v | Phase 04 UAT 결함 2건 수정 — SQL 2편 준비 블록 스키마 충돌(G-04-1), 복사 버튼이 코드 첫 줄 가림(G-04-2) | 2026-08-25 | f750017 | [260825-n7v-phase-04-uat-gap-fixes-g-04-1-sql-lesson](./quick/260825-n7v-phase-04-uat-gap-fixes-g-04-1-sql-lesson/) |
 | 260825-r4k | 코드블록 복사 버튼이 모든 레슨에서 동작하지 않던 [Critical] 결함 수정 (04-UI-REVIEW Priority Fix 1) — 문자열 onclick을 실제 React 핸들러로 교체 | 2026-08-25 | 920741e | [260825-r4k-lesson-reading-screen-design-pass](./quick/260825-r4k-lesson-reading-screen-design-pass/) |
 | 260826-tbx | 학습 시작일 8/25→8/28 이동 + 35개 레슨을 8/28~9/28에 재배정(토요일 8/29·9/5·9/12만 2개), 9/29 복습일 유지 — 개강 전 완주 보존 | 2026-08-26 | 22d86ee | [260826-tbx-shift-study-start-date-from-2026-08-25-t](./quick/260826-tbx-shift-study-start-date-from-2026-08-25-t/) |
-| 260826-uig | 개념 설명 구간 클로즈(빈칸) 필사 — 35개 레슨 빈칸 111개 자동 추출, blur 1회 판정(한글 조합 중 판정 안 함), 정답 보기, Supabase 기기 간 저장 | 2026-08-26 | d59e3eb | [260826-uig-add-cloze-blank-transcription-to-concept](./quick/260826-uig-add-cloze-blank-transcription-to-concept/) |
 
 ## Deferred Items
+
+### 빈칸(클로즈) 필사 — 2026-08-27 롤백
+
+2026-08-26에 개념 설명 구간 클로즈 필사를 구현해 배포했다가(quick 260826-uig, 35개 레슨 빈칸
+111개, 게이트 2종 신설, Supabase `cloze_answer` 테이블), 사용자 판단으로 **전량 롤백했다** —
+"없는 게 낫겠다". 코드·게이트·마이그레이션·테이블 모두 제거했고 되돌린 커밋은 히스토리에 남아 있다
+(f7c3ccd..e2d505f).
+
+남길 만한 조사 결과(`.planning/research/필사-transcription-ux.md`는 그대로 둔다):
+- 문단을 통째로 베껴 쓰는 "완전 필사"는 아이패드에서 가장 불편하고 학습 근거도 가장 약하다 —
+  보이는 글을 옮기는 것은 인출이 아니라 복사라 testing/generation effect 조건을 충족하지 않는다.
+- 대안으로 만든 클로즈는 근거는 더 강했지만, 실제로 써보니 학습 흐름에 끼어드는 느낌이 컸다.
+- 다음 시도는 **판정하지 않는 방향**(예: 접었다 펼치는 고정 메모장)으로 간다.
 
 Items acknowledged and carried forward from previous milestone close:
 

@@ -1,0 +1,21 @@
+- generic [active] [ref=f9e1]:
+  - banner [ref=f9e2]:
+    - navigation "주요 내비게이션" [ref=f9e3]:
+      - link "AI Engineer Runway" [ref=f9e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f9e5]:
+        - link "오늘의 학습" [ref=f9e6] [cursor=pointer]:
+          - /url: /
+        - link "커리큘럼" [ref=f9e7] [cursor=pointer]:
+          - /url: /curriculum
+        - link "일정표" [ref=f9e8] [cursor=pointer]:
+          - /url: /schedule
+        - link "소개" [ref=f9e9] [cursor=pointer]:
+          - /url: /about
+      - button "다크 모드로 전환" [ref=f9e10]
+  - main [ref=f9e13]:
+    - heading "페이지를 찾을 수 없습니다" [level=1] [ref=f9e14]
+    - paragraph [ref=f9e15]: 요청하신 콘텐츠가 존재하지 않습니다. 아래 버튼으로 커리큘럼 홈에서 다시 탐색해보세요.
+    - link "커리큘럼 홈으로" [ref=f9e16] [cursor=pointer]:
+      - /url: /
+  - alert [ref=f9e17]

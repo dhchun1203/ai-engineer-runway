@@ -1,0 +1,266 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - navigation "주요 내비게이션" [ref=e3]:
+      - link "AI Engineer Runway" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e5]:
+        - link "오늘의 학습" [ref=e6] [cursor=pointer]:
+          - /url: /
+        - link "커리큘럼" [ref=e7] [cursor=pointer]:
+          - /url: /curriculum
+        - link "일정표" [ref=e8] [cursor=pointer]:
+          - /url: /schedule
+        - link "소개" [ref=e9] [cursor=pointer]:
+          - /url: /about
+      - button "다크 모드로 전환" [ref=e10]
+  - article [ref=e13]:
+    - navigation "브레드크럼" [ref=e14]:
+      - link "Step 1" [ref=e15] [cursor=pointer]:
+        - /url: /step/1
+      - generic [ref=e16]: ">"
+      - link "SQL & 데이터베이스 기초" [ref=e17] [cursor=pointer]:
+        - /url: /step/1
+    - generic [ref=e18]:
+      - heading "관계형 데이터베이스 구조" [level=1] [ref=e19]
+      - generic [ref=e20]:
+        - generic [ref=e21]: 심화
+        - generic [ref=e22]: 약 2.5시간
+    - generic [ref=e23]:
+      - heading "1. 학습 목표" [level=2] [ref=e24]
+      - paragraph [ref=e25]: 이 레슨을 마치면 다음을 할 수 있습니다.
+      - list [ref=e26]:
+        - listitem [ref=e27]: 테이블 · 행 · 열이 각각 무엇에 해당하는지 설명할 수 있다
+        - listitem [ref=e28]: 기본키가 왜 필요한지 말할 수 있다
+        - listitem [ref=e29]: 외래키로 두 테이블을 연결해 만들 수 있다
+        - listitem [ref=e30]: 만든 테이블에 데이터를 넣고 조회해 확인할 수 있다
+      - heading "2. 왜 배우나" [level=2] [ref=e31]
+      - paragraph [ref=e32]: 앞 레슨에서 파일에 데이터를 저장해봤다면, 데이터가 많아질수록 찾기 어렵고 중복이 쌓이고 여러 사람이 동시에 고치면 꼬인다는 걸 느꼈을 겁니다. 관계형 데이터베이스(relational database, 표들을 서로 연결해 데이터를 정리해 두는 저장소)는 이 문제를 표 여러 개로 나누고 서로 잇는 방식으로 풉니다. 이 커리큘럼에서 만들 서비스는 결국 전부 이 구조 위에 데이터를 쌓습니다. 이 레슨은 Supabase SQL 에디터라는 브라우저 화면에서 전부 실습하므로 아이패드만 있어도 됩니다.
+      - heading "3. 개념 설명" [level=2] [ref=e33]
+      - heading "📊 표 하나 = 테이블" [level=3] [ref=e34]
+      - paragraph [ref=e35]:
+        - text: 테이블(table, 같은 종류의 데이터를 모아두는 표)을 엑셀 시트라고 생각하면 쉽습니다. 시트 하나가 테이블 하나, 시트의 한 줄이 행(row, 표의 한 줄 — 레코드 하나) 하나, 시트의 세로 칸이 열(column, 표의 세로 칸 — 정해진 자료형을 가짐) 하나입니다. 다른 점은, 열마다 어떤 자료형(
+        - code [ref=e36]: "`text`"
+        - text: ","
+        - code [ref=e37]: "`int`"
+        - text: ","
+        - code [ref=e38]: "`serial`"
+        - text: 등)만 들어갈지 미리 정해둔다는 것입니다.
+      - table [ref=e39]:
+        - rowgroup [ref=e40]:
+          - row [ref=e41]:
+            - columnheader "엑셀" [ref=e42]
+            - columnheader "데이터베이스" [ref=e43]
+            - columnheader "예시" [ref=e44]
+        - rowgroup [ref=e45]:
+          - row [ref=e46]:
+            - cell "시트" [ref=e47]
+            - cell "테이블" [ref=e48]
+            - cell [ref=e49]:
+              - code [ref=e50]: "`students`"
+              - text: 표
+          - row [ref=e51]:
+            - cell "줄(행)" [ref=e52]
+            - cell "행(레코드)" [ref=e53]
+            - cell "학생 한 명" [ref=e54]
+          - row [ref=e55]:
+            - cell "칸(열)" [ref=e56]
+            - cell "열(컬럼)" [ref=e57]
+            - cell [ref=e58]:
+              - code [ref=e59]: "`name`"
+              - text: (이름),
+              - code [ref=e60]: "`grade`"
+              - text: (학년)
+      - heading "🔑 기본키 — 누가 누구인지 가리는 이름표" [level=3] [ref=e61]
+      - paragraph [ref=e62]: 기본키(primary key, 표 안에서 각 행을 유일하게 구분하는 값)가 없으면 이름이 같은 학생 두 명을 구분할 방법이 없습니다. 그래서 표를 만들 때 절대 중복되지 않는 값(보통 자동으로 늘어나는 번호)을 한 열에 정해두고, 그 열을 기본키로 지정합니다. 어떤 행을 콕 집어 가리키고 싶을 땐 항상 이 값을 씁니다.
+      - heading "🧵 외래키 — 두 표를 잇는 실" [level=3] [ref=e63]
+      - paragraph [ref=e64]: 외래키(foreign key, 다른 표의 기본키를 가리켜 두 표를 연결하는 값)는 한 표의 열이 다른 표의 기본키를 가리키게 만드는 방법입니다. 학생 표와 과목 표를 직접 잇는 대신, 그 사이에 "누가 어떤 과목을 듣는지"를 적는 수강 표를 하나 더 두고 두 개의 외래키로 양쪽을 가리키게 합니다.
+      - paragraph [ref=e65]:
+        - code [ref=e66]: "`학생 → 수강 → 과목`"
+      - heading "🗄️ 스키마 — 표들을 담는 서랍" [level=3] [ref=e67]
+      - paragraph [ref=e68]:
+        - text: 스키마(schema, 여러 테이블을 묶어 담는 이름 붙은 서랍)는 테이블들을 그룹으로 묶는 이름표입니다. 이 사이트의 진도 데이터는 같은 Supabase 프로젝트의 다른 서랍(공유 스키마)에 들어 있습니다. 이번 실습은 그 서랍을 절대 건드리지 않도록,
+        - code [ref=e69]: "`practice`"
+        - text: 라는 연습용 서랍을 따로 만들어 그 안에서만 표를 만들고 지웁니다.
+      - heading "4. 실무 예제" [level=2] [ref=e70]
+      - paragraph [ref=e71]: 아래 SQL을 순서대로 Supabase 대시보드의 SQL 에디터에 붙여넣고 실행하면, 서로 연결된 표 세 개를 세우고 데이터를 넣어 확인하는 과정을 전부 브라우저에서 끝낼 수 있습니다.
+      - figure [ref=e72]:
+        - code [ref=e74]:
+          - generic [ref=e75]: "-- Supabase 대시보드 → SQL 에디터에서 실행합니다."
+          - generic [ref=e76]: "-- 이 블록은 연습용 서랍(practice 스키마) 안에서만 동작하며, 사이트 진도 데이터와는 무관합니다."
+          - generic [ref=e77]: CREATE SCHEMA IF NOT EXISTS practice;
+          - generic [ref=e79]: CREATE TABLE practice.students (
+          - generic [ref=e80]: id serial PRIMARY KEY,
+          - generic [ref=e81]: name text NOT NULL,
+          - generic [ref=e82]: grade int
+          - generic [ref=e83]: );
+          - generic [ref=e85]: CREATE TABLE practice.subjects (
+          - generic [ref=e86]: id serial PRIMARY KEY,
+          - generic [ref=e87]: name text NOT NULL
+          - generic [ref=e88]: );
+          - generic [ref=e90]: CREATE TABLE practice.enrollments (
+          - generic [ref=e91]: id serial PRIMARY KEY,
+          - generic [ref=e92]: student_id int NOT NULL REFERENCES practice.students(id),
+          - generic [ref=e93]: subject_id int NOT NULL REFERENCES practice.subjects(id)
+          - generic [ref=e94]: );
+          - button "Copy code" [ref=e95]
+      - paragraph [ref=e97]:
+        - text: 이 블록을 실행하면 에디터 하단에 성공 메시지가 뜨고, 왼쪽 테이블 목록에
+        - code [ref=e98]: "`practice`"
+        - text: 서랍 아래로 표 세 개가 나타납니다.
+      - figure [ref=e99]:
+        - code [ref=e101]:
+          - generic [ref=e102]: "-- 각 표에 데이터를 몇 행씩 넣습니다."
+          - generic [ref=e103]: INSERT INTO practice.students (name, grade) VALUES
+          - generic [ref=e104]: ('김지현', 2),
+          - generic [ref=e105]: ('이민준', 1),
+          - generic [ref=e106]: ('박서연', 3);
+          - generic [ref=e108]: INSERT INTO practice.subjects (name) VALUES
+          - generic [ref=e109]: ('수학'),
+          - generic [ref=e110]: ('영어'),
+          - generic [ref=e111]: ('과학');
+          - generic [ref=e113]: INSERT INTO practice.enrollments (student_id, subject_id) VALUES
+          - generic [ref=e114]: (1, 1),
+          - generic [ref=e115]: (1, 2),
+          - generic [ref=e116]: (2, 1),
+          - generic [ref=e117]: (3, 3);
+          - button "Copy code" [ref=e118]
+      - paragraph [ref=e120]:
+        - text: 각
+        - code [ref=e121]: "`INSERT`"
+        - text: "문이 성공하면 몇 행이 추가됐는지 메시지로 알려줍니다(예: \"Success. 3 rows affected\")."
+      - figure [ref=e122]:
+        - code [ref=e124]:
+          - generic [ref=e125]: "-- 넣은 데이터를 확인합니다."
+          - generic [ref=e126]: SELECT * FROM practice.students ORDER BY id;
+          - generic [ref=e128]: SELECT s.name AS 학생, sub.name AS 과목
+          - generic [ref=e129]: FROM practice.enrollments e
+          - generic [ref=e130]: JOIN practice.students s ON s.id = e.student_id
+          - generic [ref=e131]: JOIN practice.subjects sub ON sub.id = e.subject_id
+          - generic [ref=e132]: ORDER BY e.id;
+          - button "Copy code" [ref=e133]
+      - paragraph [ref=e135]: 첫 번째 조회는 학생 3명이 담긴 표 그대로를 보여줍니다. 두 번째 조회는 수강 표의 외래키 두 개를 따라가 "누가 어떤 과목을 듣는지"를 한 줄씩 이어 붙여 보여줍니다 — 결과는 총 4행입니다.
+      - heading "해보기" [level=3] [ref=e136]
+      - paragraph [ref=e137]:
+        - code [ref=e138]: "`practice`"
+        - text: 서랍 안에
+        - code [ref=e139]: "`classrooms`"
+        - text: 라는 표를 하나 더 만들어보세요. 열은
+        - code [ref=e140]: "`id`"
+        - text: (기본키),
+        - code [ref=e141]: "`room_name`"
+        - text: (text, 필수),
+        - code [ref=e142]: "`capacity`"
+        - text: (int)로 합니다.
+      - group [ref=e143]:
+        - generic "▶ 정답 보기" [ref=e144] [cursor=pointer]
+        - text: "``"
+      - heading "해보기" [level=3] [ref=e145]
+      - paragraph [ref=e146]:
+        - code [ref=e147]: "`students`"
+        - text: 표에 자신의 이름과 학년으로 새 행을 하나 추가하고,
+        - code [ref=e148]: "`SELECT * FROM practice.students;`"
+        - text: 로 확인해보세요.
+      - group [ref=e149]:
+        - generic "▶ 정답 보기" [ref=e150] [cursor=pointer]
+        - text: "``"
+      - heading "해보기" [level=3] [ref=e151]
+      - paragraph [ref=e152]:
+        - code [ref=e153]: "`enrollments`"
+        - text: "표에 존재하지 않는 학생 번호(예:"
+        - code [ref=e154]: "`999`"
+        - text: )로 새 수강 기록을 넣어보고 어떤 일이 일어나는지 확인해보세요.
+      - group [ref=e155]:
+        - generic "▶ 정답 보기" [ref=e156] [cursor=pointer]
+        - text: "````````"
+      - heading "5. 실무 팁" [level=2] [ref=e157]
+      - list [ref=e158]:
+        - listitem [ref=e159]:
+          - text: 테이블 · 열 이름은 소문자와 밑줄(snake_case)로 짓는 관례를 따릅니다 —
+          - code [ref=e160]: "`student_name`"
+          - text: 처럼.
+        - listitem [ref=e161]:
+          - code [ref=e162]: "`NOT NULL`"
+          - text: 은 처음부터 걸어두는 편이 나중에 빈 값을 찾아 다시 채우는 것보다 쉽습니다.
+        - listitem [ref=e163]:
+          - text: 연습은 반드시
+          - code [ref=e164]: "`practice`"
+          - text: 스키마 안에서만 합니다 — 실수로 다른 서랍을 건드리면 되돌릴 수 없습니다.
+        - listitem [ref=e165]: 실습이 끝나면 아래 정리 SQL로 연습용 서랍을 치워둡니다 — 다음에 처음부터 다시 해볼 수 있습니다.
+      - figure [ref=e166]:
+        - code [ref=e168]:
+          - generic [ref=e169]: "-- 실습을 되돌립니다. practice 서랍(스키마)을 통째로 지웁니다."
+          - generic [ref=e170]: "-- 이 문장은 practice 스키마만 대상으로 하므로 사이트 진도 데이터에는 아무 영향이 없습니다."
+          - generic [ref=e171]: DROP SCHEMA IF EXISTS practice CASCADE;
+          - button "Copy code" [ref=e172]
+      - heading "6. 핵심 정리 및 스스로 점검" [level=2] [ref=e174]
+      - paragraph [ref=e175]:
+        - strong [ref=e176]: 핵심 정리
+      - list [ref=e177]:
+        - listitem [ref=e178]: 테이블 하나는 같은 종류의 데이터를 모아두는 표이고, 행은 한 건, 열은 항목이다
+        - listitem [ref=e179]: 기본키는 각 행을 유일하게 구분하는 값이다
+        - listitem [ref=e180]: 외래키는 다른 표의 기본키를 가리켜 두 표를 연결하는 값이다
+        - listitem [ref=e181]:
+          - text: 스키마는 여러 테이블을 묶어 담는 서랍이며, 연습은 별도 서랍(
+          - code [ref=e182]: "`practice`"
+          - text: )에서만 한다
+        - listitem [ref=e183]: 실습은 Supabase SQL 에디터라는 브라우저 화면에서 이뤄지므로 아이패드에서도 그대로 할 수 있다
+      - paragraph [ref=e184]:
+        - strong [ref=e185]: 이 레슨의 단어
+      - table [ref=e186]:
+        - rowgroup [ref=e187]:
+          - row [ref=e188]:
+            - columnheader "단어" [ref=e189]
+            - columnheader "뜻" [ref=e190]
+        - rowgroup [ref=e191]:
+          - row [ref=e192]:
+            - cell "테이블" [ref=e193]
+            - cell "같은 종류의 데이터를 모아두는 표" [ref=e194]
+          - row [ref=e195]:
+            - cell "행" [ref=e196]
+            - cell "표의 한 줄 — 레코드 하나" [ref=e197]
+          - row [ref=e198]:
+            - cell "열" [ref=e199]
+            - cell "표의 세로 칸 — 정해진 자료형을 가짐" [ref=e200]
+          - row [ref=e201]:
+            - cell "기본키" [ref=e202]
+            - cell "표 안에서 각 행을 유일하게 구분하는 값" [ref=e203]
+          - row [ref=e204]:
+            - cell "외래키" [ref=e205]
+            - cell "다른 표의 기본키를 가리켜 두 표를 연결하는 값" [ref=e206]
+          - row [ref=e207]:
+            - cell "스키마" [ref=e208]
+            - cell "여러 테이블을 묶어 담는 이름 붙은 서랍" [ref=e209]
+          - row [ref=e210]:
+            - cell "제약조건" [ref=e211]
+            - cell [ref=e212]:
+              - text: 표에 넣을 수 있는 값의 규칙(
+              - code [ref=e213]: "`NOT NULL`"
+              - text: ", 기본키 등)"
+      - paragraph [ref=e214]:
+        - strong [ref=e215]: 스스로 점검
+      - list [ref=e216]:
+        - listitem [ref=e217]:
+          - text: 학생 표에서 기본키로
+          - code [ref=e218]: "`id`"
+          - text: 대신
+          - code [ref=e219]: "`name`"
+          - text: (이름)을 쓰면 어떤 문제가 생길까요?
+      - group [ref=e220]:
+        - generic "▶ 정답 보기" [ref=e221] [cursor=pointer]
+      - list [ref=e222]:
+        - listitem [ref=e223]:
+          - text: 수강 표(
+          - code [ref=e224]: "`enrollments`"
+          - text: )의
+          - code [ref=e225]: "`student_id`"
+          - text: 열에서
+          - code [ref=e226]: "`REFERENCES practice.students(id)`"
+          - text: 를 빼면 어떤 일이 생길까요?
+      - group [ref=e227]:
+        - generic "▶ 정답 보기" [ref=e228] [cursor=pointer]
+    - navigation "레슨 페이저" [ref=e229]:
+      - link "← 이전 레슨" [ref=e230] [cursor=pointer]:
+        - /url: /lesson/1-3-python-functions-and-io
+      - link "다음 레슨 →" [ref=e233] [cursor=pointer]:
+        - /url: /lesson/1-4-sql-queries-and-joins
+  - alert [ref=e236]

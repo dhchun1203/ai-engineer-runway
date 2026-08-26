@@ -1,0 +1,286 @@
+- generic [active] [ref=f2e1]:
+  - banner [ref=f2e2]:
+    - navigation "주요 내비게이션" [ref=f2e3]:
+      - link "AI Engineer Runway" [ref=f2e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f2e5]:
+        - link "오늘의 학습" [ref=f2e6] [cursor=pointer]:
+          - /url: /
+        - link "커리큘럼" [ref=f2e7] [cursor=pointer]:
+          - /url: /curriculum
+        - link "일정표" [ref=f2e8] [cursor=pointer]:
+          - /url: /schedule
+        - link "소개" [ref=f2e9] [cursor=pointer]:
+          - /url: /about
+      - button "다크 모드로 전환" [ref=f2e10]
+  - article [ref=f2e13]:
+    - navigation "브레드크럼" [ref=f2e14]:
+      - link "Step 1" [ref=f2e15] [cursor=pointer]:
+        - /url: /step/1
+      - generic [ref=f2e16]: ">"
+      - link "Python 프로그래밍 기초" [ref=f2e17] [cursor=pointer]:
+        - /url: /step/1
+    - generic [ref=f2e18]:
+      - heading "Python 함수·예외·파일 입출력" [level=1] [ref=f2e19]
+      - generic [ref=f2e20]:
+        - generic [ref=f2e21]: 심화
+        - generic [ref=f2e22]: 약 2.5시간
+    - generic [ref=f2e23]:
+      - heading "1. 학습 목표" [level=2] [ref=f2e24]
+      - paragraph [ref=f2e25]: 이 레슨을 마치면 다음을 할 수 있습니다.
+      - list [ref=f2e26]:
+        - listitem [ref=f2e27]: 반복되는 처리를 함수로 묶어 이름을 붙일 수 있다
+        - listitem [ref=f2e28]: 함수에 값을 넘기고 결과를 돌려받는 흐름을 설명할 수 있다
+        - listitem [ref=f2e29]:
+          - text: 예상 가능한 실패를
+          - code [ref=f2e30]: "`try`"
+          - text: /
+          - code [ref=f2e31]: "`except`"
+          - text: 로 감싸 프로그램이 멈추지 않게 할 수 있다
+        - listitem [ref=f2e32]: 결과를 파일에 저장하고 다시 읽어 확인할 수 있다
+      - heading "2. 왜 배우나" [level=2] [ref=f2e33]
+      - paragraph [ref=f2e34]: 앞 레슨에서 변수·자료형·조건문·반복문으로 한 덩어리 스크립트를 짰다면, 이번엔 그 덩어리를 이름 붙은 조각으로 나눌 차례입니다. 코드가 길어질수록 같은 처리를 여러 번 복사-붙여넣기 하게 되는데, 함수는 이 반복을 한 곳에 모아줍니다. 그리고 프로그램은 늘 바깥 세계(사용자 입력, 파일, 나중엔 API)와 만나고, 바깥 세계는 항상 예상과 다르게 굴 수 있습니다. 실패를 감당하고 결과를 남기는 법을 배우면 다음 Step의 API 호출·데이터 처리로 자연스럽게 이어집니다.
+      - heading "3. 개념 설명" [level=2] [ref=f2e35]
+      - heading "🥤 함수는 자판기" [level=3] [ref=f2e36]
+      - paragraph [ref=f2e37]:
+        - text: 자판기(function, 반복되는 처리를 이름 붙여 묶어 두는 코드 조각)에 동전을 넣으면 정해진 음료가 나옵니다. 넣는 동전이 다르면 나오는 음료도 다르지만, 자판기 내부 작동 방식은 항상 같습니다. 함수도 똑같습니다 —
+        - code [ref=f2e38]: "`def`"
+        - text: 로 한 번 정의해두면, 넣는 값(입력)만 바꿔가며 같은 처리를 계속 재사용할 수 있습니다. 함수를 "정의할 때" 괄호 안에 적는 이름은 매개변수(parameter, 함수가 입력을 받기 위해 미리 정해둔 이름)이고, 함수를 "호출할 때" 실제로 넣는 값은 인자(argument, 함수를 호출할 때 실제로 넘기는 값)라고 부릅니다.
+      - table [ref=f2e39]:
+        - rowgroup [ref=f2e40]:
+          - row [ref=f2e41]:
+            - columnheader "자판기 비유" [ref=f2e42]
+            - columnheader "함수 개념" [ref=f2e43]
+            - columnheader "예시" [ref=f2e44]
+        - rowgroup [ref=f2e45]:
+          - row [ref=f2e46]:
+            - cell "동전 넣는 자리" [ref=f2e47]
+            - cell "매개변수 — 입력을 받기로 미리 정해둔 이름" [ref=f2e48]
+            - cell [ref=f2e49]:
+              - code [ref=f2e50]: "`def summarize_member(name, age, height):`"
+          - row [ref=f2e51]:
+            - cell "실제로 넣는 동전" [ref=f2e52]
+            - cell "인자 — 호출할 때 실제로 넘기는 값" [ref=f2e53]
+            - cell [ref=f2e54]:
+              - code [ref=f2e55]: "`summarize_member(\"김지현\", 27, 168.3)`"
+          - row [ref=f2e56]:
+            - cell "나오는 음료" [ref=f2e57]
+            - cell "반환값(return value, 함수가 돌려주는 결과)" [ref=f2e58]
+            - cell [ref=f2e59]:
+              - code [ref=f2e60]: "`return f\"{name} - 나이 {age}세\"`"
+      - heading "🛟 예외는 안전망" [level=3] [ref=f2e61]
+      - paragraph [ref=f2e62]:
+        - text: 줄타기 곡예사 밑에 안전망이 있으면, 발을 헛디뎌도 바닥까지 떨어지지 않고 그 자리에서 다시 시작할 수 있습니다. 예외(exception, 코드 실행 중 발생하는 예상 가능한 오류 상황)를 처리하지 않으면 프로그램은 그 줄에서 곧바로 멈춰버립니다.
+        - code [ref=f2e63]: "`try:`"
+        - text: 블록 안에서 실패할 수 있는 코드를 실행하다가, 실제로 실패하면
+        - code [ref=f2e64]: "`except 예외이름:`"
+        - text: 블록이 대신 실행되고 프로그램은 계속 이어집니다. 이때 반드시 잡을 예외를 이름으로 지정해야 합니다 — 이름 없이
+        - code [ref=f2e65]: "`except:`"
+        - text: 만 쓰면 무엇이 잘못됐는지 알 수 없는 채로 온갖 종류의 오류를 전부 삼켜버려서, 나중에 진짜 버그를 찾을 때 실마리가 사라집니다.
+      - heading "✉️ 파일은 편지" [level=3] [ref=f2e66]
+      - paragraph [ref=f2e67]:
+        - text: 편지를 쓰고 봉투에 넣어 두면 내가 컴퓨터를 꺼도 그 내용은 그대로 남아 있다가, 나중에 다시 열어 읽을 수 있습니다. 변수에 담긴 값은 프로그램이 끝나면 사라지지만, 파일(file, 프로그램이 끝난 뒤에도 내용이 남는 저장 단위)에 쓴 내용은 남습니다.
+        - code [ref=f2e68]: "`open(파일명, \"w\")`"
+        - text: 는 쓰기 모드로,
+        - code [ref=f2e69]: "`open(파일명, \"r\")`"
+        - text: 는 읽기 모드로 파일을 엽니다.
+        - code [ref=f2e70]: "`with open(...) as f:`"
+        - text: 블록을 쓰면 블록이 끝나는 순간 파일이 자동으로 닫혀서, 닫는 것을 깜박할 걱정이 없습니다. 한글을 쓰거나 읽을 때는
+        - code [ref=f2e71]: "`encoding=\"utf-8\"`"
+        - text: 을 반드시 지정해야 합니다 — Windows의 기본 인코딩은
+        - code [ref=f2e72]: "`utf-8`"
+        - text: 이 아니라서, 지정하지 않으면 한글이 깨질 수 있습니다.
+      - heading "4. 실무 예제" [level=2] [ref=f2e73]
+      - paragraph [ref=f2e74]:
+        - text: 앞 레슨의 회원 정보(
+        - code [ref=f2e75]: "`name`"
+        - text: ","
+        - code [ref=f2e76]: "`age`"
+        - text: ","
+        - code [ref=f2e77]: "`height`"
+        - text: )를 이어받아, 요약 문자열을 돌려주는 함수를 만들고, 나이 값이 잘못된 회원은 예외로 방어하고, 정상 처리된 결과만 파일에 저장했다가 다시 읽는 완결된 예제입니다.
+      - figure [ref=f2e78]:
+        - code [ref=f2e80]:
+          - generic [ref=f2e81]: "# members_io.py"
+          - generic [ref=f2e82]: "# 함수로 회원 요약을 만들고, 잘못된 나이 값은 예외로 방어하고, 결과를 파일에 남긴다"
+          - generic [ref=f2e84]: "def summarize_member(name, age, height):"
+          - generic [ref=f2e85]: "\"\"\"회원 정보를 받아 한 줄 요약 문자열을 돌려준다.\"\"\""
+          - generic [ref=f2e86]: "return f\"{name} - 나이 {age}세, 키 {height}cm\""
+          - generic [ref=f2e89]: "# 회원 원본 데이터 - 세 번째 회원의 나이 값이 숫자가 아니다 (일부러 잘못된 값을 섞었다)"
+          - generic [ref=f2e90]: raw_members = [
+          - generic [ref=f2e91]: ("김지현", "27", 168.3),
+          - generic [ref=f2e92]: ("이민준", "34", 175.5),
+          - generic [ref=f2e93]: "(\"박서연\", \"스물아홉\", 162.0), # 잘못된 나이 값"
+          - generic [ref=f2e94]: "]"
+          - generic [ref=f2e96]: summaries = []
+          - generic [ref=f2e98]: "for name, age_text, height in raw_members:"
+          - generic [ref=f2e99]: "try:"
+          - generic [ref=f2e100]: age = int(age_text)
+          - generic [ref=f2e101]: "except ValueError:"
+          - generic [ref=f2e102]: "print(f\"'{name}'의 나이 값이 잘못되었습니다: '{age_text}' - 건너뜁니다.\")"
+          - generic [ref=f2e103]: continue
+          - generic [ref=f2e104]: summaries.append(summarize_member(name, age, height))
+          - generic [ref=f2e106]: print("---")
+          - generic [ref=f2e108]: "# 정상 처리된 요약을 파일에 저장한다 (같은 폴더의 상대 경로, UTF-8 인코딩)"
+          - generic [ref=f2e109]: "with open(\"members.txt\", \"w\", encoding=\"utf-8\") as f:"
+          - generic [ref=f2e110]: "for line in summaries:"
+          - generic [ref=f2e111]: f.write(line + "\n")
+          - generic [ref=f2e113]: "# 저장한 파일을 다시 열어 읽고 출력한다"
+          - generic [ref=f2e114]: "with open(\"members.txt\", \"r\", encoding=\"utf-8\") as f:"
+          - generic [ref=f2e115]: print("members.txt 내용:")
+          - generic [ref=f2e116]: print(f.read())
+          - button "Copy code" [ref=f2e117]
+      - paragraph [ref=f2e119]:
+        - strong [ref=f2e120]: "실행 방법:"
+        - text: 위 코드를
+        - code [ref=f2e121]: "`members_io.py`"
+        - text: 파일로 저장한 뒤, PowerShell에서 아래 명령을 실행합니다.
+      - figure [ref=f2e122]:
+        - code [ref=f2e124]:
+          - generic [ref=f2e125]: "# members_io.py 실행 — python 대신 py 런처를 씁니다"
+          - generic [ref=f2e126]: py members_io.py
+          - button "Copy code" [ref=f2e127]
+      - paragraph [ref=f2e129]:
+        - text: macOS는
+        - code [ref=f2e130]: "`python3 members_io.py`"
+        - text: 로 실행합니다.
+      - paragraph [ref=f2e131]:
+        - text: 실행하면 먼저 "박서연"의 나이 값이 잘못되었다는 경고 메시지가 한 줄 출력됩니다(예외가 실제로 한 번 잡힌 것입니다). 이어서 정상 처리된 "김지현"·"이민준" 두 명의 요약이
+        - code [ref=f2e132]: "`members.txt`"
+        - text: 에 저장되고, 바로 다시 읽어 그 내용이 화면에 출력됩니다. 실행이 끝나면
+        - code [ref=f2e133]: "`members_io.py`"
+        - text: 와 같은 폴더에
+        - code [ref=f2e134]: "`members.txt`"
+        - text: 파일이 실제로 생겼는지 직접 열어서 확인해보세요.
+      - heading "해보기" [level=3] [ref=f2e135]
+      - paragraph [ref=f2e136]:
+        - code [ref=f2e137]: "`summarize_member`"
+        - text: 함수에 등급(
+        - code [ref=f2e138]: "`grade`"
+        - text: ) 매개변수를 하나 더 추가해, 요약 문자열 끝에 등급을 덧붙이도록 고쳐보세요. 함수를 호출하는 부분도 함께 고쳐야 합니다.
+      - group [ref=f2e139]:
+        - generic "▶ 정답 보기" [ref=f2e140] [cursor=pointer]
+        - text: "````"
+      - heading "해보기" [level=3] [ref=f2e141]
+      - paragraph [ref=f2e142]:
+        - code [ref=f2e143]: "`raw_members`"
+        - text: "리스트에 나이 값이 잘못된 회원을 하나 더 추가해보세요(예:"
+        - code [ref=f2e144]: "`(\"최유진\", \"삼십오\", 170.0)`"
+        - text: ). 예외가 몇 번 잡히는지, 그리고 왜 프로그램이 중간에 멈추지 않는지 확인합니다.
+      - group [ref=f2e145]:
+        - generic "▶ 정답 보기" [ref=f2e146] [cursor=pointer]
+        - text: "````````````"
+      - heading "해보기 (선택)" [level=3] [ref=f2e147]
+      - paragraph [ref=f2e148]:
+        - text: 저장 파일명을
+        - code [ref=f2e149]: "`members.txt`"
+        - text: 대신
+        - code [ref=f2e150]: "`members2.txt`"
+        - text: 로 바꿔보세요. 쓰기와 읽기 두 곳의 파일명을 모두 고쳐야 실행 후 폴더에
+        - code [ref=f2e151]: "`members2.txt`"
+        - text: 가 생깁니다.
+      - group [ref=f2e152]:
+        - generic "▶ 정답 보기" [ref=f2e153] [cursor=pointer]
+        - text: "``````"
+      - heading "5. 실무 팁" [level=2] [ref=f2e154]
+      - list [ref=f2e155]:
+        - listitem [ref=f2e156]:
+          - strong [ref=f2e157]: 함수는 하나의 일만 하게 짓습니다.
+          - text: 이름만 보고도 무슨 일을 하는지 알 수 있게(
+          - code [ref=f2e158]: "`summarize_member`"
+          - text: 처럼) 짓습니다.
+        - listitem [ref=f2e159]:
+          - strong [ref=f2e160]: 예외를 잡을 때는 잡을 예외를 이름으로 지정합니다.
+          - code [ref=f2e161]: "`except ValueError:`"
+          - text: 처럼 구체적으로 적어야, 나중에 다른 종류의 오류가 났을 때 그걸 놓치지 않고 알아챌 수 있습니다.
+        - listitem [ref=f2e162]:
+          - strong [ref=f2e163]:
+            - text: 파일을 열 때는
+            - code [ref=f2e164]: "`with`"
+            - text: 를 씁니다.
+          - text: 블록이 끝나면 자동으로 닫혀서, 닫는 것을 잊어버릴 수가 없습니다.
+        - listitem [ref=f2e165]:
+          - strong [ref=f2e166]:
+            - text: 한글을 다루는 파일은
+            - code [ref=f2e167]: "`encoding=\"utf-8\"`"
+            - text: 을 꼭 지정합니다.
+          - text: Windows 환경에서 특히 이 지정을 빠뜨리면 한글이 깨지는 문제를 자주 겪습니다.
+      - heading "6. 핵심 정리 및 스스로 점검" [level=2] [ref=f2e168]
+      - paragraph [ref=f2e169]:
+        - strong [ref=f2e170]: 핵심 정리
+      - list [ref=f2e171]:
+        - listitem [ref=f2e172]:
+          - text: 함수는
+          - code [ref=f2e173]: "`def`"
+          - text: 로 정의하고, 매개변수로 입력을 받아
+          - code [ref=f2e174]: "`return`"
+          - text: 으로 결과를 돌려준다
+        - listitem [ref=f2e175]:
+          - code [ref=f2e176]: "`try`"
+          - text: /
+          - code [ref=f2e177]: "`except`"
+          - text: 는 예상 가능한 실패를 감싸는 안전망이고, 잡을 예외는 반드시 이름으로 지정한다
+        - listitem [ref=f2e178]:
+          - code [ref=f2e179]: "`with open(...) as f:`"
+          - text: 는 파일을 자동으로 닫아주는 안전한 파일 열기 방식이다
+        - listitem [ref=f2e180]:
+          - text: 한글이 담긴 파일은
+          - code [ref=f2e181]: "`encoding=\"utf-8\"`"
+          - text: 을 지정해야 깨지지 않는다
+        - listitem [ref=f2e182]: 예외 하나를 처리해도 반복문의 나머지 항목은 계속 처리된다
+      - paragraph [ref=f2e183]:
+        - strong [ref=f2e184]: 이 레슨의 단어
+      - table [ref=f2e185]:
+        - rowgroup [ref=f2e186]:
+          - row [ref=f2e187]:
+            - columnheader "단어" [ref=f2e188]
+            - columnheader "뜻" [ref=f2e189]
+        - rowgroup [ref=f2e190]:
+          - row [ref=f2e191]:
+            - cell "함수" [ref=f2e192]
+            - cell "반복되는 처리를 이름 붙여 묶어 두는 코드 조각" [ref=f2e193]
+          - row [ref=f2e194]:
+            - cell "매개변수" [ref=f2e195]
+            - cell "함수가 입력을 받기 위해 미리 정해둔 이름" [ref=f2e196]
+          - row [ref=f2e197]:
+            - cell "인자" [ref=f2e198]
+            - cell "함수를 호출할 때 실제로 넘기는 값" [ref=f2e199]
+          - row [ref=f2e200]:
+            - cell "반환값" [ref=f2e201]
+            - cell "함수가 처리를 마치고 돌려주는 결과" [ref=f2e202]
+          - row [ref=f2e203]:
+            - cell "예외" [ref=f2e204]
+            - cell "코드 실행 중 발생하는 예상 가능한 오류 상황" [ref=f2e205]
+          - row [ref=f2e206]:
+            - cell "파일" [ref=f2e207]
+            - cell "프로그램이 끝난 뒤에도 내용이 남는 저장 단위" [ref=f2e208]
+          - row [ref=f2e209]:
+            - cell "인코딩" [ref=f2e210]
+            - cell "글자를 컴퓨터가 저장할 수 있는 형태로 바꾸는 규칙" [ref=f2e211]
+      - paragraph [ref=f2e212]:
+        - strong [ref=f2e213]: 스스로 점검
+      - list [ref=f2e214]:
+        - listitem [ref=f2e215]:
+          - text: 잡을 예외 이름을 지정하지 않고 모든 예외를 조용히 삼키는
+          - code [ref=f2e216]: "`except:`"
+          - text: 형태로 코드를 짜면 무엇이 문제일까요?
+      - group [ref=f2e217]:
+        - generic "▶ 정답 보기" [ref=f2e218] [cursor=pointer]
+        - text: "``"
+      - list [ref=f2e219]:
+        - listitem [ref=f2e220]:
+          - code [ref=f2e221]: "`with open(\"members.txt\", \"w\", encoding=\"utf-8\") as f:`"
+          - text: 대신
+          - code [ref=f2e222]: "`with`"
+          - text: 를 빼고
+          - code [ref=f2e223]: "`f = open(\"members.txt\", \"w\", encoding=\"utf-8\")`"
+          - text: 만 썼다면, 파일을 다 쓴 뒤 무엇을 직접 해줘야 할까요?
+      - group [ref=f2e224]:
+        - generic "▶ 정답 보기" [ref=f2e225] [cursor=pointer]
+        - text: "``````"
+    - navigation "레슨 페이저" [ref=f2e226]:
+      - link "← 이전 레슨" [ref=f2e227] [cursor=pointer]:
+        - /url: /lesson/1-3-python-variables-and-types
+      - link "다음 레슨 →" [ref=f2e230] [cursor=pointer]:
+        - /url: /lesson/1-4-relational-db-basics
+  - alert [ref=f2e233]

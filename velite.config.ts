@@ -1,10 +1,5 @@
 import { defineConfig, s } from "velite";
 import rehypePrettyCode from "rehype-pretty-code";
-// 상대 경로로 import한다 — Velite는 이 설정 파일을 esbuild로 번들하므로
-// tsconfig의 `@/*` 별칭(paths)이 적용되지 않는다. 별칭으로 바꾸면 플러그인이
-// 조용히 아예 실행되지 않아(모듈을 못 찾아 빌드 자체가 실패하거나, 최악의
-// 경우 오번들로 무동작) 이후의 모든 어설션이 공허해진다(plan-check 지적).
-import remarkClozeBlanks from "./src/lib/remark-cloze-blanks";
 
 // 복사 버튼은 여기서 만들지 않는다. @rehype-pretty/transformers의
 // transformerCopyButton은 인라인 onclick을 *문자열*로 내보내는데, 컴파일된 MDX가
@@ -25,11 +20,6 @@ export default defineConfig({
     clean: true,
   },
   mdx: {
-    // 클로즈 빈칸 추출(CONT-07) — 개념 설명 구간의 문단에서 저자가 이미
-    // 강조해 둔 용어 하나를 ClozeBlank로 치환한다. rehypePlugins보다 먼저
-    // mdast 단계에서 실행되어야 <strong>/<code>로 변환되기 전에 원본
-    // 강조 노드를 볼 수 있다.
-    remarkPlugins: [remarkClozeBlanks],
     rehypePlugins: [[rehypePrettyCode, rehypePrettyCodeOptions]],
   },
   collections: {

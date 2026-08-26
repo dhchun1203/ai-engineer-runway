@@ -6,10 +6,8 @@ import { LessonBreadcrumb, LessonPager } from "@/components/lesson-nav";
 import { CompleteButton } from "@/components/complete-button";
 import { ProgressReadError } from "@/components/progress-error";
 import { SectionTape } from "@/components/section-tape";
-import { ClozeProvider } from "@/components/cloze-provider";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readCompletedLessonIds } from "@/lib/progress-store";
-import { readClozeAnswers } from "@/lib/cloze-store";
 import {
   getLessonBySlug,
   getOrderedLessons,
@@ -48,12 +46,6 @@ export default async function LessonPage(
   const { prev, next } = getAdjacentLessons(lesson.slug);
   const progressRead = unlocked ? await readCompletedLessonIds() : null;
 
-  // 잠금 해제 상태에서만 조회한다 — 잠금 상태는 콘텐츠가 공개라는 기존
-  // 설계상 저장 경로 자체를 켜지 않는다(enabled=false). 조회 실패는 오류
-  // UI를 새로 만들지 않고 records: null(휘발성 모드)로 넘긴다(DD-9).
-  const clozeRead = unlocked ? await readClozeAnswers(lesson.slug) : null;
-  const clozeRecords = clozeRead && clozeRead.ok ? clozeRead.records : null;
-
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
       <article className="flex flex-col gap-8">
@@ -68,11 +60,9 @@ export default async function LessonPage(
         {lesson.hasContent ? (
           <>
             <SectionTape articleId={LESSON_ARTICLE_ID} stepId={lesson.stepId as StepId} />
-            <ClozeProvider lessonId={lesson.slug} records={clozeRecords} enabled={unlocked}>
-              <div id={LESSON_ARTICLE_ID} className="prose dark:prose-invert max-w-none">
-                <MDXContent code={lesson.code} />
-              </div>
-            </ClozeProvider>
+            <div id={LESSON_ARTICLE_ID} className="prose dark:prose-invert max-w-none">
+              <MDXContent code={lesson.code} />
+            </div>
           </>
         ) : (
           <div className="flex flex-col gap-3">

@@ -1,0 +1,221 @@
+- generic [active] [ref=f1e1]:
+  - banner [ref=f1e2]:
+    - navigation "주요 내비게이션" [ref=f1e3]:
+      - link "AI Engineer Runway" [ref=f1e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f1e5]:
+        - link "오늘의 학습" [ref=f1e6] [cursor=pointer]:
+          - /url: /
+        - link "커리큘럼" [ref=f1e7] [cursor=pointer]:
+          - /url: /curriculum
+        - link "일정표" [ref=f1e8] [cursor=pointer]:
+          - /url: /schedule
+        - link "소개" [ref=f1e9] [cursor=pointer]:
+          - /url: /about
+      - button "다크 모드로 전환" [ref=f1e10]
+  - article [ref=f1e13]:
+    - navigation "브레드크럼" [ref=f1e14]:
+      - link "Step 1" [ref=f1e15] [cursor=pointer]:
+        - /url: /step/1
+      - generic [ref=f1e16]: ">"
+      - link "개발 협업 & 생성형 AI 이해" [ref=f1e17] [cursor=pointer]:
+        - /url: /step/1
+    - generic [ref=f1e18]:
+      - heading "생성형 AI 개념과 활용 윤리" [level=1] [ref=f1e19]
+      - generic [ref=f1e20]:
+        - generic [ref=f1e21]: 심화
+        - generic [ref=f1e22]: 약 2.5시간
+    - generic [ref=f1e23]:
+      - heading "1. 학습 목표" [level=2] [ref=f1e24]
+      - paragraph [ref=f1e25]: 이 레슨을 마치면 다음을 할 수 있습니다.
+      - list [ref=f1e26]:
+        - listitem [ref=f1e27]: 생성형 AI가 무엇을 하는 도구인지 비유로 설명할 수 있다
+        - listitem [ref=f1e28]: 공식 SDK로 최소 호출 코드를 작성해 실행할 수 있다
+        - listitem [ref=f1e29]: API 키를 코드에 넣지 않고 환경변수로 다룰 수 있다
+        - listitem [ref=f1e30]: AI에 맡길 일과 사람이 검증해야 할 일을 구분해 판단할 수 있다
+      - heading "2. 왜 배우나" [level=2] [ref=f1e31]
+      - paragraph [ref=f1e32]: 이 커리큘럼 전체의 주제가 바로 생성형 AI를 활용한 서비스를 만드는 것입니다. 지금 여기서 배우는 API 호출 한 번이 Step 2 전체에서 반복해서 쓰일 기본 동작입니다. 특히 API 키를 다루는 습관은 이 레슨에서 처음 만들어지고, 이후 모든 레슨이 그 습관을 그대로 물려받습니다. 그래서 개념보다 "키를 어떻게 안전하게 다루는가"가 이 레슨에서 가장 중요합니다.
+      - heading "3. 개념 설명" [level=2] [ref=f1e33]
+      - heading "🔮 아주 똑똑해진 자동완성" [level=3] [ref=f1e34]
+      - paragraph [ref=f1e35]: 생성형 AI(generative AI, 새로운 텍스트·이미지 등을 만들어내는 AI)는 스마트폰 자판의 "다음 단어 추천" 기능이 아주 똑똑해진 것이라고 생각하면 이해하기 쉽습니다. 모델(model, 학습된 AI 프로그램 자체)은 지금까지 나온 글을 보고 "다음에 올 확률이 가장 높은 말"을 계속 골라 이어 붙입니다. 확률로 고르기 때문에 문법도 맞고 그럴듯하게 들리지만 사실은 틀린 답이 나올 수 있습니다 — 이를 할루시네이션(hallucination, AI가 사실이 아닌 내용을 그럴듯하게 지어내는 현상)이라고 부릅니다. "말이 되는 것"과 "사실인 것"은 다른 문제라는 걸 항상 기억해야 합니다.
+      - heading "📝 프롬프트·토큰·모델" [level=3] [ref=f1e36]
+      - table [ref=f1e37]:
+        - rowgroup [ref=f1e38]:
+          - row [ref=f1e39]:
+            - columnheader "용어" [ref=f1e40]
+            - columnheader "뜻" [ref=f1e41]
+            - columnheader "일상 비유" [ref=f1e42]
+        - rowgroup [ref=f1e43]:
+          - row [ref=f1e44]:
+            - cell "프롬프트(prompt, AI에게 주는 질문이나 지시문)" [ref=f1e45]
+            - cell "AI에게 무엇을 해달라고 요청하는 입력" [ref=f1e46]
+            - cell "식당에서 주문하는 말" [ref=f1e47]
+          - row [ref=f1e48]:
+            - cell "토큰(token, 텍스트를 잘게 나눈 처리 단위)" [ref=f1e49]
+            - cell "AI가 글을 처리하는 최소 단위, 비용도 토큰 수로 계산된다" [ref=f1e50]
+            - cell "글자를 세는 조각 단위(음절과 비슷하지만 다르다)" [ref=f1e51]
+          - row [ref=f1e52]:
+            - cell "모델(model, 학습된 AI 프로그램 자체)" [ref=f1e53]
+            - cell "실제로 답을 만들어내는 AI 프로그램" [ref=f1e54]
+            - cell "요리를 만드는 요리사" [ref=f1e55]
+      - heading "⚖️ 맡길 일과 검증할 일" [level=3] [ref=f1e56]
+      - paragraph [ref=f1e57]: 생성형 AI 윤리는 "무엇을 하면 안 된다"는 원칙 목록보다, "무엇을 맡겨도 되고 무엇을 사람이 다시 확인해야 하는가"라는 판단 기준으로 이해하는 것이 실무에서 훨씬 유용합니다.
+      - table [ref=f1e58]:
+        - rowgroup [ref=f1e59]:
+          - row [ref=f1e60]:
+            - columnheader "맡겨도 되는 일" [ref=f1e61]
+            - columnheader "반드시 사람이 확인할 일" [ref=f1e62]
+        - rowgroup [ref=f1e63]:
+          - row [ref=f1e64]:
+            - cell "초안 작성, 문장 다듬기" [ref=f1e65]
+            - cell "사실 확인, 수치·통계" [ref=f1e66]
+          - row [ref=f1e67]:
+            - cell "요약, 번역" [ref=f1e68]
+            - cell "법적·의료적 판단" [ref=f1e69]
+          - row [ref=f1e70]:
+            - cell "코드 뼈대(보일러플레이트) 생성" [ref=f1e71]
+            - cell "저작권이 걸린 원문 그대로 복제 여부" [ref=f1e72]
+          - row [ref=f1e73]:
+            - cell "아이디어 브레인스토밍" [ref=f1e74]
+            - cell "개인정보가 섞여 나오는지 여부" [ref=f1e75]
+      - paragraph [ref=f1e76]: AI는 그럴듯한 근거나 출처를 실제로 존재하지 않는데도 만들어낼 수 있습니다(할루시네이션). 그래서 AI가 제시한 사실·수치·출처는 항상 사람이 별도로 확인해야 하는 항목으로 분류해야 합니다.
+      - heading "4. 실무 예제" [level=2] [ref=f1e77]
+      - paragraph [ref=f1e78]:
+        - text: 아래는 공식
+        - code [ref=f1e79]: "`anthropic`"
+        - text: SDK로 Claude API를 한 번 호출하는 최소 예제입니다. API 키가 없다면 코드를 건너뛰고 아래 대체 경로로 바로 넘어가도 됩니다.
+      - figure [ref=f1e80]:
+        - code [ref=f1e82]:
+          - generic [ref=f1e83]: "# claude_hello.py"
+          - generic [ref=f1e84]: "# 환경변수 ANTHROPIC_API_KEY에 API 키가 설정되어 있어야 합니다."
+          - generic [ref=f1e85]: "# 키가 없다면 아래 \"키 없이 실습하기\"로 바로 넘어가세요."
+          - generic [ref=f1e87]: import os
+          - generic [ref=f1e88]: from anthropic import Anthropic
+          - generic [ref=f1e90]: client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+          - generic [ref=f1e92]: response = client.messages.create(
+          - generic [ref=f1e93]: model="claude-opus-5",
+          - generic [ref=f1e94]: max_tokens=1024,
+          - generic [ref=f1e95]: messages=[
+          - generic [ref=f1e96]: "{\"role\": \"user\", \"content\": \"생성형 AI를 한 문장으로 설명해줘.\"}"
+          - generic [ref=f1e97]: "],"
+          - generic [ref=f1e98]: )
+          - generic [ref=f1e100]: "for block in response.content:"
+          - generic [ref=f1e101]: "if block.type == \"text\":"
+          - generic [ref=f1e102]: print(block.text)
+          - button "Copy code" [ref=f1e103]
+      - paragraph [ref=f1e105]:
+        - strong [ref=f1e106]: "실행 방법:"
+      - figure [ref=f1e107]:
+        - code [ref=f1e109]:
+          - generic [ref=f1e110]: pip install anthropic
+          - generic [ref=f1e111]: $env:ANTHROPIC_API_KEY = "여기에_발급받은_키"
+          - generic [ref=f1e112]: py claude_hello.py
+          - button "Copy code" [ref=f1e113]
+      - paragraph [ref=f1e115]:
+        - text: macOS는 환경변수를
+        - code [ref=f1e116]: "`export ANTHROPIC_API_KEY=\"여기에_발급받은_키\"`"
+        - text: 로 설정하고
+        - code [ref=f1e117]: "`python3 claude_hello.py`"
+        - text: 로 실행합니다.
+      - paragraph [ref=f1e118]: 실행하면 터미널에 Claude가 생성형 AI를 한 문장으로 설명한 답변 텍스트가 출력됩니다. 답변 내용은 매번 조금씩 달라질 수 있습니다 — 같은 질문이라도 확률로 다음 말을 고르기 때문입니다.
+      - paragraph [ref=f1e119]:
+        - strong [ref=f1e120]: 키 없이 실습하기.
+        - text: API 키가 없어도 이 레슨의 해보기를 끝낼 수 있습니다. 위 코드의 프롬프트("생성형 AI를 한 문장으로 설명해줘.")를 그대로 복사해
+        - link "claude.ai" [ref=f1e121] [cursor=pointer]:
+          - /url: https://claude.ai
+        - text: 같은 채팅 화면에 붙여 넣고 결과를 받아보세요. API와 채팅 UI가 같은 모델을 쓰는지 답변의 말투·길이를 비교해보는 것도 좋은 관찰 포인트입니다.
+      - heading "해보기" [level=3] [ref=f1e122]
+      - paragraph [ref=f1e123]: 같은 질문을 코드(또는 채팅 화면)와 채팅 화면 양쪽에 던져 답을 비교해보세요. 길이·말투·구체성 중 어디서 차이가 나는지 기록합니다.
+      - group [ref=f1e124]:
+        - generic "▶ 정답 보기" [ref=f1e125] [cursor=pointer]
+      - heading "해보기" [level=3] [ref=f1e126]
+      - paragraph [ref=f1e127]: 프롬프트에 조건 한 줄("초등학생에게 설명하듯")을 더해 답변이 어떻게 달라지는지 관찰해보세요.
+      - group [ref=f1e128]:
+        - generic "▶ 정답 보기" [ref=f1e129] [cursor=pointer]
+      - heading "해보기" [level=3] [ref=f1e130]
+      - paragraph [ref=f1e131]:
+        - code [ref=f1e132]: "`max_tokens`"
+        - text: 값을
+        - code [ref=f1e133]: "`1024`"
+        - text: 에서
+        - code [ref=f1e134]: "`20`"
+        - text: 처럼 작게 줄여 실행해보고, 답이 어떻게 잘리는지 확인해보세요.
+      - group [ref=f1e135]:
+        - generic "▶ 정답 보기" [ref=f1e136] [cursor=pointer]
+        - text: "``"
+      - heading "5. 실무 팁" [level=2] [ref=f1e137]
+      - list [ref=f1e138]:
+        - listitem [ref=f1e139]:
+          - strong [ref=f1e140]: 키를 코드 파일이나 저장소에 넣지 않습니다.
+          - text: 한 번이라도 커밋되면 이력에 남아 지우기 어렵습니다 — 항상 환경변수로만 다룹니다.
+        - listitem [ref=f1e141]:
+          - strong [ref=f1e142]: 설치 패키지 이름과 import 이름이 다를 수 있습니다.
+          - text: 이 예제는
+          - code [ref=f1e143]: "`pip install anthropic`"
+          - text: 으로 설치하고
+          - code [ref=f1e144]: "`from anthropic import Anthropic`"
+          - text: "으로 그대로 불러오지만, 다른 라이브러리는 설치명과 import명이 다른 경우가 흔합니다(예:"
+          - code [ref=f1e145]: "`scikit-learn`"
+          - text: 설치 후
+          - code [ref=f1e146]: "`import sklearn`"
+          - text: ).
+        - listitem [ref=f1e147]:
+          - strong [ref=f1e148]: 모델 ID는 시간이 지나며 바뀔 수 있습니다.
+          - text: 이 레슨의 예제는 이 글을 쓴 시점 기준 모델 ID를 씁니다 — 최신 모델 ID는 항상 Anthropic 공식 문서에서 확인하세요.
+        - listitem [ref=f1e149]:
+          - strong [ref=f1e150]: 답을 그대로 믿지 않습니다.
+          - text: 특히 사실·수치·출처는 AI가 그럴듯하게 지어낼 수 있으므로(할루시네이션), 검증 대상을 미리 정해두고 확인하는 습관을 들입니다.
+      - heading "6. 핵심 정리 및 스스로 점검" [level=2] [ref=f1e151]
+      - paragraph [ref=f1e152]:
+        - strong [ref=f1e153]: 핵심 정리
+      - list [ref=f1e154]:
+        - listitem [ref=f1e155]: 생성형 AI는 다음에 올 확률이 가장 높은 말을 계속 골라 이어 붙이는 도구다
+        - listitem [ref=f1e156]: 문법과 말투가 그럴듯해도 사실이 아닐 수 있다(할루시네이션)
+        - listitem [ref=f1e157]: API 키는 오직 환경변수로만 다루고 코드나 저장소에 절대 적지 않는다
+        - listitem [ref=f1e158]: 초안·요약·번역·코드 뼈대는 맡겨도 되지만, 사실·수치·법적/의료 판단은 사람이 검증한다
+        - listitem [ref=f1e159]: 모델 ID는 공식 문서에서 최신 값을 확인해야 한다
+      - paragraph [ref=f1e160]:
+        - strong [ref=f1e161]: 이 레슨의 단어
+      - table [ref=f1e162]:
+        - rowgroup [ref=f1e163]:
+          - row [ref=f1e164]:
+            - columnheader "단어" [ref=f1e165]
+            - columnheader "뜻" [ref=f1e166]
+        - rowgroup [ref=f1e167]:
+          - row [ref=f1e168]:
+            - cell "생성형 AI" [ref=f1e169]
+            - cell "새로운 텍스트·이미지 등을 만들어내는 AI" [ref=f1e170]
+          - row [ref=f1e171]:
+            - cell "프롬프트" [ref=f1e172]
+            - cell "AI에게 주는 질문이나 지시문" [ref=f1e173]
+          - row [ref=f1e174]:
+            - cell "토큰" [ref=f1e175]
+            - cell "텍스트를 잘게 나눈 처리 단위" [ref=f1e176]
+          - row [ref=f1e177]:
+            - cell "모델" [ref=f1e178]
+            - cell "학습된 AI 프로그램 자체" [ref=f1e179]
+          - row [ref=f1e180]:
+            - cell "API" [ref=f1e181]
+            - cell "다른 프로그램이 AI 기능을 불러 쓸 수 있게 열어둔 통로" [ref=f1e182]
+          - row [ref=f1e183]:
+            - cell "환경변수" [ref=f1e184]
+            - cell "코드 밖에서 값을 넣어두고 프로그램이 읽어가게 하는 설정" [ref=f1e185]
+          - row [ref=f1e186]:
+            - cell "할루시네이션" [ref=f1e187]
+            - cell "AI가 사실이 아닌 내용을 그럴듯하게 지어내는 현상" [ref=f1e188]
+      - paragraph [ref=f1e189]:
+        - strong [ref=f1e190]: 스스로 점검
+      - list [ref=f1e191]:
+        - listitem [ref=f1e192]: API 키를 코드 파일에 직접 적으면 무엇이 문제인가요?
+      - group [ref=f1e193]:
+        - generic "▶ 정답 보기" [ref=f1e194] [cursor=pointer]
+      - list [ref=f1e195]:
+        - listitem [ref=f1e196]: AI가 답변에 그럴듯한 통계 수치를 포함시켰습니다. 이 수치를 바로 써도 될까요, 검증이 필요할까요? 왜 그런가요?
+      - group [ref=f1e197]:
+        - generic "▶ 정답 보기" [ref=f1e198] [cursor=pointer]
+    - navigation "레슨 페이저" [ref=f1e199]:
+      - link "← 이전 레슨" [ref=f1e200] [cursor=pointer]:
+        - /url: /lesson/1-2-git-branch-and-pr
+      - link "다음 레슨 →" [ref=f1e203] [cursor=pointer]:
+        - /url: /lesson/1-3-python-variables-and-types
+  - alert [ref=f1e206]
