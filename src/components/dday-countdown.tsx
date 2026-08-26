@@ -9,19 +9,19 @@ export function DDayCountdown({ daysUntil }: { daysUntil: number }) {
 
   return (
     <div data-schedule-ui="dday" className="flex flex-col gap-1">
-      <span className="text-[14px] font-normal leading-[1.4] text-badge-neutral-text dark:text-badge-neutral-text-dark">
+      <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
         {isBeforeStart ? '개강까지' : '9/30 개강'}
       </span>
       {isBeforeStart ? (
-        <span className="whitespace-nowrap text-[28px] font-semibold leading-[1.2] text-accent dark:text-accent-dark">
+        <span className="whitespace-nowrap text-display font-bold text-accent dark:text-accent-dark">
           D-{daysUntil}
         </span>
       ) : (
         <span className="flex flex-wrap items-baseline gap-2">
-          <span className="whitespace-nowrap text-[28px] font-semibold leading-[1.2] text-accent dark:text-accent-dark">
+          <span className="whitespace-nowrap text-display font-bold text-accent dark:text-accent-dark">
             D-DAY
           </span>
-          <span className="whitespace-nowrap text-[14px] font-normal leading-[1.4] text-badge-neutral-text dark:text-badge-neutral-text-dark">
+          <span className="whitespace-nowrap text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
             (개강일)
           </span>
         </span>

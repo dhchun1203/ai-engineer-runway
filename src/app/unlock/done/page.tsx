@@ -26,15 +26,15 @@ export default async function UnlockDonePage({
 
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center gap-4 px-4 py-24 text-center">
-      <h1 className="text-[20px] font-semibold leading-[1.3]">
+      <h1 className="text-heading font-bold">
         {ok ? "잠금 해제됐어요" : "유효하지 않은 링크예요"}
       </h1>
-      <p className="text-[16px] font-normal leading-[1.6]">
+      <p className="text-body font-normal">
         {ok ? "이제 이 기기에서도 진도가 저장돼요." : "링크를 다시 확인해주세요."}
       </p>
       <Link
         href="/"
-        className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-6 text-[16px] font-semibold leading-[1.6] text-white dark:bg-accent-dark dark:text-background-dark"
+        className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-6 text-body font-semibold text-white dark:bg-accent-dark dark:text-background-dark"
       >
         {ok ? "커리큘럼 홈으로" : "홈으로 돌아가기"}
       </Link>

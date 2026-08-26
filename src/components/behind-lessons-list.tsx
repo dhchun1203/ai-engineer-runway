@@ -26,7 +26,7 @@ export function BehindLessonsList({ rows }: { rows: readonly BehindLessonRow[] }
 
   return (
     <section data-schedule-ui="behind-list" className="flex flex-col gap-3">
-      <h2 className="text-[20px] font-semibold leading-[1.3]">밀린 레슨 {rows.length}개</h2>
+      <h2 className="text-heading font-bold">밀린 레슨 {rows.length}개</h2>
       <ul className="flex flex-col gap-2">
         {rows.map((row) => (
           <li key={row.slug}>
@@ -35,11 +35,11 @@ export function BehindLessonsList({ rows }: { rows: readonly BehindLessonRow[] }
               className="flex min-h-11 flex-wrap items-center justify-between gap-2 rounded-lg bg-surface p-4 dark:bg-surface-dark"
             >
               <span className="flex flex-col gap-0.5">
-                <span className="text-[14px] font-normal leading-[1.4] text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
                   {row.date}
                 </span>
-                <span className="text-[16px] font-normal leading-[1.6]">{row.title}</span>
-                <span className="text-[14px] font-semibold leading-[1.4] text-accent dark:text-accent-dark">
+                <span className="text-body font-normal">{row.title}</span>
+                <span className="text-label font-semibold text-accent dark:text-accent-dark">
                   레슨 시작하기
                 </span>
               </span>

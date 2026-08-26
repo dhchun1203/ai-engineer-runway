@@ -54,11 +54,16 @@ const ALLOWED_FONT_WEIGHTS = new Set(['400', '600', '700']);
 // hex 리터럴 검사와는 무관(text-white는 hex 리터럴이 아니다).
 const PALETTE_ALLOWLIST_TOKENS = new Set(['text-white']);
 
-// about/page.tsx 장식용 점 마커 세로 정렬 — 06-RESEARCH.md 실측상 간격
-// 임의값 계열 코드베이스 전체에서 이것 하나뿐이고, 값이 폰트 크기에 상대적
-// (em)이라 rem 기반 Tailwind 기본 스페이싱 스케일에 대응물이 없다. 파일
-// 경로 + 정확한 토큰 문자열로 좁게 등록한다 — 와일드카드로 열지 않는다.
-const ARBITRARY_ALLOWLIST_TOKENS = new Map([['src/app/about/page.tsx', new Set(['top-[0.4em]'])]]);
+// about/page.tsx 장식용 점 마커 — 06-RESEARCH.md 실측상 간격 임의값 계열
+// 코드베이스 전체에서 이것 하나뿐이고, 값이 폰트 크기에 상대적(em)이라 rem
+// 기반 Tailwind 기본 스페이싱 스케일에 대응물이 없다. `content-['']`은 같은
+// 장식용 마커의 빈 pseudo-element content 선언(디자인 토큰이 아니라 순수
+// 구조적 값, Tailwind 기본 팔레트/타입 스케일 어느 쪽에도 대응물이 없음) —
+// 같은 마커의 일부이므로 같은 근거로 등록한다(06-04, Rule 3). 파일 경로 +
+// 정확한 토큰 문자열로 좁게 등록한다 — 와일드카드로 열지 않는다.
+const ARBITRARY_ALLOWLIST_TOKENS = new Map([
+  ['src/app/about/page.tsx', new Set(["before:top-[0.4em]", "before:content-['']"])],
+]);
 
 const TAILWIND_PALETTE_COLOR_NAMES = [
   'slate',

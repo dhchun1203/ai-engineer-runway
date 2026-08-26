@@ -34,8 +34,8 @@ export function PaceStatusPanel({ pace }: { pace: PaceResult }) {
   }
 
   const headingClass = isAhead
-    ? "text-[20px] font-semibold leading-[1.3] text-accent dark:text-accent-dark"
-    : "text-[20px] font-semibold leading-[1.3]";
+    ? "text-heading font-bold text-accent dark:text-accent-dark"
+    : "text-heading font-bold";
 
   return (
     <section
@@ -51,7 +51,7 @@ export function PaceStatusPanel({ pace }: { pace: PaceResult }) {
         <h2 className={headingClass}>{heading}</h2>
       </div>
       {bodyLines.map((line) => (
-        <p key={line} className="text-[16px] font-normal leading-[1.6]">
+        <p key={line} className="text-body font-normal">
           {line}
         </p>
       ))}

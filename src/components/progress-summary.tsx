@@ -47,11 +47,11 @@ export function ProgressSummary({
       className="flex flex-col gap-4 rounded-lg bg-surface p-6 dark:bg-surface-dark"
     >
       <div className="flex flex-col gap-2">
-        <h2 className="text-[20px] font-semibold leading-[1.3]">{heading}</h2>
+        <h2 className="text-heading font-bold">{heading}</h2>
         {!isEmpty ? (
-          <p className="text-[28px] font-semibold leading-[1.2] text-accent dark:text-accent-dark">{percent}%</p>
+          <p className="text-display font-bold text-accent dark:text-accent-dark">{percent}%</p>
         ) : null}
-        <p className="text-[16px] font-normal leading-[1.6]">{body}</p>
+        <p className="text-body font-normal">{body}</p>
         <ProgressBadge completed={completed} total={total} percent={percent} />
       </div>
       <div
@@ -69,7 +69,7 @@ export function ProgressSummary({
       {cta ? (
         <Link
           href={cta.href}
-          className="flex min-h-11 w-fit items-center justify-center rounded-lg bg-accent px-4 py-2 text-[16px] font-semibold leading-[1.6] text-white dark:bg-accent-dark dark:text-background-dark"
+          className="flex min-h-11 w-fit items-center justify-center rounded-lg bg-accent px-4 py-2 text-body font-semibold text-white dark:bg-accent-dark dark:text-background-dark"
         >
           {cta.label}
         </Link>
