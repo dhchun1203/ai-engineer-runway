@@ -23,7 +23,7 @@ export type TomorrowInfo =
 // progress-summary.tsx의 min-h-11 버튼 클래스를 그대로 재사용하되, UI-SPEC
 // Typography가 이 CTA에 배정한 Label 14px/600 크기로 맞춘다.
 const CTA_CLASS =
-  "flex min-h-11 w-fit items-center justify-center rounded-lg bg-accent px-4 py-2 text-[14px] font-semibold leading-[1.4] text-white dark:bg-accent-dark dark:text-background-dark";
+  "flex min-h-11 w-fit items-center justify-center rounded-lg bg-accent px-4 py-2 text-label font-semibold text-white dark:bg-accent-dark dark:text-background-dark";
 
 export function TodayLessonCard({
   todayLesson,
@@ -76,7 +76,9 @@ export function TodayLessonCard({
   return (
     <section
       data-schedule-ui="today-card"
-      className="flex flex-col gap-3 rounded-lg bg-surface p-6 dark:bg-surface-dark"
+      className={`flex flex-col gap-3 rounded-lg bg-surface p-4 transition-colors duration-150 dark:bg-surface-dark ${
+        cta ? "card-interactive" : ""
+      }`}
     >
       {state === "assigned" && todayLesson ? (
         <div className="flex flex-col gap-2">
@@ -88,7 +90,7 @@ export function TodayLessonCard({
               />
             ) : null}
             <p
-              className={`text-[16px] font-normal leading-[1.6] ${
+              className={`text-body font-normal ${
                 completed === true ? "text-badge-neutral-text dark:text-badge-neutral-text-dark" : ""
               }`}
             >
@@ -102,8 +104,8 @@ export function TodayLessonCard({
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          {heading ? <h2 className="text-[20px] font-semibold leading-[1.3]">{heading}</h2> : null}
-          {body ? <p className="text-[16px] font-normal leading-[1.6]">{body}</p> : null}
+          {heading ? <h2 className="text-heading font-bold">{heading}</h2> : null}
+          {body ? <p className="text-body font-normal">{body}</p> : null}
         </div>
       )}
       {cta ? (

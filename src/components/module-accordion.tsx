@@ -37,8 +37,8 @@ export function ModuleAccordion({
       <summary
         className={`flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 ${STEP_HEADER_CLASSES[stepId]}`}
       >
-        <span className="text-[20px] font-semibold leading-[1.3]">{module.title}</span>
-        <span className="flex shrink-0 items-center gap-2 text-[14px] font-normal leading-[1.4]">
+        <span className="text-heading font-bold">{module.title}</span>
+        <span className="flex shrink-0 items-center gap-2 text-label font-normal">
           레슨 {lessons.length}개
           {progress ? <ProgressBadge completed={progress.completed} total={progress.total} percent={progress.percent} /> : null}
           <ChevronDown
@@ -55,7 +55,7 @@ export function ModuleAccordion({
             <li key={lesson.slug} {...(isDone ? { "data-progress-ui": "lesson-done" } : {})}>
               <Link
                 href={`/lesson/${lesson.slug}`}
-                className="flex min-h-11 flex-wrap items-center justify-between gap-2 py-3"
+                className="card-interactive flex min-h-11 flex-wrap items-center justify-between gap-2 py-3 transition-colors duration-150"
               >
                 <span className="flex flex-col gap-0.5">
                   <span className="flex items-start gap-1.5">
@@ -66,14 +66,14 @@ export function ModuleAccordion({
                       />
                     ) : null}
                     <span
-                      className={`text-[16px] font-normal leading-[1.6] ${
+                      className={`text-body font-normal ${
                         isDone ? "text-badge-neutral-text dark:text-badge-neutral-text-dark" : ""
                       }`}
                     >
                       {lesson.title}
                     </span>
                   </span>
-                  <span className="text-[14px] font-semibold leading-[1.4] text-accent dark:text-accent-dark">
+                  <span className="text-label font-semibold text-accent dark:text-accent-dark">
                     {isDone ? "다시 보기" : "레슨 시작하기"}
                   </span>
                 </span>

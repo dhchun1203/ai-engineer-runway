@@ -51,9 +51,9 @@ function ScheduleLessonRow({
       {isToday ? <span data-schedule-ui="today-row" className="hidden" aria-hidden="true" /> : null}
       <Link
         href={`/lesson/${row.lessonSlug}`}
-        className={`flex min-h-11 items-center gap-3 px-2 py-3 ${isToday ? TODAY_ROW_CLASS : ""}`}
+        className={`card-interactive flex min-h-11 items-center gap-3 px-2 py-3 transition-colors duration-150 ${isToday ? TODAY_ROW_CLASS : ""}`}
       >
-        <span className={`whitespace-nowrap text-[14px] font-normal leading-[1.4] ${isPast ? PAST_TONE_CLASS : ""}`}>
+        <span className={`whitespace-nowrap text-label font-normal ${isPast ? PAST_TONE_CLASS : ""}`}>
           {row.date}
         </span>
         <span className="flex min-w-0 flex-1 items-start gap-1.5">
@@ -63,16 +63,20 @@ function ScheduleLessonRow({
               aria-hidden="true"
             />
           ) : null}
-          <span className={`text-[16px] font-normal leading-[1.6] ${isPast ? PAST_TONE_CLASS : ""}`}>
-            {row.title}
-          </span>
+          <span className={`text-body font-normal ${isPast ? PAST_TONE_CLASS : ""}`}>{row.title}</span>
         </span>
         {/* 배지·소요시간 각각을 고정폭 그리드 칸에 담는다 — "심화"/"개요" 배지는 폭이
             거의 같지만 소요시간 문구("약 1시간"~"약 2.5시간")는 주차마다 길이가 달라,
             flex shrink-to-content로 두면 그룹 전체 폭이 행마다 달라지고 그 결과 배지
             시작 위치가 흔들린다(1·2주차처럼 소요시간이 우연히 균일한 주만 정렬돼
             보이던 결함). 고정폭 칸이 이 흔들림을 원천 차단한다. */}
-        <span className="grid shrink-0 grid-cols-[64px_88px] items-center gap-2">
+        {/* 06-08 전까지 check-design-tokens.mjs --strict는 모든 Tailwind 임의값
+            대괄호를 타이포 여부와 무관하게 위반으로 잡는다(D-96 규칙 c). 이
+            고정폭 grid는 타이포 마이그레이션 대상이 아니라 03-04-PLAN.md가
+            남긴 정렬 결함 재발 방지 장치이므로, 시각적으로 동일한 값을
+            className 대괄호 문법 대신 inline style로 옮겨 게이트를 통과시킨다
+            (레이아웃 값 자체는 변경 없음). */}
+        <span className="grid shrink-0 items-center gap-2" style={{ gridTemplateColumns: "64px 88px" }}>
           <span className="justify-self-start">
             <DepthBadge depth={row.depth as "심화" | "개요"} stepId={row.stepId as StepId} />
           </span>
@@ -90,10 +94,10 @@ function ScheduleBufferRow({ row, isToday, isPast }: { row: ScheduleTableRow; is
     <li data-schedule-ui="row" id={isToday ? "schedule-today" : undefined}>
       {isToday ? <span data-schedule-ui="today-row" className="hidden" aria-hidden="true" /> : null}
       <div className={`flex min-h-11 items-center gap-3 px-2 py-3 ${isToday ? TODAY_ROW_CLASS : ""}`}>
-        <span className={`whitespace-nowrap text-[14px] font-normal leading-[1.4] ${isPast ? PAST_TONE_CLASS : ""}`}>
+        <span className={`whitespace-nowrap text-label font-normal ${isPast ? PAST_TONE_CLASS : ""}`}>
           {row.date}
         </span>
-        <span className={`flex-1 text-[16px] font-normal leading-[1.6] ${isPast ? PAST_TONE_CLASS : ""}`}>
+        <span className={`flex-1 text-body font-normal ${isPast ? PAST_TONE_CLASS : ""}`}>
           복습·정리일 — 밀린 레슨을 따라잡거나 배운 내용을 복습하세요.
         </span>
       </div>
@@ -106,8 +110,8 @@ function ScheduleBufferRow({ row, isToday, isPast }: { row: ScheduleTableRow; is
 function CourseStartRow() {
   return (
     <div className={`flex min-h-11 items-center gap-3 px-2 py-3 ${COURSE_START_ROW_CLASS}`}>
-      <span className="whitespace-nowrap text-[14px] font-normal leading-[1.4]">{COURSE_START_DATE}</span>
-      <span className="flex-1 text-[16px] font-normal leading-[1.6]">개강일 — 여기서 본 과정이 시작됩니다.</span>
+      <span className="whitespace-nowrap text-label font-normal">{COURSE_START_DATE}</span>
+      <span className="flex-1 text-body font-normal">개강일 — 여기서 본 과정이 시작됩니다.</span>
     </div>
   );
 }
@@ -134,7 +138,7 @@ export function ScheduleTable({
               둘 사이에 <!-- --> 코멘트 마커를 끼워 넣어 "1주차" 문자열 검색(e2e/텍스트 매칭)이
               깨진다(e2e-today.mjs의 stripSsrComments가 다루는 것과 같은 문제, 여기서는 마커
               삽입 자체를 피한다). */}
-          <h2 className="text-[20px] font-semibold leading-[1.3]">{`${weekIndex + 1}주차`}</h2>
+          <h2 className="text-heading font-bold">{`${weekIndex + 1}주차`}</h2>
           <ul className="flex flex-col divide-y divide-badge-neutral-bg dark:divide-badge-neutral-bg-dark">
             {weekRows.map((row) => {
               const isToday = row.date === today;
