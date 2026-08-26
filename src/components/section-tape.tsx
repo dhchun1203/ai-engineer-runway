@@ -188,9 +188,9 @@ export function SectionTape({
               className={`w-full rounded-full ${barClass}`}
             />
             {isCurrent ? (
-              <span className="flex items-center gap-1 whitespace-nowrap px-1 opacity-100 transition-opacity duration-150">
+              <span data-section-tape-label className="flex items-center gap-1 whitespace-nowrap px-1 opacity-100 transition-opacity duration-150">
                 <span className="font-mono text-label">{String(index + 1).padStart(2, "0")}</span>
-                <span className="text-label font-semibold">{section.title}</span>
+                <span data-section-tape-label-title className="text-label font-semibold">{section.title}</span>
               </span>
             ) : null}
           </button>
