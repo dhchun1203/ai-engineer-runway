@@ -30,82 +30,307 @@ function makeSlugs(n) {
 }
 
 async function main() {
-  const { buildSchedule, scheduleTotalDays } = await import(pathToFileURL(SCHEDULE_PATH).href);
+  const {
+    buildSchedule,
+    scheduleTotalDays,
+    SCHEDULE_START,
+    DOUBLE_LESSON_DATES,
+    rowsForDate,
+    firstRowAfter,
+  } = await import(pathToFileURL(SCHEDULE_PATH).href);
   const { todayInSeoul, daysUntil } = await import(pathToFileURL(TODAY_PATH).href);
 
-  // --- buildSchedule ---
+  // --- 상수·산식 ---
 
-  runCase('buildSchedule(빈 slug 배열, totalDays 1) -> 버퍼 1행만', () => {
-    const rows = buildSchedule([], '2026-08-25', 1);
-    assert.strictEqual(rows.length, 1);
-    assert.deepStrictEqual(rows[0], { date: '2026-08-25', lessonSlug: null, isBuffer: true });
+  runCase("SCHEDULE_START 값이 '2026-08-28'이다", () => {
+    assert.strictEqual(SCHEDULE_START, '2026-08-28');
   });
 
-  runCase('buildSchedule(35개 slug, scheduleTotalDays(35)) -> 정확히 36행', () => {
+  runCase("DOUBLE_LESSON_DATES가 ['2026-08-29', '2026-09-05', '2026-09-12']와 순서까지 일치한다", () => {
+    assert.deepStrictEqual(DOUBLE_LESSON_DATES, ['2026-08-29', '2026-09-05', '2026-09-12']);
+  });
+
+  runCase('scheduleTotalDays(35, 3) === 33', () => {
+    assert.strictEqual(scheduleTotalDays(35, 3), 33);
+  });
+
+  runCase('scheduleTotalDays(35, 0) === 36 (2레슨 날이 없으면 종전 산식과 같다)', () => {
+    assert.strictEqual(scheduleTotalDays(35, 0), 36);
+  });
+
+  // --- 실제 일정 ---
+
+  runCase('실제 일정: rows.length === 36', () => {
     const slugs = makeSlugs(35);
-    const rows = buildSchedule(slugs, '2026-08-25', scheduleTotalDays(35));
+    const rows = buildSchedule(
+      slugs,
+      SCHEDULE_START,
+      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      DOUBLE_LESSON_DATES,
+    );
     assert.strictEqual(rows.length, 36);
   });
 
-  runCase('buildSchedule 첫 행 date가 2026-08-25', () => {
+  runCase('실제 일정: 서로 다른 날짜 수가 33이다', () => {
     const slugs = makeSlugs(35);
-    const rows = buildSchedule(slugs, '2026-08-25', scheduleTotalDays(35));
-    assert.strictEqual(rows[0].date, '2026-08-25');
+    const rows = buildSchedule(
+      slugs,
+      SCHEDULE_START,
+      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      DOUBLE_LESSON_DATES,
+    );
+    const dates = new Set(rows.map((r) => r.date));
+    assert.strictEqual(dates.size, 33);
   });
 
-  runCase('buildSchedule 인덱스 34행(35번째) date가 2026-09-28이고 lessonSlug가 입력 35번째 원소', () => {
-    const slugs = makeSlugs(35);
-    const rows = buildSchedule(slugs, '2026-08-25', scheduleTotalDays(35));
-    assert.strictEqual(rows[34].date, '2026-09-28');
-    assert.strictEqual(rows[34].lessonSlug, slugs[34]);
-    assert.strictEqual(rows[34].isBuffer, false);
-  });
+  runCase(
+    '실제 일정: lessonSlug가 null이 아닌 행이 35개이고 그 slug 배열이 입력 makeSlugs(35)와 순서까지 일치한다',
+    () => {
+      const slugs = makeSlugs(35);
+      const rows = buildSchedule(
+        slugs,
+        SCHEDULE_START,
+        scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+        DOUBLE_LESSON_DATES,
+      );
+      const assignedSlugs = rows.filter((r) => r.lessonSlug !== null).map((r) => r.lessonSlug);
+      assert.strictEqual(assignedSlugs.length, 35);
+      assert.deepStrictEqual(assignedSlugs, slugs);
+    },
+  );
 
-  runCase('buildSchedule 인덱스 35행(36번째) date가 2026-09-29이고 lessonSlug null, isBuffer true', () => {
+  runCase('실제 일정: 날짜 배열이 비내림차순이다(중복은 허용, 역행은 실패)', () => {
     const slugs = makeSlugs(35);
-    const rows = buildSchedule(slugs, '2026-08-25', scheduleTotalDays(35));
-    assert.strictEqual(rows[35].date, '2026-09-29');
-    assert.strictEqual(rows[35].lessonSlug, null);
-    assert.strictEqual(rows[35].isBuffer, true);
-  });
-
-  runCase('buildSchedule 36개 date가 전부 유일하고 문자열 오름차순', () => {
-    const slugs = makeSlugs(35);
-    const rows = buildSchedule(slugs, '2026-08-25', scheduleTotalDays(35));
+    const rows = buildSchedule(
+      slugs,
+      SCHEDULE_START,
+      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      DOUBLE_LESSON_DATES,
+    );
     const dates = rows.map((r) => r.date);
-    assert.strictEqual(new Set(dates).size, dates.length, 'date 중복 발견');
-    const sorted = [...dates].sort();
-    assert.deepStrictEqual(dates, sorted, 'date가 오름차순이 아님');
+    for (let i = 1; i < dates.length; i++) {
+      assert.ok(dates[i] >= dates[i - 1], `날짜가 역행함: ${dates[i - 1]} -> ${dates[i]}`);
+    }
   });
 
-  runCase('buildSchedule 2026-08-25보다 작은 date가 0건이고 2026-09-29보다 큰 date가 0건', () => {
+  runCase(
+    '실제 일정: 같은 날짜 2행 갖는 날짜 목록이 DOUBLE_LESSON_DATES와 일치하고 3행 이상인 날짜는 0건',
+    () => {
+      const slugs = makeSlugs(35);
+      const rows = buildSchedule(
+        slugs,
+        SCHEDULE_START,
+        scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+        DOUBLE_LESSON_DATES,
+      );
+      const countByDate = new Map();
+      for (const r of rows) {
+        countByDate.set(r.date, (countByDate.get(r.date) ?? 0) + 1);
+      }
+      const doubleDates = [...countByDate.entries()]
+        .filter(([, count]) => count === 2)
+        .map(([date]) => date)
+        .sort();
+      assert.deepStrictEqual(doubleDates, [...DOUBLE_LESSON_DATES].sort());
+      const tripleOrMore = [...countByDate.values()].filter((count) => count >= 3);
+      assert.strictEqual(tripleOrMore.length, 0);
+    },
+  );
+
+  runCase("실제 일정: 마지막 레슨 행(lessonSlug가 null이 아닌 마지막 행)의 date가 '2026-09-28'이다", () => {
     const slugs = makeSlugs(35);
-    const rows = buildSchedule(slugs, '2026-08-25', scheduleTotalDays(35));
-    const belowStart = rows.filter((r) => r.date < '2026-08-25');
+    const rows = buildSchedule(
+      slugs,
+      SCHEDULE_START,
+      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      DOUBLE_LESSON_DATES,
+    );
+    const lessonRows = rows.filter((r) => r.lessonSlug !== null);
+    assert.strictEqual(lessonRows[lessonRows.length - 1].date, '2026-09-28');
+  });
+
+  runCase("실제 일정: rows[35]가 { date: '2026-09-29', lessonSlug: null, isBuffer: true }이다", () => {
+    const slugs = makeSlugs(35);
+    const rows = buildSchedule(
+      slugs,
+      SCHEDULE_START,
+      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      DOUBLE_LESSON_DATES,
+    );
+    assert.deepStrictEqual(rows[35], { date: '2026-09-29', lessonSlug: null, isBuffer: true });
+  });
+
+  runCase("실제 일정: date < SCHEDULE_START인 행 0건, date > '2026-09-29'인 행 0건", () => {
+    const slugs = makeSlugs(35);
+    const rows = buildSchedule(
+      slugs,
+      SCHEDULE_START,
+      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      DOUBLE_LESSON_DATES,
+    );
+    const belowStart = rows.filter((r) => r.date < SCHEDULE_START);
     const aboveEnd = rows.filter((r) => r.date > '2026-09-29');
     assert.strictEqual(belowStart.length, 0);
     assert.strictEqual(aboveEnd.length, 0);
   });
 
-  runCase('buildSchedule 월 경계: 2026-08-31 바로 다음 행이 2026-09-01', () => {
+  runCase('실제 일정: DOUBLE_LESSON_DATES의 어떤 날짜도 isBuffer: true 행을 갖지 않는다', () => {
     const slugs = makeSlugs(35);
-    const rows = buildSchedule(slugs, '2026-08-25', scheduleTotalDays(35));
+    const rows = buildSchedule(
+      slugs,
+      SCHEDULE_START,
+      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      DOUBLE_LESSON_DATES,
+    );
+    for (const doubleDate of DOUBLE_LESSON_DATES) {
+      const bufferRows = rows.filter((r) => r.date === doubleDate && r.isBuffer);
+      assert.strictEqual(bufferRows.length, 0, `${doubleDate}에 버퍼 행이 존재함`);
+    }
+  });
+
+  runCase("월 경계: '2026-08-31'을 갖는 행 다음에 나오는 서로 다른 첫 날짜가 '2026-09-01'이다", () => {
+    const slugs = makeSlugs(35);
+    const rows = buildSchedule(
+      slugs,
+      SCHEDULE_START,
+      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      DOUBLE_LESSON_DATES,
+    );
     const idx = rows.findIndex((r) => r.date === '2026-08-31');
     assert.notStrictEqual(idx, -1, '2026-08-31 행을 찾지 못함');
-    assert.strictEqual(rows[idx + 1].date, '2026-09-01');
+    const nextDifferentDate = rows.slice(idx).find((r) => r.date !== '2026-08-31')?.date;
+    assert.strictEqual(nextDifferentDate, '2026-09-01');
   });
 
-  runCase('buildSchedule 호출 후 입력 배열이 변형되지 않음', () => {
+  runCase('buildSchedule 호출 후 입력 slug 배열과 doubleDates 배열이 변형되지 않았다', () => {
     const slugs = makeSlugs(35);
-    const snapshot = [...slugs];
-    buildSchedule(slugs, '2026-08-25', scheduleTotalDays(35));
-    assert.deepStrictEqual(slugs, snapshot);
+    const slugsSnapshot = [...slugs];
+    const doubleDatesSnapshot = [...DOUBLE_LESSON_DATES];
+    buildSchedule(slugs, SCHEDULE_START, scheduleTotalDays(35, DOUBLE_LESSON_DATES.length), DOUBLE_LESSON_DATES);
+    assert.deepStrictEqual(slugs, slugsSnapshot);
+    assert.deepStrictEqual(DOUBLE_LESSON_DATES, doubleDatesSnapshot);
   });
 
-  // --- scheduleTotalDays ---
+  // --- 경계 ---
 
-  runCase('scheduleTotalDays(35) -> 36', () => {
-    assert.strictEqual(scheduleTotalDays(35), 36);
+  runCase("buildSchedule([], '2026-08-28', 1, []) -> 버퍼 1행만", () => {
+    const rows = buildSchedule([], '2026-08-28', 1, []);
+    assert.strictEqual(rows.length, 1);
+    assert.deepStrictEqual(rows[0], { date: '2026-08-28', lessonSlug: null, isBuffer: true });
+  });
+
+  runCase("buildSchedule(makeSlugs(2), '2026-08-28', 2, ['2026-08-28']) -> 8/28에 2행, 8/29는 버퍼 1행", () => {
+    const rows = buildSchedule(makeSlugs(2), '2026-08-28', 2, ['2026-08-28']);
+    assert.strictEqual(rows.length, 3);
+    assert.strictEqual(rows[0].date, '2026-08-28');
+    assert.strictEqual(rows[1].date, '2026-08-28');
+    assert.strictEqual(rows[0].isBuffer, false);
+    assert.strictEqual(rows[1].isBuffer, false);
+    assert.strictEqual(rows[2].date, '2026-08-29');
+    assert.strictEqual(rows[2].isBuffer, true);
+  });
+
+  runCase(
+    "buildSchedule(makeSlugs(1), '2026-08-28', 2, ['2026-08-28']) -> slug가 모자라면 8/28은 1행만 갖고 예외를 던지지 않는다",
+    () => {
+      const rows = buildSchedule(makeSlugs(1), '2026-08-28', 2, ['2026-08-28']);
+      const day1Rows = rows.filter((r) => r.date === '2026-08-28');
+      assert.strictEqual(day1Rows.length, 1);
+      assert.strictEqual(day1Rows[0].lessonSlug, 'lesson-1');
+    },
+  );
+
+  runCase('doubleDates에 일정 범위 밖 날짜가 들어와도 예외 없이 무시된다', () => {
+    const rows = buildSchedule(makeSlugs(2), '2026-08-28', 2, ['2099-01-01']);
+    assert.strictEqual(rows.length, 2);
+  });
+
+  // --- 선택 헬퍼 ---
+
+  runCase("rowsForDate(rows, '2026-08-28').length === 1", () => {
+    const slugs = makeSlugs(35);
+    const rows = buildSchedule(
+      slugs,
+      SCHEDULE_START,
+      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      DOUBLE_LESSON_DATES,
+    );
+    assert.strictEqual(rowsForDate(rows, '2026-08-28').length, 1);
+  });
+
+  runCase(
+    "rowsForDate(rows, '2026-08-29').length === 2이고 두 행의 slug가 서로 다르며 입력 순서상 연속한 2개다",
+    () => {
+      const slugs = makeSlugs(35);
+      const rows = buildSchedule(
+        slugs,
+        SCHEDULE_START,
+        scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+        DOUBLE_LESSON_DATES,
+      );
+      const dayRows = rowsForDate(rows, '2026-08-29');
+      assert.strictEqual(dayRows.length, 2);
+      assert.notStrictEqual(dayRows[0].lessonSlug, dayRows[1].lessonSlug);
+      const idx0 = slugs.indexOf(dayRows[0].lessonSlug);
+      const idx1 = slugs.indexOf(dayRows[1].lessonSlug);
+      assert.strictEqual(idx1, idx0 + 1);
+    },
+  );
+
+  runCase("rowsForDate(rows, '2026-08-01')은 빈 배열이다", () => {
+    const slugs = makeSlugs(35);
+    const rows = buildSchedule(
+      slugs,
+      SCHEDULE_START,
+      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      DOUBLE_LESSON_DATES,
+    );
+    assert.deepStrictEqual(rowsForDate(rows, '2026-08-01'), []);
+  });
+
+  runCase(
+    "firstRowAfter(rows, '2026-08-29').date === '2026-08-30' — 같은 날짜의 두 번째 행이 아니라 다음 날짜의 첫 행을 돌려준다",
+    () => {
+      const slugs = makeSlugs(35);
+      const rows = buildSchedule(
+        slugs,
+        SCHEDULE_START,
+        scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+        DOUBLE_LESSON_DATES,
+      );
+      const result = firstRowAfter(rows, '2026-08-29');
+      assert.strictEqual(result.date, '2026-08-30');
+    },
+  );
+
+  runCase("firstRowAfter(rows, '2026-09-28')가 9/29 버퍼 행이다", () => {
+    const slugs = makeSlugs(35);
+    const rows = buildSchedule(
+      slugs,
+      SCHEDULE_START,
+      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      DOUBLE_LESSON_DATES,
+    );
+    const result = firstRowAfter(rows, '2026-09-28');
+    assert.strictEqual(result.date, '2026-09-29');
+    assert.strictEqual(result.isBuffer, true);
+  });
+
+  runCase("firstRowAfter(rows, '2026-09-29')가 null이다", () => {
+    const slugs = makeSlugs(35);
+    const rows = buildSchedule(
+      slugs,
+      SCHEDULE_START,
+      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      DOUBLE_LESSON_DATES,
+    );
+    assert.strictEqual(firstRowAfter(rows, '2026-09-29'), null);
+  });
+
+  // --- daysUntil (schedule 관련) ---
+
+  runCase('daysUntil(2026-09-30, SCHEDULE_START) === 33', () => {
+    assert.strictEqual(daysUntil('2026-09-30', SCHEDULE_START), 33);
   });
 
   // --- todayInSeoul ---
