@@ -6,8 +6,10 @@ import { LessonBreadcrumb, LessonPager } from "@/components/lesson-nav";
 import { CompleteButton } from "@/components/complete-button";
 import { ProgressReadError } from "@/components/progress-error";
 import { SectionTape } from "@/components/section-tape";
+import { LessonNotepad } from "@/components/lesson-notepad";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readCompletedLessonIds } from "@/lib/progress-store";
+import { readLessonNote } from "@/lib/note-store";
 import {
   getLessonBySlug,
   getOrderedLessons,
@@ -45,9 +47,19 @@ export default async function LessonPage(
 
   const { prev, next } = getAdjacentLessons(lesson.slug);
   const progressRead = unlocked ? await readCompletedLessonIds() : null;
+  // 잠금 상태에서는 호출도 렌더도 하지 않는다(T-0y8-03) — 메모 본문이 HTML에
+  // 아예 등장하지 않는다.
+  const noteRead = unlocked ? await readLessonNote(lesson.slug) : null;
+  const showNotepad = noteRead !== null && noteRead.ok;
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
+    <main
+      className={
+        showNotepad
+          ? "note-page-spacer mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8"
+          : "mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8"
+      }
+    >
       <article className="flex flex-col gap-8">
         <LessonBreadcrumb lesson={lesson} />
         <header className="flex flex-col gap-3">
@@ -102,6 +114,20 @@ export default async function LessonPage(
           </div>
         )}
       </article>
+      {noteRead ? (
+        noteRead.ok ? (
+          <LessonNotepad lessonId={lesson.slug} initialBody={noteRead.body} />
+        ) : (
+          // 읽기 실패 시에는 메모장을 렌더하지 않는다 — 빈 메모로 시작했다가
+          // 자동 저장이 실제 메모를 빈 값으로 덮어쓰는 최악의 경로를 막는다.
+          <p
+            data-notepad-read-error
+            className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark"
+          >
+            메모를 불러오지 못했어요. 새로고침해 주세요.
+          </p>
+        )
+      ) : null}
     </main>
   );
 }
