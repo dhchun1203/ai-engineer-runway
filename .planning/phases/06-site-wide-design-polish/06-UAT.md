@@ -52,10 +52,14 @@ expected: 6종 화면이 세로/가로 모두에서 깨짐 없이 렌더되고, 
 가로 스크롤·터치 정확도가 전부 통과 기준을 만족한다.
 result: blocked
 blocked_by: physical-device
+deploy_status: ready
 reason: |
-  실기기 iPad Safari가 필요하고, 이 항목이 가리키는 배포 URL은 아직 Phase 6 코드를 받지
-  못했다 — master가 origin보다 53커밋 앞서 있어 Vercel 배포본은 Phase 6 이전 상태다.
-  push 후 실기기에서 확인해야 한다.
+  배포 차단은 해제됐다. 2026-08-26 master를 origin에 push(64커밋)했고 Vercel production
+  배포가 READY 상태다(커밋 4e2bcd4). 프로덕션 CSS에서 Phase 6 산출물을 직접 확인:
+  --text-* 토큰 5종, .card-interactive, scroll-margin-top: var(--section-tape-scroll-offset).
+  아래 6개 URL이 이제 Phase 6 코드를 서비스한다 — 남은 것은 실기기 iPad Safari 확인뿐이고,
+  이것만은 Chromium 자동화가 원리적으로 대신할 수 없다(-webkit- 렌더링 차이, 실제 손가락
+  터치 히트박스, 100vh와 주소창 겹침).
   참고(자동 확인됨, Chromium 한정): e2e-mobile-overflow 21/21 조합 가로 오버플로 0,
   1024x768 가로 모드 6개 라우트 전부 오버플로 0.
 
