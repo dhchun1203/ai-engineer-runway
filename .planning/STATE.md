@@ -8,7 +8,7 @@ status: executing
 stopped_at: Phase 6 실행+UAT 완료, 실기기 iPad Safari 확인 대기(06-UAT.md 테스트 1)
 last_updated: "2026-08-26T03:42:21.213Z"
 last_activity: 2026-08-26
-last_activity_desc: 학습 시작일 8/28 이동 완료(quick 260826-tbx) — 35개 레슨 재배정, 게이트 14종 통과
+last_activity_desc: 레슨 메모장 완료(quick 260827-0y8) — 게이트 16종 통과, 배포
 progress:
   total_phases: 7
   completed_phases: 5  # Phase 6은 실기기 UAT 대기로 미포함
@@ -191,6 +191,7 @@ None yet.
 | 260825-n7v | Phase 04 UAT 결함 2건 수정 — SQL 2편 준비 블록 스키마 충돌(G-04-1), 복사 버튼이 코드 첫 줄 가림(G-04-2) | 2026-08-25 | f750017 | [260825-n7v-phase-04-uat-gap-fixes-g-04-1-sql-lesson](./quick/260825-n7v-phase-04-uat-gap-fixes-g-04-1-sql-lesson/) |
 | 260825-r4k | 코드블록 복사 버튼이 모든 레슨에서 동작하지 않던 [Critical] 결함 수정 (04-UI-REVIEW Priority Fix 1) — 문자열 onclick을 실제 React 핸들러로 교체 | 2026-08-25 | 920741e | [260825-r4k-lesson-reading-screen-design-pass](./quick/260825-r4k-lesson-reading-screen-design-pass/) |
 | 260826-tbx | 학습 시작일 8/25→8/28 이동 + 35개 레슨을 8/28~9/28에 재배정(토요일 8/29·9/5·9/12만 2개), 9/29 복습일 유지 — 개강 전 완주 보존 | 2026-08-26 | 22d86ee | [260826-tbx-shift-study-start-date-from-2026-08-25-t](./quick/260826-tbx-shift-study-start-date-from-2026-08-25-t/) |
+| 260827-0y8 | 레슨 하단 메모장(옥스포드 노트 스타일) — 접었다 펼치기, 스크롤 고정, 타이핑 멈추면 자동 저장, 레슨당 메모 1개 Supabase 기기 간 공유 | 2026-08-27 | 5947684 | [260827-0y8-bottom-sheet-lesson-notepad-collapsible-](./quick/260827-0y8-bottom-sheet-lesson-notepad-collapsible-/) |
 
 ## Deferred Items
 
