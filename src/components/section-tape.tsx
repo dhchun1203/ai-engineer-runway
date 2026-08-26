@@ -49,8 +49,11 @@ const SECTION_TAPE_STEP_CLASSES: Record<StepId, { idle: string; hover: string; c
 // 실제 h2 개수만큼 칸이 생긴다(2개 미만~7개 이상 전부 지원, D-R4K-1).
 const PLACEHOLDER_SECTION_COUNT = 6;
 
-// 셀 높이(터치 타깃, D-R4K-1) — 시각 막대는 이 안에서 3px.
-const TAPE_HEIGHT_PX = 44;
+// 테이프 높이 상수는 여기 없다(G-06-9) — globals.css의 `:root { --section-tape-height }`가
+// 단일 소스이고, 컨테이너는 `.section-tape` CSS 클래스로 그 값을 소비한다
+// (h-11 Tailwind 클래스도 이 상수의 세 번째 사본이었으므로 함께 제거했다).
+// updateCurrent()의 임계값도 이 값을 다시 여기 적지 않고 DOM에서 유도한다
+// (아래 참고).
 
 export function SectionTape({
   articleId,
@@ -67,6 +70,7 @@ export function SectionTape({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const headingRefs = useRef<HTMLElement[]>([]);
+  const tapeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const container = document.getElementById(articleId);
@@ -108,9 +112,22 @@ export function SectionTape({
     const updateCurrent = () => {
       const headings = headingRefs.current;
       if (headings.length < 2) return;
+
+      // 임계값을 브라우저가 실제로 h2를 착지시키는 값(scroll-margin-top)에서
+      // 직접 읽는다(G-06-9) — 이 값과 비교하는 한 두 수치가 다시 어긋날 수
+      // 없다. 캐시하지 않고 호출마다 읽는 이유: 바로 아래에서 이미 모든
+      // 헤딩에 getBoundingClientRect()를 부르고 있어 추가 레이아웃 읽기가
+      // 아니고, 나중에 scroll-margin-top이 미디어 쿼리로 갈라져도 캐시
+      // 무효화 지점이 따로 필요 없다.
+      const computedOffset = Number.parseFloat(getComputedStyle(headings[0]).scrollMarginTop);
+      const threshold =
+        Number.isFinite(computedOffset) && computedOffset > 0
+          ? computedOffset
+          : (tapeRef.current?.getBoundingClientRect().height ?? 0);
+
       let idx = 0;
       for (let i = 0; i < headings.length; i++) {
-        if (headings[i].getBoundingClientRect().top <= TAPE_HEIGHT_PX + 1) {
+        if (headings[i].getBoundingClientRect().top <= threshold + 1) {
           idx = i;
         }
       }
@@ -160,8 +177,9 @@ export function SectionTape({
 
   return (
     <div
+      ref={tapeRef}
       data-section-tape
-      className="sticky top-0 z-10 flex h-11 w-full overflow-x-hidden bg-background dark:bg-background-dark"
+      className="section-tape sticky top-0 z-10 flex w-full overflow-x-hidden bg-background dark:bg-background-dark"
     >
       {cells.map((section, index) => {
         const isCurrent = sections !== null && index === currentIndex;
