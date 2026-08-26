@@ -261,11 +261,16 @@ function rectsOverlap(a, b) {
   return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
 }
 
-// 측정값에서 위반 태그 목록을 뽑는다. 클릭한 칸 인덱스(0-based)를 받아
-// 기대 라벨 텍스트를 "2자리 0패딩 번호 + 공백 + 정규화된 h2 텍스트"로 구성한다.
+// 측정값에서 위반 태그 목록을 뽑는다. 기대 라벨 텍스트는 정규화된 h2 텍스트 그 자체다.
+//
+// 2026-08-27 변경: 이전에는 "2자리 0패딩 번호 + 공백 + h2 텍스트"를 기대했다. 테이프가
+// 인덱스 뱃지(01/02...)를 따로 그렸기 때문인데, 35개 레슨의 h2 제목이 이미 "1. 학습 목표"처럼
+// 번호로 시작해서 화면에 "01 1. 학습 목표"로 숫자가 두 번 나왔다. 제목이 원본이므로 파생된
+// 뱃지를 없앴고, 그에 맞춰 기대값도 제목만으로 바꾼다. clickedIndex는 여전히 아래에서
+// 클릭한 칸과 표시된 구간이 일치하는지 판정하는 데 쓰인다(호출부 계약 유지).
 function evaluateViolations(m, clickedIndex) {
   const violations = [];
-  const expected = `${String(clickedIndex + 1).padStart(2, '0')} ${m.headingText}`;
+  const expected = m.headingText;
 
   const labelMissing = m.labelCount === 0 || !m.labelText || (m.labelRect && m.labelRect.width === 0);
   if (labelMissing) {

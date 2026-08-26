@@ -229,7 +229,9 @@ export function SectionTape({
             data-section-tape-label
             className="flex min-w-0 max-w-full items-center gap-1 whitespace-nowrap opacity-100 transition-opacity duration-150"
           >
-            <span className="font-mono text-label">{String(currentIndex + 1).padStart(2, "0")}</span>
+            {/* 인덱스 뱃지(01/02...)를 따로 그리지 않는다 — 35개 레슨의 h2 제목이 이미
+                "1. 학습 목표"처럼 번호로 시작해서 "01 1. 학습 목표"로 두 번 나왔다.
+                제목이 원본이므로 파생된 뱃지 쪽을 없앤다. */}
             <span data-section-tape-label-title className="truncate text-label font-semibold">
               {cells[currentIndex].title}
             </span>
