@@ -4,15 +4,15 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 06
 current_phase_name: 전체 페이지 디자인 정리
-status: planning
-stopped_at: Completed 05-13-PLAN.md (Phase 5 마감 — Step 3 배포, 매니페스트 최종화, 진행률 100% 확인)
-last_updated: "2026-08-26T01:49:45.239Z"
+status: executing
+stopped_at: Phase 6 UI-SPEC approved
+last_updated: "2026-08-26T03:35:29.850Z"
 last_activity: 2026-08-26
 last_activity_desc: Plan 05-08 complete (Step 3 depth re-trim/re-approval + 2 lessons)
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 5
-  total_plans: 34
+  total_plans: 42
   completed_plans: 34
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 
 Phase: 06 — 전체 페이지 디자인 정리
 Plan: Not started
-Status: Ready to plan
+Status: Ready to execute
 Last activity: 2026-08-26 — Phase 05 complete, transitioned to Phase 06
 
 Progress: [█████████████████░░░] 8/13 plans in phase 05 ([██████████] 100% project-wide)
@@ -108,6 +108,7 @@ UI 작업을 끼워 넣을 자리가 없으므로, frontend-design은 페이즈 
 ## Accumulated Context
 
 ### Roadmap Evolution
+
 - Phase 7 추가: 아이패드 브라우저 실습 환경 — 2026-08-26 UAT에서 사용자가 제기. "읽기는 아이패드, 실행은 PC"(D-55/D-73)가 아이패드 주 사용자에게 실제 제약이 된다는 문제. 외부 온라인 IDE(D-73이 배제)가 아니라 페이지 내 실행(PGlite 등)으로 검토한다
 
 - Phase 6 added (2026-08-25): 전체 페이지 디자인 정리 — frontend-design 스킬로 토큰·셸·페이지별 마감을 Phase 5 이후 한 번에 적용, 타임박스 2일. 사용자 결정: 콘텐츠 phase보다 앞에 두지 않음(플랫폼 다듬기가 콘텐츠를 잠식하는 리스크 회피)
@@ -200,6 +201,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-25T16:41:05.740Z
-Stopped at: Completed 05-13-PLAN.md (Phase 5 마감 — Step 3 배포, 매니페스트 최종화, 진행률 100% 확인)
-Resume file: None
+Last session: 2026-08-26T02:54:29.256Z
+Stopped at: Phase 6 UI-SPEC approved
+Resume file: .planning/phases/06-site-wide-design-polish/06-UI-SPEC.md
