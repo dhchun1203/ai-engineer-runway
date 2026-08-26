@@ -43,33 +43,46 @@ Declared values (must be multiples of 4):
 
 Exceptions:
 - **44px minimum touch target (UX-01)** — applies to all interactive elements regardless of visual size: nav links, theme toggle, accordion `<summary>` header, prev/next lesson buttons, code copy button hit area. 44px = 4px × 11, fits the 4px grid but is a functional floor, not a spacing token — apply via `min-h-11 min-w-11` (Tailwind) on the clickable element, not just its visible icon/label.
+- **Section Tape 셀 폭 방향 24px 하한 예외 (Phase 6, D-R4K-1)** — Section Tape 셀은 44px 규칙에서 폭(width) 방향만 예외이며 24px 최소 폭을 대신 적용한다. 높이는 44px 규칙을 그대로 따른다 (`06-UI-SPEC.md` § Section Tape 계약 "터치 타깃 예외" 참고).
 
 ---
 
 ## Typography
 
-| Role | Size | Weight | Line Height |
-|------|------|--------|-------------|
-| Label | 14px | 400 (regular) | 1.4 |
-| Body | 16px | 400 (regular) | 1.8 |
-| Heading | 20px | 600 (semibold) | 1.3 |
-| Display | 28px | 600 (semibold) | 1.2 |
+**개정 고지 (D-R4K-4, Phase 6):** 이 표는 Phase 6(`06-UI-SPEC.md` § Typography)에서 4종/2굵기를
+5종/3굵기로 대체했다. 원인은 종수 자체가 아니라 `@tailwindcss/typography`가 조용히 주입한
+선언되지 않은 런타임 이탈이었다(04-UI-REVIEW Pillar 4 실측 = 2/4, 런타임에서 6종/3굵기가
+이미 관측됨). 근거 원문은 `06-UI-SPEC.md`와 `06-CONTEXT.md`의 D-R4K-4를 참고할 것.
 
-**Weights:** exactly 2 — regular (400) for body/label text, semibold (600) for headings/emphasis/nav labels/badge text. Do not introduce a third weight (e.g. bold 700) anywhere in Phase 1 UI.
+| Role | 유틸리티 클래스 | Size | Weight | Line Height |
+|------|----------------|------|--------|-------------|
+| Display | `text-display` | 30px | 700 (bold, tracking `-0.02em`) | 1.2 |
+| Heading | `text-heading` | 22px | 700 (bold) | 1.3 |
+| Subhead | `text-subhead` | 17px | 700 (bold) | 1.4 |
+| Body | `text-body` | 16px | 400 (regular) | 1.6 |
+| Label | `text-label` | 14px | 400 (regular) 또는 600 (semibold) | 1.4 |
+| Inline code | (토큰화 안 함, `.prose code` 단일 규칙) | 15px (`0.9375rem`, 절대값) | 400 (regular) | 상속 |
 
-**Sizes:** exactly 4 — 14 / 16 / 20 / 28px. Do not introduce intermediate sizes (e.g. 18px) without updating this contract.
+**Weights:** 정확히 3종 — regular(400)은 body/label 기본 텍스트, semibold(600)은 label의 badge/nav
+변형, bold(700)은 display/heading/subhead(제목 계열)에 쓴다. 4종/2굵기라는 이전 표현은 더 이상
+유효하지 않다.
 
-**Line height rationale (UX-03, revised — D-79/05-13):** Body `.prose` line-height is **1.8** (28.8px line gap at 16px), not the 1.6 this table originally specified. The original 1.6 override was recorded against a comment claiming "@tailwindcss/typography's default(1.5)" — that default does not exist; the plugin's actual default is **1.75**, so the original 1.6 value had actually *tightened* spacing relative to the plugin default, in direct contradiction of its own stated intent (more breathing room for Korean prose, Pitfall 4).
+**Sizes:** 정확히 6종 — 30 / 22 / 17 / 16 / 15 / 14px (인라인 코드 15px 포함). 이 표에 없는 중간
+크기(예: 18px, 20px, 24px, 28px)를 새로 도입하지 않는다.
+
+**Line height rationale (UX-03, revised — D-79/05-13):** Body `.prose` line-height is **1.8** (28.8px line gap at 16px), not the 1.6 this table's `text-body` utility specifies for non-prose contexts. The original 1.6 override was recorded against a comment claiming "@tailwindcss/typography's default(1.5)" — that default does not exist; the plugin's actual default is **1.75**, so the original 1.6 value had actually *tightened* spacing relative to the plugin default, in direct contradiction of its own stated intent (more breathing room for Korean prose, Pitfall 4). `.prose` 본문의 1.8은 Phase 6에서도 바뀌지 않는다 — `text-body` 유틸리티는 프로즈 밖(카드 설명, 목록 항목 등)에서 쓰일 때만 1.6을 적용한다.
 
 **Root-caused during Phase 5 Plan 01 (05-01-SUMMARY.md):** the user reported the 1.6 value read as an undifferentiated wall of text ("없던 난독증도 올 것 같다" — even someone without dyslexia would start seeing text swim together) because `.prose > p` had **no explicit paragraph margin**, so the gap *between* paragraphs (browser default ~20px) was smaller than the gap *within* a paragraph's own lines (25.6px at the old 1.6). Fixed by raising line-height to 1.8 (28.8px line gap) **and** adding an explicit `.prose > p { margin-block: 2.4em }` (38.4px paragraph gap) — giving a paragraph-to-line gap ratio of **1.33**, so paragraph breaks read as visibly larger gaps than line breaks within a paragraph. User confirmed the fix reads well ("만족스러워").
 
 **L7 paragraph-length rule (content contract, added alongside the CSS fix):** `scripts/check-lesson-structure.mjs` enforces a 200-character-per-paragraph ceiling on lesson body prose (a "paragraph" = a maximal run of non-blank lines; headings/lists/tables/blockquotes/code fences/HTML tags/frontmatter are excluded from the count). This is now an enforced, permanent part of the lesson content contract — long, undifferentiated paragraphs are rejected at the same gate as structural violations, not just caught by spacing CSS.
 
-**Application map:**
-- Display (28px/600) → page `<h1>` (Step page title, lesson title, "AI Engineer Runway" home hero, Making-of title)
-- Heading (20px/600) → `<h2>`/`<h3>` (module accordion header, lesson section headers, Step card title)
-- Body (16px/400) → lesson MDX prose (via `@tailwindcss/typography` `prose` wrapper), card descriptions
-- Label (14px/400, use 600 for badge/nav variants) → breadcrumb, depth badge, estimated-time badge, global nav items, lesson list item metadata
+**Application map (Phase 6 갱신):**
+- Display (30px/700) → 레슨 제목(`<h1>`), Step 페이지 제목, 홈 히어로, Making-of 제목
+- Heading (22px/700) → `.prose h2`(레슨 구간 제목), 모듈 아코디언 헤더, Step 카드 제목, 사이트 로고(내비)
+- Subhead (17px/700) → `.prose h3`
+- Body (16px/400) → 카드 설명, 레슨 목록 항목 제목, 페이저 라벨 (프로즈 본문 자체는 위 line-height 각주대로 1.8 유지)
+- Label (14px/400 또는 600) → 배지, 표 셀, 브레드크럼, 내비 항목, Section Tape 번호
+- Inline code (15px/400) → `.prose` 안 인라인 코드 — rem 절대값이라 표 셀 안에서도 축소되지 않음
 
 **Code/monospace:** does NOT inherit Pretendard — `code, pre { font-family: ui-monospace, monospace }` (RESEARCH.md Pattern 6). Sizing/coloring inside code blocks is owned by the Shiki theme output (`github-light`/`github-dark-dimmed`), not this typography table.
 
