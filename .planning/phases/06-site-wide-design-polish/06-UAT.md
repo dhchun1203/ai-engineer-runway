@@ -1,5 +1,5 @@
 ---
-status: partial
+status: partial  # 테스트 1(실기기 iPad Safari)만 남음 — 배포 후 확인 필요
 phase: 06-site-wide-design-polish
 source: [06-VALIDATION.md, 06-UI-SPEC.md, 06-CONTEXT.md D-93, 06-D97-MEASUREMENT.md]
 started: 2026-08-26T00:00:00Z
@@ -72,8 +72,15 @@ reason: |
 expected: 현재 구간 제목이 테이프 칸 밖(그 아래)에 자연스럽게 표시된다 — 문서 수준
 가로 오버플로는 e2e-mobile-overflow.mjs가 이미 0으로 확인했으므로(D-91), 여기서는
 줄바꿈/말줄임 처리가 시각적으로 어색하지 않은지만 본다.
-result: issue
+result: pass
 severity: minor
+resolved_by: 06-09-PLAN.md (G-06-2)
+retest: |
+  06-09 병합 후 오케스트레이터가 독립 재측정 — /lesson/1-1-course-orientation의 6개 칸 전부,
+  375px·768px 양쪽에서 라벨 잘림 좌 0px / 우 0px. 라벨이 칸 안이 아니라 테이프 기준 절대
+  배치로 바뀌어 좁은 칸에서도 경계를 넘지 않는다.
+  최초 보고 내용은 아래 reported에 그대로 남긴다.
+original_report_below: true
 reported: |
   현재 구간 라벨이 칸 폭보다 넓을 때 줄바꿈도 말줄임도 하지 않고, 테이프의
   overflow-x:hidden에 의해 왼쪽이 잘린다. 라벨이 칸 안에서 가운데 정렬(items-center)이라
@@ -266,8 +273,16 @@ npm run dev
 
 expected: 6개 화면이 "한 사람이 만든 하나의 사이트"로 읽히면 통과. 어떤 화면 하나가
 "다른 템플릿에서 가져온 것 같다"고 느껴지면 그 화면과 이유를 적어 실패로 보고한다.
-result: issue
+result: pass
 severity: major
+resolved_by: 06-09-PLAN.md (G-06-9)
+retest: |
+  06-09 병합 후 오케스트레이터가 독립 재측정 — 칸 6개 × 뷰포트 2종 = 12개 조합 전부에서
+  클릭한 칸과 테이프에 표시되는 구간이 일치. 이전에는 표시조차 되지 않던 6번 구간
+  ("6. 핵심 정리 및 스스로 점검")도 정상 표시된다. 문서 가로 넘침 0.
+  네 번째 확인 항목이 이로써 통과했고, 나머지 3개 항목은 이미 자동 확인으로 통과했다.
+  전체 인상에 대한 시각 판단은 실기기 확인(테스트 1)에 함께 남아 있다.
+original_report_below: true
 origin: deferred-to-uat (06-08 Task 4, human_verify_mode=end-of-phase)
 reported: |
   4개 확인 항목 중 3개는 자동 확인으로 통과:
@@ -283,8 +298,8 @@ reported: |
 ## Summary
 
 total: 9
-passed: 6
-issues: 2
+passed: 8
+issues: 0
 pending: 0
 skipped: 0
 blocked: 1
@@ -294,7 +309,14 @@ blocked: 1
 ```yaml
 - gap_id: G-06-9
   truth: "레슨 화면에서 구간 테이프의 칸을 누르면 그 칸에 해당하는 구간 제목이 테이프에 표시된다"
-  status: failed
+  status: resolved
+  resolved_by: 06-09-PLAN.md
+  resolved_note: |
+    테이프 높이와 scroll-margin-top이 :root의 단일 소스에서 파생되도록 바꾸고, updateCurrent가
+    임계값을 getComputedStyle(h2).scrollMarginTop에서 직접 읽게 했다 — 숫자를 45에서 53으로
+    고쳐 쓴 것이 아니라 복제 자체를 없앴다(TAPE_HEIGHT_PX와 h-11 삭제).
+    재측정: 12개 조합(칸 6 × 뷰포트 2) 전부 일치, 위반 0건.
+    새 게이트 scripts/e2e-section-tape.mjs가 수정 전 코드에서 30/30 실패 → 수정 후 30/30 통과.
   reason: |
     칸을 누르면 스크롤은 정확한 위치로 이동하지만 테이프가 표시하는 구간 제목은 항상 한 칸
     이전 것이다. 2~6번 칸 5개 전부, 768px·375px 양쪽에서 재현(5/5).
@@ -318,7 +340,11 @@ blocked: 1
 
 - gap_id: G-06-2
   truth: "현재 구간 제목이 칸 폭을 넘칠 때 잘리지 않고 읽을 수 있게 표시된다"
-  status: failed
+  status: resolved
+  resolved_by: 06-09-PLAN.md
+  resolved_note: |
+    라벨을 칸의 자식에서 테이프 기준 절대 배치 오버레이로 옮겼다(pointer-events-none,
+    최후 수단으로 truncate). 재측정: 12개 조합 전부 잘림 좌 0px / 우 0px.
   reason: |
     라벨이 칸 안에서 가운데 정렬이고 whitespace-nowrap이라, 테이프 왼쪽 끝에 붙은 좁은
     칸에서는 넘친 부분이 테이프의 overflow-x:hidden에 잘려나간다.
