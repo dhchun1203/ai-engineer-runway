@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: 진도 체크와 진행률** - 레슨 완료를 토글하고 모듈·Step·전체 진행률을 확인한다 (completed 2026-08-24)
 - [x] **Phase 3: 학습 일정과 오늘의 학습** - 8/25~9/29 일정표와 오늘 배정 레슨, D-day·페이스 상태를 본다 (completed 2026-08-25)
 - [ ] **Phase 4: Step 1 심화 콘텐츠** - Python·Git·SQL·ML 기초 전 레슨을 개념 설명 + 실무 예제로 학습한다
-- [ ] **Phase 5: Step 2·3 콘텐츠와 프로젝트 가이드** - 풀스택·LLM 심화와 RAG·오케스트레이션 개요, 프로젝트 5종 준비 가이드를 학습한다
+- [x] **Phase 5: Step 2·3 콘텐츠와 프로젝트 가이드** - 풀스택·LLM 심화와 RAG·오케스트레이션 개요, 프로젝트 5종 준비 가이드를 학습한다 (completed 2026-08-26)
 
 ## Phase Details
 
@@ -235,7 +235,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. 진도 체크와 진행률 | 4/4 | Complete    | 2026-08-24 |
 | 3. 학습 일정과 오늘의 학습 | 4/4 | Complete    | 2026-08-25 |
 | 4. Step 1 심화 콘텐츠 | 6/7 | In Progress|  |
-| 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 13/13 | In Progress|  |
+| 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 13/13 | Complete    | 2026-08-26 |
 | 6. 전체 페이지 디자인 정리 | 0/TBD | Not started | - |
 
 ## Coverage Notes
