@@ -296,7 +296,7 @@ hover 피드백이 전혀 없다. 새 색 없이 기존 surface 톤 안에서 �
 | 상태 | 시각 처리 |
 |---|---|
 | **idle**(비-현재 칸) | 3px 시각 막대, Step 색 배경 불투명도 40%(`bg-step-N/40 dark:bg-step-N-dark/40`) — 번호/제목 텍스트 없음(D-R4K-1 원문: "나머지는 무표시") |
-| **current**(현재 칸) | 3px 막대 불투명도 100%, 칸 안에 번호+제목 텍스트 표시(`text-label` mono 번호 + `text-label` 제목, 굵기 600) |
+| **current**(현재 칸) | 3px 막대 불투명도 100%, 테이프 기준으로 배치한(칸 기준 아님, G-06-2로 개정 — 칸 기준 배치는 좁은 칸에서 최대 32px까지 잘렸다) 번호+제목 텍스트 표시(`text-label` mono 번호 + `text-label` 제목, 굵기 600) |
 | **hover**(마우스 환경) | 배경 불투명도 idle 대비 +20%p(`/60`) — 새 색 없이 같은 Step 색의 불투명도만 이동 |
 | **focus-visible**(키보드 탭) | `outline: 2px solid var(--color-accent)` (다크 `--color-accent-dark`), `outline-offset: 2px` — Section Tape는 이 Phase의 신규 컴포넌트라 기존 코드베이스에 focus-visible 관례가 없었다(전역 grep 확인, `globals.css`에 `focus-visible` 0건) → 이 Phase가 처음 도입하는 명시적 규칙. accent를 쓰는 이유: "활성/포커스 상태"는 이미 Accent reserved-for 목록에 있는 용도(색 의미 재사용, 새 규칙 아님) |
 | **tap/active** | 클릭 즉시 해당 `h2`로 스크롤. `prefers-reduced-motion: reduce`면 `scrollIntoView({ behavior: "auto" })`, 그 외에는 `{ behavior: "smooth" }` — 코드베이스가 이미 완료 애니메이션에서 이 패턴을 지킨다(`globals.css:283-287`, `@media (prefers-reduced-motion: reduce)`로 `complete-check-icon` 애니메이션 제거) |
@@ -317,7 +317,7 @@ hover 피드백이 전혀 없다. 새 색 없이 기존 surface 톤 안에서 �
 
 ```css
 .prose h2 {
-  scroll-margin-top: 52px; /* 44px(테이프 높이) + 8px(spacing sm 토큰) 여유 */
+  scroll-margin-top: var(--section-tape-scroll-offset); /* :root 단일 소스(44px 테이프 높이 + 8px spacing sm 토큰), 06-09 G-06-9 */
 }
 ```
 
