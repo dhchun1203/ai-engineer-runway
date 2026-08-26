@@ -238,7 +238,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. 학습 일정과 오늘의 학습 | 4/4 | Complete    | 2026-08-25 |
 | 4. Step 1 심화 콘텐츠 | 6/7 | In Progress|  |
 | 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 13/13 | Complete    | 2026-08-26 |
-| 6. 전체 페이지 디자인 정리 | 5/8 | In Progress|  |
+| 6. 전체 페이지 디자인 정리 | 7/8 | In Progress|  |
 
 ## Coverage Notes
 
@@ -273,7 +273,7 @@ Phase 1~3(플랫폼)은 합쳐서 약 1주가 목표다. 리서치가 지목한 
   3. 폰 폭(375px)에서도 오늘 카드·일정표·레슨 본문이 깨지지 않는다 (Phase 3 검증 후속 항목 해소)
   4. Phase 1~5의 자동 게이트(check-*.mjs, e2e-*.mjs)가 전부 통과한다 — 디자인 정리가 기능 회귀를 만들지 않는다
 
-**Plans**: 5/8 plans executed (웨이브 1~4 — 웨이브 2에서 4개 플랜 병렬, 파일 소유권 무충돌)
+**Plans**: 7/8 plans executed (웨이브 1~4 — 웨이브 2에서 4개 플랜 병렬, 파일 소유권 무충돌)
 
 Plans:
 
@@ -290,8 +290,8 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2)* — 레슨 화면 마감 + 빈 캔버스 재배치
 
-- [ ] 06-06-PLAN.md — 표 가로 스크롤 래퍼 + `<main>` 랜드마크·gap 통일·잠금 문구 + 구간 테이프(Section Tape) 신설 (SC1~SC4)
-- [ ] 06-07-PLAN.md — `/curriculum` 재배치 + 홈 재배치(D-97 판정 조건부). **타임박스 초과 시 첫 번째 드롭 후보** (SC2, SC4)
+- [x] 06-06-PLAN.md — 표 가로 스크롤 래퍼 + `<main>` 랜드마크·gap 통일·잠금 문구 + 구간 테이프(Section Tape) 신설 (SC1~SC4)
+- [x] 06-07-PLAN.md — `/curriculum` 재배치 + 홈 재배치(D-97 판정 조건부). **타임박스 초과 시 첫 번째 드롭 후보** (SC2, SC4)
 
 **Wave 4** *(blocked on Wave 3)* — 게이트 활성화 + 최종 검증
 
