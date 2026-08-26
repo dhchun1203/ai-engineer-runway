@@ -238,7 +238,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. 학습 일정과 오늘의 학습 | 4/4 | Complete    | 2026-08-25 |
 | 4. Step 1 심화 콘텐츠 | 6/7 | In Progress|  |
 | 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 13/13 | Complete    | 2026-08-26 |
-| 6. 전체 페이지 디자인 정리 | 8/8 | In Progress|  |
+| 6. 전체 페이지 디자인 정리 | 9/9 | In Progress|  |
 
 ## Coverage Notes
 
@@ -273,7 +273,7 @@ Phase 1~3(플랫폼)은 합쳐서 약 1주가 목표다. 리서치가 지목한 
   3. 폰 폭(375px)에서도 오늘 카드·일정표·레슨 본문이 깨지지 않는다 (Phase 3 검증 후속 항목 해소)
   4. Phase 1~5의 자동 게이트(check-*.mjs, e2e-*.mjs)가 전부 통과한다 — 디자인 정리가 기능 회귀를 만들지 않는다
 
-**Plans**: 8/9 plans executed (웨이브 1~4 실행 완료 + UAT gap 클로저 플랜 1개 대기)
+**Plans**: 9/9 plans executed (웨이브 1~4 실행 완료 + UAT gap 클로저 플랜 1개 대기)
 
 Plans:
 
@@ -299,7 +299,7 @@ Plans:
 
 **Wave 1 (gap closure)** *(UAT gap G-06-9, G-06-2 — 기존 8개 플랜과 무관하게 단독 실행)*
 
-- [ ] 06-09-PLAN.md — 구간 테이프 게이트 신설(빨간불 선증명) + 테이프 기하 CSS 단일 소스화 + 라벨을 테이프 기준 배치 (SC1~SC4, G-06-9·G-06-2)
+- [x] 06-09-PLAN.md — 구간 테이프 게이트 신설(빨간불 선증명) + 테이프 기하 CSS 단일 소스화 + 라벨을 테이프 기준 배치 (SC1~SC4, G-06-9·G-06-2)
 
 ### Phase 7: 아이패드 브라우저 실습 환경
 
