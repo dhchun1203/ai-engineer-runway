@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 4
+open_count: 5
 waived_count: 0
 fixed_count: 1
-total_count: 5
-last_updated: 2026-08-25T16:33:39.522Z
+total_count: 6
+last_updated: 2026-08-26T23:46:35.825Z
 ---
 
 # Broken Windows Ledger
@@ -20,6 +20,7 @@ last_updated: 2026-08-25T16:33:39.522Z
 | 3 | 02 | unrun-verify | src/app/page.tsx |  | 02-04 Task 3 human-check A-D (기기 전환, 진행률 표시, 외부인 차단, 아이패드 경험 — 12개 항목) — workflow.human_verify_mode=end-of-phase에 따라 미실행, /gsd-verify-work end-of-phase UAT에서 harvest 예정 | open |  | 2026-08-24T09:41:06.787Z |  |
 | 4 | 03 | unrun-verify | scripts/e2e-today.mjs |  | t8(과거 배정 미완료 -> behind + 밀린 레슨 목록 실제 화면 왕복)이 실행일(2026-08-25, 사전학습 첫날)에 어제까지 배정분이 없어 스킵됨 -- 과거 배정분이 쌓이는 날 재실행 필요 | fixed |  | 2026-08-24T15:22:31.715Z | 2026-08-25T16:33:39.522Z |
 | 5 | 05 | lint-warning | src/components/theme-toggle.tsx | 15 | Pre-existing Phase 1 react-hooks/set-state-in-effect + no-assign-module-variable lint errors surfaced by Plan 05-13's npm run lint gate (theme-toggle.tsx, lesson-nav.tsx) - not caused by Phase 5, out of scope, logged in deferred-items.md | open |  | 2026-08-25T16:31:11.078Z |  |
+| 6 | 08 | deviation | scripts/e2e-perf-budget.mjs |  | e2e-perf-budget.mjs를 실제 .env.local(진짜 Supabase 자격 증명)로 재실행해 기준선 숫자를 재확인하지 못함 — 이 워크트리에서 .env* 파일이 권한상 차단되어 더미 자격 증명으로만 검증함 | open |  | 2026-08-26T23:46:35.825Z |  |
 
 ````json
 [
@@ -82,6 +83,19 @@ last_updated: 2026-08-25T16:33:39.522Z
     "reason": "",
     "recorded_at": "2026-08-25T16:31:11.078Z",
     "resolved_at": null
+  },
+  {
+    "id": 6,
+    "kind": "deviation",
+    "phase": "08",
+    "file": "scripts/e2e-perf-budget.mjs",
+    "line": null,
+    "description": "e2e-perf-budget.mjs를 실제 .env.local(진짜 Supabase 자격 증명)로 재실행해 기준선 숫자를 재확인하지 못함 — 이 워크트리에서 .env* 파일이 권한상 차단되어 더미 자격 증명으로만 검증함",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-08-26T23:46:35.825Z",
+    "resolved_at": null
   }
 ]
 ````
+
