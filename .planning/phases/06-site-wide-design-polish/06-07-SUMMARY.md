@@ -186,3 +186,9 @@ None — no external service configuration required. `UNLOCK_SECRET` was already
 ---
 *Phase: 06-site-wide-design-polish*
 *Completed: 2026-08-26*
+
+## Self-Check: PASSED
+
+- FOUND: src/app/curriculum/page.tsx
+- FOUND: commit 7144cf0 (Task 1)
+- FOUND: commit 1c05e10 (SUMMARY.md)
