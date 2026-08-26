@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 06
-current_phase_name: 전체 페이지 디자인 정리
+current_phase_name: site-wide-design-polish
 status: executing
 stopped_at: Phase 6 UI-SPEC approved
-last_updated: "2026-08-26T03:35:29.850Z"
+last_updated: "2026-08-26T03:42:21.213Z"
 last_activity: 2026-08-26
 last_activity_desc: Plan 05-08 complete (Step 3 depth re-trim/re-approval + 2 lessons)
 progress:
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-24)
 
 **Core value:** 개강 전까지 커리큘럼의 기초를 확실히 다질 수 있도록 — 콘텐츠를 읽고, 완료를 체크하고, 진행률과 일정을 한눈에 확인하는 흐름이 반드시 동작해야 한다.
-**Current focus:** Phase 05 — step-2-3
+**Current focus:** Phase 06 — site-wide-design-polish
 
 ## Current Position
 
-Phase: 06 — 전체 페이지 디자인 정리
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-08-26 — Phase 05 complete, transitioned to Phase 06
+Phase: 06 (site-wide-design-polish) — EXECUTING
+Plan: 1 of 8
+Status: Executing Phase 06
+Last activity: 2026-08-26 — Phase 06 execution started
 
 Progress: [█████████████████░░░] 8/13 plans in phase 05 ([██████████] 100% project-wide)
 
