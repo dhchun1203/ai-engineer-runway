@@ -25,7 +25,7 @@ export function DepthBadge({
 
   return (
     <span
-      className={`inline-flex items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-[14px] font-semibold leading-[1.4] ${colorClasses}`}
+      className={`inline-flex items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-label font-semibold ${colorClasses}`}
     >
       {depth}
     </span>

@@ -8,7 +8,7 @@ export function ProgressReadError({ className }: { className?: string }) {
   return (
     <div
       data-progress-ui="read-error"
-      className={`flex min-h-11 items-center rounded-lg bg-badge-neutral-bg px-4 text-[16px] font-normal leading-[1.6] text-badge-neutral-text dark:bg-badge-neutral-bg-dark dark:text-badge-neutral-text-dark${
+      className={`flex min-h-11 items-center rounded-lg bg-badge-neutral-bg px-4 text-body font-normal text-badge-neutral-text dark:bg-badge-neutral-bg-dark dark:text-badge-neutral-text-dark${
         className ? ` ${className}` : ""
       }`}
     >

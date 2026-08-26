@@ -51,7 +51,7 @@ export function CompleteButton({
         disabled={isPending}
         aria-pressed={optimisticDone}
         aria-label={optimisticDone ? '완료 취소하기' : '레슨 완료하기'}
-        className={`flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 text-[16px] font-semibold leading-[1.6] ${
+        className={`flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 text-body font-semibold ${
           optimisticDone
             ? 'complete-ring-glow border-accent text-accent dark:border-accent-dark dark:text-accent-dark'
             : 'border-badge-neutral-bg dark:border-badge-neutral-bg-dark'
@@ -67,7 +67,7 @@ export function CompleteButton({
         )}
       </button>
       {error ? (
-        <div className="flex items-center gap-2 text-[14px] font-normal leading-[1.4]">
+        <div className="flex items-center gap-2 text-label font-normal">
           <span>{error}</span>
           <button
             type="button"
