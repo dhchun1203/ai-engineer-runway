@@ -1,24 +1,29 @@
 ---
 phase: 05-step-2-3
 verified: 2026-08-26T00:00:00Z
-status: human_needed
+status: passed
 score: 4/4 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
 mvp_mode_note: "phase has mode: mvp in ROADMAP.md, but the goal text ('학습자가 커리큘럼 전체(...)를 사이트에서 학습할 수 있다') does not match the required 'As a X, I want Y, so that Z.' regex — confirmed via `gsd-tools query user-story.validate` returning valid=false. This is a Korean-language declarative goal, not an English user-story template; every other phase in this ROADMAP uses the same declarative style. Rather than refuse verification outright, this report proceeds with standard goal-backward verification against the ROADMAP's explicit, concrete Success Criteria (which function as the must-haves contract regardless of mode tag). Flagging this tooling/content mismatch for the human to decide whether to correct the mode tag or accept declarative Korean goals project-wide.
 human_verification:
+
   - test: "iPad Safari 실기기에서 프로젝트 준비 가이드 5편(2-4, 2-6, 3-2, 3-5, 3-7)을 끝까지 읽고 표·체크박스·해보기 접힘 블록이 정상 렌더되는지 확인"
     expected: "가로 스크롤 없이 표가 읽히고, 체크박스·<details> 터치 타깃이 44px 이상이며, 내용이 실제로 '준비 가이드'로 읽힌다(완성 코드로 읽히지 않는다)"
     why_human: "시각적 렌더링·터치 조작감은 코드 검사로 확인 불가 (이미 STATE.md/known-open-item으로 기록됨 — 새 발견 아님)"
+
   - test: "iPad Safari 실기기에서 Making-of 페이지의 Phase 4·5 신설 섹션을 읽고 톤·흐름이 이전 섹션과 이어지는지 확인"
     expected: "Phase 1~5가 하나의 이야기처럼 끊김 없이 읽힌다"
     why_human: "톤 일관성은 사람의 읽기 판단 영역 (이미 05-13 SUMMARY가 backstop으로 기록 — 새 발견 아님)"
+
   - test: "2-1 모듈(PostgreSQL·Supabase) SQL을 실제 Supabase SQL 에디터에서 실행해 연습 스키마 분리(D-56)가 진짜로 `public.progress`에 영향을 주지 않는지 확인"
     expected: "연습 스키마 생성·조작이 진도 저장 테이블에 부작용을 만들지 않는다"
     why_human: "실행 환경(Supabase 크리덴셜)에 접근 가능한 실행자가 없었음 (이미 known-open-item — 새 발견 아님)"
+
   - test: "3-4-n8n-langgraph·3-6-structured-output-canary·3-4-multi-agent-structure 세 편을 사용자가 승인한 트리밍 기준 레슨(3-1-vector-search-basics, 트림 후 '이제 맞다' 승인본)과 나란히 놓고 읽어, '언제 X가 Y보다 낫다'류 비교표·모범답안이 '알아듣기' 선을 넘지 않는지 재확인"
     expected: "비교표는 D-62(b)의 '언제 쓰는지' 정의 요구를 충족하는 범주적 설명에 머물고, 수치 튜닝(카나리 비율 등)은 오직 판단형 해보기의 예시 답안 안에만 있다 — 이 검증에서는 이 경계를 code-review로 확인했으나(찾은 근거는 본문 참고), '알아듣기 vs 실무 판단력' 사이의 최종 경계 판정은 원 사용자가 3-1 파일럿을 승인했던 것과 같은 기준으로 사람이 다시 봐야 한다. 05-08의 '이제 맞다' 재승인은 3-1·3-1-hybrid·3-2 세 편만 실사용자가 봤고, 05-09~05-12(10편)은 병렬 집필돼 사람이 개별 확인하지 않았다"
     why_human: "깊이·톤의 최종 적정성 판단은 코드 검사로 완전히 대체할 수 없는 콘텐츠 품질 판단 (이번 검증에서 새로 식별 — 기존 known-open-item에는 없음)"
+
   - test: "실제로 35편 전체를 완료 처리한 상태에서 대시보드·오늘의 학습 화면이 100%를 표시하는지 브라우저로 직접 확인"
     expected: "반올림·집계 결함 없이 100%가 화면에 그대로 보인다"
     why_human: "05-13 SUMMARY가 스스로 기록한 backstop — `progress-math.ts`의 `aggregate()` 함수를 실제 매니페스트로 독립 실행해 100%(반올림 결함 0건)를 수치로 확인했으나, 이는 실사용자의 진짜 진도 데이터를 건드리지 않기 위해 화면을 통한 종단 확인은 의도적으로 생략한 것 — 계산 로직 자체는 강한 증거로 검증됐고 화면 렌더링 파이프라인은 Phase 2·3에서 이미 검증된 기존 기능이므로 리스크는 낮지만, 사용자가 실제로 전 레슨을 마치는 시점에 최종 확인이 필요하다"
@@ -123,3 +128,25 @@ human_verification:
 
 *Verified: 2026-08-26*
 *Verifier: Claude (gsd-verifier)*
+
+## Acknowledged Gaps
+
+사용자가 2026-08-26 UAT 세션에서 아래 항목을 인지한 상태로 Phase 마감을 승인했다(선택 A).
+
+### UAT test 5 — 35편 완료 후 100% 화면 확인 (blocked / prerequisite-study)
+
+**왜 미결인가:** 35편을 실제로 학습 완료해야만 만들어지는 상태다. 확인하려고 미리 완료 체크하면
+실제 진도 데이터가 오염된다. 개강(2026-09-30) 전 학습이 진행되면서 자연히 확인된다.
+
+**코드 경로는 검증됨 — 남은 것은 사람이 눈으로 보는 절차뿐:**
+- `percent`는 `src/lib/progress-math.ts:25` 한 곳에서만 계산된다 —
+  `Math.min(100, Math.max(0, Math.round((completed/total)*100)))`
+- `src/components/progress-summary.tsx`가 그 값을 재가공 없이 그대로 렌더한다
+  (52행 숫자 표시, 66행 막대 너비, 60행 `aria-valuenow`)
+- 표시 단계에 2차 반올림·절삭 경로가 없다 — 100이 99로 깨질 코드 경로가 존재하지 않는다
+- `node scripts/check-progress-math.mjs` 11개 케이스 통과
+- 05-13이 35편 완료 상태를 실제 `aggregate()`에 넣어 전체·Step·19개 모듈 모두 정확히 100 확인
+
+**남은 위험:** 낮음. 어긋나더라도 표시 계층 문제라 되돌리기 쉽다.
+
+**추적:** `/gsd-audit-uat`에 계속 노출된다. 학습 완료 시점에 `/gsd-verify-work 5`로 이 항목만 닫으면 된다.
