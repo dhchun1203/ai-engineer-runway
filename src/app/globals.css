@@ -82,6 +82,20 @@ body {
   background-color: var(--color-badge-neutral-bg-dark);
 }
 
+/* Section Tape 셀 focus-visible (D-R4K-1) — 이 코드베이스에 focus-visible
+   전례가 없어 이 Phase가 처음 정의하는 규칙이다(globals.css 전역 grep 0건).
+   accent를 쓰는 이유는 테이프 색으로 accent를 쓰는 것이 아니라 "활성/포커스
+   상태"가 이미 accent 예약 목록에 있는 용도이기 때문이다(색 의미 재사용,
+   새 규칙 아님) — 테이프 자체의 색은 해당 레슨의 Step 색을 쓴다. */
+.section-tape-cell:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.dark .section-tape-cell:focus-visible {
+  outline-color: var(--color-accent-dark);
+}
+
 /* Code must never inherit the Korean body font (D-06) */
 code,
 pre {
@@ -223,6 +237,10 @@ code[data-theme*=" "] span {
   font-size: var(--text-heading);
   font-weight: 700;
   line-height: 1.3;
+  /* Section Tape 높이(44px) + spacing sm 토큰(8px) 여유 — 테이프가 sticky로
+     상단에 떠 있는 동안 탭 이동한 h2 제목이 테이프 밑에 가리지 않게 한다
+     (06-UI-SPEC.md § scroll-margin-top, D-R4K-1). */
+  scroll-margin-top: 52px;
 }
 .prose h3 {
   font-size: var(--text-subhead);

@@ -5,6 +5,7 @@ import { EstimatedTime } from "@/components/estimated-time";
 import { LessonBreadcrumb, LessonPager } from "@/components/lesson-nav";
 import { CompleteButton } from "@/components/complete-button";
 import { ProgressReadError } from "@/components/progress-error";
+import { SectionTape } from "@/components/section-tape";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readCompletedLessonIds } from "@/lib/progress-store";
 import {
@@ -13,6 +14,10 @@ import {
   getAdjacentLessons,
 } from "@/content/curriculum-helpers";
 import type { StepId } from "@/content/modules";
+
+// 구간 테이프가 측정할 prose 컨테이너의 id — 페이지당 하나뿐이라 레슨 슬러그와
+// 무관한 상수로 둔다.
+const LESSON_ARTICLE_ID = "lesson-article";
 
 // 이 페이지는 쿠키를 읽으므로 어차피 동적 렌더링으로 전환되지만, 명시 선언이
 // 조건부 쿠키 접근 때문에 캐시된 응답이 나가는 문제(RESEARCH Pitfall 4)를
@@ -53,9 +58,12 @@ export default async function LessonPage(
           </div>
         </header>
         {lesson.hasContent ? (
-          <div className="prose dark:prose-invert max-w-none">
-            <MDXContent code={lesson.code} />
-          </div>
+          <>
+            <SectionTape articleId={LESSON_ARTICLE_ID} stepId={lesson.stepId as StepId} />
+            <div id={LESSON_ARTICLE_ID} className="prose dark:prose-invert max-w-none">
+              <MDXContent code={lesson.code} />
+            </div>
+          </>
         ) : (
           <div className="flex flex-col gap-3">
             <h2 className="text-heading font-bold">콘텐츠 준비 중입니다</h2>
