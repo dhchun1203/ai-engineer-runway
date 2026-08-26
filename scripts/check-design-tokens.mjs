@@ -15,10 +15,10 @@
 //   타입 스케일 판정 대상이 아니라 이 규칙에서 제외한다. 상시 게이트다.
 // 규칙 (c) 임의값 대괄호(`text-[...]`/`leading-[...]` 등, D-R4K-4 표에서
 //   벗어난 값인지와 무관하게 대괄호 문법 자체를 금지) + Tailwind 기본
-//   팔레트 색 유틸리티 — 이 규칙만 기본 비활성(ENFORCE_ARBITRARY_VALUES=false).
-//   66곳 치환 완료 후 06-08 태스크에서 true로 뒤집는다. --strict는 이 상수와
-//   무관하게 즉시 활성화한다. 기본(비-strict) 실행에서 아직 치환하지 않은
-//   파일 때문에 상시 exit 1이 되는 것을 막는 것이 이 분리의 핵심 이유다 —
+//   팔레트 색 유틸리티 — 66곳 치환이 전부 끝난 06-08부터 기본 활성
+//   (ENFORCE_ARBITRARY_VALUES=true, D-88c/D-95 순서 제약). --strict는 이
+//   상수와 무관하게 규칙 (c)를 즉시 활성화하는 동작을 그대로 유지한다(이제는
+//   기본값과 동일하지만 의도를 문서화하는 값으로 남긴다) —
 //   text-[...] 임의값도 이 규칙(c) 소관이며 규칙(b)에는 포함되지 않는다.
 
 import fs from 'node:fs';
@@ -36,11 +36,11 @@ const ONLY_PATHS =
     ? args.slice(onlyFlagIndex + 1).filter((a) => !a.startsWith('--'))
     : null;
 
-// 66곳 치환 완료 후 06-08 태스크에서 true로 뒤집는다 — 그 시점부터 임의값
-// 대괄호·기본 팔레트 색 유틸리티가 상시 위반으로 잡힌다. --strict 플래그는
-// 이 상수와 무관하게 규칙 (c)를 즉시 활성화한다(치환 진행 상황을 미리 확인
-// 하려는 용도).
-const ENFORCE_ARBITRARY_VALUES = false;
+// 06-08에서 활성화됨(치환 완료 시점) — 66곳 치환이 전부 끝나 임의값 대괄호·
+// 기본 팔레트 색 유틸리티가 이제 상시 위반으로 잡힌다(D-88c, D-95). --strict
+// 플래그는 이 상수와 무관하게 규칙 (c)를 즉시 활성화하는 동작을 그대로
+// 유지한다 — 이제는 기본값과 같은 동작이지만, 의도를 문서화하는 값으로 남긴다.
+const ENFORCE_ARBITRARY_VALUES = true;
 const ENFORCE_RULE_C = STRICT || ENFORCE_ARBITRARY_VALUES;
 
 // D-R4K-4 / 06-UI-SPEC.md § Typography — 문자열 그대로 대조한다(환산 없음).
@@ -445,7 +445,7 @@ if (violations.length > 0) {
 
 console.log(
   `check-design-tokens: 위반 없음 — ${scannedFileCount}개 파일 검사 완료${
-    ENFORCE_RULE_C ? ' (--strict, 규칙 c 포함)' : ' (규칙 c는 ENFORCE_ARBITRARY_VALUES=false로 비활성)'
+    ENFORCE_RULE_C ? ' (규칙 c 포함, 기본 활성 ENFORCE_ARBITRARY_VALUES=true)' : ' (규칙 c는 ENFORCE_ARBITRARY_VALUES=false로 비활성)'
   }`,
 );
 process.exit(0);
