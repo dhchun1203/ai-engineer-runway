@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import * as runtime from "react/jsx-runtime";
 import type { ComponentPropsWithoutRef, ComponentType } from "react";
 import { CodeBlock } from "@/components/code-block";
+import { ClozeBlank } from "@/components/cloze-blank";
 
 // Velite는 MDX를 빌드 타임에 함수 본문(code) 문자열로 컴파일한다.
 // 이 컴포넌트는 그 문자열을 다시 React 컴포넌트로 되돌리는 유일하게 올바른 방법이다 —
@@ -29,9 +30,15 @@ function TableWrapper(props: ComponentPropsWithoutRef<"table">) {
 // 모든 MDX 렌더 지점(/lesson, /about)이 공유하는 기본 매핑. 호출부마다 따로
 // 넘기게 두면 한쪽을 빠뜨리기 쉬우므로 여기 한 곳에서 주입한다.
 // pre -> CodeBlock: 동작하는 복사 버튼을 붙인다(code-block.tsx 주석 참고).
+// ClozeBlank -> src/lib/remark-cloze-blanks.ts가 컴파일된 MDX에 심는 참조.
+// 이 매핑이 빠지면 개념 설명 구간이 있는 모든 레슨이 렌더 시점에
+// "Expected component ClozeBlank to be defined"로 죽는다 — /about처럼 빈칸이
+// 없는 콘텐츠는 이 매핑이 없어도 영향받지 않지만, 한 곳에서 관리하는 원칙을
+// 지키기 위해 여기서도 항상 주입한다.
 const defaultComponents: Record<string, ComponentType> = {
   pre: CodeBlock as ComponentType,
   table: TableWrapper as ComponentType,
+  ClozeBlank: ClozeBlank as ComponentType,
 };
 
 export const MDXContent = ({
