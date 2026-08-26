@@ -23,12 +23,12 @@ export function ProgressBadge({
   return (
     <span
       data-progress-ui="badge"
-      className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[14px] font-normal leading-[1.4] text-badge-neutral-text dark:text-badge-neutral-text-dark${
+      className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark${
         className ? ` ${className}` : ""
       }`}
     >
       완료 {completed}/{total} ·{" "}
-      <span className={`text-[14px] font-semibold leading-[1.4] ${percentClass}`}>{percent}%</span>
+      <span className={`text-label font-semibold ${percentClass}`}>{percent}%</span>
     </span>
   );
 }

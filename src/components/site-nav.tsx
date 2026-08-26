@@ -21,7 +21,7 @@ const NAV_ITEMS: readonly NavItem[] = [
 
 function NavBadge() {
   return (
-    <span className="rounded-full bg-badge-neutral-bg px-2 py-0.5 text-[14px] font-semibold leading-[1.4] text-badge-neutral-text dark:bg-badge-neutral-bg-dark dark:text-badge-neutral-text-dark">
+    <span className="rounded-full bg-badge-neutral-bg px-2 py-0.5 text-label font-semibold text-badge-neutral-text dark:bg-badge-neutral-bg-dark dark:text-badge-neutral-text-dark">
       준비 중
     </span>
   );
@@ -38,7 +38,7 @@ export function SiteNav() {
       >
         <Link
           href="/"
-          className="flex min-h-11 shrink-0 items-center text-[20px] font-semibold leading-[1.3]"
+          className="flex min-h-11 shrink-0 items-center text-heading font-bold"
         >
           AI Engineer Runway
         </Link>
@@ -49,7 +49,7 @@ export function SiteNav() {
                 <span
                   key={item.label}
                   aria-disabled="true"
-                  className="flex min-h-11 cursor-not-allowed items-center gap-2 text-[14px] font-semibold leading-[1.4] text-badge-neutral-text opacity-70 dark:text-badge-neutral-text-dark"
+                  className="flex min-h-11 cursor-not-allowed items-center gap-2 text-label font-semibold text-badge-neutral-text opacity-70 dark:text-badge-neutral-text-dark"
                 >
                   {item.label}
                   <NavBadge />
@@ -61,7 +61,7 @@ export function SiteNav() {
               <Link
                 key={item.label}
                 href={item.href}
-                className={`flex min-h-11 items-center border-b-2 text-[14px] font-semibold leading-[1.4] ${
+                className={`flex min-h-11 items-center border-b-2 text-label font-semibold ${
                   isActive
                     ? "border-accent text-accent dark:border-accent-dark dark:text-accent-dark"
                     : "border-transparent"

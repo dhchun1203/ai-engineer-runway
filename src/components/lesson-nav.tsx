@@ -10,7 +10,7 @@ export function LessonBreadcrumb({ lesson }: { lesson: Pick<Lesson, "stepId" | "
   const module = modules.find((m) => m.id === lesson.moduleId);
 
   return (
-    <nav aria-label="브레드크럼" className="flex flex-wrap items-center gap-2 text-[14px] font-normal leading-[1.4]">
+    <nav aria-label="브레드크럼" className="flex flex-wrap items-center gap-2 text-label font-normal font-mono">
       <Link href={stepHref} className="flex min-h-11 items-center underline-offset-2 hover:underline">
         Step {lesson.stepId}
       </Link>
@@ -32,9 +32,9 @@ function PagerButton({
   direction: "prev" | "next";
 }) {
   const isPrev = direction === "prev";
-  const label = isPrev ? "← 이전 레슨" : "다음 레슨 →";
+  const label = isPrev ? "이전 레슨" : "다음 레슨";
   const alignClass = isPrev ? "sm:justify-start" : "sm:justify-end";
-  const baseClass = `flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-badge-neutral-bg px-4 py-2 text-[16px] font-normal leading-[1.6] dark:border-badge-neutral-bg-dark ${alignClass}`;
+  const baseClass = `flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-badge-neutral-bg px-4 py-2 text-body font-normal dark:border-badge-neutral-bg-dark ${alignClass}`;
 
   const content = isPrev ? (
     <>

@@ -11,7 +11,7 @@ export function formatEstimatedTime(minutes: number): string {
 
 export function EstimatedTime({ minutes }: { minutes: number }) {
   return (
-    <span className="whitespace-nowrap text-[14px] font-normal leading-[1.4]">
+    <span className="whitespace-nowrap text-label font-normal font-mono">
       {formatEstimatedTime(minutes)}
     </span>
   );
