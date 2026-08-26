@@ -263,7 +263,7 @@ Phase 1~3(플랫폼)은 합쳐서 약 1주가 목표다. 리서치가 지목한 
 **Goal**: 모든 화면이 존재하는 상태에서 `frontend-design` 스킬로 사이트 전체를 한 번에 다듬는다 — 디자인 토큰(색·타이포·간격)·셸(내비·카드)·페이지별 마감을 정리해 아이패드에서 "템플릿 같지 않은" 일관된 경험을 만든다
 **Mode:** mvp
 **Depends on**: Phase 5
-**Requirements**: TBD (PROJECT.md Active "모바일·아이패드 최적화" 귀속 후보; 초과 범위는 v2 CONV-01~04로)
+**Requirements**: TBD (PROJECT.md Active "모바일·아이패드 최적화" 귀속 후보; 초과 범위는 v2 CONV-01~04로) — 확정 ID가 없으므로 **아래 성공 기준 4개(SC1~SC4)를 요구사항 단위로 사용한다.** `06-VALIDATION.md`·`06-EDGE-COVERAGE.json`·8개 PLAN의 `requirements` 필드가 모두 이 치환을 따른다
 **Timebox**: 2일 — 개강(9/30) 전에 끝나도록 Phase 5 목표일을 9월 셋째 주 안으로 잡는다. 초과분은 v2로 밀어낸다
 **Inputs**: Phase 3 `/gsd-ui-review` 결과(있다면), 03-VERIFICATION.md 후속 항목(폰 폭 375px 오늘 카드 레이아웃 미확인), Phase 4·5 UI-SPEC
 **Success Criteria** (what must be TRUE):
@@ -273,11 +273,29 @@ Phase 1~3(플랫폼)은 합쳐서 약 1주가 목표다. 리서치가 지목한 
   3. 폰 폭(375px)에서도 오늘 카드·일정표·레슨 본문이 깨지지 않는다 (Phase 3 검증 후속 항목 해소)
   4. Phase 1~5의 자동 게이트(check-*.mjs, e2e-*.mjs)가 전부 통과한다 — 디자인 정리가 기능 회귀를 만들지 않는다
 
-**Plans**: TBD
+**Plans**: 8 plans (웨이브 1~4 — 웨이브 2에서 4개 플랜 병렬, 파일 소유권 무충돌)
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 6 to break down)
+**Wave 1** — 트레이서: 토큰 사슬을 한 파일로 끝까지 관통시킨다
+
+- [ ] 06-01-PLAN.md — `@theme` 네임스페이스 정정(`--text-*` 5종) + `.prose` 봉쇄 + 레슨 페이지 1파일 치환 + 정적/런타임 게이트 2종 신설 (SC1, SC4)
+
+**Wave 2** *(blocked on Wave 1)* — 임의값 66곳 중 63곳 치환 + 실측 정산, 4개 플랜 병렬
+
+- [ ] 06-02-PLAN.md — `01-UI-SPEC.md` Typography 표 개정 + D-97 빈 캔버스 실측(쿠키 유무 양쪽) (SC1, SC2)
+- [ ] 06-03-PLAN.md — 카드·행 계약 통일(`.card-interactive` hover, padding) + 4개 컴포넌트 치환 19곳 (SC1, SC2, SC4)
+- [ ] 06-04-PLAN.md — 라우트 페이지 7종 + 홈 대시보드 4종 치환 31곳, CTA 타이포 표준 확정 (SC1, SC2, SC4)
+- [ ] 06-05-PLAN.md — 내비·페이저·배지·버튼 7종 치환 13곳 + 페이저 이중 글리프 제거 + mono 승격 (SC1, SC2, SC4)
+
+**Wave 3** *(blocked on Wave 2)* — 레슨 화면 마감 + 빈 캔버스 재배치
+
+- [ ] 06-06-PLAN.md — 표 가로 스크롤 래퍼 + `<main>` 랜드마크·gap 통일·잠금 문구 + 구간 테이프(Section Tape) 신설 (SC1~SC4)
+- [ ] 06-07-PLAN.md — `/curriculum` 재배치 + 홈 재배치(D-97 판정 조건부). **타임박스 초과 시 첫 번째 드롭 후보** (SC2, SC4)
+
+**Wave 4** *(blocked on Wave 3)* — 게이트 활성화 + 최종 검증
+
+- [ ] 06-08-PLAN.md — 375px 오버플로 게이트 신설 + 임의값 게이트 활성화 + 게이트 13종 스위트 + UAT 기록 + 시각 검수 체크포인트 (SC1~SC4)
 
 ### Phase 7: 아이패드 브라우저 실습 환경
 
