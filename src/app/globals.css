@@ -67,6 +67,21 @@ body {
   color: var(--color-foreground-dark);
 }
 
+/* 클릭 가능한 카드/행 hover 톤 (06-UI-SPEC.md § Card Contract). 그리드 카드 2종
+   (StepCard, TodayLessonCard)과 리스트 행 2종(ModuleAccordion 레슨 행,
+   ScheduleTable 행)이 공용으로 붙이는 클래스다 — 지금까지 이 4곳 전부 클릭은
+   되지만 hover 피드백이 전혀 없었다(04-UI-REVIEW). 새 색을 만들지 않고 기존
+   중성 surface 토큰(--color-badge-neutral-bg[-dark]) 안에서 명도만 이동한다
+   (D-R4K-2). 포커스 아웃라인은 이 규칙에 포함하지 않는다 — 브라우저 기본
+   아웃라인을 유지하는 것이 06-UI-SPEC.md § Focus-visible 계약의 결정이다. */
+.card-interactive:hover {
+  background-color: var(--color-badge-neutral-bg);
+}
+
+.dark .card-interactive:hover {
+  background-color: var(--color-badge-neutral-bg-dark);
+}
+
 /* Code must never inherit the Korean body font (D-06) */
 code,
 pre {
