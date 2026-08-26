@@ -1,5 +1,5 @@
 ---
-status: issues_found
+status: partial
 phase: 06-site-wide-design-polish
 source: [06-VALIDATION.md, 06-UI-SPEC.md, 06-CONTEXT.md D-93, 06-D97-MEASUREMENT.md]
 started: 2026-08-26T00:00:00Z
@@ -8,12 +8,7 @@ updated: 2026-08-26T00:00:00Z
 
 ## Current Test
 
-number: 1
-name: 실기기 iPad Safari 확인 (D-93)
-expected: |
-  6종 화면이 세로/가로 모두에서 정상 렌더되고, 구간 테이프 탭 이동·코드 블록 가로
-  스크롤·터치 히트박스가 실제 손가락으로 문제없이 동작한다.
-awaiting: user
+[testing complete]
 
 ## Tests
 
