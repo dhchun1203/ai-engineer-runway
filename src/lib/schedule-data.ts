@@ -5,7 +5,7 @@
 // 않는 공개 층이다(D-37, ARCHITECTURE 책임 맵의 계층 분리).
 
 import { getOrderedLessons } from '@/content/curriculum-helpers';
-import { buildSchedule, scheduleTotalDays, SCHEDULE_START, type ScheduleRow } from './schedule';
+import { buildSchedule, scheduleTotalDays, SCHEDULE_START, DOUBLE_LESSON_DATES, type ScheduleRow } from './schedule';
 
 /**
  * 매니페스트 전역 정렬(getOrderedLessons) 순서를 SCHEDULE_START부터 배정한
@@ -14,7 +14,12 @@ import { buildSchedule, scheduleTotalDays, SCHEDULE_START, type ScheduleRow } fr
  */
 export function getScheduleRows(): ScheduleRow[] {
   const slugs = getOrderedLessons().map((lesson) => lesson.slug);
-  return buildSchedule(slugs, SCHEDULE_START, scheduleTotalDays(slugs.length));
+  return buildSchedule(
+    slugs,
+    SCHEDULE_START,
+    scheduleTotalDays(slugs.length, DOUBLE_LESSON_DATES.length),
+    DOUBLE_LESSON_DATES,
+  );
 }
 
 /** slug → estimatedMinutes Map (Plan 03의 페이스 계산 입력). */
