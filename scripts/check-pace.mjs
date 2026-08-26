@@ -187,6 +187,78 @@ async function main() {
     assert.deepStrictEqual(completedIds, completedSnapshot, 'computePace가 입력 completedIds Set을 변형했습니다');
   });
 
+  // --- 중복 날짜(2레슨 날) 케이스 — DD-1의 "pace.ts는 중복 날짜를 이미 견딘다"는
+  // 주장을 실행 증거로 못박는다. 날짜 문자열은 SCHEDULE_START를 읽지 않는 자기완결
+  // 픽스처이므로 기존 케이스와 무관한 값을 자유롭게 쓴다. ---
+
+  runCase(
+    '같은 날짜 2행이 모두 과거이고 둘 다 미완료 -> behind, gapMinutes=두 레슨 분의 합, missedSlugs=두 slug를 rows 순서대로',
+    () => {
+      const rows = [
+        { date: '2026-08-29', lessonSlug: 'l1' },
+        { date: '2026-08-29', lessonSlug: 'l2' },
+      ];
+      const minutesBySlug = new Map([
+        ['l1', 60],
+        ['l2', 90],
+      ]);
+      const result = computePace(rows, minutesBySlug, new Set(), '2026-08-30');
+      assert.deepStrictEqual(result, { status: 'behind', gapMinutes: 150, missedSlugs: ['l1', 'l2'] });
+    },
+  );
+
+  runCase(
+    '같은 날짜 2행이 모두 과거이고 하나만 완료 -> behind, gapMinutes=미완료 1건의 분, missedSlugs=그 1건만(완료한 쪽이 미완료를 가리지 않는다)',
+    () => {
+      const rows = [
+        { date: '2026-08-29', lessonSlug: 'l1' },
+        { date: '2026-08-29', lessonSlug: 'l2' },
+      ];
+      const minutesBySlug = new Map([
+        ['l1', 60],
+        ['l2', 90],
+      ]);
+      const completedIds = new Set(['l1']);
+      const result = computePace(rows, minutesBySlug, completedIds, '2026-08-30');
+      assert.deepStrictEqual(result, { status: 'behind', gapMinutes: 90, missedSlugs: ['l2'] });
+    },
+  );
+
+  runCase(
+    '같은 날짜 2행이 오늘 날짜이고 둘 다 미완료 -> on-track(어제까지 배정분 0), missedSlugs 빈 배열(오늘 배정분이 밀린 것으로 잡히지 않는다)',
+    () => {
+      const rows = [
+        { date: '2026-08-29', lessonSlug: 'l1' },
+        { date: '2026-08-29', lessonSlug: 'l2' },
+      ];
+      const minutesBySlug = new Map([
+        ['l1', 60],
+        ['l2', 90],
+      ]);
+      const result = computePace(rows, minutesBySlug, new Set(), '2026-08-29');
+      assert.deepStrictEqual(result, { status: 'on-track', gapMinutes: 0, missedSlugs: [] });
+    },
+  );
+
+  runCase(
+    '같은 날짜 2행 중 하나가 오늘·미래 배정인데 미리 완료 -> 어제까지 배정분의 미완료를 가리지 않고 behind로 판정된다(Pitfall 3, 중복 날짜에서도 재현 안 됨)',
+    () => {
+      const rows = [
+        { date: '2026-08-27', lessonSlug: 'l0' }, // 어제까지 배정, 미완료
+        { date: '2026-08-29', lessonSlug: 'l1' }, // 오늘 배정
+        { date: '2026-08-29', lessonSlug: 'l2' }, // 오늘 배정, 미리 완료
+      ];
+      const minutesBySlug = new Map([
+        ['l0', 60],
+        ['l1', 90],
+        ['l2', 120],
+      ]);
+      const completedIds = new Set(['l2']);
+      const result = computePace(rows, minutesBySlug, completedIds, '2026-08-29');
+      assert.deepStrictEqual(result, { status: 'behind', gapMinutes: 60, missedSlugs: ['l0'] });
+    },
+  );
+
   // --- catchUpDays ---
 
   runCase('catchUpDays(0) -> 0', () => {

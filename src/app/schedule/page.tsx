@@ -3,6 +3,7 @@ import { ScheduleAutoScroll } from "@/components/schedule-auto-scroll";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readCompletedLessonIds } from "@/lib/progress-store";
 import { todayInSeoul } from "@/lib/today";
+import { SCHEDULE_START } from "@/lib/schedule";
 import { getScheduleRows } from "@/lib/schedule-data";
 import { getLessonBySlug } from "@/content/curriculum-helpers";
 import type { StepId } from "@/content/modules";
@@ -55,13 +56,17 @@ export default async function SchedulePage() {
     .filter((row): row is ScheduleTableRow => row !== null);
 
   const todayInRange = rows.some((row) => row.date === today);
+  // 시작일은 SCHEDULE_START, 종료일은 실제 마지막 행 date에서 파생한다 — 날짜
+  // 리터럴을 이 파일에 다시 적지 않는다. 하루 1레슨이 기본이고 토요일 3일만
+  // 2레슨이라는 사실을 문구에 담는다.
+  const scheduleEnd = rows[rows.length - 1]?.date ?? SCHEDULE_START;
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-2">
         <h1 className="text-display font-bold">학습 일정표</h1>
         <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          2026-08-25 ~ 2026-09-29 · 하루 1레슨
+          {`${SCHEDULE_START} ~ ${scheduleEnd} · 하루 1레슨(토요일 3일만 2레슨)`}
         </p>
       </header>
       <ScheduleTable rows={tableRows} today={today} completedIds={completedIds} />

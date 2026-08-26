@@ -18,7 +18,7 @@ import { createClient } from '@supabase/supabase-js';
 import { spawn, execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -28,9 +28,12 @@ const ROOT = path.resolve(__dirname, '..');
 // 상수를 재선언한다(e2e-progress.mjs와 같은 이유).
 const UNLOCK_COOKIE_NAME = 'runway_unlock';
 
-// src/lib/schedule.ts의 SCHEDULE_START/COURSE_START_DATE와 반드시 일치해야
-// 한다 — 앱 코드를 import하지 않고 독립적으로 기대값을 계산하기 위해 재선언한다.
-const SCHEDULE_START = '2026-08-25';
+// 상수는 schedule.ts에서 로드하고 알고리즘만 독립 재구현한다(DD-4). SCHEDULE_START를
+// 이 파일에 다시 적으면 값이 드리프트할 수 있다(Phase 6 gap G-06-9와 같은 실패 모드) —
+// schedule.ts는 import가 0개인 순수 모듈이라 Node 22.6+ 타입 스트리핑으로 트랜스파일러
+// 없이 그대로 동적 import할 수 있다(check-schedule.mjs가 이미 쓰는 패턴).
+const SCHEDULE_TS_PATH = path.join(ROOT, 'src', 'lib', 'schedule.ts');
+const { SCHEDULE_START, DOUBLE_LESSON_DATES } = await import(pathToFileURL(SCHEDULE_TS_PATH).href);
 
 const PORT = process.env.E2E_PORT ? Number(process.env.E2E_PORT) : 3211;
 const HOST = '127.0.0.1';
@@ -99,17 +102,30 @@ function computeOrderedSlugs() {
   return ordered.map((l) => l.slug);
 }
 
-// buildSchedule()과 동일한 Date.UTC 산술을 독립적으로 재현한다 — schedule.ts를
-// import하지 않는다(같은 함수를 재사용하면 계산이 틀려도 검증이 같이 틀린다).
-function computeScheduleRows(orderedSlugs, startDateISO) {
-  const totalDays = orderedSlugs.length + 1;
+// buildSchedule()과 동일한 Date.UTC 산술 + 2레슨 규칙을 독립적으로 재현한다 —
+// schedule.ts의 buildSchedule을 import하지 않는다(같은 함수를 재사용하면 계산이
+// 틀려도 검증이 같이 틀린다는 이 파일의 원래 설계 이유가 그대로 유효하다). 상수만
+// (SCHEDULE_START/DOUBLE_LESSON_DATES) 위에서 schedule.ts로부터 로드해 단일 출처를
+// 지킨다(DD-4).
+function computeScheduleRows(orderedSlugs, startDateISO, doubleDates = []) {
+  const doubleDateSet = new Set(doubleDates);
+  const totalDays = orderedSlugs.length - doubleDates.length + 1;
   const [y, m, d] = startDateISO.split('-').map(Number);
   const rows = [];
+  let cursor = 0;
   for (let i = 0; i < totalDays; i++) {
     const dt = new Date(Date.UTC(y, m - 1, d + i));
     const dateStr = dt.toISOString().slice(0, 10);
-    const lessonSlug = i < orderedSlugs.length ? orderedSlugs[i] : null;
-    rows.push({ date: dateStr, lessonSlug, isBuffer: lessonSlug === null });
+    const slotsToday = doubleDateSet.has(dateStr) ? 2 : 1;
+    let assignedAny = false;
+    for (let slot = 0; slot < slotsToday && cursor < orderedSlugs.length; slot++) {
+      rows.push({ date: dateStr, lessonSlug: orderedSlugs[cursor], isBuffer: false });
+      cursor++;
+      assignedAny = true;
+    }
+    if (!assignedAny) {
+      rows.push({ date: dateStr, lessonSlug: null, isBuffer: true });
+    }
   }
   return rows;
 }
@@ -210,13 +226,13 @@ async function main() {
         throw new FatalError('시나리오 t1 실패 — 쿠키 없는 홈 응답에 data-progress-ui 마커가 존재합니다 (D-20 위반)');
       }
     }
-    console.log('e2e-today: t1/5 홈 쿠키 없음 → dday 1건 + today-card 1건 + 진도 마커 0건 OK');
+    console.log('e2e-today: t1/8 홈 쿠키 없음 → dday 1건 + today-card 1건 + 진도 마커 0건 OK');
 
     // --- t2. 오늘 날짜를 독립 계산해 분기별 본문 확인 (SCHED-01/02 경계) ---
     {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
       const orderedSlugs = computeOrderedSlugs();
-      const rows = computeScheduleRows(orderedSlugs, SCHEDULE_START);
+      const rows = computeScheduleRows(orderedSlugs, SCHEDULE_START, DOUBLE_LESSON_DATES);
       const todayRow = rows.find((r) => r.date === today) ?? null;
 
       const res = await fetchWithTimeout(`${BASE_URL}/`);
@@ -247,7 +263,7 @@ async function main() {
         }
       }
     }
-    console.log('e2e-today: t2/5 오늘 날짜 분기별 홈 상태 문구/링크 OK');
+    console.log('e2e-today: t2/8 오늘 날짜 분기별 홈 상태 문구/링크 OK');
 
     // --- t3. 쿠키 없이 GET /curriculum → 200, /step/1~3 링크 3건 (D-18/D-37) ---
     {
@@ -265,7 +281,7 @@ async function main() {
         throw new FatalError('시나리오 t3 실패 — 쿠키 없는 /curriculum 응답에 data-progress-ui 마커가 존재합니다 (D-20 위반)');
       }
     }
-    console.log('e2e-today: t3/5 /curriculum 쿠키 없음 → Step 링크 3건 + 진도 마커 0건 OK');
+    console.log('e2e-today: t3/8 /curriculum 쿠키 없음 → Step 링크 3건 + 진도 마커 0건 OK');
 
     // --- t4. 쿠키 포함 GET /curriculum → data-progress-ui="step-bar" 3건 (T-03-01) ---
     {
@@ -277,7 +293,7 @@ async function main() {
         throw new FatalError(`시나리오 t4 실패 — /curriculum Step 진행률 바 마커가 3건이 아닙니다 (got ${stepBarCount})`);
       }
     }
-    console.log('e2e-today: t4/5 /curriculum 쿠키 있음 → Step 진행률 바 3건 OK');
+    console.log('e2e-today: t4/8 /curriculum 쿠키 있음 → Step 진행률 바 3건 OK');
 
     // --- t5. GET / 본문에 내비 4개 href 모두 존재 (D-09) ---
     {
@@ -289,7 +305,7 @@ async function main() {
         }
       }
     }
-    console.log('e2e-today: t5/5 내비 4개 href 전부 존재 OK');
+    console.log('e2e-today: t5/8 내비 4개 href 전부 존재 OK');
 
     // --- t6. 쿠키 포함 GET / → 200. 오늘이 일정 범위 안이면 data-schedule-ui="pace"
     // 정확히 1건 + data-pace-status 값이 ahead/on-track/behind 중 하나. 범위
@@ -298,7 +314,7 @@ async function main() {
       const cookieHeader = `${UNLOCK_COOKIE_NAME}=${UNLOCK_SECRET}`;
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
       const orderedSlugs = computeOrderedSlugs();
-      const rows = computeScheduleRows(orderedSlugs, SCHEDULE_START);
+      const rows = computeScheduleRows(orderedSlugs, SCHEDULE_START, DOUBLE_LESSON_DATES);
       const todayRow = rows.find((r) => r.date === today) ?? null;
 
       const res = await fetchWithTimeout(`${BASE_URL}/`, { headers: { Cookie: cookieHeader } });
@@ -352,7 +368,7 @@ async function main() {
     {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
       const orderedSlugs = computeOrderedSlugs();
-      const rows = computeScheduleRows(orderedSlugs, SCHEDULE_START);
+      const rows = computeScheduleRows(orderedSlugs, SCHEDULE_START, DOUBLE_LESSON_DATES);
       const pastAssignedRows = rows.filter((r) => r.lessonSlug !== null && r.date < today);
 
       if (pastAssignedRows.length === 0) {
@@ -428,7 +444,7 @@ async function main() {
         throw new FatalError('시나리오 s1 실패 — 쿠키 없는 /schedule 응답에 data-progress-ui 마커가 존재합니다 (D-37 위반)');
       }
     }
-    console.log('e2e-today: s1/5 /schedule 쿠키 없음 → 36행 + 진도 마커 0건 OK');
+    console.log('e2e-today: s1/7 /schedule 쿠키 없음 → 36행 + 진도 마커 0건 OK');
 
     // --- s2. 쿠키 포함 GET /schedule → 200, 행 수는 여전히 36건 — 쿠키가 일정
     // 데이터의 양을 바꾸지 않는다(D-37 핵심 어설션) ---
@@ -444,14 +460,14 @@ async function main() {
         throw new FatalError(`시나리오 s2 실패 — 쿠키 포함 응답의 data-schedule-ui="row" 마커가 36건이 아닙니다 (got ${rowCount})`);
       }
     }
-    console.log('e2e-today: s2/5 /schedule 쿠키 있음 → 여전히 36행 OK (D-37)');
+    console.log('e2e-today: s2/7 /schedule 쿠키 있음 → 여전히 36행 OK (D-37)');
 
     // --- s3. 오늘이 일정 범위 안이면 data-schedule-ui="today-row" 1건과 그 행이
     // 오늘 날짜 문자열을 담고 있는지 확인, 범위 밖이면 0건임을 확인한다 ---
     {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
       const orderedSlugs = computeOrderedSlugs();
-      const rows = computeScheduleRows(orderedSlugs, SCHEDULE_START);
+      const rows = computeScheduleRows(orderedSlugs, SCHEDULE_START, DOUBLE_LESSON_DATES);
       const todayRow = rows.find((r) => r.date === today) ?? null;
 
       const res = await fetchWithTimeout(`${BASE_URL}/schedule`);
@@ -477,7 +493,7 @@ async function main() {
         );
       }
     }
-    console.log('e2e-today: s3/5 /schedule 오늘 행 마커(범위 안/밖) OK');
+    console.log('e2e-today: s3/7 /schedule 오늘 행 마커(범위 안/밖) OK');
 
     // --- s4. GET /schedule 본문에 2026-09-30 개강일 문구가 존재한다 ---
     {
@@ -487,7 +503,7 @@ async function main() {
         throw new FatalError('시나리오 s4 실패 — /schedule 응답에 2026-09-30 개강일 행 문구가 없습니다');
       }
     }
-    console.log('e2e-today: s4/5 /schedule 개강일(9/30) 행 문구 존재 OK');
+    console.log('e2e-today: s4/7 /schedule 개강일(9/30) 행 문구 존재 OK');
 
     // --- s5. 매니페스트에서 독립 계산한 전역 정렬 첫 레슨 slug가 첫 일정 행의
     // 링크와 일치한다 — 배정 순서가 커리큘럼 순서를 따른다는 D-32 확인 ---
@@ -507,10 +523,77 @@ async function main() {
         );
       }
     }
-    console.log('e2e-today: s5/5 /schedule 첫 행 링크가 매니페스트 독립 계산 첫 레슨과 일치 OK');
+    console.log('e2e-today: s5/7 /schedule 첫 행 링크가 매니페스트 독립 계산 첫 레슨과 일치 OK');
+
+    // --- s6. 쿠키 없이 GET /schedule → 응답 본문에서 일정 행이 담은 날짜 문자열을
+    // 모두 뽑아, 서로 다른 날짜 33개 · DOUBLE_LESSON_DATES 각 날짜 정확히 2회 등장 ·
+    // 나머지 날짜는 전부 정확히 1회 등장을 어설션한다. 개강일 행(2026-09-30)은
+    // data-schedule-ui="row" 마커가 없으므로 33개 집계에서 자연히 빠진다 —
+    // 빠지는지 확인하는 어설션도 함께 넣는다 ---
+    {
+      const res = await fetchWithTimeout(`${BASE_URL}/schedule`);
+      const body = stripSsrComments(await res.text());
+      const rowMarkerIdx = [];
+      {
+        let idx = body.indexOf('data-schedule-ui="row"');
+        while (idx !== -1) {
+          rowMarkerIdx.push(idx);
+          idx = body.indexOf('data-schedule-ui="row"', idx + 1);
+        }
+      }
+      const rowDates = rowMarkerIdx.map((idx) => {
+        const window = body.slice(idx, idx + 500);
+        const match = window.match(/\d{4}-\d{2}-\d{2}/);
+        return match ? match[0] : null;
+      });
+      if (rowDates.some((d) => d === null)) {
+        throw new FatalError('시나리오 s6 실패 — data-schedule-ui="row" 마커 근처에서 날짜 문자열을 찾지 못한 행이 있습니다');
+      }
+      const dateCounts = new Map();
+      for (const d of rowDates) {
+        dateCounts.set(d, (dateCounts.get(d) ?? 0) + 1);
+      }
+      const distinctDates = [...dateCounts.keys()];
+      if (distinctDates.length !== 33) {
+        throw new FatalError(`시나리오 s6 실패 — 서로 다른 날짜가 33개가 아닙니다 (got ${distinctDates.length})`);
+      }
+      for (const doubleDate of DOUBLE_LESSON_DATES) {
+        const count = dateCounts.get(doubleDate) ?? 0;
+        if (count !== 2) {
+          throw new FatalError(`시나리오 s6 실패 — ${doubleDate}가 정확히 2회 등장하지 않습니다 (got ${count})`);
+        }
+      }
+      for (const [d, count] of dateCounts.entries()) {
+        if (DOUBLE_LESSON_DATES.includes(d)) continue;
+        if (count !== 1) {
+          throw new FatalError(`시나리오 s6 실패 — ${d}가 정확히 1회 등장하지 않습니다 (got ${count})`);
+        }
+      }
+      if (dateCounts.has('2026-09-30')) {
+        throw new FatalError('시나리오 s6 실패 — 개강일(2026-09-30)이 data-schedule-ui="row" 집계에 포함되어 있습니다');
+      }
+    }
+    console.log('e2e-today: s6/7 /schedule 33개 날짜 중 DOUBLE_LESSON_DATES 3일만 2회, 나머지 1회씩 OK');
+
+    // --- s7. /schedule과 /를 각각 한 번 요청한 뒤, dev 서버 출력 버퍼에 React
+    // 중복 key 경고(same key / Encountered two children)가 없음을 확인한다.
+    // 중복 key 경고는 nit이 아니라 실패로 처리한다 ---
+    {
+      await fetchWithTimeout(`${BASE_URL}/schedule`);
+      await fetchWithTimeout(`${BASE_URL}/`);
+      // 서버가 콘솔에 경고를 flush할 시간을 준다.
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const combinedOutput = serverOutput.join('');
+      if (/same key/i.test(combinedOutput) || combinedOutput.includes('Encountered two children')) {
+        throw new FatalError(
+          '시나리오 s7 실패 — dev 서버 출력에서 React 중복 key 경고가 발견되었습니다 (같은 날짜 2행 렌더의 key 유일성 위반)',
+        );
+      }
+    }
+    console.log('e2e-today: s7/7 /schedule·/ 렌더 후 React 중복 key 경고 0건 OK');
 
     console.log(
-      'e2e-today: 모든 시나리오 통과 — 매니페스트 → today.ts/schedule.ts/pace.ts → force-dynamic RSC → 렌더된 HTML까지 쿠키 유/무 두 경로 왕복 확인. /schedule 5개 시나리오 포함 전체 통과.',
+      'e2e-today: 모든 시나리오 통과 — 매니페스트 → today.ts/schedule.ts/pace.ts → force-dynamic RSC → 렌더된 HTML까지 쿠키 유/무 두 경로 왕복 확인. /schedule 7개 시나리오(2레슨 날 렌더 s6·중복 key 부재 s7 포함) 포함 전체 통과.',
     );
   } finally {
     killServerTree(child);
