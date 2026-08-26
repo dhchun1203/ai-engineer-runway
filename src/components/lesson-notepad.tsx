@@ -2,9 +2,9 @@
 
 // 레슨당 메모 1개를 자동 저장하는 하단 시트 클라이언트 아일랜드. 서버 전용 모듈
 // (note-store, supabase/admin)은 import하지 않는다 — props는 직렬화 가능한 스칼라
-// 2개(lessonId, initialBody)뿐이다. 옥스포드 노트 표면(괘선/여백선)과 아이패드
-// 키보드 보정은 Task 2가 이 파일을 편집해 덧붙인다 — 이 버전은 기존 토큰만으로
-// 배포 가능한 최소 형태다(Task 1 tracer).
+// 2개(lessonId, initialBody)뿐이다. 옥스포드 노트 표면(괘선/여백선, .note-paper)과
+// 시트 기하(.note-sheet/.note-handle/.note-sheet-panel)는 globals.css의
+// --note-line-height 단일 소스를 소비한다(G-06-9 재발 방지, Task 2).
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { saveLessonNoteAction } from '@/app/lesson/[lessonId]/note-actions';
@@ -93,6 +93,37 @@ export function LessonNotepad({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
 
+  // 아이패드 Safari 키보드 보정(R-1~R-3). env(keyboard-inset-height)와 viewport
+  // meta의 interactive-widget은 iOS/iPadOS WebKit에서 지원되지 않아 항상 폴백값
+  // 0px로 해석된다 — window.visualViewport가 유일하게 실제로 동작하는 메커니즘이다.
+  // visualViewport가 없으면(구형 브라우저) 조용히 아무것도 하지 않고 기본 fixed
+  // 동작을 유지한다(점진적 향상).
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const root = document.documentElement;
+
+    // TypeScript는 nested function 안에서 바깥 const의 null 내로잉을 유지하지
+    // 않는다 — 위에서 이미 !vv로 반환했으므로 안전한 재단언이다.
+    function sync() {
+      const viewport = vv as VisualViewport;
+      root.style.setProperty('--note-visible-height', `${viewport.height}px`);
+      const inset = Math.max(0, root.clientHeight - (viewport.height + viewport.offsetTop));
+      root.style.setProperty('--note-keyboard-inset', `${inset}px`);
+    }
+
+    sync();
+    vv.addEventListener('resize', sync);
+    vv.addEventListener('scroll', sync);
+    return () => {
+      vv.removeEventListener('resize', sync);
+      vv.removeEventListener('scroll', sync);
+      root.style.removeProperty('--note-visible-height');
+      root.style.removeProperty('--note-keyboard-inset');
+    };
+  }, []);
+
   function handleToggle() {
     setOpen((prev) => !prev);
   }
@@ -110,17 +141,14 @@ export function LessonNotepad({
   const hasContent = value.trim().length > 0;
 
   return (
-    <div
-      data-notepad
-      className="fixed inset-x-0 bottom-0 z-40 flex flex-col border-t border-badge-neutral-bg bg-surface dark:border-badge-neutral-bg-dark dark:bg-surface-dark"
-    >
+    <div data-notepad className="note-sheet flex flex-col">
       <button
         ref={toggleRef}
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
         onClick={handleToggle}
-        className="flex min-h-11 w-full items-center justify-center gap-2 text-label font-semibold"
+        className="note-handle flex w-full items-center justify-center gap-2 text-label font-semibold"
       >
         <span>{open ? '메모 닫기' : '메모'}</span>
         {hasContent ? (
@@ -134,8 +162,8 @@ export function LessonNotepad({
         id={panelId}
         data-notepad-panel
         onKeyDown={handlePanelKeyDown}
-        className="flex flex-col overflow-hidden px-4"
-        style={{ height: open ? '40vh' : '0px' }}
+        className="note-sheet-panel flex flex-col overflow-hidden px-4"
+        style={{ height: open ? 'var(--note-sheet-open-height)' : '0px' }}
         inert={!open}
       >
         <textarea
@@ -144,7 +172,7 @@ export function LessonNotepad({
           onChange={handleChange}
           onBlur={() => void flush()}
           aria-label="레슨 메모"
-          className="w-full flex-1 resize-none border-0 bg-transparent text-body outline-none"
+          className="note-paper flex-1"
         />
         <div
           data-notepad-status={status}
