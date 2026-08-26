@@ -1,8 +1,9 @@
 'use client';
 
 // 클로즈(빈칸 채우기) 입력 아일랜드. 저장(Supabase)은 이 컴포넌트가 직접 하지
-// 않는다 — Task 3에서 ClozeProvider가 초기 상태·저장 콜백을 컨텍스트로 내려줄
-// 때까지는(useContext 기본값 null) 완전히 휘발성으로 동작한다(DD-8, DD-9).
+// 않는다 — ClozeProvider가 초기 상태·저장 콜백을 컨텍스트로 내려줄 때만
+// 쓴다. useContext 기본값 null(프로바이더 없음, 또는 enabled=false인 잠금
+// 상태·/about)이면 Task 1과 동일하게 완전히 휘발성으로 동작한다(DD-8, DD-9).
 //
 // 판정은 blur/Enter에서만 한다(DD-2) — onChange에서는 값만 담고 판정도
 // aria-live 낭독도 하지 않는다. 한글 조합 중(`ㄱ` -> `가` -> `각`) input 이벤트가
@@ -12,6 +13,7 @@
 import { useId, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { normalizeAnswer } from '@/lib/cloze-key';
+import { useClozeContext } from '@/components/cloze-provider';
 
 type ClozeState = 'empty' | 'correct' | 'incorrect' | 'revealed';
 
@@ -24,10 +26,30 @@ export function ClozeBlank({
   index: string;
   hash: string;
 }) {
-  const [value, setValue] = useState('');
-  const [state, setState] = useState<ClozeState>('empty');
+  const clozeContext = useClozeContext();
+  const canPersist = !!clozeContext?.enabled;
+
+  // 초기 상태 복원 — lazy useState 초기화자는 마운트 시 한 번만 실행된다.
+  // getInitialState가 hash 불일치를 이미 "기록 없음"으로 걸러주므로(DD-7),
+  // 여기서는 결과를 그대로 믿는다.
+  const [initialRestoredState] = useState<'correct' | 'revealed' | null>(() =>
+    canPersist ? (clozeContext?.getInitialState(index, hash) ?? null) : null,
+  );
+  const [value, setValue] = useState(initialRestoredState ? answer : '');
+  const [state, setState] = useState<ClozeState>(initialRestoredState ?? 'empty');
+  // 저장 실패는 조용한 표시만 남긴다(DD-9) — 배너·모달은 만들지 않는다.
+  const [saveFailed, setSaveFailed] = useState(false);
   const inputId = useId();
   const feedbackId = useId();
+
+  function persist(status: 'correct' | 'revealed') {
+    if (!canPersist || !clozeContext) return;
+    setSaveFailed(false);
+    // 낙관적 UI를 기다리게 하지 않는다 — 실패 시 표시만 뒤늦게 붙는다.
+    clozeContext.save(index, hash, status).then((ok) => {
+      if (!ok) setSaveFailed(true);
+    });
+  }
 
   function judge(candidate: string) {
     if (candidate.length === 0) {
@@ -37,19 +59,21 @@ export function ClozeBlank({
     }
     const isCorrect = normalizeAnswer(candidate) === normalizeAnswer(answer);
     setState(isCorrect ? 'correct' : 'incorrect');
+    if (isCorrect) persist('correct');
   }
 
   function handleReveal() {
     setState('revealed');
+    persist('revealed');
   }
 
   const feedbackText =
     state === 'correct'
-      ? '정답입니다'
+      ? `정답입니다${saveFailed ? ' (저장 안 됨)' : ''}`
       : state === 'incorrect'
         ? '틀렸습니다. 다시 시도하거나 정답 보기를 눌러보세요'
         : state === 'revealed'
-          ? `정답: ${answer}`
+          ? `정답: ${answer}${saveFailed ? ' (저장 안 됨)' : ''}`
           : '';
 
   return (

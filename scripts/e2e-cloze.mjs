@@ -11,9 +11,10 @@
 // 포트 기본값 3215(E2E_CLOZE_PORT로 override) — 기존 게이트가 이미 쓰는
 // 3210~3214와 겹치지 않는다.
 //
-// 브라우저 컨텍스트는 잠금 해제 쿠키 없이(잠금 상태로) 연다 — 이 게이트는
-// 저장 경로를 건드리지 않고, 콘텐츠가 잠금 상태에서도 공개라는 기존 설계상
-// 빈칸도 잠금 상태에서 동작해야 한다.
+// s1~s9 브라우저 컨텍스트는 잠금 해제 쿠키 없이(잠금 상태로) 연다 — 콘텐츠가
+// 잠금 상태에서도 공개라는 기존 설계상 빈칸도 잠금 상태에서 동작해야 한다.
+// s10만 잠금 해제 쿠키를 심은 별도 컨텍스트로 저장 왕복을 검증하고,
+// finally에서 프로브 행을 반드시 정리한다(T-uig-06).
 //
 // 판정 로직은 전부 순수 함수로 분리해 쓴다(s3이 이 함수들 자체를 검사한다).
 //
@@ -32,6 +33,7 @@ import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkMdx from 'remark-mdx';
 import { toString as mdastToString } from 'mdast-util-to-string';
+import { createClient } from '@supabase/supabase-js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -42,6 +44,10 @@ const BASE_URL = `http://${HOST}:${PORT}`;
 const SERVER_READY_TIMEOUT_MS = 180_000;
 const FETCH_TIMEOUT_MS = 30_000;
 const LESSON_ARTICLE_ID = 'lesson-article';
+// src/lib/unlock-secret.ts의 UNLOCK_COOKIE_NAME과 반드시 일치해야 한다 —
+// 이 파일은 그 상수를 import하지 않고 값만 복제한다(게이트는 앱 모듈을
+// import하지 않는다는 관례, e2e-progress.mjs와 동일 패턴).
+const UNLOCK_COOKIE_NAME = 'runway_unlock';
 
 // DD-5: 32/35는 옛 리서치의 관측치일 뿐 고정 집합이 아니다. Task 1 SUMMARY가
 // 기록한 실측(29/35, CONT-05 프로젝트 가이드 5편 + 1-1-dev-environment-setup —
@@ -566,6 +572,89 @@ async function main() {
           `scrollWidth=${overflow.scrollWidth} clientWidth=${overflow.clientWidth} overflowXHidden=${overflow.overflowXHidden}`,
         );
       } finally {
+        await context.close();
+      }
+    }
+
+    // s10: 저장 왕복 — 잠금 해제 쿠키를 심은 컨텍스트로 레슨을 열어 첫
+    // 빈칸에 정답을 넣고 blur -> 새로 로드해도 correct 상태가 유지됨을
+    // 확인한 뒤, service_role로 그 레슨의 프로브 행을 지우고 지워졌음을
+    // 확인한다. 정리는 finally에서 반드시 수행한다 — 이 게이트가 실제
+    // 학습 기록을 오염시킨 채 끝나면 안 된다(T-uig-06).
+    {
+      const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const s10BlankId = `${primary.slug}#${primary.blank.index}`;
+
+      const context = await browser.newContext({ viewport: { width: 768, height: 1024 } });
+      try {
+        // 실제 앱과 같은 방식으로 쿠키를 심는다 — /unlock 라우트를 거치지
+        // 않고 컨텍스트에 직접 addCookies한다(HttpOnly 쿠키는 fetch/document.cookie로
+        // 만들 수 없으므로 Playwright의 컨텍스트 API를 쓴다).
+        await context.addCookies([
+          {
+            name: UNLOCK_COOKIE_NAME,
+            value: UNLOCK_SECRET,
+            domain: HOST,
+            path: '/',
+            httpOnly: true,
+            secure: false,
+          },
+        ]);
+        const page = await context.newPage();
+
+        await page.goto(`${BASE_URL}/lesson/${primary.slug}`, { waitUntil: 'networkidle' });
+        await page.waitForSelector(`#${LESSON_ARTICLE_ID}`);
+
+        const blankSelector = `[data-cloze-blank][data-cloze-index="${primary.blank.index}"]`;
+        const inputLocator = page.locator(`${blankSelector} .cloze-blank-input`);
+        await inputLocator.click();
+        await inputLocator.type(primary.blank.answer);
+        await page.locator('h1').click(); // blur -> correct -> 백그라운드 저장 시도
+
+        // 저장은 낙관적 UI 뒤에서 fire-and-forget으로 진행된다(DD-10, revalidatePath
+        // 없음) — 저장이 DB에 반영될 시간을 실측 폴링으로 준다.
+        let savedRow = null;
+        const deadline = Date.now() + 10_000;
+        while (Date.now() < deadline) {
+          const { data } = await admin
+            .from('cloze_answer')
+            .select('blank_id, answer_hash, status')
+            .eq('blank_id', s10BlankId)
+            .maybeSingle();
+          if (data) {
+            savedRow = data;
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 300));
+        }
+        record(
+          's10-1 저장 — Server Action이 cloze_answer에 실제로 씀',
+          !!savedRow && savedRow.status === 'correct' && savedRow.answer_hash === primary.blank.hash,
+          savedRow ? `blank_id=${savedRow.blank_id} status=${savedRow.status}` : '10초 안에 행이 나타나지 않음',
+        );
+
+        // 새로 로드해도 correct 상태가 유지되는지 — ClozeProvider가
+        // readClozeAnswers로 조회한 기록을 initial state로 복원해야 한다.
+        await page.reload({ waitUntil: 'networkidle' });
+        await page.waitForSelector(`#${LESSON_ARTICLE_ID}`);
+        const stateAfterReload = await page.locator(blankSelector).getAttribute('data-cloze-state');
+        const valueAfterReload = await inputLocator.inputValue();
+        record(
+          's10-2 새로 로드해도 채워진 상태 유지 (기기 간 동기화 전제)',
+          stateAfterReload === 'correct' && valueAfterReload === primary.blank.answer,
+          `state=${stateAfterReload} value="${valueAfterReload}"`,
+        );
+      } finally {
+        // 프로브 행 정리 — 실제 학습 기록을 남기지 않는다.
+        await admin.from('cloze_answer').delete().eq('blank_id', s10BlankId);
+        const { data: leftover } = await admin
+          .from('cloze_answer')
+          .select('blank_id')
+          .eq('blank_id', s10BlankId)
+          .maybeSingle();
+        record('s10-3 정리 — 프로브 행 삭제 확인', !leftover, leftover ? '삭제 후에도 행이 남아있음' : '삭제 확인됨');
         await context.close();
       }
     }
