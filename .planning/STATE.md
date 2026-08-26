@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 06
 current_phase_name: site-wide-design-polish
 status: executing
-stopped_at: Phase 6 UI-SPEC approved
+stopped_at: Phase 6 실행+UAT 완료, 실기기 iPad Safari 확인 대기(06-UAT.md 테스트 1)
 last_updated: "2026-08-26T03:42:21.213Z"
 last_activity: 2026-08-26
-last_activity_desc: Plan 05-08 complete (Step 3 depth re-trim/re-approval + 2 lessons)
+last_activity_desc: Phase 6 완료 — 플랜 9개(gap 수정 06-09 포함), SC1~SC4 검증, 게이트 14종 통과, 프로덕션 배포
 progress:
   total_phases: 7
-  completed_phases: 5
-  total_plans: 42
-  completed_plans: 34
+  completed_phases: 5  # Phase 6은 실기기 UAT 대기로 미포함
+  total_plans: 43
+  completed_plans: 43
 ---
 
 # Project State

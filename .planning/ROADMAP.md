@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: 배포된 커리큘럼 뼈대** - Vercel URL에서 Step→모듈→레슨을 아이패드로 탐색하고 파일럿 레슨을 읽는다 (completed 2026-08-24)
 - [x] **Phase 2: 진도 체크와 진행률** - 레슨 완료를 토글하고 모듈·Step·전체 진행률을 확인한다 (completed 2026-08-24)
 - [x] **Phase 3: 학습 일정과 오늘의 학습** - 8/25~9/29 일정표와 오늘 배정 레슨, D-day·페이스 상태를 본다 (completed 2026-08-25)
-- [ ] **Phase 4: Step 1 심화 콘텐츠** - Python·Git·SQL·ML 기초 전 레슨을 개념 설명 + 실무 예제로 학습한다
+- [x] **Phase 4: Step 1 심화 콘텐츠** - Python·Git·SQL·ML 기초 전 레슨을 개념 설명 + 실무 예제로 학습한다 (completed 2026-08-25)
 - [x] **Phase 5: Step 2·3 콘텐츠와 프로젝트 가이드** - 풀스택·LLM 심화와 RAG·오케스트레이션 개요, 프로젝트 5종 준비 가이드를 학습한다 (completed 2026-08-26)
 - [ ] **Phase 6: 전체 페이지 디자인 정리** - 모든 화면이 존재하는 상태에서 디자인 토큰·셸·페이지 마감을 한 번에 다듬는다
 - [ ] **Phase 7: 아이패드 브라우저 실습 환경** - 레슨 해보기를 PC 없이 아이패드 브라우저에서 실행한다
@@ -236,7 +236,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. 배포된 커리큘럼 뼈대 | 6/6 | Complete    | 2026-08-24 |
 | 2. 진도 체크와 진행률 | 4/4 | Complete    | 2026-08-24 |
 | 3. 학습 일정과 오늘의 학습 | 4/4 | Complete    | 2026-08-25 |
-| 4. Step 1 심화 콘텐츠 | 6/7 | In Progress|  |
+| 4. Step 1 심화 콘텐츠 | 7/7 | Complete    | 2026-08-25 |
 | 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 13/13 | Complete    | 2026-08-26 |
 | 6. 전체 페이지 디자인 정리 | 9/9 | In Progress|  |
 
