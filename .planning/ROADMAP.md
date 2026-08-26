@@ -20,6 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Step 2·3 콘텐츠와 프로젝트 가이드** - 풀스택·LLM 심화와 RAG·오케스트레이션 개요, 프로젝트 5종 준비 가이드를 학습한다 (completed 2026-08-26)
 - [ ] **Phase 6: 전체 페이지 디자인 정리** - 모든 화면이 존재하는 상태에서 디자인 토큰·셸·페이지 마감을 한 번에 다듬는다
 - [ ] **Phase 7: 아이패드 브라우저 실습 환경** - 레슨 해보기를 PC 없이 아이패드 브라우저에서 실행한다
+- [ ] **Phase 8: 성능·스마트폰 최적화** - 콘텐츠 페이지를 정적 생성으로 되돌리고 폰트를 줄이고 폰 실사용 경험을 다듬는다
 
 ## Phase Details
 
@@ -337,6 +338,45 @@ Plans:
 Plans:
 
 - [ ] TBD (run /gsd-plan-phase 7 to break down)
+
+### Phase 8: 성능·스마트폰 최적화
+
+**Goal**: 아이패드와 폰 모두에서 페이지가 즉시 열린다고 느껴진다 — 콘텐츠 페이지를 요청마다
+새로 그리지 않고 미리 만들어 두고(진도 정보만 따로 가져온다), 폰트 전송량을 줄이고, 폰(375px)
+실사용 경험을 다듬는다.
+**Depends on**: Phase 6 (디자인 토큰·셸이 확정된 뒤라야 폰 다듬기가 다시 뒤집히지 않는다)
+**Requirements**: TBD (PROJECT.md Active "모바일·아이패드 최적화" 귀속 후보)
+
+**이미 해결된 것 (2026-08-27, 이 페이즈 범위 밖):**
+- Vercel 서버리스 함수 리전을 기본값 iad1(미국 동부)에서 icn1(서울)로 이동 → 동적 라우트
+  TTFB 중앙값 238~252ms에서 59~68ms로. 원인은 서울 유입 → 미국 동부 처리 → 도쿄 Supabase
+  왕복이었다. `vercel.json` 3줄. 커밋 bf2ab53.
+
+**남은 격차 (이 페이즈가 다룬다):**
+- 정적 라우트(`/about`) 37ms 대 동적 라우트 68ms — 약 30ms는 요청마다 서버에서 페이지를
+  다시 그리는 비용이다. `force-dynamic`이 5곳(`/`, `/curriculum`, `/schedule`,
+  `/lesson/[lessonId]`, `/step/[stepId]`)에 걸려 있다. CLAUDE.md의 원래 설계는 "레슨/모듈
+  페이지는 정적 생성, 진도 상태만 per-request"였는데 지금은 전부 per-request다.
+- `public/fonts/PretendardVariable.woff2`가 2.0MB다. 한자·가나까지 포함한 전체 문자셋인데
+  이 사이트는 한글·영문·숫자만 쓴다. 서브셋하면 통상 200~400KB 수준이 된다. 첫 방문 체감에
+  영향이 있는지 먼저 측정하고, 있을 때만 손댄다.
+- 폰(375px) 실사용 경험. 가로 오버플로 0은 `e2e-mobile-overflow.mjs`가 이미 21개 조합으로
+  보장하지만, "깨지지 않는다"와 "쓰기 좋다"는 다른 문제다.
+
+**Success Criteria** (what must be TRUE):
+
+  1. 콘텐츠 페이지(레슨·Step·커리큘럼)의 TTFB가 정적 라우트 수준(약 40ms 이하)에 도달하고,
+     진도 표시는 여전히 정확하다 — 완료 토글이 즉시 반영되고 잠금 쿠키 유무가 올바르게 갈린다
+  2. 첫 방문(캐시 없음) 기준 폰트 전송량이 측정되고, 줄일 가치가 있다고 판단되면 줄어 있다
+     — 판단 근거를 숫자로 남긴다
+  3. 폰(375px)에서 6종 화면이 "좁아서 참고 쓰는" 게 아니라 실제로 편하게 읽힌다
+  4. 기존 게이트 16종이 전부 통과하고, 성능 회귀를 잡는 자동 게이트가 하나 추가된다
+
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 8 to break down)
 
 ---
 *Roadmap created: 2026-08-24*
