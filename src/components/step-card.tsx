@@ -27,18 +27,16 @@ export function StepCard({ step, progress }: { step: Step; progress?: ProgressCo
   return (
     <Link
       href={`/step/${step.id}`}
-      className={`flex min-h-11 flex-col gap-3 rounded-lg border-l-4 bg-surface p-4 dark:bg-surface-dark ${STEP_BORDER_CLASSES[step.id]}`}
+      className={`card-interactive flex min-h-11 flex-col gap-3 rounded-lg border-l-4 bg-surface p-4 transition-colors duration-150 dark:bg-surface-dark ${STEP_BORDER_CLASSES[step.id]}`}
     >
       <div className="flex items-baseline gap-2">
-        <span className="shrink-0 whitespace-nowrap text-[14px] font-semibold leading-[1.4]">
-          Step {step.id}
-        </span>
-        <h2 className="min-w-0 break-keep text-[20px] font-semibold leading-[1.3]">{step.shortTitle}</h2>
+        <span className="shrink-0 whitespace-nowrap text-label font-semibold">Step {step.id}</span>
+        <h2 className="min-w-0 break-keep text-heading font-bold">{step.shortTitle}</h2>
       </div>
-      <p className="text-[14px] font-normal leading-[1.4] text-badge-neutral-text dark:text-badge-neutral-text-dark">
+      <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
         {step.keywords.join(" · ")}
       </p>
-      <p className="text-[14px] font-normal leading-[1.4]">
+      <p className="text-label font-normal">
         모듈 {moduleCount}개 · 레슨 {lessonCount}개 · 원 {step.courseHours}시간
       </p>
       {progress ? (
