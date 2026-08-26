@@ -27,12 +27,11 @@ files_modified:
   - scripts/check-supabase-cloze.mjs
   - .planning/REQUIREMENTS.md
 
-user_setup:
-  - service: supabase
-    why: "cloze_answer 테이블 생성 — DDL은 service_role 키(PostgREST)로 실행할 수 없고 SQL 에디터/CLI 로그인이 필요하다"
-    dashboard_config:
-      - task: "supabase/migrations/20260826090000_create_cloze.sql 전문을 SQL 에디터에 붙여넣고 실행"
-        location: "Supabase Dashboard -> SQL Editor -> New query"
+user_setup: []
+# 2026-08-26 정정: cloze_answer 테이블은 오케스트레이터가 Supabase 관리 API로 이미 생성했다
+# (project ref wxqteqiuihrgtxmztauc, RLS 켜짐 / 정책 0건 — progress 테이블과 동일한 기본 차단).
+# 따라서 사람이 SQL 에디터에 붙여넣는 단계는 없다. 저장소의 마이그레이션 파일은 기록용으로
+# 남기되(재현 가능성·리뷰용), 실행은 이미 끝나 있다.
 
 estimate:
   tokens: 130000
@@ -365,7 +364,14 @@ FatalError/finally 정리/"검사 0건 = 실패" 방어/한국어 로그 + `tN/�
   <name>Task 3: Supabase 저장 — 별도 테이블, 정책 0개, 완료 모델 무변경</name>
   <files>supabase/migrations/20260826090000_create_cloze.sql, src/lib/cloze-store.ts, src/components/cloze-provider.tsx, src/components/cloze-blank.tsx, src/app/lesson/[lessonId]/actions.ts, src/app/lesson/[lessonId]/page.tsx, scripts/check-supabase-cloze.mjs</files>
   <read_first>supabase/migrations/20260824120000_create_progress.sql, src/lib/progress-store.ts, src/app/lesson/[lessonId]/actions.ts, src/app/lesson/[lessonId]/page.tsx, scripts/check-supabase-progress.mjs</read_first>
-  <precondition>Task 2의 커밋이 끝나 저장 없는 클로즈 기능이 독립적으로 배포 가능한 상태여야 한다(DD-11).</precondition>
+  <precondition>Task 2의 커밋이 끝나 저장 없는 클로즈 기능이 독립적으로 배포 가능한 상태여야 한다(DD-11).
+
+  **DB 사전 조건(이미 충족됨):** `public.cloze_answer` 테이블은 오케스트레이터가 Supabase
+  관리 API로 **이 태스크 시작 전에 이미 생성해 두었다** — 컬럼은 아래 1번의 정의와 동일하고,
+  RLS는 켜져 있으며 정책은 0건이다. 따라서 이 태스크의 `check-supabase-cloze.mjs` 검증은
+  실제 호스티드 DB에 대고 바로 돌릴 수 있다. 1번에서 마이그레이션 `.sql` 파일을 저장소에
+  남기는 것은 기록·재현용이며, 그 파일을 다시 실행할 필요는 없다(`if not exists`라 다시
+  돌려도 무해하지만 불필요하다).</precondition>
 
   <action>
 `progress` 테이블과 완료 토글 경로는 **한 줄도 수정하지 않는다**(DD-8).
@@ -454,17 +460,17 @@ FatalError/finally 정리/"검사 0건 = 실패" 방어/한국어 로그 + `tN/�
   <what-built>
 개념 설명 구간 클로즈 빈칸(빌드타임 자동 추출 + blur 1회 판정 + 정답 보기 + 아이패드 폭 보증)과
 Supabase 기기 간 저장. 신규 게이트 2종(`e2e-cloze.mjs`, `check-supabase-cloze.mjs`)과 기존 14종은
-로컬에서 전부 통과했다. 남은 것은 사람만 할 수 있는 두 가지다 — 호스티드 DB에 테이블을 만드는 것과
-실기기 아이패드 확인.
+로컬에서 전부 통과했다. `cloze_answer` 테이블은 오케스트레이터가 이미 생성했으므로, 남은 것은
+사람만 할 수 있는 한 가지 — 실기기 아이패드 확인뿐이다.
   </what-built>
   <how-to-verify>
-**1) Supabase에 테이블 만들기 (이걸 해야 저장이 켜집니다)**
-   - Supabase Dashboard → 이 프로젝트 → 왼쪽 메뉴 **SQL Editor** → **New query**
-   - 저장소의 `supabase/migrations/20260826090000_create_cloze.sql` 파일 전문을 그대로 복사해
-     붙여넣고 **Run**
-   - 성공하면 왼쪽 **Table Editor**에 `cloze_answer` 테이블이 보입니다. 행은 0건이 정상입니다.
-   - Table Editor에서 이 테이블에 "RLS enabled, no policies" 경고가 뜨는 것도 **정상**입니다 —
-     의도된 기본 차단 설계이고, `progress` 테이블도 같은 상태입니다. 정책을 추가하지 마세요.
+**1) Supabase 테이블 확인 (만드는 건 이미 끝났습니다 — 보기만 하세요)**
+   - `cloze_answer` 테이블은 **이미 만들어져 있습니다.** 직접 SQL을 붙여넣을 필요가 없습니다.
+   - 확인만 하고 싶으시면: Supabase Dashboard → 이 프로젝트 → 왼쪽 **Table Editor** →
+     `cloze_answer`가 목록에 보이면 됩니다. 행은 0건이 정상입니다(아직 아무것도 안 채웠으니까요).
+   - 이 테이블에 "RLS enabled, no policies" 경고가 뜨는 것도 **정상**입니다 — 의도된 기본 차단
+     설계이고 `progress` 테이블도 같은 상태입니다. **정책을 추가하지 마세요** — 추가하는 순간
+     이 테이블이 인터넷에 공개됩니다.
 
 **2) 로컬에서 실제로 채워보기**
    - `npm run dev` → 브라우저에서 `http://localhost:3000/lesson/1-1-course-orientation`
