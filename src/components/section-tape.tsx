@@ -49,8 +49,11 @@ const SECTION_TAPE_STEP_CLASSES: Record<StepId, { idle: string; hover: string; c
 // 실제 h2 개수만큼 칸이 생긴다(2개 미만~7개 이상 전부 지원, D-R4K-1).
 const PLACEHOLDER_SECTION_COUNT = 6;
 
-// 셀 높이(터치 타깃, D-R4K-1) — 시각 막대는 이 안에서 3px.
-const TAPE_HEIGHT_PX = 44;
+// 테이프 높이 상수는 여기 없다(G-06-9) — globals.css의 `:root { --section-tape-height }`가
+// 단일 소스이고, 컨테이너는 `.section-tape` CSS 클래스로 그 값을 소비한다
+// (h-11 Tailwind 클래스도 이 상수의 세 번째 사본이었으므로 함께 제거했다).
+// updateCurrent()의 임계값도 이 값을 다시 여기 적지 않고 DOM에서 유도한다
+// (아래 참고).
 
 export function SectionTape({
   articleId,
@@ -67,6 +70,7 @@ export function SectionTape({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const headingRefs = useRef<HTMLElement[]>([]);
+  const tapeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const container = document.getElementById(articleId);
@@ -108,9 +112,22 @@ export function SectionTape({
     const updateCurrent = () => {
       const headings = headingRefs.current;
       if (headings.length < 2) return;
+
+      // 임계값을 브라우저가 실제로 h2를 착지시키는 값(scroll-margin-top)에서
+      // 직접 읽는다(G-06-9) — 이 값과 비교하는 한 두 수치가 다시 어긋날 수
+      // 없다. 캐시하지 않고 호출마다 읽는 이유: 바로 아래에서 이미 모든
+      // 헤딩에 getBoundingClientRect()를 부르고 있어 추가 레이아웃 읽기가
+      // 아니고, 나중에 scroll-margin-top이 미디어 쿼리로 갈라져도 캐시
+      // 무효화 지점이 따로 필요 없다.
+      const computedOffset = Number.parseFloat(getComputedStyle(headings[0]).scrollMarginTop);
+      const threshold =
+        Number.isFinite(computedOffset) && computedOffset > 0
+          ? computedOffset
+          : (tapeRef.current?.getBoundingClientRect().height ?? 0);
+
       let idx = 0;
       for (let i = 0; i < headings.length; i++) {
-        if (headings[i].getBoundingClientRect().top <= TAPE_HEIGHT_PX + 1) {
+        if (headings[i].getBoundingClientRect().top <= threshold + 1) {
           idx = i;
         }
       }
@@ -160,8 +177,9 @@ export function SectionTape({
 
   return (
     <div
+      ref={tapeRef}
       data-section-tape
-      className="sticky top-0 z-10 flex h-11 w-full overflow-x-hidden bg-background dark:bg-background-dark"
+      className="section-tape sticky top-0 z-10 flex w-full overflow-x-hidden bg-background dark:bg-background-dark"
     >
       {cells.map((section, index) => {
         const isCurrent = sections !== null && index === currentIndex;
@@ -187,15 +205,37 @@ export function SectionTape({
               style={{ height: "3px" }}
               className={`w-full rounded-full ${barClass}`}
             />
-            {isCurrent ? (
-              <span className="flex items-center gap-1 whitespace-nowrap px-1 opacity-100 transition-opacity duration-150">
-                <span className="font-mono text-label">{String(index + 1).padStart(2, "0")}</span>
-                <span className="text-label font-semibold">{section.title}</span>
-              </span>
-            ) : null}
           </button>
         );
       })}
+      {/* 라벨의 기준을 칸(button)에서 테이프 전체로 옮긴다(G-06-2) — 이전에는
+          라벨이 current button의 자식이라 그 칸의 좁은 폭에 갇혔고, 테이프의
+          overflow-x-hidden이 넘친 만큼을 그대로 잘랐다(375px 왼쪽 끝 칸에서
+          최대 32px 잘림, 06-UAT.md). 이 래퍼는 테이프 폭 전체(inset-x-0)를
+          차지하는 절대 배치 자식이고, 안쪽 라벨은 그 안에서 가운데 정렬 +
+          max-w-full로 갇히므로 테이프 경계를 넘을 수 있는 경로가 없다.
+          pointer-events-none이 없으면 이 래퍼가 테이프 폭 전체를 덮어 칸
+          클릭을 통째로 먹는다. 컨테이너에는 `relative`를 추가하지 않는다 —
+          `sticky`가 이미 positioned 요소라 absolute 자식의 기준이 되고,
+          `relative`를 더하면 같은 position 속성끼리 충돌해 sticky가 죽는다.
+          라벨을 칸 위치를 따라 좌우로 클램프하지 않고 항상 테이프 중앙에
+          두는 이유: 100% 불투명도 막대와 라벨 앞 2자리 번호가 이미 "지금
+          어느 칸인지"를 말해주므로, 칸을 따라가는 배치는 라벨 폭을 JS로
+          매번 재야 하는 비용에 비해 이 2일 타임박스 마감 작업에서 얻는
+          이득이 작다 — 측정 없는 CSS만으로 잘림 0을 보장하는 쪽을 택한다. */}
+      {sections !== null && cells[currentIndex] ? (
+        <span className="pointer-events-none absolute inset-x-0 top-1 flex justify-center px-1">
+          <span
+            data-section-tape-label
+            className="flex min-w-0 max-w-full items-center gap-1 whitespace-nowrap opacity-100 transition-opacity duration-150"
+          >
+            <span className="font-mono text-label">{String(currentIndex + 1).padStart(2, "0")}</span>
+            <span data-section-tape-label-title className="truncate text-label font-semibold">
+              {cells[currentIndex].title}
+            </span>
+          </span>
+        </span>
+      ) : null}
     </div>
   );
 }

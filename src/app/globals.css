@@ -54,6 +54,25 @@
   --text-label--line-height: 1.4;
 }
 
+/* 구간 테이프(Section Tape) 기하 단일 소스 (06-09, G-06-9). 테이프 높이(44px,
+   터치 타깃 D-R4K-1)와 h2 착지 오프셋(테이프 높이 + spacing sm 토큰 8px)을
+   여기 한 곳에서만 정의한다 — 이전에는 같은 값이 globals.css의
+   `.prose h2 { scroll-margin-top: 52px }` 리터럴, section-tape.tsx의
+   `TAPE_HEIGHT_PX = 44` 상수, `h-11` Tailwind 클래스까지 사실상 세 벌
+   따로 있었고, 그중 두 곳(52px vs 45px 임계값)이 어긋나 클릭한 칸과
+   테이프에 표시되는 구간이 항상 한 칸씩 밀리는 결함(G-06-9)의 원인이 됐다.
+   착지 오프셋은 높이를 참조하는 calc()로 써서 두 값이 다시 독립적으로
+   어긋날 수 있는 경로를 코드에서 없앤다.
+   `@theme`이 아니라 `:root`에 두는 이유: 이 값들은 Tailwind v4가 유틸리티를
+   생성하는 네임스페이스(`--color-*`, `--text-*`)에 속하지 않아 `@theme`에
+   넣어도 어차피 유틸리티 클래스를 만들지 않고, `@theme` 변수의 실제 CSS
+   출력 여부가 소스 사용 여부에 좌우되는 최적화 경로를 피하기 위함이다
+   (node_modules/tailwindcss/theme.css 네임스페이스 규칙 참고). */
+:root {
+  --section-tape-height: 44px;
+  --section-tape-scroll-offset: calc(var(--section-tape-height) + 8px);
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
@@ -94,6 +113,13 @@ body {
 
 .dark .section-tape-cell:focus-visible {
   outline-color: var(--color-accent-dark);
+}
+
+/* 테이프 컨테이너 높이 — 위 :root의 --section-tape-height 단일 소스를
+   그대로 소비한다(G-06-9). 이전에는 이 값이 Tailwind의 h-11 클래스로
+   따로 박혀 있어 :root 변수와 별개로 어긋날 수 있었다. */
+.section-tape {
+  height: var(--section-tape-height);
 }
 
 /* Code must never inherit the Korean body font (D-06) */
@@ -239,8 +265,11 @@ code[data-theme*=" "] span {
   line-height: 1.3;
   /* Section Tape 높이(44px) + spacing sm 토큰(8px) 여유 — 테이프가 sticky로
      상단에 떠 있는 동안 탭 이동한 h2 제목이 테이프 밑에 가리지 않게 한다
-     (06-UI-SPEC.md § scroll-margin-top, D-R4K-1). */
-  scroll-margin-top: 52px;
+     (06-UI-SPEC.md § scroll-margin-top, D-R4K-1). --section-tape-scroll-offset
+     단일 소스를 참조한다(G-06-9) — section-tape.tsx의 updateCurrent()가
+     getComputedStyle로 이 계산된 값을 그대로 읽어 임계값을 삼으므로, 이
+     리터럴을 다시 따로 적어도 두 값이 어긋날 코드 경로가 없다. */
+  scroll-margin-top: var(--section-tape-scroll-offset);
 }
 .prose h3 {
   font-size: var(--text-subhead);
