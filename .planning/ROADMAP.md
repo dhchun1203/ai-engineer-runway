@@ -420,14 +420,30 @@ Plans:
 UX-01/02/03을 심화하는 플랜은 해당 ID를 함께 인용한다.
 
 Plans:
+**Wave 1**
 
 - [ ] 08-01-PLAN.md — Wave 0 검증 하네스 3종: 라우트 렌더 모드 계약 게이트, 프로덕션 빌드 기반 TTFB·전송량·프레임 예산 게이트, 폰트 글리프 커버리지 게이트
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 08-02-PLAN.md — **트레이서**: `/step/[stepId]` 정적 전환 수직 슬라이스 (`GET /api/progress` + 진도 아일랜드 + 스켈레톤) + G9·G14·G17 재정렬 + G21 신설
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 08-03-PLAN.md — `/lesson/[lessonId]` 정적 전환 + 완료·메모 아일랜드 + 메모 빈 값 덮어쓰기 방지
 - [ ] 08-04-PLAN.md — 첫 방문 폰트 전송량 측정 → 임계값 대조 → (조건 충족 시) 서브셋 생성·교체
 - [ ] 08-05-PLAN.md — 폰(375px) 가독성 정량 게이트 신설 + 일정표 행 재배치(아이패드 배치 불변)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 08-06-PLAN.md — `/curriculum` 정적 전환 + 브라우저 계산 D-day + `/`·`/schedule` 동적 유지 결정 기록
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
 - [ ] 08-07-PLAN.md — 탭 피드백 CSS 레이어 + 스크롤 리스너 rAF 스로틀(G22) + 에러 상태 회복 수단 + 순차 등장
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
 - [ ] 08-08-PLAN.md — 게이트 19종 전량 실행 + 배포 + 측정 종합표 + Making-of 갱신 + 아이패드·폰 실기기 UAT
 
 **Waves:** 1: 08-01 · 2: 08-02 · 3: 08-03·08-04·08-05(병렬) · 4: 08-06 · 5: 08-07 · 6: 08-08
@@ -438,8 +454,10 @@ Plans:
   그대로 받으므로(설치된 Next 16.3.2 문서 `incremental-static-regeneration.md` 100~102행) 하루 한 번
   여는 사이트에서는 매일 첫 방문이 어제를 보게 된다. 대신 커리큘럼은 D-day를 브라우저에서 계산해
   완전 정적으로 만들고, 홈·일정표는 동적으로 유지한다
+
 - `cacheComponents`를 채택하지 않는다 — 전역 렌더링 모델 변경 위험 대비 효익이 낮다. 다음
   마일스톤 백로그 후보로 남긴다
+
 - Motion 라이브러리를 넣지 않는다 — 필요한 움직임이 전부 CSS `transform`/`opacity`로 된다
 - 리서치가 지목한 G9 외에 **G14·G17과 `e2e-progress.mjs`·`e2e-today.mjs`도 정적 전환으로 깨진다** —
   계획 단계에서 소스를 직접 읽어 확인했고 각 전환 플랜이 자기 몫을 함께 고친다
