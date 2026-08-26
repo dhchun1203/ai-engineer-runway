@@ -34,21 +34,23 @@ const COURSE_START_ROW_CLASS = "border-l-4 border-accent bg-accent/5 dark:border
 function ScheduleLessonRow({
   row,
   isToday,
+  isTodayAnchor,
   isPast,
   isDone,
 }: {
   row: ScheduleTableRow;
   isToday: boolean;
+  isTodayAnchor: boolean;
   isPast: boolean;
   isDone: boolean;
 }) {
   return (
     <li
       data-schedule-ui="row"
-      id={isToday ? "schedule-today" : undefined}
+      id={isTodayAnchor ? "schedule-today" : undefined}
       {...(isDone ? { "data-progress-ui": "lesson-done" } : {})}
     >
-      {isToday ? <span data-schedule-ui="today-row" className="hidden" aria-hidden="true" /> : null}
+      {isTodayAnchor ? <span data-schedule-ui="today-row" className="hidden" aria-hidden="true" /> : null}
       <Link
         href={`/lesson/${row.lessonSlug}`}
         className={`card-interactive flex min-h-11 items-center gap-3 px-2 py-3 transition-colors duration-150 ${isToday ? TODAY_ROW_CLASS : ""}`}
@@ -116,6 +118,34 @@ function CourseStartRow() {
   );
 }
 
+// 주차 묶기는 "행 7개 단위"가 아니라 "서로 다른 날짜 7개 단위"로 나눈다. 2레슨 날이
+// 있으면 rows.slice(i, i+7) 같은 행 수 기준 슬라이스는 한 묶음이 6일치만 담게 되고,
+// 최악의 경우 같은 날짜의 두 행이 서로 다른 주차로 갈라진다. 날짜가 바뀔 때만 일수를
+// 세고 7일을 채우면 새 묶음을 연다 — 33일이면 묶음은 7·7·7·7·5 = 5개가 된다.
+function groupRowsByWeek(rows: readonly ScheduleTableRow[]): ScheduleTableRow[][] {
+  const weeks: ScheduleTableRow[][] = [];
+  let currentWeek: ScheduleTableRow[] = [];
+  let distinctDaysInWeek = 0;
+  let lastDate: string | null = null;
+
+  for (const row of rows) {
+    if (row.date !== lastDate) {
+      if (distinctDaysInWeek === 7) {
+        weeks.push(currentWeek);
+        currentWeek = [];
+        distinctDaysInWeek = 0;
+      }
+      distinctDaysInWeek++;
+      lastDate = row.date;
+    }
+    currentWeek.push(row);
+  }
+  if (currentWeek.length > 0) {
+    weeks.push(currentWeek);
+  }
+  return weeks;
+}
+
 export function ScheduleTable({
   rows,
   today,
@@ -125,10 +155,12 @@ export function ScheduleTable({
   today: string;
   completedIds: ReadonlySet<string> | null;
 }) {
-  const weeks: ScheduleTableRow[][] = [];
-  for (let i = 0; i < rows.length; i += 7) {
-    weeks.push(rows.slice(i, i + 7));
-  }
+  const weeks = groupRowsByWeek(rows);
+  // 오늘 날짜의 첫 행에만 앵커(id="schedule-today")와 today-row 마커를 붙인다 —
+  // 같은 날짜에 행이 2개면 둘 다에 id를 주면 DOM id가 중복되고, s3의 today-row
+  // 마커 1건 어설션도 함께 깨진다. 강조 스타일(TODAY_ROW_CLASS)은 오늘 날짜의
+  // 모든 행에 그대로 준다 — 앵커/마커와 강조는 별도 boolean이다.
+  let seenTodayAnchor = false;
 
   return (
     <div className="flex flex-col gap-12">
@@ -145,11 +177,23 @@ export function ScheduleTable({
               const isPast = row.date < today;
               const isDone =
                 completedIds !== null && row.lessonSlug !== null ? completedIds.has(row.lessonSlug) : false;
+              const isTodayAnchor = isToday && !seenTodayAnchor;
+              if (isTodayAnchor) seenTodayAnchor = true;
 
+              // 행 key를 유일하게 만든다 — 레슨 행은 row.lessonSlug(35개 전역 유일)를,
+              // 버퍼 행은 row.date(버퍼 행은 9/29 하나뿐이라 유일)를 쓴다. 날짜만으로는
+              // 유일하지 않다 — 2레슨 날은 같은 date를 가진 행이 2개이기 때문이다.
               return row.isBuffer ? (
                 <ScheduleBufferRow key={row.date} row={row} isToday={isToday} isPast={isPast} />
               ) : (
-                <ScheduleLessonRow key={row.date} row={row} isToday={isToday} isPast={isPast} isDone={isDone} />
+                <ScheduleLessonRow
+                  key={row.lessonSlug as string}
+                  row={row}
+                  isToday={isToday}
+                  isTodayAnchor={isTodayAnchor}
+                  isPast={isPast}
+                  isDone={isDone}
+                />
               );
             })}
           </ul>
