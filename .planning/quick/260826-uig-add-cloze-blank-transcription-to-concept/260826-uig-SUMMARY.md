@@ -285,6 +285,15 @@ one remaining manual step (real iPad Safari verification) and deployment.
 None beyond what the plan's own `<threat_model>` already covers (T-uig-01
 through T-uig-08, all mitigated as designed — see plan file).
 
+## Self-Check: PASSED
+
+All 8 created files verified present on disk (`src/lib/cloze-key.ts`,
+`src/lib/remark-cloze-blanks.ts`, `src/components/cloze-blank.tsx`,
+`src/components/cloze-provider.tsx`, `src/lib/cloze-store.ts`,
+`supabase/migrations/20260826090000_create_cloze.sql`,
+`scripts/e2e-cloze.mjs`, `scripts/check-supabase-cloze.mjs`). All 4 commits
+(`4867637`, `038d81e`, `dbdee3b`, `79c4a8a`) verified present in `git log`.
+
 ---
 *Quick task: 260826-uig*
 *Completed: 2026-08-26*
