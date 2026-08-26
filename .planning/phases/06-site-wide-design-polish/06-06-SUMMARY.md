@@ -215,3 +215,12 @@ None - no external service configuration required.
 ---
 *Phase: 06-site-wide-design-polish*
 *Completed: 2026-08-26*
+
+## Self-Check: PASSED
+
+- FOUND: src/components/section-tape.tsx
+- FOUND: .planning/phases/06-site-wide-design-polish/06-06-SUMMARY.md
+- FOUND: commit 29c9676 (Task 1)
+- FOUND: commit e35dfe8 (Task 2)
+- FOUND: commit 103e673 (Task 3)
+- FOUND: commit 3751fd0 (docs: complete plan)
