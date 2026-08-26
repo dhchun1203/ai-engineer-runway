@@ -1,7 +1,7 @@
 ---
 phase: 06-site-wide-design-polish
 verified: 2026-08-26T18:45:00Z
-status: human_needed
+status: passed
 score: 4/4 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
@@ -9,6 +9,7 @@ re_verification:
   previous_status: human_needed
   previous_score: 3/4 (SC2 fully deferred to human judgment)
   gaps_closed:
+
     - "G-06-9 (major): Section Tape displayed the PREVIOUS section's title after clicking a cell (cells 2-6 unreachable/mislabeled at both 375px and 768px) — fixed by single-sourcing tape height + scroll offset in globals.css `:root` and deriving the click threshold from `getComputedStyle(h2).scrollMarginTop` instead of a hand-typed duplicate constant"
     - "G-06-2 (minor): current-section label clipped up to 32px on narrow cells at 375px — fixed by repositioning the label from a cell-child to a tape-relative absolutely-positioned overlay"
     - "Detection gap: no gate asserted post-click tape-label correctness — closed by new 14th gate `scripts/e2e-section-tape.mjs`, proven to fail red (30/30) against the pre-fix code with clip/mismatch measurements matching UAT's manual figures, and pass green (30/30) after the fix"
@@ -17,6 +18,7 @@ re_verification:
 gaps: []
 deferred: []
 human_verification:
+
   - test: "[UAT-1] 실기기 iPad Safari 확인 (D-93) — 6개 URL, 세로/가로, 구간 테이프 탭·코드 가로 스크롤·터치 히트박스"
     expected: "6종 화면이 깨짐 없이 렌더되고 터치 상호작용이 정상 동작한다"
     why_human: "모든 자동 측정(e2e-typography, e2e-mobile-overflow, e2e-section-tape)은 Playwright Chromium으로만 돌았다 — Safari -webkit- 렌더링 차이·실제 손가락 히트박스·100vh 주소창 겹침은 원리적으로 자동화 불가. 추가 차단 요인: 이 항목이 가리키는 배포 URL(ai-engineer-runway.vercel.app)이 아직 Phase 6 코드를 받지 못했다 — master가 origin/master보다 63커밋 앞서 있어(이 검증 시점 실측), 실기기 확인 전에 push+재배포가 필요하다."
@@ -42,6 +44,7 @@ real defects that all 13 prior automated gates had missed — both inside SC2's 
   `top=52px`, but `updateCurrent()`'s threshold was a separately hand-typed `TAPE_HEIGHT_PX + 1`
   (=45) — the same conceptual value duplicated in three places (a CSS literal, a TS constant, and
   a Tailwind `h-11` class) had drifted.
+
 - **G-06-2 (minor):** the current-section label clipped up to 32px on narrow cells at 375px,
   because the label was a child of the narrow cell button and the tape's `overflow-x-hidden` cut
   off anything that overflowed the cell's width.
@@ -148,9 +151,11 @@ are now closed — see `06-UAT.md`, 8/9 tests `pass`, 0 `pending`, 0 open issues
 
 1. **UAT-1 — 실기기 iPad Safari 확인 (D-93)**: 6 screens, portrait/landscape, Section Tape tap,
    code-block horizontal swipe, touch-target accuracy, at the live deployment URL.
+
    - **Why human:** Safari `-webkit-` rendering and real touch interaction cannot be simulated by
      any Chromium-based automated gate (this now includes the new `e2e-section-tape.mjs`, which
      runs headless Chromium like every other e2e gate in this repo).
+
    - **Blocked by, additionally:** the deployment the test URL points at
      (`ai-engineer-runway.vercel.app`) has not received Phase 6's code — `master` is 63 commits
      ahead of `origin/master` (re-measured live in this verification session via

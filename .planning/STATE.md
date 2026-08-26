@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 06
-current_phase_name: site-wide-design-polish
-status: executing
-stopped_at: Phase 6 실행+UAT 완료, 실기기 iPad Safari 확인 대기(06-UAT.md 테스트 1)
-last_updated: "2026-08-26T03:42:21.213Z"
-last_activity: 2026-08-26
-last_activity_desc: 레슨 메모장 완료(quick 260827-0y8) — 게이트 16종 통과, 배포
+current_phase: 07
+current_phase_name: 아이패드 브라우저 실습 환경
+status: planning
+stopped_at: Phase 6 UI-SPEC approved
+last_updated: "2026-08-26T17:10:04.846Z"
+last_activity: 2026-08-27
+last_activity_desc: Phase 06 complete, transitioned to Phase 07
 progress:
-  total_phases: 7
-  completed_phases: 5  # Phase 6은 실기기 UAT 대기로 미포함
+  total_phases: 8
+  completed_phases: 6
   total_plans: 43
   completed_plans: 43
 ---
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 
 ## Current Position
 
-Phase: 06 (site-wide-design-polish) — EXECUTING
-Plan: 1 of 8
-Status: Executing Phase 06
-Last activity: 2026-08-26 — Phase 06 execution started
+Phase: 07 — 아이패드 브라우저 실습 환경
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-08-27 — Phase 06 complete, transitioned to Phase 07
 
 Progress: [█████████████████░░░] 8/13 plans in phase 05 ([██████████] 100% project-wide)
 
@@ -63,7 +63,7 @@ UI 작업을 끼워 넣을 자리가 없으므로, frontend-design은 페이즈 
 
 **Velocity:**
 
-- Total plans completed: 27
+- Total plans completed: 36
 - Average duration: —
 - Total execution time: 0 hours
 
@@ -75,6 +75,7 @@ UI 작업을 끼워 넣을 자리가 없으므로, frontend-design은 페이즈 
 | 02 | 4 | - | - |
 | 03 | 4 | - | - |
 | 05 | 13 | - | - |
+| 06 | 9 | - | - |
 
 **Recent Trend:**
 
@@ -205,8 +206,10 @@ None yet.
 (f7c3ccd..e2d505f).
 
 남길 만한 조사 결과(`.planning/research/필사-transcription-ux.md`는 그대로 둔다):
+
 - 문단을 통째로 베껴 쓰는 "완전 필사"는 아이패드에서 가장 불편하고 학습 근거도 가장 약하다 —
   보이는 글을 옮기는 것은 인출이 아니라 복사라 testing/generation effect 조건을 충족하지 않는다.
+
 - 대안으로 만든 클로즈는 근거는 더 강했지만, 실제로 써보니 학습 흐름에 끼어드는 느낌이 컸다.
 - 다음 시도는 **판정하지 않는 방향**(예: 접었다 펼치는 고정 메모장)으로 간다.
 

@@ -1,5 +1,5 @@
 ---
-status: partial  # 테스트 1(실기기 iPad Safari)만 남음 — 배포 후 확인 필요
+status: complete
 phase: 06-site-wide-design-polish
 source: [06-VALIDATION.md, 06-UI-SPEC.md, 06-CONTEXT.md D-93, 06-D97-MEASUREMENT.md]
 started: 2026-08-26T00:00:00Z
@@ -50,8 +50,17 @@ Playwright Chromium으로 돌았다. Safari의 `-webkit-` 렌더링 차이, 실�
 
 expected: 6종 화면이 세로/가로 모두에서 깨짐 없이 렌더되고, 구간 테이프 탭 이동·코드 블록
 가로 스크롤·터치 정확도가 전부 통과 기준을 만족한다.
-result: blocked
-blocked_by: physical-device
+result: pass
+blocked_by: physical-device  # 해소됨 — 아래 retest 참고
+retest: |
+  2026-08-27 사용자가 실기기 아이패드 Safari로 6종 화면(홈·커리큘럼·일정표·레슨·Step·소개)을
+  모두 확인하고 "정상적으로 나오고 있다"고 보고했다. 배포 차단은 8/26 push로, 기기 차단은
+  이 확인으로 해소됐다.
+  같은 확인 과정에서 실기기에서만 나던 결함 1건이 발견돼 먼저 고쳤다 — 레슨 화면 하단
+  메모장이 화면 최하단까지 닿지 않아 스크롤 시 그 틈으로 본문이 비쳤다. 원인은 아이패드
+  Safari 하단 툴바가 만드는 40~50px 뷰포트 차이를 키보드로 오인한 것이었다(커밋 b878491).
+  Chromium 자동 게이트가 원리적으로 볼 수 없는 종류의 결함이라, 이 항목이 왜 사람 확인으로
+  남아 있어야 했는지를 그대로 보여준다.
 deploy_status: ready
 reason: |
   배포 차단은 해제됐다. 2026-08-26 master를 origin에 push(64커밋)했고 Vercel production
@@ -302,11 +311,11 @@ reported: |
 ## Summary
 
 total: 9
-passed: 8
+passed: 9
 issues: 0
 pending: 0
 skipped: 0
-blocked: 1
+blocked: 0
 
 ## Gaps
 
