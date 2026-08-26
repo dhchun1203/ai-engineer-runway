@@ -238,7 +238,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. 학습 일정과 오늘의 학습 | 4/4 | Complete    | 2026-08-25 |
 | 4. Step 1 심화 콘텐츠 | 6/7 | In Progress|  |
 | 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 13/13 | Complete    | 2026-08-26 |
-| 6. 전체 페이지 디자인 정리 | 1/8 | In Progress|  |
+| 6. 전체 페이지 디자인 정리 | 5/8 | In Progress|  |
 
 ## Coverage Notes
 
@@ -273,7 +273,7 @@ Phase 1~3(플랫폼)은 합쳐서 약 1주가 목표다. 리서치가 지목한 
   3. 폰 폭(375px)에서도 오늘 카드·일정표·레슨 본문이 깨지지 않는다 (Phase 3 검증 후속 항목 해소)
   4. Phase 1~5의 자동 게이트(check-*.mjs, e2e-*.mjs)가 전부 통과한다 — 디자인 정리가 기능 회귀를 만들지 않는다
 
-**Plans**: 1/8 plans executed (웨이브 1~4 — 웨이브 2에서 4개 플랜 병렬, 파일 소유권 무충돌)
+**Plans**: 5/8 plans executed (웨이브 1~4 — 웨이브 2에서 4개 플랜 병렬, 파일 소유권 무충돌)
 
 Plans:
 
@@ -283,10 +283,10 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)* — 임의값 66곳 중 63곳 치환 + 실측 정산, 4개 플랜 병렬
 
-- [ ] 06-02-PLAN.md — `01-UI-SPEC.md` Typography 표 개정 + D-97 빈 캔버스 실측(쿠키 유무 양쪽) (SC1, SC2)
-- [ ] 06-03-PLAN.md — 카드·행 계약 통일(`.card-interactive` hover, padding) + 4개 컴포넌트 치환 19곳 (SC1, SC2, SC4)
-- [ ] 06-04-PLAN.md — 라우트 페이지 7종 + 홈 대시보드 4종 치환 31곳, CTA 타이포 표준 확정 (SC1, SC2, SC4)
-- [ ] 06-05-PLAN.md — 내비·페이저·배지·버튼 7종 치환 13곳 + 페이저 이중 글리프 제거 + mono 승격 (SC1, SC2, SC4)
+- [x] 06-02-PLAN.md — `01-UI-SPEC.md` Typography 표 개정 + D-97 빈 캔버스 실측(쿠키 유무 양쪽) (SC1, SC2)
+- [x] 06-03-PLAN.md — 카드·행 계약 통일(`.card-interactive` hover, padding) + 4개 컴포넌트 치환 19곳 (SC1, SC2, SC4)
+- [x] 06-04-PLAN.md — 라우트 페이지 7종 + 홈 대시보드 4종 치환 31곳, CTA 타이포 표준 확정 (SC1, SC2, SC4)
+- [x] 06-05-PLAN.md — 내비·페이저·배지·버튼 7종 치환 13곳 + 페이저 이중 글리프 제거 + mono 승격 (SC1, SC2, SC4)
 
 **Wave 3** *(blocked on Wave 2)* — 레슨 화면 마감 + 빈 캔버스 재배치
 
