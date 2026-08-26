@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import * as runtime from "react/jsx-runtime";
-import type { ComponentType } from "react";
+import type { ComponentPropsWithoutRef, ComponentType } from "react";
 import { CodeBlock } from "@/components/code-block";
 
 // Velite는 MDX를 빌드 타임에 함수 본문(code) 문자열로 컴파일한다.
@@ -15,11 +15,23 @@ const useMDXComponent = (code: string) => {
   }, [code]);
 };
 
+// table -> TableWrapper: 넓은 표 하나가 페이지 전체를 가로로 밀지 않도록
+// 가로 스크롤 래퍼로 감싼다(D-R4K-6). table 자체의 CSS display는 건드리지
+// 않는다 — table-layout: auto의 열 너비 계산이 깨진다.
+function TableWrapper(props: ComponentPropsWithoutRef<"table">) {
+  return (
+    <div className="overflow-x-auto">
+      <table {...props} />
+    </div>
+  );
+}
+
 // 모든 MDX 렌더 지점(/lesson, /about)이 공유하는 기본 매핑. 호출부마다 따로
 // 넘기게 두면 한쪽을 빠뜨리기 쉬우므로 여기 한 곳에서 주입한다.
 // pre -> CodeBlock: 동작하는 복사 버튼을 붙인다(code-block.tsx 주석 참고).
 const defaultComponents: Record<string, ComponentType> = {
   pre: CodeBlock as ComponentType,
+  table: TableWrapper as ComponentType,
 };
 
 export const MDXContent = ({
