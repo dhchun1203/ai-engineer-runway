@@ -423,24 +423,64 @@ function TableWrapper(props: ComponentPropsWithoutRef<"table">) {
 
 ## UI Considerations
 
-> Populated by the ui-phase UI-consideration probe. Shape-rooted UI *state* coverage
-> (empty / loading / error / populated / partial / overflow / zero-one-many / long-text).
-> 01-UI-SPEC.md가 이미 8요소×8카테고리 확률 커버를 완료했다(47/49 resolved) — Phase 6은 그
-> 결과를 재검사하지 않고, **이 Phase가 새로 만드는 표면**(Section Tape, 표 래퍼, 잠금 문구, 카드
-> hover)에 한정해 추가 커버리지만 기록한다.
+> ui-phase UI-consideration probe가 생성했다(`ui-consideration-probe.cjs`, 8 elements x 8-category
+> shape-rooted state taxonomy). 한국어 산문이라 휴리스틱 분류기가 8개 중 6개를 `unclassified`로
+> 남겼으므로, 워크플로가 규정한 kind 오버라이드(propose-then-confirm)를 저자가 적용해 재실행했다.
+> empty / loading / error / populated / partial / overflow / zero-one-many / long-text 축을 다룬다.
+> 빈 상태·에러 상태의 **문구**는 `## Copywriting Contract`가 소유한다 — 이 절은 문구를 재기술하지 않고 참조만 한다.
 
-신규 표면 커버리지: 6 covered, 2 backstop, 0 unresolved.
+**커버리지: applicable 44 / resolved 44 / unresolved 0** (explicit 27 · backstop 6 · dismissed 11)
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
-| zero-one-many | Section Tape — `h2` 0~1개 레슨 | ✅ covered | `hasContent: false`이거나 렌더된 `h2` < 2개면 컴포넌트가 아예 렌더하지 않는다(D-R4K-1) — 빈 테이프나 1칸짜리 테이프가 존재하지 않는다 |
-| overflow | Section Tape — 극단적으로 짧은 구간 | ✅ covered | 폭 하한 24px(위 "터치 타깃 예외" 참고)로 셀이 완전히 사라지지 않게 함 |
-| overflow | MDX 표 — Step 2·3의 넓은 표 | ✅ covered | `overflow-x-auto` 래퍼(D-R4K-6), `display:block` 금지로 열 너비 계산 보존 |
-| long-text | 인라인 코드 — 표 셀 안 중첩 | ✅ covered | `0.9375rem` 절대값(rem)이라 `em` 중첩 축소가 발생하지 않음(12.25px 재발 방지) |
-| empty | 잠금 상태(`progressRead === null`) | ✅ covered | 이전엔 아무 문구도 없던 자리에 위 잠금 문구가 항상 렌더 — "아무것도 없음" 상태 자체를 제거 |
-| populated | 그리드 카드 hover | ✅ covered | `.card-interactive:hover` 규칙이 StepCard·TodayLessonCard 양쪽에 적용, 새 색 없이 surface 톤 이동만 사용 |
-| overflow | 375px 전 라우트 | 🧪 backstop | D-91 게이트(`e2e-typography.mjs` 또는 별도 스크립트)가 4개 라우트의 `scrollWidth<=clientWidth`를 검증하지만, 실기기 Safari 렌더링 차이(주소창 높이, `-webkit-` 스크롤 관성)는 자동화 밖 — D-93이 UAT로 이관 |
-| overflow | Section Tape 하이드레이션 순간 레이아웃 시프트(균등 폭 → 실제 폭) | 🧪 backstop | Playwright로 SSR 직후/effect 이후 두 스냅샷을 비교하는 자동 검사는 계획 단계 선택 사항 — 시각적 "튐" 여부는 사람 눈 확인이 더 신뢰도 높음, human-verify 체크포인트 권장 |
+| Element | Category | Status | Resolution / Reason |
+|---|---|---|---|
+| Section Tape | empty | resolved (explicit) | 렌더된 article h2가 2개 미만이거나 lesson.hasContent === false이면 Section Tape 컴포넌트는 null을 반환한다 — 빈 테이프가 존재할 수 없다 (D-R4K-1) |
+| Section Tape | loading | resolved (explicit) | SSR/하이드레이션 전에는 칸을 균등 폭으로 렌더한다. 스켈레톤·스피너 없음 — 테이프 자체가 이미 최종 형태이고 폭만 effect에서 보정된다 (D-R4K-1) |
+| Section Tape | error | resolved (explicit) | h2 추출 실패(DOM 미준비, offsetTop 0)는 에러 UI가 아니라 균등 폭 유지로 처리한다 — 테이프는 보조 내비이므로 실패 시 조용히 균등 폭으로 남는다 |
+| Section Tape | populated | resolved (explicit) | 6단 척추를 따르는 정상 레슨에서 6칸이 각 구간의 실제 렌더 높이에 비례한 폭으로 표시되고, 현재 구간만 번호와 제목을 보인다 (D-R4K-1) |
+| Section Tape | partial | resolved (explicit) | h2가 6개가 아닌 레슨(2~5개 또는 7개 이상)도 헤딩 개수만큼 칸을 만든다 — 6칸은 기대값이지 하드코딩 상수가 아니다 |
+| Section Tape | overflow | resolved (explicit) | 각 칸 min-width 24px. 폭 합이 컨테이너를 넘으면 비율을 정규화해 컨테이너 폭에 맞춘다 — 테이프는 절대 가로 스크롤을 만들지 않는다 (UI-SPEC 터치 타깃 예외) |
+| Section Tape | zero-one-many | resolved (explicit) | h2 0개와 1개는 렌더하지 않는다. 2개 이상이면 개수만큼 렌더하며 상한은 없다 (D-R4K-1) |
+| Section Tape | long-text | resolved (backstop) | 현재 구간 제목이 칸 폭을 넘칠 때의 처리(말줄임 vs 감춤)를 시각 확인한다 — 실제 레슨 h2 제목 길이 분포에 의존하므로 렌더 확인이 필요 |
+| MDX 표 가로 스크롤 래퍼 | empty | dismissed | 래퍼는 표가 있을 때만 존재한다 — MDX 컴포넌트 치환이므로 표가 없으면 래퍼도 렌더되지 않는다. 내용이 빈 표는 콘텐츠 저작 문제이지 래퍼의 상태가 아니다 |
+| MDX 표 가로 스크롤 래퍼 | loading | dismissed | 레슨 본문은 Velite가 빌드 타임에 컴파일한 정적 콘텐츠다 — 표에 로딩 상태가 존재하지 않는다 |
+| MDX 표 가로 스크롤 래퍼 | error | dismissed | 정적 빌드 산출물이라 런타임 로드 실패 경로가 없다. 표 구문 오류는 빌드 타임에 잡힌다 |
+| MDX 표 가로 스크롤 래퍼 | populated | resolved (explicit) | 표가 컨테이너보다 좁을 때 래퍼는 시각적으로 아무 변화를 주지 않는다 — 스크롤바, 테두리, 배경이 추가되지 않는다 |
+| MDX 표 가로 스크롤 래퍼 | partial | dismissed | 표는 부분 렌더 상태가 없다 — 마크다운 표는 통째로 렌더되거나 렌더되지 않는다 |
+| MDX 표 가로 스크롤 래퍼 | overflow | resolved (explicit) | 표가 컨테이너보다 넓으면 래퍼만 가로 스크롤되고 document.documentElement.scrollWidth <= clientWidth가 유지된다. display: block 대체 금지 — 열 너비 계산이 깨진다 (D-R4K-6) |
+| MDX 표 가로 스크롤 래퍼 | zero-one-many | resolved (explicit) | 한 레슨 안 표가 0개, 1개, 다수인 경우 모두 각 표가 독립된 래퍼를 갖는다 — 래퍼는 표당 1개다 |
+| MDX 표 가로 스크롤 래퍼 | long-text | resolved (explicit) | 셀 안 긴 텍스트는 줄바꿈되고, 줄바꿈 불가한 긴 토큰(URL, 식별자)은 표 전체 폭을 늘려 래퍼 가로 스크롤로 흡수된다 — 페이지는 밀리지 않는다 |
+| 잠금 상태 문구 | overflow | resolved (explicit) | 한 줄 고정 문구이며 375px에서도 줄바꿈으로 흡수된다 — 말줄임과 클리핑 없음 |
+| 잠금 상태 문구 | long-text | resolved (explicit) | 문구가 상수 문자열이라 길이가 변하지 않는다: 완료 체크와 진행률 기록은 잠금 해제 후에 사용할 수 있습니다. (D-R4K-8) |
+| 그리드 카드 (StepCard / TodayLessonCard) | empty | resolved (explicit) | TodayLessonCard는 오늘 배정 레슨이 없을 때 before-start / after-range / buffer 상태 문구를 렌더한다 — 빈 카드가 되지 않는다 (기존 동작 유지) |
+| 그리드 카드 (StepCard / TodayLessonCard) | loading | dismissed | 두 카드 모두 서버에서 데이터를 갖춘 채 렌더된다(force-dynamic Server Component) — 클라이언트 로딩 상태가 존재하지 않는다 |
+| 그리드 카드 (StepCard / TodayLessonCard) | error | resolved (explicit) | Supabase 조회 실패 시 홈은 ProgressReadError를 렌더한다 — 카드가 잘못된 진행률을 보여주지 않는다 (기존 동작 유지, 이 Phase는 변경하지 않음) |
+| 그리드 카드 (StepCard / TodayLessonCard) | populated | resolved (explicit) | StepCard와 TodayLessonCard가 동일한 radius, border, surface, padding 계약을 따르고, 클릭 가능한 카드에만 card-interactive hover surface 톤 이동이 적용된다 (UI-SPEC Card Contract) |
+| 그리드 카드 (StepCard / TodayLessonCard) | partial | resolved (explicit) | 쿠키가 없어 completedIds가 null이면 카드는 완료 배지 없이 렌더된다 — 카드 자체는 항상 완전한 형태를 유지한다 |
+| 그리드 카드 (StepCard / TodayLessonCard) | overflow | resolved (backstop) | 375px에서 카드 내부 요소(배지, 제목, 소요시간)가 가로로 넘치지 않음을 D-91 게이트가 scrollWidth <= clientWidth로 검증한다 |
+| 그리드 카드 (StepCard / TodayLessonCard) | zero-one-many | resolved (explicit) | StepCard는 항상 정확히 3장(Step 1, 2, 3), TodayLessonCard는 항상 정확히 1장 — 개수가 데이터에 따라 변하지 않는다 |
+| 그리드 카드 (StepCard / TodayLessonCard) | long-text | resolved (backstop) | 긴 레슨 제목이 카드 안에서 줄바꿈되고 카드 높이만 늘어나는지 확인한다 — truncate 클래스를 새로 도입하지 않는다는 것이 계약이며, 실제 최장 제목 렌더는 시각 확인 대상 |
+| 인라인 코드 칩 | overflow | resolved (explicit) | 인라인 코드 칩은 배경과 padding만 추가하고 줄바꿈 동작을 바꾸지 않는다 — 한국어 본문 흐름 안에서 기존과 동일하게 줄바꿈된다 |
+| 인라인 코드 칩 | long-text | resolved (explicit) | font-size 0.9375rem 절대값이라 표 셀 등 어디에 중첩돼도 em 복리 축소가 일어나지 않는다(12.25px 재발 방지). font-weight 400도 함께 지정해 플러그인 기본값 600이 새지 않게 한다 (D-R4K-4) |
+| 내비 셸 (site-nav) | loading | dismissed | 내비는 정적 링크 목록이라 로딩 상태가 없다. 테마 토글만 클라이언트 컴포넌트이며 이미 하이드레이션 안전 패턴으로 동작한다(기존 코드, 이 Phase 변경 없음) |
+| 내비 셸 (site-nav) | error | dismissed | 내비는 데이터를 조회하지 않는다 — 실패 경로가 존재하지 않는다 |
+| 내비 셸 (site-nav) | overflow | resolved (explicit) | 375px에서 로고와 4개 링크와 토글이 한 줄에 안 들어가면 줄바꿈으로 흡수한다 — 가로 스크롤이나 햄버거 메뉴를 도입하지 않는다 (UI-SPEC Nav Shell Contract) |
+| 내비 셸 (site-nav) | long-text | dismissed | 내비 라벨 4개가 모두 고정 상수(홈, 커리큘럼, 일정표, 소개)로 길이가 변하지 않는다 |
+| 레슨 페이저 (lesson-nav) | loading | dismissed | 페이저 대상은 빌드 타임 매니페스트에서 계산된 정적 링크다 — 로딩 상태가 없다 |
+| 레슨 페이저 (lesson-nav) | error | dismissed | 인접 레슨 조회 실패는 빌드 타임 매니페스트 검사(check-manifest.mjs)가 잡는다 — 런타임 에러 상태가 아니다 |
+| 레슨 페이저 (lesson-nav) | overflow | resolved (explicit) | 375px에서 이전과 다음 두 링크가 세로로 쌓여도 가로 오버플로가 없어야 한다 — D-91 게이트가 레슨 라우트에서 검증한다 |
+| 레슨 페이저 (lesson-nav) | long-text | resolved (backstop) | 긴 레슨 제목이 페이저 라벨에서 줄바꿈되는지 시각 확인한다. 리터럴 화살표 제거(D-R4K-7) 후 chevron과 제목 조합의 줄바꿈 지점이 바뀔 수 있다 |
+| 진행률 요약 · 페이스 패널 | empty | resolved (explicit) | 밀린 레슨이 0개면 BehindLessonsList가 렌더되지 않는다(조건부) — 빈 목록 상자가 남지 않는다 (기존 동작 유지) |
+| 진행률 요약 · 페이스 패널 | loading | dismissed | 홈이 force-dynamic Server Component라 Supabase 조회가 서버에서 끝난 뒤 렌더된다 — 클라이언트 로딩 상태가 존재하지 않는다 |
+| 진행률 요약 · 페이스 패널 | error | resolved (explicit) | readCompletedLessonIds가 실패하면 ProgressReadError가 진행률과 페이스 자리를 대신한다 — 0퍼센트나 잘못된 페이스를 표시하지 않는다 (기존 동작 유지) |
+| 진행률 요약 · 페이스 패널 | populated | resolved (explicit) | 쿠키가 있는 실사용 상태에서 D-day, 오늘카드, 페이스, 밀린레슨(조건부), 전체진행률 5개 섹션이 렌더된다 — D-97의 빈 캔버스 판정은 이 상태를 기준으로 한다 |
+| 진행률 요약 · 페이스 패널 | partial | resolved (explicit) | 쿠키가 없으면 진행률, 페이스, 밀린레슨 3개 섹션이 통째로 빠지고 D-day와 오늘카드만 남는다. 이때 D-R4K-8의 잠금 문구가 완료 루프의 존재를 말로 알린다 |
+| 진행률 요약 · 페이스 패널 | overflow | resolved (backstop) | 375px에서 진행률 바와 페이스 패널이 넘치지 않음을 D-91 게이트가 홈 라우트에서 검증한다 |
+| 진행률 요약 · 페이스 패널 | zero-one-many | resolved (explicit) | 밀린 레슨 0개면 미렌더, 1개 이상이면 목록 렌더. 상한은 전체 레슨 수 35 |
+| 진행률 요약 · 페이스 패널 | long-text | resolved (backstop) | 밀린 레슨 목록의 긴 제목 줄바꿈을 시각 확인한다 — 목록 행이 카드 리스트 행 계약을 따르는지 함께 본다 |
+
+**플래너 lift 규칙:** `resolved (explicit)` 행은 `must_haves.truths`에 평문 문자열로,
+`resolved (backstop)` 행은 `{ statement: <the check>, verification: backstop }` 플랫 스칼라 마커로 올린다.
+`dismissed` 행은 올리지 않는다(사유가 이 표에 남아 있다). `unresolved` 행은 0건이다.
 
 ---
 
@@ -455,11 +495,11 @@ function TableWrapper(props: ComponentPropsWithoutRef<"table">) {
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-08-26 (gsd-ui-checker, 6/6 dimensions PASS)
