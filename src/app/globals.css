@@ -9,6 +9,11 @@
   --color-surface: #e7ecf3;
   --color-surface-dark: #131b2e;
 
+  /* body/.dark body의 기존 리터럴을 값 변경 없이 이곳으로 옮긴 것 — 새 색
+     값이 아니다(D-R4K-2, SC1의 "한 곳에서 정의" 요구를 만족시키기 위함). */
+  --color-foreground: #171717;
+  --color-foreground-dark: #f1f5f9;
+
   /* Global functional accent (D-03) */
   --color-accent: #0d9488;
   --color-accent-dark: #2dd4bf;
@@ -31,18 +36,27 @@
   --color-badge-neutral-text-dark: #94a3b8;
   --color-badge-neutral-bg-dark: #1e293b;
 
-  /* Typography: exactly 4 sizes / 2 weights (UI-SPEC) */
-  --font-size-label: 14px;
-  --font-size-body: 16px;
-  --font-size-heading: 20px;
-  --font-size-display: 28px;
-  --font-weight-regular: 400;
-  --font-weight-semibold: 600;
+  /* Typography: 5 sizes(+inline code), weights via Tailwind 기본 유틸리티
+     (D-R4K-4, D-95). `--text-*`가 Tailwind v4에서 `text-{name}` 유틸리티를
+     생성하는 실제 네임스페이스다(node_modules/tailwindcss/theme.css:347-372).
+     예전 `--font-size-*`/`--font-weight-*` 이름은 이 네임스페이스가 아니라서
+     아무 유틸리티도 만들지 못하는 죽은 코드였다 — 삭제. 굵기는 Tailwind
+     기본 font-normal/font-semibold/font-bold(400/600/700)로 충분하다. */
+  --text-display: 1.875rem; /* 30px */
+  --text-display--line-height: 1.2;
+  --text-heading: 1.375rem; /* 22px */
+  --text-heading--line-height: 1.3;
+  --text-subhead: 1.0625rem; /* 17px */
+  --text-subhead--line-height: 1.4;
+  --text-body: 1rem; /* 16px */
+  --text-body--line-height: 1.6;
+  --text-label: 0.875rem; /* 14px */
+  --text-label--line-height: 1.4;
 }
 
 body {
   background-color: var(--color-background);
-  color: #171717;
+  color: var(--color-foreground);
   font-family: var(--font-pretendard), "Pretendard", ui-sans-serif, system-ui, sans-serif;
   word-break: keep-all;
   overflow-wrap: break-word;
@@ -50,7 +64,7 @@ body {
 
 .dark body {
   background-color: var(--color-background-dark);
-  color: #f1f5f9;
+  color: var(--color-foreground-dark);
 }
 
 /* Code must never inherit the Korean body font (D-06) */
@@ -114,12 +128,12 @@ code[data-theme*=" "] span {
    글자색은 지정하지 않는다 — .prose 본문색을 그대로 상속받아 양쪽 테마에서 대비가 맞는다.
    hover 없이 항상 보인다 — 아이패드 Safari에는 hover가 없다. */
 .prose [data-code-block] > button {
-  background-color: rgba(248, 250, 252, 0.9);
+  background-color: color-mix(in srgb, var(--color-background) 90%, transparent);
   border-color: var(--color-badge-neutral-bg);
 }
 
 .dark .prose [data-code-block] > button {
-  background-color: rgba(11, 18, 32, 0.9);
+  background-color: color-mix(in srgb, var(--color-background-dark) 90%, transparent);
   border-color: var(--color-badge-neutral-bg-dark);
 }
 
@@ -179,6 +193,60 @@ code[data-theme*=" "] span {
   margin-top: 2.6em;
 }
 
+/* .prose h1–h4 크기·굵기 못박기 (D-R4K-4, D-95, 06-UI-SPEC.md § Typography).
+   `@tailwindcss/typography`의 모든 선택자가 `:where()`로 감싸져 명세성 0이므로
+   (node_modules/@tailwindcss/typography/src/index.js:20-45), 평범한 클래스
+   선택자가 소스 순서와 무관하게 항상 이긴다 — `!important`나 `@layer` 불필요.
+   위 `.prose > h2`/`.prose > h3`의 margin-top 규칙과 겹치지 않는 별도 속성
+   (font-size/font-weight/line-height)만 담당한다. */
+.prose h1 {
+  font-size: var(--text-display);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.prose h2 {
+  font-size: var(--text-heading);
+  font-weight: 700;
+  line-height: 1.3;
+}
+.prose h3 {
+  font-size: var(--text-subhead);
+  font-weight: 700;
+  line-height: 1.4;
+}
+.prose h4 {
+  font-size: var(--text-body);
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+/* 인라인 코드 — 리터럴 백틱 글리프 제거 + 배경 칩 (D-R4K-5, D-R4K-4).
+   `code`의 플러그인 기본 font-weight는 600이다
+   (node_modules/@tailwindcss/typography/src/styles.js:1541-1543) — font-size만
+   덮으면 굵기 이탈이 그대로 남으므로 반드시 함께 지정한다(06-RESEARCH.md
+   Pitfall 2). font-size는 rem 절대값이라 표 셀 등 어디에 중첩돼도 em 복리
+   축소가 일어나지 않는다(12.25px 재발 방지, 04-UI-REVIEW Pillar 4). 배경·
+   padding만 추가하고 줄바꿈 관련 속성은 건드리지 않는다 — 한국어 본문 흐름
+   안에서 기존과 동일하게 줄바꿈된다.
+   `:not(pre code)`로 범위를 좁힌다 — 플러그인의 `pre code` 리셋(배경
+   transparent, padding 0, fontSize/fontWeight inherit)은 `:where()`로 감싸져
+   명세성 0이라, 이 규칙을 그대로 두면 명세성이 있는(0,1,1) 우리 규칙이 항상
+   이겨 Shiki 코드 블록 안 code에도 인라인 칩 배경이 새어 들어간다. */
+.prose code:not(pre code)::before,
+.prose code:not(pre code)::after {
+  content: none;
+}
+.prose code:not(pre code) {
+  font-size: 0.9375rem; /* 15px */
+  font-weight: 400;
+  background-color: var(--color-surface);
+  padding-inline: 0.25em;
+  border-radius: 0.25rem;
+}
+.dark .prose code:not(pre code) {
+  background-color: var(--color-surface-dark);
+}
+
 /* <details>/<summary> 정답 접기 UI 터치 타깃·다크모드 (D-61, RESEARCH Pitfall 3).
    `.prose [data-code-block] > button` 규칙 쌍(라이트 기본 + `.dark` 오버라이드)과
    같은 형태로 쓴다 — 선택자를 `.prose` 하위로 한정하고, 새 색은 만들지 않고
@@ -201,7 +269,7 @@ code[data-theme*=" "] span {
   min-height: 44px;
   cursor: pointer;
   list-style: none;
-  font-weight: var(--font-weight-semibold);
+  font-weight: 600; /* --font-weight-semibold 삭제(죽은 코드) 후 리터럴로 대체 — 허용 굵기 집합 안 */
   color: var(--color-accent);
 }
 

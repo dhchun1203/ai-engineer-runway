@@ -45,7 +45,7 @@ export default async function LessonPage(
     <article className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-12 sm:px-6 lg:px-8">
       <LessonBreadcrumb lesson={lesson} />
       <header className="flex flex-col gap-3">
-        <h1 className="text-[28px] font-semibold leading-[1.2]">{lesson.title}</h1>
+        <h1 className="text-display font-bold">{lesson.title}</h1>
         <div className="flex items-center gap-2">
           <DepthBadge depth={lesson.depth} stepId={lesson.stepId as StepId} />
           <EstimatedTime minutes={lesson.estimatedMinutes} />
@@ -57,8 +57,8 @@ export default async function LessonPage(
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          <h2 className="text-[20px] font-semibold leading-[1.3]">콘텐츠 준비 중입니다</h2>
-          <p className="text-[16px] font-normal leading-[1.6]">
+          <h2 className="text-heading font-bold">콘텐츠 준비 중입니다</h2>
+          <p className="text-body font-normal">
             이 레슨은 아직 작성되지 않았습니다. 커리큘럼 목록에서 다른 레슨을 먼저
             골라 학습해보세요.
           </p>
