@@ -41,24 +41,35 @@ Task 1(측정 → 임계값 대조 → 판단)과 Task 3(서브셋 후 재측정
 ## 서브셋 후 측정 (Task 3)
 
 - 측정 일시: 2026-08-27 (Task 2 서브셋 생성·교체 직후)
-- 첫 방문 총 전송 바이트: **{{AFTER_TOTAL_BYTES}} bytes**
-- `.woff2` 폰트 합계 바이트: **{{AFTER_FONT_BYTES}} bytes**
-- 폰트 비중: **{{AFTER_FONT_PERCENT}}%**
-- 서브셋 폰트 디스크 크기: `public/fonts/PretendardVariable.subset.woff2` = **{{SUBSET_FILE_BYTES}} bytes**
+- 서브셋 문자 집합: 실측 문자 961개 ∪ KS X 1001 완성형 한글 2,350자(Unicode.org KSX1001.TXT
+  1차 자료로 검증) ∪ ASCII 출력 가능 문자 ∪ 프로젝트 상용 기호 17개 = **2,469개**
+- 첫 방문 총 전송 바이트: **1,080,563 bytes**
+- `.woff2` 폰트 합계 바이트: **448,384 bytes**
+- 폰트 비중: **41.50%**
+- 서브셋 폰트 디스크 크기: `public/fonts/PretendardVariable.subset.woff2` = **448,384 bytes**
+- `npm ls subset-font`: **subset-font@2.5.0**
 
 ### 전후 비교표
 
 | 구분 | 총 전송 바이트 | 폰트 바이트 | 폰트 비중 |
 |---|---|---|---|
 | 서브셋 전 | 2,694,858 | 2,057,688 | 76.36% |
-| 서브셋 후 | {{AFTER_TOTAL_BYTES}} | {{AFTER_FONT_BYTES}} | {{AFTER_FONT_PERCENT}}% |
-| 감소량 | {{DELTA_TOTAL_BYTES}} bytes | {{DELTA_FONT_BYTES}} bytes ({{DELTA_FONT_PERCENT}}%) | — |
+| 서브셋 후 | 1,080,563 | 448,384 | 41.50% |
+| 감소량 | 1,614,295 bytes (59.90%) | 1,609,304 bytes (78.21%) | -34.86%p |
+
+폰트 파일 자체는 2,057,688 → 448,384 bytes로 **78.21% 감소**했다. 첫 방문 총 전송량도
+59.90% 줄어 폰트 비중이 76.36%에서 41.50%로 내려갔다 — 여전히 최대 단일 자산이지만 "전체
+전송량의 대다수"에서 "상당 비중" 수준으로 낮아졌다.
 
 ### 회귀 확인
 
-- `node --env-file=.env.local scripts/e2e-typography.mjs`: {{TYPOGRAPHY_RESULT}}
-- `node --env-file=.env.local scripts/e2e-mobile-overflow.mjs`(375·768·1024 세 뷰포트): {{MOBILE_OVERFLOW_RESULT}}
-- `node scripts/check-font-glyph-coverage.mjs`: {{GLYPH_COVERAGE_RESULT}}
+- `node scripts/e2e-typography.mjs`: **통과** — 크기(font-size) 5+1종·굵기(font-weight) 3종
+  허용 집합 밖 값 없음, 인라인 코드 백틱 글리프 잔존 없음(98개 요소 측정)
+- `node scripts/e2e-mobile-overflow.mjs`(375·768·1024 세 뷰포트): **통과** — 7개 라우트 ×
+  3개 뷰포트 = 21개 조합 전부 가로 오버플로 0
+- `node scripts/check-font-glyph-coverage.mjs`: **통과** — 콘텐츠 유니크 문자 961개 전부
+  서브셋 cmap에 있음. 임시로 서브셋에 없는 한자(漢, U+6F22) 1자를 레슨에 주입해 게이트가
+  `U+6F22`를 정확히 보고하며 실패하는 것도 확인(검사 후 즉시 원복, git diff 0)
 
 폰트 스택 폴백(`ui-sans-serif`, `system-ui`)은 그대로 둔다 — 서브셋에 없는 문자가 나오면 폴백이
 그린다. 이 안전망이 있다는 것과 별개로 커버리지 게이트를 상시로 두는 이유는, 폴백 글꼴로 그려지면
