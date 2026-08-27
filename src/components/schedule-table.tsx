@@ -169,7 +169,13 @@ export function ScheduleTable({
   // 같은 날짜에 행이 2개면 둘 다에 id를 주면 DOM id가 중복되고, s3의 today-row
   // 마커 1건 어설션도 함께 깨진다. 강조 스타일(TODAY_ROW_CLASS)은 오늘 날짜의
   // 모든 행에 그대로 준다 — 앵커/마커와 강조는 별도 boolean이다.
-  let seenTodayAnchor = false;
+  //
+  // 앵커 행은 렌더 중 플래그를 뒤집는 대신 미리 한 번 찾아 둔다 — 렌더가 끝난 뒤
+  // 변수를 재할당하면 리렌더 때 값이 남아 어긋날 수 있다(react-hooks/immutability).
+  // groupRowsByWeek은 rows의 원소를 복사하지 않고 재배치만 하므로 객체 동일성
+  // 비교가 성립하고, rows가 이미 날짜 오름차순이라 find가 고르는 행은 기존
+  // 순회(주차 → 주 내 행)가 처음 만나던 행과 같다.
+  const todayAnchorRow = rows.find((row) => row.date === today) ?? null;
 
   return (
     <div className="flex flex-col gap-12">
@@ -186,8 +192,7 @@ export function ScheduleTable({
               const isPast = row.date < today;
               const isDone =
                 completedIds !== null && row.lessonSlug !== null ? completedIds.has(row.lessonSlug) : false;
-              const isTodayAnchor = isToday && !seenTodayAnchor;
-              if (isTodayAnchor) seenTodayAnchor = true;
+              const isTodayAnchor = row === todayAnchorRow;
 
               // 행 key를 유일하게 만든다 — 레슨 행은 row.lessonSlug(35개 전역 유일)를,
               // 버퍼 행은 row.date(버퍼 행은 9/29 하나뿐이라 유일)를 쓴다. 날짜만으로는
