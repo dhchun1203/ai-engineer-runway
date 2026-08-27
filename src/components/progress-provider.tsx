@@ -69,12 +69,15 @@ export function ProgressProvider({
   const [reloadToken, setReloadToken] = useState(0);
 
   function refresh() {
+    // loading 되돌림을 effect 본문이 아니라 여기서 한다 — effect 안의 동기 setState는
+    // 캐스케이딩 렌더를 만든다(react-hooks/set-state-in-effect). 최초 마운트는
+    // useState 초기값이 이미 loading이라 화면상 상태 전이는 그대로다.
+    setState({ status: "loading", data: null });
     setReloadToken((token) => token + 1);
   }
 
   useEffect(() => {
     const controller = new AbortController();
-    setState({ status: "loading", data: null });
 
     const url = `/api/progress${lessonId ? `?lesson=${encodeURIComponent(lessonId)}` : ""}`;
 
