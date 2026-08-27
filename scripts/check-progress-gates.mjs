@@ -247,12 +247,18 @@ if (packageJsonSource === null) {
 // STATIC_SHELL_PAGES: 이 페이즈가 정적 셸로 전환하는 페이지 — route segment
 // config `dynamic` 선언이 없고, 쿠키/진도 조회 식별자(hasUnlockCookie·
 // readCompletedLessonIds·readLessonNote·cookies()) 중 어느 것도 등장하지
-// 않는다. 08-02는 Step 페이지, 08-03은 레슨 페이지를 여기 넣는다. 08-06이
-// 커리큘럼 페이지를 이 배열에 추가한다(계획에 명시돼 있다).
+// 않는다. 08-02는 Step 페이지, 08-03은 레슨 페이지, 08-06은 커리큘럼 페이지를
+// 여기 넣었다 — 이제 세 항목으로 확정이다(SC1이 명시한 라우트 전부).
 //
 // DYNAMIC_GATED_PAGES: 오늘 날짜가 곧 페이지 본문이라 동적으로 유지하기로
-// 결정된 두 라우트(근거는 08-06이 기록한다) — 기존 정규식대로 force-dynamic
-// 선언 존재를 요구한다.
+// 결정된 두 라우트(D8-P, 근거는 08-06-PLAN.md objective와 두 파일 자신의
+// 헤더 주석에 있다 — 오늘 배정 레슨·페이스·밀린 레슨/오늘 행 강조·자동
+// 스크롤이 전부 오늘 날짜에서 나온다) — 기존 정규식대로 force-dynamic 선언
+// 존재를 요구한다. 이 배열은 이제 두 항목으로 확정이다.
+//
+// G9(이 배열, 선언 존재)과 G17(아래, 쿠키 게이트 호출 순서)이 DYNAMIC_GATED_PAGES와
+// 같은 두 파일을 서로 다른 각도에서 지킨다 — 하나가 없어도 다른 하나가 잡는
+// 이중 방어다.
 //
 // STATIC_SHELL_PAGES 검사는 stripJsLineComments()로 주석을 걷어낸 소스만
 // 본다 — 전환된 페이지가 "여기서 쿠키를 읽지 않는다"는 설명 주석을 달게
@@ -261,6 +267,7 @@ if (packageJsonSource === null) {
 const STATIC_SHELL_PAGES = [
   path.join(ROOT, 'src', 'app', 'step', '[stepId]', 'page.tsx'),
   path.join(ROOT, 'src', 'app', 'lesson', '[lessonId]', 'page.tsx'),
+  path.join(ROOT, 'src', 'app', 'curriculum', 'page.tsx'),
 ];
 
 const DYNAMIC_GATED_PAGES = [
@@ -453,8 +460,8 @@ if (fs.existsSync(DASHBOARD_SEGMENT_PATH)) {
 // --- G17: /와 /schedule 각각에서 hasUnlockCookie 첫 등장 위치가
 // readCompletedLessonIds 첫 등장보다 앞선다 (G14가 Route Handler에 대해 하는
 // 것과 동일한 형태) — 게이트를 건너뛰고 조회하는 회귀를 잡는다 (03-01,
-// T-03-01). /curriculum은 08-06이 정적으로 전환하면 두 식별자가 사라지므로
-// 08-02에서 뺀다 — 그 계약은 G9의 STATIC_SHELL_PAGES로 옮겨간다 ---
+// T-03-01). /curriculum은 08-06이 정적으로 전환해 두 식별자가 사라졌으므로
+// 08-02에서 이미 뺐다 — 그 계약은 G9의 STATIC_SHELL_PAGES로 옮겨갔다 ---
 
 const G17_GATED_PAGES = [
   path.join(ROOT, 'src', 'app', 'page.tsx'),

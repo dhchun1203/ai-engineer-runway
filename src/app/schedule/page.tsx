@@ -8,9 +8,20 @@ import { getScheduleRows } from "@/lib/schedule-data";
 import { getLessonBySlug } from "@/content/curriculum-helpers";
 import type { StepId } from "@/content/modules";
 
-// /schedule도 쿠키를 읽으므로 동적 렌더링이 필요하다 — /와 /curriculum이 이미 겪은
+// /schedule도 쿠키를 읽으므로 동적 렌더링이 필요하다 — /가 이미 겪은
 // 조건부 쿠키 접근 → 캐시된 응답 문제(RESEARCH Pitfall 4)를 여기서도 원천 차단한다.
 // 이 선언은 상속되지 않으므로 각 라우트가 자기 파일에 직접 둔다.
+//
+// D8-P(08-06): Phase 8이 레슨·Step·커리큘럼 세 라우트를 정적으로 전환했지만
+// 이 라우트는 동적으로 남긴다 — 오늘 행 강조와 자동 스크롤 앵커가 오늘
+// 날짜에서 나온다. ISR(revalidate)도 쓰지 않는다 — 설치된 Next 16.3.2
+// 문서(node_modules/next/dist/docs/01-app/02-guides/
+// incremental-static-regeneration.md 100~102행·238행)가 직접 말하듯 재검증
+// 창 만료 후 첫 요청은 캐시된(낡은) 페이지를 그대로 받는다. 하루 한 번 여는
+// 1인 학습 사이트에서는 그 "낡은 첫 요청"이 사실상 매일 어제의 오늘 행을
+// 보는 것과 같다. icn1 리전 이동으로 이미 TTFB 59~68ms라 동적 유지의 비용도
+// 낮다(08-01 기준선). check-progress-gates.mjs G9의 DYNAMIC_GATED_PAGES가
+// 이 선언을 상시 검사한다.
 export const dynamic = "force-dynamic";
 
 export default async function SchedulePage() {
