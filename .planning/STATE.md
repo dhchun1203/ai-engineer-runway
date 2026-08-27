@@ -197,6 +197,7 @@ None yet.
 | 260825-r4k | 코드블록 복사 버튼이 모든 레슨에서 동작하지 않던 [Critical] 결함 수정 (04-UI-REVIEW Priority Fix 1) — 문자열 onclick을 실제 React 핸들러로 교체 | 2026-08-25 | 920741e | [260825-r4k-lesson-reading-screen-design-pass](./quick/260825-r4k-lesson-reading-screen-design-pass/) |
 | 260826-tbx | 학습 시작일 8/25→8/28 이동 + 35개 레슨을 8/28~9/28에 재배정(토요일 8/29·9/5·9/12만 2개), 9/29 복습일 유지 — 개강 전 완주 보존 | 2026-08-26 | 22d86ee | [260826-tbx-shift-study-start-date-from-2026-08-25-t](./quick/260826-tbx-shift-study-start-date-from-2026-08-25-t/) |
 | 260827-0y8 | 레슨 하단 메모장(옥스포드 노트 스타일) — 접었다 펼치기, 스크롤 고정, 타이핑 멈추면 자동 저장, 레슨당 메모 1개 Supabase 기기 간 공유 | 2026-08-27 | 5947684 | [260827-0y8-bottom-sheet-lesson-notepad-collapsible-](./quick/260827-0y8-bottom-sheet-lesson-notepad-collapsible-/) |
+| 260827-g6u | 폰(640px 미만) 헤더 내비 4항목을 햄버거+접이식 패널로 전환, 640px 이상은 게이트 실측으로 픽셀 동일성 증명(375px M3 126→120, 768/1024 완전 동일) | 2026-08-27 | eb1357b | [260827-g6u-phone-hamburger-nav-640px](./quick/260827-g6u-phone-hamburger-nav-640px/) |
 
 ## Deferred Items
 
