@@ -47,10 +47,16 @@ export function ModuleAccordion({
       open={defaultOpen}
       className="group overflow-hidden rounded-lg border border-badge-neutral-bg dark:border-badge-neutral-bg-dark"
     >
+      {/* 폰(375px 미만)에서는 제목 줄과 레슨수/진행률/화살표 줄을 세로로 쌓아
+          제목에 전체 폭을 준다(08-05 M2 게이트) — 640px 이상(sm:)에서는
+          flex-row로 되돌아가 원래의 한 줄 배치를 그대로 유지한다. 자식
+          엘리먼트 구성은 그대로 두고 summary 자체의 방향만 바꿔, 새 leaf
+          텍스트 요소를 만들지 않는다(hidden/inline 토글은 오히려 "레슨 N개"를
+          독립 leaf로 만들어 768/1024에서 새 M3 위반을 유발했다 — 대신 이 방식을 쓴다). */}
       <summary
-        className={`flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 ${STEP_HEADER_CLASSES[stepId]}`}
+        className={`flex min-h-11 cursor-pointer list-none flex-col items-start gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 ${STEP_HEADER_CLASSES[stepId]}`}
       >
-        <span className="text-heading font-bold">{module.title}</span>
+        <span className="min-w-0 text-heading font-bold">{module.title}</span>
         <span className="flex shrink-0 items-center gap-2 text-label font-normal">
           레슨 {lessons.length}개
           <ModuleProgressSlot moduleId={module.id} />
