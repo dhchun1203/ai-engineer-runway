@@ -289,3 +289,25 @@ None - 이 플랜은 신규 npm 패키지를 설치하지 않았다(`git diff pa
 ---
 *Phase: 08-performance-and-mobile*
 *Completed: 2026-08-27*
+
+## Self-Check: PASSED
+
+- FOUND: src/components/section-tape.tsx
+- FOUND: scripts/check-progress-gates.mjs
+- FOUND: src/app/globals.css
+- FOUND: src/components/complete-button.tsx
+- FOUND: src/components/theme-toggle.tsx
+- FOUND: src/components/code-block.tsx
+- FOUND: src/components/lesson-nav.tsx
+- FOUND: src/components/site-nav.tsx
+- FOUND: src/components/today-lesson-card.tsx
+- FOUND: src/components/lesson-notepad.tsx
+- FOUND: src/components/progress-summary.tsx
+- FOUND: src/components/progress-error.tsx
+- FOUND: src/components/progress-slots.tsx
+- FOUND: src/components/step-card.tsx
+- FOUND: src/app/curriculum/page.tsx
+- FOUND: commit ef0d1dd
+- FOUND: commit 8c0d7fb
+- FOUND: commit be6e6ea
+- FOUND: commit ea2ff0d
