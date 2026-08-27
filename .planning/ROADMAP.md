@@ -414,7 +414,7 @@ Plans:
 괜찮다"가 아니라 숫자로. Phase 6에서 게이트 16종이 전부 초록불인 상태로 실기기 결함(메모장 하단
 틈)이 나온 전례가 있으므로, 실기기 확인 항목도 함께 남긴다.
 
-**Plans:** 5/8 plans executed
+**Plans:** 6/8 plans executed
 
 계획 단위는 이 페이즈의 성공 기준 SC1~SC5다(확정된 REQ ID 없음 — Phase 6 선례). 기존 요구사항
 UX-01/02/03을 심화하는 플랜은 해당 ID를 함께 인용한다.
@@ -436,7 +436,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 08-06-PLAN.md — `/curriculum` 정적 전환 + 브라우저 계산 D-day + `/`·`/schedule` 동적 유지 결정 기록
+- [x] 08-06-PLAN.md — `/curriculum` 정적 전환 + 브라우저 계산 D-day + `/`·`/schedule` 동적 유지 결정 기록
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
