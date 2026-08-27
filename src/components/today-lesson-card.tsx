@@ -22,9 +22,11 @@ export type TomorrowInfo =
   | { kind: "none" };
 
 // progress-summary.tsx의 min-h-11 버튼 클래스를 그대로 재사용하되, UI-SPEC
-// Typography가 이 CTA에 배정한 Label 14px/600 크기로 맞춘다.
+// Typography가 이 CTA에 배정한 Label 14px/600 크기로 맞춘다. 640px 미만에서는
+// 카드 폭 전체로 넓혀 텍스트 컨테이너가 지나치게 좁아지지 않게 한다(08-05 M3
+// 게이트) — 640px 이상은 원래의 w-fit(내용에 맞춘 폭)을 그대로 유지한다.
 const CTA_CLASS =
-  "flex min-h-11 w-fit items-center justify-center rounded-lg bg-accent px-4 py-2 text-label font-semibold text-white dark:bg-accent-dark dark:text-background-dark";
+  "flex min-h-11 w-full items-center justify-center rounded-lg bg-accent px-4 py-2 text-label font-semibold text-white dark:bg-accent-dark dark:text-background-dark sm:w-fit";
 
 // 개별 레슨 한 줄 — 2레슨 날에 두 레슨을 나열할 때 재사용한다. 완료 여부는
 // completedIds가 non-null일 때만 표시하고(쿠키 없음/조회 실패를 미완료로
