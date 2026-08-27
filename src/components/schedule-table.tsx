@@ -53,36 +53,45 @@ function ScheduleLessonRow({
       {isTodayAnchor ? <span data-schedule-ui="today-row" className="hidden" aria-hidden="true" /> : null}
       <Link
         href={`/lesson/${row.lessonSlug}`}
-        className={`card-interactive flex min-h-11 items-center gap-3 px-2 py-3 transition-colors duration-150 ${isToday ? TODAY_ROW_CLASS : ""}`}
+        className={`card-interactive flex min-h-11 flex-col gap-2 px-2 py-3 transition-colors duration-150 sm:flex-row sm:items-center sm:gap-3 ${isToday ? TODAY_ROW_CLASS : ""}`}
       >
-        <span className={`whitespace-nowrap text-label font-normal ${isPast ? PAST_TONE_CLASS : ""}`}>
-          {row.date}
+        {/* 375px(폰): 날짜+제목을 상단 줄로 묶는다 — 배지·소요시간 그룹은 이
+            아래 별도 하단 줄로 내려가(08-05, D8-M) 제목에 남는 폭을 늘린다.
+            640px 이상(sm:)에서는 이 래퍼가 display:contents로 스스로 사라져
+            날짜·제목이 다시 Link의 직접 자식(flex row)이 되고, 렌더 결과가
+            03-04가 만든 원래 한 줄 배치와 픽셀 단위로 같아진다. */}
+        <span className="flex items-start gap-3 sm:contents">
+          <span className={`whitespace-nowrap text-label font-normal ${isPast ? PAST_TONE_CLASS : ""}`}>
+            {row.date}
+          </span>
+          <span className="flex min-w-0 flex-1 items-start gap-1.5">
+            {isDone ? (
+              <CheckCircle2
+                className="mt-1 h-4 w-4 shrink-0 self-start text-accent dark:text-accent-dark"
+                aria-hidden="true"
+              />
+            ) : null}
+            <span className={`text-body font-normal ${isPast ? PAST_TONE_CLASS : ""}`}>{row.title}</span>
+          </span>
         </span>
-        <span className="flex min-w-0 flex-1 items-start gap-1.5">
-          {isDone ? (
-            <CheckCircle2
-              className="mt-1 h-4 w-4 shrink-0 self-start text-accent dark:text-accent-dark"
-              aria-hidden="true"
-            />
-          ) : null}
-          <span className={`text-body font-normal ${isPast ? PAST_TONE_CLASS : ""}`}>{row.title}</span>
-        </span>
-        {/* 배지·소요시간 각각을 고정폭 그리드 칸에 담는다 — "심화"/"개요" 배지는 폭이
-            거의 같지만 소요시간 문구("약 1시간"~"약 2.5시간")는 주차마다 길이가 달라,
-            flex shrink-to-content로 두면 그룹 전체 폭이 행마다 달라지고 그 결과 배지
-            시작 위치가 흔들린다(1·2주차처럼 소요시간이 우연히 균일한 주만 정렬돼
-            보이던 결함). 고정폭 칸이 이 흔들림을 원천 차단한다. */}
+        {/* 배지·소요시간 — 640px 미만에서는 하단 줄에서 gap-2 flex로 왼쪽
+            정렬한다(폰에서는 행이 이미 두 줄이라 배지 시작 위치 정렬이 애초에
+            의미가 없다, D8-M). 640px 이상에서는 03-04가 도입한 고정폭
+            grid(64px+88px)로 되돌아간다 — 정렬 정확성이 필요한 건 여러 행을
+            한눈에 훑는 아이패드·데스크톱 폭에서뿐이다. */}
         {/* 06-08 전까지 check-design-tokens.mjs --strict는 모든 Tailwind 임의값
             대괄호를 타이포 여부와 무관하게 위반으로 잡는다(D-96 규칙 c). 이
             고정폭 grid는 타이포 마이그레이션 대상이 아니라 03-04-PLAN.md가
             남긴 정렬 결함 재발 방지 장치이므로, 시각적으로 동일한 값을
             className 대괄호 문법 대신 inline style로 옮겨 게이트를 통과시킨다
-            (레이아웃 값 자체는 변경 없음). */}
-        <span className="grid shrink-0 items-center gap-2" style={{ gridTemplateColumns: "64px 88px" }}>
-          <span className="justify-self-start">
+            (레이아웃 값 자체는 변경 없음). display:flex 상태(640px 미만)에서는
+            grid-template-columns가 아무 효과가 없으므로 이 style은 640px
+            이상에서만 실제로 적용된다. */}
+        <span className="flex shrink-0 items-center gap-2 sm:grid" style={{ gridTemplateColumns: "64px 88px" }}>
+          <span className="sm:justify-self-start">
             <DepthBadge depth={row.depth as "심화" | "개요"} stepId={row.stepId as StepId} />
           </span>
-          <span className="justify-self-end">
+          <span className="sm:justify-self-end">
             <EstimatedTime minutes={row.estimatedMinutes as number} />
           </span>
         </span>
