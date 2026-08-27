@@ -697,19 +697,26 @@ async function main() {
 
     // 발급된 쿠키를 재사용해 레슨 페이지에 진도 UI가 렌더되는지 확인 — 발급된
     // 쿠키가 실제로 게이트를 통과한다는 증거.
+    //
+    // 08-08: 레슨 페이지가 08-03에서 완전 정적으로 전환된 뒤에는 원문 fetch에
+    // 진도 마커가 아예 없는 것이 올바른 동작이다(f 시나리오가 바로 그 계약을
+    // 검사한다) — 이 검사가 raw fetch로 'data-progress-ui' 존재를 기대하는 것은
+    // 정적 전환 이전에 쓰인 낡은 어설션이었다. h2~h4/i2~i5와 같은 방식으로
+    // renderedHtml()(수화 완료 후 DOM)로 바꿔 실제로 쿠키가 게이트를 통과함을
+    // 검사한다.
     {
       if (!issuedUnlockCookiePair) {
         throw new FatalError('시나리오 g4 실패 — g1에서 쿠키를 확보하지 못했습니다');
       }
-      const res = await fetchWithTimeout(`${BASE_URL}/lesson/${PROBE_SLUG}`, {
-        headers: { Cookie: issuedUnlockCookiePair },
+      const issuedCookieValue = issuedUnlockCookiePair.split('=').slice(1).join('=');
+      const body = await renderedHtml(browser, `${BASE_URL}/lesson/${PROBE_SLUG}`, {
+        cookieValue: issuedCookieValue,
       });
-      const body = await res.text();
       if (!body.includes('data-progress-ui')) {
         throw new FatalError('시나리오 g4 실패 — /unlock이 발급한 쿠키로 요청해도 진도 UI가 렌더되지 않습니다');
       }
     }
-    console.log('e2e-progress: g4/f /unlock 발급 쿠키 재사용 → 레슨 페이지 진도 UI 렌더 OK');
+    console.log('e2e-progress: g4/f /unlock 발급 쿠키 재사용 → 레슨 페이지 진도 UI 렌더 OK (수화 후 DOM)');
 
     // /unlock/done 두 상태 화면이 각각 UI-SPEC 제목을 담고 있는지 확인.
     {

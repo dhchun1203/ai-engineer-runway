@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 8
+open_count: 5
 waived_count: 0
-fixed_count: 1
-total_count: 9
-last_updated: 2026-08-27T02:10:28.056Z
+fixed_count: 5
+total_count: 10
+last_updated: 2026-08-27T02:24:45.016Z
 ---
 
 # Broken Windows Ledger
@@ -20,10 +20,11 @@ last_updated: 2026-08-27T02:10:28.056Z
 | 3 | 02 | unrun-verify | src/app/page.tsx |  | 02-04 Task 3 human-check A-D (기기 전환, 진행률 표시, 외부인 차단, 아이패드 경험 — 12개 항목) — workflow.human_verify_mode=end-of-phase에 따라 미실행, /gsd-verify-work end-of-phase UAT에서 harvest 예정 | open |  | 2026-08-24T09:41:06.787Z |  |
 | 4 | 03 | unrun-verify | scripts/e2e-today.mjs |  | t8(과거 배정 미완료 -> behind + 밀린 레슨 목록 실제 화면 왕복)이 실행일(2026-08-25, 사전학습 첫날)에 어제까지 배정분이 없어 스킵됨 -- 과거 배정분이 쌓이는 날 재실행 필요 | fixed |  | 2026-08-24T15:22:31.715Z | 2026-08-25T16:33:39.522Z |
 | 5 | 05 | lint-warning | src/components/theme-toggle.tsx | 15 | Pre-existing Phase 1 react-hooks/set-state-in-effect + no-assign-module-variable lint errors surfaced by Plan 05-13's npm run lint gate (theme-toggle.tsx, lesson-nav.tsx) - not caused by Phase 5, out of scope, logged in deferred-items.md | open |  | 2026-08-25T16:31:11.078Z |  |
-| 6 | 08 | deviation | scripts/e2e-perf-budget.mjs |  | e2e-perf-budget.mjs를 실제 .env.local(진짜 Supabase 자격 증명)로 재실행해 기준선 숫자를 재확인하지 못함 — 이 워크트리에서 .env* 파일이 권한상 차단되어 더미 자격 증명으로만 검증함 | open |  | 2026-08-26T23:46:35.825Z |  |
-| 7 | 08 | unrun-verify | scripts/e2e-progress.mjs |  | i2-i6 curriculum scenarios require real Supabase credentials not accessible in this worktree; structurally verified via mocked API responses | open |  | 2026-08-27T01:39:07.584Z |  |
-| 8 | 08 | unrun-verify | scripts/e2e-today.mjs |  | t4 and the new D-day accuracy scenario require real Supabase credentials/full run not accessible in this worktree; t4 logic verified via a standalone scratch script against a live dev server with mocked /api/progress and page.clock overrides | open |  | 2026-08-27T01:39:15.736Z |  |
-| 9 | 08 | unrun-verify | scripts/e2e-lesson-note.mjs |  | Notepad backup-lookup fetch requires real Supabase credentials not accessible in this worktree; script exits immediately at the first real Supabase call (same environment constraint as e2e-progress.mjs/e2e-today.mjs entries #7/#8) — this plan's changes did not touch note-store logic, so this is a pre-existing environment gap, not a new regression | open |  | 2026-08-27T02:10:28.056Z |  |
+| 6 | 08 | deviation | scripts/e2e-perf-budget.mjs |  | e2e-perf-budget.mjs를 실제 .env.local(진짜 Supabase 자격 증명)로 재실행해 기준선 숫자를 재확인하지 못함 — 이 워크트리에서 .env* 파일이 권한상 차단되어 더미 자격 증명으로만 검증함 | fixed |  | 2026-08-26T23:46:35.825Z | 2026-08-27T02:24:32.638Z |
+| 7 | 08 | unrun-verify | scripts/e2e-progress.mjs |  | i2-i6 curriculum scenarios require real Supabase credentials not accessible in this worktree; structurally verified via mocked API responses | fixed |  | 2026-08-27T01:39:07.584Z | 2026-08-27T02:24:33.341Z |
+| 8 | 08 | unrun-verify | scripts/e2e-today.mjs |  | t4 and the new D-day accuracy scenario require real Supabase credentials/full run not accessible in this worktree; t4 logic verified via a standalone scratch script against a live dev server with mocked /api/progress and page.clock overrides | fixed |  | 2026-08-27T01:39:15.736Z | 2026-08-27T02:24:34.054Z |
+| 9 | 08 | unrun-verify | scripts/e2e-lesson-note.mjs |  | Notepad backup-lookup fetch requires real Supabase credentials not accessible in this worktree; script exits immediately at the first real Supabase call (same environment constraint as e2e-progress.mjs/e2e-today.mjs entries #7/#8) — this plan's changes did not touch note-store logic, so this is a pre-existing environment gap, not a new regression | fixed |  | 2026-08-27T02:10:28.056Z | 2026-08-27T02:24:34.840Z |
+| 10 | 08 | unmet-truth | scripts/e2e-mobile-readability.mjs |  | 375px M3(콘텐츠폭) 146건 잔존 — 날짜/소요시간/Step N 배지·공유 내비 링크(whitespace-nowrap 짧은 캡션, 08-05가 이미 4자 초과 예외 규칙 밖으로 확정), /about·/lesson MDX 프로즈(td/th/strong/code, 08-05가 컴포넌트 파일 범위 밖으로 확정). 08-05/06/07 수치와 정확히 일치 — 이번 실행이 만든 새 회귀 아님. 08-08 Task 3 실기기 UAT가 실제 읽기 체감을 최종 판정한다 | open |  | 2026-08-27T02:24:45.016Z |  |
 
 ````json
 [
@@ -94,10 +95,10 @@ last_updated: 2026-08-27T02:10:28.056Z
     "file": "scripts/e2e-perf-budget.mjs",
     "line": null,
     "description": "e2e-perf-budget.mjs를 실제 .env.local(진짜 Supabase 자격 증명)로 재실행해 기준선 숫자를 재확인하지 못함 — 이 워크트리에서 .env* 파일이 권한상 차단되어 더미 자격 증명으로만 검증함",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-08-26T23:46:35.825Z",
-    "resolved_at": null
+    "resolved_at": "2026-08-27T02:24:32.638Z"
   },
   {
     "id": 7,
@@ -106,10 +107,10 @@ last_updated: 2026-08-27T02:10:28.056Z
     "file": "scripts/e2e-progress.mjs",
     "line": null,
     "description": "i2-i6 curriculum scenarios require real Supabase credentials not accessible in this worktree; structurally verified via mocked API responses",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-08-27T01:39:07.584Z",
-    "resolved_at": null
+    "resolved_at": "2026-08-27T02:24:33.341Z"
   },
   {
     "id": 8,
@@ -118,10 +119,10 @@ last_updated: 2026-08-27T02:10:28.056Z
     "file": "scripts/e2e-today.mjs",
     "line": null,
     "description": "t4 and the new D-day accuracy scenario require real Supabase credentials/full run not accessible in this worktree; t4 logic verified via a standalone scratch script against a live dev server with mocked /api/progress and page.clock overrides",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-08-27T01:39:15.736Z",
-    "resolved_at": null
+    "resolved_at": "2026-08-27T02:24:34.054Z"
   },
   {
     "id": 9,
@@ -130,13 +131,26 @@ last_updated: 2026-08-27T02:10:28.056Z
     "file": "scripts/e2e-lesson-note.mjs",
     "line": null,
     "description": "Notepad backup-lookup fetch requires real Supabase credentials not accessible in this worktree; script exits immediately at the first real Supabase call (same environment constraint as e2e-progress.mjs/e2e-today.mjs entries #7/#8) — this plan's changes did not touch note-store logic, so this is a pre-existing environment gap, not a new regression",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-08-27T02:10:28.056Z",
+    "resolved_at": "2026-08-27T02:24:34.840Z"
+  },
+  {
+    "id": 10,
+    "kind": "unmet-truth",
+    "phase": "08",
+    "file": "scripts/e2e-mobile-readability.mjs",
+    "line": null,
+    "description": "375px M3(콘텐츠폭) 146건 잔존 — 날짜/소요시간/Step N 배지·공유 내비 링크(whitespace-nowrap 짧은 캡션, 08-05가 이미 4자 초과 예외 규칙 밖으로 확정), /about·/lesson MDX 프로즈(td/th/strong/code, 08-05가 컴포넌트 파일 범위 밖으로 확정). 08-05/06/07 수치와 정확히 일치 — 이번 실행이 만든 새 회귀 아님. 08-08 Task 3 실기기 UAT가 실제 읽기 체감을 최종 판정한다",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-08-27T02:24:45.016Z",
     "resolved_at": null
   }
 ]
 ````
+
 
 
 
