@@ -37,3 +37,28 @@ export function SummarySkeleton({ className }: { className?: string }) {
     </div>
   );
 }
+
+/** 완료 버튼 자리(08-03) — complete-button.tsx의 실제 버튼과 같은
+ * min-h-11/rounded-lg/border 구성을 공유해 데이터 도착 후에도 높이·모서리가
+ * 바뀌지 않는다(레이아웃 시프트 0). */
+export function CompleteButtonSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`progress-skeleton flex min-h-11 items-center justify-center rounded-lg border border-badge-neutral-bg bg-badge-neutral-bg dark:border-badge-neutral-bg-dark dark:bg-badge-neutral-bg-dark${
+        className ? ` ${className}` : ""
+      }`}
+    />
+  );
+}
+
+/** 메모장 자리(08-03) — 접힌 상태의 실제 메모장(.note-sheet + .note-handle)과
+ * 같은 하단 고정 위치·높이를 공유한다. 메모 도착 후 <LessonNotepad>로 교체돼도
+ * 이 자리를 대체하므로 레이아웃 시프트가 없다. */
+export function NotepadSkeleton() {
+  return (
+    <div aria-hidden="true" className="note-sheet flex flex-col">
+      <div className="progress-skeleton note-handle w-full bg-badge-neutral-bg dark:bg-badge-neutral-bg-dark" />
+    </div>
+  );
+}

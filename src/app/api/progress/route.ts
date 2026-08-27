@@ -15,6 +15,7 @@
 import { NextResponse } from "next/server";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readCompletedLessonIds } from "@/lib/progress-store";
+import { readLessonNote } from "@/lib/note-store";
 import { overallProgress, stepProgress, moduleProgress, nextIncompleteLesson } from "@/lib/progress";
 import { getModulesByStep, getLessonBySlug } from "@/content/curriculum-helpers";
 import type { StepId } from "@/content/modules";
@@ -24,7 +25,13 @@ const STEP_IDS: readonly StepId[] = [1, 2, 3];
 
 const NO_STORE_HEADERS = { "Cache-Control": "private, no-store" } as const;
 
-type ProgressLesson = { slug: string; done: boolean };
+// note는 실패 시 { ok: false }만 담는다 — DB 오류 문자열(NoteRead의 error 필드)을
+// 클라이언트로 내보내지 않는다 (T-08-03-04).
+type ProgressLesson = {
+  slug: string;
+  done: boolean;
+  note: { ok: true; body: string } | { ok: false };
+};
 
 export type ProgressApiResponse = {
   unlocked: boolean;
@@ -34,7 +41,6 @@ export type ProgressApiResponse = {
   modules: Record<string, ProgressCounts> | null;
   completedSlugs: string[] | null;
   nextLessonSlug: string | null;
-  // 08-03이 이 자리에 note 필드를 덧붙인다 — 지금은 만들지 않는다.
   lesson: ProgressLesson | null;
 };
 
@@ -77,13 +83,20 @@ export async function GET(request: Request) {
 
   // ?lesson=<slug> — 존재 여부를 먼저 검증한다(actions.ts 23~27행과 같은 방어).
   // 미존재 슬러그는 오류가 아니라 lesson: null로 처리한다 — 존재 여부를 되묻는
-  // 탐침이 되지 않게 한다 (T-08-02-04).
+  // 탐침이 되지 않게 한다 (T-08-02-04). readLessonNote()는 hasUnlockCookie() 판정을
+  // 통과한 뒤(위 unlocked 분기 이후)에만, 그리고 슬러그 존재가 확인된 뒤에만
+  // 호출한다 — 잠금 해제 전에는 이 호출 자체가 발생할 경로가 없다 (T-08-03-01).
   const lessonSlug = new URL(request.url).searchParams.get("lesson");
   let lesson: ProgressLesson | null = null;
   if (lessonSlug) {
     const found = getLessonBySlug(lessonSlug);
     if (found) {
-      lesson = { slug: found.slug, done: completedIds.has(found.slug) };
+      const noteRead = await readLessonNote(found.slug);
+      lesson = {
+        slug: found.slug,
+        done: completedIds.has(found.slug),
+        note: noteRead.ok ? { ok: true, body: noteRead.body } : { ok: false },
+      };
     }
   }
 

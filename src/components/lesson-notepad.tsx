@@ -5,6 +5,11 @@
 // 2개(lessonId, initialBody)뿐이다. 옥스포드 노트 표면(괘선/여백선, .note-paper)과
 // 시트 기하(.note-sheet/.note-handle/.note-sheet-panel)는 globals.css의
 // --note-line-height 단일 소스를 소비한다(G-06-9 재발 방지, Task 2).
+//
+// 08-03(D8-H): 이 컴포넌트는 메모(GET /api/progress?lesson=<slug>의 응답)가
+// 도착한 뒤에만 마운트된다 — LessonNoteSlot이 로딩 중에는 <NotepadSkeleton>을
+// 대신 렌더한다. initialBody를 나중에 다른 값으로 갈아끼우지 않는다 — 그 형태는
+// lastSavedRef/valueRef의 초기값과 어긋나 빈 값 자동 저장 경로를 남긴다.
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { saveLessonNoteAction } from '@/app/lesson/[lessonId]/note-actions';

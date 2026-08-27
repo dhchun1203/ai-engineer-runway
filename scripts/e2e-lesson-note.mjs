@@ -117,6 +117,20 @@ async function waitForServerReady() {
   throw new FatalError('서버가 제한 시간(180초) 안에 기동하지 않았습니다.');
 }
 
+// 08-03 — 메모장이 이제 <ProgressProvider>의 fetch 완료 이후에만 마운트되므로
+// (LessonNoteSlot이 loading 상태에서는 <NotepadSkeleton>만 렌더한다), 페이지를
+// 열거나 새로고침한 직후 곧바로 [data-notepad]/[data-notepad-input]을 찾으면
+// 아직 로딩 중이라 실패할 수 있다. 진도 아일랜드가 loading을 벗어날 때까지
+// 먼저 기다린 뒤에 메모장 셀렉터를 찾는다 — e2e-progress.mjs의 renderedHtml()
+// 대기 조건과 같은 신호(data-progress-state !== 'loading')를 쓴다.
+async function waitForProgressSettled(page) {
+  await page.waitForSelector('[data-progress-island]');
+  await page.waitForFunction(() => {
+    const el = document.querySelector('[data-progress-island]');
+    return el !== null && el.getAttribute('data-progress-state') !== 'loading';
+  });
+}
+
 // --- 결과 누적기 — 실패는 항목 순서대로 모아 마지막에 한 번에 출력한다 ---
 const results = [];
 function record(id, label, pass, detail) {
@@ -258,6 +272,7 @@ async function main() {
     ]);
     const page = await context.newPage();
     await page.goto(`${BASE_URL}${PROBE_ROUTE}`, { waitUntil: 'domcontentloaded' });
+    await waitForProgressSettled(page);
     await page.waitForSelector('[data-notepad]');
 
     // === A. 접힘 기본 상태 ===
@@ -426,6 +441,7 @@ async function main() {
       record('F1', '자동 저장 — DB 직접 확인', dbPass, `dbBody일치=${dbPass}`);
 
       await page.reload({ waitUntil: 'domcontentloaded' });
+      await waitForProgressSettled(page);
       await page.waitForSelector('[data-notepad-input]');
       const reloadedValue = await page.evaluate(() => {
         const textarea = document.querySelector('[data-notepad-input]');
@@ -587,17 +603,64 @@ async function main() {
     await context.close();
 
     // === H. 잠금 없이는 저장되지 않는다 ===
+    // 정적 셸에서는 수화 전에도 [data-notepad]가 원문에 없는 것이 참이라, 곧바로
+    // page.content()만 보면 "아직 안 그려진 것"과 "잠겨서 안 그린 것"을 구분하지
+    // 못하는 위양성 통과가 가능하다. waitForProgressSettled()로 진도 아일랜드가
+    // 확실히 locked 상태에 도달한 것을 먼저 확인한 뒤에 data-notepad 부재를 본다.
     try {
       const lockedContext = await browser.newContext({ viewport: { width: 768, height: 1024 } });
       const lockedPage = await lockedContext.newPage();
       await lockedPage.goto(`${BASE_URL}${PROBE_ROUTE}`, { waitUntil: 'domcontentloaded' });
+      await waitForProgressSettled(lockedPage);
+      const progressState = await lockedPage.evaluate(
+        () => document.querySelector('[data-progress-island]')?.getAttribute('data-progress-state') ?? null,
+      );
       const html = await lockedPage.content();
       const noNotepad = !html.includes('data-notepad');
       const noLeak = !html.includes(uniqueNoteText);
-      record('H', '잠금 없이는 렌더도 저장 내용 노출도 없음', noNotepad && noLeak, `noNotepad=${noNotepad} noLeak=${noLeak}`);
+      const isLocked = progressState === 'locked';
+      record(
+        'H',
+        '잠금 없이는 렌더도 저장 내용 노출도 없음',
+        isLocked && noNotepad && noLeak,
+        `progressState=${progressState} noNotepad=${noNotepad} noLeak=${noLeak}`,
+      );
       await lockedContext.close();
     } catch (e) {
       record('H', '잠금 없이는 렌더도 저장 내용 노출도 없음', false, `예외: ${e.message}`);
+    }
+
+    // === N(신규, D8-H). 빈 값 덮어쓰기 방지 ===
+    // 프로브 레슨의 메모를 고유 문자열로 미리 심어 둔다. 그 레슨 페이지를 열고,
+    // 진도가 정착되기를(waitForProgressSettled) 기다리지 않은 채 자동 저장
+    // 디바운스(SAVE_DEBOUNCE_MS=1000ms)보다 긴 2500ms를 그냥 기다린다 — 메모가
+    // 도착하기 전에 <LessonNotepad>가 빈 초기값으로 마운트되면 이 구간에서 빈
+    // 값이 저장될 수 있다(D8-H가 막으려는 경로). 그 다음 Supabase에서 그 행을
+    // 다시 읽어 본문이 여전히 원래 고유 문자열인지 확인한다.
+    const overwriteGuardText = `덮어쓰기방지-${Date.now()}-한글`;
+    try {
+      const { error: seedError } = await admin
+        .from('lesson_note')
+        .upsert({ lesson_id: PROBE_SLUG, body: overwriteGuardText, updated_at: new Date().toISOString() });
+      if (seedError) throw new Error(`Supabase 시드 오류: ${seedError.message}`);
+
+      const guardContext = await browser.newContext({ viewport: { width: 768, height: 1024 } });
+      await guardContext.addCookies([{ name: UNLOCK_COOKIE_NAME, value: cookieValue, url: BASE_URL }]);
+      const guardPage = await guardContext.newPage();
+      await guardPage.goto(`${BASE_URL}${PROBE_ROUTE}`, { waitUntil: 'domcontentloaded' });
+      await guardPage.waitForTimeout(2500);
+      await guardContext.close();
+
+      const { data: guardRow, error: guardReadError } = await admin
+        .from('lesson_note')
+        .select('body')
+        .eq('lesson_id', PROBE_SLUG)
+        .maybeSingle();
+      if (guardReadError) throw new Error(`Supabase 확인 오류: ${guardReadError.message}`);
+      const preserved = guardRow?.body === overwriteGuardText;
+      record('N', '빈 값 덮어쓰기 방지 — 메모 도착 전 마운트 금지(D8-H)', preserved, `preserved=${preserved}`);
+    } catch (e) {
+      record('N', '빈 값 덮어쓰기 방지 — 메모 도착 전 마운트 금지(D8-H)', false, `예외: ${e.message}`);
     }
 
     // === L. 가로 오버플로 0 (시트를 연 채, 3개 뷰포트) ===
@@ -612,6 +675,7 @@ async function main() {
         await vpContext.addCookies([{ name: UNLOCK_COOKIE_NAME, value: cookieValue, url: BASE_URL }]);
         const vpPage = await vpContext.newPage();
         await vpPage.goto(`${BASE_URL}${PROBE_ROUTE}`, { waitUntil: 'domcontentloaded' });
+        await waitForProgressSettled(vpPage);
         await vpPage.waitForSelector('[data-notepad]');
         await vpPage.locator('[data-notepad] button[aria-expanded]').click();
         await vpPage.waitForTimeout(250);

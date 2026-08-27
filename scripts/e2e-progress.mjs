@@ -388,67 +388,132 @@ async function main() {
     }
     console.log('e2e-progress: i5/i 프로브 삭제 → 홈 전체 퍼센트 원상 복구 OK (TRACK-04)');
 
-    // b. 쿠키 없이 GET — 진도 UI 마커 0건 + 레슨 제목은 존재 (D-18/D-20)
+    // b. 쿠키 없이 GET(레슨 정적 셸 원문) — 진도 UI 마커 0건 + 레슨 제목은 존재
+    // (D-18/D-20). 08-03부터 이 라우트는 완전 정적 셸이라 이 판정이 더 강하게
+    // 참이 된다 — 서버가 애초에 쿠키를 읽지 않는다.
     {
       const res = await fetchWithTimeout(`${BASE_URL}/lesson/${PROBE_SLUG}`);
       if (res.status !== 200) {
-        throw new FatalError(`시나리오 b 실패 — 쿠키 없는 요청이 200이 아닙니다 (status=${res.status})`);
+        throw new FatalError(`시나리오 b 실패 — 쿠키 없는 정적 셸 레슨 요청이 200이 아닙니다 (status=${res.status})`);
       }
       const body = await res.text();
       if (body.includes('data-progress-ui')) {
-        throw new FatalError('시나리오 b 실패 — 쿠키 없는 응답에 data-progress-ui 마커가 존재합니다 (D-20 위반)');
+        throw new FatalError('시나리오 b 실패 — 쿠키 없는 정적 셸 레슨 응답에 data-progress-ui 마커가 존재합니다 (D-20 위반)');
       }
       if (!body.includes(PROBE_LESSON.title)) {
-        throw new FatalError('시나리오 b 실패 — 쿠키 없는 응답에 레슨 제목이 없습니다 (D-18 위반)');
+        throw new FatalError('시나리오 b 실패 — 쿠키 없는 정적 셸 레슨 응답에 레슨 제목이 없습니다 (D-18 위반)');
       }
     }
-    console.log('e2e-progress: b/f 쿠키 없음 → 진도 UI 마커 0건 + 레슨 제목 존재 OK');
+    console.log('e2e-progress: b 쿠키 없음 → 레슨 정적 셸 원문에 진도 UI 마커 0건 + 레슨 제목 존재 OK');
 
-    // c. 올바른 쿠키 + DB 미완료 → todo
+    // c. 올바른 쿠키 + DB 미완료 → todo (08-03부터 수화 완료 후 DOM으로 확인한다 —
+    // 완료 상태가 이제 서버 렌더가 아니라 GET /api/progress?lesson=<slug> 응답에서
+    // 온다. renderedHtml()의 반환 타입이 기존 res.text()와 같은 HTML 문자열이라
+    // downstream 문자열 어설션은 바뀌지 않는다.)
     {
-      const res = await fetchWithTimeout(`${BASE_URL}/lesson/${PROBE_SLUG}`, {
-        headers: { Cookie: cookieHeader },
-      });
-      const body = await res.text();
+      const body = await renderedHtml(browser, `${BASE_URL}/lesson/${PROBE_SLUG}`, { cookieValue: UNLOCK_SECRET });
       if (!body.includes('data-complete-state="todo"')) {
         throw new FatalError('시나리오 c 실패 — 쿠키 보유 + DB 미완료 상태인데 data-complete-state="todo"가 없습니다');
       }
     }
-    console.log('e2e-progress: c/f 쿠키 있음 + DB 미완료 → todo 렌더 OK');
+    console.log('e2e-progress: c 쿠키 있음 + DB 미완료 → todo 렌더 OK (수화 완료 후 DOM)');
 
-    // d. service_role로 완료 upsert → done (TRACK-01 지속성의 서버 렌더 증거)
+    // d. service_role로 완료 upsert → done (TRACK-01 지속성의 증거)
     {
       const { error } = await admin
         .from('progress')
         .upsert({ lesson_id: PROBE_SLUG, completed_at: new Date().toISOString() });
       if (error) throw new FatalError(`시나리오 d 준비(upsert) 실패 — Supabase 오류: ${error.message}`);
 
-      const res = await fetchWithTimeout(`${BASE_URL}/lesson/${PROBE_SLUG}`, {
-        headers: { Cookie: cookieHeader },
-      });
-      const body = await res.text();
+      const body = await renderedHtml(browser, `${BASE_URL}/lesson/${PROBE_SLUG}`, { cookieValue: UNLOCK_SECRET });
       if (!body.includes('data-complete-state="done"')) {
         throw new FatalError(
           '시나리오 d 실패 — DB 완료 후에도 data-complete-state="done"이 렌더되지 않습니다 (TRACK-01)',
         );
       }
     }
-    console.log('e2e-progress: d/f DB 완료 upsert → done 렌더 OK (TRACK-01)');
+    console.log('e2e-progress: d DB 완료 upsert → done 렌더 OK (TRACK-01)');
 
     // e. 그 행을 delete → todo로 복귀 (TRACK-02)
     {
       const { error } = await admin.from('progress').delete().eq('lesson_id', PROBE_SLUG);
       if (error) throw new FatalError(`시나리오 e 준비(delete) 실패 — Supabase 오류: ${error.message}`);
 
-      const res = await fetchWithTimeout(`${BASE_URL}/lesson/${PROBE_SLUG}`, {
-        headers: { Cookie: cookieHeader },
-      });
-      const body = await res.text();
+      const body = await renderedHtml(browser, `${BASE_URL}/lesson/${PROBE_SLUG}`, { cookieValue: UNLOCK_SECRET });
       if (!body.includes('data-complete-state="todo"')) {
         throw new FatalError('시나리오 e 실패 — DB 삭제 후에도 todo로 복귀하지 않습니다 (TRACK-02)');
       }
     }
-    console.log('e2e-progress: e/f DB 삭제 → todo 복귀 OK (TRACK-02)');
+    console.log('e2e-progress: e DB 삭제 → todo 복귀 OK (TRACK-02)');
+
+    // f(신규, T-08-03-01/02). 잠금 쿠키를 실은 채로 레슨 라우트를 원문 fetch(브라우저를
+    // 거치지 않는다) → 응답 HTML에 data-progress-ui와 data-notepad 둘 다 0건. h5의
+    // 레슨 버전이다 — 정적 셸이 진도도 메모도 담지 않는다는 런타임 증명이다.
+    {
+      const res = await fetchWithTimeout(`${BASE_URL}/lesson/${PROBE_SLUG}`, {
+        headers: { Cookie: cookieHeader },
+      });
+      if (res.status !== 200) {
+        throw new FatalError(`시나리오 f 실패 — 잠금 쿠키 보유 정적 셸 레슨 요청이 200이 아닙니다 (status=${res.status})`);
+      }
+      const body = await res.text();
+      if (body.includes('data-progress-ui')) {
+        throw new FatalError(
+          '시나리오 f 실패 — 쿠키가 있어도 레슨 정적 셸 원문에는 진도 마커가 없어야 하는데 data-progress-ui가 존재합니다',
+        );
+      }
+      if (body.includes('data-notepad')) {
+        throw new FatalError(
+          '시나리오 f 실패 — 쿠키가 있어도 레슨 정적 셸 원문에는 메모 마커가 없어야 하는데 data-notepad가 존재합니다',
+        );
+      }
+    }
+    console.log('e2e-progress: f 잠금 쿠키 + 레슨 정적 셸 원문 fetch → data-progress-ui·data-notepad 마커 0건 OK (T-08-03-01/02)');
+
+    // g(신규, SC1). 브라우저에서 완료 버튼을 실제로 클릭 → data-complete-state가
+    // todo에서 done으로 즉시 바뀌고, 페이지를 새로 열어도(reload) done으로
+    // 유지된다. c·d·e는 Supabase를 직접 조작한 뒤 페이지를 다시 여는 방식이라
+    // "토글 → refresh → 슬롯 재렌더" 경로를 한 번도 지나가지 않는다 — 이 시나리오가
+    // 그 경로를 실제로 증명한다.
+    {
+      const context = await browser.newContext();
+      await context.addCookies([{ name: UNLOCK_COOKIE_NAME, value: UNLOCK_SECRET, url: BASE_URL }]);
+      const page = await context.newPage();
+      try {
+        await page.goto(`${BASE_URL}/lesson/${PROBE_SLUG}`, { waitUntil: 'domcontentloaded' });
+        await page.waitForSelector('[data-progress-island]');
+        await page.waitForFunction(() => {
+          const el = document.querySelector('[data-progress-island]');
+          return el !== null && el.getAttribute('data-progress-state') !== 'loading';
+        });
+        const before = await page.evaluate(
+          () => document.querySelector('[data-complete-state]')?.getAttribute('data-complete-state') ?? null,
+        );
+        if (before !== 'todo') {
+          throw new FatalError(`시나리오 g 실패 — 클릭 전 상태가 todo가 아닙니다 (got ${before})`);
+        }
+        await page.click('[data-progress-ui="complete-button"] button');
+        await page.waitForFunction(
+          () => document.querySelector('[data-complete-state]')?.getAttribute('data-complete-state') === 'done',
+        );
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await page.waitForSelector('[data-progress-island]');
+        await page.waitForFunction(() => {
+          const el = document.querySelector('[data-progress-island]');
+          return el !== null && el.getAttribute('data-progress-state') !== 'loading';
+        });
+        const afterReload = await page.evaluate(
+          () => document.querySelector('[data-complete-state]')?.getAttribute('data-complete-state') ?? null,
+        );
+        if (afterReload !== 'done') {
+          throw new FatalError(`시나리오 g 실패 — 재방문 후에도 done으로 유지되지 않습니다 (got ${afterReload})`);
+        }
+      } finally {
+        await context.close();
+        await deleteProbeRow(admin);
+      }
+    }
+    console.log('e2e-progress: g 완료 버튼 클릭 → 즉시 done 반영 + 재방문 후에도 유지 OK (SC1)');
 
     // h. Step 페이지 시나리오 (02-03, TRACK-03)
 
