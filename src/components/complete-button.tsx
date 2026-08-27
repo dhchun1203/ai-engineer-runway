@@ -17,9 +17,14 @@ const SAVE_ERROR_MESSAGE = '저장하지 못했습니다. 다시 시도해주세
 export function CompleteButton({
   lessonId,
   initialDone,
+  onToggled,
 }: {
   lessonId: string;
   initialDone: boolean;
+  // 08-03 — 토글이 성공적으로 resolve된 직후에만 호출된다(실패 시에는 호출하지
+  // 않는다, 낙관적 값이 prop으로 수렴하는 기존 동작 그대로). 레슨 페이지의
+  // <ProgressProvider>가 refresh()를 여기 연결해 완료 토글을 즉시 반영한다.
+  onToggled?: () => void;
 }) {
   const [optimisticDone, setOptimisticDone] = useOptimistic(initialDone);
   const [isPending, startTransition] = useTransition();
@@ -31,6 +36,7 @@ export function CompleteButton({
       setError(null);
       try {
         await toggleLessonComplete(lessonId, initialDone);
+        onToggled?.();
       } catch {
         // 낙관적 값은 트랜지션 종료와 함께 initialDone(서버가 갱신하지 못한
         // 이전 값)으로 자동 수렴하므로 별도 롤백 코드가 필요 없다 (D-28).

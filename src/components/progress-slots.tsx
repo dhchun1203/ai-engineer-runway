@@ -6,7 +6,9 @@
 import { useProgress } from "@/components/progress-provider";
 import { ProgressBadge } from "@/components/progress-badge";
 import { ProgressReadError } from "@/components/progress-error";
-import { BadgeSkeleton } from "@/components/progress-skeleton";
+import { BadgeSkeleton, CompleteButtonSkeleton, NotepadSkeleton } from "@/components/progress-skeleton";
+import { CompleteButton } from "@/components/complete-button";
+import { LessonNotepad } from "@/components/lesson-notepad";
 import type { StepId } from "@/content/modules";
 
 /** Step 헤더 배지 자리. locked/error 상태에서는 아무것도 렌더하지 않는다 —
@@ -41,4 +43,54 @@ export function ModuleProgressSlot({ moduleId }: { moduleId: string }) {
   if (!counts) return null;
 
   return <ProgressBadge {...counts} />;
+}
+
+/** 레슨 완료 버튼 자리(08-03). locked 문구·data-locked-notice 속성은 기존
+ * 레슨 페이지가 쓰던 문구를 그대로 옮겨온 것이다 — 새로 쓰지 않는다. */
+export function CompleteButtonSlot({ lessonId }: { lessonId: string }) {
+  const { status, data, refresh } = useProgress();
+
+  if (status === "loading") return <CompleteButtonSkeleton />;
+  if (status === "error") return <ProgressReadError />;
+  if (status === "locked") {
+    return (
+      <p
+        data-locked-notice
+        className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark"
+      >
+        완료 체크와 진행률 기록은 잠금 해제 후에 사용할 수 있습니다.
+      </p>
+    );
+  }
+  if (status !== "ready") return null;
+
+  if (!data.lesson) return null;
+
+  return <CompleteButton lessonId={lessonId} initialDone={data.lesson.done} onToggled={refresh} />;
+}
+
+/** 레슨 메모장 자리(08-03). D8-H — 메모가 도착하기 전에는 <LessonNotepad>를
+ * 마운트하지 않는다(로딩 중에는 스켈레톤만). locked/error 상태에서는 메모장이
+ * DOM에 전혀 등장하지 않는다 — 잠금 상태에서 메모 본문이 노출될 경로 자체를
+ * 없앤다(T-08-03-02). */
+export function LessonNoteSlot({ lessonId }: { lessonId: string }) {
+  const { status, data } = useProgress();
+
+  if (status === "loading") return <NotepadSkeleton />;
+  if (status !== "ready") return null;
+
+  if (!data.lesson) return null;
+
+  if (data.lesson.note.ok) {
+    return <LessonNotepad lessonId={lessonId} initialBody={data.lesson.note.body} />;
+  }
+
+  return (
+    <p
+      data-notepad-read-error
+      className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark"
+    >
+      메모를 불러오지 못했어요. 새로고침해 주세요.
+    </p>
+  );
 }

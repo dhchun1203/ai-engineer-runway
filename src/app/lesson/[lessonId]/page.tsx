@@ -3,13 +3,9 @@ import { MDXContent } from "@/components/mdx-content";
 import { DepthBadge } from "@/components/depth-badge";
 import { EstimatedTime } from "@/components/estimated-time";
 import { LessonBreadcrumb, LessonPager } from "@/components/lesson-nav";
-import { CompleteButton } from "@/components/complete-button";
-import { ProgressReadError } from "@/components/progress-error";
 import { SectionTape } from "@/components/section-tape";
-import { LessonNotepad } from "@/components/lesson-notepad";
-import { hasUnlockCookie } from "@/lib/auth";
-import { readCompletedLessonIds } from "@/lib/progress-store";
-import { readLessonNote } from "@/lib/note-store";
+import { ProgressProvider } from "@/components/progress-provider";
+import { CompleteButtonSlot, LessonNoteSlot } from "@/components/progress-slots";
 import {
   getLessonBySlug,
   getOrderedLessons,
@@ -21,11 +17,10 @@ import type { StepId } from "@/content/modules";
 // 무관한 상수로 둔다.
 const LESSON_ARTICLE_ID = "lesson-article";
 
-// 이 페이지는 쿠키를 읽으므로 어차피 동적 렌더링으로 전환되지만, 명시 선언이
-// 조건부 쿠키 접근 때문에 캐시된 응답이 나가는 문제(RESEARCH Pitfall 4)를
-// 원천 차단한다. generateStaticParams는 라우트 목록 정의용으로 그대로 둔다 —
-// force-dynamic과 공존한다.
-export const dynamic = "force-dynamic";
+// 08-03부터 완전 정적 셸이다 — 이 페이지는 쿠키·진도·메모를 전혀 읽지 않는다.
+// 완료 상태와 메모 본문은 <ProgressProvider lessonId>가 마운트 후
+// GET /api/progress?lesson=<slug>를 호출해 클라이언트에서 가져온다
+// (check-progress-gates.mjs G9 STATIC_SHELL_PAGES).
 
 export function generateStaticParams() {
   return getOrderedLessons().map((lesson) => ({ lessonId: lesson.slug }));
@@ -37,97 +32,53 @@ export default async function LessonPage(
   const { lessonId } = await props.params;
   const lesson = getLessonBySlug(lessonId);
 
-  // 무조건, 그리고 notFound() 분기보다 먼저 호출한다 — 조건부 호출은 Next가
-  // 이 페이지의 동적 요구를 감지하지 못하는 원인이 된다(RESEARCH Pitfall 4).
-  const unlocked = await hasUnlockCookie();
-
   if (!lesson) {
     notFound();
   }
 
   const { prev, next } = getAdjacentLessons(lesson.slug);
-  const progressRead = unlocked ? await readCompletedLessonIds() : null;
-  // 잠금 상태에서는 호출도 렌더도 하지 않는다(T-0y8-03) — 메모 본문이 HTML에
-  // 아예 등장하지 않는다.
-  const noteRead = unlocked ? await readLessonNote(lesson.slug) : null;
-  const showNotepad = noteRead !== null && noteRead.ok;
 
   return (
     <main
-      className={
-        showNotepad
-          ? "note-page-spacer mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8"
-          : "mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8"
-      }
+      // note-page-spacer를 항상 붙인다 — 서버는 이제 메모장 표시 여부를 모른다
+      // (잠금 여부는 마운트 후 클라이언트 fetch가 확정한다). 잠금 상태에서
+      // 하단 여백이 조금 남는 것이 레이아웃 시프트보다 낫고, 이 클래스는 하단
+      // 패딩만 준다(globals.css의 .note-page-spacer).
+      className="note-page-spacer mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8"
     >
-      <article className="flex flex-col gap-8">
-        <LessonBreadcrumb lesson={lesson} />
-        <header className="flex flex-col gap-3">
-          <h1 className="text-display font-bold">{lesson.title}</h1>
-          <div className="flex items-center gap-2">
-            <DepthBadge depth={lesson.depth} stepId={lesson.stepId as StepId} />
-            <EstimatedTime minutes={lesson.estimatedMinutes} />
-          </div>
-        </header>
-        {lesson.hasContent ? (
-          <>
-            <SectionTape articleId={LESSON_ARTICLE_ID} stepId={lesson.stepId as StepId} />
-            <div id={LESSON_ARTICLE_ID} className="prose dark:prose-invert max-w-none">
-              <MDXContent code={lesson.code} />
+      <ProgressProvider lessonId={lesson.slug}>
+        <article className="flex flex-col gap-8">
+          <LessonBreadcrumb lesson={lesson} />
+          <header className="flex flex-col gap-3">
+            <h1 className="text-display font-bold">{lesson.title}</h1>
+            <div className="flex items-center gap-2">
+              <DepthBadge depth={lesson.depth} stepId={lesson.stepId as StepId} />
+              <EstimatedTime minutes={lesson.estimatedMinutes} />
             </div>
-          </>
-        ) : (
-          <div className="flex flex-col gap-3">
-            <h2 className="text-heading font-bold">콘텐츠 준비 중입니다</h2>
-            <p className="text-body font-normal">
-              이 레슨은 아직 작성되지 않았습니다. 커리큘럼 목록에서 다른 레슨을 먼저
-              골라 학습해보세요.
-            </p>
-          </div>
-        )}
-        {progressRead ? (
+          </header>
+          {lesson.hasContent ? (
+            <>
+              <SectionTape articleId={LESSON_ARTICLE_ID} stepId={lesson.stepId as StepId} />
+              <div id={LESSON_ARTICLE_ID} className="prose dark:prose-invert max-w-none">
+                <MDXContent code={lesson.code} />
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <h2 className="text-heading font-bold">콘텐츠 준비 중입니다</h2>
+              <p className="text-body font-normal">
+                이 레슨은 아직 작성되지 않았습니다. 커리큘럼 목록에서 다른 레슨을 먼저
+                골라 학습해보세요.
+              </p>
+            </div>
+          )}
           <div data-progress-controls className="flex flex-col gap-6">
-            {progressRead.ok ? (
-              <CompleteButton
-                lessonId={lesson.slug}
-                initialDone={progressRead.completedIds.has(lesson.slug)}
-              />
-            ) : (
-              <ProgressReadError />
-            )}
+            <CompleteButtonSlot lessonId={lesson.slug} />
             <LessonPager prev={prev} next={next} />
           </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {/* 잠금 상태 문구 (D-R4K-8) — 완료 체크와 진행률 기록이 잠금 해제 후
-                사용 가능하다는 사실만 말한다. /unlock은 ?key= 시크릿이 필요한
-                route.ts라 링크를 걸지 않는다(unlock/route.ts:16). 상수 문자열이라
-                길이가 변하지 않고, truncate/고정폭 없이 375px에서도 줄바꿈으로
-                흡수된다. */}
-            <p
-              data-locked-notice
-              className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark"
-            >
-              완료 체크와 진행률 기록은 잠금 해제 후에 사용할 수 있습니다.
-            </p>
-            <LessonPager prev={prev} next={next} />
-          </div>
-        )}
-      </article>
-      {noteRead ? (
-        noteRead.ok ? (
-          <LessonNotepad lessonId={lesson.slug} initialBody={noteRead.body} />
-        ) : (
-          // 읽기 실패 시에는 메모장을 렌더하지 않는다 — 빈 메모로 시작했다가
-          // 자동 저장이 실제 메모를 빈 값으로 덮어쓰는 최악의 경로를 막는다.
-          <p
-            data-notepad-read-error
-            className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark"
-          >
-            메모를 불러오지 못했어요. 새로고침해 주세요.
-          </p>
-        )
-      ) : null}
+        </article>
+        <LessonNoteSlot lessonId={lesson.slug} />
+      </ProgressProvider>
     </main>
   );
 }

@@ -23,7 +23,11 @@ import {
 import type { StepId } from "@/content/modules";
 import type { ProgressCounts } from "@/lib/progress-math";
 
-export type ProgressLesson = { slug: string; done: boolean };
+export type ProgressLesson = {
+  slug: string;
+  done: boolean;
+  note: { ok: true; body: string } | { ok: false };
+};
 
 export type ProgressData = {
   unlocked: boolean;
