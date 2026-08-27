@@ -1,29 +1,29 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.0
-milestone_name: milestone
+milestone_name: 사전학습 사이트 v1.0
 status: Awaiting next milestone
-stopped_at: Completed 08-08-PLAN.md
+stopped_at: v1.0 milestone closed
 last_updated: "2026-08-27T07:20:04.732Z"
 last_activity: 2026-08-27
-last_activity_desc: Phase 08 complete; Phase 07 (아이패드 브라우저 실습) removed from roadmap
+last_activity_desc: v1.0 shipped and archived (verified_closeout, 7 phases / 51 plans / 20 requirements)
 progress:
   total_phases: 7
   completed_phases: 7
   total_plans: 51
   completed_plans: 51
-current_phase: 8
-current_phase_name: 성능·인터랙션·스마트폰 최적화
+current_phase: null
+current_phase_name: null
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-08-24)
+See: .planning/PROJECT.md (updated 2026-08-27 after v1.0)
 
 **Core value:** 개강 전까지 커리큘럼의 기초를 확실히 다질 수 있도록 — 콘텐츠를 읽고, 완료를 체크하고, 진행률과 일정을 한눈에 확인하는 흐름이 반드시 동작해야 한다.
-**Current focus:** Phase 08 — performance-and-mobile
+**Current focus:** 다음 마일스톤 정의 대기 — 그 전에 사전학습을 실제로 도는 것이 1순위 (개강 2026-09-30)
 
 ## Current Position
 
@@ -34,18 +34,16 @@ Last activity: 2026-08-27 — Milestone v1.0 completed and archived
 
 ### 다음에 할 일
 
-계획된 페이즈(1~6, 8)가 전부 완료됐다. Phase 7(아이패드 브라우저 실습 환경)은 2026-08-27에
-"아이패드에서는 실습을 하지 않는다"는 사용자 결정으로 제거됐다 — 재론하지 않는다.
+v1.0이 출하·아카이브됐다. 계획된 페이즈(1~6, 8)와 요구사항 20개가 전부 닫혔다.
 
-선택지:
+**지금 1순위는 사이트를 더 만드는 것이 아니라 사전학습을 실제로 도는 것이다.**
+개강이 2026-09-30이고, 일정표는 8/28부터 시작한다 — 남은 기간이 곧 사용 기간이다.
 
-1. `/gsd-complete-milestone` — v1.0을 마감하고 아카이브한다.
-2. `/gsd-audit-uat` — 페이즈 간 미결 UAT·검증 항목이 남아 있는지 교차 확인한다
-   (REQUIREMENTS.md의 CONT-02/CONT-03이 "Phase 4 | Pending"으로 남아 있는 문서 불일치가
-   08-VERIFICATION.md에 관찰 사항으로 기록돼 있다).
+새 마일스톤이 필요해지면:
 
-3. 후속 정리 후보 — 08-REVIEW.md의 Warning 5건(특히 WR-01: 메모장 언마운트 시 미저장
-   디바운스 입력 유실 이론적 경로)과 375px 잔존 M3 120건.
+- `/gsd-new-milestone` — questioning → research → requirements → roadmap
+
+후보는 `.planning/PROJECT.md`의 Requirements § Active에 적어 뒀다 (콘텐츠 보완, lint 게이트 편입, 08-REVIEW Warning 5건, 375px 잔존 M3 120건).
 
 ## Performance Metrics
 
