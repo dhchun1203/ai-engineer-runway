@@ -189,6 +189,34 @@ body {
   }
 }
 
+/* Step 카드 순차 등장(08-07, 08-RESEARCH.md Pattern 6, design-taste-frontend
+   5.C 부분 적용 — motion/react 대신 CSS로 대체, D8-R). opacity와 transform만
+   바꾼다(6.A). `--reveal-index`는 각 카드가 인라인 커스텀 프로퍼티로 전달하는
+   자기 순번이다 — `staggerChildren`이 요구하는 부모·자식 공유 클라이언트 트리
+   제약 없이 서버 컴포넌트에서도 동작한다. `backwards`로 애니메이션 시작 전
+   0% 프레임(opacity:0)을 유지해 깜빡임 없이 시작한다. */
+@keyframes step-card-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.step-card-reveal {
+  animation: step-card-reveal 400ms ease-out backwards;
+  animation-delay: calc(var(--reveal-index, 0) * 80ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-card-reveal {
+    animation: none;
+  }
+}
+
 /* Section Tape 셀 focus-visible (D-R4K-1) — 이 코드베이스에 focus-visible
    전례가 없어 이 Phase가 처음 정의하는 규칙이다(globals.css 전역 grep 0건).
    accent를 쓰는 이유는 테이프 색으로 accent를 쓰는 것이 아니라 "활성/포커스
