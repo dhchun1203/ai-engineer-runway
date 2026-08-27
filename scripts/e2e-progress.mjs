@@ -16,6 +16,12 @@
 // fetch로 둔다(쿠키 없을 때 서버가 아무것도 안 내보낸다는 게 더 강하게 참이 됨).
 // h5가 신규 — 쿠키를 실어도 원문 HTML에는 진도 마커가 0건임을 검사한다.
 //
+// 08-06: /curriculum도 정적으로 전환되면서 i2~i5의 커리큘럼 쪽 요청만
+// renderedHtml(...)로 교체한다 — 홈(/)은 여전히 동적이라 그 요청은 원문
+// fetch 그대로 둔다. 한 시나리오 안에 두 방식이 섞이는 이유: 홈과 커리큘럼이
+// 이제 서로 다른 렌더 모드이기 때문이다(i1 주석 및 각 시나리오 로그 참고).
+// i6이 신규 — h5/f의 커리큘럼 버전(쿠키를 실어도 원문에 진도 마커 0건).
+//
 // 역할 분담: 이 게이트는 개발 서버(next dev)를 spawn한다 — 개발 서버는 항상
 // 온디맨드 렌더되므로 h5의 "원문에 마커 0건"은 코드가 쿠키를 안 읽는다는
 // 사실만으로 성립한다. 실제 프로덕션 프리렌더 여부(next build 산출물이 진짜
@@ -284,9 +290,11 @@ async function main() {
       if (!body.includes('data-progress-ui="summary"')) {
         throw new FatalError('시나리오 i2 실패 — 잠금 쿠키 홈 응답에 요약 블록 마커가 없습니다');
       }
-      // Step 진행률 바는 /curriculum(03-01에서 홈과 분리)에서 확인한다.
-      const curRes = await fetchWithTimeout(`${BASE_URL}/curriculum`, { headers: { Cookie: cookieHeader } });
-      const curBody = await curRes.text();
+      // Step 진행률 바는 /curriculum(03-01에서 홈과 분리, 08-06부터 정적 셸)에서
+      // 확인한다 — 이 라우트는 이제 마운트 후 클라이언트 fetch로 진도를 가져오므로
+      // 원문 fetch가 아니라 renderedHtml()(수화 완료 후 DOM)을 써야 한다. 홈(/)은
+      // 여전히 동적이라 위 body는 그대로 원문 fetch를 쓴다.
+      const curBody = await renderedHtml(browser, `${BASE_URL}/curriculum`, { cookieValue: UNLOCK_SECRET });
       const stepBarCount = (curBody.match(/data-progress-ui="step-bar"/g) || []).length;
       if (stepBarCount !== 3) {
         throw new FatalError(`시나리오 i2 실패 — /curriculum의 Step 진행률 바 마커가 3개가 아닙니다 (got ${stepBarCount})`);
@@ -328,8 +336,8 @@ async function main() {
       const body = await res.text();
       const percentAttrs = extractAttrs(body, 'data-progress-percent');
       afterOverallPercent = Number(percentAttrs[0]);
-      const curRes = await fetchWithTimeout(`${BASE_URL}/curriculum`, { headers: { Cookie: cookieHeader } });
-      const curBody = await curRes.text();
+      // /curriculum은 08-06부터 정적 셸이라 renderedHtml()(수화 완료 후 DOM)로 읽는다.
+      const curBody = await renderedHtml(browser, `${BASE_URL}/curriculum`, { cookieValue: UNLOCK_SECRET });
       afterStepPercents = extractAttrs(curBody, 'data-step-percent').map(Number);
 
       if (!(afterOverallPercent > beforeOverallPercent)) {
@@ -387,6 +395,23 @@ async function main() {
       }
     }
     console.log('e2e-progress: i5/i 프로브 삭제 → 홈 전체 퍼센트 원상 복구 OK (TRACK-04)');
+
+    // i6(신규, 08-06). 잠금 쿠키를 실은 채로 /curriculum을 원문 fetch(브라우저를
+    // 거치지 않는다) → 응답 HTML에 data-progress-ui 문자열이 0건. h5(Step)·f(레슨)의
+    // 커리큘럼 버전이다 — 정적 셸이 진도를 담지 않는다는 런타임 증명이다.
+    {
+      const res = await fetchWithTimeout(`${BASE_URL}/curriculum`, { headers: { Cookie: cookieHeader } });
+      if (res.status !== 200) {
+        throw new FatalError(`시나리오 i6 실패 — 잠금 쿠키 보유 정적 셸 커리큘럼 요청이 200이 아닙니다 (status=${res.status})`);
+      }
+      const body = await res.text();
+      if (body.includes('data-progress-ui')) {
+        throw new FatalError(
+          '시나리오 i6 실패 — 쿠키가 있어도 정적 셸 HTML에는 진도가 없어야 하는데 data-progress-ui 마커가 원문에 존재합니다',
+        );
+      }
+    }
+    console.log('e2e-progress: i6/i 잠금 쿠키 + /curriculum 정적 셸 원문 fetch → data-progress-ui 마커 0건 OK (T-08-06-01)');
 
     // b. 쿠키 없이 GET(레슨 정적 셸 원문) — 진도 UI 마커 0건 + 레슨 제목은 존재
     // (D-18/D-20). 08-03부터 이 라우트는 완전 정적 셸이라 이 판정이 더 강하게
