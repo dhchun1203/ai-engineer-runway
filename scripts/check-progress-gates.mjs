@@ -247,8 +247,8 @@ if (packageJsonSource === null) {
 // STATIC_SHELL_PAGES: 이 페이즈가 정적 셸로 전환하는 페이지 — route segment
 // config `dynamic` 선언이 없고, 쿠키/진도 조회 식별자(hasUnlockCookie·
 // readCompletedLessonIds·readLessonNote·cookies()) 중 어느 것도 등장하지
-// 않는다. 08-02는 Step 페이지 하나만 여기 넣는다. 08-03이 레슨 페이지를,
-// 08-06이 커리큘럼 페이지를 이 배열에 추가한다(각 플랜에 명시돼 있다).
+// 않는다. 08-02는 Step 페이지, 08-03은 레슨 페이지를 여기 넣는다. 08-06이
+// 커리큘럼 페이지를 이 배열에 추가한다(계획에 명시돼 있다).
 //
 // DYNAMIC_GATED_PAGES: 오늘 날짜가 곧 페이지 본문이라 동적으로 유지하기로
 // 결정된 두 라우트(근거는 08-06이 기록한다) — 기존 정규식대로 force-dynamic
@@ -258,7 +258,10 @@ if (packageJsonSource === null) {
 // 본다 — 전환된 페이지가 "여기서 쿠키를 읽지 않는다"는 설명 주석을 달게
 // 되므로, 주석까지 검사하면 게이트가 스스로를 오탐시킨다(G20과 같은 이유).
 
-const STATIC_SHELL_PAGES = [path.join(ROOT, 'src', 'app', 'step', '[stepId]', 'page.tsx')];
+const STATIC_SHELL_PAGES = [
+  path.join(ROOT, 'src', 'app', 'step', '[stepId]', 'page.tsx'),
+  path.join(ROOT, 'src', 'app', 'lesson', '[lessonId]', 'page.tsx'),
+];
 
 const DYNAMIC_GATED_PAGES = [
   path.join(ROOT, 'src', 'app', 'page.tsx'),
