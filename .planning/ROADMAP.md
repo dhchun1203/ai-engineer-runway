@@ -13,13 +13,14 @@
 
 Decimal phases appear between their surrounding integers in numeric order.
 
+Phase 7(아이패드 브라우저 실습 환경)은 2026-08-27에 제거됐다 — 아이패드에서 실습을 하지 않기로 정리. 이미 완료된 Phase 8의 산출물·커밋 기록과 어긋나지 않도록 재번호하지 않았고, 7번은 재사용하지 않는다.
+
 - [x] **Phase 1: 배포된 커리큘럼 뼈대** - Vercel URL에서 Step→모듈→레슨을 아이패드로 탐색하고 파일럿 레슨을 읽는다 (completed 2026-08-24)
 - [x] **Phase 2: 진도 체크와 진행률** - 레슨 완료를 토글하고 모듈·Step·전체 진행률을 확인한다 (completed 2026-08-24)
 - [x] **Phase 3: 학습 일정과 오늘의 학습** - 8/25~9/29 일정표와 오늘 배정 레슨, D-day·페이스 상태를 본다 (completed 2026-08-25)
 - [x] **Phase 4: Step 1 심화 콘텐츠** - Python·Git·SQL·ML 기초 전 레슨을 개념 설명 + 실무 예제로 학습한다 (completed 2026-08-25)
 - [x] **Phase 5: Step 2·3 콘텐츠와 프로젝트 가이드** - 풀스택·LLM 심화와 RAG·오케스트레이션 개요, 프로젝트 5종 준비 가이드를 학습한다 (completed 2026-08-26)
 - [x] **Phase 6: 전체 페이지 디자인 정리** - 모든 화면이 존재하는 상태에서 디자인 토큰·셸·페이지 마감을 한 번에 다듬는다 (completed 2026-08-27)
-- [ ] **Phase 7: 아이패드 브라우저 실습 환경** - 레슨 해보기를 PC 없이 아이패드 브라우저에서 실행한다
 - [x] **Phase 8: 성능·인터랙션·스마트폰 최적화** - 정적 생성 전환·폰트 축소와 함께 버튼·인터랙션 감각을 다듬는다 (completed 2026-08-27)
 
 ## Phase Details
@@ -230,7 +231,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 8 (7은 제거됨)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -240,6 +241,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 4. Step 1 심화 콘텐츠 | 7/7 | Complete    | 2026-08-25 |
 | 5. Step 2·3 콘텐츠와 프로젝트 가이드 | 13/13 | Complete    | 2026-08-26 |
 | 6. 전체 페이지 디자인 정리 | 9/9 | Complete    | 2026-08-27 |
+| 8. 성능·인터랙션·스마트폰 최적화 | 8/8 | Complete    | 2026-08-27 |
 
 ## Coverage Notes
 
@@ -301,43 +303,6 @@ Plans:
 **Wave 1 (gap closure)** *(UAT gap G-06-9, G-06-2 — 기존 8개 플랜과 무관하게 단독 실행)*
 
 - [x] 06-09-PLAN.md — 구간 테이프 게이트 신설(빨간불 선증명) + 테이프 기하 CSS 단일 소스화 + 라벨을 테이프 기준 배치 (SC1~SC4, G-06-9·G-06-2)
-
-### Phase 7: 아이패드 브라우저 실습 환경
-
-**Goal**: 학습자가 PC 없이 아이패드 브라우저만으로 레슨의 `해보기` 과제를 실행하고 결과를 확인할 수 있다
-**Mode:** mvp
-**Depends on**: Phase 6
-**Requirements**: TBD (PROJECT.md "주 사용 기기: 아이패드" 귀속 후보)
-**Timebox**: 미정 — 개강(9/30) 전 학습 시간을 잠식하지 않는 선에서만. 초과 시 v2로 밀어낸다
-
-**왜 필요한가**: D-55/D-73이 "읽기는 아이패드, 실행은 PC"로 정리했으나, 주 사용 기기가 아이패드인
-학습자는 레슨을 읽다가 `해보기`에서 매번 막힌다. 2026-08-26 UAT에서 사용자가 직접 제기했다.
-
-**후보 방식** (Phase 7 계획 단계에서 결정):
-
-| 대상 레슨 | 방식 | 비고 |
-|---|---|---|
-| 2-2 HTML·CSS·JS | 페이지 내 브라우저 실행 | 가장 쉬움 — 원래 ".html 파일 열기" 예제 |
-| 1-4 SQL, 2-1 SQL | PGlite (Postgres WASM) | 외부 서비스·계정·CSP 의존 없음 |
-| 1-3 Python | Pyodide | 무겁다 — 비용 대비 효과 검토 필요 |
-| 2-5 Express 등 서버 필요 | 불가 — 로컬 유지 | 범위 밖 |
-
-**결정 이력**: D-73이 StackBlitz·CodeSandbox 등 외부 온라인 IDE를 명시적으로 배제했다. 이 phase는
-그 결정을 뒤집는 것이 아니라 **외부 서비스 의존 없이 페이지 안에서 실행**하는 다른 경로를 검토한다 —
-서비스 중단·정책 변경·계정 요구가 학습을 막지 않아야 한다.
-
-**Success Criteria** (what must be TRUE):
-
-  1. 대상 레슨의 `해보기`를 아이패드 Safari에서 PC 없이 끝까지 수행할 수 있다
-  2. 실행 환경이 외부 서비스에 의존하지 않는다 — 계정·네트워크 서비스 없이 동작한다
-  3. 실행 UI가 기존 레슨 읽기 경험을 해치지 않는다 — 읽기만 할 때는 방해되지 않는다
-  4. Phase 1~6의 자동 게이트가 전부 통과한다 — 실습 환경 추가가 기능 회귀를 만들지 않는다
-
-**Plans**: TBD
-
-Plans:
-
-- [ ] TBD (run /gsd-plan-phase 7 to break down)
 
 ### Phase 8: 성능·인터랙션·스마트폰 최적화
 

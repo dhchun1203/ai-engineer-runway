@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 7
-current_phase_name: 아이패드 브라우저 실습 환경
-status: planning
-stopped_at: Completed 08-08-PLAN.md
-last_updated: "2026-08-27T03:40:08.675Z"
+current_phase: 8
+current_phase_name: 성능·인터랙션·스마트폰 최적화
+status: complete
+stopped_at: Phase 08 complete (learnings extracted)
+last_updated: "2026-08-27T04:11:18.487Z"
 last_activity: 2026-08-27
-last_activity_desc: Phase 06 complete, transitioned to Phase 07
 progress:
-  total_phases: 8
+  total_phases: 7
   completed_phases: 7
   total_plans: 51
   completed_plans: 51
+last_activity_desc: Phase 08 complete; Phase 07 (아이패드 브라우저 실습) removed from roadmap
 ---
 
 # Project State
@@ -27,37 +27,26 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 
 ## Current Position
 
-Phase: 7 — 아이패드 브라우저 실습 환경
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-08-27 — Phase 08 complete, transitioned to Phase 7
+Phase: 8 — 성능·인터랙션·스마트폰 최적화 (완료)
+Plan: 8/8 완료
+Status: 마일스톤 v1.0의 계획된 페이즈 전부 완료
+Last activity: 2026-08-27 — Phase 08 학습 추출, Phase 07 로드맵에서 제거
 
-Progress: [█████████████████░░░] 8/13 plans in phase 05 ([██████████] 100% project-wide)
+Progress: [████████████████████] 51/51 plans ([██████████] 100% project-wide)
 
-### 다음에 할 일 (이 순서대로)
+### 다음에 할 일
 
-Phase 4는 **아직 완료로 표시되지 않았다.** UAT를 먼저 닫아야 한다.
+계획된 페이즈(1~6, 8)가 전부 완료됐다. Phase 7(아이패드 브라우저 실습 환경)은 2026-08-27에
+"아이패드에서는 실습을 하지 않는다"는 사용자 결정으로 제거됐다 — 재론하지 않는다.
 
-1. `/gsd-verify-work 04` — `04-UAT.md`의 2건을 안내하고, 통과 시 phase를 완료 처리한다.
-   그 시점에 `REQUIREMENTS.md`의 CONT-02/CONT-03도 정산된다.
+선택지:
 
-   - UAT 1: SQL 레슨 2편을 Supabase SQL 에디터에서 실제 실행 — 실행자·게이트·검증자 모두
-     자격증명 없는 격리 환경이라 아무도 실행하지 못했다. 성공 기준 3번이 "실행 가능한 예제"를
-     요구하므로 추론으로 대체 불가.
-
-   - UAT 2: 아직 사람이 안 본 5편 훑어보기. 파일럿의 렌더 결함 2종은 10편 전부에서
-     기계적으로 배제 완료(`<pre>` data-theme 누락 0, `<details>` 마크다운 누출 0,
-     1줄 블록 프로덕션 실측 완료) — 남은 건 결함 사냥이 아니라 "읽을 만한가" 판단.
-
-2. `/gsd-ui-review` — 구현된 프론트엔드의 6-pillar 시각 감사. UI-SPEC 계약 위반을 싸게 잡는다.
-3. (2번 후에도 "템플릿 같다"가 남으면) `frontend-design` 스킬 — 미감 방향 잡기.
-   스코프는 **레슨 읽기 화면**으로 제한하고 시간 제한을 둘 것.
-
-**왜 이 순서인가:** frontend-design은 Phase 4가 끝난 지금이 최적기다 — 실제 한국어 장문 10편이
-생겨서 타이포그래피·프로즈 리듬을 진짜 콘텐츠에 대고 설계할 수 있고, Phase 5의 나머지 25편이
-개선된 읽기 화면을 물려받는다. 다만 UAT보다 먼저 하면 안 된다: 스타일을 바꾸면 UAT에서
-확인하려는 화면이 발밑에서 달라진다. 로드맵의 남은 Phase 4·5는 둘 다 콘텐츠 페이즈라
-UI 작업을 끼워 넣을 자리가 없으므로, frontend-design은 페이즈 스텝이 아니라 독립 패스로 돈다.
+1. `/gsd-complete-milestone` — v1.0을 마감하고 아카이브한다.
+2. `/gsd-audit-uat` — 페이즈 간 미결 UAT·검증 항목이 남아 있는지 교차 확인한다
+   (REQUIREMENTS.md의 CONT-02/CONT-03이 "Phase 4 | Pending"으로 남아 있는 문서 불일치가
+   08-VERIFICATION.md에 관찰 사항으로 기록돼 있다).
+3. 후속 정리 후보 — 08-REVIEW.md의 Warning 5건(특히 WR-01: 메모장 언마운트 시 미저장
+   디바운스 입력 유실 이론적 경로)과 375px 잔존 M3 120건.
 
 ## Performance Metrics
 
@@ -115,6 +104,8 @@ UI 작업을 끼워 넣을 자리가 없으므로, frontend-design은 페이즈 
 - Phase 8 범위 확장 (2026-08-27): 인터랙션·버튼 감각 다듬기를 성능 작업에 합침. `design-taste-frontend` 스킬을 부분 적용(4.5/5/6절만, 랜딩 전용 규칙 제외), Motion 라이브러리는 CSS로 안 되는 지점이 생겼을 때만 조건부 도입. 근거는 ROADMAP Phase 8 상세 참고
 
 - Phase 8 added: 성능·스마트폰 최적화 (2026-08-27) — 리전 이동으로 TTFB 238→68ms 해결 후 남은 정적 생성·폰트·폰 UX 작업
+
+- Phase 7 제거 (2026-08-27): 아이패드 브라우저 실습 환경 — 사용자가 "아이패드에서는 실습 안 한다"로 정리. 아래 추가 항목의 전제(주 사용 기기가 아이패드라 해보기에서 막힌다)가 더 이상 성립하지 않는다. 완료된 Phase 8과의 정합을 위해 재번호하지 않았고 7번은 재사용하지 않는다.
 
 - Phase 7 추가: 아이패드 브라우저 실습 환경 — 2026-08-26 UAT에서 사용자가 제기. "읽기는 아이패드, 실행은 PC"(D-55/D-73)가 아이패드 주 사용자에게 실제 제약이 된다는 문제. 외부 온라인 IDE(D-73이 배제)가 아니라 페이지 내 실행(PGlite 등)으로 검토한다
 
