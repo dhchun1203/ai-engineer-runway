@@ -7,6 +7,7 @@
 // 것을 막기 위해 페이지가 미리 계산해 moduleCount/lessonCount prop으로 넘긴다.
 
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import type { Step, StepId } from "@/content/modules";
 import { ProgressBadge } from "@/components/progress-badge";
 import { BarSkeleton, BadgeSkeleton } from "@/components/progress-skeleton";
@@ -32,10 +33,15 @@ export function StepCard({
   step,
   moduleCount,
   lessonCount,
+  revealIndex,
 }: {
   step: Step;
   moduleCount: number;
   lessonCount: number;
+  // 08-07 — 있으면 .step-card-reveal 순차 등장을 적용한다(커리큘럼 페이지
+  // 전용). 없으면 클래스도 인라인 스타일도 붙이지 않는다 — 이 카드가 다른
+  // 화면에 재사용될 때 등장 연출이 딸려오지 않게 한다.
+  revealIndex?: number;
 }) {
   const { status, data } = useProgress();
   const progress = status === "ready" ? (data.steps?.[step.id] ?? null) : null;
@@ -43,7 +49,8 @@ export function StepCard({
   return (
     <Link
       href={`/step/${step.id}`}
-      className={`card-interactive flex min-h-11 flex-col gap-3 rounded-lg border-l-4 bg-surface p-4 transition-colors duration-150 dark:bg-surface-dark ${STEP_BORDER_CLASSES[step.id]}`}
+      className={`card-interactive flex min-h-11 flex-col gap-3 rounded-lg border-l-4 bg-surface p-4 transition-colors duration-150 dark:bg-surface-dark ${STEP_BORDER_CLASSES[step.id]} ${revealIndex !== undefined ? "step-card-reveal" : ""}`}
+      style={revealIndex !== undefined ? ({ "--reveal-index": revealIndex } as CSSProperties) : undefined}
     >
       <div className="flex items-baseline gap-2">
         <span className="shrink-0 whitespace-nowrap text-label font-semibold">Step {step.id}</span>

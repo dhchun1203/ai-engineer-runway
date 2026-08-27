@@ -592,6 +592,67 @@ if (progressRouteSource === null) {
   }
 }
 
+// --- G22: src/components/section-tape.tsx가 스크롤 리스너를 rAF로 배칭하고
+// (requestAnimationFrame/cancelAnimationFrame이 둘 다 등장하며, rAF 정의가
+// addEventListener("scroll",...) 등록보다 앞선다 — G4의 indexOf 위치 비교
+// 기법 복제), 저장소 전체에서 "window" 스크롤 이벤트 리스너를 등록하는 파일이
+// 이 컴포넌트 하나뿐이다 — 스로틀 없는 새 스크롤 리스너가 조용히 추가되는
+// 것을 상시 차단한다(08-07, 5.D 금지 패턴 재발 방지).
+//
+// window 스크롤로 스캔을 좁히는 이유: lesson-notepad.tsx가 이미
+// visualViewport.addEventListener("scroll", sync)를 쓴다(키보드 인셋 보정,
+// 08-27 quick task). 이 리스너는 5.D가 우려하는 패턴(모든 스크롤 이벤트마다
+// getBoundingClientRect() 루프 후 무조건 리렌더)이 아니다 — visualViewport의
+// scroll 이벤트는 실제 스크롤 제스처가 아니라 뷰포트 크기 변화(키보드 열림 등)
+// 때에만 드물게 발생하고, sync()는 getComputedStyle 없이 가벼운 산술만 한다.
+// window.addEventListener("scroll", ...)만 검사 대상으로 좁혀 이 정당한
+// 기존 패턴을 오탐하지 않는다 ---
+
+const SECTION_TAPE_PATH = path.join(ROOT, 'src', 'components', 'section-tape.tsx');
+const sectionTapeSource = readFileIfExists(SECTION_TAPE_PATH);
+
+if (sectionTapeSource === null) {
+  fail(`G22 failed: ${path.relative(ROOT, SECTION_TAPE_PATH)} not found`);
+} else {
+  const codeOnly = stripJsLineComments(sectionTapeSource);
+  const rafIdx = codeOnly.indexOf('requestAnimationFrame');
+  const cancelRafIdx = codeOnly.indexOf('cancelAnimationFrame');
+  const listenerIdx = codeOnly.indexOf('addEventListener');
+
+  if (rafIdx === -1 || cancelRafIdx === -1) {
+    fail(
+      `G22 failed: ${path.relative(ROOT, SECTION_TAPE_PATH)} must use both requestAnimationFrame and cancelAnimationFrame to throttle its scroll listener`,
+    );
+  } else if (listenerIdx === -1) {
+    fail(`G22 failed: ${path.relative(ROOT, SECTION_TAPE_PATH)} no longer registers a scroll listener`);
+  } else if (rafIdx >= listenerIdx) {
+    fail(
+      `G22 failed: requestAnimationFrame throttle must be defined before addEventListener("scroll", ...) in ${path.relative(ROOT, SECTION_TAPE_PATH)} — the throttle guard must exist before the listener it wraps`,
+    );
+  }
+}
+
+const SCROLL_LISTENER_SCAN_FILES = walkFiles(SRC_DIR, /\.tsx$/);
+const filesWithScrollListener = [];
+
+for (const filePath of SCROLL_LISTENER_SCAN_FILES) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  const codeOnly = stripJsLineComments(content);
+  if (/window\.addEventListener\(\s*["']scroll["']/.test(codeOnly)) {
+    filesWithScrollListener.push(path.relative(ROOT, filePath));
+  }
+}
+
+const unexpectedScrollListenerFiles = filesWithScrollListener.filter(
+  (relPath) => relPath !== path.relative(ROOT, SECTION_TAPE_PATH),
+);
+
+if (unexpectedScrollListenerFiles.length > 0) {
+  fail(
+    `G22 failed: unthrottled scroll listener(s) found outside section-tape.tsx: ${unexpectedScrollListenerFiles.join(', ')} — 5.D: 스크롤 리스너는 rAF 배칭 없이 쓰지 않는다`,
+  );
+}
+
 // --- 결과 ---
 
 if (skipped.length > 0) {

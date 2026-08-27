@@ -61,7 +61,7 @@ export function SiteNav() {
               <Link
                 key={item.label}
                 href={item.href}
-                className={`flex min-h-11 items-center border-b-2 text-label font-semibold ${
+                className={`tap-feedback flex min-h-11 items-center border-b-2 text-label font-semibold ${
                   isActive
                     ? "border-accent text-accent dark:border-accent-dark dark:text-accent-dark"
                     : "border-transparent"

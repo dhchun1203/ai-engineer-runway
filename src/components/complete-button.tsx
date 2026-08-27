@@ -57,7 +57,7 @@ export function CompleteButton({
         disabled={isPending}
         aria-pressed={optimisticDone}
         aria-label={optimisticDone ? '완료 취소하기' : '레슨 완료하기'}
-        className={`flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 text-body font-semibold ${
+        className={`tap-feedback flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 text-body font-semibold ${
           optimisticDone
             ? 'complete-ring-glow border-accent text-accent dark:border-accent-dark dark:text-accent-dark'
             : 'border-badge-neutral-bg dark:border-badge-neutral-bg-dark'
@@ -78,7 +78,7 @@ export function CompleteButton({
           <button
             type="button"
             onClick={handleToggle}
-            className="flex min-h-11 items-center justify-center rounded-lg border border-badge-neutral-bg px-3 dark:border-badge-neutral-bg-dark"
+            className="tap-feedback flex min-h-11 items-center justify-center rounded-lg border border-badge-neutral-bg px-3 dark:border-badge-neutral-bg-dark"
           >
             다시 시도
           </button>

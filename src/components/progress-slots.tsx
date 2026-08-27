@@ -31,11 +31,12 @@ export function StepBadgeSlot({ stepId }: { stepId: StepId }) {
   return <ProgressBadge {...counts} />;
 }
 
-/** error 상태에서만 렌더한다. 새 에러 컴포넌트를 만들지 않고 기존 것을 재사용한다. */
+/** error 상태에서만 렌더한다. 새 에러 컴포넌트를 만들지 않고 기존 것을 재사용한다.
+ * 08-07 — useProgress().refresh를 onRetry로 넘겨 새로고침 없이 재조회할 수 있다. */
 export function ProgressErrorSlot() {
-  const { status } = useProgress();
+  const { status, refresh } = useProgress();
   if (status !== "error") return null;
-  return <ProgressReadError />;
+  return <ProgressReadError onRetry={refresh} />;
 }
 
 /** 모듈 아코디언 헤더의 진행률 배지 자리. */
@@ -57,7 +58,7 @@ export function CompleteButtonSlot({ lessonId }: { lessonId: string }) {
   const { status, data, refresh } = useProgress();
 
   if (status === "loading") return <CompleteButtonSkeleton />;
-  if (status === "error") return <ProgressReadError />;
+  if (status === "error") return <ProgressReadError onRetry={refresh} />;
   if (status === "locked") {
     return (
       <p
@@ -81,10 +82,10 @@ export function CompleteButtonSlot({ lessonId }: { lessonId: string }) {
  * 자체는 바꾸지 않는다 — 홈(/, 동적 유지)이 지금 그대로 쓰고 있어 prop 계약을
  * 깨면 안 된다. */
 export function ProgressSummarySlot() {
-  const { status, data } = useProgress();
+  const { status, data, refresh } = useProgress();
 
   if (status === "loading") return <SummarySkeleton />;
-  if (status === "error") return <ProgressReadError />;
+  if (status === "error") return <ProgressReadError onRetry={refresh} />;
   if (status !== "ready") return null;
 
   if (!data.overall) return null;

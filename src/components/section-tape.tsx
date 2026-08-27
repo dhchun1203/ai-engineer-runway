@@ -131,7 +131,10 @@ export function SectionTape({
           idx = i;
         }
       }
-      setCurrentIndex(idx);
+      // 값이 실제로 바뀔 때만 상태를 갱신한다(08-07, 5.D) — 함수형 갱신으로
+      // 이전 값과 같으면 같은 참조를 그대로 반환해 리렌더를 건너뛴다. 별도
+      // ref 미러를 두지 않는 이유: 미러가 state와 어긋날 여지를 만들 뿐이다.
+      setCurrentIndex((prev) => (prev === idx ? prev : idx));
     };
 
     measure();
@@ -139,18 +142,40 @@ export function SectionTape({
 
     // <details> 펼침 등으로 컨테이너 높이가 바뀔 때 재측정한다. cleanup에서
     // 반드시 disconnect() — 라우트 이동 시 관찰자가 누수되지 않게 한다.
+    // 크기 변화는 스크롤만큼 자주 일어나지 않으므로 여기서는 rAF로 지연시키지
+    // 않는다 — 지연시키면 <details> 펼침 직후 테이프가 한 박자 늦게 반응한다.
     const resizeObserver = new ResizeObserver(() => {
       measure();
       updateCurrent();
     });
     resizeObserver.observe(container);
 
-    const handleScroll = () => updateCurrent();
+    // 스크롤 프레임 예산 스로틀(08-07, 5.D 금지 패턴 해소, G22) — 이 리스너가
+    // 저장소에서 유일한 스크롤 리스너다. rAF 핸들이 이미 예약돼 있으면 새
+    // 스크롤 이벤트는 즉시 반환하고, 예약이 없을 때만 다음 프레임에
+    // updateCurrent()를 실행하도록 예약한다. 콜백 안에서 핸들을 비워 다음
+    // 스크롤 이벤트가 다시 예약할 수 있게 한다. 리스너 등록 자체(passive:true)는
+    // 그대로 유지한다 — 5.D가 금지하는 것은 "배칭 없이 매 프레임 도는 것"이지
+    // 리스너의 존재가 아니다.
+    let rafHandle: number | null = null;
+    const handleScroll = () => {
+      if (rafHandle !== null) return;
+      rafHandle = window.requestAnimationFrame(() => {
+        rafHandle = null;
+        updateCurrent();
+      });
+    };
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
       resizeObserver.disconnect();
       window.removeEventListener("scroll", handleScroll);
+      // 예약된 프레임이 있으면 취소한다 — 라우트 이동으로 언마운트된 뒤
+      // 콜백이 실행돼 사라진 컴포넌트의 상태를 건드리지 않게 한다.
+      if (rafHandle !== null) {
+        window.cancelAnimationFrame(rafHandle);
+        rafHandle = null;
+      }
     };
   }, [articleId]);
 
@@ -199,7 +224,7 @@ export function SectionTape({
             onMouseLeave={() => setHoveredIndex((prev) => (prev === index ? null : prev))}
             aria-label={section.title || undefined}
             style={{ flexGrow: section.ratio, flexBasis: 0 }}
-            className="section-tape-cell flex h-full min-w-6 flex-col items-center justify-end gap-1 pb-1"
+            className="section-tape-cell tap-feedback flex h-full min-w-6 flex-col items-center justify-end gap-1 pb-1"
           >
             <span
               style={{ height: "3px" }}

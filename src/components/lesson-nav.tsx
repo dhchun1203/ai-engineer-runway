@@ -11,11 +11,11 @@ export function LessonBreadcrumb({ lesson }: { lesson: Pick<Lesson, "stepId" | "
 
   return (
     <nav aria-label="브레드크럼" className="flex flex-wrap items-center gap-2 text-label font-normal font-mono">
-      <Link href={stepHref} className="flex min-h-11 items-center underline-offset-2 hover:underline">
+      <Link href={stepHref} className="tap-feedback flex min-h-11 items-center underline-offset-2 hover:underline">
         Step {lesson.stepId}
       </Link>
       <span aria-hidden="true">&gt;</span>
-      <Link href={stepHref} className="flex min-h-11 items-center underline-offset-2 hover:underline">
+      <Link href={stepHref} className="tap-feedback flex min-h-11 items-center underline-offset-2 hover:underline">
         {module?.title ?? ""}
       </Link>
     </nav>
@@ -62,7 +62,7 @@ function PagerButton({
   }
 
   return (
-    <Link href={`/lesson/${lesson.slug}`} data-pager={direction} className={baseClass}>
+    <Link href={`/lesson/${lesson.slug}`} data-pager={direction} className={`tap-feedback ${baseClass}`}>
       {content}
     </Link>
   );

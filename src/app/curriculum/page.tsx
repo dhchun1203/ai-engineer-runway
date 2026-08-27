@@ -29,12 +29,13 @@ export default function CurriculumPage() {
         <DDayCountdownLive initialDaysUntil={initialDaysUntil} />
         <ProgressSummarySlot />
         <section className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {steps.map((step) => (
+          {steps.map((step, index) => (
             <StepCard
               key={step.id}
               step={step}
               moduleCount={getModulesByStep(step.id).length}
               lessonCount={getLessonCounts(step.id).total}
+              revealIndex={index}
             />
           ))}
         </section>

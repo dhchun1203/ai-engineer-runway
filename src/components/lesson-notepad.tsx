@@ -180,7 +180,7 @@ export function LessonNotepad({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={handleToggle}
-        className="note-handle flex w-full items-center justify-center gap-2 text-label font-semibold"
+        className="note-handle tap-feedback flex w-full items-center justify-center gap-2 text-label font-semibold"
       >
         <span>{open ? '메모 닫기' : '메모'}</span>
         {hasContent ? (

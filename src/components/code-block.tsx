@@ -70,7 +70,7 @@ export function CodeBlock({ children, ...props }: ComponentPropsWithoutRef<'pre'
         onClick={handleCopy}
         data-copy-state={state}
         // hover가 없는 아이패드에서도 항상 보여야 한다(기존 visibility:"always"와 동등).
-        className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-lg border"
+        className="tap-feedback absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-lg border"
         aria-label={label}
       >
         {state === 'copied' ? (

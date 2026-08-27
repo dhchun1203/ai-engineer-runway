@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 7
+open_count: 8
 waived_count: 0
 fixed_count: 1
-total_count: 8
-last_updated: 2026-08-27T01:39:15.736Z
+total_count: 9
+last_updated: 2026-08-27T02:10:28.056Z
 ---
 
 # Broken Windows Ledger
@@ -23,6 +23,7 @@ last_updated: 2026-08-27T01:39:15.736Z
 | 6 | 08 | deviation | scripts/e2e-perf-budget.mjs |  | e2e-perf-budget.mjs를 실제 .env.local(진짜 Supabase 자격 증명)로 재실행해 기준선 숫자를 재확인하지 못함 — 이 워크트리에서 .env* 파일이 권한상 차단되어 더미 자격 증명으로만 검증함 | open |  | 2026-08-26T23:46:35.825Z |  |
 | 7 | 08 | unrun-verify | scripts/e2e-progress.mjs |  | i2-i6 curriculum scenarios require real Supabase credentials not accessible in this worktree; structurally verified via mocked API responses | open |  | 2026-08-27T01:39:07.584Z |  |
 | 8 | 08 | unrun-verify | scripts/e2e-today.mjs |  | t4 and the new D-day accuracy scenario require real Supabase credentials/full run not accessible in this worktree; t4 logic verified via a standalone scratch script against a live dev server with mocked /api/progress and page.clock overrides | open |  | 2026-08-27T01:39:15.736Z |  |
+| 9 | 08 | unrun-verify | scripts/e2e-lesson-note.mjs |  | Notepad backup-lookup fetch requires real Supabase credentials not accessible in this worktree; script exits immediately at the first real Supabase call (same environment constraint as e2e-progress.mjs/e2e-today.mjs entries #7/#8) — this plan's changes did not touch note-store logic, so this is a pre-existing environment gap, not a new regression | open |  | 2026-08-27T02:10:28.056Z |  |
 
 ````json
 [
@@ -121,8 +122,21 @@ last_updated: 2026-08-27T01:39:15.736Z
     "reason": "",
     "recorded_at": "2026-08-27T01:39:15.736Z",
     "resolved_at": null
+  },
+  {
+    "id": 9,
+    "kind": "unrun-verify",
+    "phase": "08",
+    "file": "scripts/e2e-lesson-note.mjs",
+    "line": null,
+    "description": "Notepad backup-lookup fetch requires real Supabase credentials not accessible in this worktree; script exits immediately at the first real Supabase call (same environment constraint as e2e-progress.mjs/e2e-today.mjs entries #7/#8) — this plan's changes did not touch note-store logic, so this is a pre-existing environment gap, not a new regression",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-08-27T02:10:28.056Z",
+    "resolved_at": null
   }
 ]
 ````
+
 
 
