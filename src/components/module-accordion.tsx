@@ -1,11 +1,25 @@
+"use client";
+
+// 08-02부터 클라이언트 컴포넌트다 — 진도 표시가 useProgress() context에서
+// 오기 때문이다. getLessonsByModule(module.id) 호출은 더 이상 이 컴포넌트가
+// 하지 않는다: 호출한다면 Velite 콘텐츠 매니페스트 전체를 클라이언트
+// 번들에 끌고 오게 된다(SC2와 충돌). 대신 페이지가 계산해 lessons prop으로
+// 넘긴다. completedSlugs/progress prop도 없앴다 — 진도는 context에서 직접
+// 읽는다(ModuleProgressSlot, useProgress().data.completedSlugs).
+
 import Link from "next/link";
 import { ChevronDown, CheckCircle2 } from "lucide-react";
 import type { Module, StepId } from "@/content/modules";
-import { getLessonsByModule } from "@/content/curriculum-helpers";
+import type { getLessonBySlug } from "@/content/curriculum-helpers";
 import { DepthBadge } from "@/components/depth-badge";
 import { EstimatedTime } from "@/components/estimated-time";
-import { ProgressBadge } from "@/components/progress-badge";
-import type { ProgressCounts } from "@/lib/progress-math";
+import { ModuleProgressSlot } from "@/components/progress-slots";
+import { useProgress } from "@/components/progress-provider";
+
+// Velite 콘텐츠 매니페스트 모듈을 직접 import하지 않는다 — 타입은
+// getLessonBySlug의 반환 타입에서 파생한다(today-lesson-card.tsx/progress.ts와
+// 같은 경계).
+type Lesson = NonNullable<ReturnType<typeof getLessonBySlug>>;
 
 // 아코디언 헤더 배경에 그 모듈이 속한 Step의 상징 색을 쓴다 (D-04).
 const STEP_HEADER_CLASSES: Record<StepId, string> = {
@@ -17,17 +31,16 @@ const STEP_HEADER_CLASSES: Record<StepId, string> = {
 export function ModuleAccordion({
   module,
   stepId,
+  lessons,
   defaultOpen = false,
-  completedSlugs,
-  progress,
 }: {
   module: Module;
   stepId: StepId;
+  lessons: Lesson[];
   defaultOpen?: boolean;
-  completedSlugs?: ReadonlySet<string>;
-  progress?: ProgressCounts | null;
 }) {
-  const lessons = getLessonsByModule(module.id);
+  const { status, data } = useProgress();
+  const completedSlugs = status === "ready" ? data.completedSlugs : null;
 
   return (
     <details
@@ -40,7 +53,7 @@ export function ModuleAccordion({
         <span className="text-heading font-bold">{module.title}</span>
         <span className="flex shrink-0 items-center gap-2 text-label font-normal">
           레슨 {lessons.length}개
-          {progress ? <ProgressBadge completed={progress.completed} total={progress.total} percent={progress.percent} /> : null}
+          <ModuleProgressSlot moduleId={module.id} />
           <ChevronDown
             className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180"
             aria-hidden="true"
@@ -49,7 +62,7 @@ export function ModuleAccordion({
       </summary>
       <ul className="flex flex-col divide-y divide-badge-neutral-bg px-4 dark:divide-badge-neutral-bg-dark">
         {lessons.map((lesson) => {
-          const isDone = completedSlugs?.has(lesson.slug) ?? false;
+          const isDone = completedSlugs?.includes(lesson.slug) ?? false;
 
           return (
             <li key={lesson.slug} {...(isDone ? { "data-progress-ui": "lesson-done" } : {})}>
