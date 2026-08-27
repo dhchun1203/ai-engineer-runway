@@ -76,8 +76,8 @@ export async function GET(request: Request) {
   const modules: Record<string, ProgressCounts> = {};
   for (const stepId of STEP_IDS) {
     steps[stepId] = stepProgress(stepId, completedIds);
-    for (const module of getModulesByStep(stepId)) {
-      modules[module.id] = moduleProgress(module.id, completedIds);
+    for (const stepModule of getModulesByStep(stepId)) {
+      modules[stepModule.id] = moduleProgress(stepModule.id, completedIds);
     }
   }
 

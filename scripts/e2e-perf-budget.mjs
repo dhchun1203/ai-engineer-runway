@@ -237,7 +237,7 @@ async function measureScrollFrameBudget(browser, url) {
 
     // Source: 08-RESEARCH.md § Code Examples — rAF 프레임 델타 수집.
     const result = await page.evaluate(
-      async ({ distance, waitMs, budgetMs, overBudgetMs }) => {
+      async ({ distance, waitMs, overBudgetMs }) => {
         const el = document.scrollingElement;
         const deltas = [];
         let last = performance.now();
@@ -265,7 +265,6 @@ async function measureScrollFrameBudget(browser, url) {
       {
         distance: SCROLL_DISTANCE_PX,
         waitMs: SCROLL_WAIT_MS,
-        budgetMs: FRAME_BUDGET_MS,
         overBudgetMs: OVER_BUDGET_THRESHOLD_MS,
       },
     );

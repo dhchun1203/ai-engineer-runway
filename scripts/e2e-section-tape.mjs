@@ -266,9 +266,10 @@ function rectsOverlap(a, b) {
 // 2026-08-27 변경: 이전에는 "2자리 0패딩 번호 + 공백 + h2 텍스트"를 기대했다. 테이프가
 // 인덱스 뱃지(01/02...)를 따로 그렸기 때문인데, 35개 레슨의 h2 제목이 이미 "1. 학습 목표"처럼
 // 번호로 시작해서 화면에 "01 1. 학습 목표"로 숫자가 두 번 나왔다. 제목이 원본이므로 파생된
-// 뱃지를 없앴고, 그에 맞춰 기대값도 제목만으로 바꾼다. clickedIndex는 여전히 아래에서
-// 클릭한 칸과 표시된 구간이 일치하는지 판정하는 데 쓰인다(호출부 계약 유지).
-function evaluateViolations(m, clickedIndex) {
+// 뱃지를 없앴고, 그에 맞춰 기대값도 제목만으로 바꾼다. 클릭한 칸과 표시된 구간이
+// 일치하는지는 175~234행의 브라우저 측 수집 함수가 clickedIndex로 이미 판정한다 —
+// 이 함수는 수집된 측정값(m)만 보고 위반을 가린다.
+function evaluateViolations(m) {
   const violations = [];
   const expected = m.headingText;
 
@@ -383,7 +384,7 @@ async function runCombo({ browser, route, routeLabel, viewport, viewportLabel, r
         throw new FatalError(`${scenario} ${route} 칸${i + 1} — 클릭 후 테이프가 사라졌습니다.`);
       }
 
-      const violations = evaluateViolations(m, i);
+      const violations = evaluateViolations(m);
 
       console.log(
         `e2e-section-tape: ${scenario} ${route} @ ${viewportLabel}/${reducedMotion} 칸${i + 1} — h2 top=${m.headingTop != null ? m.headingTop.toFixed(1) : 'n/a'}px scrollY=${m.scrollY}`,

@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Lesson } from "#site/content";
-import type { StepId } from "@/content/modules";
 import { modules } from "@/content/modules";
 
 /** 브레드크럼: Step {n} > {모듈 제목} — 두 세그먼트 모두 해당 Step 페이지로 링크한다 (D-08). */
 export function LessonBreadcrumb({ lesson }: { lesson: Pick<Lesson, "stepId" | "moduleId"> }) {
   const stepHref = `/step/${lesson.stepId}`;
-  const module = modules.find((m) => m.id === lesson.moduleId);
+  const lessonModule = modules.find((m) => m.id === lesson.moduleId);
 
   return (
     <nav aria-label="브레드크럼" className="flex flex-wrap items-center gap-2 text-label font-normal font-mono">
@@ -16,7 +15,7 @@ export function LessonBreadcrumb({ lesson }: { lesson: Pick<Lesson, "stepId" | "
       </Link>
       <span aria-hidden="true">&gt;</span>
       <Link href={stepHref} className="tap-feedback flex min-h-11 items-center underline-offset-2 hover:underline">
-        {module?.title ?? ""}
+        {lessonModule?.title ?? ""}
       </Link>
     </nav>
   );
