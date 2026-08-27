@@ -242,25 +242,61 @@ if (packageJsonSource === null) {
   }
 }
 
-// --- G9: 잠금 게이트를 통과해야 하는 페이지들에 force-dynamic 선언이 있다.
-// 02-03이 Step 페이지를 이 목록에 추가했다. 02-04가 홈을 추가한다 ---
+// --- G9: 두 계약으로 나뉜다 (08-02).
+//
+// STATIC_SHELL_PAGES: 이 페이즈가 정적 셸로 전환하는 페이지 — route segment
+// config `dynamic` 선언이 없고, 쿠키/진도 조회 식별자(hasUnlockCookie·
+// readCompletedLessonIds·readLessonNote·cookies()) 중 어느 것도 등장하지
+// 않는다. 08-02는 Step 페이지 하나만 여기 넣는다. 08-03이 레슨 페이지를,
+// 08-06이 커리큘럼 페이지를 이 배열에 추가한다(각 플랜에 명시돼 있다).
+//
+// DYNAMIC_GATED_PAGES: 오늘 날짜가 곧 페이지 본문이라 동적으로 유지하기로
+// 결정된 두 라우트(근거는 08-06이 기록한다) — 기존 정규식대로 force-dynamic
+// 선언 존재를 요구한다.
+//
+// STATIC_SHELL_PAGES 검사는 stripJsLineComments()로 주석을 걷어낸 소스만
+// 본다 — 전환된 페이지가 "여기서 쿠키를 읽지 않는다"는 설명 주석을 달게
+// 되므로, 주석까지 검사하면 게이트가 스스로를 오탐시킨다(G20과 같은 이유).
+
+const STATIC_SHELL_PAGES = [path.join(ROOT, 'src', 'app', 'step', '[stepId]', 'page.tsx')];
 
 const DYNAMIC_GATED_PAGES = [
-  path.join(ROOT, 'src', 'app', 'lesson', '[lessonId]', 'page.tsx'),
-  path.join(ROOT, 'src', 'app', 'step', '[stepId]', 'page.tsx'),
   path.join(ROOT, 'src', 'app', 'page.tsx'),
-  path.join(ROOT, 'src', 'app', 'curriculum', 'page.tsx'),
   path.join(ROOT, 'src', 'app', 'schedule', 'page.tsx'),
 ];
+
+const G9_COOKIE_IDENTIFIERS = ['hasUnlockCookie', 'readCompletedLessonIds', 'readLessonNote', 'cookies('];
+
+for (const pagePath of STATIC_SHELL_PAGES) {
+  const source = readFileIfExists(pagePath);
+  if (source === null) {
+    fail(`G9 failed: ${path.relative(ROOT, pagePath)} not found (이 페이즈가 정적 셸로 전환한 페이지 계약)`);
+    continue;
+  }
+  const codeOnly = stripJsLineComments(source);
+  if (/export\s+const\s+dynamic\s*=/.test(codeOnly)) {
+    fail(
+      `G9 failed: ${path.relative(ROOT, pagePath)} still declares a route segment config "dynamic" export — 이 페이지는 정적 셸로 전환됐어야 한다`,
+    );
+  }
+  const foundIdentifiers = G9_COOKIE_IDENTIFIERS.filter((identifier) => codeOnly.includes(identifier));
+  if (foundIdentifiers.length > 0) {
+    fail(
+      `G9 failed: ${path.relative(ROOT, pagePath)} still references cookie/progress identifier(s): ${foundIdentifiers.join(', ')} — 정적 셸로 전환한 페이지 계약 위반`,
+    );
+  }
+}
 
 for (const pagePath of DYNAMIC_GATED_PAGES) {
   const source = readFileIfExists(pagePath);
   if (source === null) {
-    fail(`G9 failed: ${path.relative(ROOT, pagePath)} not found`);
+    fail(`G9 failed: ${path.relative(ROOT, pagePath)} not found (동적 유지가 결정된 페이지 계약)`);
     continue;
   }
   if (!/export\s+const\s+dynamic\s*=\s*["']force-dynamic["']/.test(source)) {
-    fail(`G9 failed: ${path.relative(ROOT, pagePath)} missing "export const dynamic = 'force-dynamic'"`);
+    fail(
+      `G9 failed: ${path.relative(ROOT, pagePath)} missing "export const dynamic = 'force-dynamic'" (동적 유지가 결정된 페이지 계약)`,
+    );
   }
 }
 
@@ -363,25 +399,26 @@ if (progressSource === null) {
   }
 }
 
-// --- G14: src/app/step/[stepId]/page.tsx에서 hasUnlockCookie 첫 등장 위치가
-// readCompletedLessonIds 첫 등장보다 앞선다 — 게이트를 건너뛰고 조회하는
-// 회귀를 잡는다 (02-03) ---
+// --- G14: 쿠키 게이트 순서 계약이 Step 페이지에서 신규 Route Handler로
+// 이사했다(08-02). src/app/api/progress/route.ts에서 hasUnlockCookie 첫 등장
+// 위치가 readCompletedLessonIds 첫 등장보다 앞선다 — 게이트를 건너뛰고
+// 조회하는 회귀를 잡는다. 검사 내용(indexOf 비교)은 G4와 동일한 기법이다 ---
 
-const STEP_PAGE_PATH = path.join(ROOT, 'src', 'app', 'step', '[stepId]', 'page.tsx');
-const stepPageSource = readFileIfExists(STEP_PAGE_PATH);
+const PROGRESS_ROUTE_PATH = path.join(ROOT, 'src', 'app', 'api', 'progress', 'route.ts');
+const progressRouteSource = readFileIfExists(PROGRESS_ROUTE_PATH);
 
-if (stepPageSource === null) {
-  fail(`G14 failed: ${path.relative(ROOT, STEP_PAGE_PATH)} not found`);
+if (progressRouteSource === null) {
+  fail(`G14 failed: ${path.relative(ROOT, PROGRESS_ROUTE_PATH)} not found`);
 } else {
-  const hasUnlockIdx = stepPageSource.indexOf('hasUnlockCookie');
-  const readCompletedIdx = stepPageSource.indexOf('readCompletedLessonIds');
+  const hasUnlockIdx = progressRouteSource.indexOf('hasUnlockCookie');
+  const readCompletedIdx = progressRouteSource.indexOf('readCompletedLessonIds');
   if (hasUnlockIdx === -1 || readCompletedIdx === -1) {
     fail(
-      `G14 failed: expected hasUnlockCookie and readCompletedLessonIds to both appear in ${path.relative(ROOT, STEP_PAGE_PATH)}`,
+      `G14 failed: expected hasUnlockCookie and readCompletedLessonIds to both appear in ${path.relative(ROOT, PROGRESS_ROUTE_PATH)}`,
     );
   } else if (hasUnlockIdx >= readCompletedIdx) {
     fail(
-      `G14 failed: hasUnlockCookie must appear before readCompletedLessonIds in ${path.relative(ROOT, STEP_PAGE_PATH)} (cookie gate must run before progress read)`,
+      `G14 failed: hasUnlockCookie must appear before readCompletedLessonIds in ${path.relative(ROOT, PROGRESS_ROUTE_PATH)} (cookie gate must run before progress read)`,
     );
   }
 }
@@ -410,13 +447,14 @@ if (fs.existsSync(DASHBOARD_SEGMENT_PATH)) {
   );
 }
 
-// --- G17: /와 /curriculum 각각에서 hasUnlockCookie 첫 등장 위치가
-// readCompletedLessonIds 첫 등장보다 앞선다 (G14가 Step 페이지에 대해 하는 것과
-// 동일한 형태) — 게이트를 건너뛰고 조회하는 회귀를 잡는다 (03-01, T-03-01) ---
+// --- G17: /와 /schedule 각각에서 hasUnlockCookie 첫 등장 위치가
+// readCompletedLessonIds 첫 등장보다 앞선다 (G14가 Route Handler에 대해 하는
+// 것과 동일한 형태) — 게이트를 건너뛰고 조회하는 회귀를 잡는다 (03-01,
+// T-03-01). /curriculum은 08-06이 정적으로 전환하면 두 식별자가 사라지므로
+// 08-02에서 뺀다 — 그 계약은 G9의 STATIC_SHELL_PAGES로 옮겨간다 ---
 
 const G17_GATED_PAGES = [
   path.join(ROOT, 'src', 'app', 'page.tsx'),
-  path.join(ROOT, 'src', 'app', 'curriculum', 'page.tsx'),
   path.join(ROOT, 'src', 'app', 'schedule', 'page.tsx'),
 ];
 
@@ -518,6 +556,28 @@ if (scheduleAutoScrollSource === null) {
   if (foundIdentifiers.length > 0) {
     fail(
       `G20 failed: ${path.relative(ROOT, SCHEDULE_AUTO_SCROLL_PATH)} references progress/secret identifier(s): ${foundIdentifiers.join(', ')} — this island must only receive targetId (T-03-15)`,
+    );
+  }
+}
+
+// --- G21: src/app/api/progress/route.ts가 (1) route segment config를
+// force-static으로 지정하지 않고 (2) 응답에 no-store 캐시 금지 헤더를 실제로
+// 설정한다 — 이 핸들러가 캐시되면 한 사용자의 진도가 다른 요청자에게
+// 응답된다(T-08-02-02). G20과 같은 형태(파일 존재 → 주석 제거 → 문자열 검사)를
+// 쓴다 ---
+
+if (progressRouteSource === null) {
+  fail(`G21 failed: ${path.relative(ROOT, PROGRESS_ROUTE_PATH)} not found`);
+} else {
+  const codeOnly = stripJsLineComments(progressRouteSource);
+  if (/export\s+const\s+dynamic\s*=\s*["']force-static["']/.test(codeOnly)) {
+    fail(
+      `G21 failed: ${path.relative(ROOT, PROGRESS_ROUTE_PATH)} declares "export const dynamic = 'force-static'" — 사용자별 진도 응답이 정적 캐시로 강제되면 캐시 오염이 발생한다`,
+    );
+  }
+  if (!codeOnly.includes('no-store')) {
+    fail(
+      `G21 failed: ${path.relative(ROOT, PROGRESS_ROUTE_PATH)} does not set a "no-store" cache directive — 응답 캐시 금지 헤더가 실제로 설정돼야 한다`,
     );
   }
 }

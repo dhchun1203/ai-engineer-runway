@@ -571,3 +571,28 @@ code[data-theme*=" "] span {
   border-color: var(--color-accent-dark);
   background-color: color-mix(in srgb, var(--color-accent-dark) 15%, transparent);
 }
+
+/* 진도 아일랜드 스켈레톤 펄스 (08-02). Tailwind animate-pulse 대신 이 클래스를
+   쓰는 이유: 유틸리티 클래스는 prefers-reduced-motion 미디어 쿼리로 끌 수
+   없기 때문이다. opacity만 애니메이트한다(transform/opacity 외 금지, D-23과
+   동일 원칙). 배경색은 새 색을 만들지 않고 기존 --color-badge-neutral-bg[-dark]
+   토큰을 그대로 쓴다(progress-skeleton.tsx가 bg-badge-neutral-bg 유틸리티로 적용). */
+@keyframes progress-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.progress-skeleton {
+  animation: progress-skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-skeleton {
+    animation: none;
+  }
+}

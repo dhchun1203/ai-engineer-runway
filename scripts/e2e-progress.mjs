@@ -7,7 +7,22 @@
 // 같은 이유로, 이 스크립트는 @supabase/supabase-js의 createClient를 직접 호출한다.
 //
 // 어떤 출력에도 쿠키 값·시크릿을 찍지 않는다.
+//
+// 08-02: Step 라우트가 정적으로 전환되면서 진도 표시가 서버 렌더가 아니라
+// 마운트 후 클라이언트 fetch(GET /api/progress)로 옮겨갔다. h2~h4는 이제
+// `await res.text()`(서버가 내려준 원문)가 아니라 `renderedHtml(...)`(Chromium으로
+// 열어 수화 완료를 기다린 뒤의 DOM)을 문자열로 받는다 — 반환 타입이 같은 HTML
+// 문자열이라 downstream 어설션은 한 글자도 바꾸지 않는다. h1은 그대로 원문
+// fetch로 둔다(쿠키 없을 때 서버가 아무것도 안 내보낸다는 게 더 강하게 참이 됨).
+// h5가 신규 — 쿠키를 실어도 원문 HTML에는 진도 마커가 0건임을 검사한다.
+//
+// 역할 분담: 이 게이트는 개발 서버(next dev)를 spawn한다 — 개발 서버는 항상
+// 온디맨드 렌더되므로 h5의 "원문에 마커 0건"은 코드가 쿠키를 안 읽는다는
+// 사실만으로 성립한다. 실제 프로덕션 프리렌더 여부(next build 산출물이 진짜
+// 정적인지)는 08-02-PLAN.md Task 1의 prerender-manifest 어설션과
+// scripts/check-route-rendering.mjs가 본다 — 이 스크립트의 책임이 아니다.
 
+import { chromium } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import { spawn, execSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -140,6 +155,30 @@ async function deleteProbeRow(admin) {
   await admin.from('progress').delete().eq('lesson_id', PROBE_SLUG);
 }
 
+// Chromium 컨텍스트를 새로 만들고(필요하면 잠금 쿠키를 심고) 페이지를 연 다음
+// [data-progress-island]가 나타날 때까지, 그리고 data-progress-state가
+// loading이 아닐 때까지 기다린 뒤 page.content()를 문자열로 돌려준다.
+// 반환 타입이 기존 `await res.text()`와 같은 HTML 문자열이므로 h2~h4의
+// downstream 문자열 어설션은 바뀌지 않는다 (최소 변경 이행 경로).
+async function renderedHtml(browser, url, { cookieValue } = {}) {
+  const context = await browser.newContext();
+  if (cookieValue) {
+    await context.addCookies([{ name: UNLOCK_COOKIE_NAME, value: cookieValue, url: BASE_URL }]);
+  }
+  const page = await context.newPage();
+  try {
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('[data-progress-island]');
+    await page.waitForFunction(() => {
+      const el = document.querySelector('[data-progress-island]');
+      return el !== null && el.getAttribute('data-progress-state') !== 'loading';
+    });
+    return await page.content();
+  } finally {
+    await context.close();
+  }
+}
+
 async function main() {
   const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -158,6 +197,7 @@ async function main() {
   child.stdout.on('data', (d) => serverOutput.push(d.toString()));
   child.stderr.on('data', (d) => serverOutput.push(d.toString()));
 
+  let browser;
   try {
     try {
       await waitForServerReady();
@@ -167,6 +207,10 @@ async function main() {
       );
     }
     console.log(`e2e-progress: 개발 서버 기동 완료 (probe lesson: ${PROBE_SLUG})`);
+
+    // h2~h5(수화 완료 후 DOM 검증 + 정적 셸 원문 검증)가 쓴다 — i/b~g 시나리오는
+    // 원문 fetch만 쓰므로 이 브라우저와 무관하다.
+    browser = await chromium.launch();
 
     const cookieHeader = `${UNLOCK_COOKIE_NAME}=${UNLOCK_SECRET}`;
     // 프로브 레슨이 속한 stepId는 매니페스트에서 읽는다(하드코딩 금지) — 02-03이
@@ -417,31 +461,31 @@ async function main() {
     }
 
     // h1. 쿠키 없이 Step 페이지 GET → 진도 UI 마커 0건 + 모듈 아코디언(<details)은
-    // 그대로 존재 (D-18 + D-20 동시 확인)
+    // 그대로 존재 (D-18 + D-20 동시 확인). 08-02부터 이 라우트는 완전 정적
+    // 셸이라 이 판정이 더 강하게 참이 된다 — 서버가 애초에 쿠키를 읽지 않는다.
     {
       const res = await fetchWithTimeout(`${BASE_URL}/step/${PROBE_STEP_ID}`);
       if (res.status !== 200) {
-        throw new FatalError(`시나리오 h1 실패 — 쿠키 없는 Step 요청이 200이 아닙니다 (status=${res.status})`);
+        throw new FatalError(`시나리오 h1 실패 — 쿠키 없는 정적 셸 Step 요청이 200이 아닙니다 (status=${res.status})`);
       }
       const body = await res.text();
       if (body.includes('data-progress-ui')) {
-        throw new FatalError('시나리오 h1 실패 — 쿠키 없는 Step 응답에 data-progress-ui 마커가 존재합니다 (D-20 위반)');
+        throw new FatalError('시나리오 h1 실패 — 쿠키 없는 정적 셸 Step 응답에 data-progress-ui 마커가 존재합니다 (D-20 위반)');
       }
       if (!body.includes('<details')) {
-        throw new FatalError('시나리오 h1 실패 — 쿠키 없는 Step 응답에 모듈 아코디언(<details)이 없습니다 (D-18 위반)');
+        throw new FatalError('시나리오 h1 실패 — 쿠키 없는 정적 셸 Step 응답에 모듈 아코디언(<details)이 없습니다 (D-18 위반)');
       }
     }
-    console.log('e2e-progress: h1/f Step 쿠키 없음 → 진도 UI 마커 0건 + 아코디언 존재 OK');
+    console.log('e2e-progress: h1/f Step 정적 셸 쿠키 없음 → 진도 UI 마커 0건 + 아코디언 존재 OK');
 
-    // h2. 잠금 쿠키로 GET → 진행률 배지 마커 존재, "완료 " 접두 + "%" 포함
+    // h2. 잠금 쿠키로 GET(수화 완료 후 DOM) → 진행률 배지 마커 존재, "완료 " 접두 + "%" 포함
     let beforeStepCount;
     {
-      const res = await fetchWithTimeout(`${BASE_URL}/step/${PROBE_STEP_ID}`, {
-        headers: { Cookie: cookieHeader },
+      const body = await renderedHtml(browser, `${BASE_URL}/step/${PROBE_STEP_ID}`, {
+        cookieValue: UNLOCK_SECRET,
       });
-      const body = await res.text();
       if (!body.includes('data-progress-ui="badge"') || !body.includes('완료 ') || !body.includes('%')) {
-        throw new FatalError('시나리오 h2 실패 — 잠금 쿠키 보유 Step 응답에 진행률 배지 마커/텍스트가 없습니다');
+        throw new FatalError('시나리오 h2 실패 — 잠금 쿠키 보유 Step 응답(수화 완료 후 DOM)에 진행률 배지 마커/텍스트가 없습니다');
       }
       beforeStepCount = extractHeaderBadgeCount(body);
       if (!beforeStepCount) {
@@ -459,10 +503,9 @@ async function main() {
         .upsert({ lesson_id: PROBE_SLUG, completed_at: new Date().toISOString() });
       if (error) throw new FatalError(`시나리오 h3 준비(upsert) 실패 — Supabase 오류: ${error.message}`);
 
-      const res = await fetchWithTimeout(`${BASE_URL}/step/${PROBE_STEP_ID}`, {
-        headers: { Cookie: cookieHeader },
+      const body = await renderedHtml(browser, `${BASE_URL}/step/${PROBE_STEP_ID}`, {
+        cookieValue: UNLOCK_SECRET,
       });
-      const body = await res.text();
       if (!body.includes('data-progress-ui="lesson-done"')) {
         throw new FatalError('시나리오 h3 실패 — 완료 처리 후 완료 행 마커(data-progress-ui="lesson-done")가 없습니다');
       }
@@ -480,10 +523,9 @@ async function main() {
       const { error } = await admin.from('progress').delete().eq('lesson_id', PROBE_SLUG);
       if (error) throw new FatalError(`시나리오 h4 준비(delete) 실패 — Supabase 오류: ${error.message}`);
 
-      const res = await fetchWithTimeout(`${BASE_URL}/step/${PROBE_STEP_ID}`, {
-        headers: { Cookie: cookieHeader },
+      const body = await renderedHtml(browser, `${BASE_URL}/step/${PROBE_STEP_ID}`, {
+        cookieValue: UNLOCK_SECRET,
       });
-      const body = await res.text();
       const restoredStepCount = extractHeaderBadgeCount(body);
       if (!restoredStepCount || restoredStepCount.completed !== beforeStepCount.completed) {
         throw new FatalError(
@@ -492,6 +534,26 @@ async function main() {
       }
     }
     console.log('e2e-progress: h4/f 프로브 삭제 → Step 헤더 배지 완료 개수 원상 복구 OK');
+
+    // h5(신규, T-08-02-03). 잠금 쿠키를 실은 채로 /step/1을 원문 fetch(브라우저를
+    // 거치지 않는다) → 응답 HTML에 data-progress-ui 문자열이 0건. 정적 전환이
+    // 실제로 이뤄졌다는 증거이자, 정적 셸이 사용자별 상태를 담지 않는다는 캐시
+    // 오염 방어의 런타임 증명이다.
+    {
+      const res = await fetchWithTimeout(`${BASE_URL}/step/${PROBE_STEP_ID}`, {
+        headers: { Cookie: cookieHeader },
+      });
+      if (res.status !== 200) {
+        throw new FatalError(`시나리오 h5 실패 — 잠금 쿠키 보유 정적 셸 Step 요청이 200이 아닙니다 (status=${res.status})`);
+      }
+      const body = await res.text();
+      if (body.includes('data-progress-ui')) {
+        throw new FatalError(
+          '시나리오 h5 실패 — 쿠키가 있어도 정적 셸 HTML에는 진도가 없어야 하는데 data-progress-ui 마커가 원문에 존재합니다',
+        );
+      }
+    }
+    console.log('e2e-progress: h5/f 잠금 쿠키 + 정적 셸 원문 fetch → data-progress-ui 마커 0건 OK (T-08-02-03)');
 
     // g. /unlock 발급 경로 — 리다이렉트를 따라가지 않고 응답 헤더를 직접 본다.
     let issuedUnlockCookiePair = null;
@@ -578,8 +640,11 @@ async function main() {
       'e2e-progress: 모든 시나리오 통과 — 완료 토글과 /unlock 잠금 해제 흐름이 브라우저 → 쿠키 게이트 → Supabase → 서버 재렌더까지 왕복합니다.',
     );
   } finally {
-    // f. 정리 — 프로브 행 삭제, 서버 프로세스 트리 종료
+    // f. 정리 — 프로브 행 삭제, 브라우저·서버 프로세스 트리 종료
     await deleteProbeRow(admin);
+    if (browser) {
+      await browser.close().catch(() => {});
+    }
     killServerTree(child);
   }
 }
