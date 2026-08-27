@@ -217,6 +217,31 @@ body {
   }
 }
 
+/* 640px 미만 내비 패널 진입 애니메이션 (quick task 260827-g6u) — Tailwind 유틸리티가 아니라
+   CSS 클래스로 구현하는 이유는 D8-Q와 같다: check-design-tokens.mjs가 임의값 대괄호를
+   색·타이포와 무관하게 전부 위반으로 잡기 때문이다. transform과 opacity만 애니메이트한다
+   (08-07 6.A 원칙). */
+@keyframes nav-panel-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.nav-panel-reveal {
+  animation: nav-panel-reveal 140ms ease-out backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-panel-reveal {
+    animation: none;
+  }
+}
+
 /* Section Tape 셀 focus-visible (D-R4K-1) — 이 코드베이스에 focus-visible
    전례가 없어 이 Phase가 처음 정의하는 규칙이다(globals.css 전역 grep 0건).
    accent를 쓰는 이유는 테이프 색으로 accent를 쓰는 것이 아니라 "활성/포커스
