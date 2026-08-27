@@ -277,7 +277,7 @@ hover 피드백이 전혀 없다. 새 색 없이 기존 surface 톤 안에서 �
 | 활성 상태 | `border-b-2 border-accent text-accent`(라이트) / `dark:border-accent-dark dark:text-accent-dark` | `site-nav.tsx:64-68` — 변경 없음, accent 예약 목록에 이미 있는 용도("활성 내비 밑줄") |
 | 비활성(준비 중) 항목 | `opacity-70` + `NavBadge`("준비 중" 배지, `text-label font-semibold`로 마이그레이션) | `site-nav.tsx:49-56` — Phase 6 시점에는 4개 항목 전부 라우트가 존재하므로 이 분기가 실제로는 도달하지 않을 가능성이 높다(계획 단계에서 `href: null` 잔존 여부 확인 권고, 도달 불가 코드라도 D-79 선례처럼 안전망으로 유지 가능) |
 | 터치 타깃 | 로고·각 내비 항목·테마 토글 전부 `min-h-11` | `site-nav.tsx:41,52,64` — 이미 부합, 변경 없음 |
-| 375px 동작 | `flex-wrap gap-y-2`가 이미 줄바꿈을 허용 — 로고+4항목+테마 토글이 한 줄에 안 들어가면 2줄로 내려가며 겹침 없이 44px 타깃 유지. D-91 게이트가 `scrollWidth <= clientWidth`로 가로 오버플로 0을 검증(아래 375px 계약 참고) | `site-nav.tsx:37`(`flex-wrap`) |
+| 375px 동작 | `flex-wrap gap-y-2`가 이미 줄바꿈을 허용 — 로고+4항목+테마 토글이 한 줄에 안 들어가면 2줄로 내려가며 겹침 없이 44px 타깃 유지. D-91 게이트가 `scrollWidth <= clientWidth`로 가로 오버플로 0을 검증(아래 375px 계약 참고). **[개정, quick task 260827-g6u]** 실측 결과 이 2줄 흡수가 헤더 높이를 화면 위쪽 1/4까지 늘려 아이폰 가독성을 해쳐 계약을 변경했다: **640px 미만은 내비 4항목을 햄버거 버튼 뒤로 접고**(초기 로드 시 `display:none`, 탭하면 헤더 아래 패널로 펼침), **640px 이상은 이 표의 기존 `flex-wrap` 동작을 픽셀 단위로 그대로 유지**한다(변경 후 768/1024 관측치가 변경 전과 완전히 동일함을 게이트로 실증 — `260827-g6u-GATE-BASELINE.md` 참고) | `site-nav.tsx:37`(`flex-wrap`), `site-nav.tsx`(햄버거+패널, quick 260827-g6u) |
 | 768px / 1024px 동작 | 한 줄에 모두 들어감(현재 실측, 04-UI-REVIEW 문제 없음) | 변경 없음 |
 
 ---
