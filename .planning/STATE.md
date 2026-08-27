@@ -193,6 +193,7 @@ None yet.
 | 260826-tbx | 학습 시작일 8/25→8/28 이동 + 35개 레슨을 8/28~9/28에 재배정(토요일 8/29·9/5·9/12만 2개), 9/29 복습일 유지 — 개강 전 완주 보존 | 2026-08-26 | 22d86ee | [260826-tbx-shift-study-start-date-from-2026-08-25-t](./quick/260826-tbx-shift-study-start-date-from-2026-08-25-t/) |
 | 260827-0y8 | 레슨 하단 메모장(옥스포드 노트 스타일) — 접었다 펼치기, 스크롤 고정, 타이핑 멈추면 자동 저장, 레슨당 메모 1개 Supabase 기기 간 공유 | 2026-08-27 | 5947684 | [260827-0y8-bottom-sheet-lesson-notepad-collapsible-](./quick/260827-0y8-bottom-sheet-lesson-notepad-collapsible-/) |
 | 260827-g6u | 폰(640px 미만) 헤더 내비 4항목을 햄버거+접이식 패널로 전환, 640px 이상은 게이트 실측으로 픽셀 동일성 증명(375px M3 126→120, 768/1024 완전 동일) | 2026-08-27 | eb1357b | [260827-g6u-phone-hamburger-nav-640px](./quick/260827-g6u-phone-hamburger-nav-640px/) |
+| 260827-mdz | v1.0 마감 전 lint 정합성 정리 — 에러 6·경고 3 → 0·0. Phase 1 이월 3건 + Phase 8 신규 3건(effect 내 동기 setState, module 변수명, 렌더 중 재할당) + eslint 스캔에서 고아 워크트리 제외 | 2026-08-27 | 3e9bdfd | [260827-mdz-v1-0-lint-6-3-eslint-claude](./quick/260827-mdz-v1-0-lint-6-3-eslint-claude/) |
 
 ## Deferred Items
 
