@@ -224,7 +224,7 @@ export function SectionTape({
             onMouseLeave={() => setHoveredIndex((prev) => (prev === index ? null : prev))}
             aria-label={section.title || undefined}
             style={{ flexGrow: section.ratio, flexBasis: 0 }}
-            className="section-tape-cell flex h-full min-w-6 flex-col items-center justify-end gap-1 pb-1"
+            className="section-tape-cell tap-feedback flex h-full min-w-6 flex-col items-center justify-end gap-1 pb-1"
           >
             <span
               style={{ height: "3px" }}

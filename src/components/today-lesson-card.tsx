@@ -26,7 +26,7 @@ export type TomorrowInfo =
 // 카드 폭 전체로 넓혀 텍스트 컨테이너가 지나치게 좁아지지 않게 한다(08-05 M3
 // 게이트) — 640px 이상은 원래의 w-fit(내용에 맞춘 폭)을 그대로 유지한다.
 const CTA_CLASS =
-  "flex min-h-11 w-full items-center justify-center rounded-lg bg-accent px-4 py-2 text-label font-semibold text-white dark:bg-accent-dark dark:text-background-dark sm:w-fit";
+  "tap-feedback flex min-h-11 w-full items-center justify-center rounded-lg bg-accent px-4 py-2 text-label font-semibold text-white dark:bg-accent-dark dark:text-background-dark sm:w-fit";
 
 // 개별 레슨 한 줄 — 2레슨 날에 두 레슨을 나열할 때 재사용한다. 완료 여부는
 // completedIds가 non-null일 때만 표시하고(쿠키 없음/조회 실패를 미완료로

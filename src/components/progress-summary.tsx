@@ -69,7 +69,7 @@ export function ProgressSummary({
       {cta ? (
         <Link
           href={cta.href}
-          className="flex min-h-11 w-fit items-center justify-center rounded-lg bg-accent px-4 py-2 text-body font-semibold text-white dark:bg-accent-dark dark:text-background-dark"
+          className="tap-feedback flex min-h-11 w-fit items-center justify-center rounded-lg bg-accent px-4 py-2 text-body font-semibold text-white dark:bg-accent-dark dark:text-background-dark"
         >
           {cta.label}
         </Link>

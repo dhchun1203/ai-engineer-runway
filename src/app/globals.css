@@ -147,6 +147,48 @@ body {
   background-color: var(--color-badge-neutral-bg-dark);
 }
 
+/* 탭 피드백 (08-07, design-taste-frontend 4.5절 부분 적용, D8-Q). 누를 수 있는
+   모든 표면(카드·버튼·내비 링크·페이저·토글)이 눌렸을 때 물리적으로 눌리는
+   감각을 공유한다 — 지금까지는 hover만 있고 탭 피드백이 전혀 없었다.
+   `.card-interactive`(카드·행 5곳)와 `.tap-feedback`(버튼·링크·토글 전용)이
+   똑같은 :active 변형을 쓰는 이유는 사이트 전체가 하나의 탭 감각을 공유해야
+   하기 때문이다 — 두 클래스를 따로 정의하는 이유는 대상이 카드/행(이미
+   hover 규칙이 있는 `.card-interactive`)과 그 외 누를 수 있는 요소로 갈리기
+   때문이지, 감각 자체가 다르기 때문이 아니다.
+   Tailwind `active:` 유틸리티(예: `active:-translate-y-[1px]`)가 아니라 여기
+   CSS 클래스로 구현한 이유(D8-Q): check-design-tokens.mjs의
+   findArbitraryValueTokens()가 `word-[...]` 형태의 모든 Tailwind 임의값
+   대괄호를 위반으로 잡는다 — 색·타이포에 국한되지 않는다. CSS 클래스로
+   구현하면 게이트를 건드리지 않고 스킬이 지정한 정확한 수치(1px, 0.98)를
+   그대로 쓸 수 있고, `.card-interactive`에 이미 붙어 있는 5개 호출 지점
+   (StepCard, TodayLessonCard 두 곳, ModuleAccordion 레슨 행, ScheduleTable
+   행)에 JSX를 한 줄도 고치지 않고 한 번에 적용된다.
+   transform 외의 속성은 애니메이트하지 않는다(6.A) — will-change는 쓰지
+   않는다, 100ms짜리 단발 변형에 승격 힌트는 오히려 손해다. */
+.card-interactive,
+.tap-feedback {
+  transition: transform 100ms ease-out;
+}
+
+.card-interactive:active,
+.tap-feedback:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+/* prefers-reduced-motion: reduce에서 트랜지션과 :active 변형을 모두 끈다
+   (6.B, non-negotiable). */
+@media (prefers-reduced-motion: reduce) {
+  .card-interactive,
+  .tap-feedback {
+    transition: none;
+  }
+
+  .card-interactive:active,
+  .tap-feedback:active {
+    transform: none;
+  }
+}
+
 /* Section Tape 셀 focus-visible (D-R4K-1) — 이 코드베이스에 focus-visible
    전례가 없어 이 Phase가 처음 정의하는 규칙이다(globals.css 전역 grep 0건).
    accent를 쓰는 이유는 테이프 색으로 accent를 쓰는 것이 아니라 "활성/포커스
