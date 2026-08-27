@@ -17,6 +17,18 @@ import type { StepId } from "@/content/modules";
 // 홈도 쿠키를 읽으므로 동적 렌더링이 필요하다 — 조건부 쿠키 접근이 캐시된
 // 응답을 내보내는 문제(RESEARCH Pitfall 4)를 원천 차단한다. `/unlock` 직후
 // 리다이렉트로 도착했을 때 방금 켠 진도가 안 보이는 것을 막는 바로 그 화면이다.
+//
+// D8-P(08-06): Phase 8이 레슨·Step·커리큘럼 세 라우트를 정적으로 전환했지만
+// 이 라우트는 동적으로 남긴다 — 오늘 날짜가 곧 페이지 본문 전체다(오늘 배정
+// 레슨, 상태 머신, 페이스, 밀린 레슨, 내일). 정적으로 만들려면 화면 대부분이
+// 클라이언트 렌더가 되어 정적 셸의 이득이 사라진다. ISR(revalidate)도 쓰지
+// 않는다 — 설치된 Next 16.3.2 문서(node_modules/next/dist/docs/01-app/
+// 02-guides/incremental-static-regeneration.md 100~102행·238행)가 직접
+// 말하듯 재검증 창 만료 후 첫 요청은 캐시된(낡은) 페이지를 그대로 받는다.
+// 하루 한 번 여는 1인 학습 사이트에서는 그 "낡은 첫 요청"이 사실상 매일 어제의
+// "오늘의 학습"을 보는 것과 같다. icn1 리전 이동으로 이미 TTFB 59~68ms라
+// 동적 유지의 비용도 낮다(08-01 기준선). check-progress-gates.mjs G9의
+// DYNAMIC_GATED_PAGES가 이 선언을 상시 검사한다.
 export const dynamic = "force-dynamic";
 
 export default async function Home() {

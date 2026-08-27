@@ -6,7 +6,13 @@
 import { useProgress } from "@/components/progress-provider";
 import { ProgressBadge } from "@/components/progress-badge";
 import { ProgressReadError } from "@/components/progress-error";
-import { BadgeSkeleton, CompleteButtonSkeleton, NotepadSkeleton } from "@/components/progress-skeleton";
+import { ProgressSummary } from "@/components/progress-summary";
+import {
+  BadgeSkeleton,
+  CompleteButtonSkeleton,
+  NotepadSkeleton,
+  SummarySkeleton,
+} from "@/components/progress-skeleton";
 import { CompleteButton } from "@/components/complete-button";
 import { LessonNotepad } from "@/components/lesson-notepad";
 import type { StepId } from "@/content/modules";
@@ -67,6 +73,23 @@ export function CompleteButtonSlot({ lessonId }: { lessonId: string }) {
   if (!data.lesson) return null;
 
   return <CompleteButton lessonId={lessonId} initialDone={data.lesson.done} onToggled={refresh} />;
+}
+
+/** 커리큘럼 페이지 전체 진행률 요약 자리(08-06). loading이면 SummarySkeleton,
+ * ready면 기존 <ProgressSummary>에 counts/nextLessonSlug를 넘겨 렌더, error면
+ * 기존 <ProgressReadError>, locked면 아무것도 렌더하지 않는다. progress-summary.tsx
+ * 자체는 바꾸지 않는다 — 홈(/, 동적 유지)이 지금 그대로 쓰고 있어 prop 계약을
+ * 깨면 안 된다. */
+export function ProgressSummarySlot() {
+  const { status, data } = useProgress();
+
+  if (status === "loading") return <SummarySkeleton />;
+  if (status === "error") return <ProgressReadError />;
+  if (status !== "ready") return null;
+
+  if (!data.overall) return null;
+
+  return <ProgressSummary counts={data.overall} nextLessonSlug={data.nextLessonSlug} />;
 }
 
 /** 레슨 메모장 자리(08-03). D8-H — 메모가 도착하기 전에는 <LessonNotepad>를

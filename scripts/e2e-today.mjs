@@ -6,6 +6,20 @@
 // 실제 Supabase 완료 데이터로 behind 판정까지 왕복하는지 확인한다.
 // 03-04가 /schedule 시나리오(s1~s5)를 추가했다 — 36행 전량 렌더가 쿠키 유/무와
 // 무관함(D-37), 오늘 행 마커, 개강일 행 문구, 첫 행 링크의 매니페스트 정렬 일치를 확인한다.
+//
+// 08-06: /curriculum이 완전 정적 셸로 전환되면서 t4(쿠키 포함 Step 진행률 바
+// 확인)는 서버 렌더 원문이 아니라 마운트 후 클라이언트 fetch 결과를 봐야 한다.
+// 이 게이트는 지금까지 Chromium을 전혀 쓰지 않았다 — e2e-progress.mjs/
+// e2e-lesson-note.mjs의 브라우저 수명주기(launch → context → page → close)를
+// 그대로 복제해 새로 들여온다(이 저장소는 게이트 간 "재사용 안 함, 복제" 원칙을
+// 쓴다 — 공유 헬퍼 모듈로 빼면 한 게이트의 변경이 다른 게이트를 조용히 바꿀 수
+// 있다). renderedHtml() 헬퍼도 e2e-progress.mjs의 것과 동일한 대기 조건
+// ([data-progress-island] 존재 + data-progress-state !== 'loading')으로
+// 이 파일에 별도로 정의한다. 신규 D-day 정확성 시나리오는 Playwright의
+// page.clock.setFixedTime()으로 브라우저 시각을 다음 날 00:05(Asia/Seoul)로
+// 고정해, 수화 후 D-day 숫자가 빌드 시점 값이 아니라 그 다음 날 기준으로
+// 정정되는지(D8-O) 확인한다.
+//
 // 실행: node --env-file=.env.local scripts/e2e-today.mjs
 //
 // 앱 코드(curriculum-helpers.ts/schedule.ts/today.ts/pace.ts)를 import하지
@@ -14,6 +28,7 @@
 //
 // 어떤 출력에도 쿠키 값·시크릿을 찍지 않는다.
 
+import { chromium } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import { spawn, execSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -174,6 +189,30 @@ function killServerTree(child) {
   }
 }
 
+// Chromium 컨텍스트를 새로 만들고(필요하면 잠금 쿠키를 심고) 페이지를 연 다음
+// [data-progress-island]가 나타날 때까지, 그리고 data-progress-state가
+// loading이 아닐 때까지 기다린 뒤 page.content()를 문자열로 돌려준다.
+// e2e-progress.mjs의 renderedHtml()과 동일한 구현이다 — 공유 모듈로 빼지 않고
+// 이 파일에도 복제한다(이 저장소의 "재사용 안 함, 복제" 원칙, 파일 상단 주석 참고).
+async function renderedHtml(browser, url, { cookieValue } = {}) {
+  const context = await browser.newContext();
+  if (cookieValue) {
+    await context.addCookies([{ name: UNLOCK_COOKIE_NAME, value: cookieValue, url: BASE_URL }]);
+  }
+  const page = await context.newPage();
+  try {
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('[data-progress-island]');
+    await page.waitForFunction(() => {
+      const el = document.querySelector('[data-progress-island]');
+      return el !== null && el.getAttribute('data-progress-state') !== 'loading';
+    });
+    return await page.content();
+  } finally {
+    await context.close();
+  }
+}
+
 // React SSR은 인접한 JSX 표현식 사이에 <!-- --> 마커를 끼워 넣는다 — 정규식
 // 매칭 전에 제거한다(e2e-progress.mjs의 extractAttrs와 동일 원리).
 function stripSsrComments(body) {
@@ -195,6 +234,7 @@ async function main() {
   child.stdout.on('data', (d) => serverOutput.push(d.toString()));
   child.stderr.on('data', (d) => serverOutput.push(d.toString()));
 
+  let browser;
   try {
     try {
       await waitForServerReady();
@@ -204,6 +244,10 @@ async function main() {
       );
     }
     console.log('e2e-today: 개발 서버 기동 완료');
+
+    // t4(수화 완료 후 DOM)와 신규 D-day 정확성 시나리오가 쓴다 — t1~t3/t5~t8/
+    // s1~s7은 전부 원문 fetch만 쓰므로 이 브라우저와 무관하다.
+    browser = await chromium.launch();
 
     // --- t1. 쿠키 없이 GET / → 200, dday 1건, today-card 1건, 진도 마커 0건 (D-37/D-20) ---
     {
@@ -283,17 +327,94 @@ async function main() {
     }
     console.log('e2e-today: t3/8 /curriculum 쿠키 없음 → Step 링크 3건 + 진도 마커 0건 OK');
 
-    // --- t4. 쿠키 포함 GET /curriculum → data-progress-ui="step-bar" 3건 (T-03-01) ---
+    // --- t4. 쿠키 포함 GET /curriculum → data-progress-ui="step-bar" 3건 (T-03-01).
+    // 08-06부터 /curriculum은 완전 정적 셸이라 서버가 진도를 담아 내려주지 않는다 —
+    // 마운트 후 클라이언트 fetch가 끝난 뒤의 DOM을 봐야 하므로 원문 fetch 대신
+    // renderedHtml()(수화 완료 후 DOM)을 쓴다. ---
     {
-      const cookieHeader = `${UNLOCK_COOKIE_NAME}=${UNLOCK_SECRET}`;
-      const res = await fetchWithTimeout(`${BASE_URL}/curriculum`, { headers: { Cookie: cookieHeader } });
-      const body = stripSsrComments(await res.text());
+      const body = stripSsrComments(
+        await renderedHtml(browser, `${BASE_URL}/curriculum`, { cookieValue: UNLOCK_SECRET }),
+      );
       const stepBarCount = countOccurrences(body, 'data-progress-ui="step-bar"');
       if (stepBarCount !== 3) {
         throw new FatalError(`시나리오 t4 실패 — /curriculum Step 진행률 바 마커가 3건이 아닙니다 (got ${stepBarCount})`);
       }
     }
-    console.log('e2e-today: t4/8 /curriculum 쿠키 있음 → Step 진행률 바 3건 OK');
+    console.log('e2e-today: t4/8 /curriculum 쿠키 있음 → Step 진행률 바 3건 OK (수화 완료 후 DOM)');
+
+    // --- 신규(08-06, D8-O). /curriculum D-day 정확성 — 정적 셸의 초기 D-day
+    // 숫자(서버가 요청 시점에 계산한 값)와, 브라우저 시각을 다음 날 00:05
+    // (Asia/Seoul)로 고정한 채 수화를 마친 뒤의 D-day 숫자를 비교한다. 초기값이
+    // 그대로 굳어 있다면(브라우저 재계산이 동작하지 않는다면) 둘이 같을 것이고,
+    // D8-O가 실제로 동작한다면 정확히 1만큼(하루) 줄어 있어야 한다. ISR을 피하고
+    // 클라이언트 재계산을 택한 이유(개강 임박 며칠 전에는 창 만료 후 첫 요청이
+    // 어제 숫자를 보여줄 위험)가 실제로 해소됐음을 증명하는 시나리오다. ---
+    // 문서 전체를 상대로 /D-(\d+|DAY)/를 검색하면 Next.js가 심는 다른 스크립트/
+    // 청크 문자열에서 우연히 일치하는 부분 문자열을 주울 위험이 있다(실측으로
+    // 확인됨) — data-schedule-ui="dday" 마커 뒤 600자 윈도우 안에서만 찾는다
+    // (s3 시나리오의 500자 윈도우 관례와 동일).
+    function extractDdayNear(body) {
+      const idx = body.indexOf('data-schedule-ui="dday"');
+      if (idx === -1) return null;
+      const window = body.slice(idx, idx + 600);
+      const match = window.match(/D-(\d+|DAY)/);
+      return match ? match[0] : null;
+    }
+    {
+      const initialRes = await fetchWithTimeout(`${BASE_URL}/curriculum`);
+      const initialBody = stripSsrComments(await initialRes.text());
+      const initialMatch = extractDdayNear(initialBody);
+      if (!initialMatch) {
+        throw new FatalError('시나리오 D-day 정확성 실패 — 정적 셸 원문에서 D-day 숫자를 찾지 못했습니다');
+      }
+
+      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
+      const [y, m, d] = today.split('-').map(Number);
+      // 다음 날 00:05 KST를 UTC ms로 환산 — KST는 UTC+9이므로 로컬 00:05은
+      // UTC로는 전날 15:05이다.
+      const nextDay0005KstUtcMs = Date.UTC(y, m - 1, d + 1, 0, 5, 0) - 9 * 60 * 60 * 1000;
+
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.clock.setFixedTime(nextDay0005KstUtcMs);
+      let hydratedBody;
+      try {
+        await page.goto(`${BASE_URL}/curriculum`, { waitUntil: 'domcontentloaded' });
+        await page.waitForSelector('[data-progress-island]');
+        await page.waitForFunction(() => {
+          const el = document.querySelector('[data-progress-island]');
+          return el !== null && el.getAttribute('data-progress-state') !== 'loading';
+        });
+        hydratedBody = stripSsrComments(await page.content());
+      } finally {
+        await context.close();
+      }
+
+      const hydratedMatch = extractDdayNear(hydratedBody);
+      if (!hydratedMatch) {
+        throw new FatalError('시나리오 D-day 정확성 실패 — 수화 후 DOM에서 D-day 숫자를 찾지 못했습니다');
+      }
+
+      const parseDdayCount = (str) => {
+        const m = str.match(/^D-(\d+)$/);
+        return m ? Number(m[1]) : null;
+      };
+      const initialCount = parseDdayCount(initialMatch);
+      const hydratedCount = parseDdayCount(hydratedMatch);
+
+      if (initialCount !== null && hydratedCount !== null) {
+        if (hydratedCount !== initialCount - 1) {
+          throw new FatalError(
+            `시나리오 D-day 정확성 실패 — 다음 날로 시각을 고정했는데 D-day가 정확히 1만큼 줄지 않았습니다 (초기=${initialMatch}, 수화 후=${hydratedMatch})`,
+          );
+        }
+      } else if (initialMatch === hydratedMatch) {
+        throw new FatalError(
+          `시나리오 D-day 정확성 실패 — 다음 날로 시각을 고정했는데 D-day가 정정되지 않았습니다 (초기=${initialMatch}, 수화 후=${hydratedMatch})`,
+        );
+      }
+    }
+    console.log('e2e-today: D-day 정확성/신규 다음 날 00:05(Asia/Seoul) 고정 → 수화 후 D-day 1만큼 정정 OK (D8-O)');
 
     // --- t5. GET / 본문에 내비 4개 href 모두 존재 (D-09) ---
     {
@@ -596,6 +717,9 @@ async function main() {
       'e2e-today: 모든 시나리오 통과 — 매니페스트 → today.ts/schedule.ts/pace.ts → force-dynamic RSC → 렌더된 HTML까지 쿠키 유/무 두 경로 왕복 확인. /schedule 7개 시나리오(2레슨 날 렌더 s6·중복 key 부재 s7 포함) 포함 전체 통과.',
     );
   } finally {
+    if (browser) {
+      await browser.close().catch(() => {});
+    }
     killServerTree(child);
   }
 }

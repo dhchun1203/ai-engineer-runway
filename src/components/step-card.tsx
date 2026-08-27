@@ -1,8 +1,16 @@
+"use client";
+
+// 08-06부터 'use client' — /curriculum이 완전 정적 셸로 전환되면서 진행률
+// 표시는 서버가 계산해 넘기는 것이 아니라 useProgress() 컨텍스트에서 직접
+// 읽는다. getModulesByStep/getLessonCounts는 Velite 매니페스트를 참조하므로
+// 이 컴포넌트 안에서 부르지 않는다 — 클라이언트 번들에 매니페스트가 끌려오는
+// 것을 막기 위해 페이지가 미리 계산해 moduleCount/lessonCount prop으로 넘긴다.
+
 import Link from "next/link";
 import type { Step, StepId } from "@/content/modules";
-import { getModulesByStep, getLessonCounts } from "@/content/curriculum-helpers";
 import { ProgressBadge } from "@/components/progress-badge";
-import type { ProgressCounts } from "@/lib/progress-math";
+import { BarSkeleton, BadgeSkeleton } from "@/components/progress-skeleton";
+import { useProgress } from "@/components/progress-provider";
 
 // Step 상징 색 좌측 강조선 — Step 1 #3B82F6/#60A5FA, Step 2 #8B5CF6/#A78BFA, Step 3 #F59E0B/#FBBF24 (D-04).
 const STEP_BORDER_CLASSES: Record<StepId, string> = {
@@ -20,9 +28,17 @@ const STEP_FILL_CLASSES: Record<StepId, string> = {
   3: "bg-step-3 dark:bg-step-3-dark",
 };
 
-export function StepCard({ step, progress }: { step: Step; progress?: ProgressCounts | null }) {
-  const moduleCount = getModulesByStep(step.id).length;
-  const { total: lessonCount } = getLessonCounts(step.id);
+export function StepCard({
+  step,
+  moduleCount,
+  lessonCount,
+}: {
+  step: Step;
+  moduleCount: number;
+  lessonCount: number;
+}) {
+  const { status, data } = useProgress();
+  const progress = status === "ready" ? (data.steps?.[step.id] ?? null) : null;
 
   return (
     <Link
@@ -39,7 +55,12 @@ export function StepCard({ step, progress }: { step: Step; progress?: ProgressCo
       <p className="text-label font-normal">
         모듈 {moduleCount}개 · 레슨 {lessonCount}개 · 원 {step.courseHours}시간
       </p>
-      {progress ? (
+      {status === "loading" ? (
+        <>
+          <BarSkeleton className="mt-1" />
+          <BadgeSkeleton />
+        </>
+      ) : progress ? (
         <>
           <div
             data-progress-ui="step-bar"
