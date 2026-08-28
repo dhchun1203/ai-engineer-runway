@@ -7,7 +7,7 @@ import { LessonBreadcrumb, LessonPager } from "@/components/lesson-nav";
 import { SectionTape } from "@/components/section-tape";
 import { ProgressProvider } from "@/components/progress-provider";
 import { PrintButton } from "@/components/print-button";
-import { CompleteButtonSlot, LessonNoteSlot } from "@/components/progress-slots";
+import { CompleteButtonSlot, LessonNoteSlot, TutorSlot } from "@/components/progress-slots";
 import {
   getLessonBySlug,
   getOrderedLessons,
@@ -100,6 +100,7 @@ export default async function LessonPage(
           </div>
         </article>
         <LessonNoteSlot lessonId={lesson.slug} />
+        <TutorSlot lessonId={lesson.slug} />
       </ProgressProvider>
     </main>
   );
