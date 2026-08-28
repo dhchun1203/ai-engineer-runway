@@ -4,7 +4,12 @@ import Link from "next/link";
 import { MDXContent } from "@/components/mdx-content";
 import { PrintButton } from "@/components/print-button";
 import { formatEstimatedTime } from "@/components/estimated-time";
-import { getPrintScope, getPrintScopes, getModuleTitle } from "@/content/print-scopes";
+import {
+  getPrintScope,
+  getPrintScopes,
+  getModuleTitle,
+  getLessonNumber,
+} from "@/content/print-scopes";
 import type { StepId } from "@/content/modules";
 
 // 범위 하나를 한 파일로 묶어 인쇄하는 페이지 (quick 260828-k4t).
@@ -29,14 +34,15 @@ export function generateStaticParams() {
 }
 
 // Safari는 인쇄로 만든 PDF의 기본 파일명을 문서 제목에서 가져온다 —
-// 이 제목이 곧 Notability에 들어갈 파일 이름이 된다.
+// 이 제목이 곧 Notability에 들어갈 파일 이름이 된다. 끝에 커리큘럼 번호를
+// 붙여 파일 목록에서 제목만 보고 커리큘럼 어디인지 알 수 있게 한다.
 export async function generateMetadata(
   props: PageProps<"/print/[scope]">,
 ): Promise<Metadata> {
   const { scope: slug } = await props.params;
   const scope = getPrintScope(slug);
   if (!scope) return {};
-  return { title: `${scope.title} (인쇄용)` };
+  return { title: `${scope.title} (인쇄용) · ${scope.number}` };
 }
 
 export default async function PrintScopePage(props: PageProps<"/print/[scope]">) {
@@ -86,10 +92,12 @@ export default async function PrintScopePage(props: PageProps<"/print/[scope]">)
       <section className="flex flex-col gap-3">
         <h2 className="text-heading font-bold">목차</h2>
         <ol className="flex flex-col gap-2">
-          {scope.lessons.map((lesson, index) => (
+          {scope.lessons.map((lesson) => (
             <li key={lesson.slug} className="flex gap-3 text-body font-normal">
+              {/* 일련번호가 아니라 커리큘럼 번호를 찍는다 — 묶음마다 달라지는
+                  01/02보다 커리큘럼 어디인지가 인쇄본에서 더 쓸모 있다. */}
               <span className="shrink-0 font-mono text-badge-neutral-text dark:text-badge-neutral-text-dark">
-                {String(index + 1).padStart(2, "0")}
+                {getLessonNumber(lesson)}
               </span>
               <span className="flex flex-col">
                 <span className="font-semibold">{lesson.title}</span>
@@ -103,12 +111,12 @@ export default async function PrintScopePage(props: PageProps<"/print/[scope]">)
       </section>
 
       {/* ── 본문 ───────────────────────────────────────────────────────── */}
-      {scope.lessons.map((lesson, index) => (
+      {scope.lessons.map((lesson) => (
         // data-print-break: 레슨마다 새 쪽에서 시작한다(globals.css @media print).
         <article key={lesson.slug} data-print-break className="flex flex-col gap-4">
           <header className="flex flex-col gap-2">
             <p className="text-label font-normal font-mono text-badge-neutral-text dark:text-badge-neutral-text-dark">
-              {String(index + 1).padStart(2, "0")} · Step {lesson.stepId} ·{" "}
+              {getLessonNumber(lesson)} · Step {lesson.stepId} ·{" "}
               {getModuleTitle(lesson.moduleId)} · {formatEstimatedTime(lesson.estimatedMinutes)}
             </p>
             <h2 className="text-display font-bold">{lesson.title}</h2>

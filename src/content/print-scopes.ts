@@ -25,6 +25,11 @@ export interface PrintScope {
   title: string;
   /** 표지 부제 — 범위의 위치를 한 줄로 설명한다 */
   subtitle: string;
+  /**
+   * 커리큘럼 번호 — 문서 제목 끝에 붙어 PDF 파일명을 구분한다.
+   * Step은 'Step 1', 모듈은 모듈 id('1-3'), 전체는 'Step 1~3'.
+   */
+  number: string;
   /** 이 범위에 속한 Step (kind가 'all'이면 없음) — 표지 색 강조에 쓴다 */
   stepId: StepId | null;
   lessons: Lesson[];
@@ -36,6 +41,7 @@ function buildScope(
   kind: PrintScopeKind,
   title: string,
   subtitle: string,
+  num: string,
   stepId: StepId | null,
   scopeLessons: Lesson[],
 ): PrintScope {
@@ -44,6 +50,7 @@ function buildScope(
     kind,
     title,
     subtitle,
+    number: num,
     stepId,
     lessons: scopeLessons,
     totalMinutes: scopeLessons.reduce((sum, lesson) => sum + lesson.estimatedMinutes, 0),
@@ -62,7 +69,7 @@ function printableLessons(): Lesson[] {
 export function getPrintScopes(): PrintScope[] {
   const all = printableLessons();
   const result: PrintScope[] = [
-    buildScope('all', 'all', '전체 사전학습 노트', 'Step 1~3 전 과정', null, all),
+    buildScope('all', 'all', '전체 사전학습 노트', 'Step 1~3 전 과정', 'Step 1~3', null, all),
   ];
 
   for (const step of steps) {
@@ -74,6 +81,7 @@ export function getPrintScopes(): PrintScope[] {
         'step',
         step.title,
         `Step ${step.id} · ${step.shortTitle}`,
+        `Step ${step.id}`,
         step.id,
         stepLessons,
       ),
@@ -89,6 +97,7 @@ export function getPrintScopes(): PrintScope[] {
         'module',
         mod.title,
         `Step ${mod.stepId} · 모듈 ${mod.id}`,
+        mod.id,
         mod.stepId,
         moduleLessons,
       ),
@@ -100,6 +109,15 @@ export function getPrintScopes(): PrintScope[] {
 
 export function getPrintScope(slug: string): PrintScope | undefined {
   return getPrintScopes().find((scope) => scope.slug === slug);
+}
+
+/**
+ * 레슨 한 편의 커리큘럼 번호 — '<모듈 id>-<모듈 안 순번>' 형태로, 레슨 슬러그
+ * 앞부분(`1-3-python-variables-and-types`)과 같은 번호 체계다. 문서 제목 끝과
+ * 인쇄본 레슨 머리에 찍혀 "이게 커리큘럼 어디였지"를 파일명만 보고 알게 한다.
+ */
+export function getLessonNumber(lesson: Pick<Lesson, 'moduleId' | 'order'>): string {
+  return `${lesson.moduleId}-${lesson.order}`;
 }
 
 /** 표지·목차에서 레슨 한 편의 소속을 한 줄로 보여주기 위한 조회. */

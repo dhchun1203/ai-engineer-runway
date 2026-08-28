@@ -16,13 +16,14 @@ provides:
   - "[data-print-break] — 인쇄에서 새 쪽을 여는 표식"
   - "print-mode.tsx — 인쇄 직전 .dark 해제 + <details> 펼침, 인쇄 후 원복(루트 레이아웃에 상주)"
   - "print-button.tsx — window.print() 트리거"
-  - "print-scopes.ts — all | step-N | module-N-M 범위 네임스페이스"
+  - "print-scopes.ts — all | step-N | module-N-M 범위 네임스페이스 + getLessonNumber(모듈id-순번)"
+  - "레슨/묶음 문서 제목 끝의 커리큘럼 번호 — Safari가 만드는 PDF 파일명 규약"
   - "/print 허브 + /print/[scope] 23개 정적 라우트"
 affects: [lesson-page, curriculum-page, root-layout, globals-css]
 
 actuals:
-  tasks: 3
-  commits: 3
+  tasks: 4
+  commits: 4
 
 tech-stack:
   added: []
@@ -31,7 +32,8 @@ tech-stack:
     - "CSS로 되돌릴 수 없는 두 가지(다크 유틸리티 수백 개, <details>의 open HTML 상태)만 인쇄 직전 DOM 조작으로 처리하고, 나머지는 전부 @media print — 조작한 것에는 표식(data-print-opened)을 달아 원복 범위를 우리가 바꾼 것으로 한정한다"
     - "beforeprint/afterprint와 matchMedia('print') 두 경로를 함께 듣는다 — Safari의 인쇄 이벤트 발화가 불안정하고, 공유 시트→인쇄처럼 버튼을 거치지 않는 경로도 잡아야 한다. enter()/leave()는 멱등이라 두 경로가 겹쳐도 무해하다"
     - "범위를 단일 슬러그 네임스페이스(all/step-N/module-N-M)로 통일 — 라우트 하나 + generateStaticParams가 곧 프리렌더 목록"
-    - "문서 <title>이 Safari가 만드는 PDF 파일명이다 — 묶음 페이지 제목을 '<범위명> (인쇄용)'으로 잡아 Notability에 들어갈 이름을 제어한다"
+    - "문서 <title>이 Safari가 만드는 PDF 파일명이다 — 제목 끝에 커리큘럼 번호를 붙여('… · 1-3-1', '… (인쇄용) · 1-3') Notability 파일 목록에서 제목만으로 커리큘럼 위치를 알 수 있게 한다"
+    - "묶음 인쇄본의 목차·레슨 머리에 찍는 번호도 묶음마다 달라지는 일련번호(01/02)가 아니라 커리큘럼 번호로 통일 — 화면·파일명·종이가 같은 번호 체계를 쓴다"
 
 key-files:
   created:
@@ -71,10 +73,18 @@ Safari의 인쇄 미리보기는 그 자체가 PDF이고 공유 시트에서 Not
 | 코드 블록 `white-space: pre-wrap` 전환 | PASS |
 | 인쇄 후 다크 모드·details 원복, 표식 잔여 0 | PASS |
 | 레슨 PDF / 모듈 묶음 / 전체 묶음 생성 | PASS (693KB / 1.0MB / 8.2MB·약 222쪽) |
-| 묶음 문서 제목 = PDF 파일명 | PASS ("Python 프로그래밍 기초 (인쇄용)") |
+| 묶음 문서 제목 = PDF 파일명 | PASS ("Python 프로그래밍 기초 (인쇄용) · 1-3") |
+| 레슨 35편 전부 제목 끝에 커리큘럼 번호 | PASS (불일치 0건) |
 
 빌드: 23개 인쇄 라우트 전부 SSG 프리렌더. 게이트 brand·design-tokens·manifest·
 route-rendering·lesson-structure·progress-gates 전부 통과, lint 0.
+
+## 뒤이은 보완 (커밋 4)
+
+레슨 페이지에 문서 제목이 없어 모든 레슨 PDF가 "AI Engineer Runway" 하나로 저장되던
+문제를 함께 잡았다 — 이제 제목이 `Python 변수·자료형 · 1-3-1`이고, 묶음은
+`Python 프로그래밍 기초 (인쇄용) · 1-3`이다. 인쇄본 목차·레슨 머리의 번호도
+일련번호에서 커리큘럼 번호로 바꿔 파일명·종이·커리큘럼이 같은 번호를 쓴다.
 
 ## 남은 것
 

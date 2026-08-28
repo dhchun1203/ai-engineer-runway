@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MDXContent } from "@/components/mdx-content";
 import { DepthBadge } from "@/components/depth-badge";
@@ -12,6 +13,7 @@ import {
   getOrderedLessons,
   getAdjacentLessons,
 } from "@/content/curriculum-helpers";
+import { getLessonNumber } from "@/content/print-scopes";
 import type { StepId } from "@/content/modules";
 
 // 구간 테이프가 측정할 prose 컨테이너의 id — 페이지당 하나뿐이라 레슨 슬러그와
@@ -25,6 +27,19 @@ const LESSON_ARTICLE_ID = "lesson-article";
 
 export function generateStaticParams() {
   return getOrderedLessons().map((lesson) => ({ lessonId: lesson.slug }));
+}
+
+// 레슨마다 고유한 문서 제목을 준다. 브라우저 탭 구분도 되지만 진짜 이유는 인쇄다 —
+// Safari는 인쇄로 만든 PDF의 기본 파일명을 문서 제목에서 가져오므로, 제목이 없으면
+// 모든 레슨 PDF가 사이트 이름 하나로 저장된다. 끝에 커리큘럼 번호를 붙여 Notability
+// 파일 목록에서 제목만 보고 커리큘럼 어디인지 알 수 있게 한다.
+export async function generateMetadata(
+  props: PageProps<"/lesson/[lessonId]">,
+): Promise<Metadata> {
+  const { lessonId } = await props.params;
+  const lesson = getLessonBySlug(lessonId);
+  if (!lesson) return {};
+  return { title: `${lesson.title} · ${getLessonNumber(lesson)}` };
 }
 
 export default async function LessonPage(
