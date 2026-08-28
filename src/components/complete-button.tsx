@@ -1,14 +1,23 @@
 'use client';
 
-// 낙관적 완료 토글 클라이언트 아일랜드. initialDone은 서버가 매 렌더마다 새로
-// 내려주는 prop이다 — 완료 여부를 담는 별도의 로컬 useState를 두지 않는다.
-// Server Action이 revalidatePath를 부르면 서버가 새 initialDone을 내려주고
-// useOptimistic이 그 값으로 수렴하는 것이 React 19의 정상 흐름이다. RESEARCH의
-// 예시 코드는 useState(initialDone)을 함께 두는데, 그러면 다른 기기에서 바뀐
-// 상태가 이 화면에 반영되지 않는 정합성 구멍이 생긴다 — 이 컴포넌트는 prop
-// 수렴 방식을 채택한다.
+// 완료 토글 버튼.
+//
+// 표시값은 `pendingDone ?? initialDone`이다 — 서버 값(initialDone)이 진실이고,
+// 저장이 진행 중인 동안만 사용자가 방금 고른 값(pendingDone)이 그 위를 덮는다.
+//
+// 예전에는 useOptimistic을 썼는데, 이 화면의 "서버 값"은 트랜지션이 아니라 별도
+// fetch(GET /api/progress)로 도착한다. useOptimistic의 낙관적 값은 트랜지션이
+// 끝나는 순간 prop으로 되돌아가므로, 그 시점에 재조회가 아직 도착하지 않았으면
+// 방금 누른 완료가 잠깐 취소된 것처럼 보인다. 아이패드에서 "완료했어요 ✓ → 회색
+// → 레슨 완료하기"로 보이던 깜빡임의 절반이 여기였고, 나머지 절반은 재조회가
+// 아일랜드를 스켈레톤으로 비우면서 이 버튼을 통째로 언마운트한 것이었다
+// (progress-provider.tsx에서 함께 고쳤다, quick 260828-w2r).
+//
+// pendingDone은 저장과 재조회가 **둘 다** 끝난 뒤에 푼다. 그래서 버튼이 그동안
+// 계속 같은 자리에 같은 모습으로 남아 있고, 그 사이의 추가 탭은 전부 무시된다 —
+// 사라졌다 돌아온 버튼을 다시 눌러 완료가 취소되는 경로가 없어진다.
 
-import { useOptimistic, useState, useTransition } from 'react';
+import { useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { toggleLessonComplete } from '@/app/lesson/[lessonId]/actions';
 
@@ -21,49 +30,57 @@ export function CompleteButton({
 }: {
   lessonId: string;
   initialDone: boolean;
-  // 08-03 — 토글이 성공적으로 resolve된 직후에만 호출된다(실패 시에는 호출하지
-  // 않는다, 낙관적 값이 prop으로 수렴하는 기존 동작 그대로). 레슨 페이지의
-  // <ProgressProvider>가 refresh()를 여기 연결해 완료 토글을 즉시 반영한다.
-  onToggled?: () => void;
+  // 저장이 성공한 뒤에만 호출된다. <ProgressProvider>의 refresh()가 연결되며,
+  // 재조회가 끝나면 resolve되는 Promise를 돌려준다 — 이 버튼은 그 Promise를
+  // 기다렸다가 자기 임시 상태를 푼다.
+  onToggled?: () => void | Promise<void>;
 }) {
-  const [optimisticDone, setOptimisticDone] = useOptimistic(initialDone);
-  const [isPending, startTransition] = useTransition();
+  // null = 저장 중이 아님(서버 값을 그대로 보여준다).
+  const [pendingDone, setPendingDone] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  function handleToggle() {
-    startTransition(async () => {
-      setOptimisticDone(!optimisticDone);
-      setError(null);
-      try {
-        await toggleLessonComplete(lessonId, initialDone);
-        onToggled?.();
-      } catch {
-        // 낙관적 값은 트랜지션 종료와 함께 initialDone(서버가 갱신하지 못한
-        // 이전 값)으로 자동 수렴하므로 별도 롤백 코드가 필요 없다 (D-28).
-        setError(SAVE_ERROR_MESSAGE);
-      }
-    });
+  const isPending = pendingDone !== null;
+  const shownDone = pendingDone ?? initialDone;
+
+  async function handleToggle() {
+    // 저장·재조회가 도는 동안의 추가 탭은 삼킨다.
+    if (isPending) return;
+
+    const next = !shownDone;
+    setPendingDone(next);
+    setError(null);
+    try {
+      await toggleLessonComplete(lessonId, initialDone);
+      // 재조회까지 기다린 뒤에 임시 상태를 푼다 — 여기서 먼저 풀면 아직 옛
+      // 값인 initialDone이 한 프레임 드러난다(그게 바로 되돌아가 보이던 증상).
+      await onToggled?.();
+    } catch {
+      setError(SAVE_ERROR_MESSAGE);
+    } finally {
+      setPendingDone(null);
+    }
   }
 
   return (
     <div
       data-progress-ui="complete-button"
-      data-complete-state={optimisticDone ? 'done' : 'todo'}
+      data-complete-state={shownDone ? 'done' : 'todo'}
       className="flex flex-col gap-2"
     >
       <button
         type="button"
         onClick={handleToggle}
         disabled={isPending}
-        aria-pressed={optimisticDone}
-        aria-label={optimisticDone ? '완료 취소하기' : '레슨 완료하기'}
+        aria-busy={isPending}
+        aria-pressed={shownDone}
+        aria-label={shownDone ? '완료 취소하기' : '레슨 완료하기'}
         className={`tap-feedback flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 text-body font-semibold ${
-          optimisticDone
+          shownDone
             ? 'complete-ring-glow border-accent text-accent dark:border-accent-dark dark:text-accent-dark'
             : 'border-badge-neutral-bg dark:border-badge-neutral-bg-dark'
         }`}
       >
-        {optimisticDone ? (
+        {shownDone ? (
           <>
             <CheckCircle2 className="complete-check-icon h-4 w-4 shrink-0" aria-hidden="true" />
             완료했어요 ✓

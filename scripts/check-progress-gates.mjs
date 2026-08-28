@@ -364,8 +364,21 @@ if (!fs.existsSync(UNLOCK_SECRET_TS_PATH)) {
   }
 }
 
-// --- G12: complete-button.tsx가 useOptimistic을 쓰고, 완료 여부를 담는 별도의
-// useState를 두지 않는다 (Task 1이 채택한 prop 수렴 방식의 회귀 방지) ---
+// --- G12: complete-button.tsx의 표시값이 서버 값(initialDone prop)으로 수렴하고,
+// 저장 중 임시 상태를 재조회가 끝난 뒤에 푼다 ---
+//
+// 원래 이 게이트는 useOptimistic 호출 존재를 요구했다. 그 요구는 quick
+// 260828-w2r에서 폐기했다 — 그 훅의 낙관적 값은 트랜지션이 끝나는 순간 prop으로
+// 되돌아가는데, 이 화면의 서버 값은 트랜지션이 아니라 별도 fetch(GET
+// /api/progress)로 도착한다. 그래서 저장은 성공했는데 재조회가 아직 도착하지 않은
+// 구간에서 방금 누른 완료가 취소된 것처럼 보였다(아이패드 실사용 리포트).
+//
+// 게이트가 지키려던 진짜 불변식은 훅 이름이 아니라 세 가지다.
+//  (1) 완료 여부를 담는 별도의 로컬 상태를 initialDone으로 씨앗 삼지 않는다 —
+//      그러면 다른 기기에서 바뀐 완료 상태가 이 화면에 영영 반영되지 않는다.
+//  (2) 표시값이 결국 서버 값으로 수렴한다.
+//  (3) 저장 성공 후 재조회를 기다린 뒤에 임시 상태를 푼다 — 먼저 풀면 옛
+//      initialDone이 한 프레임 드러나는 깜빡임이 되돌아온다.
 
 const COMPLETE_BUTTON_PATH = path.join(ROOT, 'src', 'components', 'complete-button.tsx');
 const completeButtonSource = readFileIfExists(COMPLETE_BUTTON_PATH);
@@ -377,8 +390,17 @@ if (completeButtonSource === null) {
   // 스캔에서 제외한다 — 그 설명 문장 자체가 금지 패턴의 리터럴을 담고 있어
   // 주석까지 검사하면 게이트가 스스로를 오탐시킨다.
   const codeOnly = stripJsLineComments(completeButtonSource);
-  if (!/useOptimistic\s*\(/.test(codeOnly)) {
-    fail(`G12 failed: ${path.relative(ROOT, COMPLETE_BUTTON_PATH)} does not call useOptimistic(...)`);
+  // 정규식 대신 문자열 포함 검사를 쓴다 — 표기 흔들림까지 잡으려다 게이트가
+  // 스스로 복잡해지는 것보다, 코드가 이 형태를 유지하도록 못박는 편이 낫다.
+  if (!codeOnly.includes('?? initialDone')) {
+    fail(
+      `G12 failed: ${path.relative(ROOT, COMPLETE_BUTTON_PATH)} 표시값이 서버 값(?? initialDone)으로 수렴하지 않는다 — 로컬 상태만 보고 그리면 다른 기기의 변경이 반영되지 않는다`,
+    );
+  }
+  if (!codeOnly.includes('await onToggled?.()')) {
+    fail(
+      `G12 failed: ${path.relative(ROOT, COMPLETE_BUTTON_PATH)} does not await onToggled?.() — 재조회를 기다리지 않고 임시 상태를 풀면 옛 값이 한 프레임 드러나 완료가 취소된 것처럼 보인다(quick 260828-w2r 회귀)`,
+    );
   }
   if (/useState\s*\(\s*initialDone\s*\)/.test(codeOnly)) {
     fail(
@@ -651,6 +673,35 @@ if (unexpectedScrollListenerFiles.length > 0) {
   fail(
     `G22 failed: unthrottled scroll listener(s) found outside section-tape.tsx: ${unexpectedScrollListenerFiles.join(', ')} — 5.D: 스크롤 리스너는 rAF 배칭 없이 쓰지 않는다`,
   );
+}
+
+// --- G23: progress-provider.tsx의 refresh()가 화면을 비우지 않는다 ---
+//
+// refresh()가 status를 loading으로 되돌리면 진도 아일랜드 전체가 스켈레톤으로
+// 교체되고, 완료 토글 직후에 이게 일어나면 방금 누른 버튼이 언마운트됐다가 다시
+// 마운트된다. 사용자에게는 회색 깜빡임으로 보이고, 버튼이 사라졌다 돌아오는
+// 순간을 다시 누르면 완료가 조용히 취소된다(quick 260828-w2r).
+//
+// 판정: 주석을 걷어낸 소스에서 loading 상태 리터럴이 정확히 한 번만 등장해야
+// 한다 — 그 하나는 useState 초기값(최초 마운트 전, 보여줄 이전 데이터가 없는
+// 유일한 시점)이다. 두 번째가 생겼다는 것은 어딘가에서 화면을 다시 비우기
+// 시작했다는 뜻이다.
+
+const PROGRESS_PROVIDER_PATH = path.join(ROOT, 'src', 'components', 'progress-provider.tsx');
+const progressProviderSource = readFileIfExists(PROGRESS_PROVIDER_PATH);
+
+if (progressProviderSource === null) {
+  fail(`G23 failed: ${path.relative(ROOT, PROGRESS_PROVIDER_PATH)} not found`);
+} else {
+  const codeOnly = stripJsLineComments(progressProviderSource);
+  // 타입 선언(`status: "loading"; data: null`)이 아니라 실제로 상태를 만드는
+  // 객체 리터럴(쉼표 구분)만 센다 — 타입까지 세면 항상 2가 되어 게이트가 무의미해진다.
+  const loadingLiteralCount = codeOnly.split('status: "loading", data').length - 1;
+  if (loadingLiteralCount !== 1) {
+    fail(
+      `G23 failed: ${path.relative(ROOT, PROGRESS_PROVIDER_PATH)} has ${loadingLiteralCount} loading-state literal(s), expected exactly 1 (useState 초기값) — 재조회가 화면을 스켈레톤으로 비우면 완료 버튼이 언마운트되어 깜빡임·중복 탭 취소가 되돌아온다`,
+    );
+  }
 }
 
 // --- 결과 ---
