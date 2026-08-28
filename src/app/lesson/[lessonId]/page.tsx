@@ -7,7 +7,8 @@ import { LessonBreadcrumb, LessonPager } from "@/components/lesson-nav";
 import { SectionTape } from "@/components/section-tape";
 import { ProgressProvider } from "@/components/progress-provider";
 import { PrintButton } from "@/components/print-button";
-import { CompleteButtonSlot, LessonNoteSlot, TutorSlot } from "@/components/progress-slots";
+import { CopyLessonPrompt } from "@/components/lesson-copy-prompt";
+import { CompleteButtonSlot, LessonNoteSlot } from "@/components/progress-slots";
 import {
   getLessonBySlug,
   getOrderedLessons,
@@ -75,7 +76,15 @@ export default async function LessonPage(
               {/* 이 레슨 한 편만 PDF로 뽑는 입구. 여러 편을 한 파일로 묶는 것은
                   /print가 맡는다. 콘텐츠가 없는 자리표시 레슨에는 뽑을 것이
                   없으므로 버튼도 내지 않는다. */}
-              {lesson.hasContent ? <PrintButton /> : null}
+              {lesson.hasContent ? (
+                <span className="flex flex-wrap items-start gap-2">
+                  {/* 레슨 본문 + 질문 틀을 클립보드에 담는다 — 클로드 탭에 붙여넣기
+                      한 번이면 과외가 시작된다. 사이트 안에 대화창을 두는 대신
+                      이 방식을 고른 이유는 lesson-copy-prompt.tsx 머리 주석 참고. */}
+                  <CopyLessonPrompt lessonTitle={lesson.title} articleId={LESSON_ARTICLE_ID} />
+                  <PrintButton />
+                </span>
+              ) : null}
             </div>
           </header>
           {lesson.hasContent ? (
@@ -100,7 +109,6 @@ export default async function LessonPage(
           </div>
         </article>
         <LessonNoteSlot lessonId={lesson.slug} />
-        <TutorSlot lessonId={lesson.slug} />
       </ProgressProvider>
     </main>
   );

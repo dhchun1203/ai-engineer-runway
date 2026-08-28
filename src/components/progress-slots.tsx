@@ -15,7 +15,6 @@ import {
 } from "@/components/progress-skeleton";
 import { CompleteButton } from "@/components/complete-button";
 import { LessonNotepad } from "@/components/lesson-notepad";
-import { LessonTutor } from "@/components/lesson-tutor";
 import type { StepId } from "@/content/modules";
 
 /** Step 헤더 배지 자리. locked/error 상태에서는 아무것도 렌더하지 않는다 —
@@ -118,13 +117,4 @@ export function LessonNoteSlot({ lessonId }: { lessonId: string }) {
       메모를 불러오지 못했어요. 새로고침해 주세요.
     </p>
   );
-}
-
-/** 학습도우미 자리(quick 260829-t8k). 잠금 해제된 상태에서만 띄운다 — 잠긴
- * 방문자에게 눌러도 아무 일이 없는 아이콘을 보여줄 이유가 없다. 대화 자체는
- * /api/tutor가 쿠키를 다시 검증하므로 이 판정은 표시용이지 보안 경계가 아니다. */
-export function TutorSlot({ lessonId }: { lessonId: string }) {
-  const { status } = useProgress();
-  if (status !== "ready") return null;
-  return <LessonTutor lessonId={lessonId} />;
 }

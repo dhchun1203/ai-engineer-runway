@@ -37,12 +37,6 @@ export default defineConfig({
           slug: s.slug("lessons"),
           hasContent: s.boolean().default(true), // false for placeholder lessons
           code: s.mdx(),
-          // 원문 마크다운 — 과외선생님(/api/tutor)이 시스템 프롬프트에 넣을
-          // 레슨 본문이다. code는 컴파일된 함수 본문 문자열이라 사람이 읽을
-          // 텍스트가 아니어서 그대로는 쓸 수 없다. 이 필드는 서버에서만
-          // 소비된다 — #site/content를 import하는 파일 5개가 전부 서버
-          // 컴포넌트/서버 모듈이라 클라이언트 번들로 새지 않는다.
-          raw: s.raw(),
         })
         .transform((data) => ({ ...data, permalink: `/lesson/${data.slug}` })),
     },
