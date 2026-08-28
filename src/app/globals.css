@@ -3,69 +3,108 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* Base surfaces (D-03 딥블루/청록) */
-  --color-background: #f8fafc;
-  --color-background-dark: #0b1220;
-  --color-surface: #e7ecf3;
-  --color-surface-dark: #131b2e;
+  /* ─────────────────────────────────────────────────────────────────────
+     팔레트 — marketing.dailyaithread.com의 디자인 시스템을 그대로 옮겼다
+     (quick 260828-d3n). 사용자가 만든 자매 학습 사이트와 같은 언어를 쓴다.
 
-  /* body/.dark body의 기존 리터럴을 값 변경 없이 이곳으로 옮긴 것 — 새 색
-     값이 아니다(D-R4K-2, SC1의 "한 곳에서 정의" 요구를 만족시키기 위함). */
-  --color-foreground: #171717;
-  --color-foreground-dark: #f1f5f9;
+     성격: 크림색 종이 위에 흰 패널, 둥근 모서리 0, 흐림 없는 하드 오프셋
+     그림자, 굵은 제목과 좁은 자간. 인쇄물에 가까운 편집 디자인이다.
+     이전 팔레트(딥블루/청록 D-03)는 이 결정으로 대체됐다. */
 
-  /* Global functional accent (D-03) */
-  --color-accent: #0d9488;
-  --color-accent-dark: #2dd4bf;
+  /* 지면과 패널 */
+  --color-background: #f5f4f0; /* 종이 */
+  --color-background-dark: #0b0d13;
+  --color-surface: #ffffff; /* 패널 */
+  --color-surface-dark: #10141f;
+  --color-surface-2: #eceae4; /* 한 단계 눌린 면 — 칩 배경, 표 머리 */
+  --color-surface-2-dark: #171c2b;
 
-  /* Destructive (reserved for Phase 2's 진도 초기화) */
-  --color-destructive: #dc2626;
-  --color-destructive-dark: #f87171;
+  --color-foreground: #14161c; /* 본문 잉크이자 테두리 색 */
+  --color-foreground-dark: #e8ecf8;
+  --color-muted: #5a6070; /* 보조 텍스트 */
+  --color-muted-dark: #8a93ad;
+  --color-line: #cbc7bd; /* 얇은 구분선 */
+  --color-line-dark: #303a5c;
 
-  /* Step identity colors (D-04) */
-  --color-step-1: #3b82f6;
-  --color-step-1-dark: #60a5fa;
-  --color-step-2: #8b5cf6;
-  --color-step-2-dark: #a78bfa;
-  --color-step-3: #f59e0b;
-  --color-step-3-dark: #fbbf24;
+  /* 하드 그림자 색 — 흐림 0, 오프셋만. 이 디자인의 서명이다. */
+  --color-shadow-hard: #dedad0;
+  --color-shadow-hard-dark: #1a2140;
 
-  /* 개요 배지 (neutral, not tied to any Step color) */
-  --color-badge-neutral-text: #64748b;
-  --color-badge-neutral-bg: #f1f5f9;
-  --color-badge-neutral-text-dark: #94a3b8;
-  --color-badge-neutral-bg-dark: #1e293b;
+  /* 강조 두 축: accent(파랑)는 링크·활성 상태, action(주황)은 실행 버튼 */
+  --color-accent: #2c4fd6;
+  --color-accent-dark: #6f8dff;
+  --color-action: #c2410c;
+  --color-action-dark: #ff5c00;
 
-  /* Typography: 5 sizes(+inline code), weights via Tailwind 기본 유틸리티
-     (D-R4K-4, D-95). `--text-*`가 Tailwind v4에서 `text-{name}` 유틸리티를
-     생성하는 실제 네임스페이스다(node_modules/tailwindcss/theme.css:347-372).
-     예전 `--font-size-*`/`--font-weight-*` 이름은 이 네임스페이스가 아니라서
-     아무 유틸리티도 만들지 못하는 죽은 코드였다 — 삭제. 굵기는 Tailwind
-     기본 font-normal/font-semibold/font-bold(400/600/700)로 충분하다. */
-  --text-display: 1.875rem; /* 30px */
-  --text-display--line-height: 1.2;
+  --color-ok: #15803d;
+  --color-ok-dark: #2fd48a;
+  --color-warn: #a16207;
+  --color-warn-dark: #ffb020;
+  --color-destructive: #c02033;
+  --color-destructive-dark: #ff4d6d;
+
+  /* Step 상징 색 (D-04) — 세 Step을 구분하는 역할은 그대로 두되 값은 위
+     팔레트 안에서만 고른다. 파랑·주황·황토는 서로 충분히 구분되고 종이
+     배경에서 같은 채도대로 읽힌다. 예전 파랑/보라/주황 삼색은 이 팔레트에
+     보라가 없어 그대로 쓸 수 없다. */
+  --color-step-1: #2c4fd6;
+  --color-step-1-dark: #6f8dff;
+  --color-step-2: #c2410c;
+  --color-step-2-dark: #ff5c00;
+  --color-step-3: #a16207;
+  --color-step-3-dark: #ffb020;
+
+  /* 중성 배지 — 기존 토큰 이름을 유지한다(호출 지점 30여 곳). bg는 눌린 면,
+     text는 보조 텍스트로 각각 위 토큰과 같은 값이다. */
+  --color-badge-neutral-text: #5a6070;
+  --color-badge-neutral-bg: #eceae4;
+  --color-badge-neutral-text-dark: #8a93ad;
+  --color-badge-neutral-bg-dark: #171c2b;
+
+  /* ─────────────────────────────────────────────────────────────────────
+     모서리 — 전부 각지게. Tailwind v4의 rounded-* 유틸리티가 이 네임스페이스를
+     읽으므로, 여기서 0으로 두면 컴포넌트의 rounded-lg/xl을 한 줄도 고치지 않고
+     사이트 전체가 각져진다. rounded-full만 유틸리티가 값을 하드코딩하므로
+     아래 base 레이어에서 따로 덮는다. */
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+
+  /* ─────────────────────────────────────────────────────────────────────
+     타이포 — 크기 6종 + 굵기. 자간을 크기 토큰에 함께 묶어(Tailwind v4의
+     `--text-*--letter-spacing`) 컴포넌트가 자간을 따로 적지 않아도 사이트
+     전체가 같은 좁은 트래킹을 쓴다. 제목이 굵고 좁은 것이 이 디자인의
+     인상 절반이다. */
+  --text-display: 2.25rem; /* 36px */
+  --text-display--line-height: 1.15;
+  --text-display--letter-spacing: -0.04em;
   --text-heading: 1.375rem; /* 22px */
   --text-heading--line-height: 1.3;
+  --text-heading--letter-spacing: -0.03em;
   --text-subhead: 1.0625rem; /* 17px */
   --text-subhead--line-height: 1.4;
+  --text-subhead--letter-spacing: -0.02em;
   --text-body: 1rem; /* 16px */
-  --text-body--line-height: 1.6;
+  --text-body--line-height: 1.65;
+  --text-body--letter-spacing: -0.011em;
   --text-label: 0.875rem; /* 14px */
   --text-label--line-height: 1.4;
+  --text-label--letter-spacing: -0.011em;
 
-  /* 옥스포드 노트 색(D-7, R-6) — 종이가 가장 밝고, 괘선은 겨우 보일 정도,
-     세로 여백선이 그보다 한 단계 진하다. 이 순서를 라이트/다크 양쪽에서
-     동일하게 유지한다. 다크 종이는 라이트를 그대로 어둡게 만든 값이 아니라
-     별도로 고른 값이다(#151d2b) — 저녁 아이패드 화면에서 밝은 종이가
-     뷰포트 40%로 뜨면 화면에서 가장 눈부신 물체가 되는 것을 피한다. */
+  /* 옥스포드 노트 색(D-7, R-6) — 메모장은 이 팔레트 안에서도 별도의 "종이"다.
+     본문 지면(--color-background)보다 살짝 따뜻하게 두어 두 종이가 구분된다. */
   --color-note-paper: #fbf8f1;
   --color-note-paper-dark: #151d2b;
-  --color-note-rule: #ccd8e6;
+  --color-note-rule: #dcd7cb;
   --color-note-rule-dark: #24334a;
   --color-note-margin: #dd9aa2;
   --color-note-margin-dark: #7a4750;
-  --color-note-ink: #1f2430;
-  --color-note-ink-dark: #eef2f7;
+  --color-note-ink: #14161c;
+  --color-note-ink-dark: #e8ecf8;
 }
 
 /* 구간 테이프(Section Tape) 기하 단일 소스 (06-09, G-06-9). 테이프 높이(44px,
@@ -130,6 +169,204 @@ body {
 .dark body {
   background-color: var(--color-background-dark);
   color: var(--color-foreground-dark);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   디자인 시스템 — 각진 종이 + 하드 그림자 (quick 260828-d3n)
+
+   marketing.dailyaithread.com에서 옮겨온 형태 규칙 모음. 색은 위 @theme의
+   토큰만 쓰고 여기서 새 색을 만들지 않는다(check-design-tokens 규칙 a).
+
+   이 클래스들이 존재하는 이유: 하드 그림자(`4px 4px 0`)와 1px 잉크 테두리는
+   Tailwind 임의값 대괄호로 써야 하는데, check-design-tokens 규칙 c가 그 문법
+   자체를 금지한다. 그래서 형태를 CSS 클래스로 한 번 정의하고 컴포넌트는
+   이름만 부른다 — 08-07의 .tap-feedback이 세운 전례와 같다.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* rounded-full만 유틸리티가 값을 하드코딩해 @theme의 --radius-*로 덮이지
+   않는다. 이 디자인에 완전한 원형 모서리는 없다 — 진행률 바·배지까지 각진다. */
+.rounded-full {
+  border-radius: 0;
+}
+
+/* 컴포넌트 클래스는 @layer components에 둔다 — Tailwind v4의 레이어 순서상
+   utilities가 이 레이어를 이긴다. 레이어 밖에 두면 .panel의 border 단축
+   속성이 카드의 border-l-4/border-l-step-N 유틸리티까지 덮어 Step 색 왼쪽
+   막대가 사라진다(실제로 그렇게 됐다). 반대로 .rounded-full 무력화처럼
+   "유틸리티를 이겨야 하는" 규칙은 레이어 밖에 남긴다. */
+@layer components {
+  /* ── 패널 ────────────────────────────────────────────────────────────────
+     흰 면 + 1px 잉크 테두리 + 흐림 없는 오프셋 그림자. .panel은 목록·카드용
+     (4px), .panel-hero는 페이지 첫 블록용(8px)이다. */
+  .panel,
+  .panel-hero {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-foreground);
+  }
+
+  .dark .panel,
+  .dark .panel-hero {
+    background-color: var(--color-surface-dark);
+    border-color: var(--color-foreground-dark);
+  }
+
+  .panel {
+    box-shadow: 4px 4px 0 0 var(--color-shadow-hard);
+  }
+
+  .panel-hero {
+    box-shadow: 8px 8px 0 0 var(--color-shadow-hard);
+  }
+
+  .dark .panel {
+    box-shadow: 4px 4px 0 0 var(--color-shadow-hard-dark);
+  }
+
+  .dark .panel-hero {
+    box-shadow: 8px 8px 0 0 var(--color-shadow-hard-dark);
+  }
+
+  /* ── 버튼 ────────────────────────────────────────────────────────────────
+     .btn은 잉크 테두리 + 잉크 그림자를 진 흰 버튼, .btn-action은 실행용 주황
+     버튼이다. 굵기 800은 이 디자인의 버튼 기본값이다. */
+  .btn,
+  .btn-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem; /* 44px 터치 타깃 */
+    padding-inline: 1.125rem;
+    border: 1px solid var(--color-foreground);
+    font-weight: 800;
+    box-shadow: 3px 3px 0 0 var(--color-foreground);
+  }
+
+  .btn {
+    background-color: var(--color-surface);
+    color: var(--color-foreground);
+  }
+
+  .btn-action {
+    background-color: var(--color-action);
+    color: var(--color-surface);
+  }
+
+  .dark .btn,
+  .dark .btn-action {
+    border-color: var(--color-foreground-dark);
+    box-shadow: 3px 3px 0 0 var(--color-foreground-dark);
+  }
+
+  .dark .btn {
+    background-color: var(--color-surface-dark);
+    color: var(--color-foreground-dark);
+  }
+
+  .dark .btn-action {
+    background-color: var(--color-action-dark);
+    color: var(--color-background-dark);
+  }
+
+  /* 눌림 — 그림자만큼 실제로 내려앉는다. .tap-feedback의 scale과 겹치지 않도록
+     버튼·패널은 이 규칙이 transform을 가져간다(뒤에 정의되어 우선한다). */
+  .btn:active,
+  .btn-action:active {
+    transform: translate(3px, 3px);
+    box-shadow: none;
+  }
+
+  .btn:disabled,
+  .btn-action:disabled {
+    opacity: 0.55;
+  }
+
+  .btn:disabled:active,
+  .btn-action:disabled:active {
+    transform: none;
+    box-shadow: 3px 3px 0 0 var(--color-foreground);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn:active,
+    .btn-action:active {
+      transform: none;
+    }
+  }
+
+  /* ── 칩 ──────────────────────────────────────────────────────────────────
+     메타데이터 한 조각을 담는 각진 작은 상자. .chip은 얇은 선, .chip-solid는
+     꽉 찬 잉크 블록(내비 활성 항목·트랙 번호처럼 위계를 세울 때). */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.125rem 0.5rem;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-surface);
+    color: var(--color-muted);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .dark .chip {
+    border-color: var(--color-line-dark);
+    background-color: var(--color-surface-dark);
+    color: var(--color-muted-dark);
+  }
+
+  .chip-solid {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.125rem 0.5rem;
+    background-color: var(--color-foreground);
+    color: var(--color-surface);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .dark .chip-solid {
+    background-color: var(--color-foreground-dark);
+    color: var(--color-background-dark);
+  }
+
+  /* ── 헤더 ────────────────────────────────────────────────────────────────
+     종이와 같은 색에 굵은 잉크 밑줄 하나. 얇은 회색 경계선은 이 디자인의
+     문법이 아니다. */
+  .site-header {
+    background-color: var(--color-background);
+    border-bottom: 2px solid var(--color-foreground);
+  }
+
+  .dark .site-header {
+    background-color: var(--color-background-dark);
+    border-bottom-color: var(--color-foreground-dark);
+  }
+
+  /* 로고 앞의 작은 사각형 — accent 블록에 action 색 하드 그림자. 이 사이트가
+     어떤 규칙(각짐 + 오프셋 그림자 + 두 강조색)을 쓰는지 한눈에 선언하는 표식이다. */
+  .brand-mark {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    background-color: var(--color-accent);
+    box-shadow: 3px 3px 0 0 var(--color-action);
+  }
+
+  .dark .brand-mark {
+    background-color: var(--color-accent-dark);
+    box-shadow: 3px 3px 0 0 var(--color-action-dark);
+  }
+
+  /* ── 얇은 구분선 ─────────────────────────────────────────────────────── */
+  .hairline {
+    border-top: 1px solid var(--color-line);
+  }
+
+  .dark .hairline {
+    border-top-color: var(--color-line-dark);
+  }
 }
 
 /* 클릭 가능한 카드/행 hover 톤 (06-UI-SPEC.md § Card Contract). 그리드 카드 2종
@@ -690,6 +927,164 @@ code[data-theme*=" "] span {
   .progress-skeleton {
     animation: none;
   }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   레슨 본문(prose) — 옮겨온 디자인에 맞춘 재조정 (quick 260828-d3n)
+
+   소스 순서상 위의 .prose 규칙들 뒤에 온다 — 같은 명세성이면 나중 것이 이긴다.
+   위 블록들을 지우지 않고 여기서 덮는 이유: 각 규칙이 왜 그 값인지 적어둔 긴
+   근거 주석(줄 간격 역전, scroll-margin-top 단일 소스 등)이 그대로 살아 있어야
+   나중에 같은 실수를 반복하지 않는다.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.prose {
+  line-height: 1.9;
+  color: var(--color-foreground);
+  max-width: none;
+}
+
+.dark .prose {
+  color: var(--color-foreground-dark);
+}
+
+/* 제목은 굵고 좁게 — 자간은 @theme의 --text-*--letter-spacing이 이미 준다. */
+.prose h1 {
+  font-weight: 900;
+}
+
+.prose h2 {
+  font-weight: 800;
+}
+
+.prose h3,
+.prose h4 {
+  font-weight: 700;
+}
+
+/* h2 위의 얇은 선 — 섹션이 바뀐다는 것을 여백만이 아니라 선으로도 말한다.
+   원본 사이트가 쓰는 방식이고, 긴 레슨에서 구간을 훑기 쉬워진다. */
+.prose > h2 {
+  border-top: 1px solid var(--color-line);
+  padding-top: 1.8em;
+  margin-top: 2.6em;
+}
+
+.dark .prose > h2 {
+  border-top-color: var(--color-line-dark);
+}
+
+/* 강조와 링크 */
+.prose strong {
+  font-weight: 800;
+  color: inherit;
+}
+
+.prose a {
+  color: var(--color-accent);
+  font-weight: 700;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.dark .prose a {
+  color: var(--color-accent-dark);
+}
+
+/* 표 — 머리는 눌린 면, 칸 경계는 얇은 선. 각진 모서리를 유지한다. */
+.prose table {
+  border: 1px solid var(--color-line);
+  border-collapse: collapse;
+}
+
+.prose thead th {
+  background-color: var(--color-surface-2);
+  font-weight: 700;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid var(--color-line);
+  padding: 0.5rem 0.75rem;
+}
+
+.dark .prose table,
+.dark .prose th,
+.dark .prose td {
+  border-color: var(--color-line-dark);
+}
+
+.dark .prose thead th {
+  background-color: var(--color-surface-2-dark);
+}
+
+/* 인용/콜아웃 — 왼쪽 굵은 막대 하나와 눌린 배경. 원본 사이트의 "사실 확인"
+   상자와 같은 형태다. */
+.prose blockquote {
+  border-left: 4px solid var(--color-action);
+  background-color: var(--color-surface-2);
+  padding: 0.875rem 1.125rem;
+  font-style: normal;
+  quotes: none;
+  color: var(--color-muted);
+}
+
+.prose blockquote p:first-of-type::before,
+.prose blockquote p:last-of-type::after {
+  content: "";
+}
+
+.dark .prose blockquote {
+  border-left-color: var(--color-action-dark);
+  background-color: var(--color-surface-2-dark);
+  color: var(--color-muted-dark);
+}
+
+/* 접히는 정답 상자 — 각지게, 눌린 면 위에, 여는 문구는 action 색으로. */
+.prose details {
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-line);
+}
+
+.prose summary {
+  color: var(--color-action);
+  font-weight: 800;
+}
+
+.dark .prose details {
+  background-color: var(--color-surface-2-dark);
+  border-color: var(--color-line-dark);
+}
+
+.dark .prose summary {
+  color: var(--color-action-dark);
+}
+
+/* 첫 h2는 위에 선을 긋지 않는다 — 구간 테이프 바로 아래에 또 선이 오면 띠가
+   두 겹으로 보이고, 본문이 시작하기도 전에 구분선부터 나온다. */
+.prose > h2:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 1.2em;
+}
+
+/* 구간 테이프는 본문 위에 뜨는 띠다 — 아래쪽 얇은 선으로 지면과 분리한다. */
+.section-tape {
+  border-bottom: 1px solid var(--color-line);
+}
+
+.dark .section-tape {
+  border-bottom-color: var(--color-line-dark);
+}
+
+/* 코드 블록 테두리 — Shiki 배경 위에 잉크 선을 둘러 패널과 같은 문법을 쓴다. */
+.prose [data-code-block] > pre {
+  border: 1px solid var(--color-line);
+}
+
+.dark .prose [data-code-block] > pre {
+  border-color: var(--color-line-dark);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

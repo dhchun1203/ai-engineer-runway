@@ -38,8 +38,9 @@ const REPORT_ONLY = process.argv.includes('--report-only');
 
 // D-R4K-4 / 06-UI-SPEC.md § Typography — 허용 크기(px)·굵기 집합. 인라인
 // 코드 15px(0.9375rem)도 포함된 5+1종/3굵기다.
-const ALLOWED_SIZES_PX = [30, 22, 17, 16, 15, 14];
-const ALLOWED_WEIGHTS = [400, 600, 700];
+// quick 260828-d3n: 디스플레이 30 -> 36px, 굵기 800/900 추가(옮겨온 디자인의 굵은 제목).
+const ALLOWED_SIZES_PX = [36, 22, 17, 16, 15, 14];
+const ALLOWED_WEIGHTS = [400, 600, 700, 800, 900];
 
 // 측정 라우트 — 콘텐츠가 있는 레슨 1편이 기본값. 배열 상수라 나중에 늘릴 수
 // 있다(06-08 최종 스위트가 같은 범위로 재실행될 예정).

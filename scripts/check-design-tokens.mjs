@@ -44,8 +44,11 @@ const ENFORCE_ARBITRARY_VALUES = true;
 const ENFORCE_RULE_C = STRICT || ENFORCE_ARBITRARY_VALUES;
 
 // D-R4K-4 / 06-UI-SPEC.md § Typography — 문자열 그대로 대조한다(환산 없음).
-const ALLOWED_FONT_SIZES = new Set(['1.875rem', '1.375rem', '1.0625rem', '1rem', '0.9375rem', '0.875rem']);
-const ALLOWED_FONT_WEIGHTS = new Set(['400', '600', '700']);
+// quick 260828-d3n에서 디스플레이 크기를 30px(1.875rem) -> 36px(2.25rem)로 올리고
+// 굵기 800/900을 추가했다 — 옮겨온 디자인의 제목은 굵고 크다. 크기는 여전히 6종,
+// 굵기는 5종으로 닫혀 있다(임의값 금지 원칙은 그대로).
+const ALLOWED_FONT_SIZES = new Set(['2.25rem', '1.375rem', '1.0625rem', '1rem', '0.9375rem', '0.875rem']);
+const ALLOWED_FONT_WEIGHTS = new Set(['400', '600', '700', '800', '900']);
 
 // 06-UI-SPEC.md § Color allowlist — 4곳 전부 accent 배경 위 고정 대비용 CTA
 // 텍스트라 토큰화해도 값이 항상 #ffffff로 동일해 실익이 없다
