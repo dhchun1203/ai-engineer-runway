@@ -191,6 +191,7 @@ None yet.
 | 260827-0y8 | 레슨 하단 메모장(옥스포드 노트 스타일) — 접었다 펼치기, 스크롤 고정, 타이핑 멈추면 자동 저장, 레슨당 메모 1개 Supabase 기기 간 공유 | 2026-08-27 | 5947684 | [260827-0y8-bottom-sheet-lesson-notepad-collapsible-](./quick/260827-0y8-bottom-sheet-lesson-notepad-collapsible-/) |
 | 260827-g6u | 폰(640px 미만) 헤더 내비 4항목을 햄버거+접이식 패널로 전환, 640px 이상은 게이트 실측으로 픽셀 동일성 증명(375px M3 126→120, 768/1024 완전 동일) | 2026-08-27 | eb1357b | [260827-g6u-phone-hamburger-nav-640px](./quick/260827-g6u-phone-hamburger-nav-640px/) |
 | 260827-mdz | v1.0 마감 전 lint 정합성 정리 — 에러 6·경고 3 → 0·0. Phase 1 이월 3건 + Phase 8 신규 3건(effect 내 동기 setState, module 변수명, 렌더 중 재할당) + eslint 스캔에서 고아 워크트리 제외 | 2026-08-27 | 3e9bdfd | [260827-mdz-v1-0-lint-6-3-eslint-claude](./quick/260827-mdz-v1-0-lint-6-3-eslint-claude/) |
+| 260828-k4t | 레슨 PDF 내보내기 — 인쇄 전용 스타일시트 + 레슨별 "PDF로 저장" 버튼 + /print 허브와 범위별 묶음 라우트 23개(전체·Step·모듈). 아이패드 인쇄 미리보기 → 공유 → Notability 경로 | 2026-08-28 | 4da9ac2 | [260828-k4t-lesson-pdf-export](./quick/260828-k4t-lesson-pdf-export/) |
 
 ## Deferred Items
 
