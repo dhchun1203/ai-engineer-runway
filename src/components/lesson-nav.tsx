@@ -33,7 +33,7 @@ function PagerButton({
   const isPrev = direction === "prev";
   const label = isPrev ? "이전 레슨" : "다음 레슨";
   const alignClass = isPrev ? "sm:justify-start" : "sm:justify-end";
-  const baseClass = `flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-badge-neutral-bg px-4 py-2 text-body font-normal dark:border-badge-neutral-bg-dark ${alignClass}`;
+  const baseClass = `btn flex-1 text-body ${alignClass}`;
 
   const content = isPrev ? (
     <>
@@ -78,7 +78,7 @@ export function LessonPager({
   return (
     <nav
       aria-label="레슨 페이저"
-      className="mt-8 flex flex-col gap-3 border-t border-badge-neutral-bg pt-6 dark:border-badge-neutral-bg-dark sm:flex-row sm:justify-between"
+      className="hairline mt-8 flex flex-col gap-3 pt-6 sm:flex-row sm:justify-between"
     >
       <PagerButton lesson={prev} direction="prev" />
       <PagerButton lesson={next} direction="next" />

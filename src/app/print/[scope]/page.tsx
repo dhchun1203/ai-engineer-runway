@@ -60,12 +60,12 @@ export default async function PrintScopePage(props: PageProps<"/print/[scope]">)
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-12 sm:px-6 lg:px-8">
-      {/* ── 표지 ───────────────────────────────────────────────────────── */}
+      {/* -- 표지 --------------------------------------------------------- */}
       <section className={`flex flex-col gap-4 border-l-4 pl-4 ${accentBorder}`}>
         <p className="text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark">
           AI Engineer 교육과정 사전학습 노트
         </p>
-        <h1 className="text-display font-bold">{scope.title}</h1>
+        <h1 className="text-display font-black">{scope.title}</h1>
         <p className="text-subhead font-normal">{scope.subtitle}</p>
         <p className="text-label font-normal font-mono text-badge-neutral-text dark:text-badge-neutral-text-dark">
           레슨 {scope.lessons.length}편 · {formatEstimatedTime(scope.totalMinutes)}
@@ -88,9 +88,9 @@ export default async function PrintScopePage(props: PageProps<"/print/[scope]">)
         </p>
       </section>
 
-      {/* ── 목차 ───────────────────────────────────────────────────────── */}
+      {/* -- 목차 --------------------------------------------------------- */}
       <section className="flex flex-col gap-3">
-        <h2 className="text-heading font-bold">목차</h2>
+        <h2 className="text-heading font-extrabold">목차</h2>
         <ol className="flex flex-col gap-2">
           {scope.lessons.map((lesson) => (
             <li key={lesson.slug} className="flex gap-3 text-body font-normal">
@@ -110,7 +110,7 @@ export default async function PrintScopePage(props: PageProps<"/print/[scope]">)
         </ol>
       </section>
 
-      {/* ── 본문 ───────────────────────────────────────────────────────── */}
+      {/* -- 본문 --------------------------------------------------------- */}
       {scope.lessons.map((lesson) => (
         // data-print-break: 레슨마다 새 쪽에서 시작한다(globals.css @media print).
         <article key={lesson.slug} data-print-break className="flex flex-col gap-4">
@@ -119,7 +119,7 @@ export default async function PrintScopePage(props: PageProps<"/print/[scope]">)
               {getLessonNumber(lesson)} · Step {lesson.stepId} ·{" "}
               {getModuleTitle(lesson.moduleId)} · {formatEstimatedTime(lesson.estimatedMinutes)}
             </p>
-            <h2 className="text-display font-bold">{lesson.title}</h2>
+            <h2 className="text-display font-black">{lesson.title}</h2>
           </header>
           <div className="prose dark:prose-invert max-w-none">
             <MDXContent code={lesson.code} />

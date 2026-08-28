@@ -13,12 +13,12 @@ export function DDayCountdown({ daysUntil }: { daysUntil: number }) {
         {isBeforeStart ? '개강까지' : '9/30 개강'}
       </span>
       {isBeforeStart ? (
-        <span className="whitespace-nowrap text-display font-bold text-accent dark:text-accent-dark">
+        <span className="whitespace-nowrap text-display font-black text-accent dark:text-accent-dark">
           D-{daysUntil}
         </span>
       ) : (
         <span className="flex flex-wrap items-baseline gap-2">
-          <span className="whitespace-nowrap text-display font-bold text-accent dark:text-accent-dark">
+          <span className="whitespace-nowrap text-display font-black text-accent dark:text-accent-dark">
             D-DAY
           </span>
           <span className="whitespace-nowrap text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">

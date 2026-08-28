@@ -30,7 +30,7 @@ export function ProgressReadError({
         <button
           type="button"
           onClick={onRetry}
-          className="tap-feedback flex min-h-11 items-center justify-center rounded-lg border border-badge-neutral-bg px-3 dark:border-badge-neutral-bg-dark"
+          className="btn tap-feedback text-label"
         >
           다시 시도
         </button>

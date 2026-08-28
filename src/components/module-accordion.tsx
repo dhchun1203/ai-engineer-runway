@@ -22,10 +22,13 @@ import { useProgress } from "@/components/progress-provider";
 type Lesson = NonNullable<ReturnType<typeof getLessonBySlug>>;
 
 // 아코디언 헤더 배경에 그 모듈이 속한 Step의 상징 색을 쓴다 (D-04).
+// 모듈 헤더는 "한 단계 눌린 면"(surface-2)에 Step 색 왼쪽 굵은 선으로 소속을
+// 말한다 — 헤더 전체에 Step 색 틴트를 깔면 크림 종이 위에서 색 면이 둥둥 뜬다
+// (quick 260828-d3n에서 옮겨온 디자인은 배경 틴트 대신 선과 블록으로 구분한다).
 const STEP_HEADER_CLASSES: Record<StepId, string> = {
-  1: "bg-step-1/10 dark:bg-step-1-dark/10",
-  2: "bg-step-2/10 dark:bg-step-2-dark/10",
-  3: "bg-step-3/10 dark:bg-step-3-dark/10",
+  1: "bg-surface-2 border-l-4 border-l-step-1 dark:bg-surface-2-dark dark:border-l-step-1-dark",
+  2: "bg-surface-2 border-l-4 border-l-step-2 dark:bg-surface-2-dark dark:border-l-step-2-dark",
+  3: "bg-surface-2 border-l-4 border-l-step-3 dark:bg-surface-2-dark dark:border-l-step-3-dark",
 };
 
 export function ModuleAccordion({
@@ -45,7 +48,7 @@ export function ModuleAccordion({
   return (
     <details
       open={defaultOpen}
-      className="group overflow-hidden rounded-lg border border-badge-neutral-bg dark:border-badge-neutral-bg-dark"
+      className="panel group overflow-hidden"
     >
       {/* 폰(375px 미만)에서는 제목 줄과 레슨수/진행률/화살표 줄을 세로로 쌓아
           제목에 전체 폭을 준다(08-05 M2 게이트) — 640px 이상(sm:)에서는
@@ -56,7 +59,7 @@ export function ModuleAccordion({
       <summary
         className={`flex min-h-11 cursor-pointer list-none flex-col items-start gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 ${STEP_HEADER_CLASSES[stepId]}`}
       >
-        <span className="min-w-0 text-heading font-bold">{module.title}</span>
+        <span className="min-w-0 text-heading font-extrabold">{module.title}</span>
         <span className="flex shrink-0 items-center gap-2 text-label font-normal">
           레슨 {lessons.length}개
           <ModuleProgressSlot moduleId={module.id} />
@@ -66,7 +69,7 @@ export function ModuleAccordion({
           />
         </span>
       </summary>
-      <ul className="flex flex-col divide-y divide-badge-neutral-bg px-4 dark:divide-badge-neutral-bg-dark">
+      <ul className="flex flex-col divide-y divide-line px-4 dark:divide-line-dark">
         {lessons.map((lesson) => {
           const isDone = completedSlugs?.includes(lesson.slug) ?? false;
 

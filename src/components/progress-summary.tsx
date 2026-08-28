@@ -44,32 +44,32 @@ export function ProgressSummary({
     <section
       data-progress-ui="summary"
       data-progress-percent={percent}
-      className="flex flex-col gap-4 rounded-lg bg-surface p-6 dark:bg-surface-dark"
+      className="panel flex flex-col gap-4 p-6"
     >
       <div className="flex flex-col gap-2">
-        <h2 className="text-heading font-bold">{heading}</h2>
+        <h2 className="text-heading font-extrabold">{heading}</h2>
         {!isEmpty ? (
-          <p className="text-display font-bold text-accent dark:text-accent-dark">{percent}%</p>
+          <p className="text-display font-black text-accent dark:text-accent-dark">{percent}%</p>
         ) : null}
         <p className="text-body font-normal">{body}</p>
         <ProgressBadge completed={completed} total={total} percent={percent} />
       </div>
       <div
-        className="h-2 w-full overflow-hidden rounded-full bg-badge-neutral-bg dark:bg-badge-neutral-bg-dark"
+        className="h-2 w-full overflow-hidden border border-line bg-surface-2 dark:border-line-dark dark:bg-surface-2-dark"
         role="progressbar"
         aria-valuenow={percent}
         aria-valuemin={0}
         aria-valuemax={100}
       >
         <div
-          className="h-full rounded-full bg-accent dark:bg-accent-dark"
+          className="h-full bg-action dark:bg-action-dark"
           style={{ width: `${percent}%` }}
         />
       </div>
       {cta ? (
         <Link
           href={cta.href}
-          className="tap-feedback flex min-h-11 w-fit items-center justify-center rounded-lg bg-accent px-4 py-2 text-body font-semibold text-white dark:bg-accent-dark dark:text-background-dark"
+          className="btn-action tap-feedback w-fit text-body"
         >
           {cta.label}
         </Link>

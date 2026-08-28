@@ -15,9 +15,9 @@ import { useProgress } from "@/components/progress-provider";
 
 // Step 상징 색 좌측 강조선 — Step 1 #3B82F6/#60A5FA, Step 2 #8B5CF6/#A78BFA, Step 3 #F59E0B/#FBBF24 (D-04).
 const STEP_BORDER_CLASSES: Record<StepId, string> = {
-  1: "border-step-1 dark:border-step-1-dark",
-  2: "border-step-2 dark:border-step-2-dark",
-  3: "border-step-3 dark:border-step-3-dark",
+  1: "border-l-step-1 dark:border-l-step-1-dark",
+  2: "border-l-step-2 dark:border-l-step-2-dark",
+  3: "border-l-step-3 dark:border-l-step-3-dark",
 };
 
 // 진행률 바 채움색도 Step 상징 색을 쓴다(UI-SPEC #20) — 문자열 조립이 아니라
@@ -49,12 +49,12 @@ export function StepCard({
   return (
     <Link
       href={`/step/${step.id}`}
-      className={`card-interactive flex min-h-11 flex-col gap-3 rounded-lg border-l-4 bg-surface p-4 transition-colors duration-150 dark:bg-surface-dark ${STEP_BORDER_CLASSES[step.id]} ${revealIndex !== undefined ? "step-card-reveal" : ""}`}
+      className={`card-interactive panel flex min-h-11 flex-col gap-3 border-l-4 p-4 transition-colors duration-150 ${STEP_BORDER_CLASSES[step.id]} ${revealIndex !== undefined ? "step-card-reveal" : ""}`}
       style={revealIndex !== undefined ? ({ "--reveal-index": revealIndex } as CSSProperties) : undefined}
     >
       <div className="flex items-baseline gap-2">
         <span className="shrink-0 whitespace-nowrap text-label font-semibold">Step {step.id}</span>
-        <h2 className="min-w-0 break-keep text-heading font-bold">{step.shortTitle}</h2>
+        <h2 className="min-w-0 break-keep text-heading font-extrabold">{step.shortTitle}</h2>
       </div>
       <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
         {step.keywords.join(" · ")}
@@ -72,14 +72,14 @@ export function StepCard({
           <div
             data-progress-ui="step-bar"
             data-step-percent={progress.percent}
-            className="mt-1 h-2 w-full overflow-hidden rounded-full bg-badge-neutral-bg dark:bg-badge-neutral-bg-dark"
+            className="mt-1 h-2 w-full overflow-hidden border border-line bg-surface-2 dark:border-line-dark dark:bg-surface-2-dark"
             role="progressbar"
             aria-valuenow={progress.percent}
             aria-valuemin={0}
             aria-valuemax={100}
           >
             <div
-              className={`h-full rounded-full ${STEP_FILL_CLASSES[step.id]}`}
+              className={`h-full ${STEP_FILL_CLASSES[step.id]}`}
               style={{ width: `${progress.percent}%` }}
             />
           </div>

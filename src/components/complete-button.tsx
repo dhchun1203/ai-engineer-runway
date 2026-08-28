@@ -74,10 +74,8 @@ export function CompleteButton({
         aria-busy={isPending}
         aria-pressed={shownDone}
         aria-label={shownDone ? '완료 취소하기' : '레슨 완료하기'}
-        className={`tap-feedback flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 text-body font-semibold ${
-          shownDone
-            ? 'complete-ring-glow border-accent text-accent dark:border-accent-dark dark:text-accent-dark'
-            : 'border-badge-neutral-bg dark:border-badge-neutral-bg-dark'
+        className={`tap-feedback text-body ${
+          shownDone ? 'btn complete-ring-glow text-ok dark:text-ok-dark' : 'btn-action'
         }`}
       >
         {shownDone ? (
@@ -95,7 +93,7 @@ export function CompleteButton({
           <button
             type="button"
             onClick={handleToggle}
-            className="tap-feedback flex min-h-11 items-center justify-center rounded-lg border border-badge-neutral-bg px-3 dark:border-badge-neutral-bg-dark"
+            className="btn tap-feedback text-label"
           >
             다시 시도
           </button>

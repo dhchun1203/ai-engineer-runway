@@ -29,7 +29,7 @@ function isActiveHref(pathname: string, href: string): boolean {
 
 function NavBadge() {
   return (
-    <span className="rounded-full bg-badge-neutral-bg px-2 py-0.5 text-label font-semibold text-badge-neutral-text dark:bg-badge-neutral-bg-dark dark:text-badge-neutral-text-dark">
+    <span className="chip text-label">
       준비 중
     </span>
   );
@@ -40,15 +40,18 @@ export function SiteNav() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="border-b border-badge-neutral-bg bg-surface dark:border-badge-neutral-bg-dark dark:bg-surface-dark">
+    // 크림 지면과 같은 색 + 굵은 잉크 밑줄 하나(.site-header) — 얇은 회색 경계선은
+    // 이 디자인의 문법이 아니다. sticky로 두어 긴 레슨에서도 내비가 따라온다.
+    <header className="site-header sticky top-0 z-20">
       <nav
         aria-label="주요 내비게이션"
         className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2 sm:px-6 lg:px-8"
       >
         <Link
           href="/"
-          className="flex min-h-11 shrink-0 items-center text-heading font-bold"
+          className="flex min-h-11 shrink-0 items-center gap-2 text-heading font-extrabold"
         >
+          <span className="brand-mark" aria-hidden="true" />
           AI Engineer Runway
         </Link>
         <div className="hidden flex-1 flex-wrap items-center gap-x-4 gap-y-1 sm:flex">
@@ -70,10 +73,10 @@ export function SiteNav() {
               <Link
                 key={item.label}
                 href={item.href}
-                className={`tap-feedback flex min-h-11 items-center border-b-2 text-label font-semibold ${
+                className={`tap-feedback flex min-h-11 items-center px-3 text-label font-bold ${
                   isActive
-                    ? "border-accent text-accent dark:border-accent-dark dark:text-accent-dark"
-                    : "border-transparent"
+                    ? "chip-solid"
+                    : "text-muted dark:text-muted-dark"
                 }`}
               >
                 {item.label}
@@ -92,7 +95,7 @@ export function SiteNav() {
             aria-expanded={open}
             aria-controls="site-nav-panel"
             aria-label={open ? "메뉴 닫기" : "메뉴 열기"}
-            className="tap-feedback flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-badge-neutral-text hover:bg-badge-neutral-bg dark:text-badge-neutral-text-dark dark:hover:bg-badge-neutral-bg-dark sm:hidden"
+            className="tap-feedback flex min-h-11 min-w-11 shrink-0 items-center justify-center text-muted hover:bg-surface-2 dark:text-muted-dark dark:hover:bg-surface-2-dark sm:hidden"
           >
             {open ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
           </button>
@@ -102,7 +105,7 @@ export function SiteNav() {
       {open && (
         <div
           id="site-nav-panel"
-          className="nav-panel-reveal border-t border-badge-neutral-bg sm:hidden dark:border-badge-neutral-bg-dark"
+          className="nav-panel-reveal hairline sm:hidden"
         >
           <div className="mx-auto flex w-full max-w-5xl flex-col px-4 pb-2">
             {NAV_ITEMS.map((item) => {
@@ -124,10 +127,10 @@ export function SiteNav() {
                   key={item.label}
                   href={item.href}
                   onClick={() => setOpen(false)}
-                  className={`tap-feedback flex min-h-11 items-center border-l-2 pl-3 text-label font-semibold ${
+                  className={`tap-feedback flex min-h-11 items-center px-3 text-label font-bold ${
                     isActive
-                      ? "border-accent text-accent dark:border-accent-dark dark:text-accent-dark"
-                      : "border-transparent"
+                      ? "chip-solid"
+                      : "text-muted dark:text-muted-dark"
                   }`}
                 >
                   {item.label}

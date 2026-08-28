@@ -29,7 +29,7 @@ export default async function StepPage(props: PageProps<"/step/[stepId]">) {
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-display font-bold">
+            <h1 className="text-display font-black">
               Step {step.id}. {step.title}
             </h1>
             <StepBadgeSlot stepId={step.id} />

@@ -25,11 +25,11 @@ const PAST_TONE_CLASS = "text-badge-neutral-text dark:text-badge-neutral-text-da
 
 // 오늘 행 강조 — accent 좌측 테두리 + 배경 틴트(UI-SPEC Color, D-46). 36행 중 유일하게
 // "튀어야" 하는 행이다.
-const TODAY_ROW_CLASS = "border-l-4 border-accent bg-accent/10 dark:border-accent-dark dark:bg-accent-dark/10";
+const TODAY_ROW_CLASS = "border-l-4 border-l-action bg-surface-2 dark:border-l-action-dark dark:bg-surface-2-dark";
 
 // 개강일 행 — 표 전체의 도착점을 표시하는 accent 좌측 테두리(UI-SPEC Color). 오늘 행과
 // 같은 강조 어휘를 재사용하되 배경 틴트는 더 옅게 둬 "오늘"과 시각적으로 구분한다.
-const COURSE_START_ROW_CLASS = "border-l-4 border-accent bg-accent/5 dark:border-accent-dark dark:bg-accent-dark/5";
+const COURSE_START_ROW_CLASS = "border-l-4 border-l-accent bg-surface-2 dark:border-l-accent-dark dark:bg-surface-2-dark";
 
 function ScheduleLessonRow({
   row,
@@ -185,7 +185,7 @@ export function ScheduleTable({
               둘 사이에 <!-- --> 코멘트 마커를 끼워 넣어 "1주차" 문자열 검색(e2e/텍스트 매칭)이
               깨진다(e2e-today.mjs의 stripSsrComments가 다루는 것과 같은 문제, 여기서는 마커
               삽입 자체를 피한다). */}
-          <h2 className="text-heading font-bold">{`${weekIndex + 1}주차`}</h2>
+          <h2 className="text-heading font-extrabold">{`${weekIndex + 1}주차`}</h2>
           <ul className="flex flex-col divide-y divide-badge-neutral-bg dark:divide-badge-neutral-bg-dark">
             {weekRows.map((row) => {
               const isToday = row.date === today;

@@ -16,7 +16,7 @@ export default function AboutPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      <h1 className="text-display font-bold">{page?.title ?? "소개"}</h1>
+      <h1 className="text-display font-black">{page?.title ?? "소개"}</h1>
 
       {page ? (
         <div
@@ -34,7 +34,7 @@ export default function AboutPage() {
         href={GITHUB_REPO_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex min-h-11 w-fit items-center gap-2 rounded-lg border border-badge-neutral-bg px-4 text-body font-normal text-accent hover:bg-badge-neutral-bg dark:border-badge-neutral-bg-dark dark:text-accent-dark dark:hover:bg-badge-neutral-bg-dark"
+        className="btn tap-feedback w-fit text-body"
       >
         GitHub에서 코드 보기
         <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />

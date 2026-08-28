@@ -20,7 +20,7 @@ export function PrintButton({
       type="button"
       data-print-hide
       onClick={() => window.print()}
-      className={`tap-feedback inline-flex min-h-11 items-center gap-2 rounded-lg border border-badge-neutral-bg px-4 text-label font-semibold text-badge-neutral-text dark:border-badge-neutral-bg-dark dark:text-badge-neutral-text-dark ${className}`}
+      className={`btn tap-feedback text-label ${className}`}
     >
       <Printer className="h-4 w-4 shrink-0" aria-hidden="true" />
       {label}

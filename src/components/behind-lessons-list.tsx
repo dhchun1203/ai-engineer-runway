@@ -26,13 +26,13 @@ export function BehindLessonsList({ rows }: { rows: readonly BehindLessonRow[] }
 
   return (
     <section data-schedule-ui="behind-list" className="flex flex-col gap-3">
-      <h2 className="text-heading font-bold">밀린 레슨 {rows.length}개</h2>
+      <h2 className="text-heading font-extrabold">밀린 레슨 {rows.length}개</h2>
       <ul className="flex flex-col gap-2">
         {rows.map((row) => (
           <li key={row.slug}>
             <Link
               href={`/lesson/${row.slug}`}
-              className="flex min-h-11 flex-wrap items-center justify-between gap-2 rounded-lg bg-surface p-4 dark:bg-surface-dark"
+              className="panel flex min-h-11 flex-wrap items-center justify-between gap-2 p-4"
             >
               <span className="flex flex-col gap-0.5">
                 <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">

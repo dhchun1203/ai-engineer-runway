@@ -75,7 +75,7 @@ export default async function SchedulePage() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-display font-bold">학습 일정표</h1>
+        <h1 className="text-display font-black">학습 일정표</h1>
         <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
           {`${SCHEDULE_START} ~ ${scheduleEnd} · 하루 1레슨(토요일 3일만 2레슨)`}
         </p>

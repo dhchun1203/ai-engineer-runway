@@ -34,14 +34,14 @@ export function PaceStatusPanel({ pace }: { pace: PaceResult }) {
   }
 
   const headingClass = isAhead
-    ? "text-heading font-bold text-accent dark:text-accent-dark"
-    : "text-heading font-bold";
+    ? "text-heading font-extrabold text-accent dark:text-accent-dark"
+    : "text-heading font-extrabold";
 
   return (
     <section
       data-schedule-ui="pace"
       data-pace-status={pace.status}
-      className="flex flex-col gap-2 rounded-lg bg-surface p-6 dark:bg-surface-dark"
+      className="panel flex flex-col gap-2 p-6"
     >
       <div className="flex items-center gap-2">
         {isAhead ? (
