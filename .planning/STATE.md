@@ -193,6 +193,7 @@ None yet.
 | 260827-mdz | v1.0 마감 전 lint 정합성 정리 — 에러 6·경고 3 → 0·0. Phase 1 이월 3건 + Phase 8 신규 3건(effect 내 동기 setState, module 변수명, 렌더 중 재할당) + eslint 스캔에서 고아 워크트리 제외 | 2026-08-27 | 3e9bdfd | [260827-mdz-v1-0-lint-6-3-eslint-claude](./quick/260827-mdz-v1-0-lint-6-3-eslint-claude/) |
 | 260828-k4t | 레슨 PDF 내보내기 — 인쇄 전용 스타일시트 + 레슨별 "PDF로 저장" 버튼 + /print 허브와 범위별 묶음 라우트 23개(전체·Step·모듈). 아이패드 인쇄 미리보기 → 공유 → Notability 경로 | 2026-08-28 | 4da9ac2 | [260828-k4t-lesson-pdf-export](./quick/260828-k4t-lesson-pdf-export/) |
 | 260828-w2r | 아이패드 완료 버튼이 "완료했어요 ✓ → 회색 → 레슨 완료하기"로 되돌아가 보이던 증상 — 재조회가 화면을 비워 버튼을 언마운트하던 구조와 낙관적 값 되돌림 시점을 함께 수정, 게이트 G12 개정·G23 신설 | 2026-08-28 | e61cbaf | [260828-w2r-complete-button-revert](./quick/260828-w2r-complete-button-revert/) |
+| 260828-d3n | 자매 사이트(marketing.dailyaithread.com) 디자인을 전체 이식 — 크림 종이·각진 패널·하드 오프셋 그림자·굵은 제목 팔레트로 교체, 컴포넌트 클래스 9종 신설, 타이포 게이트 허용 집합 갱신 | 2026-08-28 | 78e25e2 | [260828-d3n-design-system-port](./quick/260828-d3n-design-system-port/) |
 
 ## Deferred Items
 
