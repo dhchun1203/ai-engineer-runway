@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { pretendard } from "@/lib/fonts";
 import { SiteNav } from "@/components/site-nav";
+import { PrintMode } from "@/components/print-mode";
 import "./globals.css";
 
 // D-15: 비밀이 아닌 값 — 환경변수가 없어도 빌드가 성공해야 한다.
@@ -46,6 +47,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full flex flex-col">
         <SiteNav />
+        {/* 인쇄 직전 다크 모드 해제 + 접힌 상자 펼침 — 어느 페이지에서 인쇄하든
+            같은 종이가 나오도록 루트 레이아웃에 한 번만 둔다. */}
+        <PrintMode />
         {children}
       </body>
     </html>

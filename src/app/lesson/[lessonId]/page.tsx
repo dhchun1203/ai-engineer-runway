@@ -5,6 +5,7 @@ import { EstimatedTime } from "@/components/estimated-time";
 import { LessonBreadcrumb, LessonPager } from "@/components/lesson-nav";
 import { SectionTape } from "@/components/section-tape";
 import { ProgressProvider } from "@/components/progress-provider";
+import { PrintButton } from "@/components/print-button";
 import { CompleteButtonSlot, LessonNoteSlot } from "@/components/progress-slots";
 import {
   getLessonBySlug,
@@ -51,9 +52,15 @@ export default async function LessonPage(
           <LessonBreadcrumb lesson={lesson} />
           <header className="flex flex-col gap-3">
             <h1 className="text-display font-bold">{lesson.title}</h1>
-            <div className="flex items-center gap-2">
-              <DepthBadge depth={lesson.depth} stepId={lesson.stepId as StepId} />
-              <EstimatedTime minutes={lesson.estimatedMinutes} />
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <DepthBadge depth={lesson.depth} stepId={lesson.stepId as StepId} />
+                <EstimatedTime minutes={lesson.estimatedMinutes} />
+              </div>
+              {/* 이 레슨 한 편만 PDF로 뽑는 입구. 여러 편을 한 파일로 묶는 것은
+                  /print가 맡는다. 콘텐츠가 없는 자리표시 레슨에는 뽑을 것이
+                  없으므로 버튼도 내지 않는다. */}
+              {lesson.hasContent ? <PrintButton /> : null}
             </div>
           </header>
           {lesson.hasContent ? (

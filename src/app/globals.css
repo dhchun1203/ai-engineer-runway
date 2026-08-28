@@ -691,3 +691,141 @@ code[data-theme*=" "] span {
     animation: none;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   인쇄(PDF) 전용 스타일 — 아이패드 Safari 인쇄 미리보기 → 공유 → Notability
+   경로를 1급 출력으로 삼는다(quick 260828-k4t).
+
+   서버 PDF 렌더러(puppeteer/chromium)를 도입하지 않은 이유: 이 사이트는 완전
+   정적 프리렌더이고 Vercel 함수에 chromium을 얹는 비용이 얻는 것보다 크다.
+   iOS Safari의 인쇄 미리보기는 그 자체로 PDF이고 공유 시트에서 Notability로
+   바로 넘어간다 — 브라우저가 이미 PDF 렌더러인 셈이다.
+
+   다크 모드 해제와 <details> 펼침은 CSS로 완전히 처리할 수 없어(전자는
+   `dark:` 유틸리티가 만든 수백 개 선언, 후자는 content-visibility 계열이 아닌
+   HTML 동작) print-mode.tsx가 인쇄 직전 DOM에서 처리한다. 아래 규칙들은 그
+   스크립트가 실패했을 때를 위한 안전망 + 스크립트로는 못 하는 지면 제어다. */
+@media print {
+  @page {
+    margin: 14mm 12mm;
+  }
+
+  /* 안전망 1 — 스크립트가 .dark를 못 걷어냈을 때도 종이는 흰색이어야 한다.
+     새 색을 만들지 않고 라이트 테마 토큰을 그대로 쓴다. */
+  html,
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    color-scheme: light;
+  }
+
+  /* 안전망 2 — Shiki 다크 배경(검은 코드 박스)이 지면을 덮지 않게 라이트
+     변수로 되돌린다. 화면용 `.dark` 규칙(위쪽)과 같은 선택자에 라이트 값만
+     다시 얹는 형태다. */
+  .dark pre[data-theme*=" "],
+  .dark code[data-theme*=" "],
+  .dark code[data-theme*=" "] span {
+    color: var(--shiki-light);
+    background-color: var(--shiki-light-bg);
+  }
+
+  /* 종이에 찍히면 안 되는 화면 전용 크롬. [data-print-hide]는 앞으로 추가될
+     요소들이 선택자 목록을 건드리지 않고 스스로 빠질 수 있는 열린 문이다. */
+  body > header,
+  [data-print-hide],
+  [data-progress-controls],
+  [data-section-tape],
+  [data-notepad],
+  [data-notepad-read-error],
+  [data-locked-notice],
+  [data-code-block] > button,
+  .progress-skeleton {
+    display: none !important;
+  }
+
+  /* 화면에서 메모장 손잡이 자리를 비워두던 하단 여백 — 종이에서는 빈 지면이다. */
+  .note-page-spacer {
+    padding-bottom: 0;
+  }
+
+  /* 화면 레이아웃의 좌우 여백·최대 폭은 @page margin이 대신한다. */
+  main {
+    max-width: none;
+    padding: 0;
+  }
+
+  /* 코드 블록: 화면에서는 가로 스크롤로 보던 긴 줄이 종이에서는 스크롤이
+     없으므로 그대로 잘려 나간다 — 인쇄에서만 줄바꿈으로 전환한다. 복사 버튼이
+     사라졌으니 오른쪽 예약 padding(3.5rem)도 되돌린다. */
+  pre {
+    overflow: visible;
+    padding: 0.75rem 1rem;
+    min-height: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  pre code,
+  pre code span {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* 쪽 나눔 제어 — 코드/표/정답 상자가 두 쪽에 걸쳐 반토막 나지 않게 하고,
+     제목만 쪽 끝에 홀로 남는 것을 막는다. */
+  .prose [data-code-block],
+  .prose table,
+  .prose figure,
+  .prose blockquote,
+  .prose details {
+    break-inside: avoid;
+  }
+
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4 {
+    break-after: avoid;
+    break-inside: avoid;
+  }
+
+  .prose p,
+  .prose li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* 종이에서 표는 스크롤 래퍼가 아니라 그냥 표다. */
+  .prose .overflow-x-auto {
+    overflow: visible;
+  }
+
+  /* 화면 기준 본문(16px/1.8)은 종이에서 과하게 크다 — 한 단계 줄이고 행간도
+     지면 밀도에 맞춘다. 값은 D-R4K-4 타입 스케일 안에서 고른다. */
+  .prose {
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    max-width: none;
+  }
+
+  .prose > p {
+    margin-block: 1.2em;
+  }
+
+  .prose > h2 {
+    margin-top: 1.8em;
+  }
+
+  /* 묶음 인쇄(/print/[scope]): 레슨마다 새 쪽에서 시작한다. 첫 레슨은
+     표지·목차 다음 쪽으로 이미 넘어가 있으므로 빈 쪽이 생기지 않는다. */
+  [data-print-break] {
+    break-before: page;
+  }
+
+  /* 링크는 종이에서 파란 밑줄이 아니라 본문색 그대로가 읽기 편하다 —
+     주소를 괄호로 펼치지도 않는다(레슨 안 링크가 많아 지면이 지저분해진다). */
+  .prose a {
+    color: inherit;
+    text-decoration: underline;
+  }
+}
