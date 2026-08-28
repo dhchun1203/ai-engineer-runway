@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { FileText } from "lucide-react";
 import { steps } from "@/content/modules";
 import { getModulesByStep, getLessonCounts } from "@/content/curriculum-helpers";
 import { StepCard } from "@/components/step-card";
@@ -23,8 +25,17 @@ export default function CurriculumPage() {
   return (
     <ProgressProvider>
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-        <header className="flex flex-col gap-2">
+        <header className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-display font-bold">커리큘럼</h1>
+          {/* PDF 내보내기 입구. 레슨 한 편은 레슨 화면의 버튼이, 여러 편 묶음은
+              /print 허브가 맡는다(quick 260828-k4t). */}
+          <Link
+            href="/print"
+            className="tap-feedback inline-flex min-h-11 items-center gap-2 rounded-lg border border-badge-neutral-bg px-4 text-label font-semibold text-badge-neutral-text dark:border-badge-neutral-bg-dark dark:text-badge-neutral-text-dark"
+          >
+            <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
+            PDF 내보내기
+          </Link>
         </header>
         <DDayCountdownLive initialDaysUntil={initialDaysUntil} />
         <ProgressSummarySlot />
