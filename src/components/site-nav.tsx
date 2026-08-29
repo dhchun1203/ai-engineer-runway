@@ -49,7 +49,7 @@ export function SiteNav() {
       >
         <Link
           href="/"
-          className="flex min-h-11 shrink-0 items-center gap-2 text-heading font-extrabold"
+          className="brand-link flex min-h-11 shrink-0 items-center gap-2 text-heading font-extrabold"
         >
           <span className="brand-mark" aria-hidden="true" />
           AI Engineer Runway
@@ -73,7 +73,7 @@ export function SiteNav() {
               <Link
                 key={item.label}
                 href={item.href}
-                className={`tap-feedback flex min-h-11 items-center px-3 text-label font-bold ${
+                className={`nav-link tap-feedback flex min-h-11 items-center px-3 text-label font-bold ${
                   isActive
                     ? "chip-solid"
                     : "text-muted dark:text-muted-dark"
@@ -95,7 +95,7 @@ export function SiteNav() {
             aria-expanded={open}
             aria-controls="site-nav-panel"
             aria-label={open ? "메뉴 닫기" : "메뉴 열기"}
-            className="tap-feedback flex min-h-11 min-w-11 shrink-0 items-center justify-center text-muted hover:bg-surface-2 dark:text-muted-dark dark:hover:bg-surface-2-dark sm:hidden"
+            className="tap-feedback flex min-h-11 min-w-11 shrink-0 items-center justify-center text-badge-neutral-text hover:bg-badge-neutral-bg dark:text-badge-neutral-text-dark dark:hover:bg-badge-neutral-bg-dark sm:hidden"
           >
             {open ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
           </button>
@@ -127,7 +127,7 @@ export function SiteNav() {
                   key={item.label}
                   href={item.href}
                   onClick={() => setOpen(false)}
-                  className={`tap-feedback flex min-h-11 items-center px-3 text-label font-bold ${
+                  className={`nav-link tap-feedback flex min-h-11 items-center px-3 text-label font-bold ${
                     isActive
                       ? "chip-solid"
                       : "text-muted dark:text-muted-dark"

@@ -194,6 +194,7 @@ None yet.
 | 260828-k4t | 레슨 PDF 내보내기 — 인쇄 전용 스타일시트 + 레슨별 "PDF로 저장" 버튼 + /print 허브와 범위별 묶음 라우트 23개(전체·Step·모듈). 아이패드 인쇄 미리보기 → 공유 → Notability 경로 | 2026-08-28 | 4da9ac2 | [260828-k4t-lesson-pdf-export](./quick/260828-k4t-lesson-pdf-export/) |
 | 260828-w2r | 아이패드 완료 버튼이 "완료했어요 ✓ → 회색 → 레슨 완료하기"로 되돌아가 보이던 증상 — 재조회가 화면을 비워 버튼을 언마운트하던 구조와 낙관적 값 되돌림 시점을 함께 수정, 게이트 G12 개정·G23 신설 | 2026-08-28 | e61cbaf | [260828-w2r-complete-button-revert](./quick/260828-w2r-complete-button-revert/) |
 | 260828-d3n | 자매 사이트(marketing.dailyaithread.com) 디자인을 전체 이식 — 크림 종이·각진 패널·하드 오프셋 그림자·굵은 제목 팔레트로 교체, 컴포넌트 클래스 9종 신설, 타이포 게이트 허용 집합 갱신 | 2026-08-28 | 78e25e2 | [260828-d3n-design-system-port](./quick/260828-d3n-design-system-port/) |
+| 260829-hof | 헤더 내비 호버 효과 — 비활성 항목 잉크 밑줄(좌→우), 활성 항목 accent 하드 그림자로 떠오르기, 로고 표식 뜨기. 기존 규칙이 @layer components에 있어 utilities 레이어에 지고 있던(= 호버가 전혀 없던) 원인까지 수정 | 2026-08-29 | 7cb0564 | [260829-hof-nav-hover](./quick/260829-hof-nav-hover/) |
 
 ## Deferred Items
 
