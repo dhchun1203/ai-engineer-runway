@@ -70,6 +70,58 @@ export function computePace(
 }
 
 /**
+ * 앞서간 정도를 수치로 만든다 — "앞서가고 있어요"만으로는 얼마나인지 알 수 없다.
+ *
+ * computePace()의 반환 타입을 건드리지 않고 별도 함수로 두는 이유: 그 함수의
+ * 판정은 22개 케이스 게이트(scripts/check-pace.mjs)가 반환 객체 전체를
+ * deepStrictEqual로 고정하고 있다. 필드를 하나 더하면 22개가 전부 깨진다.
+ * 여기서 재는 것은 판정이 아니라 "얼마나"이므로 분리하는 편이 맞기도 하다.
+ *
+ * 세는 대상은 **오늘 이후(오늘 포함) 배정분 중 이미 완료한 것**이다. 어제까지의
+ * 배정분은 앞선 것이 아니라 원래 했어야 하는 몫이므로 제외한다.
+ *
+ * daysAhead는 **오늘보다 뒤**에 배정된 날짜 중 완료한 것의 개수다(오늘 몫을
+ * 끝낸 것은 0일 앞선 것 — 예정대로 한 것이지 앞선 게 아니다). 날짜는 문자열
+ * 사전순 비교로 충분하다(computePace와 같은 전제).
+ */
+export type AheadDetail = {
+  lessonCount: number; // 오늘 이후 배정분 중 미리 끝낸 레슨 수
+  minutes: number; // 그 레슨들의 예상 소요 합계
+  throughDate: string | null; // 완료한 것 중 가장 늦은 배정일 (없으면 null)
+  daysAhead: number; // 오늘보다 뒤 날짜를 며칠치 끝냈는지
+};
+
+export function computeAheadDetail(
+  rows: readonly { date: string; lessonSlug: string | null }[],
+  minutesBySlug: ReadonlyMap<string, number>,
+  completedIds: ReadonlySet<string>,
+  todayStr: string,
+): AheadDetail {
+  const doneFromToday = rows.filter(
+    (r) => r.lessonSlug !== null && r.date >= todayStr && completedIds.has(r.lessonSlug),
+  );
+
+  const minutes = doneFromToday.reduce(
+    (sum, r) => sum + (minutesBySlug.get(r.lessonSlug as string) ?? 0),
+    0,
+  );
+
+  let throughDate: string | null = null;
+  const futureDates = new Set<string>();
+  for (const r of doneFromToday) {
+    if (throughDate === null || r.date > throughDate) throughDate = r.date;
+    if (r.date > todayStr) futureDates.add(r.date);
+  }
+
+  return {
+    lessonCount: doneFromToday.length,
+    minutes,
+    throughDate,
+    daysAhead: futureDates.size,
+  };
+}
+
+/**
  * 밀린 분량(gapMinutes)을 하루 30분씩 추가 투입하면 며칠 만에 따라잡는지 계산한다
  * (D-43, RESEARCH.md Assumption A1). 하루 추가 30분 상수는 이 함수 안에만 두고
  * UI 문구 층이 같은 계산을 다시 하지 않게 한다.

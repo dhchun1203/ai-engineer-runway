@@ -8,7 +8,7 @@ import { hasUnlockCookie } from "@/lib/auth";
 import { readCompletedLessonIds } from "@/lib/progress-store";
 import { overallProgress, nextIncompleteLesson } from "@/lib/progress";
 import { todayInSeoul, daysUntil } from "@/lib/today";
-import { computePace } from "@/lib/pace";
+import { computePace, computeAheadDetail } from "@/lib/pace";
 import { SCHEDULE_START, COURSE_START_DATE, rowsForDate, firstRowAfter } from "@/lib/schedule";
 import { getScheduleRows, getLessonMinutesBySlug } from "@/lib/schedule-data";
 import { getLessonBySlug } from "@/content/curriculum-helpers";
@@ -68,6 +68,10 @@ export default async function Home() {
   // 레슨 목록의 유일한 출처다(별도 재계산 금지).
   const minutesBySlug = getLessonMinutesBySlug();
   const pace = completedIds ? computePace(rows, minutesBySlug, completedIds, today) : null;
+  // 앞선 정도의 "얼마나"는 판정과 분리된 별도 계산이다(lib/pace.ts 주석 참고).
+  const ahead = completedIds
+    ? computeAheadDetail(rows, minutesBySlug, completedIds, today)
+    : undefined;
 
   // 오늘 배정 레슨을 전부 완료했을 때만 true — completedIds가 null이면 조회
   // 실패/쿠키 없음을 미완료로 오인시키지 않도록 null을 유지한다.
@@ -139,7 +143,7 @@ export default async function Home() {
       />
       {completedIds ? (
         <>
-          {pace ? <PaceStatusPanel pace={pace} /> : null}
+          {pace ? <PaceStatusPanel pace={pace} ahead={ahead} /> : null}
           {behindRows.length > 0 ? <BehindLessonsList rows={behindRows} /> : null}
         </>
       ) : progressRead && !progressRead.ok ? (

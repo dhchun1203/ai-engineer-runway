@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// src/lib/pace.ts(computePace, catchUpDays)의 3분기 경계값을 node:assert로 직접
+// src/lib/pace.ts(computePace, computeAheadDetail, catchUpDays)의 경계값을 node:assert로 직접
 // 실행 검증하는 게이트. 외부 의존성 0, 새 devDependency 추가 없음. pace.ts는
 // import를 쓰지 않으므로 Node가 별도 러너 없이 그대로 로드한다(Node 22.6+ 타입
 // 스트리핑, check-progress-math.mjs/check-schedule.mjs와 같은 원리). 실제
@@ -26,7 +26,7 @@ function runCase(name, fn) {
 }
 
 async function main() {
-  const { computePace, catchUpDays } = await import(pathToFileURL(PACE_PATH).href);
+  const { computePace, catchUpDays, computeAheadDetail } = await import(pathToFileURL(PACE_PATH).href);
 
   // --- computePace ---
 
@@ -283,6 +283,96 @@ async function main() {
 
   runCase('catchUpDays(151) -> 6', () => {
     assert.strictEqual(catchUpDays(151), 6);
+  });
+
+  // --- computeAheadDetail (앞선 정도의 "얼마나") ---
+
+  runCase('앞선 것 없음 -> 전부 0/null', () => {
+    const rows = [
+      { date: '2026-08-28', lessonSlug: 'l1' },
+      { date: '2026-08-29', lessonSlug: 'l2' },
+    ];
+    const m = new Map([['l1', 60], ['l2', 90]]);
+    const r = computeAheadDetail(rows, m, new Set(['l1']), '2026-08-29');
+    assert.deepStrictEqual(r, { lessonCount: 0, minutes: 0, throughDate: null, daysAhead: 0 });
+  });
+
+  runCase('오늘 몫만 완료 -> lessonCount 1, daysAhead 0 (예정대로 한 것은 앞선 것이 아니다)', () => {
+    const rows = [
+      { date: '2026-08-28', lessonSlug: 'l1' },
+      { date: '2026-08-29', lessonSlug: 'l2' },
+    ];
+    const m = new Map([['l1', 60], ['l2', 90]]);
+    const r = computeAheadDetail(rows, m, new Set(['l1', 'l2']), '2026-08-29');
+    assert.deepStrictEqual(r, {
+      lessonCount: 1,
+      minutes: 90,
+      throughDate: '2026-08-29',
+      daysAhead: 0,
+    });
+  });
+
+  runCase('내일·모레 몫까지 완료 -> daysAhead 2, 분 합계 누적', () => {
+    const rows = [
+      { date: '2026-08-29', lessonSlug: 'l1' },
+      { date: '2026-08-30', lessonSlug: 'l2' },
+      { date: '2026-08-31', lessonSlug: 'l3' },
+    ];
+    const m = new Map([['l1', 60], ['l2', 90], ['l3', 150]]);
+    const r = computeAheadDetail(rows, m, new Set(['l1', 'l2', 'l3']), '2026-08-29');
+    assert.deepStrictEqual(r, {
+      lessonCount: 3,
+      minutes: 300,
+      throughDate: '2026-08-31',
+      daysAhead: 2,
+    });
+  });
+
+  runCase('같은 날 2레슨을 미리 완료 -> daysAhead는 날짜 기준이라 1', () => {
+    const rows = [
+      { date: '2026-08-29', lessonSlug: 'l1' },
+      { date: '2026-08-30', lessonSlug: 'l2' },
+      { date: '2026-08-30', lessonSlug: 'l3' },
+    ];
+    const m = new Map([['l1', 60], ['l2', 90], ['l3', 90]]);
+    const r = computeAheadDetail(rows, m, new Set(['l2', 'l3']), '2026-08-29');
+    assert.strictEqual(r.lessonCount, 2);
+    assert.strictEqual(r.minutes, 180);
+    assert.strictEqual(r.daysAhead, 1);
+    assert.strictEqual(r.throughDate, '2026-08-30');
+  });
+
+  runCase('버퍼일(lessonSlug null)은 어느 집계에도 들어가지 않는다', () => {
+    const rows = [
+      { date: '2026-08-29', lessonSlug: null },
+      { date: '2026-08-30', lessonSlug: 'l1' },
+    ];
+    const m = new Map([['l1', 60]]);
+    const r = computeAheadDetail(rows, m, new Set(['l1']), '2026-08-29');
+    assert.deepStrictEqual(r, {
+      lessonCount: 1,
+      minutes: 60,
+      throughDate: '2026-08-30',
+      daysAhead: 1,
+    });
+  });
+
+  runCase('minutesBySlug에 없는 slug는 0분으로 취급하고 던지지 않는다', () => {
+    const rows = [{ date: '2026-08-30', lessonSlug: 'unknown' }];
+    const r = computeAheadDetail(rows, new Map(), new Set(['unknown']), '2026-08-29');
+    assert.strictEqual(r.lessonCount, 1);
+    assert.strictEqual(r.minutes, 0);
+    assert.strictEqual(r.daysAhead, 1);
+  });
+
+  runCase('어제 완료분은 앞선 것으로 세지 않는다', () => {
+    const rows = [
+      { date: '2026-08-27', lessonSlug: 'l1' },
+      { date: '2026-08-28', lessonSlug: 'l2' },
+    ];
+    const m = new Map([['l1', 60], ['l2', 60]]);
+    const r = computeAheadDetail(rows, m, new Set(['l1', 'l2']), '2026-08-29');
+    assert.deepStrictEqual(r, { lessonCount: 0, minutes: 0, throughDate: null, daysAhead: 0 });
   });
 
   if (failures.length > 0) {
