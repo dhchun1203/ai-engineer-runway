@@ -268,6 +268,102 @@ body {
     color: var(--color-background-dark);
   }
 
+  /* 호버 — 눌림의 반대 방향. 살짝 떠오르면서 그림자가 한 뼘 커진다.
+     "이건 누를 수 있다"를 색이 아니라 깊이로 말한다.
+
+     @media (hover: hover)로 감싸는 이유가 중요하다: 아이패드에서 :hover를 조건
+     없이 걸면 탭한 버튼이 손을 뗀 뒤에도 떠 있는 상태로 남는다(터치 기기는
+     hover를 "마지막으로 만진 요소"에 붙들어 둔다). 이 사이트의 1순위 기기가
+     아이패드라 이 가드가 없으면 오히려 고장처럼 보인다.
+
+     :active 규칙보다 **앞에** 둔다 — 명세성이 같으므로 뒤에 오는 :active가
+     이겨야 누르는 동안 확실히 내려앉는다. */
+  @media (hover: hover) {
+    .btn:hover,
+    .btn-action:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0 0 var(--color-foreground);
+    }
+
+    .dark .btn:hover,
+    .dark .btn-action:hover {
+      box-shadow: 4px 4px 0 0 var(--color-foreground-dark);
+    }
+
+    /* 비활성 버튼은 뜨지 않는다 — 누를 수 없는데 누를 수 있어 보이면 안 된다. */
+    .btn:disabled:hover,
+    .btn-action:disabled:hover {
+      transform: none;
+      box-shadow: 3px 3px 0 0 var(--color-foreground);
+    }
+
+    .dark .btn:disabled:hover,
+    .dark .btn-action:disabled:hover {
+      box-shadow: 3px 3px 0 0 var(--color-foreground-dark);
+    }
+
+    /* 칩은 뜨지 않고 선만 진해진다 — 칩은 정보 조각이지 버튼이 아니다.
+       누를 수 있는 칩(시작 버튼 등)도 같은 신호로 충분하다. */
+    .chip:hover {
+      border-color: var(--color-foreground);
+      color: var(--color-foreground);
+    }
+
+    .dark .chip:hover {
+      border-color: var(--color-foreground-dark);
+      color: var(--color-foreground-dark);
+    }
+
+    /* 누를 수 있는 패널(Step 카드·모듈·PDF 범위 카드)도 같은 문법으로 뜬다. */
+    .card-interactive.panel:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 6px 6px 0 0 var(--color-shadow-hard);
+    }
+
+    .dark .card-interactive.panel:hover {
+      box-shadow: 6px 6px 0 0 var(--color-shadow-hard-dark);
+    }
+
+    /* 헤더 내비의 비활성 항목 — 잉크색으로 또렷해진다. 활성 항목은 이미 꽉 찬
+       블록이라 더 보탤 것이 없다. */
+    .site-header a:not(.chip-solid):hover {
+      color: var(--color-foreground);
+    }
+
+    .dark .site-header a:not(.chip-solid):hover {
+      color: var(--color-foreground-dark);
+    }
+  }
+
+  /* 트랜지션은 transform과 box-shadow만 — 6.A 원칙(그 둘 외에는 애니메이트하지
+     않는다)을 그대로 지킨다. .tap-feedback이 이미 transform에 트랜지션을 걸고
+     있지만 버튼은 그 클래스 없이도 같은 감각이어야 한다. */
+  .btn,
+  .btn-action,
+  .chip,
+  .card-interactive.panel {
+    transition:
+      transform 120ms ease-out,
+      box-shadow 120ms ease-out,
+      border-color 120ms ease-out,
+      color 120ms ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn,
+    .btn-action,
+    .chip,
+    .card-interactive.panel {
+      transition: none;
+    }
+
+    .btn:hover,
+    .btn-action:hover,
+    .card-interactive.panel:hover {
+      transform: none;
+    }
+  }
+
   /* 눌림 — 그림자만큼 실제로 내려앉는다. .tap-feedback의 scale과 겹치지 않도록
      버튼·패널은 이 규칙이 transform을 가져간다(뒤에 정의되어 우선한다). */
   .btn:active,
