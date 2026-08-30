@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
@@ -38,11 +38,39 @@ function NavBadge() {
 export function SiteNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+
+  // 헤더의 실제 높이를 --site-header-height에 실어 보낸다(quick 260831-0f5).
+  // 이 값을 소비하는 곳은 두 군데다: 구간 테이프가 서는 자리(.section-tape의
+  // top)와 h2 착지 오프셋(--section-tape-scroll-offset). 상수로 둘 수 없어
+  // 실측한다 — 내비는 좁은 폭에서 두 줄로 접히고(320px 114px, 640px 110px,
+  // 그 외 62px), 햄버거 패널을 펼치면 헤더가 더 자란다. 그때 테이프가 따라
+  // 내려가지 않으면 다시 헤더 뒤로 들어간다.
+  //
+  // CSS 변수만 쓰고 상태를 만들지 않는다 — 이 값은 렌더에 쓰이지 않으므로
+  // setState는 리렌더만 유발한다. 서버 렌더 마크업도 건드리지 않아
+  // 하이드레이션 불일치 경로가 없다(globals.css의 기본값 62px이 첫 페인트를 맡는다).
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+
+    const apply = () => {
+      document.documentElement.style.setProperty(
+        "--site-header-height",
+        `${Math.round(el.getBoundingClientRect().height)}px`,
+      );
+    };
+
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     // 크림 지면과 같은 색 + 굵은 잉크 밑줄 하나(.site-header) — 얇은 회색 경계선은
     // 이 디자인의 문법이 아니다. sticky로 두어 긴 레슨에서도 내비가 따라온다.
-    <header className="site-header sticky top-0 z-20">
+    <header ref={headerRef} className="site-header sticky top-0 z-20">
       <nav
         aria-label="주요 내비게이션"
         className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2 sm:px-6 lg:px-8"

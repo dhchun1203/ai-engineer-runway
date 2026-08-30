@@ -44,6 +44,9 @@ const SCROLL_STABLE_TIMEOUT_MS = 3_000;
 const SCROLL_STABLE_POLL_MS = 50;
 const SCROLL_STABLE_CONSECUTIVE = 3;
 const BOUNDARY_TOLERANCE_PX = 0.5;
+// 테이프 부착 판정 허용 오차 — 헤더 높이를 JS가 정수 px로 반올림해
+// --site-header-height에 쓰므로 최대 1px가 남을 수 있다(quick 260831-0f5).
+const STICK_TOLERANCE_PX = 1.5;
 const LESSON_ARTICLE_ID = 'lesson-article';
 const PRIMARY_SLUG = '1-1-course-orientation';
 
@@ -190,6 +193,16 @@ function buildTapeMeasurementScript() {
     const tape = document.querySelector('[data-section-tape]');
     if (!tape) return { tapeFound: false };
 
+    // 사이트 헤더도 sticky top-0이다 — 테이프가 '붙었는지'는 뷰포트 상단(0)이 아니라
+    // 헤더 아래쪽 경계를 기준으로 판정해야 한다(quick 260831-0f5).
+    const headerEl = document.querySelector('header.site-header');
+    const headerRect = headerEl
+      ? (() => {
+          const r = headerEl.getBoundingClientRect();
+          return { top: r.top, bottom: r.bottom, height: r.height };
+        })()
+      : null;
+
     const tapeRectRaw = tape.getBoundingClientRect();
     const tapeRect = {
       top: tapeRectRaw.top,
@@ -250,6 +263,7 @@ function buildTapeMeasurementScript() {
       titleClientWidth,
       headingTop,
       headingText,
+      headerRect,
       scrollY: window.scrollY,
       docScrollWidth: docEl.scrollWidth,
       docClientWidth: docEl.clientWidth,
@@ -321,11 +335,22 @@ function evaluateViolations(m) {
     });
   }
 
-  if (m.scrollY > 0 && m.tapeRect.top > 1) {
-    violations.push({
-      tag: '[테이프-미부착]',
-      detail: `scrollY=${m.scrollY} tapeTop=${m.tapeRect.top.toFixed(1)}`,
-    });
+  // 테이프는 뷰포트 상단이 아니라 '헤더 아래'에 붙어야 한다. 이전 판정은
+  // top === 0을 요구했는데, 그 자리는 불투명한 .site-header(z-20)가 이미
+  // 차지하고 있어 통과 = 테이프가 화면에서 사라짐이었다(quick 260831-0f5).
+  // 헤더를 못 찾으면 옛 기준(0)으로 물러선다 — 조용히 검사를 건너뛰지 않는다.
+  if (m.scrollY > 0) {
+    const expectedTop = m.headerRect ? m.headerRect.bottom : 0;
+    const gap = m.tapeRect.top - expectedTop;
+    if (Math.abs(gap) > STICK_TOLERANCE_PX) {
+      violations.push({
+        tag: '[테이프-미부착]',
+        detail:
+          `scrollY=${m.scrollY} tapeTop=${m.tapeRect.top.toFixed(1)} ` +
+          `headerBottom=${expectedTop.toFixed(1)} 차=${gap.toFixed(1)}px` +
+          (gap < 0 ? ' (헤더에 가려짐)' : ' (헤더와 본문 사이에 틈)'),
+      });
+    }
   }
 
   if (m.docScrollWidth > m.docClientWidth) {

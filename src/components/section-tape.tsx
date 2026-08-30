@@ -54,6 +54,11 @@ const PLACEHOLDER_SECTION_COUNT = 6;
 // (h-11 Tailwind 클래스도 이 상수의 세 번째 사본이었으므로 함께 제거했다).
 // updateCurrent()의 임계값도 이 값을 다시 여기 적지 않고 DOM에서 유도한다
 // (아래 참고).
+//
+// 테이프가 서는 자리(top)도 같은 이유로 여기 없다 — Tailwind의 `top-0`을 붙이면
+// 사이트 헤더(sticky top-0, z-20, 불투명)와 같은 자리에 서서 통째로 가려진다
+// (quick 260831-0f5). `.section-tape`가 `top: var(--site-header-height)`로
+// 헤더 바로 아래를 잡는다.
 
 export function SectionTape({
   articleId,
@@ -204,7 +209,7 @@ export function SectionTape({
     <div
       ref={tapeRef}
       data-section-tape
-      className="section-tape sticky top-0 z-10 flex w-full overflow-x-hidden bg-background dark:bg-background-dark"
+      className="section-tape sticky z-10 flex w-full overflow-x-hidden bg-background dark:bg-background-dark"
     >
       {cells.map((section, index) => {
         const isCurrent = sections !== null && index === currentIndex;
