@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { pretendard } from "@/lib/fonts";
+import { pretendard, newsreader, notoSerifKr, jetbrainsMono } from "@/lib/fonts";
 import { SiteNav } from "@/components/site-nav";
 import { PrintMode } from "@/components/print-mode";
 import { ScrollToTop } from "@/components/scroll-to-top";
@@ -42,7 +42,10 @@ const themeInitScript = `
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ko" className={`${pretendard.variable} h-full antialiased`}>
+    <html
+      lang="ko"
+      className={`${pretendard.variable} ${newsreader.variable} ${notoSerifKr.variable} ${jetbrainsMono.variable} h-full antialiased`}
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

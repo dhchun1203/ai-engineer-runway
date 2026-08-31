@@ -47,3 +47,8 @@ next-env.d.ts
 # claude code local settings + agent worktrees
 .claude/settings.local.json
 .claude/worktrees/
+
+# 서브셋 원본 폰트 중 대용량 파일 — 저장소에 두지 않는다(23MB, git 히스토리에
+# 영구히 남는다). scripts/subset-font.mjs가 없으면 자동으로 내려받고, 앱이 실제로
+# 쓰는 서브셋 결과(public/fonts/*.subset.woff2)는 커밋한다.
+/assets/fonts/NotoSerifKR.ttf

@@ -25,7 +25,40 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 
-const SUBSET_FONT_PATH = path.join(ROOT, 'public', 'fonts', 'PretendardVariable.subset.woff2');
+// 자체 호스팅하는 서브셋 폰트 전부. scripts/subset-font.mjs의 FONTS와 짝이다 —
+// 거기에 폰트를 추가하면 여기에도 추가해야 그 폰트의 글리프 누락이 잡힌다.
+// 폰트마다 **책임 범위가 다르다** — 폰트 스택에서 맡은 자리가 다르기 때문이다.
+//
+// Pretendard는 제목·UI를 그리고, 본문 스택에서도 맨 뒤 안전망이다(명조에 없는
+// 기호가 시스템 폰트로 새는 것을 막는다). 그래서 콘텐츠 문자 **전부**를 덮어야 한다.
+//
+// Noto Serif KR은 본문 스택에서 한글만 받는다(라틴은 앞의 Newsreader가, 나머지는 뒤의
+// Pretendard가 가져간다). 그래서 **한글**만 덮으면 된다 — 이 폰트에 ①②③이
+// 없다고 실패시키면, 애초에 이 폰트가 그리지 않을 글자를 요구하는 것이다.
+const HANGUL_RANGES = [
+  [0x1100, 0x11ff], // 한글 자모
+  [0x3130, 0x318f], // 호환용 자모
+  [0xa960, 0xa97f], // 확장 자모-A
+  [0xac00, 0xd7a3], // 완성형 음절
+  [0xd7b0, 0xd7ff], // 확장 자모-B
+];
+
+const isHangul = (cp) => HANGUL_RANGES.some(([s, e]) => cp >= s && cp <= e);
+
+const SUBSET_FONTS = [
+  {
+    label: 'Pretendard (제목·UI + 본문 안전망)',
+    path: path.join(ROOT, 'public', 'fonts', 'PretendardVariable.subset.woff2'),
+    scope: '콘텐츠 전체',
+    required: () => true,
+  },
+  {
+    label: 'Noto Serif KR (본문 한글 명조)',
+    path: path.join(ROOT, 'public', 'fonts', 'NotoSerifKR.subset.woff2'),
+    scope: '한글',
+    required: isHangul,
+  },
+];
 
 // --- 제외 규칙 상수 (본문 폰트가 아니라 시스템 폴백이 그리는 문자) ---
 // [start, end] 코드포인트 구간(포함) 배열.
@@ -49,11 +82,25 @@ function isExcludedCodepoint(cp) {
 
 // --- 1. 서브셋 파일 부재 시 skip ---
 
-if (!fs.existsSync(SUBSET_FONT_PATH)) {
+// 하나라도 없으면 skip이 아니라 실패다. 예전에는 폰트가 하나뿐이라 "아직 안 만든
+// 상태"와 "만들다 만 상태"가 구별되지 않았지만, 이제는 둘 중 하나만 없는 것이
+// 곧 결함이다 — 본문 폰트가 빠진 채로 초록불이 뜨면 안 된다.
+const absentFonts = SUBSET_FONTS.filter((f) => !fs.existsSync(f.path));
+
+if (absentFonts.length === SUBSET_FONTS.length) {
   console.log(
-    `check-font-glyph-coverage: ${path.relative(ROOT, SUBSET_FONT_PATH)} not found — 서브셋 폰트가 아직 없음(08-04가 만든다). Skipping.`,
+    'check-font-glyph-coverage: 서브셋 폰트가 하나도 없음 — `node scripts/subset-font.mjs`가 아직 실행되지 않았습니다. Skipping.',
   );
   process.exit(0);
+}
+
+if (absentFonts.length > 0) {
+  for (const f of absentFonts) {
+    console.error(
+      `check-font-glyph-coverage: [${f.label}] ${path.relative(ROOT, f.path)}가 없습니다 — \`node scripts/subset-font.mjs\`를 실행하세요.`,
+    );
+  }
+  process.exit(1);
 }
 
 // --- 2. 콘텐츠 문자 집합 수집 (앱 코드를 import하지 않고 소스 파일을 직접 스캔) ---
@@ -260,40 +307,65 @@ function parseCmapCodepoints(cmapBuffer) {
   return codepoints;
 }
 
-let cmapCodepoints;
-try {
-  const fontBuffer = fs.readFileSync(SUBSET_FONT_PATH);
+function readCmapCodepoints(fontPath) {
+  const fontBuffer = fs.readFileSync(fontPath);
   const { tables, decompressed } = parseWoff2TableDirectory(fontBuffer);
   const cmapTable = tables.find((t) => t.tag === 'cmap');
   if (!cmapTable) {
-    console.error(`check-font-glyph-coverage: ${path.relative(ROOT, SUBSET_FONT_PATH)}에 cmap 테이블이 없습니다`);
-    process.exit(1);
+    throw new Error('cmap 테이블이 없습니다');
   }
   const cmapBuffer = decompressed.subarray(cmapTable.streamOffset, cmapTable.streamOffset + cmapTable.streamLength);
-  cmapCodepoints = parseCmapCodepoints(cmapBuffer);
-} catch (e) {
-  console.error(`check-font-glyph-coverage: ${path.relative(ROOT, SUBSET_FONT_PATH)} 파싱 실패: ${e.message}`);
-  process.exit(1);
+  return parseCmapCodepoints(cmapBuffer);
 }
 
-// --- 4. 콘텐츠 집합 − cmap 집합 차집합 ---
+// --- 4. 서브셋 폰트마다 (콘텐츠 집합 − cmap 집합) 차집합 ---
+//
+// 본문이 세리프로 바뀌면서 자체 호스팅 폰트가 둘이 됐다(quick 260831-wlw). 하나만
+// 검사하면 "제목은 멀쩡한데 본문 한글만 빠지는" 결함이 게이트를 그대로 통과한다 —
+// 서브셋 누락은 배포 후에야 눈에 띄므로 폰트가 늘어나면 검사도 같이 늘어야 한다.
 
-const missing = [...contentCodepoints].filter((cp) => !cmapCodepoints.has(cp)).sort((a, b) => a - b);
+let failed = false;
 
-if (missing.length > 0) {
-  const shown = missing.slice(0, 40);
-  console.error(
-    `check-font-glyph-coverage: ${missing.length}개 문자가 서브셋 폰트에 없습니다(최대 40개 표시):`,
+for (const font of SUBSET_FONTS) {
+  const rel = path.relative(ROOT, font.path);
+
+  let cmapCodepoints;
+  try {
+    cmapCodepoints = readCmapCodepoints(font.path);
+  } catch (e) {
+    console.error(`check-font-glyph-coverage: ${rel} 파싱 실패: ${e.message}`);
+    failed = true;
+    continue;
+  }
+
+  const required = [...contentCodepoints].filter(font.required);
+  const missing = required.filter((cp) => !cmapCodepoints.has(cp)).sort((a, b) => a - b);
+
+  if (missing.length > 0) {
+    console.error(
+      `check-font-glyph-coverage: [${font.label}] 담당 범위(${font.scope})의 ${missing.length}개 문자가 ${rel}에 없습니다(최대 40개 표시):`,
+    );
+    console.error(
+      missing
+        .slice(0, 40)
+        .map((cp) => `U+${cp.toString(16).toUpperCase().padStart(4, '0')}`)
+        .join(', '),
+    );
+    failed = true;
+    continue;
+  }
+
+  console.log(
+    `check-font-glyph-coverage: [${font.label}] 담당 ${required.length}자(${font.scope}) 전부 있음 — 통과`,
   );
-  console.error(
-    shown
-      .map((cp) => `U+${cp.toString(16).toUpperCase().padStart(4, '0')}`)
-      .join(', '),
-  );
+}
+
+if (failed) {
+  console.error('check-font-glyph-coverage: 누락된 글리프를 메우려면 `node scripts/subset-font.mjs`를 다시 실행하세요.');
   process.exit(1);
 }
 
 console.log(
-  `check-font-glyph-coverage: 콘텐츠 유니크 문자 ${contentCodepoints.size}개가 서브셋 cmap에 전부 있습니다 — 통과`,
+  `check-font-glyph-coverage: 콘텐츠 유니크 문자 ${contentCodepoints.size}개가 서브셋 폰트 ${SUBSET_FONTS.length}종의 cmap에 전부 있습니다 — 통과`,
 );
 process.exit(0);

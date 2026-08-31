@@ -29,8 +29,42 @@ import subsetFont from 'subset-font';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 
-const SOURCE_FONT_PATH = path.join(ROOT, 'assets', 'fonts', 'PretendardVariable.woff2');
-const OUTPUT_FONT_PATH = path.join(ROOT, 'public', 'fonts', 'PretendardVariable.subset.woff2');
+// 서브셋할 폰트들. 문자 집합은 하나를 공유한다 — 제목(Pretendard)과 본문(Noto Serif KR)이
+// 서로 다른 글자를 쓰지 않으므로, 집합을 나누면 "제목에만 쓰인 글자"를 추적하는
+// 경로가 생기고 그게 곧 어긋남의 원인이 된다(quick 260831-wlw).
+const FONTS = [
+  {
+    label: 'Pretendard (제목·UI 산세)',
+    source: path.join(ROOT, 'assets', 'fonts', 'PretendardVariable.woff2'),
+    output: path.join(ROOT, 'public', 'fonts', 'PretendardVariable.subset.woff2'),
+  },
+  {
+    label: 'Noto Serif KR (본문 한글 명조)',
+    source: path.join(ROOT, 'assets', 'fonts', 'NotoSerifKR.ttf'),
+    output: path.join(ROOT, 'public', 'fonts', 'NotoSerifKR.subset.woff2'),
+    // 원본이 23MB라 저장소에 두지 않는다(.gitignore) — git 히스토리에 영구히 남는
+    // 비용이 서브셋을 다시 만들 때 한 번 받는 비용보다 크다. 없으면 여기서 받는다.
+    // 라이선스(OFL)는 assets/fonts/NotoSerifKR-OFL.txt로 함께 보관한다.
+    sourceUrl:
+      'https://raw.githubusercontent.com/google/fonts/main/ofl/notoserifkr/NotoSerifKR%5Bwght%5D.ttf',
+  },
+];
+
+async function ensureSource(font) {
+  if (fs.existsSync(font.source)) return true;
+  if (!font.sourceUrl) return false;
+
+  console.log(`subset-font: ${path.relative(ROOT, font.source)}가 없어 내려받습니다…`);
+  const res = await fetch(font.sourceUrl);
+  if (!res.ok) {
+    console.error(`subset-font: 내려받기 실패(HTTP ${res.status}) — ${font.sourceUrl}`);
+    return false;
+  }
+  fs.mkdirSync(path.dirname(font.source), { recursive: true });
+  fs.writeFileSync(font.source, Buffer.from(await res.arrayBuffer()));
+  console.log(`subset-font: 받음 (${fs.statSync(font.source).size.toLocaleString()} bytes)`);
+  return true;
+}
 
 // KS X 1001 완성형 한글 2,350자 (출처: 위 헤더 주석 참고, Unicode.org KSX1001.TXT에서
 // "HANGUL SYLLABLE" 행만 추출 — 정확히 2,350자, U+AC00~U+D79D).
@@ -279,31 +313,42 @@ console.log(`subset-font: 최종 서브셋 문자 집합 ${finalCodepoints.size}
 // 하므로(축이 잘리면 font-weight: 700을 쓰는 제목·강조가 굵어지지 않는다) variationAxes를 아예
 // 생략해 전체 가변 축을 그대로 넘긴다.
 async function main() {
-  if (!fs.existsSync(SOURCE_FONT_PATH)) {
-    console.error(`subset-font: 원본 폰트가 없습니다: ${path.relative(ROOT, SOURCE_FONT_PATH)}`);
+  const missing = [];
+  for (const f of FONTS) {
+    if (!(await ensureSource(f))) missing.push(f);
+  }
+  if (missing.length > 0) {
+    for (const f of missing) {
+      console.error(`subset-font: 원본 폰트가 없습니다: ${path.relative(ROOT, f.source)}`);
+    }
     process.exit(1);
   }
 
-  const originalBuffer = fs.readFileSync(SOURCE_FONT_PATH);
-  const originalSize = originalBuffer.length;
-
-  const subsetBuffer = await subsetFont(originalBuffer, subsetText, {
-    targetFormat: 'woff2',
-  });
-
-  fs.mkdirSync(path.dirname(OUTPUT_FONT_PATH), { recursive: true });
-  fs.writeFileSync(OUTPUT_FONT_PATH, subsetBuffer);
-
-  const subsetSize = subsetBuffer.length;
-  const reductionPercent = ((1 - subsetSize / originalSize) * 100).toFixed(2);
-
   console.log('\n=== subset-font: 결과 ===');
-  console.log(`원본 크기: ${originalSize.toLocaleString()} bytes`);
-  console.log(`서브셋 크기: ${subsetSize.toLocaleString()} bytes`);
-  console.log(`감소율: ${reductionPercent}%`);
-  console.log(`포함 문자 수: ${finalCodepoints.size.toLocaleString()}`);
-  console.log(`출력 경로: ${path.relative(ROOT, OUTPUT_FONT_PATH)}`);
-  console.log('=== 끝 ===\n');
+  console.log(`포함 문자 수: ${finalCodepoints.size.toLocaleString()} (모든 폰트 공통)`);
+
+  for (const font of FONTS) {
+    const originalBuffer = fs.readFileSync(font.source);
+    const originalSize = originalBuffer.length;
+
+    const subsetBuffer = await subsetFont(originalBuffer, subsetText, {
+      targetFormat: 'woff2',
+    });
+
+    fs.mkdirSync(path.dirname(font.output), { recursive: true });
+    fs.writeFileSync(font.output, subsetBuffer);
+
+    const subsetSize = subsetBuffer.length;
+    const reductionPercent = ((1 - subsetSize / originalSize) * 100).toFixed(2);
+
+    console.log(`\n[${font.label}]`);
+    console.log(`  원본 크기: ${originalSize.toLocaleString()} bytes`);
+    console.log(`  서브셋 크기: ${subsetSize.toLocaleString()} bytes`);
+    console.log(`  감소율: ${reductionPercent}%`);
+    console.log(`  출력 경로: ${path.relative(ROOT, font.output)}`);
+  }
+
+  console.log('\n=== 끝 ===\n');
 }
 
 main().catch((e) => {

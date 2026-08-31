@@ -141,6 +141,16 @@ function buildBrowserMeasurementScript() {
     for (const el of all) {
       if (el.closest('pre')) continue;
 
+      // 그림(data-diagram) 안 글자는 이 게이트의 대상이 아니다. 크기가 SVG
+      // 좌표계 안의 값이라 페이지 타입 스케일과 단위가 다르다 — 그림이 본문 폭에
+      // 맞춰 줄어들면 화면상 크기도 같이 줄어들고, viewBox마다 배율이 다르므로
+      // "18px 텍스트"가 화면에서 18px이라는 보장 자체가 없다. globals.css의
+      // `.prose [data-diagram] text` 주석이 같은 이유로 크기를 각 SVG에 맡긴다.
+      //
+      // 이 제외가 없으면 그림을 한 점 그릴 때마다 타입 스케일 위반이 쌓인다
+      // (실제로 레슨 35편에 그림 115점을 넣은 뒤 이 게이트가 깨져 있었다).
+      if (el.closest('[data-diagram]')) continue;
+
       const hasDirectText = Array.from(el.childNodes).some(
         (n) => n.nodeType === Node.TEXT_NODE && n.textContent.trim().length > 0,
       );
