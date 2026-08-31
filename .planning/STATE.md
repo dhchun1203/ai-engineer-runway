@@ -196,7 +196,7 @@ None yet.
 | 260828-d3n | 자매 사이트(marketing.dailyaithread.com) 디자인을 전체 이식 — 크림 종이·각진 패널·하드 오프셋 그림자·굵은 제목 팔레트로 교체, 컴포넌트 클래스 9종 신설, 타이포 게이트 허용 집합 갱신 | 2026-08-28 | 78e25e2 | [260828-d3n-design-system-port](./quick/260828-d3n-design-system-port/) |
 | 260829-hof | 헤더 내비 호버 효과 — 비활성 항목 잉크 밑줄(좌→우), 활성 항목 accent 하드 그림자로 떠오르기, 로고 표식 뜨기. 기존 규칙이 @layer components에 있어 utilities 레이어에 지고 있던(= 호버가 전혀 없던) 원인까지 수정 | 2026-08-29 | f02867e | [260829-hof-nav-hover](./quick/260829-hof-nav-hover/) |
 | 260831-0f5 | 구간 테이프가 스크롤 시 안 보이던 문제 — sticky top-0이 같은 자리의 불투명한 헤더(z-20) 뒤로 들어가 통째로 가려졌다. --site-header-height 단일 소스 신설(실측 갱신), h2 착지 오프셋에 헤더 높이 반영, 옛 동작을 고정하던 e2e 게이트 판정 개정 | 2026-08-31 | d56d836 | [260831-0f5-section-tape-under-header](./quick/260831-0f5-section-tape-under-header/) |
-| 260831-mih | 레슨에 실제 그림 들이기 파일럿 — 35편 전수에 다이어그램 0건이던 원인(D-48 금지 결정)을 확인하고 철회. 인라인 SVG 방식으로 1-3 Python 변수·자료형에 그림 4점 추가, 테마·인쇄·아이패드 폭 실측. 나머지 34편은 승인 대기 | 2026-08-31 | PENDING | [260831-mih-lesson-diagram-pilot](./quick/260831-mih-lesson-diagram-pilot/) |
+| 260831-mih | 레슨에 실제 그림 들이기 파일럿 — 35편 전수에 다이어그램 0건이던 원인(D-48 금지 결정)을 확인하고 철회. 인라인 SVG 방식으로 1-3 Python 변수·자료형에 그림 4점 추가, 테마·인쇄·아이패드 폭 실측. 나머지 34편은 승인 대기 | 2026-08-31 | feccb67 | [260831-mih-lesson-diagram-pilot](./quick/260831-mih-lesson-diagram-pilot/) |
 
 ## Deferred Items
 
