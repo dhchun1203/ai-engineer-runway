@@ -5,8 +5,8 @@ milestone_name: 사전학습 사이트 v1.0
 status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
 last_updated: "2026-08-27T07:20:04.732Z"
-last_activity: 2026-08-27
-last_activity_desc: v1.0 shipped and archived (verified_closeout, 7 phases / 51 plans / 20 requirements)
+last_activity: 2026-08-31
+last_activity_desc: quick 260831-n5r — 레슨 35편 전편 그림 115점 확장 완료
 progress:
   total_phases: 7
   completed_phases: 7
@@ -197,6 +197,7 @@ None yet.
 | 260829-hof | 헤더 내비 호버 효과 — 비활성 항목 잉크 밑줄(좌→우), 활성 항목 accent 하드 그림자로 떠오르기, 로고 표식 뜨기. 기존 규칙이 @layer components에 있어 utilities 레이어에 지고 있던(= 호버가 전혀 없던) 원인까지 수정 | 2026-08-29 | f02867e | [260829-hof-nav-hover](./quick/260829-hof-nav-hover/) |
 | 260831-0f5 | 구간 테이프가 스크롤 시 안 보이던 문제 — sticky top-0이 같은 자리의 불투명한 헤더(z-20) 뒤로 들어가 통째로 가려졌다. --site-header-height 단일 소스 신설(실측 갱신), h2 착지 오프셋에 헤더 높이 반영, 옛 동작을 고정하던 e2e 게이트 판정 개정 | 2026-08-31 | d56d836 | [260831-0f5-section-tape-under-header](./quick/260831-0f5-section-tape-under-header/) |
 | 260831-mih | 레슨에 실제 그림 들이기 파일럿 — 35편 전수에 다이어그램 0건이던 원인(D-48 금지 결정)을 확인하고 철회. 인라인 SVG 방식으로 1-3 Python 변수·자료형에 그림 4점 추가, 테마·인쇄·아이패드 폭 실측. 나머지 34편은 승인 대기 | 2026-08-31 | feccb67 | [260831-mih-lesson-diagram-pilot](./quick/260831-mih-lesson-diagram-pilot/) |
+| 260831-n5r | 파일럿 승인 후 나머지 34편으로 확장 — 레슨 35편 전편에 개념 그림 115점(편당 2~4점). 함께: 그림 강조색이 Step을 안 따라가던 문제(prose data-step + globals.css 오버라이드), 파일럿이 남긴 서브셋 폰트 ≥ 글리프 구멍. 계약 검사기·768px 런타임 스윕 전수 통과 | 2026-08-31 | 5095e76, 5920835, 7fbeb93, 336d7eb, 883b2b4 | [260831-n5r-lesson-diagram-rollout](./quick/260831-n5r-lesson-diagram-rollout/) |
 
 ## Deferred Items
 
