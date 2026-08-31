@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { pretendard } from "@/lib/fonts";
 import { SiteNav } from "@/components/site-nav";
 import { PrintMode } from "@/components/print-mode";
+import { ScrollToTop } from "@/components/scroll-to-top";
 import "./globals.css";
 
 // D-15: 비밀이 아닌 값 — 환경변수가 없어도 빌드가 성공해야 한다.
@@ -51,6 +52,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             같은 종이가 나오도록 루트 레이아웃에 한 번만 둔다. */}
         <PrintMode />
         {children}
+        {/* 맨 위로 가기 — 어느 화면에서든 같은 자리에 있어야 하므로 루트에 한 번만
+            둔다. 자기 자리는 스스로 안다(.scroll-top). */}
+        <ScrollToTop />
       </body>
     </html>
   );
