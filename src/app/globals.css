@@ -927,6 +927,49 @@ code[data-theme*=" "] span {
   margin-block: 2.4em;
 }
 
+/* ── 레슨 본문 그림 (quick 260831-mih) ─────────────────────────────────────
+   레슨의 개념 설명에 들어가는 인라인 SVG. 렌더 라이브러리를 쓰지 않는 이유는
+   이 사이트가 코드 하이라이팅을 빌드 타임으로 미룬 것과 같다 — 아이패드에
+   그림 하나 그리자고 수백 KB 자바스크립트를 얹지 않는다. MDX의 인라인 SVG는
+   Velite가 JSX로 컴파일해 정적 HTML로 나오므로 클라이언트 JS가 0바이트다.
+
+   그림은 자기 색을 직접 정하지 않는다 — 아래 네 변수만 참조하고, 실제 값은
+   테마가 정한다. 그래야 새 레슨이 그림을 그릴 때 색을 고민하지 않고,
+   팔레트가 바뀌어도 35편을 다시 열 필요가 없다. */
+.prose [data-diagram] {
+  /* 선과 글자는 본문 잉크를 그대로 물려받는다 — 테마 전환이 저절로 따라온다. */
+  --diagram-ink: currentColor;
+  --diagram-accent: var(--color-step-1);
+  /* 강조색 위에 얹는 글자색 — 팔레트에 라이트/다크 짝이 따로 있어
+     currentColor로 대신할 수 없다(강조색 블록 위에서는 잉크가 안 읽힌다). */
+  --diagram-on-accent: var(--color-surface);
+  --diagram-soft: var(--color-surface-2);
+  --diagram-line: var(--color-line);
+
+  display: block;
+  width: 100%;
+  /* viewBox 비율대로 줄어든다 — 아이패드 세로(768px)에서도 가로로 넘치지
+     않는다. max-width는 그림이 본문 폭을 넘겨 커지는 것만 막는다. */
+  height: auto;
+  max-width: 34rem;
+  margin: 2.4em auto;
+}
+
+.dark .prose [data-diagram] {
+  --diagram-accent: var(--color-step-1-dark);
+  --diagram-on-accent: var(--color-background-dark);
+  --diagram-soft: var(--color-surface-2-dark);
+  --diagram-line: var(--color-line-dark);
+}
+
+/* 그림 안 글자는 본문 스케일과 따로 논다 — SVG 좌표계 안의 크기이므로
+   타이포 토큰(rem)을 쓰면 그림이 커질 때 글자만 어긋난다. 크기는 각 SVG가
+   fontSize로 직접 정하고, 여기서는 서체만 본문과 맞춘다. */
+.prose [data-diagram] text {
+  font-family: inherit;
+  font-weight: 600;
+}
+
 /* 문단 간격이 커진 만큼 섹션(heading) 경계는 그보다 더 크게 유지해야 위계가 뒤집히지
    않는다 — h2(3.2em ≈ 문단 간격의 1.33배)가 h3(2.6em)보다 크고, 둘 다 문단 간격
    2.4em보다 크다. */
