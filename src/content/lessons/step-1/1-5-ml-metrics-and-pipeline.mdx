@@ -30,6 +30,28 @@ slug: "1-5-ml-metrics-and-pipeline"
 
 그래서 데이터를 학습용(train)과 평가용(test)으로 미리 나눠두고, 모델은 학습용만 보고 배우게 하고 점수는 평가용으로만 매깁니다. 앞 레슨(`1-5-ml-model-types`)의 예제는 이 구분 없이 전체 데이터로 학습과 채점을 같이 했는데, 이번 레슨부터는 이 구분을 반드시 지킵니다.
 
+<svg data-diagram viewBox="0 0 540 244" role="img" aria-labelledby="dia-train-test-t">
+  <title id="dia-train-test-t">데이터를 학습용과 평가용으로 먼저 나눈다. 모델은 학습용만 보고 배우고, 점수는 평가용으로만 매겨야 성적이 정직하다.</title>
+  <text x="260" y="30" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">데이터를 먼저 둘로 나눈다</text>
+  <rect x="24" y="52" width="480" height="44" fill="var(--diagram-line)" />
+  <rect x="20" y="48" width="480" height="44" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="20" y="48" width="336" height="44" fill="var(--diagram-accent)" />
+  <text x="188" y="76" textAnchor="middle" fontSize="15" fill="var(--diagram-on-accent)">학습용 70%</text>
+  <text x="428" y="76" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">평가용 30%</text>
+  <line x1="356" y1="48" x2="356" y2="92" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="188" y1="96" x2="188" y2="124" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="182,124 194,124 188,136" fill="var(--diagram-ink)" />
+  <line x1="428" y1="96" x2="428" y2="124" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="422,124 434,124 428,136" fill="var(--diagram-ink)" />
+  <rect x="104" y="148" width="176" height="52" fill="var(--diagram-line)" />
+  <rect x="100" y="144" width="176" height="52" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="188" y="176" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">모델이 배운다</text>
+  <rect x="344" y="148" width="176" height="52" fill="var(--diagram-line)" />
+  <rect x="340" y="144" width="176" height="52" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="428" y="176" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">점수를 매긴다</text>
+  <text x="260" y="228" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">평가용은 학습에 쓰지 않는다</text>
+</svg>
+
 ### 📊 성적표 읽는 법
 
 이번에는 앞 레슨에서 쓴 그 꽃 데이터(`load_iris`)와 같은 분류기를 그대로 씁니다. 성적을 재는 지표는 여러 개가 있고, 지표마다 보는 게 다릅니다.
@@ -42,11 +64,71 @@ slug: "1-5-ml-metrics-and-pipeline"
 
 정확도 하나만 보면 위험한 상황이 있습니다. 100명 중 1명만 병에 걸린 데이터에서 "전부 정상"이라고만 찍어도 정확도는 99%가 나옵니다. 이런 데이터를 불균형 데이터(imbalanced data, 정답 종류의 비율이 한쪽으로 크게 치우친 데이터)라고 부르는데, 이때는 정밀도·재현율을 함께 봐야 모델이 실제로 쓸모 있는지 알 수 있습니다.
 
+<svg data-diagram viewBox="0 0 560 240" role="img" aria-labelledby="dia-precision-recall-t">
+  <title id="dia-precision-recall-t">정밀도와 재현율은 같은 결과를 다른 기준으로 잰다. 정밀도는 모델이 맞다고 한 것 중 진짜의 비율이고, 재현율은 실제 정답 중 찾아낸 것의 비율이다.</title>
+  <text x="280" y="24" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">같은 결과를 두 가지로 잰다</text>
+  <rect x="64" y="74" width="40" height="40" fill="var(--diagram-line)" />
+  <rect x="60" y="70" width="40" height="40" fill="var(--diagram-accent)" />
+  <rect x="110" y="74" width="40" height="40" fill="var(--diagram-line)" />
+  <rect x="106" y="70" width="40" height="40" fill="var(--diagram-accent)" />
+  <rect x="156" y="74" width="40" height="40" fill="var(--diagram-line)" />
+  <rect x="152" y="70" width="40" height="40" fill="var(--diagram-accent)" />
+  <rect x="202" y="74" width="40" height="40" fill="var(--diagram-line)" />
+  <rect x="198" y="70" width="40" height="40" fill="var(--diagram-accent)" />
+  <rect x="248" y="74" width="40" height="40" fill="var(--diagram-line)" />
+  <rect x="244" y="70" width="40" height="40" fill="var(--diagram-accent)" />
+  <rect x="294" y="74" width="40" height="40" fill="var(--diagram-line)" />
+  <rect x="290" y="70" width="40" height="40" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="340" y="74" width="40" height="40" fill="var(--diagram-line)" />
+  <rect x="336" y="70" width="40" height="40" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="386" y="74" width="40" height="40" fill="var(--diagram-line)" />
+  <rect x="382" y="70" width="40" height="40" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="432" y="74" width="40" height="40" fill="var(--diagram-line)" />
+  <rect x="428" y="70" width="40" height="40" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="478" y="74" width="40" height="40" fill="var(--diagram-line)" />
+  <rect x="474" y="70" width="40" height="40" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="146" y="60" width="190" height="58" fill="none" stroke="var(--diagram-accent)" strokeWidth="3" strokeDasharray="8 6" />
+  <text x="241" y="48" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">모델이 &#34;맞다&#34;고 한 4개</text>
+  <line x1="60" y1="128" x2="284" y2="128" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <line x1="60" y1="128" x2="60" y2="120" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <line x1="284" y1="128" x2="284" y2="120" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <text x="172" y="150" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">색칠된 칸 = 실제 정답 5개</text>
+  <text x="60" y="190" textAnchor="start" fontSize="15" fill="var(--diagram-ink)">정밀도 = 3 / 4</text>
+  <text x="220" y="190" textAnchor="start" fontSize="13" fill="var(--diagram-accent)">&#34;맞다&#34;고 한 4개 중 3개가 진짜</text>
+  <text x="60" y="224" textAnchor="start" fontSize="15" fill="var(--diagram-ink)">재현율 = 3 / 5</text>
+  <text x="220" y="224" textAnchor="start" fontSize="13" fill="var(--diagram-accent)">실제 정답 5개 중 3개를 찾아냄</text>
+</svg>
+
 ### 🏭 조립 라인 — Pipeline
 
 전처리(스케일 맞추기)와 모델을 따로 실행하면 문제가 생길 수 있습니다. 스케일러를 전체 데이터로 먼저 맞춰버리면, 평가용 데이터의 정보가 학습 단계에 몰래 새어 들어가 버립니다 — 이를 데이터 누수(data leakage, 평가용 정보가 학습 과정에 섞여 들어가는 문제)라고 합니다.
 
 Pipeline(파이프라인, 전처리와 모델을 순서대로 묶어 하나처럼 다루는 도구)은 공장 조립 라인처럼 `재료 → 전처리 → 모델 → 결과`를 한 덩어리로 묶어서, 항상 학습용 데이터로만 전처리 기준을 정하고 평가용 데이터에는 그 기준을 적용만 하도록 강제합니다.
+
+<svg data-diagram viewBox="0 0 560 240" role="img" aria-labelledby="dia-pipeline-t">
+  <title id="dia-pipeline-t">Pipeline은 전처리와 모델을 한 덩어리로 묶는다. 전처리 기준이 학습용 데이터에서만 정해지므로 평가용 정보가 학습에 새어 들어가지 않는다.</title>
+  <text x="280" y="30" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">재료 → 전처리 → 모델을 한 덩어리로</text>
+  <rect x="10" y="86" width="90" height="58" fill="var(--diagram-line)" />
+  <rect x="6" y="82" width="90" height="58" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="51" y="106" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">학습용</text>
+  <text x="51" y="128" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">데이터</text>
+  <line x1="104" y1="111" x2="124" y2="111" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="124,104 138,111 124,118" fill="var(--diagram-ink)" />
+  <rect x="140" y="60" width="400" height="110" fill="none" stroke="var(--diagram-accent)" strokeWidth="3" strokeDasharray="8 6" />
+  <text x="158" y="84" textAnchor="start" fontSize="14" fill="var(--diagram-accent)">Pipeline</text>
+  <rect x="170" y="104" width="160" height="54" fill="var(--diagram-line)" />
+  <rect x="166" y="100" width="160" height="54" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="246" y="124" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">스케일러</text>
+  <text x="246" y="146" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">크기 맞추기</text>
+  <line x1="334" y1="127" x2="346" y2="127" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="346,120 358,127 346,134" fill="var(--diagram-ink)" />
+  <rect x="366" y="104" width="160" height="54" fill="var(--diagram-line)" />
+  <rect x="362" y="100" width="160" height="54" fill="var(--diagram-accent)" />
+  <text x="442" y="124" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">모델</text>
+  <text x="442" y="146" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">학습 · 예측</text>
+  <text x="280" y="204" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">전처리 기준은 학습용에서만 정해진다</text>
+  <text x="280" y="226" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">평가용 정보가 학습에 새지 않는다</text>
+</svg>
 
 ## 4. 실무 예제
 

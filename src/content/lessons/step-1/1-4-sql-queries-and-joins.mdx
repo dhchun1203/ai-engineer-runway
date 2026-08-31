@@ -35,17 +35,160 @@ slug: "1-4-sql-queries-and-joins"
 | `WHERE` | 조건에 맞는 행만 남긴다 | `grade > 1` |
 | `ORDER BY` | 결과 순서를 정한다 | `grade DESC` |
 
+<svg data-diagram viewBox="0 0 520 268" role="img" aria-labelledby="dia-select-shape-t">
+  <title id="dia-select-shape-t">조회 쿼리의 네 자리는 표를 서로 다른 방향으로 자른다. WHERE는 가로로 행을 남기고, SELECT는 세로로 열을 고르며, FROM은 어느 표인지, ORDER BY는 결과 순서를 정한다.</title>
+  <rect x="144" y="90" width="250" height="144" fill="var(--diagram-line)" />
+  <rect x="140" y="86" width="250" height="144" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="140" y="86" width="250" height="36" fill="var(--diagram-accent)" />
+  <text x="175" y="110" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">id</text>
+  <text x="255" y="110" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">name</text>
+  <text x="345" y="110" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">grade</text>
+  <line x1="140" y1="122" x2="390" y2="122" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="140" y1="158" x2="390" y2="158" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="140" y1="194" x2="390" y2="194" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="210" y1="86" x2="210" y2="230" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="300" y1="86" x2="300" y2="230" stroke="var(--diagram-line)" strokeWidth="2" />
+  <text x="175" y="146" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">1</text>
+  <text x="255" y="146" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">김지현</text>
+  <text x="345" y="146" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">2</text>
+  <text x="175" y="182" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">2</text>
+  <text x="255" y="182" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">이민준</text>
+  <text x="345" y="182" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">1</text>
+  <text x="175" y="218" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">3</text>
+  <text x="255" y="218" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">박서연</text>
+  <text x="345" y="218" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">3</text>
+  <rect x="140" y="122" width="250" height="36" fill="none" stroke="var(--diagram-accent)" strokeWidth="3" />
+  <rect x="140" y="194" width="250" height="36" fill="none" stroke="var(--diagram-accent)" strokeWidth="3" />
+  <line x1="210" y1="64" x2="390" y2="64" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <line x1="210" y1="64" x2="210" y2="80" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <line x1="390" y1="64" x2="390" y2="80" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <text x="300" y="50" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">SELECT — 이 열만</text>
+  <line x1="136" y1="140" x2="112" y2="140" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="136" y1="212" x2="112" y2="212" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="112" y1="140" x2="112" y2="212" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="78" y1="176" x2="98" y2="176" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="98,169 110,176 98,183" fill="var(--diagram-ink)" />
+  <text x="72" y="170" textAnchor="end" fontSize="14" fill="var(--diagram-accent)">WHERE</text>
+  <text x="72" y="192" textAnchor="end" fontSize="13" fill="var(--diagram-ink)">이 행만</text>
+  <line x1="394" y1="158" x2="410" y2="158" stroke="var(--diagram-line)" strokeWidth="2" />
+  <text x="416" y="152" textAnchor="start" fontSize="14" fill="var(--diagram-accent)">ORDER BY</text>
+  <text x="416" y="174" textAnchor="start" fontSize="13" fill="var(--diagram-ink)">결과 순서</text>
+  <text x="265" y="256" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">FROM practice.students</text>
+</svg>
+
 ### 🔗 JOIN — 두 표를 겹쳐 놓기
 
 JOIN(공통 열을 기준으로 두 표를 이어 붙이는 연산)은 두 표에서 같은 값을 가진 열끼리 짝을 맞춰 나란히 붙이는 것입니다. `INNER JOIN`은 양쪽 모두에 짝이 있는 행만 남기고, `LEFT JOIN`은 왼쪽 표의 행을 짝이 없어도 남깁니다 — "짝이 없는 행을 버리느냐, 남기느냐"의 차이입니다.
+
+<svg data-diagram viewBox="0 0 560 278" role="img" aria-labelledby="dia-join-t">
+  <title id="dia-join-t">INNER JOIN은 양쪽에 짝이 있는 행만 남겨 결과가 두 줄이 되고, LEFT JOIN은 짝이 없는 왼쪽 행도 빈 값으로 남겨 결과가 세 줄이 된다.</title>
+  <rect x="14" y="24" width="256" height="34" fill="var(--diagram-line)" />
+  <rect x="10" y="20" width="256" height="34" fill="var(--diagram-accent)" />
+  <text x="138" y="43" textAnchor="middle" fontSize="15" fill="var(--diagram-on-accent)">INNER JOIN</text>
+  <rect x="14" y="74" width="256" height="146" fill="var(--diagram-line)" />
+  <rect x="10" y="70" width="256" height="146" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="28" y="90" width="90" height="34" fill="var(--diagram-line)" />
+  <rect x="24" y="86" width="90" height="34" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="69" y="108" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">김지현</text>
+  <line x1="114" y1="103" x2="144" y2="103" stroke="var(--diagram-line)" strokeWidth="2" />
+  <rect x="148" y="90" width="104" height="34" fill="var(--diagram-line)" />
+  <rect x="144" y="86" width="104" height="34" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="196" y="108" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">수학</text>
+  <rect x="28" y="134" width="90" height="34" fill="var(--diagram-line)" />
+  <rect x="24" y="130" width="90" height="34" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="69" y="152" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">이민준</text>
+  <line x1="114" y1="147" x2="144" y2="147" stroke="var(--diagram-line)" strokeWidth="2" />
+  <rect x="148" y="134" width="104" height="34" fill="var(--diagram-line)" />
+  <rect x="144" y="130" width="104" height="34" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="196" y="152" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">영어</text>
+  <rect x="28" y="178" width="90" height="34" fill="var(--diagram-line)" />
+  <rect x="24" y="174" width="90" height="34" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" strokeDasharray="6 5" />
+  <text x="69" y="196" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">박서연</text>
+  <text x="196" y="196" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">짝 없음 → 제외</text>
+  <text x="138" y="242" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">결과 2행</text>
+  <text x="138" y="264" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">짝 없으면 버린다</text>
+  <rect x="294" y="24" width="256" height="34" fill="var(--diagram-line)" />
+  <rect x="290" y="20" width="256" height="34" fill="var(--diagram-accent)" />
+  <text x="418" y="43" textAnchor="middle" fontSize="15" fill="var(--diagram-on-accent)">LEFT JOIN</text>
+  <rect x="294" y="74" width="256" height="146" fill="var(--diagram-line)" />
+  <rect x="290" y="70" width="256" height="146" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="308" y="90" width="90" height="34" fill="var(--diagram-line)" />
+  <rect x="304" y="86" width="90" height="34" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="349" y="108" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">김지현</text>
+  <line x1="394" y1="103" x2="424" y2="103" stroke="var(--diagram-line)" strokeWidth="2" />
+  <rect x="428" y="90" width="104" height="34" fill="var(--diagram-line)" />
+  <rect x="424" y="86" width="104" height="34" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="476" y="108" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">수학</text>
+  <rect x="308" y="134" width="90" height="34" fill="var(--diagram-line)" />
+  <rect x="304" y="130" width="90" height="34" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="349" y="152" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">이민준</text>
+  <line x1="394" y1="147" x2="424" y2="147" stroke="var(--diagram-line)" strokeWidth="2" />
+  <rect x="428" y="134" width="104" height="34" fill="var(--diagram-line)" />
+  <rect x="424" y="130" width="104" height="34" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="476" y="152" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">영어</text>
+  <rect x="308" y="178" width="90" height="34" fill="var(--diagram-line)" />
+  <rect x="304" y="174" width="90" height="34" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="349" y="196" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">박서연</text>
+  <line x1="394" y1="191" x2="424" y2="191" stroke="var(--diagram-line)" strokeWidth="2" />
+  <rect x="428" y="178" width="104" height="34" fill="var(--diagram-line)" />
+  <rect x="424" y="174" width="104" height="34" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" strokeDasharray="6 5" />
+  <text x="476" y="196" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">NULL</text>
+  <text x="418" y="242" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">결과 3행</text>
+  <text x="418" y="264" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">짝 없어도 남긴다</text>
+</svg>
 
 ### 🧮 집계 — 같은 것끼리 접기
 
 집계 함수(COUNT · SUM · AVG처럼 여러 행을 하나의 값으로 계산하는 함수)는 `GROUP BY`(같은 값을 가진 행끼리 묶는 절)와 짝을 이뤄 씁니다. `WHERE`는 묶기 전에 개별 행을 거르고, `HAVING`(그룹으로 묶은 뒤 결과를 거르는 조건절)은 묶어서 계산한 뒤의 결과를 거릅니다.
 
+<svg data-diagram viewBox="0 0 560 316" role="img" aria-labelledby="dia-groupby-t">
+  <title id="dia-groupby-t">GROUP BY는 같은 값을 가진 행을 한 덩어리로 접는다. WHERE는 접기 전에 개별 행을 거르고, HAVING은 접어서 계산한 뒤의 결과를 거른다.</title>
+  <rect x="44" y="24" width="240" height="54" fill="var(--diagram-line)" />
+  <rect x="40" y="20" width="240" height="54" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="160" y="53" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">수강 기록 5행</text>
+  <line x1="160" y1="78" x2="160" y2="100" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="154,100 166,100 160,112" fill="var(--diagram-ink)" />
+  <text x="186" y="95" textAnchor="start" fontSize="13" fill="var(--diagram-accent)">WHERE — 묶기 전에 행을 거른다</text>
+  <rect x="44" y="124" width="240" height="80" fill="var(--diagram-line)" />
+  <rect x="40" y="120" width="240" height="80" fill="var(--diagram-accent)" />
+  <text x="160" y="146" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">GROUP BY로 묶기</text>
+  <rect x="60" y="162" width="64" height="30" fill="var(--diagram-line)" />
+  <rect x="56" y="158" width="64" height="30" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="88" y="178" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">김지현</text>
+  <rect x="136" y="162" width="64" height="30" fill="var(--diagram-line)" />
+  <rect x="132" y="158" width="64" height="30" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="164" y="178" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">이민준</text>
+  <rect x="212" y="162" width="64" height="30" fill="var(--diagram-line)" />
+  <rect x="208" y="158" width="64" height="30" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="240" y="178" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">박서연</text>
+  <line x1="160" y1="204" x2="160" y2="226" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="154,226 166,226 160,238" fill="var(--diagram-ink)" />
+  <text x="186" y="221" textAnchor="start" fontSize="13" fill="var(--diagram-accent)">HAVING — 묶은 뒤 결과를 거른다</text>
+  <rect x="44" y="250" width="240" height="54" fill="var(--diagram-line)" />
+  <rect x="40" y="246" width="240" height="54" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="160" y="279" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">학생별 평균 3행</text>
+</svg>
+
 ### ❓ 서브쿼리 — 질문 안의 질문
 
 서브쿼리(쿼리 안에 들어있는 또 다른 쿼리)는 `WHERE` 조건 안에 넣어 "이 값보다 큰 것만" 같은 조건을 만들거나, `FROM` 자리에 넣어 미리 정리된 결과를 다시 조회하는 데 씁니다.
+
+<svg data-diagram viewBox="0 0 540 254" role="img" aria-labelledby="dia-subquery-t">
+  <title id="dia-subquery-t">서브쿼리는 괄호 안쪽이 먼저 계산되어 숫자 하나가 되고, 바깥 쿼리가 그 숫자를 조건 자리에 넣어 행을 거른다.</title>
+  <text x="270" y="24" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">① 안쪽 쿼리가 먼저 계산된다</text>
+  <rect x="64" y="42" width="420" height="58" fill="var(--diagram-line)" />
+  <rect x="60" y="38" width="420" height="58" fill="var(--diagram-accent)" />
+  <text x="270" y="64" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">SELECT AVG(score) FROM enrollments</text>
+  <text x="270" y="86" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">→ 81.2</text>
+  <line x1="270" y1="104" x2="270" y2="132" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="264,132 276,132 270,144" fill="var(--diagram-ink)" />
+  <text x="288" y="126" textAnchor="start" fontSize="13" fill="var(--diagram-ink)">이 값이 조건 자리에 들어간다</text>
+  <text x="270" y="166" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">② 바깥 쿼리가 그 값으로 거른다</text>
+  <rect x="64" y="182" width="420" height="58" fill="var(--diagram-line)" />
+  <rect x="60" y="178" width="420" height="58" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="270" y="204" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">SELECT ... FROM enrollments</text>
+  <text x="270" y="226" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">WHERE score &gt; 81.2</text>
+</svg>
 
 ## 4. 실무 예제
 

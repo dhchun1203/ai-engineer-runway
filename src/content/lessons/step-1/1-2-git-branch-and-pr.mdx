@@ -38,6 +38,30 @@ Git(버전 관리 도구, 파일이 바뀐 이력을 통째로 저장하는 프�
 | 커밋 | 특정 시점의 변경을 하나로 묶어 기록한다 | 캐비닛에 넣는 "개정판 한 장" |
 | 브랜치 | 원본과 별도로 작업할 수 있는 갈래를 만든다 | 원본 문서를 복사해 낙서해도 되는 사본 |
 
+<svg data-diagram viewBox="0 0 540 232" role="img" aria-labelledby="dia-commit-branch-t">
+  <title id="dia-commit-branch-t">커밋과 브랜치. 커밋은 시점마다 찍는 스냅샷이고, 브랜치는 원줄기에서 갈라져 나온 작업 갈래다. 갈래에서 작업한 뒤 다시 원줄기로 합친다.</title>
+  <text x="30" y="36" textAnchor="start" fontSize="15" fill="var(--diagram-accent)">master — 원줄기</text>
+  <line x1="30" y1="71" x2="516" y2="71" stroke="var(--diagram-ink)" strokeWidth="3" />
+  <line x1="240" y1="71" x2="240" y2="161" stroke="var(--diagram-accent)" strokeWidth="3" />
+  <line x1="240" y1="161" x2="464" y2="161" stroke="var(--diagram-accent)" strokeWidth="3" />
+  <line x1="464" y1="161" x2="464" y2="71" stroke="var(--diagram-accent)" strokeWidth="3" />
+  <rect x="52" y="63" width="24" height="24" fill="var(--diagram-line)" />
+  <rect x="48" y="59" width="24" height="24" fill="var(--diagram-ink)" />
+  <rect x="142" y="63" width="24" height="24" fill="var(--diagram-line)" />
+  <rect x="138" y="59" width="24" height="24" fill="var(--diagram-ink)" />
+  <rect x="232" y="63" width="24" height="24" fill="var(--diagram-line)" />
+  <rect x="228" y="59" width="24" height="24" fill="var(--diagram-ink)" />
+  <rect x="456" y="63" width="24" height="24" fill="var(--diagram-line)" />
+  <rect x="452" y="59" width="24" height="24" fill="var(--diagram-ink)" />
+  <text x="464" y="44" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">머지</text>
+  <rect x="314" y="153" width="24" height="24" fill="var(--diagram-line)" />
+  <rect x="310" y="149" width="24" height="24" fill="var(--diagram-accent)" />
+  <rect x="394" y="153" width="24" height="24" fill="var(--diagram-line)" />
+  <rect x="390" y="149" width="24" height="24" fill="var(--diagram-accent)" />
+  <text x="252" y="198" textAnchor="start" fontSize="15" fill="var(--diagram-accent)">feature — 갈래</text>
+  <text x="270" y="222" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">커밋은 스냅샷, 브랜치는 그것이 이어지는 갈래</text>
+</svg>
+
 ### 🌊 한 바퀴의 흐름
 
 전체 흐름은 이렇게 이어집니다.
@@ -55,11 +79,76 @@ clone → branch → commit → push → PR → merge → pull
 
 로컬에서 저장소를 내려받고(clone) 갈래를 뻗어(branch) 작업을 커밋(commit)한 뒤 원격에 올리면(push), 그다음부터는 GitHub 웹으로 넘어가 PR을 열고 머지합니다. 마지막으로 다시 로컬 터미널로 돌아와 최신 상태를 받습니다(pull).
 
+<svg data-diagram viewBox="0 0 550 258" role="img" aria-labelledby="dia-git-cycle-t">
+  <title id="dia-git-cycle-t">협업 한 바퀴의 흐름. clone, branch, commit, push까지는 로컬 터미널에서 하고, PR 열기와 merge는 GitHub 웹에서 한 뒤, 다시 로컬로 돌아와 pull로 최신 상태를 받는다.</title>
+  <rect x="20" y="52" width="112" height="46" fill="var(--diagram-line)" />
+  <rect x="16" y="48" width="112" height="46" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="72" y="77" textAnchor="middle" fontSize="17" fill="var(--diagram-ink)">clone</text>
+  <line x1="130" y1="71" x2="138" y2="71" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="138,65 150,71 138,77" fill="var(--diagram-ink)" />
+  <rect x="156" y="52" width="112" height="46" fill="var(--diagram-line)" />
+  <rect x="152" y="48" width="112" height="46" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="208" y="77" textAnchor="middle" fontSize="17" fill="var(--diagram-ink)">branch</text>
+  <line x1="266" y1="71" x2="274" y2="71" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="274,65 286,71 274,77" fill="var(--diagram-ink)" />
+  <rect x="292" y="52" width="112" height="46" fill="var(--diagram-line)" />
+  <rect x="288" y="48" width="112" height="46" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="344" y="77" textAnchor="middle" fontSize="17" fill="var(--diagram-ink)">commit</text>
+  <line x1="402" y1="71" x2="410" y2="71" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="410,65 422,71 410,77" fill="var(--diagram-ink)" />
+  <rect x="428" y="52" width="112" height="46" fill="var(--diagram-line)" />
+  <rect x="424" y="48" width="112" height="46" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="480" y="77" textAnchor="middle" fontSize="17" fill="var(--diagram-ink)">push</text>
+  <line x1="480" y1="94" x2="480" y2="120" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="344" y1="120" x2="480" y2="120" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="344" y1="120" x2="344" y2="138" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="338,138 350,138 344,150" fill="var(--diagram-ink)" />
+  <rect x="292" y="154" width="112" height="46" fill="var(--diagram-line)" />
+  <rect x="288" y="150" width="112" height="46" fill="var(--diagram-accent)" />
+  <text x="344" y="179" textAnchor="middle" fontSize="17" fill="var(--diagram-on-accent)">PR</text>
+  <line x1="402" y1="173" x2="410" y2="173" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="410,167 422,173 410,179" fill="var(--diagram-ink)" />
+  <rect x="428" y="154" width="112" height="46" fill="var(--diagram-line)" />
+  <rect x="424" y="150" width="112" height="46" fill="var(--diagram-accent)" />
+  <text x="480" y="179" textAnchor="middle" fontSize="17" fill="var(--diagram-on-accent)">merge</text>
+  <rect x="20" y="154" width="112" height="46" fill="var(--diagram-line)" />
+  <rect x="16" y="150" width="112" height="46" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="72" y="179" textAnchor="middle" fontSize="17" fill="var(--diagram-ink)">pull</text>
+  <line x1="480" y1="196" x2="480" y2="222" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="72" y1="222" x2="480" y2="222" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="72" y1="214" x2="72" y2="222" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="66,214 78,214 72,202" fill="var(--diagram-ink)" />
+  <text x="16" y="246" textAnchor="start" fontSize="13" fill="var(--diagram-ink)">테두리 칸 = 로컬 터미널 · 채운 칸 = GitHub 웹</text>
+</svg>
+
 ### 🚧 왜 원줄기에서 바로 고치지 않나
 
 브랜치(branch, 작업을 따로 복사해 두는 갈래) 없이 원줄기(주 브랜치, `master` 또는 `main`)에서 바로 고치면, 실수했을 때 되돌리기가 훨씬 번거롭고 다른 사람이 리뷰할 기회 없이 바로 배포될 수 있습니다. 브랜치를 뻗어 작업하면 원줄기는 항상 "검증된 상태"로 남고, 문제가 생겨도 그 브랜치만 버리면 됩니다.
 
 이 사이트 저장소(`ai-engineer-runway`)도 실제로 이 흐름을 씁니다 — PR(풀 리퀘스트, pull request, 변경을 원줄기에 합쳐 달라는 요청)을 열면 자동으로 미리보기 주소가 생겨서, 머지하기 전에 실제 화면으로 먼저 확인할 수 있습니다.
+
+<svg data-diagram viewBox="0 0 560 226" role="img" aria-labelledby="dia-branch-why-t">
+  <title id="dia-branch-why-t">원줄기에서 바로 고칠 때와 브랜치를 뻗어 작업할 때의 차이. 브랜치로 작업하면 원줄기는 검증된 상태로 남고, 리뷰를 거칠 수 있으며, 문제가 생기면 그 갈래만 버리면 된다.</title>
+  <text x="141" y="32" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">원줄기에서 바로 작업</text>
+  <rect x="20" y="48" width="250" height="140" fill="var(--diagram-line)" />
+  <rect x="16" y="44" width="250" height="140" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="34" y="76" width="8" height="8" fill="var(--diagram-accent)" />
+  <text x="52" y="84" textAnchor="start" fontSize="14" fill="var(--diagram-ink)">되돌리기가 번거롭다</text>
+  <rect x="34" y="108" width="8" height="8" fill="var(--diagram-accent)" />
+  <text x="52" y="116" textAnchor="start" fontSize="14" fill="var(--diagram-ink)">리뷰 없이 바로 배포된다</text>
+  <rect x="34" y="140" width="8" height="8" fill="var(--diagram-accent)" />
+  <text x="52" y="148" textAnchor="start" fontSize="14" fill="var(--diagram-ink)">원줄기가 깨질 수 있다</text>
+  <text x="419" y="32" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">브랜치를 뻗어 작업</text>
+  <rect x="298" y="48" width="250" height="140" fill="var(--diagram-line)" />
+  <rect x="294" y="44" width="250" height="140" fill="var(--diagram-accent)" />
+  <rect x="312" y="76" width="8" height="8" fill="var(--diagram-on-accent)" />
+  <text x="330" y="84" textAnchor="start" fontSize="14" fill="var(--diagram-on-accent)">원줄기는 늘 검증된 상태</text>
+  <rect x="312" y="108" width="8" height="8" fill="var(--diagram-on-accent)" />
+  <text x="330" y="116" textAnchor="start" fontSize="14" fill="var(--diagram-on-accent)">PR에서 리뷰를 받는다</text>
+  <rect x="312" y="140" width="8" height="8" fill="var(--diagram-on-accent)" />
+  <text x="330" y="148" textAnchor="start" fontSize="14" fill="var(--diagram-on-accent)">문제 생기면 갈래만 버린다</text>
+  <text x="280" y="214" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">PR마다 미리보기 주소가 생겨 머지 전에 화면으로 확인한다</text>
+</svg>
 
 ## 4. 실무 예제
 

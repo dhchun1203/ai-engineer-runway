@@ -32,6 +32,36 @@ slug: "1-2-generative-ai-basics"
 
 확률로 고르기 때문에 문법도 맞고 그럴듯하게 들리지만 사실은 틀린 답이 나올 수 있습니다 — 이를 할루시네이션(hallucination, AI가 사실이 아닌 내용을 그럴듯하게 지어내는 현상)이라고 부릅니다. "말이 되는 것"과 "사실인 것"은 다른 문제라는 걸 항상 기억해야 합니다.
 
+<svg data-diagram viewBox="0 0 520 248" role="img" aria-labelledby="dia-next-word-t">
+  <title id="dia-next-word-t">생성형 AI는 아주 똑똑해진 자동완성이다. 지금까지 나온 글 뒤에 올 말 후보에 확률을 매기고, 확률이 가장 높은 말을 골라 이어 붙인다.</title>
+  <text x="335" y="26" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">다음에 올 말 후보</text>
+  <text x="91" y="76" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">지금까지 나온 글</text>
+  <rect x="20" y="94" width="150" height="52" fill="var(--diagram-line)" />
+  <rect x="16" y="90" width="150" height="52" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="91" y="123" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">오늘 날씨가</text>
+  <line x1="174" y1="116" x2="208" y2="116" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="208" y1="61" x2="208" y2="173" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="208" y1="61" x2="236" y2="61" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="236,55 248,61 236,67" fill="var(--diagram-ink)" />
+  <rect x="254" y="44" width="170" height="42" fill="var(--diagram-line)" />
+  <rect x="250" y="40" width="170" height="42" fill="var(--diagram-accent)" />
+  <text x="268" y="67" textAnchor="start" fontSize="16" fill="var(--diagram-on-accent)">좋다</text>
+  <text x="402" y="67" textAnchor="end" fontSize="15" fill="var(--diagram-on-accent)">62%</text>
+  <line x1="208" y1="117" x2="236" y2="117" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="236,111 248,117 236,123" fill="var(--diagram-ink)" />
+  <rect x="254" y="100" width="170" height="42" fill="var(--diagram-line)" />
+  <rect x="250" y="96" width="170" height="42" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="268" y="123" textAnchor="start" fontSize="16" fill="var(--diagram-ink)">흐리다</text>
+  <text x="402" y="123" textAnchor="end" fontSize="15" fill="var(--diagram-ink)">24%</text>
+  <line x1="208" y1="173" x2="236" y2="173" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="236,167 248,173 236,179" fill="var(--diagram-ink)" />
+  <rect x="254" y="156" width="170" height="42" fill="var(--diagram-line)" />
+  <rect x="250" y="152" width="170" height="42" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="268" y="179" textAnchor="start" fontSize="16" fill="var(--diagram-ink)">춥다</text>
+  <text x="402" y="179" textAnchor="end" fontSize="15" fill="var(--diagram-ink)">9%</text>
+  <text x="260" y="232" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">확률이 가장 높은 말을 골라 이어 붙인다</text>
+</svg>
+
 ### 📝 프롬프트·토큰·모델
 
 | 용어 | 뜻 | 일상 비유 |
@@ -39,6 +69,42 @@ slug: "1-2-generative-ai-basics"
 | 프롬프트(prompt, AI에게 주는 질문이나 지시문) | AI에게 무엇을 해달라고 요청하는 입력 | 식당에서 주문하는 말 |
 | 토큰(token, 텍스트를 잘게 나눈 처리 단위) | AI가 글을 처리하는 최소 단위, 비용도 토큰 수로 계산된다 | 글자를 세는 조각 단위(음절과 비슷하지만 다르다) |
 | 모델(model, 학습된 AI 프로그램 자체) | 실제로 답을 만들어내는 AI 프로그램 | 요리를 만드는 요리사 |
+
+<svg data-diagram viewBox="0 0 480 300" role="img" aria-labelledby="dia-prompt-token-model-t">
+  <title id="dia-prompt-token-model-t">프롬프트가 답이 되기까지. 사람이 쓴 프롬프트는 토큰이라는 작은 조각으로 쪼개져 모델에 들어가고, 모델이 답을 만들어 낸다. 비용은 토큰 수로 계산된다.</title>
+  <text x="115" y="24" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">프롬프트</text>
+  <rect x="24" y="38" width="190" height="48" fill="var(--diagram-line)" />
+  <rect x="20" y="34" width="190" height="48" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="115" y="64" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">오늘 날씨 알려줘</text>
+  <line x1="214" y1="58" x2="226" y2="58" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="226,52 238,58 226,64" fill="var(--diagram-ink)" />
+  <text x="351" y="24" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">토큰</text>
+  <rect x="250" y="40" width="48" height="44" fill="var(--diagram-line)" />
+  <rect x="246" y="36" width="48" height="44" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="270" y="64" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">오늘</text>
+  <rect x="304" y="40" width="48" height="44" fill="var(--diagram-line)" />
+  <rect x="300" y="36" width="48" height="44" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="324" y="64" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">날씨</text>
+  <rect x="358" y="40" width="48" height="44" fill="var(--diagram-line)" />
+  <rect x="354" y="36" width="48" height="44" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="378" y="64" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">알려</text>
+  <rect x="412" y="40" width="48" height="44" fill="var(--diagram-line)" />
+  <rect x="408" y="36" width="48" height="44" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="432" y="64" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">줘</text>
+  <line x1="378" y1="84" x2="378" y2="104" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="372,104 384,104 378,116" fill="var(--diagram-ink)" />
+  <rect x="64" y="128" width="400" height="54" fill="var(--diagram-line)" />
+  <rect x="60" y="124" width="400" height="54" fill="var(--diagram-accent)" />
+  <text x="260" y="152" textAnchor="middle" fontSize="19" fill="var(--diagram-on-accent)">모델</text>
+  <text x="260" y="172" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">답을 만들어내는 학습된 AI 프로그램</text>
+  <line x1="260" y1="178" x2="260" y2="200" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="254,200 266,200 260,212" fill="var(--diagram-ink)" />
+  <rect x="114" y="224" width="300" height="48" fill="var(--diagram-line)" />
+  <rect x="110" y="220" width="300" height="48" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="260" y="250" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">맑고 선선합니다</text>
+  <text x="422" y="250" textAnchor="start" fontSize="13" fill="var(--diagram-accent)">응답</text>
+  <text x="240" y="292" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">토큰 수가 곧 비용 — 글이 길수록 토큰이 늘어난다</text>
+</svg>
 
 ### ⚖️ 맡길 일과 검증할 일
 
@@ -52,6 +118,28 @@ slug: "1-2-generative-ai-basics"
 | 아이디어 브레인스토밍 | 개인정보가 섞여 나오는지 여부 |
 
 AI는 그럴듯한 근거나 출처를 실제로 존재하지 않는데도 만들어낼 수 있습니다(할루시네이션). 그래서 AI가 제시한 사실·수치·출처는 항상 사람이 별도로 확인해야 하는 항목으로 분류해야 합니다.
+
+<svg data-diagram viewBox="0 0 560 258" role="img" aria-labelledby="dia-ai-trust-split-t">
+  <title id="dia-ai-trust-split-t">AI 출력은 두 갈래로 나뉜다. 초안·요약·번역·코드 뼈대는 그대로 맡겨도 되지만, 사실·수치·출처·법적 판단은 사람이 반드시 다시 확인해야 한다.</title>
+  <rect x="20" y="100" width="130" height="58" fill="var(--diagram-line)" />
+  <rect x="16" y="96" width="130" height="58" fill="var(--diagram-soft)" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <text x="81" y="132" textAnchor="middle" fontSize="18" fill="var(--diagram-ink)">AI 출력</text>
+  <line x1="146" y1="125" x2="176" y2="125" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="176" y1="58" x2="176" y2="192" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="176" y1="58" x2="200" y2="58" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="200,52 212,58 200,64" fill="var(--diagram-ink)" />
+  <line x1="176" y1="192" x2="200" y2="192" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="200,186 212,192 200,198" fill="var(--diagram-ink)" />
+  <rect x="224" y="32" width="320" height="60" fill="var(--diagram-line)" />
+  <rect x="220" y="28" width="320" height="60" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="380" y="56" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">초안 · 요약 · 번역 · 코드 뼈대</text>
+  <text x="380" y="78" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">그대로 맡겨도 되는 일</text>
+  <rect x="224" y="166" width="320" height="60" fill="var(--diagram-line)" />
+  <rect x="220" y="162" width="320" height="60" fill="var(--diagram-accent)" />
+  <text x="380" y="190" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">사실 · 수치 · 출처 · 법적 판단</text>
+  <text x="380" y="212" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">사람이 반드시 확인할 일</text>
+  <text x="280" y="248" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">그럴듯한 출처를 지어낼 수 있다 — 할루시네이션</text>
+</svg>
 
 ## 4. 실무 예제
 
