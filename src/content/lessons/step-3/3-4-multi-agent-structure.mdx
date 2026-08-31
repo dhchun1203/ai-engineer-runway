@@ -32,11 +32,82 @@ slug: "3-4-multi-agent-structure"
 
 한 사람이 기획·집필·검수를 전부 맡으면 어딘가에서 놓치기 마련입니다. 한 AI에게 전체 작업을 한 번에 시키는 것도 같은 문제를 겪습니다.
 
+<svg data-diagram viewBox="0 0 552 272" role="img" aria-labelledby="dia-single-agent-t">
+  <title id="dia-single-agent-t">한 AI에게 기획·집필·검수·발송을 한꺼번에 맡기면 지시가 한 상자로 몰리고, 결과에서 빠뜨리거나 뒤섞이는 부분이 생긴다.</title>
+  <rect x="14" y="22" width="112" height="40" fill="var(--diagram-line)" />
+  <rect x="10" y="18" width="112" height="40" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="66" y="44" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">기획</text>
+  <rect x="14" y="74" width="112" height="40" fill="var(--diagram-line)" />
+  <rect x="10" y="70" width="112" height="40" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="66" y="96" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">집필</text>
+  <rect x="14" y="126" width="112" height="40" fill="var(--diagram-line)" />
+  <rect x="10" y="122" width="112" height="40" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="66" y="148" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">검수</text>
+  <rect x="14" y="178" width="112" height="40" fill="var(--diagram-line)" />
+  <rect x="10" y="174" width="112" height="40" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="66" y="200" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">발송</text>
+  <line x1="122" y1="38" x2="160" y2="38" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="122" y1="90" x2="160" y2="90" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="122" y1="142" x2="160" y2="142" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="122" y1="194" x2="160" y2="194" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="160" y1="38" x2="160" y2="194" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="160" y1="116" x2="196" y2="116" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="196,110 208,116 196,122" fill="var(--diagram-ink)" />
+  <rect x="220" y="60" width="140" height="120" fill="var(--diagram-line)" />
+  <rect x="216" y="56" width="140" height="120" fill="var(--diagram-accent)" />
+  <text x="286" y="106" textAnchor="middle" fontSize="19" fill="var(--diagram-on-accent)">AI 하나</text>
+  <text x="286" y="136" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">지시를 한꺼번에</text>
+  <line x1="356" y1="116" x2="392" y2="116" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="392,110 404,116 392,122" fill="var(--diagram-ink)" />
+  <rect x="416" y="60" width="130" height="120" fill="var(--diagram-line)" />
+  <rect x="412" y="56" width="130" height="120" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="477" y="96" textAnchor="middle" fontSize="17" fill="var(--diagram-ink)">결과</text>
+  <text x="477" y="128" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">빠뜨림</text>
+  <text x="477" y="154" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">뒤섞임</text>
+  <text x="276" y="250" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">한 상자에 일이 몰릴수록 놓치는 곳이 생긴다</text>
+</svg>
+
 ### 🏢 역할 분담 — 편집국의 데스크·기자·교열
 
 신문사는 기사를 한 사람이 처음부터 끝까지 쓰지 않습니다. 데스크가 방향을 정하고, 기자가 취재해 쓰고, 교열이 검수합니다.
 
 여러 AI로 이루어진 구조도 이렇게 역할을 나눠 각자 한 가지만 맡게 합니다. 이 역할 하나하나를 에이전트(agent)라고 부릅니다.
+
+<svg data-diagram viewBox="0 0 552 258" role="img" aria-labelledby="dia-role-split-t">
+  <title id="dia-role-split-t">신문사 편집국의 데스크·기자·교열이 각각 AI 역할인 분류 담당·초안 담당·검수 담당에 대응한다. 역할 하나가 곧 에이전트 하나다.</title>
+  <text x="10" y="24" textAnchor="start" fontSize="14" fill="var(--diagram-accent)">신문사 편집국</text>
+  <rect x="14" y="40" width="150" height="52" fill="var(--diagram-line)" />
+  <rect x="10" y="36" width="150" height="52" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="85" y="68" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">데스크</text>
+  <line x1="160" y1="62" x2="188" y2="62" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="188,56 200,62 188,68" fill="var(--diagram-ink)" />
+  <rect x="204" y="40" width="150" height="52" fill="var(--diagram-line)" />
+  <rect x="200" y="36" width="150" height="52" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="275" y="68" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">기자</text>
+  <line x1="350" y1="62" x2="378" y2="62" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="378,56 390,62 378,68" fill="var(--diagram-ink)" />
+  <rect x="394" y="40" width="150" height="52" fill="var(--diagram-line)" />
+  <rect x="390" y="36" width="150" height="52" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="465" y="68" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">교열</text>
+  <line x1="85" y1="92" x2="85" y2="126" stroke="var(--diagram-line)" strokeWidth="2" strokeDasharray="5 4" />
+  <line x1="275" y1="92" x2="275" y2="126" stroke="var(--diagram-line)" strokeWidth="2" strokeDasharray="5 4" />
+  <line x1="465" y1="92" x2="465" y2="126" stroke="var(--diagram-line)" strokeWidth="2" strokeDasharray="5 4" />
+  <text x="10" y="144" textAnchor="start" fontSize="14" fill="var(--diagram-accent)">AI 역할 분담</text>
+  <rect x="14" y="156" width="150" height="52" fill="var(--diagram-line)" />
+  <rect x="10" y="152" width="150" height="52" fill="var(--diagram-accent)" />
+  <text x="85" y="184" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">분류 담당</text>
+  <line x1="160" y1="178" x2="188" y2="178" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="188,172 200,178 188,184" fill="var(--diagram-ink)" />
+  <rect x="204" y="156" width="150" height="52" fill="var(--diagram-line)" />
+  <rect x="200" y="152" width="150" height="52" fill="var(--diagram-accent)" />
+  <text x="275" y="184" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">초안 담당</text>
+  <line x1="350" y1="178" x2="378" y2="178" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="378,172 390,178 378,184" fill="var(--diagram-ink)" />
+  <rect x="394" y="156" width="150" height="52" fill="var(--diagram-line)" />
+  <rect x="390" y="152" width="150" height="52" fill="var(--diagram-accent)" />
+  <text x="465" y="184" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">검수 담당</text>
+  <text x="276" y="240" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">역할 하나가 곧 에이전트 하나</text>
+</svg>
 
 ### 🔗 연결 방식 — 순차·병렬·감독자
 
@@ -48,11 +119,105 @@ slug: "3-4-multi-agent-structure"
 | 병렬 (parallel) | 여러 역할이 동시에 각자 작업함 | 서로 독립적인 작업을 동시에 처리할 때 |
 | 감독자 (supervisor) | 감독자 역할이 다음에 누구를 부를지 그때그때 정함 | 상황에 따라 다음 단계가 달라질 때 |
 
+<svg data-diagram viewBox="0 0 552 340" role="img" aria-labelledby="dia-wiring-t">
+  <title id="dia-wiring-t">역할을 잇는 세 가지 방식. 순차는 분류에서 초안, 검수로 한 줄로 이어진다. 병렬은 문서 검색과 과거 사례를 동시에 처리한 뒤 다시 합친다. 감독자는 다음에 누구를 부를지 그때그때 고른다.</title>
+  <text x="10" y="42" textAnchor="start" fontSize="15" fill="var(--diagram-accent)">순차</text>
+  <rect x="92" y="18" width="96" height="42" fill="var(--diagram-line)" />
+  <rect x="88" y="14" width="96" height="42" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="136" y="41" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">분류</text>
+  <line x1="188" y1="35" x2="216" y2="35" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="216,29 228,35 216,41" fill="var(--diagram-ink)" />
+  <rect x="232" y="18" width="96" height="42" fill="var(--diagram-line)" />
+  <rect x="228" y="14" width="96" height="42" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="276" y="41" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">초안</text>
+  <line x1="328" y1="35" x2="356" y2="35" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="356,29 368,35 356,41" fill="var(--diagram-ink)" />
+  <rect x="372" y="18" width="96" height="42" fill="var(--diagram-line)" />
+  <rect x="368" y="14" width="96" height="42" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="416" y="41" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">검수</text>
+  <text x="10" y="161" textAnchor="start" fontSize="15" fill="var(--diagram-accent)">병렬</text>
+  <rect x="92" y="138" width="96" height="42" fill="var(--diagram-line)" />
+  <rect x="88" y="134" width="96" height="42" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="136" y="161" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">문의</text>
+  <line x1="184" y1="155" x2="210" y2="155" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="210" y1="119" x2="210" y2="191" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="210" y1="119" x2="236" y2="119" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="236,113 248,119 236,125" fill="var(--diagram-ink)" />
+  <line x1="210" y1="191" x2="236" y2="191" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="236,185 248,191 236,197" fill="var(--diagram-ink)" />
+  <rect x="252" y="104" width="116" height="38" fill="var(--diagram-line)" />
+  <rect x="248" y="100" width="116" height="38" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="306" y="124" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">문서 검색</text>
+  <rect x="252" y="176" width="116" height="38" fill="var(--diagram-line)" />
+  <rect x="248" y="172" width="116" height="38" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="306" y="196" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">과거 사례</text>
+  <line x1="364" y1="119" x2="390" y2="119" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="364" y1="191" x2="390" y2="191" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="390" y1="119" x2="390" y2="191" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="390" y1="155" x2="412" y2="155" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="412,149 424,155 412,161" fill="var(--diagram-ink)" />
+  <rect x="434" y="138" width="110" height="42" fill="var(--diagram-line)" />
+  <rect x="430" y="134" width="110" height="42" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="485" y="161" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">초안</text>
+  <text x="10" y="280" textAnchor="start" fontSize="15" fill="var(--diagram-accent)">감독자</text>
+  <rect x="92" y="254" width="104" height="48" fill="var(--diagram-line)" />
+  <rect x="88" y="250" width="104" height="48" fill="var(--diagram-accent)" />
+  <text x="140" y="281" textAnchor="middle" fontSize="15" fill="var(--diagram-on-accent)">감독자</text>
+  <line x1="192" y1="274" x2="222" y2="274" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="222" y1="249" x2="222" y2="317" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="222" y1="249" x2="238" y2="249" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="238,243 250,249 238,255" fill="var(--diagram-ink)" />
+  <line x1="222" y1="283" x2="238" y2="283" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="238,277 250,283 238,289" fill="var(--diagram-ink)" />
+  <line x1="222" y1="317" x2="238" y2="317" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="238,311 250,317 238,323" fill="var(--diagram-ink)" />
+  <rect x="254" y="238" width="116" height="30" fill="var(--diagram-line)" />
+  <rect x="250" y="234" width="116" height="30" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="308" y="254" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">분류</text>
+  <rect x="254" y="272" width="116" height="30" fill="var(--diagram-line)" />
+  <rect x="250" y="268" width="116" height="30" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="308" y="288" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">검색</text>
+  <rect x="254" y="306" width="116" height="30" fill="var(--diagram-line)" />
+  <rect x="250" y="302" width="116" height="30" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="308" y="322" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">초안</text>
+  <text x="382" y="288" textAnchor="start" fontSize="14" fill="var(--diagram-accent)">그때그때 선택</text>
+</svg>
+
 ### 💾 상태 공유와 위험
 
 역할들은 무엇을 주고받았는지 어딘가에 남겨야 다음 역할이 이어받을 수 있습니다. 이 기록을 상태(state)라고 부릅니다.
 
 역할들이 서로를 계속 부르도록 잘못 짜이면 끝나지 않는 루프가 생기고, 그만큼 비용도 함께 늘어납니다.
+
+<svg data-diagram viewBox="0 0 552 248" role="img" aria-labelledby="dia-loop-limit-t">
+  <title id="dia-loop-limit-t">초안 담당과 검수 담당 사이에서 반려가 반복되면 고리가 끝나지 않는다. 반복 상한 3회를 두고, 넘으면 사람이 처리하도록 빠져나가게 만든다.</title>
+  <rect x="64" y="44" width="140" height="56" fill="var(--diagram-line)" />
+  <rect x="60" y="40" width="140" height="56" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="130" y="74" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">초안 담당</text>
+  <rect x="324" y="44" width="140" height="56" fill="var(--diagram-line)" />
+  <rect x="320" y="40" width="140" height="56" fill="var(--diagram-accent)" />
+  <text x="390" y="74" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">검수 담당</text>
+  <line x1="200" y1="58" x2="296" y2="58" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="296,52 308,58 296,64" fill="var(--diagram-ink)" />
+  <text x="252" y="34" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">초안 전달</text>
+  <line x1="390" y1="96" x2="390" y2="124" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="390" y1="124" x2="130" y2="124" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="130" y1="124" x2="130" y2="112" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="124,112 136,112 130,100" fill="var(--diagram-ink)" />
+  <text x="180" y="146" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">반려 — 다시 초안</text>
+  <line x1="275" y1="124" x2="275" y2="152" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="269,152 281,152 275,164" fill="var(--diagram-ink)" />
+  <text x="286" y="146" textAnchor="start" fontSize="13" fill="var(--diagram-accent)">3회 넘으면</text>
+  <rect x="184" y="170" width="190" height="48" fill="var(--diagram-line)" />
+  <rect x="180" y="166" width="190" height="48" fill="var(--diagram-soft)" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <text x="275" y="196" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">반복 상한 3회</text>
+  <line x1="370" y1="190" x2="400" y2="190" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="400,184 412,190 400,196" fill="var(--diagram-ink)" />
+  <rect x="424" y="170" width="120" height="48" fill="var(--diagram-line)" />
+  <rect x="420" y="166" width="120" height="48" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="480" y="196" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">사람이 처리</text>
+  <text x="276" y="238" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">상한이 없으면 이 고리가 끝나지 않는다</text>
+</svg>
 
 이 레슨에서는 아래 시나리오를 계속 씁니다.
 

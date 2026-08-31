@@ -35,21 +35,130 @@ LLM 서비스는 오류 없이 잘 돌아가는데도 답이 이상한 상태가
 | 시스템 지표 | 서비스가 정상적으로 돌고 있는가 | 오류율, 응답 지연, 비용 |
 | 품질 지표 | 응답의 내용이 쓸 만한가 | 형식 통과율, 거절률, 사용자 피드백 |
 
+<svg data-diagram viewBox="0 0 560 292" role="img" aria-labelledby="dia-metrics-t">
+  <title id="dia-metrics-t">같은 응답 한 건을 두 갈래로 나눠 본다. 시스템 지표는 오류율·지연·비용이 정상이라고 말하지만, 품질 지표로 보면 형식 통과율이 떨어져 문제가 드러난다.</title>
+  <rect x="204" y="18" width="160" height="48" fill="var(--diagram-line)" />
+  <rect x="200" y="14" width="160" height="48" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="280" y="44" textAnchor="middle" fontSize="17" fill="var(--diagram-ink)">응답 1건</text>
+  <line x1="280" y1="62" x2="280" y2="84" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="140" y1="84" x2="420" y2="84" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="140" y1="84" x2="140" y2="100" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="134,100 146,100 140,112" fill="var(--diagram-ink)" />
+  <line x1="420" y1="84" x2="420" y2="100" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="414,100 426,100 420,112" fill="var(--diagram-ink)" />
+  <rect x="18" y="122" width="250" height="160" fill="var(--diagram-line)" />
+  <rect x="14" y="118" width="250" height="160" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="14" y="118" width="250" height="36" fill="var(--diagram-accent)" />
+  <text x="139" y="143" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">시스템 지표</text>
+  <text x="34" y="180" textAnchor="start" fontSize="15" fill="var(--diagram-ink)">오류율 0.1%</text>
+  <text x="34" y="206" textAnchor="start" fontSize="15" fill="var(--diagram-ink)">응답 지연 812ms</text>
+  <text x="34" y="232" textAnchor="start" fontSize="15" fill="var(--diagram-ink)">비용 평소 수준</text>
+  <text x="34" y="264" textAnchor="start" fontSize="15" fill="var(--diagram-ink)">이상 없음</text>
+  <rect x="300" y="122" width="250" height="160" fill="var(--diagram-line)" />
+  <rect x="296" y="118" width="250" height="160" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="296" y="118" width="250" height="36" fill="var(--diagram-accent)" />
+  <text x="421" y="143" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">품질 지표</text>
+  <text x="316" y="180" textAnchor="start" fontSize="15" fill="var(--diagram-ink)">형식 통과율 71%</text>
+  <text x="316" y="206" textAnchor="start" fontSize="15" fill="var(--diagram-ink)">거절률 상승</text>
+  <text x="316" y="232" textAnchor="start" fontSize="15" fill="var(--diagram-ink)">사용자 불만 증가</text>
+  <text x="316" y="264" textAnchor="start" fontSize="15" fill="var(--diagram-accent)">문제 있음</text>
+</svg>
+
 ### 🔔 알림 설계 — 평소 값 위에 기준을 얹기
 
 알림 임계값을 정하는 원칙은 평소 값을 먼저 재고 그 위에서 정하는 것입니다. 아무 근거 없이 숫자를 먼저 정하면 알림이 항상 울리거나 전혀 안 울리게 됩니다.
 
 알림이 너무 잦으면 아무도 들여다보지 않게 됩니다. 구체적인 숫자는 서비스마다 다르므로 팀이 직접 정합니다.
 
+<svg data-diagram viewBox="0 0 560 250" role="img" aria-labelledby="dia-alert-threshold-t">
+  <title id="dia-alert-threshold-t">평소 값이 움직이는 범위를 먼저 재고 그 위쪽에 임계값을 얹는다. 값이 평소 범위 안에서 흔들릴 때는 조용하고, 범위를 뚫고 임계값을 넘을 때만 알림이 울린다.</title>
+  <rect x="56" y="150" width="452" height="46" fill="var(--diagram-soft)" />
+  <line x1="56" y1="110" x2="508" y2="110" stroke="var(--diagram-accent)" strokeWidth="2" strokeDasharray="8 6" />
+  <text x="56" y="100" textAnchor="start" fontSize="14" fill="var(--diagram-accent)">임계값</text>
+  <line x1="70" y1="180" x2="128" y2="160" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="128" y1="160" x2="186" y2="186" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="186" y1="186" x2="244" y2="164" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="244" y1="164" x2="302" y2="176" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="302" y1="176" x2="360" y2="158" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="360" y1="158" x2="418" y2="76" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="418" y1="76" x2="476" y2="170" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="476" y1="170" x2="508" y2="180" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <circle cx="418" cy="76" r="8" fill="var(--diagram-accent)" />
+  <text x="418" y="56" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">여기서 알림</text>
+  <line x1="56" y1="206" x2="508" y2="206" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="62" y="232" textAnchor="start" fontSize="14" fill="var(--diagram-ink)">평소 값 범위</text>
+  <text x="508" y="232" textAnchor="end" fontSize="14" fill="var(--diagram-ink)">시간</text>
+</svg>
+
 ### 🔒 개인정보 취급 — 어디에 남고 어디에 남으면 안 되는가
 
 개인정보는 프롬프트, 로그, 평가 데이터 세 곳을 타고 흐를 수 있습니다. 남겨야 하는 항목과 남기면 안 되는 항목을 미리 정해 마스킹(masking, 민감한 값을 가려서 저장하는 것)으로 처리합니다.
+
+<svg data-diagram viewBox="0 0 560 300" role="img" aria-labelledby="dia-pii-flow-t">
+  <title id="dia-pii-flow-t">사용자 입력에 섞인 개인정보는 프롬프트, 로그, 평가 데이터 세 곳으로 함께 흘러간다. 마스킹은 세 통로가 갈라지기 전 한자리에서 값을 가린다.</title>
+  <rect x="14" y="114" width="140" height="64" fill="var(--diagram-line)" />
+  <rect x="10" y="110" width="140" height="64" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="80" y="136" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">사용자 입력</text>
+  <text x="80" y="160" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">이름·연락처</text>
+  <line x1="154" y1="142" x2="182" y2="142" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="182,136 194,142 182,148" fill="var(--diagram-ink)" />
+  <rect x="200" y="114" width="120" height="64" fill="var(--diagram-line)" />
+  <rect x="196" y="110" width="120" height="64" fill="var(--diagram-accent)" />
+  <text x="256" y="148" textAnchor="middle" fontSize="17" fill="var(--diagram-on-accent)">마스킹</text>
+  <line x1="316" y1="142" x2="344" y2="142" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="344" y1="58" x2="344" y2="232" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="344" y1="58" x2="374" y2="58" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="374,52 386,58 374,64" fill="var(--diagram-ink)" />
+  <line x1="344" y1="142" x2="374" y2="142" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="374,136 386,142 374,148" fill="var(--diagram-ink)" />
+  <line x1="344" y1="232" x2="374" y2="232" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="374,226 386,232 374,238" fill="var(--diagram-ink)" />
+  <rect x="396" y="34" width="156" height="56" fill="var(--diagram-line)" />
+  <rect x="392" y="30" width="156" height="56" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="470" y="64" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">프롬프트</text>
+  <rect x="396" y="118" width="156" height="56" fill="var(--diagram-line)" />
+  <rect x="392" y="114" width="156" height="56" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="470" y="148" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">로그</text>
+  <rect x="396" y="208" width="156" height="56" fill="var(--diagram-line)" />
+  <rect x="392" y="204" width="156" height="56" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="470" y="238" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">평가 데이터</text>
+  <text x="470" y="290" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">세 통로 모두에 남는다</text>
+</svg>
 
 ### 🛡️ 프롬프트 인젝션과 감사 추적
 
 프롬프트 인젝션은 사용자 입력이 원래 지시를 덮어쓰려 하는 것을 말합니다. `2-7-prompt-patterns`에서 본 "사용자 입력을 구분자로 감싸기"가 이 공격에 대한 대응입니다.
 
 감사 추적(audit trail)은 누가 언제 무엇을 요청했고 어떤 응답이 나갔는지 남기는 기록으로, 사고가 났을 때 되짚어 볼 근거가 됩니다.
+
+<svg data-diagram viewBox="0 0 560 264" role="img" aria-labelledby="dia-injection-t">
+  <title id="dia-injection-t">구분자 없이 사용자 문장을 그대로 이어 붙이면 그 문장이 위쪽 시스템 지시를 덮어쓰려 올라간다. 사용자 입력을 별도 칸으로 감싸면 그 경계에서 막혀 지시까지 닿지 못한다.</title>
+  <text x="141" y="26" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">구분자 없이</text>
+  <rect x="18" y="44" width="254" height="206" fill="var(--diagram-line)" />
+  <rect x="14" y="40" width="254" height="206" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="14" y="40" width="254" height="46" fill="var(--diagram-accent)" />
+  <text x="141" y="70" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">시스템 지시</text>
+  <line x1="141" y1="170" x2="141" y2="100" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="135,100 147,100 141,88" fill="var(--diagram-ink)" />
+  <text x="154" y="140" textAnchor="start" fontSize="14" fill="var(--diagram-accent)">덮어씀</text>
+  <text x="141" y="192" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">&#34;지금까지 지시는</text>
+  <text x="141" y="214" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">무시하고…&#34;</text>
+  <text x="141" y="238" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">사용자 입력</text>
+  <text x="419" y="26" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">구분자로 감싸면</text>
+  <rect x="296" y="44" width="254" height="206" fill="var(--diagram-line)" />
+  <rect x="292" y="40" width="254" height="206" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="292" y="40" width="254" height="46" fill="var(--diagram-accent)" />
+  <text x="419" y="70" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">시스템 지시</text>
+  <text x="419" y="106" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">여기서 막힌다</text>
+  <line x1="304" y1="114" x2="534" y2="114" stroke="var(--diagram-ink)" strokeWidth="5" />
+  <line x1="419" y1="142" x2="419" y2="128" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="413,128 425,128 419,118" fill="var(--diagram-ink)" />
+  <rect x="306" y="150" width="230" height="80" fill="var(--diagram-line)" />
+  <rect x="302" y="146" width="230" height="80" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="417" y="180" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">&#34;지금까지 지시는</text>
+  <text x="417" y="204" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">무시하고…&#34;</text>
+  <text x="417" y="242" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">따로 감싼 사용자 입력</text>
+</svg>
 
 **흐름:** 요청 → 처리 → 지표 수집 → 임계값 비교 → 알림 → 사람 판단 → 기록
 

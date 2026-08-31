@@ -28,17 +28,123 @@ slug: "3-1-vector-search-basics"
 
 임베딩(embedding, 글을 숫자 배열로 바꾼 것)은 문장을 의미가 비슷한 문장끼리 가깝게 모이는 지도 위의 한 점으로 옮기는 작업입니다. "강아지"와 "반려견"은 같은 단어가 아니어도 이 지도 위에서는 아주 가까운 점이 됩니다.
 
+<svg data-diagram viewBox="0 0 560 172" role="img" aria-labelledby="dia-embedding-t">
+  <title id="dia-embedding-t">임베딩은 문장을 숫자 배열로 바꾸고, 그 숫자 배열이 지도 위의 점 하나가 되는 과정이다.</title>
+  <rect x="14" y="52" width="150" height="70" fill="var(--diagram-line)" />
+  <rect x="10" y="48" width="150" height="70" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="85" y="90" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">강아지 사료 추천</text>
+  <text x="85" y="146" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">문장</text>
+  <line x1="168" y1="83" x2="194" y2="83" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="194,77 206,83 194,89" fill="var(--diagram-ink)" />
+  <rect x="220" y="52" width="164" height="70" fill="var(--diagram-line)" />
+  <rect x="216" y="48" width="164" height="70" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="298" y="78" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">[0.82, -0.14,</text>
+  <text x="298" y="102" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">0.37, ...]</text>
+  <text x="298" y="146" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">숫자 배열</text>
+  <line x1="388" y1="83" x2="414" y2="83" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="414,77 426,83 414,89" fill="var(--diagram-ink)" />
+  <rect x="444" y="42" width="110" height="86" fill="var(--diagram-line)" />
+  <rect x="440" y="38" width="110" height="86" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <circle cx="495" cy="81" r="8" fill="var(--diagram-accent)" />
+  <text x="495" y="146" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">지도 위의 점</text>
+</svg>
+
 ### 🔍 벡터 검색 — 지도에서 가장 가까운 점 찾기
 
 벡터 검색(vector search)은 이 지도 위에 "질문"이라는 점을 하나 찍고, 그 점에서 가장 가까운 점(문서)들을 찾는 것입니다. 키워드 검색이 "같은 단어가 있는가"를 보는 것과 달리, 벡터 검색은 "뜻이 비슷한가"를 봅니다.
+
+<svg data-diagram viewBox="0 0 480 290" role="img" aria-labelledby="dia-nearest-t">
+  <title id="dia-nearest-t">벡터 검색은 지도 위에 질문이라는 점을 찍고, 그 점에서 거리가 가까운 문서 점들만 골라내는 일이다. 멀리 떨어진 점은 뜻이 다른 문서다.</title>
+  <rect x="24" y="28" width="440" height="214" fill="var(--diagram-line)" />
+  <rect x="20" y="24" width="440" height="214" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <circle cx="240" cy="120" r="92" fill="none" stroke="var(--diagram-accent)" strokeWidth="2" strokeDasharray="6 6" />
+  <line x1="240" y1="120" x2="160" y2="78" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="240" y1="120" x2="312" y2="92" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="240" y1="120" x2="300" y2="178" stroke="var(--diagram-line)" strokeWidth="2" />
+  <circle cx="160" cy="78" r="6" fill="var(--diagram-ink)" />
+  <text x="150" y="72" textAnchor="end" fontSize="14" fill="var(--diagram-ink)">문서 A</text>
+  <circle cx="312" cy="92" r="6" fill="var(--diagram-ink)" />
+  <text x="322" y="86" textAnchor="start" fontSize="14" fill="var(--diagram-ink)">문서 B</text>
+  <circle cx="300" cy="178" r="6" fill="var(--diagram-ink)" />
+  <text x="310" y="184" textAnchor="start" fontSize="14" fill="var(--diagram-ink)">문서 C</text>
+  <circle cx="240" cy="120" r="10" fill="var(--diagram-accent)" />
+  <text x="240" y="150" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">질문</text>
+  <circle cx="66" cy="196" r="6" fill="var(--diagram-line)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="78" y="202" textAnchor="start" fontSize="13" fill="var(--diagram-ink)">뜻이 먼 문서</text>
+  <circle cx="412" cy="56" r="6" fill="var(--diagram-line)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="240" y="268" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">가까울수록 뜻이 비슷한 문서</text>
+</svg>
 
 ### ✂️ 청크 — 긴 문서를 검색 단위로 자르기
 
 청크(chunk, 문서를 검색하기 좋은 크기로 잘라낸 조각)는 책 한 권을 통째로 임베딩하지 않고, 문단이나 몇 문장 단위로 잘라서 각각을 지도 위의 점으로 만드는 단위입니다.
 
+<svg data-diagram viewBox="0 0 560 240" role="img" aria-labelledby="dia-chunk-t">
+  <title id="dia-chunk-t">청크는 긴 문서 한 편을 통째로 다루지 않고 여러 조각으로 자른 것이다. 잘린 조각 하나하나가 각각 지도 위의 점이 된다.</title>
+  <rect x="24" y="34" width="120" height="170" fill="var(--diagram-line)" />
+  <rect x="20" y="30" width="120" height="170" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="38" y1="56" x2="122" y2="56" stroke="var(--diagram-line)" strokeWidth="3" />
+  <line x1="38" y1="76" x2="122" y2="76" stroke="var(--diagram-line)" strokeWidth="3" />
+  <line x1="38" y1="96" x2="104" y2="96" stroke="var(--diagram-line)" strokeWidth="3" />
+  <line x1="38" y1="126" x2="122" y2="126" stroke="var(--diagram-line)" strokeWidth="3" />
+  <line x1="38" y1="146" x2="122" y2="146" stroke="var(--diagram-line)" strokeWidth="3" />
+  <line x1="38" y1="176" x2="110" y2="176" stroke="var(--diagram-line)" strokeWidth="3" />
+  <text x="80" y="228" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">문서 한 편</text>
+  <line x1="148" y1="115" x2="174" y2="115" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="174,109 186,115 174,121" fill="var(--diagram-ink)" />
+  <rect x="200" y="30" width="150" height="50" fill="var(--diagram-line)" />
+  <rect x="196" y="26" width="150" height="50" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="271" y="57" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">1장 도입</text>
+  <rect x="200" y="92" width="150" height="50" fill="var(--diagram-line)" />
+  <rect x="196" y="88" width="150" height="50" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="271" y="119" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">2장 설치</text>
+  <rect x="200" y="154" width="150" height="50" fill="var(--diagram-line)" />
+  <rect x="196" y="150" width="150" height="50" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="271" y="181" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">3장 점검</text>
+  <text x="271" y="228" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">청크 3조각</text>
+  <line x1="352" y1="51" x2="374" y2="51" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="374,45 386,51 374,57" fill="var(--diagram-ink)" />
+  <line x1="352" y1="113" x2="374" y2="113" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="374,107 386,113 374,119" fill="var(--diagram-ink)" />
+  <line x1="352" y1="175" x2="374" y2="175" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="374,169 386,175 374,181" fill="var(--diagram-ink)" />
+  <rect x="404" y="30" width="140" height="174" fill="var(--diagram-line)" />
+  <rect x="400" y="26" width="140" height="174" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <circle cx="440" cy="62" r="8" fill="var(--diagram-accent)" />
+  <circle cx="494" cy="112" r="8" fill="var(--diagram-accent)" />
+  <circle cx="452" cy="164" r="8" fill="var(--diagram-accent)" />
+  <text x="470" y="228" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">조각마다 점 하나</text>
+</svg>
+
 ### 🏷️ 메타데이터 필터 — 지도에서 구역 먼저 좁히기
 
 메타데이터(metadata, 문서에 붙는 부가 정보 — 카테고리·날짜 등)는 벡터 검색을 하기 전에 지도의 특정 구역만 먼저 골라내는 역할을 합니다. "전자제품 카테고리 안에서만 가까운 점을 찾아줘" 같은 조건을 걸 수 있습니다.
+
+<svg data-diagram viewBox="0 0 560 250" role="img" aria-labelledby="dia-metadata-t">
+  <title id="dia-metadata-t">메타데이터 필터는 지도 전체를 뒤지기 전에 카테고리 구역부터 좁힌다. 그러면 뜻은 비슷해도 엉뚱한 카테고리의 문서가 후보에서 미리 빠진다.</title>
+  <text x="136" y="28" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">필터 없이</text>
+  <rect x="20" y="44" width="240" height="150" fill="var(--diagram-line)" />
+  <rect x="16" y="40" width="240" height="150" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <circle cx="60" cy="80" r="7" fill="var(--diagram-ink)" />
+  <circle cx="110" cy="152" r="7" fill="var(--diagram-ink)" />
+  <circle cx="200" cy="72" r="7" fill="var(--diagram-ink)" />
+  <circle cx="228" cy="146" r="7" fill="var(--diagram-ink)" />
+  <circle cx="90" cy="112" r="7" fill="var(--diagram-ink)" />
+  <circle cx="150" cy="112" r="10" fill="var(--diagram-accent)" />
+  <text x="424" y="28" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">카테고리 먼저</text>
+  <rect x="308" y="44" width="240" height="150" fill="var(--diagram-line)" />
+  <rect x="304" y="40" width="240" height="150" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="330" y="62" width="120" height="108" fill="var(--diagram-line)" stroke="var(--diagram-accent)" strokeWidth="2" strokeDasharray="6 6" />
+  <text x="390" y="56" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">전자제품 구역</text>
+  <circle cx="360" cy="92" r="7" fill="var(--diagram-ink)" />
+  <circle cx="432" cy="140" r="7" fill="var(--diagram-ink)" />
+  <circle cx="400" cy="156" r="7" fill="var(--diagram-ink)" />
+  <circle cx="395" cy="118" r="10" fill="var(--diagram-accent)" />
+  <circle cx="490" cy="80" r="7" fill="var(--diagram-line)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <circle cx="514" cy="160" r="7" fill="var(--diagram-line)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <circle cx="322" cy="178" r="7" fill="var(--diagram-line)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="280" y="226" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">구역을 먼저 좁히면 엉뚱한 카테고리가 후보에서 빠진다</text>
+</svg>
 
 ## 4. 실무 예제
 

@@ -27,17 +27,118 @@ slug: "3-1-hybrid-search-reranking"
 
 키워드 검색(keyword search, 문서에 같은 단어가 실제로 들어 있는지 세는 방식 — 대표 알고리즘이 BM25)은 책 뒤 색인에서 단어를 찾는 것과 비슷합니다. "단어가 정확히 있는가"를 보므로 제품 코드나 고유명사에 강합니다.
 
+<svg data-diagram viewBox="0 0 560 244" role="img" aria-labelledby="dia-keyword-t">
+  <title id="dia-keyword-t">키워드 검색은 색인을 뒤져 그 단어가 실제로 들어 있는 문서만 골라낸다. 단어가 없는 문서는 아무리 내용이 비슷해도 걸리지 않는다.</title>
+  <text x="106" y="80" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">찾을 단어</text>
+  <rect x="20" y="98" width="180" height="60" fill="var(--diagram-line)" />
+  <rect x="16" y="94" width="180" height="60" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="106" y="131" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">사번 20231045</text>
+  <line x1="204" y1="124" x2="230" y2="124" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="230,118 242,124 230,130" fill="var(--diagram-ink)" />
+  <rect x="260" y="40" width="284" height="48" fill="var(--diagram-line)" />
+  <rect x="256" y="36" width="284" height="48" fill="var(--diagram-accent)" />
+  <text x="272" y="66" textAnchor="start" fontSize="14" fill="var(--diagram-on-accent)">문서 3 — 그 단어가 있다</text>
+  <rect x="260" y="104" width="284" height="48" fill="var(--diagram-line)" />
+  <rect x="256" y="100" width="284" height="48" fill="var(--diagram-accent)" />
+  <text x="272" y="130" textAnchor="start" fontSize="14" fill="var(--diagram-on-accent)">문서 7 — 그 단어가 있다</text>
+  <rect x="260" y="168" width="284" height="48" fill="var(--diagram-line)" />
+  <rect x="256" y="164" width="284" height="48" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="272" y="194" textAnchor="start" fontSize="14" fill="var(--diagram-ink)">문서 5 — 단어가 없다</text>
+  <text x="280" y="238" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">뜻이 아니라 단어가 있고 없고로 가른다</text>
+</svg>
+
 ### 🤝 하이브리드 검색 — 두 결과를 합치기
 
 하이브리드 검색(hybrid search)은 키워드 검색과 벡터 검색을 함께 돌려 두 결과를 하나의 순위표로 합치는 방식입니다. 뜻도 비슷하고 단어까지 일치하는 문서가 더 높은 자리에 오도록 만듭니다.
+
+<svg data-diagram viewBox="0 0 560 282" role="img" aria-labelledby="dia-hybrid-t">
+  <title id="dia-hybrid-t">하이브리드 검색은 키워드 검색과 벡터 검색을 함께 돌린 뒤 두 결과를 하나의 순위표로 합친다. 단어도 맞고 뜻도 비슷한 문서가 위로 올라온다.</title>
+  <rect x="24" y="28" width="180" height="56" fill="var(--diagram-line)" />
+  <rect x="20" y="24" width="180" height="56" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="110" y="59" textAnchor="middle" fontSize="17" fill="var(--diagram-ink)">키워드 검색</text>
+  <text x="110" y="102" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">같은 단어가 있는가</text>
+  <rect x="364" y="28" width="180" height="56" fill="var(--diagram-line)" />
+  <rect x="360" y="24" width="180" height="56" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="450" y="59" textAnchor="middle" fontSize="17" fill="var(--diagram-ink)">벡터 검색</text>
+  <text x="450" y="102" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">뜻이 비슷한가</text>
+  <line x1="110" y1="112" x2="110" y2="122" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="450" y1="112" x2="450" y2="122" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="110" y1="122" x2="450" y2="122" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="280" y1="122" x2="280" y2="136" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="274,136 286,136 280,148" fill="var(--diagram-ink)" />
+  <rect x="174" y="152" width="220" height="60" fill="var(--diagram-line)" />
+  <rect x="170" y="148" width="220" height="60" fill="var(--diagram-accent)" />
+  <text x="280" y="185" textAnchor="middle" fontSize="17" fill="var(--diagram-on-accent)">하나의 순위표</text>
+  <line x1="280" y1="212" x2="280" y2="228" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="274,228 286,228 280,240" fill="var(--diagram-ink)" />
+  <text x="280" y="268" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">단어도 맞고 뜻도 비슷한 문서가 위로</text>
+</svg>
 
 ### 🎯 Re-ranking — 서류 통과자만 다시 면접 보기
 
 Re-ranking(재순위, 후보를 넉넉히 뽑은 뒤 더 정교한 모델로 다시 줄 세우는 단계)은 서류를 넉넉히 통과시킨 뒤 면접으로 다시 추리는 채용 과정과 비슷합니다. 하이브리드 검색이 후보군을 빠르게 뽑고, re-ranking이 그 안에서 다시 정렬합니다.
 
+<svg data-diagram viewBox="0 0 560 230" role="img" aria-labelledby="dia-rerank-t">
+  <title id="dia-rerank-t">re-ranking은 빠른 검색이 넉넉히 뽑아온 후보를, 더 정교한 모델이 다시 줄 세워 상위 몇 개만 남기는 단계다.</title>
+  <rect x="20" y="58" width="150" height="90" fill="var(--diagram-line)" />
+  <rect x="16" y="54" width="150" height="90" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="91" y="90" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">빠른 검색</text>
+  <text x="91" y="118" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">후보 50개</text>
+  <text x="91" y="178" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">많고 거칠게</text>
+  <line x1="174" y1="99" x2="192" y2="99" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="192,93 204,99 192,105" fill="var(--diagram-ink)" />
+  <rect x="214" y="48" width="190" height="110" fill="var(--diagram-line)" />
+  <rect x="210" y="44" width="190" height="110" fill="var(--diagram-accent)" />
+  <text x="305" y="88" textAnchor="middle" fontSize="17" fill="var(--diagram-on-accent)">re-ranking</text>
+  <text x="305" y="120" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">다시 줄 세우기</text>
+  <text x="305" y="178" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">느리지만 정교하게</text>
+  <line x1="408" y1="99" x2="426" y2="99" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="426,93 438,99 426,105" fill="var(--diagram-ink)" />
+  <rect x="448" y="58" width="100" height="90" fill="var(--diagram-line)" />
+  <rect x="444" y="54" width="100" height="90" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="494" y="105" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">상위 5개</text>
+  <text x="494" y="178" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">적고 정확하게</text>
+  <text x="280" y="212" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">넉넉히 뽑고, 그 안에서만 다시 줄 세운다</text>
+</svg>
+
 ### ⚖️ top-k와 파이프라인에서의 자리
 
 top-k(검색에서 상위 몇 개까지 가져올지 나타내는 값)와 re-ranking 대상 수는 속도·비용과 맞물린 결정입니다. 전체 흐름은 `질문 → 키워드 검색 + 벡터 검색 → 결과 합치기 → re-ranking → 상위 N개를 LLM에 전달` 순서로 이어집니다.
+
+<svg data-diagram viewBox="0 0 560 262" role="img" aria-labelledby="dia-pipeline-t">
+  <title id="dia-pipeline-t">검색 파이프라인의 전체 순서다. 질문에서 출발해 키워드와 벡터 검색을 함께 돌리고, 결과를 합친 뒤 re-ranking으로 다시 줄 세워 상위 몇 개만 LLM에 넘긴다.</title>
+  <rect x="20" y="28" width="120" height="58" fill="var(--diagram-line)" />
+  <rect x="16" y="24" width="120" height="58" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="76" y="60" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">질문</text>
+  <line x1="144" y1="53" x2="164" y2="53" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="164,47 176,53 164,59" fill="var(--diagram-ink)" />
+  <rect x="190" y="28" width="180" height="58" fill="var(--diagram-line)" />
+  <rect x="186" y="24" width="180" height="58" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="276" y="60" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">키워드 + 벡터 검색</text>
+  <line x1="374" y1="53" x2="394" y2="53" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="394,47 406,53 394,59" fill="var(--diagram-ink)" />
+  <rect x="420" y="28" width="128" height="58" fill="var(--diagram-line)" />
+  <rect x="416" y="24" width="128" height="58" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="480" y="60" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">결과 합치기</text>
+  <line x1="480" y1="86" x2="480" y2="112" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="480" y1="112" x2="91" y2="112" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="91" y1="112" x2="91" y2="136" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="85,136 97,136 91,148" fill="var(--diagram-ink)" />
+  <rect x="20" y="160" width="150" height="58" fill="var(--diagram-line)" />
+  <rect x="16" y="156" width="150" height="58" fill="var(--diagram-accent)" />
+  <text x="91" y="192" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">re-ranking</text>
+  <line x1="174" y1="185" x2="194" y2="185" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="194,179 206,185 194,191" fill="var(--diagram-ink)" />
+  <rect x="220" y="160" width="130" height="58" fill="var(--diagram-line)" />
+  <rect x="216" y="156" width="130" height="58" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="281" y="192" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">상위 N개</text>
+  <line x1="354" y1="185" x2="374" y2="185" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="374,179 386,185 374,191" fill="var(--diagram-ink)" />
+  <rect x="400" y="160" width="148" height="58" fill="var(--diagram-line)" />
+  <rect x="396" y="156" width="148" height="58" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="470" y="192" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">LLM 답변</text>
+  <text x="280" y="246" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">top-k는 각 단계에서 몇 개를 넘길지 정하는 값이다</text>
+</svg>
 
 ## 4. 실무 예제
 

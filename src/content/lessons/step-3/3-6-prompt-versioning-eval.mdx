@@ -30,15 +30,88 @@ slug: "3-6-prompt-versioning-eval"
 
 파일과 태그로 프롬프트를 관리하면 어떤 버전이 언제 운영에 있었는지 남길 수 있습니다. 계약서를 개정할 때마다 새 판을 찍고 이전 판을 보관해 두는 것과 같은 방식입니다.
 
+<svg data-diagram viewBox="0 0 560 270" role="img" aria-labelledby="dia-prompt-versions-t">
+  <title id="dia-prompt-versions-t">프롬프트는 판을 갈아엎지 않고 새 판을 쌓는다. v1과 v2는 지우지 않고 보관하고, 맨 위 v3만 지금 운영에 올라가 있다.</title>
+  <text x="30" y="30" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">시간</text>
+  <line x1="30" y1="40" x2="30" y2="240" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="24,240 36,240 30,252" fill="var(--diagram-ink)" />
+  <line x1="30" y1="68" x2="66" y2="68" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="30" y1="146" x2="66" y2="146" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="30" y1="224" x2="66" y2="224" stroke="var(--diagram-line)" strokeWidth="2" />
+  <rect x="74" y="44" width="400" height="56" fill="var(--diagram-line)" />
+  <rect x="70" y="40" width="400" height="56" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="92" y="74" textAnchor="start" fontSize="16" fill="var(--diagram-ink)">v1 첫 프롬프트</text>
+  <text x="452" y="74" textAnchor="end" fontSize="14" fill="var(--diagram-accent)">보관</text>
+  <rect x="74" y="122" width="400" height="56" fill="var(--diagram-line)" />
+  <rect x="70" y="118" width="400" height="56" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="92" y="152" textAnchor="start" fontSize="16" fill="var(--diagram-ink)">v2 톤 수정</text>
+  <text x="452" y="152" textAnchor="end" fontSize="14" fill="var(--diagram-accent)">보관</text>
+  <rect x="74" y="200" width="400" height="56" fill="var(--diagram-line)" />
+  <rect x="70" y="196" width="400" height="56" fill="var(--diagram-accent)" />
+  <text x="92" y="230" textAnchor="start" fontSize="16" fill="var(--diagram-on-accent)">v3 필수 항목 추가</text>
+  <text x="452" y="230" textAnchor="end" fontSize="14" fill="var(--diagram-on-accent)">운영 중</text>
+</svg>
+
 ### 🚦 평가 자동화가 붙는 위치 — 출하 전 검사대
 
 변경이 배포 파이프라인에 올라오면 자동으로 평가가 돌고, 기준을 채우지 못하면 배포가 막힙니다. 공장에서 제품이 출하되기 전 검사대를 통과해야 하는 것과 같은 구조입니다.
+
+<svg data-diagram viewBox="0 0 560 306" role="img" aria-labelledby="dia-eval-gate-t">
+  <title id="dia-eval-gate-t">프롬프트를 고치면 배포 전에 자동 평가가 먼저 돈다. 기준을 통과해야 배포로 넘어가고, 통과하지 못하면 그 자리에서 배포가 막힌다.</title>
+  <rect x="18" y="18" width="200" height="54" fill="var(--diagram-line)" />
+  <rect x="14" y="14" width="200" height="54" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="114" y="48" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">프롬프트 변경</text>
+  <line x1="214" y1="41" x2="250" y2="41" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="250,35 262,41 250,47" fill="var(--diagram-ink)" />
+  <rect x="276" y="18" width="200" height="54" fill="var(--diagram-line)" />
+  <rect x="272" y="14" width="200" height="54" fill="var(--diagram-accent)" />
+  <text x="372" y="48" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">자동 평가</text>
+  <line x1="372" y1="68" x2="372" y2="96" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="366,96 378,96 372,108" fill="var(--diagram-ink)" />
+  <rect x="276" y="116" width="200" height="54" fill="var(--diagram-line)" />
+  <rect x="272" y="112" width="200" height="54" fill="var(--diagram-soft)" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <text x="372" y="146" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">기준 통과?</text>
+  <line x1="372" y1="166" x2="372" y2="190" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="129" y1="190" x2="421" y2="190" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="129" y1="190" x2="129" y2="224" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="123,224 135,224 129,236" fill="var(--diagram-ink)" />
+  <line x1="421" y1="190" x2="421" y2="224" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="415,224 427,224 421,236" fill="var(--diagram-ink)" />
+  <text x="118" y="214" textAnchor="end" fontSize="14" fill="var(--diagram-accent)">실패</text>
+  <text x="433" y="214" textAnchor="start" fontSize="14" fill="var(--diagram-accent)">통과</text>
+  <rect x="18" y="240" width="230" height="54" fill="var(--diagram-line)" />
+  <rect x="14" y="236" width="230" height="54" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="129" y="270" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">배포 차단</text>
+  <rect x="310" y="240" width="230" height="54" fill="var(--diagram-line)" />
+  <rect x="306" y="236" width="230" height="54" fill="var(--diagram-accent)" />
+  <text x="421" y="270" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">배포</text>
+</svg>
 
 **흐름:** 프롬프트 변경 → 자동 평가 실행 → 기준 통과 여부 → 통과하면 배포 / 실패하면 차단
 
 ### 📈 평가 결과를 버전별로 남기기
 
 평가가 끝날 때마다 점수를 버전과 함께 기록해 두면, 나중에 어떤 버전에서 무엇이 떨어졌는지를 이력으로 비교할 수 있습니다.
+
+<svg data-diagram viewBox="0 0 560 270" role="img" aria-labelledby="dia-eval-history-t">
+  <title id="dia-eval-history-t">평가 점수를 버전과 함께 남기면 이력이 그림이 된다. v1 86점, v2 91점으로 올라가다가 v3에서 62점으로 떨어져 기준선 아래로 내려간 것이 한눈에 보인다.</title>
+  <line x1="40" y1="80" x2="520" y2="80" stroke="var(--diagram-accent)" strokeWidth="2" strokeDasharray="8 6" />
+  <text x="520" y="70" textAnchor="end" fontSize="14" fill="var(--diagram-accent)">기준선 78점</text>
+  <rect x="74" y="66" width="110" height="148" fill="var(--diagram-line)" />
+  <rect x="70" y="62" width="110" height="148" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="125" y="52" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">86</text>
+  <rect x="229" y="56" width="110" height="158" fill="var(--diagram-line)" />
+  <rect x="225" y="52" width="110" height="158" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="280" y="42" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">91</text>
+  <rect x="384" y="122" width="110" height="92" fill="var(--diagram-line)" />
+  <rect x="380" y="118" width="110" height="92" fill="var(--diagram-accent)" />
+  <text x="435" y="108" textAnchor="middle" fontSize="16" fill="var(--diagram-accent)">62</text>
+  <line x1="40" y1="210" x2="520" y2="210" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="125" y="234" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">v1</text>
+  <text x="280" y="234" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">v2</text>
+  <text x="435" y="234" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">v3</text>
+  <text x="435" y="258" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">기준선 아래</text>
+</svg>
 
 ### 🙋 자동화되는 것과 사람 몫의 경계
 

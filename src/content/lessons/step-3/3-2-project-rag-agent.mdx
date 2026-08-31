@@ -33,6 +33,59 @@ slug: "3-2-project-rag-agent"
 
 이 프로젝트의 흐름은 `문서 수집 → 청크 나누기 → 임베딩 → 벡터 저장소 → 질문 검색 → LLM 답변 + 근거 표시` 순서로 이어집니다.
 
+<svg data-diagram viewBox="0 0 560 340" role="img" aria-labelledby="dia-index-t">
+  <title id="dia-index-t">질문이 오기 전에 미리 해두는 준비 단계다. 문서를 모아 청크로 자르고, 임베딩으로 바꿔 벡터 저장소에 넣어둔다.</title>
+  <rect x="174" y="18" width="220" height="46" fill="var(--diagram-line)" />
+  <rect x="170" y="14" width="220" height="46" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="280" y="43" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">문서 수집</text>
+  <line x1="280" y1="64" x2="280" y2="76" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="274,76 286,76 280,88" fill="var(--diagram-ink)" />
+  <rect x="174" y="96" width="220" height="46" fill="var(--diagram-line)" />
+  <rect x="170" y="92" width="220" height="46" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="280" y="121" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">청크 나누기</text>
+  <line x1="280" y1="142" x2="280" y2="154" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="274,154 286,154 280,166" fill="var(--diagram-ink)" />
+  <rect x="174" y="174" width="220" height="46" fill="var(--diagram-line)" />
+  <rect x="170" y="170" width="220" height="46" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="280" y="199" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">임베딩</text>
+  <line x1="280" y1="220" x2="280" y2="232" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="274,232 286,232 280,244" fill="var(--diagram-ink)" />
+  <rect x="174" y="252" width="220" height="46" fill="var(--diagram-line)" />
+  <rect x="170" y="248" width="220" height="46" fill="var(--diagram-accent)" />
+  <text x="280" y="277" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">벡터 저장소</text>
+  <text x="280" y="324" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">질문이 오기 전에 미리 해두는 준비</text>
+</svg>
+
+<svg data-diagram viewBox="0 0 560 262" role="img" aria-labelledby="dia-answer-t">
+  <title id="dia-answer-t">질문이 들어온 뒤의 흐름이다. 저장소에서 근거 청크를 찾아 LLM에 넘기고, LLM은 답변과 함께 어느 문서에서 나왔는지를 같이 돌려준다.</title>
+  <rect x="20" y="34" width="110" height="54" fill="var(--diagram-line)" />
+  <rect x="16" y="30" width="110" height="54" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="71" y="63" textAnchor="middle" fontSize="17" fill="var(--diagram-ink)">질문</text>
+  <line x1="134" y1="57" x2="150" y2="57" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="150,51 162,57 150,63" fill="var(--diagram-ink)" />
+  <rect x="174" y="34" width="170" height="54" fill="var(--diagram-line)" />
+  <rect x="170" y="30" width="170" height="54" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="255" y="63" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">저장소에서 검색</text>
+  <line x1="348" y1="57" x2="364" y2="57" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="364,51 376,57 364,63" fill="var(--diagram-ink)" />
+  <rect x="388" y="34" width="160" height="54" fill="var(--diagram-line)" />
+  <rect x="384" y="30" width="160" height="54" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="464" y="63" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">근거 청크</text>
+  <line x1="464" y1="88" x2="464" y2="112" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="464" y1="112" x2="91" y2="112" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="91" y1="112" x2="91" y2="136" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="85,136 97,136 91,148" fill="var(--diagram-ink)" />
+  <rect x="20" y="156" width="150" height="54" fill="var(--diagram-line)" />
+  <rect x="16" y="152" width="150" height="54" fill="var(--diagram-accent)" />
+  <text x="91" y="187" textAnchor="middle" fontSize="18" fill="var(--diagram-on-accent)">LLM</text>
+  <line x1="178" y1="179" x2="194" y2="179" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="194,173 206,179 194,185" fill="var(--diagram-ink)" />
+  <rect x="222" y="156" width="240" height="54" fill="var(--diagram-line)" />
+  <rect x="218" y="152" width="240" height="54" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="338" y="186" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">답변 + 근거 문서 표시</text>
+  <text x="280" y="242" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">답만 주지 않고 어느 문서에서 나왔는지 함께 보여준다</text>
+</svg>
+
 | 단계 | 하는 일 | 어느 레슨에서 나왔나 |
 |------|---------|----------------------|
 | 문서 수집 | 팀이 자주 찾는 문서를 모은다 | 이 레슨 ④ 체크리스트 |

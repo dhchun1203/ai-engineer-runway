@@ -29,9 +29,53 @@ slug: "3-4-n8n-langgraph"
 
 n8n은 화면에서 블록을 이어 붙여 자동화를 만드는 도구입니다. 레고 블록을 조립하듯 "이 일이 생기면 → 이걸 하고 → 저걸 한다"를 화면에서 이어 붙입니다.
 
+<svg data-diagram viewBox="0 0 552 236" role="img" aria-labelledby="dia-n8n-canvas-t">
+  <title id="dia-n8n-canvas-t">n8n은 화면 위에서 메일 도착·분류·승인 같은 블록을 선으로 이어 붙여 자동화를 만든다. 코드를 쓰지 않고 화면에서 조립한다.</title>
+  <rect x="20" y="24" width="512" height="170" fill="none" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="20" y1="58" x2="532" y2="58" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="36" y="48" textAnchor="start" fontSize="14" fill="var(--diagram-accent)">n8n 화면</text>
+  <rect x="52" y="104" width="120" height="52" fill="var(--diagram-line)" />
+  <rect x="48" y="100" width="120" height="52" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="108" y="132" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">메일 도착</text>
+  <line x1="168" y1="126" x2="196" y2="126" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="196,120 208,126 196,132" fill="var(--diagram-ink)" />
+  <rect x="220" y="104" width="120" height="52" fill="var(--diagram-line)" />
+  <rect x="216" y="100" width="120" height="52" fill="var(--diagram-accent)" />
+  <text x="276" y="132" textAnchor="middle" fontSize="15" fill="var(--diagram-on-accent)">분류</text>
+  <line x1="336" y1="126" x2="364" y2="126" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="364,120 376,126 364,132" fill="var(--diagram-ink)" />
+  <rect x="388" y="104" width="120" height="52" fill="var(--diagram-line)" />
+  <rect x="384" y="100" width="120" height="52" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="444" y="132" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">승인</text>
+  <text x="276" y="222" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">블록을 화면에서 이어 붙인다 — 코드 없이</text>
+</svg>
+
 ### 📐 코드 프레임워크 — LangGraph
 
 LangGraph는 코드로 그래프를 선언해 자동화를 만드는 프레임워크입니다. 화면에서 이어 붙이는 대신, 도면을 그리듯 코드로 노드와 연결을 적습니다.
+
+<svg data-diagram viewBox="0 0 552 244" role="img" aria-labelledby="dia-langgraph-code-t">
+  <title id="dia-langgraph-code-t">LangGraph는 코드로 노드와 연결을 적으면 그 코드가 그대로 그래프가 된다. 화면에서 조립하는 대신 코드가 흐름을 정한다.</title>
+  <text x="16" y="22" textAnchor="start" fontSize="13" fill="var(--diagram-accent)">코드로 선언</text>
+  <rect x="20" y="34" width="210" height="160" fill="var(--diagram-line)" />
+  <rect x="16" y="30" width="210" height="160" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="34" y="62" textAnchor="start" fontSize="13" fill="var(--diagram-ink)">add_node(&#34;분류&#34;)</text>
+  <text x="34" y="92" textAnchor="start" fontSize="13" fill="var(--diagram-ink)">add_node(&#34;초안&#34;)</text>
+  <text x="34" y="130" textAnchor="start" fontSize="13" fill="var(--diagram-ink)">add_edge(</text>
+  <text x="34" y="158" textAnchor="start" fontSize="13" fill="var(--diagram-ink)">  &#34;분류&#34;, &#34;초안&#34;)</text>
+  <line x1="242" y1="110" x2="272" y2="110" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="272,104 284,110 272,116" fill="var(--diagram-ink)" />
+  <text x="300" y="22" textAnchor="start" fontSize="13" fill="var(--diagram-accent)">만들어지는 그래프</text>
+  <rect x="304" y="92" width="110" height="44" fill="var(--diagram-line)" />
+  <rect x="300" y="88" width="110" height="44" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="355" y="116" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">분류</text>
+  <line x1="410" y1="110" x2="438" y2="110" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="438,104 450,110 438,116" fill="var(--diagram-ink)" />
+  <rect x="462" y="92" width="86" height="44" fill="var(--diagram-line)" />
+  <rect x="458" y="88" width="86" height="44" fill="var(--diagram-accent)" />
+  <text x="501" y="116" textAnchor="middle" fontSize="15" fill="var(--diagram-on-accent)">초안</text>
+  <text x="276" y="226" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">화면 대신 코드가 노드와 연결을 정한다</text>
+</svg>
 
 ### 🔗 공통 개념 — 노드와 연결
 
@@ -48,6 +92,34 @@ LangGraph는 코드로 그래프를 선언해 자동화를 만드는 프레임�
 | 화면 구성은 노코드로, 복잡한 판단만 코드로 | 둘을 섞어서 사용 |
 
 어느 쪽을 쓰든 무엇이 바뀌었는지 기록(버전 관리)하고, 실패했을 때 무엇이 잘못됐는지 알 수 있어야 합니다.
+
+<svg data-diagram viewBox="0 0 552 310" role="img" aria-labelledby="dia-tool-choice-t">
+  <title id="dia-tool-choice-t">무엇으로 만들지 고르는 갈림길. 변경이 잦고 비개발자도 손대야 하면 노코드인 n8n, 분기가 복잡하고 테스트가 필요하면 코드인 LangGraph, 화면은 노코드로 판단만 코드로 하려면 둘을 섞는다.</title>
+  <rect x="180" y="20" width="200" height="52" fill="var(--diagram-line)" />
+  <rect x="176" y="16" width="200" height="52" fill="var(--diagram-soft)" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <text x="276" y="48" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">무엇으로 만들까?</text>
+  <line x1="276" y1="68" x2="276" y2="96" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="110" y1="96" x2="442" y2="96" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="110" y1="96" x2="110" y2="124" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="104,124 116,124 110,136" fill="var(--diagram-ink)" />
+  <line x1="442" y1="96" x2="442" y2="124" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="436,124 448,124 442,136" fill="var(--diagram-ink)" />
+  <line x1="276" y1="96" x2="276" y2="238" stroke="var(--diagram-ink)" strokeWidth="2" strokeDasharray="5 4" />
+  <polygon points="270,238 282,238 276,250" fill="var(--diagram-ink)" />
+  <rect x="24" y="144" width="180" height="100" fill="var(--diagram-line)" />
+  <rect x="20" y="140" width="180" height="100" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="110" y="172" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">노코드 · n8n</text>
+  <text x="110" y="200" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">변경이 잦고</text>
+  <text x="110" y="222" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">비개발자도 손댐</text>
+  <rect x="356" y="144" width="180" height="100" fill="var(--diagram-line)" />
+  <rect x="352" y="140" width="180" height="100" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="442" y="172" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">코드 · LangGraph</text>
+  <text x="442" y="200" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">분기가 복잡하고</text>
+  <text x="442" y="222" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">테스트가 필요함</text>
+  <rect x="180" y="254" width="200" height="44" fill="var(--diagram-line)" />
+  <rect x="176" y="250" width="200" height="44" fill="var(--diagram-accent)" />
+  <text x="276" y="278" textAnchor="middle" fontSize="15" fill="var(--diagram-on-accent)">둘을 섞어서</text>
+</svg>
 
 이 레슨에서도 앞 두 편과 같은 시나리오를 씁니다.
 

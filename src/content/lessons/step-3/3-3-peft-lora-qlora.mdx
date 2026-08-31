@@ -30,17 +30,112 @@ slug: "3-3-peft-lora-qlora"
 
 전체 파인튜닝(full fine-tuning)은 모델의 모든 가중치를 다시 학습시키는 방법입니다. 건물을 통째로 허물고 다시 짓는 것과 비슷해서, 시간과 비용이 크게 듭니다.
 
+<svg data-diagram viewBox="0 0 560 260" role="img" aria-labelledby="dia-full-ft-t">
+  <title id="dia-full-ft-t">전체 파인튜닝은 모델을 이루는 층 전부를 다시 학습시킨다. 건드리지 않고 남겨두는 부분이 없다.</title>
+  <text x="168" y="117" textAnchor="end" fontSize="15" fill="var(--diagram-ink)">모델</text>
+  <rect x="184" y="24" width="200" height="30" fill="var(--diagram-line)" />
+  <rect x="180" y="20" width="200" height="30" fill="var(--diagram-accent)" />
+  <rect x="184" y="64" width="200" height="30" fill="var(--diagram-line)" />
+  <rect x="180" y="60" width="200" height="30" fill="var(--diagram-accent)" />
+  <rect x="184" y="104" width="200" height="30" fill="var(--diagram-line)" />
+  <rect x="180" y="100" width="200" height="30" fill="var(--diagram-accent)" />
+  <rect x="184" y="144" width="200" height="30" fill="var(--diagram-line)" />
+  <rect x="180" y="140" width="200" height="30" fill="var(--diagram-accent)" />
+  <rect x="184" y="184" width="200" height="30" fill="var(--diagram-line)" />
+  <rect x="180" y="180" width="200" height="30" fill="var(--diagram-accent)" />
+  <line x1="392" y1="115" x2="416" y2="115" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="422" y="120" textAnchor="start" fontSize="14" fill="var(--diagram-accent)">전부 다시 학습</text>
+  <text x="280" y="244" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">건물을 통째로 허물고 다시 짓는 셈</text>
+</svg>
+
 ### 🎯 PEFT — 인테리어만 바꾸기
 
 PEFT(Parameter-Efficient Fine-Tuning, 모델의 일부만 손대는 효율적인 튜닝 방식)는 건물은 그대로 두고 인테리어만 바꾸는 것과 비슷합니다. 모델 전체가 아니라 아주 일부만 학습시킵니다.
+
+<svg data-diagram viewBox="0 0 560 260" role="img" aria-labelledby="dia-peft-t">
+  <title id="dia-peft-t">PEFT는 같은 모델에서 대부분의 층을 그대로 얼려두고 아주 일부만 학습시킨다. 앞 그림과 달리 강조된 층이 하나뿐이다.</title>
+  <text x="168" y="117" textAnchor="end" fontSize="15" fill="var(--diagram-ink)">모델</text>
+  <rect x="184" y="24" width="200" height="30" fill="var(--diagram-line)" />
+  <rect x="180" y="20" width="200" height="30" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="184" y="64" width="200" height="30" fill="var(--diagram-line)" />
+  <rect x="180" y="60" width="200" height="30" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="184" y="104" width="200" height="30" fill="var(--diagram-line)" />
+  <rect x="180" y="100" width="200" height="30" fill="var(--diagram-accent)" />
+  <rect x="184" y="144" width="200" height="30" fill="var(--diagram-line)" />
+  <rect x="180" y="140" width="200" height="30" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="184" y="184" width="200" height="30" fill="var(--diagram-line)" />
+  <rect x="180" y="180" width="200" height="30" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="392" y1="35" x2="416" y2="35" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="422" y="40" textAnchor="start" fontSize="14" fill="var(--diagram-ink)">그대로 얼림</text>
+  <line x1="392" y1="115" x2="416" y2="115" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="422" y="120" textAnchor="start" fontSize="14" fill="var(--diagram-accent)">여기만 학습</text>
+  <line x1="392" y1="195" x2="416" y2="195" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="422" y="200" textAnchor="start" fontSize="14" fill="var(--diagram-ink)">그대로 얼림</text>
+  <text x="280" y="244" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">건물은 그대로 두고 인테리어만 바꾸는 셈</text>
+</svg>
 
 ### 🧥 LoRA — 옷 위에 덧입는 조끼
 
 LoRA(Low-Rank Adaptation)는 PEFT의 대표 기법입니다. 원본 가중치는 그대로 얼려두고(freeze), 그 위에 작은 어댑터(adapter, 원본 위에 덧붙여 학습하는 작은 층) 층만 새로 학습합니다. 옷을 갈아입지 않고 조끼 하나만 덧입는 것과 같습니다.
 
+<svg data-diagram viewBox="0 0 560 238" role="img" aria-labelledby="dia-lora-t">
+  <title id="dia-lora-t">LoRA는 원본 가중치를 얼린 채 그대로 두고, 그 옆에 작은 어댑터 층만 새로 학습시킨다. 출력은 원본이 낸 결과와 어댑터가 낸 결과를 합쳐 만든다.</title>
+  <text x="30" y="126" textAnchor="start" fontSize="15" fill="var(--diagram-ink)">입력</text>
+  <line x1="68" y1="120" x2="86" y2="120" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="86" y1="75" x2="86" y2="165" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="86" y1="75" x2="96" y2="75" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="96,69 108,75 96,81" fill="var(--diagram-ink)" />
+  <line x1="86" y1="165" x2="96" y2="165" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="96,159 108,165 96,171" fill="var(--diagram-ink)" />
+  <rect x="114" y="44" width="180" height="70" fill="var(--diagram-line)" />
+  <rect x="110" y="40" width="180" height="70" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="200" y="72" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">원본 가중치</text>
+  <text x="200" y="96" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">그대로 얼림</text>
+  <rect x="114" y="144" width="180" height="50" fill="var(--diagram-line)" />
+  <rect x="110" y="140" width="180" height="50" fill="var(--diagram-accent)" />
+  <text x="200" y="172" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">LoRA 어댑터</text>
+  <line x1="294" y1="75" x2="336" y2="75" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="294" y1="165" x2="336" y2="165" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="336" y1="75" x2="336" y2="165" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="336" y1="120" x2="378" y2="120" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="378,114 390,120 378,126" fill="var(--diagram-ink)" />
+  <rect x="404" y="96" width="144" height="56" fill="var(--diagram-line)" />
+  <rect x="400" y="92" width="144" height="56" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="472" y="127" textAnchor="middle" fontSize="17" fill="var(--diagram-ink)">출력</text>
+  <text x="280" y="222" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">원본은 건드리지 않고 덧붙인 어댑터만 학습한다</text>
+</svg>
+
 ### 📦 QLoRA — 짐을 진공 압축해 작은 가방에 넣기
 
 QLoRA(Quantized LoRA)는 모델을 양자화(quantization, 숫자 표현을 더 작은 크기로 압축하는 것)로 먼저 압축한 뒤 LoRA를 적용하는 방식입니다. 짐을 진공 압축해 더 작은 가방에 담는 것과 비슷해서, 더 적은 자원으로도 튜닝할 수 있습니다.
+
+<svg data-diagram viewBox="0 0 560 238" role="img" aria-labelledby="dia-qlora-t">
+  <title id="dia-qlora-t">QLoRA는 모델을 양자화로 먼저 압축해 크기를 줄인 다음 그 위에 LoRA 어댑터를 붙인다. 그래서 더 적은 자원으로도 튜닝할 수 있다.</title>
+  <rect x="24" y="34" width="140" height="140" fill="var(--diagram-line)" />
+  <rect x="20" y="30" width="140" height="140" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="90" y="94" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">원본 모델</text>
+  <text x="90" y="120" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">큰 가방</text>
+  <text x="198" y="84" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">양자화</text>
+  <line x1="172" y1="100" x2="212" y2="100" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="212,94 224,100 212,106" fill="var(--diagram-ink)" />
+  <rect x="240" y="64" width="110" height="80" fill="var(--diagram-line)" />
+  <rect x="236" y="60" width="110" height="80" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="291" y="96" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">압축된 모델</text>
+  <text x="291" y="120" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">작은 가방</text>
+  <rect x="240" y="164" width="110" height="44" fill="var(--diagram-line)" />
+  <rect x="236" y="160" width="110" height="44" fill="var(--diagram-accent)" />
+  <text x="291" y="188" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">LoRA 어댑터</text>
+  <line x1="350" y1="100" x2="366" y2="100" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="350" y1="182" x2="366" y2="182" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="366" y1="100" x2="366" y2="182" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="366" y1="141" x2="390" y2="141" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="390,135 402,141 390,147" fill="var(--diagram-ink)" />
+  <rect x="416" y="114" width="132" height="62" fill="var(--diagram-line)" />
+  <rect x="412" y="110" width="132" height="62" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="478" y="136" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">더 적은 자원으로</text>
+  <text x="478" y="158" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">튜닝 가능</text>
+  <text x="280" y="228" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">짐을 진공 압축해 더 작은 가방에 담는 셈</text>
+</svg>
 
 ### 🧭 언제 튜닝 대신 프롬프트·RAG로 푸는가
 
