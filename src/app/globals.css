@@ -962,6 +962,29 @@ code[data-theme*=" "] span {
   --diagram-line: var(--color-line-dark);
 }
 
+/* 강조색은 레슨의 Step을 따라간다. 위 기본값이 Step 1(파랑)인 것은 파일럿이
+   Step 1 레슨이었기 때문이고, 그대로 두면 Step 2·3 레슨에서 본문의 Step 색과
+   그림의 강조색이 어긋난다. 레슨 페이지가 prose 컨테이너에 `data-step`을 단다.
+
+   명세성 주의: `.dark .prose [data-diagram]`(0,3,0)과 `.prose[data-step="2"]
+   [data-diagram]`(0,3,0)이 같으므로, 다크 오버라이드는 `.dark`를 함께 써서
+   (0,4,0) 더 강하게 둔다 — 순서에 기대지 않는다. */
+.prose[data-step='2'] [data-diagram] {
+  --diagram-accent: var(--color-step-2);
+}
+
+.prose[data-step='3'] [data-diagram] {
+  --diagram-accent: var(--color-step-3);
+}
+
+.dark .prose[data-step='2'] [data-diagram] {
+  --diagram-accent: var(--color-step-2-dark);
+}
+
+.dark .prose[data-step='3'] [data-diagram] {
+  --diagram-accent: var(--color-step-3-dark);
+}
+
 /* 그림 안 글자는 본문 스케일과 따로 논다 — SVG 좌표계 안의 크기이므로
    타이포 토큰(rem)을 쓰면 그림이 커질 때 글자만 어긋난다. 크기는 각 SVG가
    fontSize로 직접 정하고, 여기서는 서체만 본문과 맞춘다. */

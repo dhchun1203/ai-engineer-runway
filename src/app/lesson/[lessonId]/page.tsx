@@ -90,7 +90,14 @@ export default async function LessonPage(
           {lesson.hasContent ? (
             <>
               <SectionTape articleId={LESSON_ARTICLE_ID} stepId={lesson.stepId as StepId} />
-              <div id={LESSON_ARTICLE_ID} className="prose dark:prose-invert max-w-none">
+              {/* data-step: 본문 그림(`[data-diagram]`)의 강조색이 이 레슨의 Step 색을
+                  따라가게 하는 유일한 연결 고리다 — globals.css의 `.prose[data-step=...]`
+                  규칙이 이 값을 읽는다. 없으면 모든 그림이 Step 1 파랑으로 굳는다. */}
+              <div
+                id={LESSON_ARTICLE_ID}
+                data-step={lesson.stepId}
+                className="prose dark:prose-invert max-w-none"
+              >
                 <MDXContent code={lesson.code} />
               </div>
             </>
