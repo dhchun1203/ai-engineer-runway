@@ -34,11 +34,52 @@ JavaScript는 원래 브라우저 안에서만 동작하던 언어입니다. Nod
 
 Python을 설치했을 때 `py` 명령으로 `.py` 파일을 실행했던 것과 같은 역할을, Node.js는 `.js`·`.ts` 파일에 대해 해줍니다.
 
+<svg data-diagram viewBox="0 0 540 224" role="img" aria-labelledby="dia-node-runtime-t">
+  <title id="dia-node-runtime-t">같은 JavaScript 코드가 돌아갈 수 있는 곳은 두 군데다. 브라우저 안에서는 웹 페이지가 열려야 돌고, Node.js를 쓰면 브라우저 없이 터미널에서 바로 돌릴 수 있다.</title>
+  <rect x="24" y="44" width="228" height="140" fill="var(--diagram-line)" />
+  <rect x="20" y="40" width="228" height="140" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="134" y="70" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">브라우저 안</text>
+  <rect x="52" y="100" width="164" height="54" fill="var(--diagram-line)" />
+  <rect x="48" y="96" width="164" height="54" fill="var(--diagram-accent)" />
+  <text x="130" y="129" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">JavaScript</text>
+  <text x="134" y="208" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">웹 페이지가 열려야 실행</text>
+  <rect x="296" y="44" width="228" height="140" fill="var(--diagram-line)" />
+  <rect x="292" y="40" width="228" height="140" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="406" y="70" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">내 컴퓨터 (Node.js)</text>
+  <rect x="324" y="100" width="164" height="54" fill="var(--diagram-line)" />
+  <rect x="320" y="96" width="164" height="54" fill="var(--diagram-accent)" />
+  <text x="402" y="129" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">JavaScript</text>
+  <text x="406" y="208" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">터미널에서 바로 실행</text>
+</svg>
+
 ### 📦 npm과 package.json — 부품 창고와 부품 목록
 
 npm(패키지 매니저, package manager, 남이 만든 코드 부품을 내려받고 관리하는 도구)은 Node.js를 설치하면 함께 딸려오는 도구입니다. 전 세계 개발자가 올려둔 부품(패키지)을 명령 한 줄로 내 프로젝트에 가져올 수 있습니다.
 
 `package.json`은 그 부품 목록을 적어두는 장부입니다. 어떤 부품을 몇 번 버전으로 쓰는지, 프로젝트를 실행하는 명령이 무엇인지가 여기 적힙니다.
+
+<svg data-diagram viewBox="0 0 540 246" role="img" aria-labelledby="dia-npm-packages-t">
+  <title id="dia-npm-packages-t">npm install 명령은 전 세계 부품 창고에서 부품을 내려받아 내 프로젝트에 넣는다. package.json은 어떤 부품을 쓰는지 적은 장부이고, node_modules는 실제로 내려받은 부품 파일이 쌓이는 곳이다.</title>
+  <text x="213" y="24" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">npm install</text>
+  <rect x="24" y="36" width="170" height="70" fill="var(--diagram-line)" />
+  <rect x="20" y="32" width="170" height="70" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="105" y="62" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">npm 창고</text>
+  <text x="105" y="84" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">(전 세계 부품)</text>
+  <line x1="194" y1="67" x2="232" y2="67" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="232,61 244,67 232,73" fill="var(--diagram-ink)" />
+  <rect x="268" y="20" width="252" height="190" fill="var(--diagram-line)" />
+  <rect x="264" y="16" width="252" height="190" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="390" y="44" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">내 프로젝트</text>
+  <rect x="296" y="68" width="196" height="54" fill="var(--diagram-line)" />
+  <rect x="292" y="64" width="196" height="54" fill="var(--diagram-accent)" />
+  <text x="390" y="88" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">package.json</text>
+  <text x="390" y="109" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">부품 목록 장부</text>
+  <rect x="296" y="140" width="196" height="54" fill="var(--diagram-line)" />
+  <rect x="292" y="136" width="196" height="54" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="390" y="160" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">node_modules</text>
+  <text x="390" y="181" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">실제 부품 파일</text>
+  <text x="270" y="234" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">장부만 있으면 부품은 언제든 다시 내려받는다</text>
+</svg>
 
 ### 🏷️ TypeScript — 상자에 이름표를 붙이는 것
 
@@ -46,11 +87,79 @@ TypeScript는 JavaScript에 타입(type, 값이 어떤 종류인지 나타내는
 
 JavaScript는 이런 이름표가 없어서 잘못된 값이 들어가도 실행해봐야 문제를 알 수 있습니다. TypeScript는 코드를 작성하는 순간 에디터가 바로 빨간 줄로 알려줍니다.
 
+<svg data-diagram viewBox="0 0 540 276" role="img" aria-labelledby="dia-ts-typecheck-t">
+  <title id="dia-ts-typecheck-t">잘못된 값을 넣었을 때 언제 알아채는지가 다르다. JavaScript는 실행해본 뒤에야 에러를 만나고, TypeScript는 코드를 작성하는 순간 에디터가 알려주므로 실행은 정상적으로 끝난다.</title>
+  <text x="88" y="86" textAnchor="end" fontSize="15" fill="var(--diagram-accent)">JavaScript</text>
+  <rect x="104" y="60" width="120" height="48" fill="var(--diagram-line)" />
+  <rect x="100" y="56" width="120" height="48" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="160" y="86" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">코드 작성</text>
+  <line x1="224" y1="80" x2="252" y2="80" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="252,74 264,80 252,86" fill="var(--diagram-ink)" />
+  <rect x="272" y="60" width="110" height="48" fill="var(--diagram-line)" />
+  <rect x="268" y="56" width="110" height="48" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="323" y="86" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">실행</text>
+  <line x1="382" y1="80" x2="410" y2="80" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="410,74 422,80 410,86" fill="var(--diagram-ink)" />
+  <rect x="430" y="60" width="100" height="48" fill="var(--diagram-line)" />
+  <rect x="426" y="56" width="100" height="48" fill="var(--diagram-accent)" />
+  <text x="476" y="79" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">실행 뒤에야</text>
+  <text x="476" y="97" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">에러 발견</text>
+  <text x="88" y="190" textAnchor="end" fontSize="15" fill="var(--diagram-accent)">TypeScript</text>
+  <rect x="104" y="164" width="120" height="48" fill="var(--diagram-line)" />
+  <rect x="100" y="160" width="120" height="48" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="160" y="190" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">코드 작성</text>
+  <rect x="104" y="220" width="120" height="44" fill="var(--diagram-line)" />
+  <rect x="100" y="216" width="120" height="44" fill="var(--diagram-accent)" />
+  <text x="160" y="235" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">작성하는 순간</text>
+  <text x="160" y="253" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">에러 발견</text>
+  <line x1="224" y1="184" x2="252" y2="184" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="252,178 264,184 252,190" fill="var(--diagram-ink)" />
+  <rect x="272" y="164" width="110" height="48" fill="var(--diagram-line)" />
+  <rect x="268" y="160" width="110" height="48" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="323" y="190" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">실행</text>
+  <line x1="382" y1="184" x2="410" y2="184" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="410,178 422,184 410,190" fill="var(--diagram-ink)" />
+  <rect x="430" y="164" width="100" height="48" fill="var(--diagram-line)" />
+  <rect x="426" y="160" width="100" height="48" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="476" y="190" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">정상 동작</text>
+</svg>
+
 ### ⚙️ 컴파일과 바로 실행 — 두 가지 실행 방식
 
 TypeScript 파일(`.ts`)은 브라우저나 Node.js가 직접 이해하지 못합니다. 원래 방식은 `tsc`라는 컴파일러(compiler, 코드를 다른 언어로 변환하는 도구)로 `.js` 파일로 먼저 변환한 뒤 그 결과를 실행하는 것입니다.
 
 이 레슨에서는 `tsx`라는 도구로 컴파일 단계를 생략하고 `.ts` 파일을 바로 실행합니다. 실습 중에는 이 방식이 훨씬 빠르고 편합니다.
+
+<svg data-diagram viewBox="0 0 540 232" role="img" aria-labelledby="dia-run-paths-t">
+  <title id="dia-run-paths-t">같은 ts 파일을 실행하는 길이 두 개다. 원래 방식은 tsc로 js 파일을 만든 뒤 그것을 node로 실행하고, 이 레슨의 방식은 tsx로 ts 파일을 바로 실행한다.</title>
+  <text x="196" y="22" textAnchor="start" fontSize="13" fill="var(--diagram-accent)">원래 방식</text>
+  <rect x="24" y="90" width="110" height="52" fill="var(--diagram-line)" />
+  <rect x="20" y="86" width="110" height="52" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="75" y="118" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">.ts 파일</text>
+  <line x1="134" y1="112" x2="158" y2="112" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="158" y1="54" x2="158" y2="172" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="158" y1="54" x2="184" y2="54" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="184,48 196,54 184,60" fill="var(--diagram-ink)" />
+  <rect x="200" y="36" width="104" height="44" fill="var(--diagram-line)" />
+  <rect x="196" y="32" width="104" height="44" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="248" y="60" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">tsc 컴파일</text>
+  <line x1="304" y1="54" x2="314" y2="54" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="314,48 326,54 314,60" fill="var(--diagram-ink)" />
+  <rect x="330" y="36" width="90" height="44" fill="var(--diagram-line)" />
+  <rect x="326" y="32" width="90" height="44" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="371" y="60" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">.js 파일</text>
+  <line x1="420" y1="54" x2="430" y2="54" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="430,48 442,54 430,60" fill="var(--diagram-ink)" />
+  <rect x="446" y="36" width="84" height="44" fill="var(--diagram-line)" />
+  <rect x="442" y="32" width="84" height="44" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="484" y="60" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">node 실행</text>
+  <line x1="158" y1="172" x2="184" y2="172" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="184,166 196,172 184,178" fill="var(--diagram-ink)" />
+  <rect x="200" y="150" width="250" height="48" fill="var(--diagram-line)" />
+  <rect x="196" y="146" width="250" height="48" fill="var(--diagram-accent)" />
+  <text x="321" y="176" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">tsx로 .ts 바로 실행</text>
+  <text x="196" y="218" textAnchor="start" fontSize="13" fill="var(--diagram-accent)">이 레슨에서 쓰는 방식 — 중간 단계가 없다</text>
+</svg>
 
 ### 🔧 개발 의존성과 실행 의존성
 

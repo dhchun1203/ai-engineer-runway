@@ -32,6 +32,24 @@ Express로 만든 서버가 바로 그 데이터를 주고받는 창구입니다
 
 Express는 이 창구를 코드로 쉽게 만들게 해주는 라이브러리입니다. "어떤 주소로 어떤 요청이 오면 무엇을 돌려줄지"를 함수 하나로 정의합니다.
 
+<svg data-diagram viewBox="0 0 540 178" role="img" aria-labelledby="dia-server-counter-t">
+  <title id="dia-server-counter-t">서버는 매장의 주문 창구다. 클라이언트가 요청을 보내면 서버가 받아 처리하고, 그 결과를 응답으로 되돌려준다.</title>
+  <rect x="24" y="64" width="130" height="80" fill="var(--diagram-line)" />
+  <rect x="20" y="60" width="130" height="80" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="85" y="98" textAnchor="middle" fontSize="17" fill="var(--diagram-ink)">클라이언트</text>
+  <text x="85" y="122" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">(손님)</text>
+  <line x1="160" y1="84" x2="372" y2="84" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="372,78 384,84 372,90" fill="var(--diagram-ink)" />
+  <text x="272" y="74" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">요청 GET /products</text>
+  <line x1="384" y1="126" x2="172" y2="126" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="172,120 160,126 172,132" fill="var(--diagram-ink)" />
+  <text x="272" y="148" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">응답 200 + 상품 목록</text>
+  <rect x="394" y="64" width="130" height="80" fill="var(--diagram-line)" />
+  <rect x="390" y="60" width="130" height="80" fill="var(--diagram-accent)" />
+  <text x="455" y="98" textAnchor="middle" fontSize="17" fill="var(--diagram-on-accent)">서버</text>
+  <text x="455" y="122" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">(주문 창구)</text>
+</svg>
+
 ### 📋 HTTP 메서드와 상태 코드
 
 요청에는 목적을 나타내는 메서드(method)가 붙습니다. 응답에는 결과를 나타내는 상태 코드(status code)가 붙습니다.
@@ -52,6 +70,28 @@ REST(자원 중심 설계 방식)의 핵심 규칙은 "URL은 명사, 행동은 
 
 `/getProducts`, `/createProduct`처럼 URL에 동사를 넣지 않습니다. 메서드가 이미 동사 역할을 하기 때문입니다.
 
+<svg data-diagram viewBox="0 0 560 206" role="img" aria-labelledby="dia-rest-noun-t">
+  <title id="dia-rest-noun-t">REST는 URL에 동사를 넣지 않는다. getProducts·createProduct처럼 주소를 늘리는 대신, products 주소 하나에 GET과 POST를 붙여 조회와 생성을 구분한다.</title>
+  <text x="135" y="24" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">이렇게 쓰지 않는다</text>
+  <rect x="24" y="48" width="230" height="44" fill="var(--diagram-line)" />
+  <rect x="20" y="44" width="230" height="44" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="135" y="72" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">GET /getProducts</text>
+  <rect x="24" y="112" width="230" height="44" fill="var(--diagram-line)" />
+  <rect x="20" y="108" width="230" height="44" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="135" y="136" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">POST /createProduct</text>
+  <text x="135" y="184" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">주소가 계속 늘어난다</text>
+  <line x1="278" y1="14" x2="278" y2="194" stroke="var(--diagram-line)" strokeWidth="2" strokeDasharray="6 6" />
+  <text x="427" y="24" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">이렇게 쓴다</text>
+  <rect x="316" y="48" width="230" height="108" fill="var(--diagram-line)" />
+  <rect x="312" y="44" width="230" height="108" fill="var(--diagram-soft)" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <text x="427" y="76" textAnchor="middle" fontSize="18" fill="var(--diagram-ink)">/products</text>
+  <rect x="330" y="94" width="94" height="40" fill="var(--diagram-accent)" />
+  <text x="377" y="120" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">GET</text>
+  <rect x="434" y="94" width="94" height="40" fill="var(--diagram-accent)" />
+  <text x="481" y="120" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">POST</text>
+  <text x="427" y="184" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">주소는 하나, 행동만 바뀐다</text>
+</svg>
+
 ### 🚪 미들웨어는 문 앞의 직원들
 
 미들웨어(middleware)는 요청이 최종 처리 함수(핸들러)에 닿기 전 순서대로 거치는 함수입니다. 손님이 매장에 들어올 때 안내·확인·번호표 발급을 차례로 거치는 것과 같습니다.
@@ -59,6 +99,42 @@ REST(자원 중심 설계 방식)의 핵심 규칙은 "URL은 명사, 행동은 
 로그 남기기, CORS 허용, 요청 본문을 객체로 바꾸는 파싱이 대표적인 미들웨어입니다. 요청의 전체 흐름은 아래와 같습니다.
 
 `요청 → 미들웨어(로그·CORS·본문 파싱) → 라우터 → 핸들러 → 응답`
+
+<svg data-diagram viewBox="0 0 460 330" role="img" aria-labelledby="dia-middleware-t">
+  <title id="dia-middleware-t">요청은 핸들러에 닿기 전에 미들웨어를 순서대로 지난다. 로그 남기기, CORS 허용, 본문 파싱을 차례로 거친 뒤에야 라우터와 핸들러가 응답을 만든다.</title>
+  <rect x="108" y="14" width="290" height="38" fill="var(--diagram-line)" />
+  <rect x="104" y="10" width="290" height="38" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="249" y="35" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">요청 도착</text>
+  <line x1="249" y1="48" x2="249" y2="54" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="243,54 255,54 249,64" fill="var(--diagram-ink)" />
+  <rect x="108" y="68" width="290" height="38" fill="var(--diagram-line)" />
+  <rect x="104" y="64" width="290" height="38" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="249" y="89" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">로그 남기기</text>
+  <line x1="249" y1="102" x2="249" y2="108" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="243,108 255,108 249,118" fill="var(--diagram-ink)" />
+  <rect x="108" y="122" width="290" height="38" fill="var(--diagram-line)" />
+  <rect x="104" y="118" width="290" height="38" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="249" y="143" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">CORS 허용</text>
+  <line x1="249" y1="156" x2="249" y2="162" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="243,162 255,162 249,172" fill="var(--diagram-ink)" />
+  <rect x="108" y="176" width="290" height="38" fill="var(--diagram-line)" />
+  <rect x="104" y="172" width="290" height="38" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="249" y="197" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">본문 파싱 express.json</text>
+  <line x1="249" y1="210" x2="249" y2="216" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="243,216 255,216 249,226" fill="var(--diagram-ink)" />
+  <rect x="108" y="230" width="290" height="38" fill="var(--diagram-line)" />
+  <rect x="104" y="226" width="290" height="38" fill="var(--diagram-accent)" />
+  <text x="249" y="251" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">라우터 → 핸들러</text>
+  <line x1="249" y1="264" x2="249" y2="270" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="243,270 255,270 249,280" fill="var(--diagram-ink)" />
+  <rect x="108" y="284" width="290" height="38" fill="var(--diagram-line)" />
+  <rect x="104" y="280" width="290" height="38" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="249" y="305" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">응답 반환</text>
+  <line x1="86" y1="64" x2="86" y2="210" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <line x1="86" y1="64" x2="96" y2="64" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <line x1="86" y1="210" x2="96" y2="210" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <text x="78" y="142" textAnchor="end" fontSize="14" fill="var(--diagram-accent)">미들웨어</text>
+</svg>
 
 ## 4. 실무 예제
 

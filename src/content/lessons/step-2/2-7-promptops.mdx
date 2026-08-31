@@ -32,17 +32,100 @@ slug: "2-7-promptops"
 
 머릿속에만 있던 프롬프트를 파일로 꺼내면 "이전 버전에서 뭐가 바뀌었는지"를 diff로 비교할 수 있게 됩니다. 이것이 프롬프트 관리의 첫걸음입니다.
 
+<svg data-diagram viewBox="0 0 560 222" role="img" aria-labelledby="dia-prompt-as-code-t">
+  <title id="dia-prompt-as-code-t">프롬프트가 코드 안 문자열로 박혀 있으면 무엇이 언제 바뀌었는지 알 수 없다. 파일로 꺼내 버전을 매기면 바뀐 부분이 diff에 그대로 드러난다.</title>
+  <text x="140" y="22" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">코드 안에 박혀 있을 때</text>
+  <rect x="24" y="44" width="240" height="104" fill="var(--diagram-line)" />
+  <rect x="20" y="40" width="240" height="104" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="140" y="68" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">app.ts</text>
+  <line x1="32" y1="80" x2="248" y2="80" stroke="var(--diagram-line)" strokeWidth="2" />
+  <text x="140" y="106" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">&#34;당신은 카피라이터&#34;</text>
+  <text x="140" y="130" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">코드에 섞여 있다</text>
+  <text x="140" y="176" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">무엇이 언제 바뀌었는지</text>
+  <text x="140" y="198" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">아무도 모른다</text>
+  <line x1="282" y1="12" x2="282" y2="208" stroke="var(--diagram-line)" strokeWidth="2" strokeDasharray="6 6" />
+  <text x="420" y="22" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">파일로 꺼냈을 때</text>
+  <rect x="304" y="44" width="240" height="104" fill="var(--diagram-line)" />
+  <rect x="300" y="40" width="240" height="104" fill="var(--diagram-soft)" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <text x="420" y="68" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">prompts/recommend.md</text>
+  <line x1="312" y1="80" x2="528" y2="80" stroke="var(--diagram-line)" strokeWidth="2" />
+  <rect x="332" y="92" width="80" height="30" fill="var(--diagram-accent)" />
+  <text x="372" y="113" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">v1</text>
+  <rect x="428" y="92" width="80" height="30" fill="var(--diagram-accent)" />
+  <text x="468" y="113" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">v2</text>
+  <text x="420" y="138" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">버전마다 기록이 남는다</text>
+  <text x="420" y="176" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">무엇이 바뀌었는지</text>
+  <text x="420" y="198" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">diff로 그대로 보인다</text>
+</svg>
+
 ### 🎯 골든셋과 회귀 확인
 
 골든셋은 정답이 정해진 입력·기대 출력 목록입니다. 프롬프트를 바꿀 때마다 이 목록을 다시 돌려 예전에는 통과하던 케이스가 이번에도 통과하는지 확인합니다.
 
 통과하던 케이스가 갑자기 실패하면 그것이 바로 회귀(regression)입니다. 골든셋이 없으면 회귀를 사람이 우연히 발견할 때까지 아무도 모릅니다.
 
+<svg data-diagram viewBox="0 0 560 288" role="img" aria-labelledby="dia-goldenset-t">
+  <title id="dia-goldenset-t">프롬프트를 새 버전으로 바꾸면 골든셋 전체를 다시 돌린다. 예전 버전에서 통과하던 케이스가 이번에 실패하면 그것이 회귀다.</title>
+  <rect x="194" y="16" width="180" height="42" fill="var(--diagram-line)" />
+  <rect x="190" y="12" width="180" height="42" fill="var(--diagram-accent)" />
+  <text x="280" y="39" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">프롬프트 v2</text>
+  <line x1="280" y1="54" x2="280" y2="66" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="274,66 286,66 280,76" fill="var(--diagram-ink)" />
+  <rect x="64" y="84" width="432" height="140" fill="var(--diagram-line)" />
+  <rect x="60" y="80" width="432" height="140" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="276" y="104" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">골든셋 — 정답이 정해진 케이스</text>
+  <rect x="76" y="116" width="124" height="44" fill="var(--diagram-line)" />
+  <text x="138" y="144" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">케이스 1</text>
+  <line x1="138" y1="160" x2="138" y2="166" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="132,166 144,166 138,176" fill="var(--diagram-ink)" />
+  <rect x="76" y="176" width="124" height="36" fill="var(--diagram-accent)" />
+  <text x="138" y="200" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">통과</text>
+  <rect x="216" y="116" width="124" height="44" fill="var(--diagram-line)" />
+  <text x="278" y="144" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">케이스 2</text>
+  <line x1="278" y1="160" x2="278" y2="166" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="272,166 284,166 278,176" fill="var(--diagram-ink)" />
+  <rect x="216" y="176" width="124" height="36" fill="var(--diagram-accent)" />
+  <text x="278" y="200" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">통과</text>
+  <rect x="356" y="116" width="124" height="44" fill="var(--diagram-line)" />
+  <text x="418" y="144" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">케이스 3</text>
+  <line x1="418" y1="160" x2="418" y2="166" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="412,166 424,166 418,176" fill="var(--diagram-ink)" />
+  <rect x="356" y="176" width="124" height="36" fill="var(--diagram-line)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="418" y="200" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">실패</text>
+  <text x="280" y="250" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">v1에서 통과하던 케이스 3이 이번엔 실패</text>
+  <text x="280" y="276" textAnchor="middle" fontSize="17" fill="var(--diagram-accent)">이것이 회귀(regression)</text>
+</svg>
+
 ### 📊 평가 지표의 종류
 
 자동으로 잴 수 있는 것과 아닌 것을 구분해야 합니다. 형식 통과율(JSON이 스키마를 지켰는가), 필수 키워드 포함 여부, 길이 제약은 코드로 자동 채점할 수 있습니다.
 
 반면 "문구가 자연스러운가"처럼 톤이나 뉘앙스는 사람이 봐야 합니다. 실무에서는 자동 채점으로 큰 문제를 먼저 걸러내고, 남은 것만 사람이 확인하는 방식을 씁니다.
+
+<svg data-diagram viewBox="0 0 560 222" role="img" aria-labelledby="dia-eval-metrics-t">
+  <title id="dia-eval-metrics-t">평가는 두 겹이다. 형식 통과율·필수 키워드·길이 제약처럼 코드로 잴 수 있는 것은 자동 채점이 먼저 걸러내고, 톤이나 자연스러움처럼 잴 수 없는 것만 사람이 확인한다.</title>
+  <text x="280" y="26" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">자동으로 걸러낸 뒤, 남은 것만 사람이 본다</text>
+  <rect x="14" y="94" width="120" height="64" fill="var(--diagram-line)" />
+  <rect x="10" y="90" width="120" height="64" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="70" y="116" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">모델</text>
+  <text x="70" y="138" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">출력</text>
+  <line x1="140" y1="122" x2="164" y2="122" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="164,116 176,122 164,128" fill="var(--diagram-ink)" />
+  <rect x="184" y="64" width="200" height="124" fill="var(--diagram-line)" />
+  <rect x="180" y="60" width="200" height="124" fill="var(--diagram-accent)" />
+  <text x="280" y="92" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">자동 채점</text>
+  <text x="280" y="118" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">형식 통과율</text>
+  <text x="280" y="140" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">필수 키워드</text>
+  <text x="280" y="162" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">길이 제약</text>
+  <line x1="390" y1="122" x2="414" y2="122" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="414,116 426,122 414,128" fill="var(--diagram-ink)" />
+  <rect x="434" y="94" width="116" height="64" fill="var(--diagram-line)" />
+  <rect x="430" y="90" width="116" height="64" fill="var(--diagram-soft)" stroke="var(--diagram-accent)" strokeWidth="2" />
+  <text x="488" y="116" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">사람이</text>
+  <text x="488" y="138" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">확인</text>
+  <text x="280" y="208" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">코드가 매번 자동으로 잰다</text>
+  <text x="488" y="182" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">톤·자연스러움</text>
+</svg>
 
 ### ⏱️ 운영 지표도 처음부터 함께 본다
 

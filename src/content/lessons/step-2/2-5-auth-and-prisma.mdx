@@ -32,11 +32,60 @@ slug: "2-5-auth-and-prisma"
 
 신분증 확인과 출입 등급의 관계와 같습니다. 신분증으로 누구인지 확인한 뒤에도, 등급이 낮으면 특정 구역에는 들어갈 수 없습니다.
 
+<svg data-diagram viewBox="0 0 540 226" role="img" aria-labelledby="dia-authn-authz-t">
+  <title id="dia-authn-authz-t">인증과 인가는 서로 다른 질문이다. 인증은 당신이 누구인지 신분증으로 확인하고, 인가는 그 사람이 이 일을 해도 되는지 출입 등급으로 확인한다. 인증이 먼저고 인가가 다음이다.</title>
+  <text x="136" y="32" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">인증 (authentication)</text>
+  <rect x="24" y="48" width="232" height="134" fill="var(--diagram-line)" />
+  <rect x="20" y="44" width="232" height="134" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="52" y="84" width="168" height="52" fill="var(--diagram-line)" />
+  <rect x="48" y="80" width="168" height="52" fill="var(--diagram-accent)" />
+  <text x="132" y="112" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">누구인가?</text>
+  <text x="136" y="164" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">신분증 확인</text>
+  <line x1="258" y1="111" x2="274" y2="111" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="274,105 286,111 274,117" fill="var(--diagram-ink)" />
+  <text x="404" y="32" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">인가 (authorization)</text>
+  <rect x="292" y="48" width="232" height="134" fill="var(--diagram-line)" />
+  <rect x="288" y="44" width="232" height="134" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="320" y="84" width="168" height="52" fill="var(--diagram-line)" />
+  <rect x="316" y="80" width="168" height="52" fill="var(--diagram-accent)" />
+  <text x="400" y="112" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">해도 되는가?</text>
+  <text x="404" y="164" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">출입 등급 확인</text>
+  <text x="270" y="210" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">누구인지 먼저 확인하고, 그다음 등급을 확인한다</text>
+</svg>
+
 ### 🔒 비밀번호는 그대로 저장하지 않는다
 
 비밀번호를 원문(평문) 그대로 저장하면, 저장소가 유출되는 순간 모든 사용자의 비밀번호가 그대로 드러납니다. 그래서 해시(hash, 원래 값을 복원할 수 없게 바꾼 값)로 바꿔서 저장합니다.
 
 솔트(salt, 해시 전에 섞는 무작위 값)를 더하면 같은 비밀번호라도 사용자마다 다른 해시가 나와 더 안전해집니다. `bcryptjs` 라이브러리가 해시 생성과 솔트 처리를 함께 해줍니다.
+
+<svg data-diagram viewBox="0 0 540 212" role="img" aria-labelledby="dia-password-hash-t">
+  <title id="dia-password-hash-t">비밀번호 원문에 솔트를 섞어 해시 함수를 통과시킨 결과만 저장한다. 화살표는 한 방향으로만 흐르며, 저장된 해시값에서 원래 비밀번호를 되돌리는 길은 막혀 있다.</title>
+  <rect x="24" y="44" width="124" height="52" fill="var(--diagram-line)" />
+  <rect x="20" y="40" width="124" height="52" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="82" y="72" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">비밀번호 원문</text>
+  <text x="156" y="74" textAnchor="middle" fontSize="20" fill="var(--diagram-ink)">+</text>
+  <rect x="172" y="44" width="66" height="52" fill="var(--diagram-line)" />
+  <rect x="168" y="40" width="66" height="52" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="201" y="72" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">솔트</text>
+  <line x1="238" y1="66" x2="254" y2="66" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="254,60 266,66 254,72" fill="var(--diagram-ink)" />
+  <rect x="276" y="44" width="110" height="52" fill="var(--diagram-line)" />
+  <rect x="272" y="40" width="110" height="52" fill="var(--diagram-accent)" />
+  <text x="327" y="72" textAnchor="middle" fontSize="15" fill="var(--diagram-on-accent)">해시 함수</text>
+  <line x1="386" y1="66" x2="402" y2="66" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="402,60 414,66 402,72" fill="var(--diagram-ink)" />
+  <rect x="424" y="44" width="104" height="52" fill="var(--diagram-line)" />
+  <rect x="420" y="40" width="104" height="52" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="472" y="72" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">저장된 해시값</text>
+  <line x1="472" y1="92" x2="472" y2="150" stroke="var(--diagram-ink)" strokeWidth="2" strokeDasharray="7 7" />
+  <line x1="472" y1="150" x2="82" y2="150" stroke="var(--diagram-ink)" strokeWidth="2" strokeDasharray="7 7" />
+  <line x1="82" y1="150" x2="82" y2="104" stroke="var(--diagram-ink)" strokeWidth="2" strokeDasharray="7 7" />
+  <polygon points="76,104 88,104 82,92" fill="var(--diagram-ink)" />
+  <line x1="265" y1="138" x2="289" y2="162" stroke="var(--diagram-accent)" strokeWidth="4" strokeLinecap="round" />
+  <line x1="289" y1="138" x2="265" y2="162" stroke="var(--diagram-accent)" strokeWidth="4" strokeLinecap="round" />
+  <text x="277" y="192" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">해시값에서 원래 비밀번호로는 되돌릴 수 없다</text>
+</svg>
 
 ### 🎫 JWT는 서명된 출입증
 
@@ -44,11 +93,65 @@ JWT(JSON Web Token, 서명된 출입증)는 로그인에 성공했을 때 서버
 
 토큰에는 만료 시간이 있어 일정 시간이 지나면 무효가 됩니다. 서버가 서명했기 때문에 내용이 조작되면 검증에 실패합니다.
 
+<svg data-diagram viewBox="0 0 540 300" role="img" aria-labelledby="dia-jwt-flow-t">
+  <title id="dia-jwt-flow-t">브라우저와 서버가 주고받는 네 번의 왕복이다. 아이디와 비밀번호로 로그인하면 서버가 서명된 토큰을 발급하고, 이후 요청마다 헤더에 그 토큰을 담아 보내면 서버는 서명을 검증한 뒤 응답한다.</title>
+  <rect x="24" y="20" width="150" height="44" fill="var(--diagram-line)" />
+  <rect x="20" y="16" width="150" height="44" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="95" y="44" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">브라우저</text>
+  <rect x="370" y="20" width="150" height="44" fill="var(--diagram-line)" />
+  <rect x="366" y="16" width="150" height="44" fill="var(--diagram-accent)" />
+  <text x="441" y="44" textAnchor="middle" fontSize="15" fill="var(--diagram-on-accent)">서버</text>
+  <line x1="95" y1="64" x2="95" y2="272" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="441" y1="64" x2="441" y2="272" stroke="var(--diagram-line)" strokeWidth="2" />
+  <text x="262" y="88" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">아이디 · 비밀번호로 로그인</text>
+  <line x1="95" y1="102" x2="415" y2="102" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="415,96 427,102 415,108" fill="var(--diagram-ink)" />
+  <text x="275" y="138" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">서명된 토큰(JWT) 발급</text>
+  <line x1="441" y1="152" x2="121" y2="152" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="121,146 109,152 121,158" fill="var(--diagram-ink)" />
+  <text x="262" y="188" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">요청 헤더에 토큰을 담아 보냄</text>
+  <line x1="95" y1="202" x2="415" y2="202" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="415,196 427,202 415,208" fill="var(--diagram-ink)" />
+  <text x="275" y="238" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">서명 검증 후 응답</text>
+  <line x1="441" y1="252" x2="121" y2="252" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="121,246 109,252 121,258" fill="var(--diagram-ink)" />
+  <text x="270" y="290" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">토큰에는 만료 시간이 있어 지나면 무효가 된다</text>
+</svg>
+
 ### 🗄️ ORM과 Prisma의 세 단계
 
 ORM(Object-Relational Mapping, 테이블을 코드 객체처럼 다루는 방식)은 SQL 문을 직접 쓰지 않고 함수 호출로 데이터베이스를 다루게 해줍니다. Prisma는 이 방식을 세 단계로 나눕니다.
 
 스키마 정의(테이블 모양을 파일로 적기) → 마이그레이션(실제 데이터베이스에 반영하기) → 타입이 붙은 클라이언트(코드에서 자동완성과 함께 안전하게 호출하기) 순서입니다.
+
+<svg data-diagram viewBox="0 0 540 240" role="img" aria-labelledby="dia-prisma-steps-t">
+  <title id="dia-prisma-steps-t">Prisma는 세 단계로 나뉜다. 스키마 파일에 테이블 모양을 적고, 마이그레이션으로 실제 데이터베이스에 반영하고, 타입이 붙은 클라이언트를 얻는다. 그 결과 SQL을 직접 쓰는 대신 함수 호출로 데이터를 다룬다.</title>
+  <rect x="24" y="54" width="150" height="76" fill="var(--diagram-line)" />
+  <rect x="20" y="50" width="150" height="76" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="95" y="82" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">1. 스키마 정의</text>
+  <text x="95" y="106" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">schema.prisma</text>
+  <line x1="174" y1="88" x2="194" y2="88" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="194,82 206,88 194,94" fill="var(--diagram-ink)" />
+  <rect x="216" y="54" width="150" height="76" fill="var(--diagram-line)" />
+  <rect x="212" y="50" width="150" height="76" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="287" y="82" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">2. 마이그레이션</text>
+  <text x="287" y="106" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">실제 DB에 반영</text>
+  <line x1="366" y1="88" x2="386" y2="88" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="386,82 398,88 386,94" fill="var(--diagram-ink)" />
+  <rect x="408" y="54" width="124" height="76" fill="var(--diagram-line)" />
+  <rect x="404" y="50" width="124" height="76" fill="var(--diagram-accent)" />
+  <text x="466" y="82" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">3. 클라이언트</text>
+  <text x="466" y="106" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">타입 자동완성</text>
+  <text x="270" y="162" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">그래서 SQL을 직접 쓰지 않고 함수 호출로 다룬다</text>
+  <rect x="94" y="186" width="160" height="44" fill="var(--diagram-line)" />
+  <rect x="90" y="182" width="160" height="44" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="170" y="210" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">SELECT * FROM ...</text>
+  <line x1="254" y1="204" x2="274" y2="204" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="274,198 286,204 274,210" fill="var(--diagram-ink)" />
+  <rect x="296" y="186" width="180" height="44" fill="var(--diagram-line)" />
+  <rect x="292" y="182" width="180" height="44" fill="var(--diagram-accent)" />
+  <text x="382" y="210" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">prisma.user.findMany()</text>
+</svg>
 
 전체 요청 흐름은 아래와 같습니다.
 

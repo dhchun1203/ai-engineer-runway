@@ -32,11 +32,73 @@ PostgreSQL(포스트그레스, 오픈소스 관계형 데이터베이스)은 컴
 
 1-4에서 이미 테이블·행·열·기본키를 다뤘으므로 여기서는 반복하지 않습니다. 이 레슨은 그 위에서 "어디에 놓고 어떻게 관리하는가"를 다룹니다.
 
+<svg data-diagram viewBox="0 0 560 220" role="img" aria-labelledby="dia-server-db-t">
+  <title id="dia-server-db-t">파일로 저장하면 한 번에 한쪽만 다룰 수 있어 다른 앱은 기다려야 하지만, 서버로 도는 데이터베이스는 여러 앱이 동시에 접속해 읽고 쓴다.</title>
+  <text x="134" y="24" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">파일로 저장하면</text>
+  <rect x="24" y="52" width="90" height="36" fill="var(--diagram-line)" />
+  <rect x="20" y="48" width="90" height="36" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="65" y="71" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">앱 1</text>
+  <rect x="24" y="112" width="90" height="36" fill="var(--diagram-line)" />
+  <rect x="20" y="108" width="90" height="36" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="65" y="131" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">앱 2</text>
+  <line x1="114" y1="66" x2="144" y2="66" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="144,60 156,66 144,72" fill="var(--diagram-ink)" />
+  <line x1="114" y1="126" x2="156" y2="126" stroke="var(--diagram-line)" strokeWidth="2" strokeDasharray="6 6" />
+  <line x1="128" y1="119" x2="142" y2="133" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <line x1="142" y1="119" x2="128" y2="133" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="164" y="52" width="100" height="96" fill="var(--diagram-line)" />
+  <rect x="160" y="48" width="100" height="96" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="210" y="104" textAnchor="middle" fontSize="18" fill="var(--diagram-ink)">파일</text>
+  <text x="134" y="196" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">여럿이 동시에 다루기 어렵다</text>
+  <text x="420" y="24" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">서버로 도는 데이터베이스</text>
+  <rect x="300" y="52" width="90" height="32" fill="var(--diagram-line)" />
+  <rect x="296" y="48" width="90" height="32" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="341" y="69" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">앱 1</text>
+  <rect x="300" y="100" width="90" height="32" fill="var(--diagram-line)" />
+  <rect x="296" y="96" width="90" height="32" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="341" y="117" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">앱 2</text>
+  <rect x="300" y="148" width="90" height="32" fill="var(--diagram-line)" />
+  <rect x="296" y="144" width="90" height="32" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="341" y="165" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">앱 3</text>
+  <line x1="390" y1="64" x2="420" y2="64" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="390" y1="112" x2="420" y2="112" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="390" y1="160" x2="420" y2="160" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="420" y1="64" x2="420" y2="160" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="420" y1="112" x2="438" y2="112" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="438,106 450,112 438,118" fill="var(--diagram-ink)" />
+  <rect x="458" y="50" width="96" height="132" fill="var(--diagram-line)" />
+  <rect x="454" y="46" width="96" height="132" fill="var(--diagram-accent)" />
+  <text x="502" y="108" textAnchor="middle" fontSize="15" fill="var(--diagram-on-accent)">Postgres</text>
+  <text x="502" y="132" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">서버</text>
+  <text x="420" y="196" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">여럿이 동시에 읽고 쓴다</text>
+</svg>
+
 ### ☁️ Supabase = 관리형 Postgres + API + 인증
 
 Supabase(서비스형 백엔드 플랫폼)는 PostgreSQL 서버를 대신 운영해주고, 테이블을 만들면 자동으로 API와 인증 기능까지 붙여줍니다.
 
 직접 서버를 설치하고 백업하고 보안 패치를 챙기는 대신, 대시보드에서 테이블만 설계하면 나머지는 Supabase가 관리합니다.
+
+<svg data-diagram viewBox="0 0 560 266" role="img" aria-labelledby="dia-supabase-t">
+  <title id="dia-supabase-t">Supabase는 맨 아래 PostgreSQL 서버를 대신 운영하고, 그 위에 표를 만들면 자동으로 붙는 API와 인증을 얹어준다.</title>
+  <text x="180" y="26" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">Supabase가 얹어주는 것</text>
+  <rect x="64" y="48" width="240" height="50" fill="var(--diagram-line)" />
+  <rect x="60" y="44" width="240" height="50" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="180" y="76" textAnchor="middle" fontSize="17" fill="var(--diagram-ink)">인증</text>
+  <rect x="64" y="110" width="240" height="50" fill="var(--diagram-line)" />
+  <rect x="60" y="106" width="240" height="50" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="180" y="138" textAnchor="middle" fontSize="17" fill="var(--diagram-ink)">자동 API</text>
+  <rect x="64" y="172" width="240" height="54" fill="var(--diagram-line)" />
+  <rect x="60" y="168" width="240" height="54" fill="var(--diagram-accent)" />
+  <text x="180" y="202" textAnchor="middle" fontSize="18" fill="var(--diagram-on-accent)">PostgreSQL</text>
+  <line x1="304" y1="69" x2="336" y2="69" stroke="var(--diagram-line)" strokeWidth="2" />
+  <text x="344" y="74" textAnchor="start" fontSize="13" fill="var(--diagram-ink)">로그인 처리까지 자동</text>
+  <line x1="304" y1="131" x2="336" y2="131" stroke="var(--diagram-line)" strokeWidth="2" />
+  <text x="344" y="136" textAnchor="start" fontSize="13" fill="var(--diagram-ink)">표를 만들면 API가 생김</text>
+  <line x1="304" y1="195" x2="336" y2="195" stroke="var(--diagram-line)" strokeWidth="2" />
+  <text x="344" y="200" textAnchor="start" fontSize="13" fill="var(--diagram-ink)">설치·백업·보안 패치 대행</text>
+  <text x="280" y="252" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">우리는 테이블 설계만 하면 된다</text>
+</svg>
 
 ### 🗄️ 스키마 — 테이블을 담는 서랍
 
@@ -44,11 +106,64 @@ Supabase(서비스형 백엔드 플랫폼)는 PostgreSQL 서버를 대신 운영
 
 이 사이트의 진도 데이터는 `public` 스키마에, 이 레슨의 연습용 테이블은 `practice` 스키마에 나눠 둡니다.
 
+<svg data-diagram viewBox="0 0 560 278" role="img" aria-labelledby="dia-schema-t">
+  <title id="dia-schema-t">데이터베이스 하나 안에 서랍이 둘 있다. public 서랍에는 손대지 않을 진도 데이터가, practice 서랍에는 이 레슨의 연습용 표가 들어간다.</title>
+  <text x="280" y="26" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">데이터베이스 하나 안의 서랍 둘</text>
+  <rect x="94" y="48" width="380" height="190" fill="var(--diagram-line)" />
+  <rect x="90" y="44" width="380" height="190" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="110" y="68" width="340" height="66" fill="var(--diagram-line)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="280" y="96" textAnchor="middle" fontSize="17" fill="var(--diagram-ink)">public</text>
+  <text x="280" y="120" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">진도 데이터 — 건드리지 않는다</text>
+  <rect x="110" y="150" width="340" height="66" fill="var(--diagram-accent)" />
+  <text x="280" y="178" textAnchor="middle" fontSize="17" fill="var(--diagram-on-accent)">practice</text>
+  <text x="280" y="202" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">연습용 표 — 여기서만 실습한다</text>
+  <text x="280" y="264" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">서랍이 다르면 이름이 겹쳐도 섞이지 않는다</text>
+</svg>
+
 ### 🔒 행 수준 보안(RLS) 소개
 
 행 수준 보안(RLS, Row Level Security)은 테이블의 행 하나하나에 "누가 이 행을 볼 수 있는가"라는 규칙을 거는 기능입니다.
 
 RLS를 켜지 않으면 접속 권한이 있는 모두가 모든 행을 볼 수 있습니다. 실제 서비스 테이블을 공개하기 전에는 반드시 RLS부터 켭니다.
+
+<svg data-diagram viewBox="0 0 560 246" role="img" aria-labelledby="dia-rls-t">
+  <title id="dia-rls-t">행 수준 보안을 끄면 접속한 사용자에게 표의 모든 행이 그대로 보이고, 켜면 규칙에 맞는 자기 행만 보이고 나머지는 가려진다.</title>
+  <text x="140" y="24" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">RLS 꺼짐</text>
+  <rect x="24" y="108" width="86" height="40" fill="var(--diagram-line)" />
+  <rect x="20" y="104" width="86" height="40" fill="var(--diagram-accent)" />
+  <text x="63" y="130" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">사용자 B</text>
+  <line x1="110" y1="124" x2="134" y2="124" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="134,118 146,124 134,130" fill="var(--diagram-ink)" />
+  <rect x="160" y="48" width="104" height="30" fill="var(--diagram-line)" />
+  <rect x="156" y="44" width="104" height="30" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="208" y="64" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">A의 행</text>
+  <rect x="160" y="86" width="104" height="30" fill="var(--diagram-line)" />
+  <rect x="156" y="82" width="104" height="30" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="208" y="102" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">B의 행</text>
+  <rect x="160" y="124" width="104" height="30" fill="var(--diagram-line)" />
+  <rect x="156" y="120" width="104" height="30" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="208" y="140" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">C의 행</text>
+  <rect x="160" y="162" width="104" height="30" fill="var(--diagram-line)" />
+  <rect x="156" y="158" width="104" height="30" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="208" y="178" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">D의 행</text>
+  <text x="140" y="224" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">모든 행이 다 보인다</text>
+  <text x="420" y="24" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">RLS 켜짐</text>
+  <rect x="304" y="108" width="86" height="40" fill="var(--diagram-line)" />
+  <rect x="300" y="104" width="86" height="40" fill="var(--diagram-accent)" />
+  <text x="343" y="130" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">사용자 B</text>
+  <line x1="390" y1="124" x2="414" y2="124" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="414,118 426,124 414,130" fill="var(--diagram-ink)" />
+  <rect x="436" y="44" width="104" height="30" fill="var(--diagram-line)" stroke="var(--diagram-ink)" strokeWidth="2" strokeDasharray="5 5" />
+  <text x="488" y="64" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">가려짐</text>
+  <rect x="440" y="86" width="104" height="30" fill="var(--diagram-line)" />
+  <rect x="436" y="82" width="104" height="30" fill="var(--diagram-accent)" />
+  <text x="488" y="102" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">B의 행</text>
+  <rect x="436" y="120" width="104" height="30" fill="var(--diagram-line)" stroke="var(--diagram-ink)" strokeWidth="2" strokeDasharray="5 5" />
+  <text x="488" y="140" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">가려짐</text>
+  <rect x="436" y="158" width="104" height="30" fill="var(--diagram-line)" stroke="var(--diagram-ink)" strokeWidth="2" strokeDasharray="5 5" />
+  <text x="488" y="178" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">가려짐</text>
+  <text x="420" y="224" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">내 행만 보인다</text>
+</svg>
 
 ## 4. 실무 예제
 

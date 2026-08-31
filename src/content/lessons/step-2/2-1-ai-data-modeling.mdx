@@ -32,6 +32,39 @@ Step 2 뒤쪽의 AI 쇼핑몰 프로젝트(2-4·2-6)에서 실제로 이 레슨�
 
 비정규화는 자주 같이 쓰는 정보를 한 표에 미리 묶어두는 것입니다. 조회는 빨라지지만, 같은 값이 여러 곳에 중복되어 수정할 때 여러 곳을 함께 고쳐야 합니다.
 
+<svg data-diagram viewBox="0 0 560 300" role="img" aria-labelledby="dia-normalization-t">
+  <title id="dia-normalization-t">정규화는 세션 표와 메시지 표로 나눠 담아 이름을 한 곳에서만 고치면 되고, 비정규화는 한 표 안에 같은 세션 이름이 반복돼 이름이 바뀌면 여러 줄을 함께 고쳐야 한다.</title>
+  <text x="130" y="24" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">정규화 — 나눠 담기</text>
+  <rect x="34" y="44" width="200" height="64" fill="var(--diagram-line)" />
+  <rect x="30" y="40" width="200" height="64" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="130" y="68" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">세션 표</text>
+  <text x="130" y="92" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">id · 이름</text>
+  <line x1="130" y1="108" x2="130" y2="136" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="124,136 136,136 130,148" fill="var(--diagram-ink)" />
+  <text x="142" y="130" textAnchor="start" fontSize="13" fill="var(--diagram-accent)">가리킴</text>
+  <rect x="34" y="158" width="200" height="92" fill="var(--diagram-line)" />
+  <rect x="30" y="154" width="200" height="92" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="130" y="182" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">메시지 표</text>
+  <text x="130" y="208" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">session_id</text>
+  <text x="130" y="232" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">내용</text>
+  <text x="130" y="280" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">이름이 바뀌면 한 곳만 고친다</text>
+  <text x="421" y="24" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">비정규화 — 묶어 담기</text>
+  <rect x="304" y="44" width="242" height="206" fill="var(--diagram-line)" />
+  <rect x="300" y="40" width="242" height="206" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="421" y="68" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">메시지 표 하나</text>
+  <rect x="312" y="82" width="76" height="34" fill="var(--diagram-accent)" />
+  <text x="350" y="105" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">상담1</text>
+  <text x="400" y="105" textAnchor="start" fontSize="14" fill="var(--diagram-ink)">배송 문의</text>
+  <rect x="312" y="124" width="76" height="34" fill="var(--diagram-accent)" />
+  <text x="350" y="147" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">상담1</text>
+  <text x="400" y="147" textAnchor="start" fontSize="14" fill="var(--diagram-ink)">환불 문의</text>
+  <rect x="312" y="166" width="76" height="34" fill="var(--diagram-accent)" />
+  <text x="350" y="189" textAnchor="middle" fontSize="14" fill="var(--diagram-on-accent)">상담1</text>
+  <text x="400" y="189" textAnchor="start" fontSize="14" fill="var(--diagram-ink)">교환 문의</text>
+  <text x="421" y="226" textAnchor="middle" fontSize="13" fill="var(--diagram-accent)">같은 이름이 반복된다</text>
+  <text x="421" y="280" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">이름이 바뀌면 세 줄 다 고친다</text>
+</svg>
+
 ### 🔗 관계 표현 — 1:N과 N:M
 
 1:N(일대다) 관계는 하나가 여러 개를 가질 수 있는 관계입니다. 대화 세션 하나에 메시지가 여러 개 달리는 것이 대표적입니다.
@@ -44,6 +77,54 @@ N:M(다대다) 관계는 양쪽 모두 여러 개를 가질 수 있는 관계입
 |-----------|------|-----------|
 | 1:N | 세션 → 메시지 | 메시지 표에 세션을 가리키는 외래키 하나 |
 | N:M | 상품 ↔ 태그 | 상품·태그 사이에 연결 테이블(중간 표)을 둔다 |
+
+<svg data-diagram viewBox="0 0 560 332" role="img" aria-labelledby="dia-relations-t">
+  <title id="dia-relations-t">1대다 관계는 메시지마다 세션을 가리키는 외래키 하나로 표현하고, 다대다 관계는 상품과 태그 사이에 짝을 적어두는 연결 테이블을 하나 더 두어 표현한다.</title>
+  <text x="10" y="22" textAnchor="start" fontSize="15" fill="var(--diagram-accent)">1:N — 세션 하나에 메시지 여럿</text>
+  <rect x="14" y="52" width="120" height="52" fill="var(--diagram-line)" />
+  <rect x="10" y="48" width="120" height="52" fill="var(--diagram-accent)" />
+  <text x="70" y="81" textAnchor="middle" fontSize="18" fill="var(--diagram-on-accent)">세션</text>
+  <line x1="134" y1="74" x2="186" y2="74" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="186" y1="45" x2="186" y2="129" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="186" y1="45" x2="212" y2="45" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="212,39 224,45 212,51" fill="var(--diagram-ink)" />
+  <line x1="186" y1="87" x2="212" y2="87" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="212,81 224,87 212,93" fill="var(--diagram-ink)" />
+  <line x1="186" y1="129" x2="212" y2="129" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="212,123 224,129 212,135" fill="var(--diagram-ink)" />
+  <rect x="232" y="32" width="142" height="34" fill="var(--diagram-line)" />
+  <rect x="228" y="28" width="142" height="34" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="299" y="51" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">메시지 1</text>
+  <rect x="232" y="74" width="142" height="34" fill="var(--diagram-line)" />
+  <rect x="228" y="70" width="142" height="34" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="299" y="93" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">메시지 2</text>
+  <rect x="232" y="116" width="142" height="34" fill="var(--diagram-line)" />
+  <rect x="228" y="112" width="142" height="34" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="299" y="135" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">메시지 3</text>
+  <text x="384" y="93" textAnchor="start" fontSize="13" fill="var(--diagram-ink)">메시지마다 외래키 하나</text>
+  <text x="10" y="196" textAnchor="start" fontSize="15" fill="var(--diagram-accent)">N:M — 상품과 태그는 양쪽 다 여럿</text>
+  <rect x="14" y="216" width="110" height="38" fill="var(--diagram-line)" />
+  <rect x="10" y="212" width="110" height="38" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="65" y="236" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">상품 A</text>
+  <rect x="14" y="266" width="110" height="38" fill="var(--diagram-line)" />
+  <rect x="10" y="262" width="110" height="38" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="65" y="286" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">상품 B</text>
+  <line x1="124" y1="231" x2="196" y2="240" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="124" y1="281" x2="196" y2="272" stroke="var(--diagram-line)" strokeWidth="2" />
+  <rect x="204" y="216" width="160" height="88" fill="var(--diagram-line)" />
+  <rect x="200" y="212" width="160" height="88" fill="var(--diagram-accent)" />
+  <text x="280" y="248" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">연결 테이블</text>
+  <text x="280" y="274" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">상품·태그 짝</text>
+  <line x1="364" y1="240" x2="426" y2="231" stroke="var(--diagram-line)" strokeWidth="2" />
+  <line x1="364" y1="272" x2="426" y2="281" stroke="var(--diagram-line)" strokeWidth="2" />
+  <rect x="434" y="216" width="110" height="38" fill="var(--diagram-line)" />
+  <rect x="430" y="212" width="110" height="38" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="485" y="236" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">태그 X</text>
+  <rect x="434" y="266" width="110" height="38" fill="var(--diagram-line)" />
+  <rect x="430" y="262" width="110" height="38" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="485" y="286" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">태그 Y</text>
+  <text x="280" y="324" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">중간에 짝을 적는 표를 하나 더 둔다</text>
+</svg>
 
 ### 🤖 AI 서비스에 자주 나오는 테이블 3종
 
@@ -60,6 +141,43 @@ AI 서비스를 만들 때 반복해서 등장하는 테이블 세 종류가 있
 인덱스(index, 특정 열을 빠르게 찾도록 미리 만들어둔 자료구조)는 책의 찾아보기와 같습니다. 찾아보기가 없으면 책 전체를 처음부터 넘겨야 합니다.
 
 행이 몇 개 안 될 때는 차이가 안 보이지만, 수만 행이 쌓이면 인덱스 없는 조회는 눈에 띄게 느려집니다.
+
+<svg data-diagram viewBox="0 0 560 232" role="img" aria-labelledby="dia-index-t">
+  <title id="dia-index-t">인덱스가 없으면 찾는 행이 나올 때까지 표를 한 줄씩 전부 훑고, 인덱스가 있으면 찾아보기를 거쳐 그 줄로 바로 건너뛴다.</title>
+  <text x="110" y="24" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">인덱스 없음</text>
+  <line x1="34" y1="44" x2="34" y2="176" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="28,176 40,176 34,188" fill="var(--diagram-ink)" />
+  <rect x="52" y="44" width="124" height="24" fill="var(--diagram-line)" />
+  <rect x="48" y="40" width="124" height="24" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="52" y="74" width="124" height="24" fill="var(--diagram-line)" />
+  <rect x="48" y="70" width="124" height="24" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="52" y="104" width="124" height="24" fill="var(--diagram-line)" />
+  <rect x="48" y="100" width="124" height="24" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="52" y="134" width="124" height="24" fill="var(--diagram-line)" />
+  <rect x="48" y="130" width="124" height="24" fill="var(--diagram-accent)" />
+  <text x="110" y="147" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">찾는 행</text>
+  <rect x="52" y="164" width="124" height="24" fill="var(--diagram-line)" />
+  <rect x="48" y="160" width="124" height="24" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="110" y="214" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">한 줄씩 전부 훑는다</text>
+  <text x="420" y="24" textAnchor="middle" fontSize="15" fill="var(--diagram-accent)">인덱스 있음</text>
+  <rect x="232" y="124" width="100" height="44" fill="var(--diagram-line)" />
+  <rect x="228" y="120" width="100" height="44" fill="var(--diagram-accent)" />
+  <text x="278" y="148" textAnchor="middle" fontSize="15" fill="var(--diagram-on-accent)">찾아보기</text>
+  <line x1="332" y1="142" x2="360" y2="142" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="360,136 372,142 360,148" fill="var(--diagram-ink)" />
+  <rect x="384" y="44" width="124" height="24" fill="var(--diagram-line)" />
+  <rect x="380" y="40" width="124" height="24" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="384" y="74" width="124" height="24" fill="var(--diagram-line)" />
+  <rect x="380" y="70" width="124" height="24" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="384" y="104" width="124" height="24" fill="var(--diagram-line)" />
+  <rect x="380" y="100" width="124" height="24" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="384" y="134" width="124" height="24" fill="var(--diagram-line)" />
+  <rect x="380" y="130" width="124" height="24" fill="var(--diagram-accent)" />
+  <text x="442" y="147" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">찾는 행</text>
+  <rect x="384" y="164" width="124" height="24" fill="var(--diagram-line)" />
+  <rect x="380" y="160" width="124" height="24" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="442" y="214" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">바로 그 줄로 간다</text>
+</svg>
 
 ## 4. 실무 예제
 
