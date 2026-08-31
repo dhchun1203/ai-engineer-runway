@@ -204,6 +204,10 @@ export function LessonNotepad({
           onChange={handleChange}
           onBlur={() => void flush()}
           aria-label="레슨 메모"
+          // 맞춤법 검사 밑줄을 끈다. 이 메모는 기술 용어(서브쿼리·리랭킹·임베딩
+          // 등)와 코드 조각이 대부분이라 브라우저 사전에 없는 낱말이 계속 걸리고,
+          // 빨간 물결선이 괘선 위에 깔려 노트 표면이 지저분해진다.
+          spellCheck={false}
           className="note-paper flex-1"
         />
         <div
