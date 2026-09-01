@@ -1171,7 +1171,13 @@ code[data-theme*=" "] span {
    기존 토큰(--color-surface, --color-badge-neutral-bg*, --color-accent)만 재사용한다.
    summary의 min-height 44px는 아이패드 터치 타깃 기준이고, cursor: pointer +
    기본 마커 유지로 펼침 가능 여부가 시각적으로 드러난다. details 배경/테두리는
-   접힌 상태와 펼친 상태 모두에서 본문과 구분되도록 항상 적용된다. */
+   접힌 상태와 펼친 상태 모두에서 본문과 구분되도록 항상 적용된다.
+
+   설계 원칙(quick 260901-etq, 리서치 G6): 정답·힌트 접기의 펼침 상태를 어떤
+   저장소(localStorage 등)에도 기억시키지 않는다 — 재방문 때 정답이 펼쳐진 채
+   복원되면 회상 연습이 통째로 죽는다. 매 방문 닫힘이 학습 장치로서 올바른
+   동작이다. 탐색용 접기를 새로 만들 때만 상태 기억을 검토하되, 정답류에는
+   절대 붙이지 말 것. */
 .prose details {
   margin: 1rem 0;
   padding: 0.75rem 1rem;
