@@ -119,6 +119,30 @@ slug: "3-4-multi-agent-structure"
 | 병렬 (parallel) | 여러 역할이 동시에 각자 작업함 | 서로 독립적인 작업을 동시에 처리할 때 |
 | 감독자 (supervisor) | 감독자 역할이 다음에 누구를 부를지 그때그때 정함 | 상황에 따라 다음 단계가 달라질 때 |
 
+이 중 감독자 방식은 오케스트라 지휘자에 비유할 수 있습니다. 지휘자가 여러 연주자 앞에서 다음에 누가 연주할지 그때그때 정하듯, 감독자 역할은 다음에 부를 에이전트를 매 순간 새로 고릅니다.
+
+<svg data-diagram viewBox="0 0 480 280" role="img" aria-labelledby="dia-supervisor-conductor-t">
+  <title id="dia-supervisor-conductor-t">오케스트라 지휘자 그림이다. 지휘자가 여러 연주자 중 다음에 누가 연주할지 그때그때 지시한다.</title>
+  <rect x="174" y="34" width="140" height="64" fill="var(--diagram-line)" />
+  <rect x="170" y="30" width="140" height="64" fill="var(--diagram-accent)" />
+  <text x="240" y="68" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">지휘자</text>
+  <text x="10" y="140" textAnchor="start" fontSize="14" fill="var(--diagram-accent)">연주자들</text>
+  <line x1="240" y1="94" x2="85" y2="160" stroke="var(--diagram-line)" strokeWidth="2" strokeDasharray="5 4" />
+  <line x1="240" y1="94" x2="240" y2="160" stroke="var(--diagram-line)" strokeWidth="2" strokeDasharray="5 4" />
+  <line x1="240" y1="94" x2="395" y2="160" stroke="var(--diagram-line)" strokeWidth="2" strokeDasharray="5 4" />
+  <rect x="34" y="164" width="110" height="64" fill="var(--diagram-line)" />
+  <rect x="30" y="160" width="110" height="64" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="189" y="164" width="110" height="64" fill="var(--diagram-line)" />
+  <rect x="185" y="160" width="110" height="64" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <rect x="344" y="164" width="110" height="64" fill="var(--diagram-line)" />
+  <rect x="340" y="160" width="110" height="64" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="240" y="254" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">지휘자가 그때그때 다음 연주자를 정한다</text>
+</svg>
+
+이 비유가 안 맞는 부분은, 지휘자는 정해진 악보를 따르지만 감독자는 매 단계 결과를 보고 다음 담당을 새로 고른다는 점입니다.
+
+이 세 연결 방식을 실제 구조도로 함께 보면 다음과 같습니다.
+
 <svg data-diagram viewBox="0 0 552 340" role="img" aria-labelledby="dia-wiring-t">
   <title id="dia-wiring-t">역할을 잇는 세 가지 방식. 순차는 분류에서 초안, 검수로 한 줄로 이어진다. 병렬은 문서 검색과 과거 사례를 동시에 처리한 뒤 다시 합친다. 감독자는 다음에 누구를 부를지 그때그때 고른다.</title>
   <text x="10" y="42" textAnchor="start" fontSize="15" fill="var(--diagram-accent)">순차</text>

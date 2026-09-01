@@ -78,6 +78,30 @@ slug: "3-1-hybrid-search-reranking"
 
 Re-ranking(재순위, 후보를 넉넉히 뽑은 뒤 더 정교한 모델로 다시 줄 세우는 단계)은 서류를 넉넉히 통과시킨 뒤 면접으로 다시 추리는 채용 과정과 비슷합니다. 하이브리드 검색이 후보군을 빠르게 뽑고, re-ranking이 그 안에서 다시 정렬합니다.
 
+<svg data-diagram viewBox="0 0 480 320" role="img" aria-labelledby="dia-rerank-hiring-t">
+  <title id="dia-rerank-hiring-t">채용 깔때기다. ① 지원서 대량이 서류전형을 통과하고, ② 면접에서 정밀 심사한 뒤, ③ 합격자 소수만 남는다.</title>
+  <rect x="44" y="28" width="400" height="70" fill="var(--diagram-line)" />
+  <rect x="40" y="24" width="400" height="70" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="240" y="52" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">① 지원서 대량</text>
+  <text x="240" y="76" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">서류전형 통과</text>
+  <line x1="240" y1="98" x2="240" y2="114" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="234,114 246,114 240,124" fill="var(--diagram-ink)" />
+  <rect x="114" y="132" width="260" height="70" fill="var(--diagram-line)" />
+  <rect x="110" y="128" width="260" height="70" fill="var(--diagram-accent)" />
+  <text x="240" y="156" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">② 면접</text>
+  <text x="240" y="180" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">정밀 심사</text>
+  <line x1="240" y1="202" x2="240" y2="218" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="234,218 246,218 240,228" fill="var(--diagram-ink)" />
+  <rect x="164" y="236" width="160" height="52" fill="var(--diagram-line)" />
+  <rect x="160" y="232" width="160" height="52" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="240" y="264" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">③ 합격 소수</text>
+  <text x="240" y="308" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">넉넉히 받고, 면접에서 정교하게 좁힌다</text>
+</svg>
+
+이 비유가 안 맞는 부분은, 면접관은 지원자를 처음부터 새로 평가하지만 re-ranking은 1차 검색 결과를 지우지 않고 그 후보 안에서만 다시 순위를 매긴다는 점입니다.
+
+이 채용 흐름을 실제 검색 파이프라인 구조로 옮기면 다음과 같습니다.
+
 <svg data-diagram viewBox="0 0 560 230" role="img" aria-labelledby="dia-rerank-t">
   <title id="dia-rerank-t">re-ranking은 빠른 검색이 넉넉히 뽑아온 후보를, 더 정교한 모델이 다시 줄 세워 상위 몇 개만 남기는 단계다.</title>
   <rect x="20" y="58" width="150" height="90" fill="var(--diagram-line)" />

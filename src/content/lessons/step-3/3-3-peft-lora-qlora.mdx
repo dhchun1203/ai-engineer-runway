@@ -78,6 +78,23 @@ PEFT(Parameter-Efficient Fine-Tuning, 모델의 일부만 손대는 효율적인
 
 LoRA(Low-Rank Adaptation)는 PEFT의 대표 기법입니다. 원본 가중치는 그대로 얼려두고(freeze), 그 위에 작은 어댑터(adapter, 원본 위에 덧붙여 학습하는 작은 층) 층만 새로 학습합니다. 옷을 갈아입지 않고 조끼 하나만 덧입는 것과 같습니다.
 
+<svg data-diagram viewBox="0 0 480 310" role="img" aria-labelledby="dia-lora-vest-t">
+  <title id="dia-lora-vest-t">옷 위에 걸치는 조끼 그림이다. 원본 옷은 그대로 두고, 그 아래쪽에 작은 조끼(어댑터)만 겹쳐 걸친다.</title>
+  <rect x="94" y="28" width="300" height="180" fill="var(--diagram-line)" />
+  <rect x="90" y="24" width="300" height="180" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="240" y="74" textAnchor="middle" fontSize="16" fill="var(--diagram-ink)">원본 옷</text>
+  <text x="240" y="100" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">그대로 입고 있음</text>
+  <rect x="144" y="174" width="200" height="90" fill="var(--diagram-line)" />
+  <rect x="140" y="170" width="200" height="90" fill="var(--diagram-accent)" />
+  <text x="240" y="210" textAnchor="middle" fontSize="15" fill="var(--diagram-on-accent)">조끼 — 어댑터</text>
+  <text x="240" y="234" textAnchor="middle" fontSize="13" fill="var(--diagram-on-accent)">새로 학습</text>
+  <text x="240" y="288" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">한 벌은 그대로 두고, 조끼만 새로 걸친다</text>
+</svg>
+
+이 비유가 안 맞는 부분은, 조끼는 겉에 따로 보이지만 어댑터의 출력은 원본과 합산되어 하나의 결과로 나온다는 점입니다.
+
+이 은유를 실제 데이터 흐름 구조로 그리면 다음과 같습니다.
+
 <svg data-diagram viewBox="0 0 560 238" role="img" aria-labelledby="dia-lora-t">
   <title id="dia-lora-t">LoRA는 원본 가중치를 얼린 채 그대로 두고, 그 옆에 작은 어댑터 층만 새로 학습시킨다. 출력은 원본이 낸 결과와 어댑터가 낸 결과를 합쳐 만든다.</title>
   <text x="30" y="126" textAnchor="start" fontSize="15" fill="var(--diagram-ink)">입력</text>
