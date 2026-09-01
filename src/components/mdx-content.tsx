@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import * as runtime from "react/jsx-runtime";
 import type { ComponentPropsWithoutRef, ComponentType } from "react";
 import { CodeBlock } from "@/components/code-block";
+import { RunPython } from "@/components/run-python";
 
 // Velite는 MDX를 빌드 타임에 함수 본문(code) 문자열로 컴파일한다.
 // 이 컴포넌트는 그 문자열을 다시 React 컴포넌트로 되돌리는 유일하게 올바른 방법이다 —
@@ -32,6 +33,7 @@ function TableWrapper(props: ComponentPropsWithoutRef<"table">) {
 const defaultComponents: Record<string, ComponentType> = {
   pre: CodeBlock as ComponentType,
   table: TableWrapper as ComponentType,
+  RunPython: RunPython as ComponentType,
 };
 
 export const MDXContent = ({
