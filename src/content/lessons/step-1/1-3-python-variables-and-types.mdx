@@ -290,6 +290,13 @@ macOS는 `python3 variables.py`로 실행합니다.
 1. `age = "27"`처럼 나이를 문자열로 저장했다면 `age + 3`을 실행했을 때 어떤 일이 일어날까요? 왜 그럴까요?
 
 <details>
+<summary>힌트 보기</summary>
+
+`age`가 따옴표로 감싸여 있다는 데 주목하세요. 파이썬에게 이 값의 자료형은 무엇이고, 종류가 다른 값끼리 `+`로 합치려 하면 어떻게 될지 떠올려 봅니다.
+
+</details>
+
+<details>
 <summary>정답 보기</summary>
 
 `TypeError`가 발생합니다. `age`가 문자열(`str`)이고 `3`은 정수(`int`)라서 Python이 자동으로 더할 수 없기 때문입니다. `int(age) + 3`처럼 자료형을 먼저 맞춰야 합니다.
@@ -297,6 +304,13 @@ macOS는 `python3 variables.py`로 실행합니다.
 </details>
 
 2. `for`가 아니라 `while`을 사용해 1부터 5까지의 숫자를 한 줄씩 출력하는 코드를 직접 작성해보세요.
+
+<details>
+<summary>힌트 보기</summary>
+
+`while`은 조건이 참인 "동안"만 반복합니다. 숫자를 하나 정해 시작하고, 반복이 5에서 멈추려면 반복 안에서 그 값을 어떻게 해줘야 할지 생각해 보세요.
+
+</details>
 
 <details>
 <summary>정답 보기</summary>
