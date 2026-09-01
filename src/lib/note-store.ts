@@ -44,3 +44,27 @@ export async function saveLessonNote(lessonSlug: string, body: string): Promise<
     throw new Error(`note-store: 메모 저장 실패 (lesson_id=${lessonSlug}): ${error.message}`);
   }
 }
+
+export type AllNotesRead = { ok: true; notes: Map<string, string> } | { ok: false; error: string };
+
+/** /notes 단권화(quick 260901-x62)를 위한 전 레슨 메모 조회 — readReviewStates가
+ * Map을 만드는 방식과 동형이다. body가 빈 문자열인 행은 Map에서 제외한다 —
+ * 단권화는 실제 내용이 있는 노트만 대상이다(레슨 메모장을 열었다 아무것도
+ * 안 쓰고 닫은 경우 등, upsert가 빈 문자열 행을 만들 수 있다). 조회 실패
+ * (error 존재)와 "노트 없음"은 여기서도 타입 수준에서 구분된다. */
+export async function readAllLessonNotes(): Promise<AllNotesRead> {
+  const { data, error } = await supabaseAdmin.from('lesson_note').select('lesson_id, body');
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  const notes = new Map<string, string>();
+  for (const row of data ?? []) {
+    const body = (row.body as string | null) ?? '';
+    if (body.length === 0) continue;
+    notes.set(row.lesson_id as string, body);
+  }
+
+  return { ok: true, notes };
+}
