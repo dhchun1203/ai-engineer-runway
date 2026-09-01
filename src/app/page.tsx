@@ -11,7 +11,7 @@ import { readReviewStates } from "@/lib/review-store";
 import { computeDueLessons, nextDueDate } from "@/lib/review";
 import { overallProgress, nextIncompleteLesson } from "@/lib/progress";
 import { todayInSeoul, daysUntil } from "@/lib/today";
-import { computePace, computeAheadDetail } from "@/lib/pace";
+import { computePace, computeAheadDetail, computeProjection } from "@/lib/pace";
 import { SCHEDULE_START, COURSE_START_DATE, rowsForDate, firstRowAfter } from "@/lib/schedule";
 import { getScheduleRows, getLessonMinutesBySlug } from "@/lib/schedule-data";
 import { getLessonBySlug } from "@/content/curriculum-helpers";
@@ -83,6 +83,10 @@ export default async function Home() {
   // 앞선 정도의 "얼마나"는 판정과 분리된 별도 계산이다(lib/pace.ts 주석 참고).
   const ahead = completedIds
     ? computeAheadDetail(rows, minutesBySlug, completedIds, today)
+    : undefined;
+  // 완료 예측일(round2-완료예측일) — pace와 같은 completedIds 게이트 조건을 쓴다.
+  const projection = completedIds
+    ? computeProjection(rows, completedIds, today, SCHEDULE_START)
     : undefined;
 
   // 오늘 배정 레슨을 전부 완료했을 때만 true — completedIds가 null이면 조회
@@ -179,7 +183,7 @@ export default async function Home() {
       {progressRead?.ok ? <TodayReviewCard dueRows={dueRows} nextDue={nextDue} /> : null}
       {completedIds ? (
         <>
-          {pace ? <PaceStatusPanel pace={pace} ahead={ahead} /> : null}
+          {pace ? <PaceStatusPanel pace={pace} ahead={ahead} projection={projection} /> : null}
           {behindRows.length > 0 ? <BehindLessonsList rows={behindRows} /> : null}
         </>
       ) : progressRead && !progressRead.ok ? (
