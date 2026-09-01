@@ -6,7 +6,7 @@ status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
 last_updated: "2026-08-31T15:06:55.410Z"
 last_activity: 2026-09-01
-last_activity_desc: 260901-v4u — 홈·접근성 폴리시(PWA manifest·skip link·이어서 읽기) 완료
+last_activity_desc: 260901-w04 — 복습 세션 /review + O·△·X 판정 + 오답 모아보기 완료
 current_phase: null
 current_phase_name: null
 progress:
@@ -98,6 +98,18 @@ article/h1 시맨틱 확인. 게이트 전부 통과. 아이패드 실기기 UAT
 
 **사용자 지시(2026-09-01)**: 2단 나머지는 되묻지 말고 전부 자율 진행·배포. 시기
 게이트/조건은 리서치 근거로 자율 판단하되 파괴적이지 않은 선에서 진행.
+
+**2026-09-01 복습 세션 /review + O/△/X + 오답 모아보기 완료(quick 260901-w04, b84b888)**:
+리서치 2단 플래그십. velite에 selfCheck 추출(parseSelfCheck, 스스로 점검 마커 이후·
+힌트/정답 접기 건너뛰고 번호 문항만·레슨당 정확히 2개·throw) 70개. lesson_review에
+missed_q int[] 컬럼 추가(라이브 마이그레이션 적용 완료 + repo 파일). /review 페이지
+(force-dynamic): 약한 것(missed_q)→만기→나머지, 날짜 시드 셔플+레슨 라운드로빈, 12문항
+컷. **정답 세션 미렌더**(두 번째 마크다운 렌더러 부채 회피) — "레슨에서 확인" 앵커
+링크(SELF_CHECK_ANCHOR)로만. O/△/X 3버튼(△="맞았지만 불안", "한 군데라도 머뭇거렸으면
+△" 기준 상주), O=missed_q 제거·△/X=추가. 오답 모아보기 섹션. 9/29 버퍼 CTA 연결(F8).
+selectReviewQuestions 순수 함수, check-review 22케이스. 내가 dev에서 잠금 해제 후
+전체 흐름 실검증(12문항·정답 미노출·△→오답 모아보기 등장→O로 제거, 흔적 없음),
+라이트 모드 실측. 아이패드 실기기 UAT(터치·세로/가로)는 사용자 몫.
 
 **리서치 2단 남은 후보**(.planning/research/edu-sites/FINAL-REPORT.md 2단 목록):
 - **시기 게이트 있음**: /review 세션(9/6 이후·완료 12편+), O/△/X 3단 판정(문항 안정 키
