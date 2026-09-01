@@ -26,7 +26,9 @@ function runCase(name, fn) {
 }
 
 async function main() {
-  const { computePace, catchUpDays, computeAheadDetail } = await import(pathToFileURL(PACE_PATH).href);
+  const { computePace, catchUpDays, computeAheadDetail, computeProjection } = await import(
+    pathToFileURL(PACE_PATH).href
+  );
 
   // --- computePace ---
 
@@ -373,6 +375,125 @@ async function main() {
     const m = new Map([['l1', 60], ['l2', 60]]);
     const r = computeAheadDetail(rows, m, new Set(['l1', 'l2']), '2026-08-29');
     assert.deepStrictEqual(r, { lessonCount: 0, minutes: 0, throughDate: null, daysAhead: 0 });
+  });
+
+  // --- computeProjection (완료 예측일) ---
+
+  runCase('완료 0개 -> show:false, remainingCount만 채워진다', () => {
+    const rows = [
+      { date: '2026-08-30', lessonSlug: 'l1' },
+      { date: '2026-08-31', lessonSlug: 'l2' },
+      { date: '2026-09-01', lessonSlug: 'l3' },
+    ];
+    const r = computeProjection(rows, new Set(), '2026-08-30', '2026-08-28');
+    assert.deepStrictEqual(r, { show: false, projectedFinish: null, remainingCount: 3 });
+  });
+
+  runCase('경과일 부족(elapsedDays=1) -> show:false', () => {
+    const rows = [
+      { date: '2026-08-28', lessonSlug: 'l1' },
+      { date: '2026-08-29', lessonSlug: 'l2' },
+    ];
+    const r = computeProjection(rows, new Set(['l1']), '2026-08-28', '2026-08-28');
+    assert.deepStrictEqual(r, { show: false, projectedFinish: null, remainingCount: 1 });
+  });
+
+  runCase('시작 전(today < scheduleStart, elapsedDays=0) -> show:false', () => {
+    const rows = [
+      { date: '2026-08-28', lessonSlug: 'l1' },
+      { date: '2026-08-29', lessonSlug: 'l2' },
+    ];
+    const r = computeProjection(rows, new Set(['l1']), '2026-08-27', '2026-08-28');
+    assert.deepStrictEqual(r, { show: false, projectedFinish: null, remainingCount: 1 });
+  });
+
+  runCase('behind 프록시(pastDueIncomplete>0) -> show:false', () => {
+    const rows = [
+      { date: '2026-08-28', lessonSlug: 'l1' },
+      { date: '2026-08-29', lessonSlug: 'l2' },
+      { date: '2026-09-01', lessonSlug: 'l3' },
+    ];
+    const r = computeProjection(rows, new Set(['l2']), '2026-08-31', '2026-08-28');
+    assert.deepStrictEqual(r, { show: false, projectedFinish: null, remainingCount: 2 });
+  });
+
+  runCase('정상 예측 A(딱 떨어짐) -> show:true, projectedFinish 2026-09-06', () => {
+    const rows = [
+      { date: '2026-08-28', lessonSlug: 'l1' },
+      { date: '2026-08-29', lessonSlug: 'l2' },
+      { date: '2026-08-30', lessonSlug: 'l3' },
+      { date: '2026-08-31', lessonSlug: 'l4' },
+      { date: '2026-09-01', lessonSlug: 'l5' },
+      { date: '2026-09-02', lessonSlug: 'l6' },
+      { date: '2026-09-03', lessonSlug: 'l7' },
+      { date: '2026-09-04', lessonSlug: 'l8' },
+      { date: '2026-09-05', lessonSlug: 'l9' },
+      { date: '2026-09-06', lessonSlug: 'l10' },
+    ];
+    const completedIds = new Set(['l1', 'l2', 'l3', 'l4', 'l5']);
+    const r = computeProjection(rows, completedIds, '2026-09-01', '2026-08-28');
+    assert.deepStrictEqual(r, { show: true, projectedFinish: '2026-09-06', remainingCount: 5 });
+  });
+
+  runCase('정상 예측 B(ceil 올림) -> show:true, projectedFinish 2026-09-04', () => {
+    const rows = [
+      { date: '2026-08-28', lessonSlug: 'l1' },
+      { date: '2026-08-29', lessonSlug: 'l2' },
+      { date: '2026-08-30', lessonSlug: 'l3' },
+      { date: '2026-08-31', lessonSlug: 'l4' },
+      { date: '2026-09-01', lessonSlug: 'l5' },
+    ];
+    const completedIds = new Set(['l1', 'l2']);
+    const r = computeProjection(rows, completedIds, '2026-08-30', '2026-08-28');
+    assert.deepStrictEqual(r, { show: true, projectedFinish: '2026-09-04', remainingCount: 3 });
+  });
+
+  runCase('남은 0개(전부 완료) -> show:false, remainingCount 0', () => {
+    const rows = [
+      { date: '2026-08-28', lessonSlug: 'l1' },
+      { date: '2026-08-29', lessonSlug: 'l2' },
+      { date: '2026-08-30', lessonSlug: 'l3' },
+    ];
+    const completedIds = new Set(['l1', 'l2', 'l3']);
+    const r = computeProjection(rows, completedIds, '2026-08-31', '2026-08-28');
+    assert.deepStrictEqual(r, { show: false, projectedFinish: null, remainingCount: 0 });
+  });
+
+  runCase('개강 훨씬 이후 today, 미완료가 밀려 있음 -> show:false(늦은 예측 안 냄)', () => {
+    const rows = [
+      { date: '2026-08-28', lessonSlug: 'l1' },
+      { date: '2026-09-28', lessonSlug: 'l2' },
+    ];
+    const r = computeProjection(rows, new Set(['l1']), '2026-10-15', '2026-08-28');
+    assert.deepStrictEqual(r, { show: false, projectedFinish: null, remainingCount: 1 });
+  });
+
+  runCase('호출 후 입력 rows 배열·completedIds Set이 변형되지 않는다', () => {
+    const rows = [
+      { date: '2026-08-28', lessonSlug: 'l1' },
+      { date: '2026-08-29', lessonSlug: 'l2' },
+      { date: '2026-08-30', lessonSlug: 'l3' },
+      { date: '2026-08-31', lessonSlug: 'l4' },
+      { date: '2026-09-01', lessonSlug: 'l5' },
+      { date: '2026-09-02', lessonSlug: 'l6' },
+      { date: '2026-09-03', lessonSlug: 'l7' },
+      { date: '2026-09-04', lessonSlug: 'l8' },
+      { date: '2026-09-05', lessonSlug: 'l9' },
+      { date: '2026-09-06', lessonSlug: 'l10' },
+    ];
+    const completedIds = new Set(['l1', 'l2', 'l3', 'l4', 'l5']);
+
+    const rowsSnapshot = rows.map((r) => ({ ...r }));
+    const completedSnapshot = new Set(completedIds);
+
+    computeProjection(rows, completedIds, '2026-09-01', '2026-08-28');
+
+    assert.deepStrictEqual(rows, rowsSnapshot, 'computeProjection이 입력 rows 배열을 변형했습니다');
+    assert.deepStrictEqual(
+      completedIds,
+      completedSnapshot,
+      'computeProjection이 입력 completedIds Set을 변형했습니다',
+    );
   });
 
   if (failures.length > 0) {

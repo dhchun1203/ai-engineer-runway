@@ -131,3 +131,78 @@ export function catchUpDays(gapMinutes: number): number {
   if (gapMinutes <= 0) return 0;
   return Math.ceil(gapMinutes / EXTRA_MINUTES_PER_DAY);
 }
+
+// 두 순수 날짜 헬퍼 — 이 파일 로컬 전용(export 안 함). schedule.ts와 동일한
+// UTC 산술 패턴(Date.UTC + toISOString().slice(0,10))만 쓴다. 로컬 타임존
+// getter(getDate 등)를 쓰면 서버 실행 환경의 타임존에 따라 날짜가 하루씩
+// 밀릴 수 있다(Pitfall 1) — 이 패턴은 그 실패 모드를 원천 차단한다. Date는
+// 전역 객체라 이 파일의 무-import 규약을 깨지 않는다.
+function daysBetween(fromISO: string, toISO: string): number {
+  const [fy, fm, fd] = fromISO.split('-').map(Number);
+  const [ty, tm, td] = toISO.split('-').map(Number);
+  const fromMs = Date.UTC(fy, fm - 1, fd);
+  const toMs = Date.UTC(ty, tm - 1, td);
+  return Math.round((toMs - fromMs) / 86400000);
+}
+
+function addDays(baseISO: string, n: number): string {
+  const [y, m, d] = baseISO.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+
+/**
+ * show(boolean) · projectedFinish(YYYY-MM-DD | null) · remainingCount(number) 세
+ * 필드만 갖는다.
+ */
+export type Projection = {
+  show: boolean;
+  projectedFinish: string | null;
+  remainingCount: number;
+};
+
+/**
+ * 지금 속도로 남은 레슨을 전부 끝내면 언제 끝나는지 예측한다(round2-완료예측일).
+ *
+ * (1) 이 함수는 분 단위 behind를 모른다 — 권위 있는 판정(behind/on-track/ahead)은
+ * computePace 소관이다. 여기서 쓰는 pastDueIncomplete는 카운트(레슨 개수) 기반
+ * 프록시일 뿐이다. (2) behind일 때 예측 줄을 숨기는 최종 보장은 이 함수의 show
+ * 플래그와 호출부(page.tsx/pace-status.tsx의 isBehind 분기 부재) 양쪽에 있다 —
+ * 어느 한쪽이 흔들려도 나머지가 막는 두 겹 방어다(리서치 2단 경고: 늦은 완주일이
+ * 격려를 낙담으로 반전시킨다). (3) 완료 0개·경과일 2일 미만은 속도 추정이
+ * 통계적으로 불안정해 예측을 아예 숨긴다.
+ *
+ * 집계는 레슨 "개수" 기준이다(computePace의 "분" 기준과 다르다) — 예측은
+ * "며칠 걸리는지"를 묻는 것이라 개수가 더 직접적인 단위다. minutesBySlug는
+ * 받지 않는다. lessonSlug가 null인 버퍼 행은 어느 집계에도 들어가지 않는다.
+ * 입력 rows 배열·completedIds Set은 변형하지 않는다(filter만 사용).
+ */
+export function computeProjection(
+  rows: readonly { date: string; lessonSlug: string | null }[],
+  completedIds: ReadonlySet<string>,
+  todayStr: string,
+  scheduleStart: string,
+): Projection {
+  const assigned = rows.filter((r) => r.lessonSlug !== null);
+  const total = assigned.length;
+  const completedCount = assigned.filter((r) => completedIds.has(r.lessonSlug as string)).length;
+  const remaining = total - completedCount;
+
+  // 카운트기반 behind 프록시 — 밀린 상태에서 예측 줄을 숨기는 두 겹 방어의
+  // 함수 쪽 절반. 권위 있는 분 단위 판정은 computePace가 한다.
+  const pastDueIncomplete = assigned.filter(
+    (r) => r.date < todayStr && !completedIds.has(r.lessonSlug as string),
+  ).length;
+
+  const elapsedDays = daysBetween(scheduleStart, todayStr) + 1;
+
+  if (completedCount < 1 || elapsedDays < 2 || pastDueIncomplete > 0 || remaining < 1) {
+    return { show: false, projectedFinish: null, remainingCount: remaining };
+  }
+
+  const daysNeeded = Math.ceil((remaining * elapsedDays) / completedCount);
+  return {
+    show: true,
+    projectedFinish: addDays(todayStr, daysNeeded),
+    remainingCount: remaining,
+  };
+}
