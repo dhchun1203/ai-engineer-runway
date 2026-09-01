@@ -14,6 +14,12 @@ import { ThemeToggle } from "@/components/theme-toggle";
 // "복습"(6번째)은 리서치 2단 round2-h V2절로 추가했다(quick 260901-w04) —
 // 일정표 바로 앞, 학습 흐름(오늘의 학습 → 커리큘럼 → 용어집 → 복습 → 일정표)에서
 // 자연스러운 위치다.
+// "노트"·"질문함"(7·8번째)은 리서치 2단 수집 그룹으로 추가했다(quick
+// 260901-x62) — 복습 다음·일정표 앞, 학습 흐름(오늘의 학습 → 커리큘럼 → 용어집
+// → 복습 → 노트 → 질문함 → 일정표)에서 자연스러운 위치이고, 용어집·복습이
+// 등장하며 내비에 추가된 것과 같은 판단이다. 내비는 flex-wrap이라 좁은 폭에서
+// 두 줄로 접히고 헤더 높이 ResizeObserver(아래)가 이를 흡수하므로 8항목·짧은
+// 라벨(노트·질문함)이 아이패드에서 문제없다.
 type NavItem = {
   label: string;
   href: string | null; // null = 비활성(준비 중)
@@ -24,6 +30,8 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: "커리큘럼", href: "/curriculum" },
   { label: "용어집", href: "/glossary" },
   { label: "복습", href: "/review" },
+  { label: "노트", href: "/notes" },
+  { label: "질문함", href: "/inbox" },
   { label: "일정표", href: "/schedule" },
   { label: "소개", href: "/about" },
 ];
