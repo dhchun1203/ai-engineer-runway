@@ -35,6 +35,7 @@ async function main() {
     scheduleTotalDays,
     SCHEDULE_START,
     DOUBLE_LESSON_DATES,
+    SCHEDULE_SPAN_DAYS,
     rowsForDate,
     firstRowAfter,
   } = await import(pathToFileURL(SCHEDULE_PATH).href);
@@ -46,8 +47,18 @@ async function main() {
     assert.strictEqual(SCHEDULE_START, '2026-08-28');
   });
 
-  runCase("DOUBLE_LESSON_DATES가 ['2026-08-29', '2026-09-05', '2026-09-12']와 순서까지 일치한다", () => {
-    assert.deepStrictEqual(DOUBLE_LESSON_DATES, ['2026-08-29', '2026-09-05', '2026-09-12']);
+  runCase('DOUBLE_LESSON_DATES가 B안(2026-09-01 사용자 결정) 5일과 순서까지 일치한다', () => {
+    assert.deepStrictEqual(DOUBLE_LESSON_DATES, [
+      '2026-08-29',
+      '2026-09-05',
+      '2026-09-06',
+      '2026-09-12',
+      '2026-09-19',
+    ]);
+  });
+
+  runCase('SCHEDULE_SPAN_DAYS === 33 (8/28~9/29 고정 달력 — 레슨 수에서 파생하지 않는다)', () => {
+    assert.strictEqual(SCHEDULE_SPAN_DAYS, 33);
   });
 
   runCase('scheduleTotalDays(35, 3) === 33', () => {
@@ -60,15 +71,15 @@ async function main() {
 
   // --- 실제 일정 ---
 
-  runCase('실제 일정: rows.length === 36', () => {
+  runCase('실제 일정: rows.length === 38 (레슨 35 + 복습·버퍼 3)', () => {
     const slugs = makeSlugs(35);
     const rows = buildSchedule(
       slugs,
       SCHEDULE_START,
-      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      SCHEDULE_SPAN_DAYS,
       DOUBLE_LESSON_DATES,
     );
-    assert.strictEqual(rows.length, 36);
+    assert.strictEqual(rows.length, 38);
   });
 
   runCase('실제 일정: 서로 다른 날짜 수가 33이다', () => {
@@ -76,7 +87,7 @@ async function main() {
     const rows = buildSchedule(
       slugs,
       SCHEDULE_START,
-      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      SCHEDULE_SPAN_DAYS,
       DOUBLE_LESSON_DATES,
     );
     const dates = new Set(rows.map((r) => r.date));
@@ -90,7 +101,7 @@ async function main() {
       const rows = buildSchedule(
         slugs,
         SCHEDULE_START,
-        scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+        SCHEDULE_SPAN_DAYS,
         DOUBLE_LESSON_DATES,
       );
       const assignedSlugs = rows.filter((r) => r.lessonSlug !== null).map((r) => r.lessonSlug);
@@ -104,7 +115,7 @@ async function main() {
     const rows = buildSchedule(
       slugs,
       SCHEDULE_START,
-      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      SCHEDULE_SPAN_DAYS,
       DOUBLE_LESSON_DATES,
     );
     const dates = rows.map((r) => r.date);
@@ -120,7 +131,7 @@ async function main() {
       const rows = buildSchedule(
         slugs,
         SCHEDULE_START,
-        scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+        SCHEDULE_SPAN_DAYS,
         DOUBLE_LESSON_DATES,
       );
       const countByDate = new Map();
@@ -137,27 +148,31 @@ async function main() {
     },
   );
 
-  runCase("실제 일정: 마지막 레슨 행(lessonSlug가 null이 아닌 마지막 행)의 date가 '2026-09-28'이다", () => {
+  runCase("실제 일정: 마지막 레슨 행(lessonSlug가 null이 아닌 마지막 행)의 date가 '2026-09-26'이다 (B안)", () => {
     const slugs = makeSlugs(35);
     const rows = buildSchedule(
       slugs,
       SCHEDULE_START,
-      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      SCHEDULE_SPAN_DAYS,
       DOUBLE_LESSON_DATES,
     );
     const lessonRows = rows.filter((r) => r.lessonSlug !== null);
-    assert.strictEqual(lessonRows[lessonRows.length - 1].date, '2026-09-28');
+    assert.strictEqual(lessonRows[lessonRows.length - 1].date, '2026-09-26');
   });
 
-  runCase("실제 일정: rows[35]가 { date: '2026-09-29', lessonSlug: null, isBuffer: true }이다", () => {
+  runCase("실제 일정: 마지막 3행이 9/27·9/28·9/29 복습·버퍼 행이다 (B안)", () => {
     const slugs = makeSlugs(35);
     const rows = buildSchedule(
       slugs,
       SCHEDULE_START,
-      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      SCHEDULE_SPAN_DAYS,
       DOUBLE_LESSON_DATES,
     );
-    assert.deepStrictEqual(rows[35], { date: '2026-09-29', lessonSlug: null, isBuffer: true });
+    assert.deepStrictEqual(rows.slice(35), [
+      { date: '2026-09-27', lessonSlug: null, isBuffer: true },
+      { date: '2026-09-28', lessonSlug: null, isBuffer: true },
+      { date: '2026-09-29', lessonSlug: null, isBuffer: true },
+    ]);
   });
 
   runCase("실제 일정: date < SCHEDULE_START인 행 0건, date > '2026-09-29'인 행 0건", () => {
@@ -165,7 +180,7 @@ async function main() {
     const rows = buildSchedule(
       slugs,
       SCHEDULE_START,
-      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      SCHEDULE_SPAN_DAYS,
       DOUBLE_LESSON_DATES,
     );
     const belowStart = rows.filter((r) => r.date < SCHEDULE_START);
@@ -179,7 +194,7 @@ async function main() {
     const rows = buildSchedule(
       slugs,
       SCHEDULE_START,
-      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      SCHEDULE_SPAN_DAYS,
       DOUBLE_LESSON_DATES,
     );
     for (const doubleDate of DOUBLE_LESSON_DATES) {
@@ -193,7 +208,7 @@ async function main() {
     const rows = buildSchedule(
       slugs,
       SCHEDULE_START,
-      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      SCHEDULE_SPAN_DAYS,
       DOUBLE_LESSON_DATES,
     );
     const idx = rows.findIndex((r) => r.date === '2026-08-31');
@@ -206,7 +221,7 @@ async function main() {
     const slugs = makeSlugs(35);
     const slugsSnapshot = [...slugs];
     const doubleDatesSnapshot = [...DOUBLE_LESSON_DATES];
-    buildSchedule(slugs, SCHEDULE_START, scheduleTotalDays(35, DOUBLE_LESSON_DATES.length), DOUBLE_LESSON_DATES);
+    buildSchedule(slugs, SCHEDULE_START, SCHEDULE_SPAN_DAYS, DOUBLE_LESSON_DATES);
     assert.deepStrictEqual(slugs, slugsSnapshot);
     assert.deepStrictEqual(DOUBLE_LESSON_DATES, doubleDatesSnapshot);
   });
@@ -252,7 +267,7 @@ async function main() {
     const rows = buildSchedule(
       slugs,
       SCHEDULE_START,
-      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      SCHEDULE_SPAN_DAYS,
       DOUBLE_LESSON_DATES,
     );
     assert.strictEqual(rowsForDate(rows, '2026-08-28').length, 1);
@@ -265,7 +280,7 @@ async function main() {
       const rows = buildSchedule(
         slugs,
         SCHEDULE_START,
-        scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+        SCHEDULE_SPAN_DAYS,
         DOUBLE_LESSON_DATES,
       );
       const dayRows = rowsForDate(rows, '2026-08-29');
@@ -282,7 +297,7 @@ async function main() {
     const rows = buildSchedule(
       slugs,
       SCHEDULE_START,
-      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      SCHEDULE_SPAN_DAYS,
       DOUBLE_LESSON_DATES,
     );
     assert.deepStrictEqual(rowsForDate(rows, '2026-08-01'), []);
@@ -295,7 +310,7 @@ async function main() {
       const rows = buildSchedule(
         slugs,
         SCHEDULE_START,
-        scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+        SCHEDULE_SPAN_DAYS,
         DOUBLE_LESSON_DATES,
       );
       const result = firstRowAfter(rows, '2026-08-29');
@@ -308,7 +323,7 @@ async function main() {
     const rows = buildSchedule(
       slugs,
       SCHEDULE_START,
-      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      SCHEDULE_SPAN_DAYS,
       DOUBLE_LESSON_DATES,
     );
     const result = firstRowAfter(rows, '2026-09-28');
@@ -321,7 +336,7 @@ async function main() {
     const rows = buildSchedule(
       slugs,
       SCHEDULE_START,
-      scheduleTotalDays(35, DOUBLE_LESSON_DATES.length),
+      SCHEDULE_SPAN_DAYS,
       DOUBLE_LESSON_DATES,
     );
     assert.strictEqual(firstRowAfter(rows, '2026-09-29'), null);

@@ -5,7 +5,7 @@
 // 않는 공개 층이다(D-37, ARCHITECTURE 책임 맵의 계층 분리).
 
 import { getOrderedLessons } from '@/content/curriculum-helpers';
-import { buildSchedule, scheduleTotalDays, SCHEDULE_START, DOUBLE_LESSON_DATES, type ScheduleRow } from './schedule';
+import { buildSchedule, SCHEDULE_SPAN_DAYS, SCHEDULE_START, DOUBLE_LESSON_DATES, type ScheduleRow } from './schedule';
 
 /**
  * 매니페스트 전역 정렬(getOrderedLessons) 순서를 SCHEDULE_START부터 배정한
@@ -14,12 +14,9 @@ import { buildSchedule, scheduleTotalDays, SCHEDULE_START, DOUBLE_LESSON_DATES, 
  */
 export function getScheduleRows(): ScheduleRow[] {
   const slugs = getOrderedLessons().map((lesson) => lesson.slug);
-  return buildSchedule(
-    slugs,
-    SCHEDULE_START,
-    scheduleTotalDays(slugs.length, DOUBLE_LESSON_DATES.length),
-    DOUBLE_LESSON_DATES,
-  );
+  // 달력 길이는 SCHEDULE_SPAN_DAYS 고정(8/28~9/29) — 레슨이 일찍 끝나는 만큼
+  // 뒤가 복습·버퍼일로 남는다(B안, 2026-09-01 사용자 결정).
+  return buildSchedule(slugs, SCHEDULE_START, SCHEDULE_SPAN_DAYS, DOUBLE_LESSON_DATES);
 }
 
 /** slug → estimatedMinutes Map (Plan 03의 페이스 계산 입력). */

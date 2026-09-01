@@ -497,14 +497,20 @@ for (const pagePath of G17_GATED_PAGES) {
     continue;
   }
   const hasUnlockIdx = source.indexOf('hasUnlockCookie');
-  const readCompletedIdx = source.indexOf('readCompletedLessonIds');
+  // 홈은 quick 260901-etq부터 완료 시각까지 읽는 readProgressRows를 쓴다 —
+  // 어느 쪽이든 '진도 조회'이고 계약(쿠키 게이트가 먼저)은 동일하다.
+  const readIdxCandidates = [
+    source.indexOf('readCompletedLessonIds'),
+    source.indexOf('readProgressRows'),
+  ].filter((idx) => idx !== -1);
+  const readCompletedIdx = readIdxCandidates.length > 0 ? Math.min(...readIdxCandidates) : -1;
   if (hasUnlockIdx === -1 || readCompletedIdx === -1) {
     fail(
-      `G17 failed: expected hasUnlockCookie and readCompletedLessonIds to both appear in ${path.relative(ROOT, pagePath)}`,
+      `G17 failed: expected hasUnlockCookie and a progress read (readCompletedLessonIds|readProgressRows) to both appear in ${path.relative(ROOT, pagePath)}`,
     );
   } else if (hasUnlockIdx >= readCompletedIdx) {
     fail(
-      `G17 failed: hasUnlockCookie must appear before readCompletedLessonIds in ${path.relative(ROOT, pagePath)} (cookie gate must run before progress read)`,
+      `G17 failed: hasUnlockCookie must appear before the first progress read in ${path.relative(ROOT, pagePath)} (cookie gate must run before progress read)`,
     );
   }
 }

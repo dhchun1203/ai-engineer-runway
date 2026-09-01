@@ -48,7 +48,7 @@ const UNLOCK_COOKIE_NAME = 'runway_unlock';
 // schedule.ts는 import가 0개인 순수 모듈이라 Node 22.6+ 타입 스트리핑으로 트랜스파일러
 // 없이 그대로 동적 import할 수 있다(check-schedule.mjs가 이미 쓰는 패턴).
 const SCHEDULE_TS_PATH = path.join(ROOT, 'src', 'lib', 'schedule.ts');
-const { SCHEDULE_START, DOUBLE_LESSON_DATES } = await import(pathToFileURL(SCHEDULE_TS_PATH).href);
+const { SCHEDULE_START, DOUBLE_LESSON_DATES, SCHEDULE_SPAN_DAYS } = await import(pathToFileURL(SCHEDULE_TS_PATH).href);
 
 const PORT = process.env.E2E_PORT ? Number(process.env.E2E_PORT) : 3211;
 const HOST = '127.0.0.1';
@@ -124,7 +124,8 @@ function computeOrderedSlugs() {
 // 지킨다(DD-4).
 function computeScheduleRows(orderedSlugs, startDateISO, doubleDates = []) {
   const doubleDateSet = new Set(doubleDates);
-  const totalDays = orderedSlugs.length - doubleDates.length + 1;
+  // B안(quick 260901-etq): 달력은 8/28~9/29 고정 33일 — 레슨이 일찍 끝나는 만큼 버퍼 행이 늘어난다.
+  const totalDays = SCHEDULE_SPAN_DAYS;
   const [y, m, d] = startDateISO.split('-').map(Number);
   const rows = [];
   let cursor = 0;
@@ -548,7 +549,7 @@ async function main() {
       }
     }
 
-    // --- s1. 쿠키 없이 GET /schedule → 200, data-schedule-ui="row" 36건,
+    // --- s1. 쿠키 없이 GET /schedule → 200, data-schedule-ui="row" 38건(레슨 35 + 복습·버퍼 3),
     // data-progress-ui= 접두 속성 0건(완료 아이콘 마커 포함), 완료 마커(data-progress-ui="lesson-done")
     // 0건 (03-04, D-37) ---
     {
@@ -558,8 +559,8 @@ async function main() {
       }
       const body = stripSsrComments(await res.text());
       const rowCount = countOccurrences(body, 'data-schedule-ui="row"');
-      if (rowCount !== 36) {
-        throw new FatalError(`시나리오 s1 실패 — data-schedule-ui="row" 마커가 36건이 아닙니다 (got ${rowCount})`);
+      if (rowCount !== 38) {
+        throw new FatalError(`시나리오 s1 실패 — data-schedule-ui="row" 마커가 38건이 아닙니다 (got ${rowCount})`);
       }
       if (body.includes('data-progress-ui')) {
         throw new FatalError('시나리오 s1 실패 — 쿠키 없는 /schedule 응답에 data-progress-ui 마커가 존재합니다 (D-37 위반)');
@@ -567,7 +568,7 @@ async function main() {
     }
     console.log('e2e-today: s1/7 /schedule 쿠키 없음 → 36행 + 진도 마커 0건 OK');
 
-    // --- s2. 쿠키 포함 GET /schedule → 200, 행 수는 여전히 36건 — 쿠키가 일정
+    // --- s2. 쿠키 포함 GET /schedule → 200, 행 수는 여전히 38건 — 쿠키가 일정
     // 데이터의 양을 바꾸지 않는다(D-37 핵심 어설션) ---
     {
       const cookieHeader = `${UNLOCK_COOKIE_NAME}=${UNLOCK_SECRET}`;
@@ -577,8 +578,8 @@ async function main() {
       }
       const body = stripSsrComments(await res.text());
       const rowCount = countOccurrences(body, 'data-schedule-ui="row"');
-      if (rowCount !== 36) {
-        throw new FatalError(`시나리오 s2 실패 — 쿠키 포함 응답의 data-schedule-ui="row" 마커가 36건이 아닙니다 (got ${rowCount})`);
+      if (rowCount !== 38) {
+        throw new FatalError(`시나리오 s2 실패 — 쿠키 포함 응답의 data-schedule-ui="row" 마커가 38건이 아닙니다 (got ${rowCount})`);
       }
     }
     console.log('e2e-today: s2/7 /schedule 쿠키 있음 → 여전히 36행 OK (D-37)');
