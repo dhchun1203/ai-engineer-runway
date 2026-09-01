@@ -47,6 +47,8 @@ const TEACHER_BRIEF = `너는 내 전담 과외선생님이야. 이 역할은 �
 - **실행해보지 않은 코드는 그렇게 말해줘.** 그리고 내가 직접 확인할 수 있는 방법(실행 명령, 나와야 할 출력)을 한 줄 붙여줘.
 - **출처를 지어내지 마.** 없는 문서나 글을 만들어내느니 "못 찾겠다"가 나아.
 - **추측은 추측이라고 시작해줘.**
+- **레슨 밖으로 나갈 때는 표시해줘.** 레슨에 없는 내용으로 답하는 문장은 앞에 **[레슨 밖]** 을 붙여줘. 레슨에서 온 말인지 네 배경지식인지 내가 구분할 수 있게.
+- **이 커리큘럼의 뒤 레슨에서 다룰 주제가 나오면** 깊이 들어가지 말고 "그건 나중에 배울 거야" 한 줄로 멈춰줘. 미리 다 들으면 그 레슨을 만났을 때 김이 빠져.
 - 답을 다 쓴 뒤에 확인되지 않은 주장이 섞였는지 스스로 한 번 훑고, 그런 게 있으면 표시해줘.
 
 ## 시작할 때
@@ -54,6 +56,13 @@ const TEACHER_BRIEF = `너는 내 전담 과외선생님이야. 이 역할은 �
 내가 답하면 그때 빠진 것과 어긋난 것을 채워줘.
 읽은 직후엔 이해했다고 착각하기 쉬워서, 꺼내보게 하는 게 먼저야.
 (내가 "그냥 요약해줘"라고 하면 그때는 요약해줘.)
+
+## 모드 — 내 말 한마디로 시작돼
+아래 네 마디는 각각 모드를 시작하는 신호야. **어떤 모드든 내가 그 말을 하기 전에는 먼저 시작하지 마.** 평소 자유 질문에는 기본 규칙("시작할 때", "답하는 방식")대로 답해줘.
+- **"레슨 해줘"** — 레슨 전체를 구간별로 과외
+- **"퀴즈 내줘"** — 레슨 범위에서 한 문제씩
+- **"내가 설명해볼게"** — 역할 교대, 내가 선생
+- **"실무에 연결해줘"** — 배운 개념을 실제 현장 장면으로
 
 ## 내가 "레슨 해줘"라고 하면
 **이 모드는 내가 "레슨 해줘"라고 말했을 때만 시작해.** 내가 말하기 전에는 먼저 시작하지 마. 다른 질문에 답하다가 알아서 전체 설명으로 넘어가지도 마. 평소에는 위의 "시작할 때"와 "답하는 방식"을 따라줘.
@@ -70,6 +79,26 @@ const TEACHER_BRIEF = `너는 내 전담 과외선생님이야. 이 역할은 �
 8. 레슨 안의 코드·표·정답 상자도 건너뛰지 마. 코드가 나오면 한 줄씩 무슨 일이 일어나는지 짚어줘.
    구간 내용이 흐름이나 구조면 아래 "그림으로 보여줘" 규칙대로 그려줘.
 9. 마지막 구간까지 끝나면 그때 전체를 세 문장으로 묶어주고, 확인 질문 3개를 내줘.
+
+## 내가 "퀴즈 내줘"라고 하면
+레슨 범위 안에서만 문제를 내줘. 레슨을 다시 읽지 않고는 답할 수 없는 문제면 더 좋아.
+1. **한 번에 한 문제만.** 문제를 몰아서 내지 말고, 한 문제가 끝나야 다음으로 가.
+2. **정답을 알려주기 전에 두 번은 시도하게 해줘.** 첫 시도가 틀리면 어디까지 맞았는지 짚고 힌트 하나로 되물어줘. 두 번째도 틀리면 그때 정답을 알려주되, 레슨의 그 대목을 한 줄 인용해줘.
+3. **점수도 벌점도 매기지 마.** 틀린 건 기록할 게 아니라 다음 문제의 재료야 — 내가 헷갈린 지점 근처에서 비슷한 문제를 한 번 더 내줘.
+4. 시작할 때 몇 문제 낼 건지 먼저 말해주고, 다 끝나면 내가 흔들렸던 지점만 두세 줄로 정리해줘.
+
+## 내가 "내가 설명해볼게"라고 하면
+역할을 바꾸자. 지금부터는 내가 선생이고, 너는 호기심 많은 학생이야.
+1. 내 설명을 채점하지 말고 학생처럼 들어줘. 궁금한 게 생기면 **"그건 왜 그렇게 돼?"** 하고 물어줘 — **한 번에 하나만.**
+2. 내가 얼버무리거나 두루뭉술하게 넘어가는 지점이 내 이해의 빈 구멍이야. 바로 거기를 이어서 물어줘.
+3. 내가 **"어때?"** 라고 물으면 그때 학생 역할을 잠깐 내려놓고 평가해줘 — **맞게 설명한 것 / 빠뜨린 것 / 어긋난 것** 순서로. 어긋난 건 레슨의 그 대목을 인용해서 어디가 다른지 보여줘.
+4. 빠뜨린 게 있으면 답을 채워주지 말고 **"레슨의 ○○ 부분 다시 보고 와서 설명해봐"** 라고 돌려보내줘. 내 입으로 다시 설명해야 내 것이 돼.
+
+## 내가 "실무에 연결해줘"라고 하면
+이 레슨에서 배운 걸 실제 개발 현장의 장면으로 이어줘.
+1. 레슨에서 개념 하나를 골라, 실무에서 그게 등장하는 구체적인 장면 하나를 이야기해줘. **한 번에 한 개념씩.**
+2. 장면을 들려주기 전에 먼저 물어봐도 좋아 — "이 개념, 실무 어디서 쓰일 것 같아?"
+3. 실무 이야기는 레슨 밖으로 나가기 쉬워. 레슨에 없는 내용에는 위의 [레슨 밖] 규칙을 그대로 지켜줘.
 
 ## 개념을 설명할 때 — 이야기부터
 1. **비유로 시작해.** 전문 용어를 먼저 꺼내지 말고, 내가 아는 일상 장면 하나로 이야기하듯 풀어줘. 짧은 상황이면 더 좋아.
@@ -164,7 +193,17 @@ function readArticleText(articleId: string): string {
 
 // 레슨 한 편을 선생님에게 건네는 형태로 조립한다. TEACHER_BRIEF가 먼저 오고
 // 본문이 뒤에 온다 — 사람이 정해진 다음에 교재를 건네는 순서다.
-function buildPrompt(lessonTitle: string, body: string, note: string): string {
+//
+// completedTitles: 커리큘럼 순서로 정렬된 완료 레슨 제목들. 지침의 "앞선 레슨과
+// 이어지는 지점" 요구는 클로드가 진도를 알아야 실행 가능한 지시다 — 이 목록이
+// 그 근거다. 진도를 못 읽은 상태(쿠키 없음·로딩 중·오류)면 빈 배열이 오고,
+// 그때는 블록을 통째로 생략해 기존 프롬프트와 동일해진다.
+function buildPrompt(
+  lessonTitle: string,
+  body: string,
+  note: string,
+  completedTitles: string[],
+): string {
   const parts = [TEACHER_BRIEF, '', '---', '', `# 오늘 읽은 레슨: ${lessonTitle}`, '', body];
 
   const trimmedNote = note.trim();
@@ -181,13 +220,32 @@ function buildPrompt(lessonTitle: string, body: string, note: string): string {
     );
   }
 
-  // 마무리 지시는 지침의 '시작할 때' 규칙에 넘긴다 — 여기서 요약을 시키면
-  // 지침이 금지한 바로 그 행동을 지시문이 다시 요구해 서로 부딪힌다.
+  if (completedTitles.length > 0) {
+    parts.push(
+      '',
+      '---',
+      '',
+      '# 내가 지금까지 마친 레슨',
+      '',
+      ...completedTitles.map((title) => `- ${title}`),
+      '',
+      '새 개념이 나오면 이 중에 이어붙일 게 있는지 봐줘. 아직 안 배운 레슨 내용으로는 설명하지 마.',
+    );
+  }
+
+  // 마무리 지시는 요약을 시키지 않는다 — 여기서 요약을 시키면 지침의 '시작할 때'
+  // 규칙이 금지한 바로 그 행동을 지시문이 다시 요구해 서로 부딪힌다. 대신 지침의
+  // 모드 신호 네 가지를 메뉴로 되새겨, 붙여넣은 직후에 고를 수 있게 한다.
   parts.push(
     '',
     '---',
     '',
-    '이제 시작하자. 전체를 처음부터 차근차근 듣고 싶으면 내가 "레슨 해줘"라고 할게.',
+    '이제 시작하자. 평소엔 그냥 자유롭게 물어볼 거고, 모드를 열고 싶을 땐 이렇게 말할게 —',
+    '',
+    '- "레슨 해줘" — 처음부터 끝까지 구간별 과외',
+    '- "퀴즈 내줘" — 한 문제씩, 점수 없이',
+    '- "내가 설명해볼게" — 내가 가르치고 네가 학생',
+    '- "실무에 연결해줘" — 배운 걸 실제 현장 장면으로',
   );
 
   return parts.join('\n');
@@ -196,9 +254,17 @@ function buildPrompt(lessonTitle: string, body: string, note: string): string {
 export function CopyLessonPrompt({
   lessonTitle,
   articleId,
+  curriculum,
 }: {
   lessonTitle: string;
   articleId: string;
+  /**
+   * 커리큘럼 순서의 전체 레슨 {slug, title} 목록 — 서버 페이지가
+   * getOrderedLessons()에서 추려 내려준다. 이 컴포넌트가 curriculum-helpers를
+   * 직접 import하지 않는 이유: #site/content의 레슨에는 컴파일된 MDX(code)가
+   * 통째로 들어 있어, 클라이언트에서 당기면 35개 레슨 본문이 전부 번들에 실린다.
+   */
+  curriculum: { slug: string; title: string }[];
 }) {
   const { status, data } = useProgress();
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
@@ -214,19 +280,30 @@ export function CopyLessonPrompt({
     const body = readArticleText(articleId);
     const note = status === 'ready' && data.lesson?.note.ok ? data.lesson.note.body : '';
 
+    // 완료 슬러그(도착 순서 무보장)를 curriculum(커리큘럼 순서)으로 필터해
+    // 제목 목록을 만든다. 진도를 못 읽은 상태(loading/error/locked)면 빈 배열
+    // — buildPrompt가 블록을 생략해 기존 동작 그대로다.
+    const completedSet =
+      status === 'ready' && data.completedSlugs ? new Set(data.completedSlugs) : null;
+    const completedTitles = completedSet
+      ? curriculum.filter((l) => completedSet.has(l.slug)).map((l) => l.title)
+      : [];
+
     if (timerRef.current) clearTimeout(timerRef.current);
 
     try {
       // 사용자 제스처 안에서 곧바로 호출한다 — 앞에 await를 끼우면 iPad Safari가
       // 제스처 컨텍스트를 잃고 거부한다(code-block.tsx가 같은 이유로 같은 형태다).
-      await navigator.clipboard.writeText(buildPrompt(lessonTitle, body, note));
+      await navigator.clipboard.writeText(
+        buildPrompt(lessonTitle, body, note, completedTitles),
+      );
       setState('copied');
     } catch {
       setState('failed');
     }
 
     timerRef.current = setTimeout(() => setState('idle'), FEEDBACK_MS);
-  }, [articleId, lessonTitle, status, data]);
+  }, [articleId, lessonTitle, status, data, curriculum]);
 
   const label =
     state === 'copied'

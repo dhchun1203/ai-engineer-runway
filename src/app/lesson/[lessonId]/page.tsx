@@ -55,6 +55,12 @@ export default async function LessonPage(
 
   const { prev, next } = getAdjacentLessons(lesson.slug);
 
+  // "클로드에 물어보기"에 넘길 커리큘럼 순서표. 클라이언트는 완료 슬러그만 알고
+  // 제목·순서는 모르므로 여기(서버)서 {slug, title}만 추려 내려준다 — 레슨 전체
+  // 매니페스트(#site/content)에는 컴파일된 MDX가 들어 있어 클라이언트에서 직접
+  // import하면 안 된다 (lesson-copy-prompt.tsx의 prop 주석 참고).
+  const curriculum = getOrderedLessons().map(({ slug, title }) => ({ slug, title }));
+
   return (
     <main
       // note-page-spacer를 항상 붙인다 — 서버는 이제 메모장 표시 여부를 모른다
@@ -81,7 +87,11 @@ export default async function LessonPage(
                   {/* 레슨 본문 + 질문 틀을 클립보드에 담는다 — 클로드 탭에 붙여넣기
                       한 번이면 과외가 시작된다. 사이트 안에 대화창을 두는 대신
                       이 방식을 고른 이유는 lesson-copy-prompt.tsx 머리 주석 참고. */}
-                  <CopyLessonPrompt lessonTitle={lesson.title} articleId={LESSON_ARTICLE_ID} />
+                  <CopyLessonPrompt
+                    lessonTitle={lesson.title}
+                    articleId={LESSON_ARTICLE_ID}
+                    curriculum={curriculum}
+                  />
                   <PrintButton />
                 </span>
               ) : null}
