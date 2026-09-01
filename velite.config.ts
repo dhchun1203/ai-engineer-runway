@@ -1,5 +1,11 @@
 import { defineConfig, s } from "velite";
 import rehypePrettyCode from "rehype-pretty-code";
+// 헤딩 id 생성 (quick 260901-etq). 복습 카드가 레슨의 "6. 핵심 정리 및 스스로 점검"
+// 섹션으로 직행하는 앵커가 필요해 들였다. 35편이 같은 헤딩을 쓰므로(게이트 L1이
+// 강제) 앵커는 전 레슨 공통 상수 하나다 — src/lib/review.ts의 SELF_CHECK_ANCHOR.
+// section-tape.tsx의 "플러그인 없이 간다" 주석은 테이프 스크롤 문제에 국한된
+// 결정이었다 — 이번엔 서버 렌더 링크의 착지점이 필요하므로 사유가 다르다.
+import rehypeSlug from "rehype-slug";
 
 // 복사 버튼은 여기서 만들지 않는다. @rehype-pretty/transformers의
 // transformerCopyButton은 인라인 onclick을 *문자열*로 내보내는데, 컴파일된 MDX가
@@ -20,7 +26,7 @@ export default defineConfig({
     clean: true,
   },
   mdx: {
-    rehypePlugins: [[rehypePrettyCode, rehypePrettyCodeOptions]],
+    rehypePlugins: [rehypeSlug, [rehypePrettyCode, rehypePrettyCodeOptions]],
   },
   collections: {
     lessons: {

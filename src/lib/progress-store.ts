@@ -8,6 +8,30 @@ import { supabaseAdmin } from './supabase/admin';
 
 export type ProgressRead = { ok: true; completedIds: Set<string> } | { ok: false; error: string };
 
+export type ProgressRowsRead =
+  | { ok: true; rows: { lessonSlug: string; completedAt: string }[] }
+  | { ok: false; error: string };
+
+/**
+ * 완료 레슨을 완료 시각과 함께 읽는다 — 복습 만기 계산(src/lib/review.ts)의
+ * 입력. completed_at 컬럼은 테이블 생성 때부터 있었지만 이 함수가 처음 읽는다.
+ * completedIds가 필요한 호출부는 rows에서 파생하면 되므로, 홈은 이 함수 하나로
+ * readCompletedLessonIds를 대체한다.
+ */
+export async function readProgressRows(): Promise<ProgressRowsRead> {
+  const { data, error } = await supabaseAdmin.from('progress').select('lesson_id, completed_at');
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  const rows = (data ?? []).map((row) => ({
+    lessonSlug: row.lesson_id as string,
+    completedAt: row.completed_at as string,
+  }));
+  return { ok: true, rows };
+}
+
 export async function readCompletedLessonIds(): Promise<ProgressRead> {
   const { data, error } = await supabaseAdmin.from('progress').select('lesson_id');
 

@@ -4,8 +4,11 @@ import { DDayCountdown } from "@/components/dday-countdown";
 import { TodayLessonCard, type TodayCardState, type TomorrowInfo } from "@/components/today-lesson-card";
 import { PaceStatusPanel } from "@/components/pace-status";
 import { BehindLessonsList, type BehindLessonRow } from "@/components/behind-lessons-list";
+import { TodayReviewCard, type DueReviewRow } from "@/components/today-review-card";
 import { hasUnlockCookie } from "@/lib/auth";
-import { readCompletedLessonIds } from "@/lib/progress-store";
+import { readProgressRows } from "@/lib/progress-store";
+import { readReviewStates } from "@/lib/review-store";
+import { computeDueLessons, nextDueDate } from "@/lib/review";
 import { overallProgress, nextIncompleteLesson } from "@/lib/progress";
 import { todayInSeoul, daysUntil } from "@/lib/today";
 import { computePace, computeAheadDetail } from "@/lib/pace";
@@ -36,8 +39,17 @@ export default async function Home() {
   // 게이트 순서를 지켜 조건부 호출이 만드는 캐시 문제를 피한다.
   const unlocked = await hasUnlockCookie();
 
-  const progressRead = unlocked ? await readCompletedLessonIds() : null;
-  const completedIds = progressRead?.ok ? progressRead.completedIds : null;
+  // 완료 시각까지 함께 읽는다(readProgressRows) — 복습 만기 계산의 입력.
+  // completedIds는 rows에서 파생하므로 조회는 한 번이다.
+  const progressRead = unlocked ? await readProgressRows() : null;
+  const completedIds = progressRead?.ok
+    ? new Set(progressRead.rows.map((row) => row.lessonSlug))
+    : null;
+
+  // 복습 상태 — 진도가 정상 조회된 때만 읽는다. 복습 조회가 실패해도 홈의 다른
+  // 부분은 살아야 하므로 실패는 "복습 카드 생략"으로 강등한다(진도 조회 실패의
+  // ProgressReadError 배너와 달리, 복습은 부가 기능이라 조용한 강등이 맞다).
+  const reviewRead = progressRead?.ok ? await readReviewStates() : null;
 
   // 일정·오늘 배정 레슨·D-day는 정적 공개 정보라 쿠키 여부와 무관하게 항상
   // 계산한다(D-37) — 완료 체크·페이스 상태만 completedIds 유무로 갈린다.
@@ -125,6 +137,27 @@ export default async function Home() {
           .filter((row): row is BehindLessonRow => row !== null)
       : [];
 
+  // 오늘 만기인 복습(간격 사다리 — src/lib/review.ts). 완료 시각(timestamptz)을
+  // 서울 날짜로 바꿔 계산한다. 조회 실패 시 빈 카드로 강등.
+  let dueRows: DueReviewRow[] = [];
+  let nextDue: string | null = null;
+  if (progressRead?.ok && reviewRead?.ok) {
+    const seoulDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" });
+    const completedDateBySlug = new Map(
+      progressRead.rows.map((row) => [row.lessonSlug, seoulDate.format(new Date(row.completedAt))]),
+    );
+    const due = computeDueLessons(completedDateBySlug, reviewRead.states, today);
+    dueRows = due
+      .map(({ lessonSlug, rung }) => {
+        const lesson = getLessonBySlug(lessonSlug);
+        return lesson ? { lesson, rung } : null;
+      })
+      .filter((row): row is DueReviewRow => row !== null);
+    if (dueRows.length === 0) {
+      nextDue = nextDueDate(completedDateBySlug, reviewRead.states);
+    }
+  }
+
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-2">
@@ -141,6 +174,9 @@ export default async function Home() {
         completedIds={completedIds}
         tomorrow={tomorrow}
       />
+      {/* 오늘의 복습 — 새 레슨 카드 아래, 페이스 판정 위. 복습은 권유까지만
+          하고 진행을 잠그지 않는다(round2-h·round6 설계 원칙). */}
+      {progressRead?.ok ? <TodayReviewCard dueRows={dueRows} nextDue={nextDue} /> : null}
       {completedIds ? (
         <>
           {pace ? <PaceStatusPanel pace={pace} ahead={ahead} /> : null}
