@@ -108,7 +108,7 @@ export default defineConfig({
           // hasContent:false 스텁은 파싱하지 않는다(terms: []) — L5 게이트가
           // hasContent:true인 레슨만 검사하는 것과 정확히 대칭이다(round2-j
           // 권장 경로 1). 현재 스텁 0편이지만 미래 방어로 남긴다.
-          terms: data.hasContent ? parseTermTable(meta.content) : [],
+          terms: data.hasContent ? parseTermTable(meta.content ?? "") : [],
         })),
     },
     // /about (Making-of) 소개 페이지 소스 — docs/making-of.md 단일 파일만 대상으로 한다.
