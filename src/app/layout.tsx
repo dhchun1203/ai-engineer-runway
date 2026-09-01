@@ -24,6 +24,15 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     type: "website",
   },
+  // 홈 화면에 추가된 페이지를 iOS가 독립 웹앱으로 다루게 하는
+  // apple-mobile-web-app-* 메타(quick 260901-v4u). manifest.ts(display:
+  // standalone)와 짝을 이룬다 — 색은 여기서 다루지 않는다(디자인 토큰
+  // 규칙 a — hex는 manifest.ts/아이콘 .ts 전담).
+  appleWebApp: {
+    capable: true,
+    title: "AI Engineer 사전학습",
+    statusBarStyle: "default",
+  },
 };
 
 // FOUC/hydration-mismatch를 피하기 위해 React context 테마 프로바이더 대신
