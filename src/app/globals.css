@@ -1667,6 +1667,17 @@ code[data-theme*=" "] span {
   margin: 0;
 }
 
+/* 출력 <pre>는 크림 .panel 안에 놓인다. @tailwindcss/typography의 기본
+   .prose pre 규칙이 어두운 배경(navy)·패딩·둥근 모서리를 걸어 라이트 모드에서
+   상자가 어둡게 뜨고 글자 대비가 떨어졌다. 배경을 투명으로 되돌려 패널의 크림이
+   그대로 비치게 하고 플러그인 기본 장식을 제거한다. .prose로 스코프해 플러그인의
+   :where(pre) 규칙을 명세성으로 이긴다. */
+.prose .code-output-text {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
 .dark .code-output-text {
   color: var(--color-foreground-dark);
 }
