@@ -172,12 +172,19 @@ slug: "1-4-relational-db-basics"
 
 ## 4. 실무 예제
 
-아래 SQL을 순서대로 Supabase 대시보드의 SQL 에디터에 붙여넣고 실행하면, 서로 연결된 표 세 개를 세우고 데이터를 넣어 확인하는 과정을 전부 브라우저에서 끝낼 수 있습니다.
+아래 SQL을 순서대로 실행하면, 서로 연결된 표 세 개를 세우고 데이터를 넣어 확인하는 과정을 전부 브라우저에서 끝낼 수 있습니다.
+
+각 블록의 "실행" 버튼을 누르면 브라우저 안 임시 데이터베이스에서 바로 돌아갑니다 — **위에서 아래로 순서대로**(먼저 표 만들기 → 데이터 넣기 → 조회) 눌러야 합니다.
+
+처음부터 다시 하고 싶으면 맨 아래 "실습 되돌리기" 블록을 먼저 실행한 뒤 다시 시작하세요. (Supabase 대시보드의 SQL 에디터에 붙여넣어 실행해도 똑같이 동작합니다.)
+
+<RunSQL>
 
 ```sql
--- Supabase 대시보드 → SQL 에디터에서 실행합니다.
--- 이 블록은 연습용 서랍(practice 스키마) 안에서만 동작하며, 사이트 진도 데이터와는 무관합니다.
-CREATE SCHEMA IF NOT EXISTS practice;
+-- 연습용 서랍(practice 스키마) 안에서만 동작하며, 사이트 진도 데이터와는 무관합니다.
+-- 이전 실습이 남아 있어도 깨끗이 비우고 시작합니다(여러 번 눌러도 안전).
+DROP SCHEMA IF EXISTS practice CASCADE;
+CREATE SCHEMA practice;
 
 CREATE TABLE practice.students (
   id serial PRIMARY KEY,
@@ -197,7 +204,11 @@ CREATE TABLE practice.enrollments (
 );
 ```
 
-이 블록을 실행하면 에디터 하단에 성공 메시지가 뜨고, 왼쪽 테이블 목록에 `practice` 서랍 아래로 표 세 개가 나타납니다.
+</RunSQL>
+
+이 블록을 실행하면 "실행 완료 — 표와 데이터가 준비되었습니다."가 뜹니다. 표 세 개(`students`·`subjects`·`enrollments`)가 `practice` 서랍 안에 만들어진 것입니다.
+
+<RunSQL>
 
 ```sql
 -- 각 표에 데이터를 몇 행씩 넣습니다.
@@ -218,7 +229,11 @@ INSERT INTO practice.enrollments (student_id, subject_id) VALUES
   (3, 3);
 ```
 
-각 `INSERT`문이 성공하면 몇 행이 추가됐는지 메시지로 알려줍니다(예: "Success. 3 rows affected").
+</RunSQL>
+
+세 표에 데이터가 채워집니다("실행 완료 — 표와 데이터가 준비되었습니다.").
+
+<RunSQL>
 
 ```sql
 -- 넣은 데이터를 확인합니다.
@@ -231,7 +246,9 @@ JOIN practice.subjects sub ON sub.id = e.subject_id
 ORDER BY e.id;
 ```
 
-첫 번째 조회는 학생 3명이 담긴 표 그대로를 보여줍니다. 두 번째 조회는 수강 표의 외래키 두 개를 따라가 "누가 어떤 과목을 듣는지"를 한 줄씩 이어 붙여 보여줍니다 — 결과는 총 4행입니다.
+</RunSQL>
+
+첫 번째 조회는 학생 3명이 담긴 표 그대로를 보여줍니다. 두 번째 조회는 수강 표의 외래키 두 개를 따라가 "누가 어떤 과목을 듣는지"를 한 줄씩 이어 붙여 보여줍니다 — 결과는 총 4행입니다. (두 SELECT의 결과 표가 순서대로 두 개 나옵니다.)
 
 ### 해보기
 
@@ -239,6 +256,8 @@ ORDER BY e.id;
 
 <details>
 <summary>정답 보기</summary>
+
+<RunSQL>
 
 ```sql
 CREATE TABLE practice.classrooms (
@@ -248,7 +267,9 @@ CREATE TABLE practice.classrooms (
 );
 ```
 
-실행하면 에디터 하단에 성공 메시지가 뜨고, 왼쪽 테이블 목록에 `classrooms`가 새로 나타납니다.
+</RunSQL>
+
+실행하면 "실행 완료 — 표와 데이터가 준비되었습니다."가 뜹니다. `practice` 서랍 안에 `classrooms` 표가 새로 생긴 것입니다.
 
 </details>
 
@@ -259,11 +280,15 @@ CREATE TABLE practice.classrooms (
 <details>
 <summary>정답 보기</summary>
 
+<RunSQL>
+
 ```sql
 INSERT INTO practice.students (name, grade) VALUES ('홍길동', 2);
 
 SELECT * FROM practice.students ORDER BY id;
 ```
+
+</RunSQL>
 
 결과 표에 앞서 넣은 3명 아래로 방금 추가한 행이 4번째 줄로 나타나고, `id` 열은 자동으로 4가 매겨져 있습니다.
 
@@ -276,11 +301,15 @@ SELECT * FROM practice.students ORDER BY id;
 <details>
 <summary>정답 보기</summary>
 
+<RunSQL>
+
 ```sql
 INSERT INTO practice.enrollments (student_id, subject_id) VALUES (999, 1);
 ```
 
-`insert or update on table "enrollments" violates foreign key constraint`라는 에러가 발생합니다.
+</RunSQL>
+
+`insert or update on table "enrollments" violates foreign key constraint`라는 에러가 발생합니다(실행하면 빨간 에러 원문이 그대로 뜹니다).
 
 `student_id`가 가리키는 `999`번 학생이 `students` 표에 없기 때문에, 외래키 제약이 이 행을 막습니다. 존재하지 않는 것을 가리키는 실이 생기는 걸 데이터베이스가 미리 거부하는 것입니다.
 
@@ -291,13 +320,17 @@ INSERT INTO practice.enrollments (student_id, subject_id) VALUES (999, 1);
 - 테이블 · 열 이름은 소문자와 밑줄(snake_case)로 짓는 관례를 따릅니다 — `student_name`처럼.
 - `NOT NULL`은 처음부터 걸어두는 편이 나중에 빈 값을 찾아 다시 채우는 것보다 쉽습니다.
 - 연습은 반드시 `practice` 스키마 안에서만 합니다 — 실수로 다른 서랍을 건드리면 되돌릴 수 없습니다.
-- 실습이 끝나면 아래 정리 SQL로 연습용 서랍을 치워둡니다 — 다음에 처음부터 다시 해볼 수 있습니다.
+- 실습이 끝나면(또는 처음부터 다시 하고 싶으면) 아래 "실습 되돌리기" 블록을 실행해 연습용 서랍을 치웁니다 — 이걸 실행한 뒤 맨 위 블록부터 다시 누르면 깨끗한 상태에서 다시 시작합니다.
+
+<RunSQL>
 
 ```sql
 -- 실습을 되돌립니다. practice 서랍(스키마)을 통째로 지웁니다.
 -- 이 문장은 practice 스키마만 대상으로 하므로 사이트 진도 데이터에는 아무 영향이 없습니다.
 DROP SCHEMA IF EXISTS practice CASCADE;
 ```
+
+</RunSQL>
 
 ## 6. 핵심 정리 및 스스로 점검
 

@@ -181,12 +181,16 @@ AI 서비스를 만들 때 반복해서 등장하는 테이블 세 종류가 있
 
 ## 4. 실무 예제
 
-**실행: 브라우저의 Supabase SQL 에디터.** 앞 레슨과 마찬가지로 이 모듈은 브라우저에서 전부 실습합니다.
+**실행: 각 블록의 "실행" 버튼.** 앞 레슨과 마찬가지로 브라우저 안 임시 데이터베이스에서 전부 실습합니다 — **위에서 아래로 순서대로** 누르세요. 처음부터 다시 하려면 맨 아래 "실습 되돌리기" 블록을 먼저 실행합니다. (Supabase 대시보드의 SQL 에디터에 붙여넣어도 똑같이 동작합니다.)
 
 ⚠️ 이 레슨의 모든 SQL은 `practice` 스키마 안에서만 실행합니다 — 이 사이트의 진도 데이터가 들어 있는 `public.progress`는 건드리지 않습니다.
 
+<RunSQL>
+
 ```sql
-create schema if not exists practice;
+-- 이전 실습이 남아 있어도 깨끗이 비우고 시작합니다(여러 번 눌러도 안전).
+drop schema if exists practice cascade;
+create schema practice;
 
 create table practice.ai_chat_sessions (
   id serial primary key,
@@ -205,15 +209,13 @@ create table practice.ai_messages (
 create index practice_ai_messages_session_idx on practice.ai_messages(session_id);
 ```
 
-**실행 결과**
+</RunSQL>
 
-```text
-Success. No rows returned
-```
-
-표와 인덱스를 만드는 명령은 돌려줄 행이 없어서 SQL 에디터가 성공 메시지만 보여줍니다.
+표와 인덱스를 만드는 명령은 돌려줄 행이 없어 "실행 완료 — 표와 데이터가 준비되었습니다."만 뜹니다.
 
 `ai_messages.session_id`가 `references`로 `ai_chat_sessions(id)`를 가리키는 외래키입니다. 이것이 1:N 관계를 표현하는 방법입니다.
+
+<RunSQL>
 
 ```sql
 insert into practice.ai_chat_sessions (user_label) values
@@ -229,7 +231,11 @@ insert into practice.ai_messages (session_id, role, content) values
   (2, 'user', '알겠습니다');
 ```
 
+</RunSQL>
+
 세션 2개, 각 세션에 메시지 3개씩 총 6개를 넣었습니다.
+
+<RunSQL>
 
 ```sql
 select s.user_label as 세션, count(m.id) as 메시지수, max(m.created_at) as 마지막메시지
@@ -238,6 +244,8 @@ join practice.ai_messages m on m.session_id = s.id
 group by s.user_label
 order by s.user_label;
 ```
+
+</RunSQL>
 
 세션별로 메시지가 몇 개 쌓였는지, 가장 최근 메시지가 언제인지를 한 번에 계산합니다.
 
@@ -266,6 +274,8 @@ order by s.user_label;
 <details>
 <summary>정답 보기</summary>
 
+<RunSQL>
+
 ```sql
 alter table practice.ai_messages add column token_count int;
 
@@ -275,6 +285,8 @@ select session_id, sum(token_count) as 토큰합계
 from practice.ai_messages
 group by session_id;
 ```
+
+</RunSQL>
 
 먼저 컬럼을 추가하고 값을 채운 뒤, `group by session_id`로 세션별 합계를 냅니다. 두 세션 모두 메시지 3개씩이라 합계는 각각 60이 나옵니다.
 
@@ -286,6 +298,8 @@ group by session_id;
 
 <details>
 <summary>정답 보기</summary>
+
+<RunSQL>
 
 ```sql
 create table practice.tags (
@@ -300,6 +314,8 @@ create table practice.message_tags (
 );
 ```
 
+</RunSQL>
+
 메시지 하나가 태그 여러 개를, 태그 하나가 메시지 여러 개를 가질 수 있는 N:M 관계라 중간에 연결 테이블을 하나 더 둡니다. 연결 테이블의 기본키는 두 외래키를 합친 것입니다.
 
 </details>
@@ -311,6 +327,8 @@ create table practice.message_tags (
 <details>
 <summary>정답 보기</summary>
 
+<RunSQL>
+
 ```sql
 explain select * from practice.ai_messages where role = 'user';
 
@@ -319,7 +337,13 @@ create index practice_ai_messages_role_idx on practice.ai_messages(role);
 explain select * from practice.ai_messages where role = 'user';
 ```
 
-인덱스를 만들기 전에는 `Seq Scan`(표 전체를 순서대로 훑음)이 나오고, 만든 뒤에는 `Index Scan`(인덱스로 바로 찾아감)이 나옵니다. 지금처럼 행이 몇 개뿐일 땐 체감 차이가 작지만 원리는 같습니다.
+</RunSQL>
+
+인덱스를 만들기 전후의 `explain` 결과가 표 두 개로 나옵니다. 위 실행 결과를 보면 **두 표 모두 `Seq Scan`(표 전체를 순서대로 훑음)** 입니다.
+
+지금은 메시지가 6개뿐이라, 인덱스를 타고 가는 것보다 그냥 전부 훑는 편이 더 싸다고 데이터베이스가 판단하기 때문입니다. 두 번째 표의 예상 비용 `cost`가 더 낮아진 것으로 인덱스의 영향은 드러납니다.
+
+행이 수만·수십만 개로 많아지면 이야기가 달라집니다 — 그때는 전체 훑기가 훨씬 비싸져, 데이터베이스가 인덱스를 타고 바로 찾아가는 `Index Scan`으로 계획을 바꿉니다. 인덱스가 빛을 보는 건 데이터가 클 때입니다.
 
 </details>
 
@@ -328,11 +352,15 @@ explain select * from practice.ai_messages where role = 'user';
 - 사용자 입력을 문자열 결합으로 쿼리에 넣지 않습니다 — 파라미터 바인딩 방식을 씁니다.
 - 대화 로그처럼 계속 쌓이는 테이블은 처음부터 보관 기간(retention)을 정해둡니다. 무한정 쌓이면 나중에 지우는 작업 자체가 위험한 대규모 작업이 됩니다.
 - 개인정보가 들어갈 수 있는 컬럼(예: 사용자 실명, 연락처)은 설계 단계에서 표시해둡니다. Step 3의 LLMOps 레슨에서 이 표시가 다시 쓰입니다.
-- 연습이 끝나면 아래 정리 SQL로 `practice` 서랍을 비워둡니다.
+- 연습이 끝나면(또는 처음부터 다시 하려면) 아래 "실습 되돌리기" 블록을 실행해 `practice` 서랍을 비웁니다.
+
+<RunSQL>
 
 ```sql
 drop schema if exists practice cascade;
 ```
+
+</RunSQL>
 
 이 문장은 `practice` 스키마만 대상으로 하므로 사이트 진도 데이터에는 아무 영향이 없습니다.
 
