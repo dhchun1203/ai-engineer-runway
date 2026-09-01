@@ -6,7 +6,7 @@ status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
 last_updated: "2026-08-31T15:06:55.410Z"
 last_activity: 2026-09-01
-last_activity_desc: 260901-iqk — 브라우저 안 파이썬 실행 파일럿(Pyodide 지연 로드) 구현, 아이패드 UAT 대기
+last_activity_desc: 260901-iqk — 코드 실행 파일럿 아이패드 UAT 승인 + 라이트 모드 출력 박스 수리, Python 레슨 확장 대기
 current_phase: null
 current_phase_name: null
 progress:
@@ -34,22 +34,22 @@ Last activity: 2026-08-27 — Milestone v1.0 completed and archived
 
 ### 다음에 할 일
 
-**2026-09-01 코드 실행 파일럿 구현 완료(quick 260901-iqk)**: 브라우저 안 파이썬 실행 —
-Pyodide 지연 로드(실행 전 0바이트, CDN script 주입, npm 의존성 0), RunPython 컴포넌트
-(실행/고쳐 보기/원래대로, 에러 원문 표시), 1-3 Python 변수·자료형 레슨 실무 예제에서 실증.
-게이트 e2e-code-run.mjs 5건 + 기존 4게이트 회귀 없음 확인. 코드는 master에 병합됨(c880057).
+**2026-09-01 코드 실행 파일럿 아이패드 UAT 승인 완료(quick 260901-iqk)**: 브라우저 안
+파이썬 실행 — Pyodide 지연 로드(실행 전 0바이트, CDN script 주입, npm 의존성 0),
+RunPython 컴포넌트(실행/고쳐 보기/원래대로, 에러 원문 표시), 1-3 Python 변수·자료형
+레슨 실무 예제에서 실증. 아이패드 사파리 실기기 통과(WASM 메모리·터치 키보드 문제 없음).
+후속 수정: 라이트 모드 출력 박스가 어둡게 뜨던 문제 수리(86ee7e9) — 내장 브라우저
+라이트/다크 실측 + 프로덕션 실측 확인. 프로덕션 배포 완료.
 
-**다음 작업 = 아이패드 사파리 실기기 UAT (사용자 직접)**:
-1. master를 Vercel 프로덕션에 배포(git push origin master)
-2. 아이패드 사파리로 `/lesson/1-3-python-variables-and-types` 열기
-3. 확인할 것:
-   - 실행 버튼 누르기 전에는 아무것도 로드 안 됨(0바이트 계약)
-   - 첫 실행 시 Pyodide 로드 후 출력이 나옴
-   - "고쳐 보기"로 코드 수정 후 재실행이 됨
-   - 실패 케이스: WASM 메모리 부족 시 "이 웹페이지에 문제가 발생했습니다" — 나오면 보고
-   - 터치 키보드 스마트따옴표(' vs ')가 파이썬 문법을 조용히 깨뜨리는지
-4. 승인되면 → **Python 레슨 전체로 확장** → 이후 **SQL(PGlite) 파일럿**
-   (pyodide-runtime.ts의 script 주입 + Promise 캐시 패턴 재사용)
+**다음 작업 = Python 레슨 전체로 RunPython 확장**:
+- 대상: Step 1 Python 레슨들 중 실행 가능한 코드 예제가 있는 편 — 실제 목록은
+  src/content/lessons/step-1/ 스캔으로 확정(1-3은 완료)
+- pyodide-runtime.ts + RunPython 컴포넌트를 그대로 재사용, MDX 예제 블록을
+  `<RunPython>`으로 감싸기만 하면 됨
+- 주의: 로컬 dev는 .velite 캐시가 stale하면 RunPython이 안 뜬다 — mdx 수정 후
+  `node node_modules/velite/bin/velite.js build --clean`로 재생성(프로덕션은 매 빌드
+  velite clean 실행이라 영향 없음)
+- 확장 후 → **SQL(PGlite) 파일럿**(script 주입 + Promise 캐시 패턴 복제)
 
 그다음 후보는 리서치 2단 목록: .planning/research/edu-sites/FINAL-REPORT.md
 (/review 세션 — round2-h V2 설계 완성돼 있음, O/△/X 판정, /glossary, 힌트 사다리).
