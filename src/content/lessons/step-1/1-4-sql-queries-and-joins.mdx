@@ -426,6 +426,13 @@ DROP SCHEMA IF EXISTS practice CASCADE;
 1. `WHERE`와 `HAVING`의 차이를 한 문장으로 설명해보세요.
 
 <details>
+<summary>힌트 보기</summary>
+
+`GROUP BY`로 묶는 시점을 기준선으로 놓고, 그 전에 개별 행을 거르는 것과 그 후에 묶인 결과를 거르는 것을 나눠서 생각해보세요.
+
+</details>
+
+<details>
 <summary>정답 보기</summary>
 
 `WHERE`는 `GROUP BY`로 묶기 전에 개별 행을 거르고, `HAVING`은 묶어서 집계한 뒤의 결과(그룹)를 거릅니다. `AVG`·`COUNT` 같은 집계 함수의 결과로 조건을 걸고 싶으면 `HAVING`을 써야 합니다.
@@ -433,6 +440,13 @@ DROP SCHEMA IF EXISTS practice CASCADE;
 </details>
 
 2. `INNER JOIN` 대신 `LEFT JOIN`을 쓰면 결과 행 수가 늘어날 수 있는 이유는 무엇일까요?
+
+<details>
+<summary>힌트 보기</summary>
+
+두 JOIN이 "짝이 없는 행"을 서로 다르게 다룬다는 점을 3장 그림에서 다시 확인해보세요. 짝을 못 찾은 행이 결과에 남는지 빠지는지가 핵심입니다.
+
+</details>
 
 <details>
 <summary>정답 보기</summary>

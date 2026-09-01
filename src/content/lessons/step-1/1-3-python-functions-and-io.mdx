@@ -279,6 +279,13 @@ def summarize_member(name, age, height, grade):
 1. 잡을 예외 이름을 지정하지 않고 모든 예외를 조용히 삼키는 `except:` 형태로 코드를 짜면 무엇이 문제일까요?
 
 <details>
+<summary>힌트 보기</summary>
+
+`except` 뒤에 이름을 적지 않으면, 정말로 예상했던 실패와 코드 자체의 진짜 실수를 프로그램이 서로 구분할 수 있을지 생각해보세요.
+
+</details>
+
+<details>
 <summary>정답 보기</summary>
 
 어떤 종류의 오류든 상관없이 전부 잡아버려서, 정말 예상했던 실패(`ValueError` 같은)와 코드에 진짜 버그가 있어서 나는 오류(오타, 잘못된 로직 등)를 구분할 수 없게 됩니다. 문제가 조용히 숨겨진 채로 프로그램은 계속 돌아가지만, 나중에 왜 결과가 이상한지 원인을 찾기가 훨씬 어려워집니다.
@@ -286,6 +293,13 @@ def summarize_member(name, age, height, grade):
 </details>
 
 2. `with open("members.txt", "w", encoding="utf-8") as f:` 대신 `with`를 빼고 `f = open("members.txt", "w", encoding="utf-8")`만 썼다면, 파일을 다 쓴 뒤 무엇을 직접 해줘야 할까요?
+
+<details>
+<summary>힌트 보기</summary>
+
+`with` 블록이 끝나는 순간 파이썬이 자동으로 해주던 일이 무엇이었는지 3장 내용을 떠올려보세요. `with` 없이는 그 일을 누가 대신 해줄까요.
+
+</details>
 
 <details>
 <summary>정답 보기</summary>

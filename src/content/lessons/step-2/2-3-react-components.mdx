@@ -387,6 +387,13 @@ export function LikeCard({ name, initialLikeCount, slug }: LikeCardProps) {
 1. 위 `LikeCard` 예제에서 `initialLikeCount`를 props로 받으면서도 왜 그 값을 그대로 화면에 쓰지 않고 `useState(initialLikeCount)`로 한 번 감싸서 별도의 state(`likeCount`)를 만들었을까요?
 
 <details>
+<summary>힌트 보기</summary>
+
+props와 state를 비교한 표에서 "바꿀 수 있는가" 항목을 다시 떠올려보세요. 버튼을 눌러 숫자가 바뀌어야 한다면, 그 값은 props와 state 중 어느 쪽으로 관리해야 할까요?
+
+</details>
+
+<details>
 <summary>정답 보기</summary>
 
 props는 읽기 전용이라 버튼을 눌러도 `initialLikeCount` 자체를 바꿀 수 없기 때문입니다. "버튼을 누르면 숫자가 바뀌어야 한다"는 요구사항을 만족하려면 컴포넌트가 스스로 바꿀 수 있는 값(state)이 별도로 필요하고, 그 state의 시작값만 부모가 넘겨준 `initialLikeCount`에서 가져오는 것입니다.
@@ -394,6 +401,13 @@ props는 읽기 전용이라 버튼을 눌러도 `initialLikeCount` 자체를 �
 </details>
 
 2. `handleLikeClick` 함수 안에서 `setLikeCount`를 `setLikeCount(likeCount + 1)`처럼 함수형 업데이트가 아닌 방식으로 바꾸면 어떤 상황에서 문제가 생길 수 있을지 생각해보세요.
+
+<details>
+<summary>힌트 보기</summary>
+
+React가 상태 변경 요청을 즉시 하나씩 반영하는 게 아니라 모아서 처리한다고 했던 부분을 떠올려보세요. 같은 클릭 안에서 값을 두 번 이상 바꾸려 한다면 각 계산이 어떤 값을 기준으로 이루어질지 생각해봅니다.
+
+</details>
 
 <details>
 <summary>정답 보기</summary>

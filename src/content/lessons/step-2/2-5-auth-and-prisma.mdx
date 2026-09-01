@@ -426,6 +426,13 @@ function requireAdmin(req: express.Request, res: express.Response, next: express
 1. 비밀번호를 `bcrypt.hash`로 저장한 뒤에는 왜 로그인할 때 원문끼리 비교하지 않고 `bcrypt.compare`를 쓸까요?
 
 <details>
+<summary>힌트 보기</summary>
+
+해시라는 값이 원래대로 되돌릴 수 있는 값인지 아닌지 떠올려 보세요. 저장된 값과 로그인 시 입력한 값을 비교하려면 두 값을 같은 형태로 맞춰야 하지 않을지 생각해봅니다.
+
+</details>
+
+<details>
 <summary>정답 보기</summary>
 
 해시는 원래 값으로 되돌릴 수 없도록 설계된 값입니다. 저장된 값은 이미 해시라서 로그인 시 입력한 원문과 직접 비교할 수 없고, `bcrypt.compare`가 입력값을 같은 방식으로 해시해 저장된 해시와 맞는지 확인해줍니다.
@@ -433,6 +440,13 @@ function requireAdmin(req: express.Request, res: express.Response, next: express
 </details>
 
 2. JWT 토큰에 사용자의 이메일이나 이름을 그대로 넣으면 왜 문제가 될 수 있을까요?
+
+<details>
+<summary>힌트 보기</summary>
+
+JWT에서 "서명"과 "암호화"가 같은 개념인지 떠올려 보세요. 토큰 문자열을 가로챈 사람이 그 안의 내용을 눈으로 읽을 수 있는지 없는지를 생각해봅니다.
+
+</details>
 
 <details>
 <summary>정답 보기</summary>

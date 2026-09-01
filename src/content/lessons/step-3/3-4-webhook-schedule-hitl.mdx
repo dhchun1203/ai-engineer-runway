@@ -277,6 +277,13 @@ export async function handleInboundWebhook(req: WebhookRequest) {
 1. Webhook과 스케줄은 둘 다 자동화를 "시작"시키지만, 무엇이 다를까요?
 
 <details>
+<summary>힌트 보기</summary>
+
+3장의 트리거 표를 다시 보세요. 두 트리거의 "무엇이 시작시키나" 칸에 적힌 말이 서로 어떤 종류의 계기인지 비교해봅니다.
+
+</details>
+
+<details>
 <summary>정답 보기</summary>
 
 Webhook은 다른 서비스에서 어떤 일이 발생했을 때 그 사건을 계기로 시작됩니다. 스케줄은 사건과 상관없이 정해진 시간이나 주기가 되면 시작됩니다.
@@ -284,6 +291,13 @@ Webhook은 다른 서비스에서 어떤 일이 발생했을 때 그 사건을 �
 </details>
 
 2. HITL 지점에서 담당자가 아무 조치도 하지 않고 대기 시간이 무한히 늘어나면 무엇이 문제가 될까요?
+
+<details>
+<summary>힌트 보기</summary>
+
+회사의 결재 라인 비유를 떠올려보세요. 결재가 하염없이 밀리면 처리를 기다리는 건들과 그 상대방에게 실제로 어떤 일이 생길지 생각해봅니다.
+
+</details>
 
 <details>
 <summary>정답 보기</summary>

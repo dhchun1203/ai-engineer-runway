@@ -404,6 +404,13 @@ function buildPrompt(product: ProductInfo): string {
 1. 구조화 출력을 "JSON으로 답해주세요"라는 요청만으로 끝내지 않고 `zod` 스키마로 다시 검증하는 이유는 무엇일까요?
 
 <details>
+<summary>힌트 보기</summary>
+
+모델이 요청한 형식을 매번 100% 지킨다고 확신할 수 있을지 떠올려 보세요. 그 확신이 없다면, 코드가 대신 무엇을 확인해줘야 안전할지 생각해봅니다.
+
+</details>
+
+<details>
 <summary>정답 보기</summary>
 
 모델이 요청을 대체로 따르더라도 항상 완벽하게 지킨다는 보장은 없기 때문입니다. 설명을 덧붙이거나 필드를 빠뜨리는 등 형식이 어긋나는 경우가 실제로 발생하고, 그 응답을 검증 없이 그대로 화면에 넣으면 서비스가 깨집니다.
@@ -413,6 +420,13 @@ function buildPrompt(product: ProductInfo): string {
 </details>
 
 2. 검증 실패 시 재시도 대신 곧바로 사람에게 넘기는 편이 더 나은 상황은 어떤 경우일지 생각해보세요.
+
+<details>
+<summary>힌트 보기</summary>
+
+재시도가 도움이 되려면 실패 원인이 매번 달라질 여지가 있어야 합니다. 원인이 우연이 아니라 다시 시도해도 똑같이 반복될 문제라면, 또는 잘못된 응답이 사용자에게 그대로 노출됐을 때 피해가 크다면 어떨지 떠올려 보세요.
+
+</details>
 
 <details>
 <summary>정답 보기</summary>

@@ -236,6 +236,13 @@ async function handleRequest(input: string) {
 1. 카나리 배포 없이 새 버전을 전체 요청에 한 번에 적용하면 어떤 위험이 있을까요?
 
 <details>
+<summary>힌트 보기</summary>
+
+식당이 새 메뉴를 손님 전체에게 한 번에 낸다면 어떻게 될지 떠올려보세요. 문제를 알아채는 시점과, 그때까지 영향을 받는 손님 수가 한 테이블에만 먼저 냈을 때와 어떻게 달라질지 생각해봅니다.
+
+</details>
+
+<details>
 <summary>정답 보기</summary>
 
 문제가 생겼을 때 전체 사용자가 동시에 그 문제를 겪게 됩니다. 문제를 발견하는 시점도 늦어지고, 되돌리기 전까지 피해를 본 사용자 수도 훨씬 많아집니다.
@@ -245,6 +252,13 @@ async function handleRequest(input: string) {
 </details>
 
 2. 검증 실패를 조용히 재시도만 하고 지표로 남기지 않으면 무엇이 문제가 될까요?
+
+<details>
+<summary>힌트 보기</summary>
+
+재시도가 결국 성공하면 밖에서 봤을 때 최종 결과가 어떤 모습으로 보일지 생각해보세요. 그 겉모습만 보고 뒤에서 얼마나 자주 실패가 일어나는지 알 수 있을지 떠올려봅니다.
+
+</details>
 
 <details>
 <summary>정답 보기</summary>

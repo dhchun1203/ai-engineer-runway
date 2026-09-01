@@ -360,6 +360,13 @@ drop schema if exists practice cascade;
 1. 이 레슨의 모든 SQL 앞에 `practice.` 접두사를 붙이는 이유는 무엇일까요?
 
 <details>
+<summary>힌트 보기</summary>
+
+접두사를 붙이지 않으면 테이블이 기본으로 어느 서랍(스키마)에 만들어질지 떠올려보세요. 그 서랍에는 원래 무엇이 들어 있었나요?
+
+</details>
+
+<details>
 <summary>정답 보기</summary>
 
 접두사가 없으면 테이블이 `public` 스키마에 만들어져, 이 사이트의 진도 데이터가 담긴 표들과 같은 공간에 섞입니다.
@@ -369,6 +376,13 @@ drop schema if exists practice cascade;
 </details>
 
 2. RLS를 켜지 않은 테이블을 공개 API로 노출하면 어떤 문제가 생길 수 있을까요?
+
+<details>
+<summary>힌트 보기</summary>
+
+Supabase는 테이블을 만들면 자동으로 API를 붙여준다고 했습니다. 행 단위로 "누가 볼 수 있는지" 규칙이 아예 없다면, 그 API에 접근하는 사람이 무엇까지 할 수 있을지 떠올려보세요.
+
+</details>
 
 <details>
 <summary>정답 보기</summary>

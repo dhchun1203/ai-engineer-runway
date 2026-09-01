@@ -260,6 +260,13 @@ print(f"정밀도(macro 평균): {precision_score(y_test, y_pred, average='macro
 1. 100명 중 1명만 해당하는 것을 찾는 문제에서는 그 1명을 전혀 못 찾는 모델도 정확도 99%가 나옵니다. 왜 그럴까요? 이런 데이터에서는 무엇을 함께 봐야 할까요?
 
 <details>
+<summary>힌트 보기</summary>
+
+정확도라는 지표가 정확히 무엇을 세고 있는지 다시 떠올려보세요. 놓친 1명과 맞힌 99명을 그 지표가 어떻게 같이 취급하는지 생각해봅니다.
+
+</details>
+
+<details>
 <summary>정답 보기</summary>
 
 "전부 아니다"라고만 찍어도 나머지 99명을 맞히기 때문입니다. 정확도는 전체 중 맞힌 비율만 보므로, 정답이 한쪽으로 치우친 불균형 데이터에서는 모델이 쓸모 있는지 보여주지 못합니다.
@@ -269,6 +276,13 @@ print(f"정밀도(macro 평균): {precision_score(y_test, y_pred, average='macro
 </details>
 
 2. 전처리(스케일러)를 Pipeline 밖에서 전체 데이터에 먼저 적용한 뒤 `train_test_split`으로 나누면 어떤 문제가 생길 수 있나요?
+
+<details>
+<summary>힌트 보기</summary>
+
+스케일러가 기준(평균·표준편차 등)을 정할 때 어떤 범위의 데이터를 들여다보게 되는지 생각해보세요. 나누기 전 전체를 보게 되면 어느 쪽의 정보가 미리 섞여 들어갈까요.
+
+</details>
 
 <details>
 <summary>정답 보기</summary>
