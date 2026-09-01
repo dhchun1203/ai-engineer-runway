@@ -22,6 +22,11 @@ export type ReviewState = {
   reviewCount: number;
   /** 마지막 복습의 서울 날짜(YYYY-MM-DD). 복습 전이면 null. */
   lastReviewedDate: string | null;
+  /** /review 세션(quick 260901-w04)의 △·X 판정이 쌓인 문항 인덱스. 기존
+   * computeDueLessons·nextDueDate는 이 필드를 무시하므로 무해하다. 값이
+   * undefined면 selectReviewQuestions가 []로 취급한다(기존 상태 fixture가
+   * 이 필드 없이도 계속 동작). */
+  missedQ?: number[];
 };
 
 export type DueLesson = {
@@ -101,3 +106,139 @@ export function nextDueDate(
  * id를 실측해 박았다(.velite 산출물에서 확인). 헤딩 문구가 바뀌면 게이트
  * check-review.mjs가 산출물 대조로 잡는다. */
 export const SELF_CHECK_ANCHOR = '6-핵심-정리-및-스스로-점검';
+
+// --- /review 세션 (quick 260901-w04, 설계는 round2-h-review-design.md V2절) ---
+//
+// selectReviewQuestions는 이 파일의 원칙(의존성 0, import 없음)을 그대로
+// 지킨다 — scripts/check-review.mjs가 이 파일을 그대로 로드해 검증한다.
+
+/** 문항 하나를 가리키는 참조 — 레슨 slug + selfCheck 배열 인덱스. */
+export type ReviewQuestionRef = {
+  lessonSlug: string;
+  questionIndex: number;
+};
+
+/** 한 세션에서 보여줄 문항 수 상한. */
+export const REVIEW_SESSION_LIMIT = 12;
+
+/** O/△/X 3단 판정. */
+export type ReviewJudgment = 'correct' | 'shaky' | 'wrong';
+
+/** review-actions.ts의 위조 POST 방어 화이트리스트가 이 배열을 그대로 쓴다. */
+export const REVIEW_JUDGMENTS: readonly ReviewJudgment[] = ['correct', 'shaky', 'wrong'];
+
+/** 문자열 → 32bit 정수 해시(FNV류 단순 버전). 같은 문자열은 항상 같은 수를 낸다 —
+ * todayStr를 셔플 시드로 바꾸는 용도라 암호학적 성질은 필요 없다. */
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0;
+  }
+  return h >>> 0;
+}
+
+/** mulberry32 — 작은 결정적 PRNG. 같은 seed는 항상 같은 난수 시퀀스를 낸다
+ * (셔플 재현성/테스트 가능성이 이 함수의 존재 이유다). */
+function mulberry32(seed: number): () => number {
+  let t = seed >>> 0;
+  return function () {
+    t = (t + 0x6d2b79f5) | 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Fisher-Yates, seed로 결정된 순서. 원본 배열은 건드리지 않는다. */
+function shuffle<T>(arr: readonly T[], seed: number): T[] {
+  const result = [...arr];
+  const rng = mulberry32(seed);
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+/** 레슨별 문항 인덱스 목록(byLesson)을 레슨 라운드로빈으로 펼친다 — 셔플된
+ * 레슨 순서로 각 레슨의 0번째 문항을 먼저 다 뽑고, 그다음 1번째 문항을 다시
+ * 순서대로 뽑는 식이다. 레슨당 문항이 최대 2개(velite build가 강제)라
+ * "연속 두 항목이 같은 레슨"이 되는 경우는 그 레슨 하나만 후보로 남았을 때뿐이다. */
+function roundRobinExpand(byLesson: ReadonlyMap<string, number[]>, seed: number): ReviewQuestionRef[] {
+  const lessonSlugs = shuffle([...byLesson.keys()], seed);
+  const result: ReviewQuestionRef[] = [];
+  let round = 0;
+  let hasMore = lessonSlugs.length > 0;
+  while (hasMore) {
+    hasMore = false;
+    for (const slug of lessonSlugs) {
+      const indices = byLesson.get(slug) ?? [];
+      if (round < indices.length) {
+        result.push({ lessonSlug: slug, questionIndex: indices[round] });
+        hasMore = true;
+      }
+    }
+    round += 1;
+  }
+  return result;
+}
+
+/**
+ * /review 세션에 보여줄 문항을 고른다(순수 함수). 완료 + 문항이 있는 레슨만
+ * 후보이고, 약한 것(missedQ 인덱스) → 만기(computeDueLessons) → 나머지 순으로
+ * 3-tier 우선순위를 매긴 뒤 각 tier 안에서 todayStr 시드 결정적 셔플 + 레슨
+ * 라운드로빈으로 교차한다. REVIEW_SESSION_LIMIT(12)에서 자른다.
+ *
+ * @param completedDateBySlug 완료 레슨 slug → 완료한 서울 날짜.
+ * @param states slug → 복습 상태(missedQ 포함). missedQ가 undefined인 상태도
+ *   무해하게 []로 취급한다.
+ * @param todayStr 오늘 서울 날짜 — 셔플 시드이자 만기 계산 기준일.
+ * @param questionCountBySlug 완료 레슨 slug → selfCheck 문항 수(호출부가
+ *   getOrderedLessons에서 조립). 0이거나 항목이 없으면 그 레슨은 후보에서
+ *   빠진다.
+ */
+export function selectReviewQuestions(
+  completedDateBySlug: ReadonlyMap<string, string>,
+  states: ReadonlyMap<string, ReviewState>,
+  todayStr: string,
+  questionCountBySlug: ReadonlyMap<string, number>,
+): ReviewQuestionRef[] {
+  const dueSlugSet = new Set(
+    computeDueLessons(completedDateBySlug, states, todayStr).map((d) => d.lessonSlug),
+  );
+
+  const weakByLesson = new Map<string, number[]>();
+  const dueByLesson = new Map<string, number[]>();
+  const restByLesson = new Map<string, number[]>();
+
+  function pushInto(map: Map<string, number[]>, slug: string, index: number) {
+    const arr = map.get(slug);
+    if (arr) {
+      arr.push(index);
+    } else {
+      map.set(slug, [index]);
+    }
+  }
+
+  for (const slug of completedDateBySlug.keys()) {
+    const count = questionCountBySlug.get(slug) ?? 0;
+    if (count <= 0) continue; // 완료+문항 있는 레슨만 후보
+    const missedQ = states.get(slug)?.missedQ ?? [];
+    for (let i = 0; i < count; i++) {
+      if (missedQ.includes(i)) {
+        pushInto(weakByLesson, slug, i);
+      } else if (dueSlugSet.has(slug)) {
+        pushInto(dueByLesson, slug, i);
+      } else {
+        pushInto(restByLesson, slug, i);
+      }
+    }
+  }
+
+  const seed = hashString(todayStr);
+  const weak = roundRobinExpand(weakByLesson, seed);
+  const due = roundRobinExpand(dueByLesson, seed + 1);
+  const rest = roundRobinExpand(restByLesson, seed + 2);
+
+  return [...weak, ...due, ...rest].slice(0, REVIEW_SESSION_LIMIT);
+}
