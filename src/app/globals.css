@@ -1616,3 +1616,65 @@ code[data-theme*=" "] span {
     text-decoration: underline;
   }
 }
+
+/* ── 브라우저 안 파이썬 실행 (quick 260901-iqk) ─────────────────────────────
+   run-python.tsx가 [data-run-python]으로 감싼다. 컨트롤·출력·편집기를 감싸는
+   화면 전용 영역은 [data-print-hide]가 이미 처리한다(위 @media print 목록,
+   preflight 7) — 코드 블록 자체(children)는 인쇄돼야 하므로 그 래퍼에는 붙이지
+   않는다. 색은 새로 만들지 않고 기존 토큰만 조합한다(preflight 5,
+   check-design-tokens 규칙 c: 임의값 대괄호·기본 팔레트 색 금지). */
+.code-editor {
+  display: block;
+  width: 100%;
+  min-height: 20rem;
+  font-family: var(--font-mono), ui-monospace, "JetBrains Mono", monospace;
+  font-size: var(--text-label);
+  line-height: 1.6;
+  tab-size: 4;
+  white-space: pre;
+  overflow-x: auto;
+  resize: vertical;
+  color: var(--color-foreground);
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-line);
+  padding: 0.75rem;
+}
+
+.dark .code-editor {
+  color: var(--color-foreground-dark);
+  background-color: var(--color-surface-2-dark);
+  border-color: var(--color-line-dark);
+}
+
+.code-editor:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.dark .code-editor:focus-visible {
+  outline-color: var(--color-accent-dark);
+}
+
+/* 실행 출력 — 줄바꿈은 보존하되 긴 줄은 감싸지 않고 가로 스크롤한다(코드 블록과
+   같은 문법). 에러 원문(TypeError 등)도 같은 상자 안에 색만 달리해 보여준다. */
+.code-output-text {
+  font-family: var(--font-mono), ui-monospace, "JetBrains Mono", monospace;
+  font-size: var(--text-label);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  color: var(--color-foreground);
+  margin: 0;
+}
+
+.dark .code-output-text {
+  color: var(--color-foreground-dark);
+}
+
+.code-output-error {
+  color: var(--color-destructive);
+}
+
+.dark .code-output-error {
+  color: var(--color-destructive-dark);
+}
