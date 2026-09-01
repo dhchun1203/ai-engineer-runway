@@ -6,7 +6,7 @@ status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
 last_updated: "2026-08-31T15:06:55.410Z"
 last_activity: 2026-09-01
-last_activity_desc: 260901-w04 — 복습 세션 /review + O·△·X 판정 + 오답 모아보기 완료
+last_activity_desc: 260901-x62 — 내 노트 단권화(/notes) + 궁금한 것 인박스(/inbox) 완료
 current_phase: null
 current_phase_name: null
 progress:
@@ -110,6 +110,13 @@ missed_q int[] 컬럼 추가(라이브 마이그레이션 적용 완료 + repo �
 selectReviewQuestions 순수 함수, check-review 22케이스. 내가 dev에서 잠금 해제 후
 전체 흐름 실검증(12문항·정답 미노출·△→오답 모아보기 등장→O로 제거, 흔적 없음),
 라이트 모드 실측. 아이패드 실기기 UAT(터치·세로/가로)는 사용자 몫.
+
+**2026-09-02 수집 그룹 완료(quick 260901-x62, 병합)**: /notes 단권화(전 레슨 lesson_note를
+모듈 순으로 읽는 readAllLessonNotes + 읽기 전용 집계 페이지, 레슨 링크)·/inbox 궁금한 것
+인박스(inbox_item 테이블 신설·라이브 적용+repo 파일, 추가·done 토글·"클로드에 물어보기"
+클립보드 복사, 서버 액션 unlock 게이트+검증). 내비에 "노트"·"질문함" 추가. 실행자 내장
+브라우저에서 추가·토글·복사·집계 확인(테스트 인박스행은 삭제해 흔적 없음). 아이패드 실기기
+UAT는 사용자 몫.
 
 **리서치 2단 남은 후보**(.planning/research/edu-sites/FINAL-REPORT.md 2단 목록):
 - **시기 게이트 있음**: /review 세션(9/6 이후·완료 12편+), O/△/X 3단 판정(문항 안정 키
