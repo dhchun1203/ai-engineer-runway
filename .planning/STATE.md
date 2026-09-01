@@ -41,15 +41,25 @@ RunPython 컴포넌트(실행/고쳐 보기/원래대로, 에러 원문 표시),
 후속 수정: 라이트 모드 출력 박스가 어둡게 뜨던 문제 수리(86ee7e9) — 내장 브라우저
 라이트/다크 실측 + 프로덕션 실측 확인. 프로덕션 배포 완료.
 
-**다음 작업 = Python 레슨 전체로 RunPython 확장**:
-- 대상: Step 1 Python 레슨들 중 실행 가능한 코드 예제가 있는 편 — 실제 목록은
-  src/content/lessons/step-1/ 스캔으로 확정(1-3은 완료)
-- pyodide-runtime.ts + RunPython 컴포넌트를 그대로 재사용, MDX 예제 블록을
-  `<RunPython>`으로 감싸기만 하면 됨
-- 주의: 로컬 dev는 .velite 캐시가 stale하면 RunPython이 안 뜬다 — mdx 수정 후
+**2026-09-01 Python 레슨 확장 완료 + 배포**: 실행 가능성 심사 결과, 브라우저(Pyodide)
+에서 순수 파이썬으로 실제로 도는 예제는 1-3 두 편뿐이었다:
+- 1-3-python-variables-and-types (파일럿, 완료)
+- 1-3-python-functions-and-io (이번 확장, c0d6d3e) — open() 파일 입출력이 Pyodide
+  가상 파일시스템(MEMFS)에서 그대로 돌아감. 프로덕션 실측 확인 완료
+- **제외**(RunPython 안 감쌈): 1-2 생성 AI(anthropic SDK 필요), 1-5 ML 2편(sklearn —
+  아이패드 WASM 메모리 초과 위험, 파일럿 핵심 제약 위반), 3-3 PEFT·3-4 멀티에이전트
+  (anthropic/무거운 라이브러리). 이들은 브라우저 실행이 부적합 — 실행 버튼을 붙이면
+  눌러도 실패하므로 버튼 없는 편이 낫다.
+- 결론: Pyodide 기반 "Python 레슨 전체 확장"은 사실상 완료.
+
+**다음 작업 = SQL(PGlite) 파일럿** (새 런타임, 별도 아이패드 UAT 필요):
+- 대상 레슨: 1-4-sql-queries-and-joins(SQL 블록 보유 확인 필요) 또는 1-4-relational-db-basics
+- pyodide-runtime.ts의 지연 로드 패턴(script 주입 or dynamic import + Promise 캐시)을
+  복제해 PGlite 런타임 모듈을 만들고, RunSQL 컴포넌트를 RunPython과 같은 구조로 작성
+- 주의: 로컬 dev는 .velite 캐시가 stale하면 새 MDX 컴포넌트가 안 뜬다 — mdx 수정 후
   `node node_modules/velite/bin/velite.js build --clean`로 재생성(프로덕션은 매 빌드
-  velite clean 실행이라 영향 없음)
-- 확장 후 → **SQL(PGlite) 파일럿**(script 주입 + Promise 캐시 패턴 복제)
+  velite clean이라 영향 없음). mdx-components.tsx에 RunSQL 매핑 추가 필요.
+- 아이패드 실기기 UAT 다시 필요(PGlite도 WASM)
 
 그다음 후보는 리서치 2단 목록: .planning/research/edu-sites/FINAL-REPORT.md
 (/review 세션 — round2-h V2 설계 완성돼 있음, O/△/X 판정, /glossary, 힌트 사다리).
