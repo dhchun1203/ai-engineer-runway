@@ -18,6 +18,7 @@
 // 목표 계약:
 //   완전 정적(prerender 대상, initialRevalidateSeconds가 숫자가 아님):
 //     /about(대조군, 이미 정적), /step/1, /step/2, /step/3, /curriculum,
+//     /glossary(quick 260901-r9t — 쿠키·진도 없는 완전 정적 셸),
 //     그리고 .velite/lessons.json의 모든 레슨 슬러그에 대한 /lesson/<slug>
 //   동적 유지(prerender 대상이 아님, routes에 등장하면 안 됨): /, /schedule
 //
@@ -80,7 +81,15 @@ if (!Array.isArray(lessons)) {
 const routes = manifest.routes || {};
 const lessonRoutes = lessons.map((l) => `/lesson/${l.slug}`);
 
-const EXPECTED_STATIC_ROUTES = ['/about', '/step/1', '/step/2', '/step/3', '/curriculum', ...lessonRoutes];
+const EXPECTED_STATIC_ROUTES = [
+  '/about',
+  '/step/1',
+  '/step/2',
+  '/step/3',
+  '/curriculum',
+  '/glossary',
+  ...lessonRoutes,
+];
 
 const EXPECTED_DYNAMIC_ROUTES = ['/', '/schedule'];
 
