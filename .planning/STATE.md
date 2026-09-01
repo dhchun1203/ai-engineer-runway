@@ -34,16 +34,23 @@ Last activity: 2026-08-27 — Milestone v1.0 completed and archived
 
 ### 다음에 할 일
 
-v1.0이 출하·아카이브됐다. 계획된 페이즈(1~6, 8)와 요구사항 20개가 전부 닫혔다.
+**2026-09-01 아이패드 UAT 승인**: 리서치 1단 10건(복습 사다리·튜터 v2·B안 일정 등)
+프로덕션 확인 완료.
 
-**지금 1순위는 사이트를 더 만드는 것이 아니라 사전학습을 실제로 도는 것이다.**
-개강이 2026-09-30이고, 일정표는 8/28부터 시작한다 — 남은 기간이 곧 사용 기간이다.
+**다음 작업 = 브라우저 내 코드 실행 파일럿** (사용자가 9/1에 8/27 제외 결정을 번복 —
+PROJECT.md Out of Scope 항목 참조):
 
-새 마일스톤이 필요해지면:
+- Python(Pyodide) **지연 로드** — 실행 버튼을 누르기 전 0바이트, 누르면 로드
+  (성능 예산 e2e-perf-budget과의 충돌을 이렇게 피한다)
+- 파일럿 레슨 1편(1-3 Python 변수·자료형 권장)에서 검증 → Python 레슨 전체 →
+  SQL(PGlite) 순으로 확장
+- 아이패드 사파리 실기기 검증 필수 (WASM 메모리·터치 키보드)
 
-- `/gsd-new-milestone` — questioning → research → requirements → roadmap
+그다음 후보는 리서치 2단 목록: .planning/research/edu-sites/FINAL-REPORT.md
+(/review 세션 — round2-h V2 설계 완성돼 있음, O/△/X 판정, /glossary, 힌트 사다리).
+9/6 이후가 /review 적기(완료 레슨 12편+).
 
-후보는 `.planning/PROJECT.md`의 Requirements § Active에 적어 뒀다 (콘텐츠 보완, lint 게이트 편입, 08-REVIEW Warning 5건, 375px 잔존 M3 120건).
+새 마일스톤으로 묶으려면 /gsd-new-milestone.
 
 ## Performance Metrics
 
