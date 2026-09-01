@@ -35,14 +35,28 @@ function PagerButton({
   const alignClass = isPrev ? "sm:justify-start" : "sm:justify-end";
   const baseClass = `btn flex-1 text-body ${alignClass}`;
 
+  // 방향 라벨만 있던 버튼에 실제 레슨 제목을 함께 보여준다(quick 260901-etq).
+  // title은 처음부터 props로 오고 있었는데 렌더만 안 하고 있었다 — "다음에 뭐가
+  // 오는지"는 하루 1레슨 페이스에서 내일 돌아올 이유가 된다(react.dev의 다음 장
+  // 연결과 같은 원리, 리서치 round1-d). 텍스트는 세로로 쌓는다: 위에 작은 방향
+  // 라벨, 아래에 제목.
+  const text = (
+    <span className={`flex min-w-0 flex-col ${isPrev ? "items-start" : "items-end"}`}>
+      <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+        {label}
+      </span>
+      {lesson ? <span className="truncate">{lesson.title}</span> : null}
+    </span>
+  );
+
   const content = isPrev ? (
     <>
       <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-      {label}
+      {text}
     </>
   ) : (
     <>
-      {label}
+      {text}
       <ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
     </>
   );
