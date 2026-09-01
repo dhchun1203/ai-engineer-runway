@@ -6,7 +6,7 @@ status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
 last_updated: "2026-08-31T15:06:55.410Z"
 last_activity: 2026-09-01
-last_activity_desc: 260901-etq — 리서치 1단 10건 구현 완료(복습 사다리 가동)
+last_activity_desc: 260901-iqk — 브라우저 안 파이썬 실행 파일럿(Pyodide 지연 로드) 구현, 아이패드 UAT 대기
 current_phase: null
 current_phase_name: null
 progress:
@@ -34,17 +34,22 @@ Last activity: 2026-08-27 — Milestone v1.0 completed and archived
 
 ### 다음에 할 일
 
-**2026-09-01 아이패드 UAT 승인**: 리서치 1단 10건(복습 사다리·튜터 v2·B안 일정 등)
-프로덕션 확인 완료.
+**2026-09-01 코드 실행 파일럿 구현 완료(quick 260901-iqk)**: 브라우저 안 파이썬 실행 —
+Pyodide 지연 로드(실행 전 0바이트, CDN script 주입, npm 의존성 0), RunPython 컴포넌트
+(실행/고쳐 보기/원래대로, 에러 원문 표시), 1-3 Python 변수·자료형 레슨 실무 예제에서 실증.
+게이트 e2e-code-run.mjs 5건 + 기존 4게이트 회귀 없음 확인. 코드는 master에 병합됨(c880057).
 
-**다음 작업 = 브라우저 내 코드 실행 파일럿** (사용자가 9/1에 8/27 제외 결정을 번복 —
-PROJECT.md Out of Scope 항목 참조):
-
-- Python(Pyodide) **지연 로드** — 실행 버튼을 누르기 전 0바이트, 누르면 로드
-  (성능 예산 e2e-perf-budget과의 충돌을 이렇게 피한다)
-- 파일럿 레슨 1편(1-3 Python 변수·자료형 권장)에서 검증 → Python 레슨 전체 →
-  SQL(PGlite) 순으로 확장
-- 아이패드 사파리 실기기 검증 필수 (WASM 메모리·터치 키보드)
+**다음 작업 = 아이패드 사파리 실기기 UAT (사용자 직접)**:
+1. master를 Vercel 프로덕션에 배포(git push origin master)
+2. 아이패드 사파리로 `/lesson/1-3-python-variables-and-types` 열기
+3. 확인할 것:
+   - 실행 버튼 누르기 전에는 아무것도 로드 안 됨(0바이트 계약)
+   - 첫 실행 시 Pyodide 로드 후 출력이 나옴
+   - "고쳐 보기"로 코드 수정 후 재실행이 됨
+   - 실패 케이스: WASM 메모리 부족 시 "이 웹페이지에 문제가 발생했습니다" — 나오면 보고
+   - 터치 키보드 스마트따옴표(' vs ')가 파이썬 문법을 조용히 깨뜨리는지
+4. 승인되면 → **Python 레슨 전체로 확장** → 이후 **SQL(PGlite) 파일럿**
+   (pyodide-runtime.ts의 script 주입 + Promise 캐시 패턴 재사용)
 
 그다음 후보는 리서치 2단 목록: .planning/research/edu-sites/FINAL-REPORT.md
 (/review 세션 — round2-h V2 설계 완성돼 있음, O/△/X 판정, /glossary, 힌트 사다리).
@@ -210,6 +215,7 @@ None yet.
 | 260901-edu | 교육 사이트 전수 리서치 — 6라운드·17에이전트·~90곳 조사, 후보 51+8건을 반대 심문 3렌즈(기회비용·학습 효과·유지보수)로 재판해 3단 목록(바로 10건/고려 15건/기록만)으로 추림. 핵심 진단: 읽기·설명은 상위권인데 기억 장치가 0 — 복습 사다리가 최우선. 원문 18편 .planning/research/edu-sites/ | 2026-09-01 | e62ad36~ | [edu-sites](../research/edu-sites/FINAL-REPORT.md) |
 | 260901-etq | 리서치 1단 10건 일괄 구현 — 복습 사다리(1·3·7·21일 자기 신고+홈 카드+13케이스 게이트), 튜터 프롬프트 v2(모드 메뉴·Feynman·진도 동봉 고장 수리), Step 2 실행 결과 16블록, 문항 11개 왜-형 재작성, 다크 3단 결함 수리, 페이저 제목, 마지막 주 B안 재배정(9/27~29 복습). 코드 실행 재범위화 기록 | 2026-09-01 | a272fc7 외 8 | [260901-etq-tier1-rollout](./quick/260901-etq-tier1-rollout/) |
 | 260901-fast | 레슨 메모장 맞춤법 검사 밑줄 끄기 — 메모 내용이 기술 용어·코드 조각이라 브라우저 사전에 없는 낱말이 계속 걸리고, 빨간 물결선이 노트 괘선 위에 깔려 표면이 지저분해짐 (/gsd-fast) | 2026-09-01 | 4e1a823 | — | 2026-08-31 | 4e1a823 | — |
+| 260901-iqk | 브라우저 안 파이썬 실행 파일럿 — Pyodide 지연 로드(실행 전 0바이트, CDN script 주입·npm 의존성 0), RunPython 컴포넌트(실행/고쳐 보기/원래대로, 에러 원문 표시), 1-3 Python 변수·자료형 레슨 실무 예제에서 실증. e2e-code-run.mjs 게이트 5건·기존 4게이트 회귀 없음. **아이패드 사파리 실기기 UAT 대기(WASM 메모리·터치 키보드 스마트따옴표)** | 2026-09-01 | c880057 | [260901-iqk-python-pyodide-1-3-python](./quick/260901-iqk-python-pyodide-1-3-python/) |
 
 ## Deferred Items
 
