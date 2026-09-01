@@ -5,6 +5,7 @@ import { TodayLessonCard, type TodayCardState, type TomorrowInfo } from "@/compo
 import { PaceStatusPanel } from "@/components/pace-status";
 import { BehindLessonsList, type BehindLessonRow } from "@/components/behind-lessons-list";
 import { TodayReviewCard, type DueReviewRow } from "@/components/today-review-card";
+import { ContinueReadingCard } from "@/components/continue-reading-card";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readProgressRows } from "@/lib/progress-store";
 import { readReviewStates } from "@/lib/review-store";
@@ -178,6 +179,11 @@ export default async function Home() {
         completedIds={completedIds}
         tomorrow={tomorrow}
       />
+      {/* 이어서 읽기(quick 260901-v4u) — 마지막으로 연 레슨이 오늘 배정과
+          다를 때만 뜬다. todayLessons가 이미 계산한 slug 목록이 중복 제거의
+          유일한 입력이다(별도 재계산 금지). 클라이언트 컴포넌트라 홈의 동적
+          렌더 계약(/ force-dynamic)에 영향 없음. */}
+      <ContinueReadingCard todaySlugs={todayLessons.map((lesson) => lesson.slug)} />
       {/* 오늘의 복습 — 새 레슨 카드 아래, 페이스 판정 위. 복습은 권유까지만
           하고 진행을 잠그지 않는다(round2-h·round6 설계 원칙). */}
       {progressRead?.ok ? <TodayReviewCard dueRows={dueRows} nextDue={nextDue} /> : null}
