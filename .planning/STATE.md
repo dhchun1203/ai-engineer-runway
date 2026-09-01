@@ -6,7 +6,7 @@ status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
 last_updated: "2026-08-31T15:06:55.410Z"
 last_activity: 2026-09-01
-last_activity_desc: 260901-s8b — 완료 예측일("이 속도면 M월 D일 완주") 추가, 밀리면 미표시
+last_activity_desc: 260901 — 완료 예측일 완료 + 힌트 사다리 파일럿 2편(승인 대기)
 current_phase: null
 current_phase_name: null
 progress:
@@ -77,6 +77,17 @@ velite 빌드타임 파서(parseTermTable, L5 게이트 로직 이식·실패 �
 프롬프트가 정의별로 출처 레슨 역링크와 함께). ㄱㄴㄷ + A~W 점프 인덱스, 내비 "용어집"
 링크(커리큘럼·일정표 사이). check-route-rendering에 /glossary 등록. 내장 브라우저
 라이트/다크 실측 확인. 이 페이지는 콘텐츠 무편집·순수 정적이라 아이패드 UAT 불필요.
+
+**2026-09-01 완료 예측일 완료(quick 260901-s8b, acfe445)**: pace.ts에 순수 함수
+computeProjection 추가(computePace 불변·의존성 0), 홈 페이스 패널에 "이 속도면 M월
+D일 완주 예정" 한 줄. behind는 예측 미표시(두 겹 방어)로 낙담 방지. check-pace 38 통과.
+
+**2026-09-01 힌트 사다리 파일럿 2편(8df2b80, 스타일 승인 대기)**: 자기 점검 문항의
+"정답 보기" 앞에 "힌트 보기" 접기를 추가해 방향만 한 줄 제공(답 노출 금지 — 힌트가
+정답이면 인출 0). 파일럿: 1-3 Python(코딩형 2문항)·1-2 생성 AI(개념형 2문항). 게이트
+인프라는 1단에서 준비 완료(L3 허용목록·L4 빈줄), 게이트 변경 0. 승인 시 나머지 33편
+66문항으로 확장. **주의: 힌트 품질은 문항마다 판단 필요 — 방향만, 답·핵심정리 인용
+금지.**
 
 **리서치 2단 남은 후보**(.planning/research/edu-sites/FINAL-REPORT.md 2단 목록):
 - **시기 게이트 있음**: /review 세션(9/6 이후·완료 12편+), O/△/X 3단 판정(문항 안정 키
