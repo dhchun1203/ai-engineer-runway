@@ -9,7 +9,8 @@
 
 import { hasUnlockCookie } from '@/lib/auth';
 import { getLessonBySlug } from '@/content/curriculum-helpers';
-import { markLessonReviewed } from '@/lib/review-store';
+import { markLessonReviewed, recordReviewJudgment as storeRecordReviewJudgment } from '@/lib/review-store';
+import { REVIEW_JUDGMENTS, type ReviewJudgment } from '@/lib/review';
 
 export async function completeReview(lessonId: string): Promise<void> {
   if (!(await hasUnlockCookie())) {
@@ -21,4 +22,38 @@ export async function completeReview(lessonId: string): Promise<void> {
   }
 
   await markLessonReviewed(lessonId);
+}
+
+/** /review 세션의 O(맞음)/△(맞았지만 불안)/X(틀림) 판정 Server Action(quick
+ * 260901-w04). completeReview와 동일한 순서로 스스로 재검증한다 — hasUnlockCookie
+ * 실패 → throw, getLessonBySlug 없으면 → throw, questionIndex가 그 레슨
+ * selfCheck 길이 범위를 벗어나면 → throw(위조 POST 방어), judgment도 화이트리스트로
+ * 검증한다. 이 순서를 모두 통과한 다음에만 store를 호출한다. */
+export async function recordReviewJudgment(
+  lessonId: string,
+  questionIndex: number,
+  judgment: ReviewJudgment,
+): Promise<void> {
+  if (!(await hasUnlockCookie())) {
+    throw new Error('unauthorized');
+  }
+
+  const lesson = getLessonBySlug(lessonId);
+  if (!lesson) {
+    throw new Error('invalid lesson');
+  }
+
+  if (
+    !Number.isInteger(questionIndex) ||
+    questionIndex < 0 ||
+    questionIndex >= lesson.selfCheck.length
+  ) {
+    throw new Error('invalid question index');
+  }
+
+  if (!REVIEW_JUDGMENTS.includes(judgment)) {
+    throw new Error('invalid judgment');
+  }
+
+  await storeRecordReviewJudgment(lessonId, questionIndex, judgment);
 }

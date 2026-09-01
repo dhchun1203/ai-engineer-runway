@@ -11,6 +11,9 @@ import { ThemeToggle } from "@/components/theme-toggle";
 // 전까지 404이지만, D-09 배치를 그대로 지키기 위해 미리 활성 링크로 켜 둔다.
 // D-09 4항목 확정 이후 "용어집"(5번째)을 리서치 2단 round2-j로 추가했다(quick
 // 260901-r9t) — 커리큘럼과 함께 두는 게 자연스러운 용어 참조 도구다.
+// "복습"(6번째)은 리서치 2단 round2-h V2절로 추가했다(quick 260901-w04) —
+// 일정표 바로 앞, 학습 흐름(오늘의 학습 → 커리큘럼 → 용어집 → 복습 → 일정표)에서
+// 자연스러운 위치다.
 type NavItem = {
   label: string;
   href: string | null; // null = 비활성(준비 중)
@@ -20,6 +23,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: "오늘의 학습", href: "/" },
   { label: "커리큘럼", href: "/curriculum" },
   { label: "용어집", href: "/glossary" },
+  { label: "복습", href: "/review" },
   { label: "일정표", href: "/schedule" },
   { label: "소개", href: "/about" },
 ];
