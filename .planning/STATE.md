@@ -6,7 +6,7 @@ status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
 last_updated: "2026-08-31T15:06:55.410Z"
 last_activity: 2026-09-01
-last_activity_desc: 260901 — 힌트 사다리 완료(35편 70문항) + 완료 예측일 완료
+last_activity_desc: 260901-v4u — 홈·접근성 폴리시(PWA manifest·skip link·이어서 읽기) 완료
 current_phase: null
 current_phase_name: null
 progress:
@@ -88,6 +88,16 @@ D일 완주 예정" 한 줄. behind는 예측 미표시(두 겹 방어)로 낙�
 (배치 5개)으로 확장. 표본 점검: 정답을 말하지 않고 "떠올려 보라"로만 유도 확인. 게이트
 인프라는 1단(260901-etq)에서 준비 완료라 게이트 변경 0, 462줄 순수 추가(문항·정답
 무변경), 구조·브랜드·토큰 게이트 통과.
+
+**2026-09-01 홈·접근성 폴리시 완료(quick 260901-v4u, cab7ddb)**: PWA manifest(src/app/
+manifest.ts·icon.ts·apple-icon.ts, 아이패드 홈 화면 추가 시 앱처럼 실행)+apple-web-app
+메타, skip link("본문으로 건너뛰기" 포커스 시 표시, #main-content), 이어서 읽기(마지막
+연 레슨 localStorage 기록→홈에서 오늘 배정과 다를 때만 복귀 링크). Safari Reader용
+article/h1 시맨틱 확인. 게이트 전부 통과. 아이패드 실기기 UAT(홈 화면 추가·Reader)는
+사용자 몫으로 남김.
+
+**사용자 지시(2026-09-01)**: 2단 나머지는 되묻지 말고 전부 자율 진행·배포. 시기
+게이트/조건은 리서치 근거로 자율 판단하되 파괴적이지 않은 선에서 진행.
 
 **리서치 2단 남은 후보**(.planning/research/edu-sites/FINAL-REPORT.md 2단 목록):
 - **시기 게이트 있음**: /review 세션(9/6 이후·완료 12편+), O/△/X 3단 판정(문항 안정 키
