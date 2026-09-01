@@ -91,6 +91,9 @@ export function TodayLessonCard({
   } else if (state === "buffer") {
     heading = "복습·정리일";
     body = "밀린 레슨을 따라잡거나 배운 내용을 복습하세요.";
+    // F8 해소(round2-h V2절) — 버퍼일 카드에 CTA가 없었다. /review 세션으로
+    // 바로 보낸다.
+    cta = { href: "/review", label: "복습 세션 열기" };
   } else if (state === "celebration") {
     // 오늘 배정을 완료했거나 앞서 있을 때(D-38) — 자동 이동·리다이렉트는 걸지
     // 않는다, 이동은 사용자가 아래 CTA를 직접 누를 때만 일어난다.
@@ -99,7 +102,10 @@ export function TodayLessonCard({
       body = `내일은 "${tomorrow.title}"을 배워요.`;
       cta = { href: `/lesson/${tomorrow.slug}`, label: "내일 레슨 미리 보기" };
     } else if (tomorrow?.kind === "buffer") {
+      // 내일이 버퍼일임을 알리며 복습 세션으로 예열한다(F8 해소, buffer 분기와
+      // 같은 CTA).
       body = "내일은 복습·정리일이에요.";
+      cta = { href: "/review", label: "복습 세션 열기" };
     } else {
       body = "사전학습 일정을 모두 마쳤어요.";
       cta = { href: "/curriculum", label: "커리큘럼 보기" };

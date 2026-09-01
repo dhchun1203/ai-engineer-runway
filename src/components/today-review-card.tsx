@@ -46,14 +46,21 @@ export function TodayReviewCard({
 
   return (
     <section className="panel flex flex-col gap-4 p-6" aria-labelledby="today-review-heading">
-      <div className="flex items-center gap-2">
-        <RotateCcw className="h-5 w-5 shrink-0" aria-hidden="true" />
-        <h2 id="today-review-heading" className="text-heading font-extrabold">
-          오늘의 복습
-        </h2>
-        <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          {dueRows.length}편
-        </span>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <RotateCcw className="h-5 w-5 shrink-0" aria-hidden="true" />
+          <h2 id="today-review-heading" className="text-heading font-extrabold">
+            오늘의 복습
+          </h2>
+          <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            {dueRows.length}편
+          </span>
+        </div>
+        {/* /review 세션 상시 진입점(quick 260901-w04) — 만기 복습이 있을 때 홈에서
+            바로 세션으로 넘어간다. */}
+        <Link href="/review" className="chip tap-feedback min-h-11 w-fit items-center">
+          복습 세션 열기 →
+        </Link>
       </div>
       <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
         점검 문제만 다시 풀어 보세요 — 약 3분이면 됩니다. 판정은 본인 몫이고, 후하게
