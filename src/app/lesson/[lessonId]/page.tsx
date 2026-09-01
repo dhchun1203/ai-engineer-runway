@@ -9,6 +9,7 @@ import { ProgressProvider } from "@/components/progress-provider";
 import { PrintButton } from "@/components/print-button";
 import { CopyLessonPrompt } from "@/components/lesson-copy-prompt";
 import { CompleteButtonSlot, LessonNoteSlot } from "@/components/progress-slots";
+import { LastLessonRecorder } from "@/components/last-lesson-recorder";
 import {
   getLessonBySlug,
   getOrderedLessons,
@@ -70,6 +71,10 @@ export default async function LessonPage(
       className="note-page-spacer mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8"
     >
       <ProgressProvider lessonId={lesson.slug}>
+        {/* "이어서 읽기"(quick 260901-v4u) 기록기 — 화면에 아무것도 그리지
+            않고 useEffect에서만 동작하므로 이 페이지의 정적 셸 계약(레슨 =
+            완전 정적)을 깨지 않는다. */}
+        <LastLessonRecorder slug={lesson.slug} title={lesson.title} />
         <article className="flex flex-col gap-8">
           <LessonBreadcrumb lesson={lesson} />
           <header className="flex flex-col gap-3">
