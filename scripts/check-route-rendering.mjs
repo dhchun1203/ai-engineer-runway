@@ -22,7 +22,8 @@
 //     그리고 .velite/lessons.json의 모든 레슨 슬러그에 대한 /lesson/<slug>
 //   동적 유지(prerender 대상이 아님, routes에 등장하면 안 됨): /, /schedule,
 //     /review(quick 260901-w04 — 쿠키·진도·복습 상태를 읽는 세션 라우트, /와
-//     동일한 계약)
+//     동일한 계약), /notes·/inbox(quick 260901-x62 — 쿠키·노트/질문 상태를
+//     읽는 라우트, /·/review와 동일 계약)
 //
 // 주의: 이 스크립트는 next build를 스스로 실행하지 않는다 — 빌드는 호출자가
 // 한다(정적 게이트는 수 초 안에 끝나야 한다는 이 저장소의 샘플링 관례).
@@ -93,7 +94,7 @@ const EXPECTED_STATIC_ROUTES = [
   ...lessonRoutes,
 ];
 
-const EXPECTED_DYNAMIC_ROUTES = ['/', '/schedule', '/review'];
+const EXPECTED_DYNAMIC_ROUTES = ['/', '/schedule', '/review', '/notes', '/inbox'];
 
 function isFullyStatic(routeEntry) {
   return typeof routeEntry.initialRevalidateSeconds !== 'number';
