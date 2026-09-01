@@ -15,6 +15,7 @@ import {
 } from "@/components/progress-skeleton";
 import { CompleteButton } from "@/components/complete-button";
 import { LessonNotepad } from "@/components/lesson-notepad";
+import { LessonTil } from "@/components/lesson-til";
 import type { StepId } from "@/content/modules";
 
 /** Step 헤더 배지 자리. locked/error 상태에서는 아무것도 렌더하지 않는다 —
@@ -117,4 +118,19 @@ export function LessonNoteSlot({ lessonId }: { lessonId: string }) {
       메모를 불러오지 못했어요. 새로고침해 주세요.
     </p>
   );
+}
+
+/** TIL(오늘 배운 것 한 줄) 입력 자리(quick 260902-0rz). CompleteButtonSlot/LessonNoteSlot과
+ * 같은 가드 방식이다 — loading/error/locked/note 실패에는 아무것도 렌더하지 않는다.
+ * note.ok에서만 렌더하는 이유: til은 note 읽기와 같은 왕복의 결과값이라(route.ts
+ * 참고) note 읽기가 실패하면 til도 신뢰할 수 없는 빈 문자열이다. 완료 상태와는
+ * 무관하게 렌더 여부를 판정한다 — TIL은 완료의 전제 조건이 아니다. */
+export function LessonTilSlot({ lessonId }: { lessonId: string }) {
+  const { status, data } = useProgress();
+
+  if (status !== "ready") return null;
+  if (!data.lesson) return null;
+  if (!data.lesson.note.ok) return null;
+
+  return <LessonTil lessonId={lessonId} initialTil={data.lesson.til} />;
 }

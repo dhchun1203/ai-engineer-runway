@@ -35,6 +35,7 @@ export type ProgressLesson = {
   slug: string;
   done: boolean;
   note: { ok: true; body: string } | { ok: false };
+  til: string;
 };
 
 export type ProgressData = {

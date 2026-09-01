@@ -27,10 +27,15 @@ const NO_STORE_HEADERS = { "Cache-Control": "private, no-store" } as const;
 
 // note는 실패 시 { ok: false }만 담는다 — DB 오류 문자열(NoteRead의 error 필드)을
 // 클라이언트로 내보내지 않는다 (T-08-03-04).
+//
+// til은 note와 별도 필드다(quick 260902-0rz) — note.ok가 false(조회 실패)이면
+// til은 빈 문자열로 채운다. LessonTilSlot은 note.ok에서만 렌더하므로 이 값은
+// note 읽기가 성공했을 때만 실제로 쓰인다(T-0rz-04).
 type ProgressLesson = {
   slug: string;
   done: boolean;
   note: { ok: true; body: string } | { ok: false };
+  til: string;
 };
 
 export type ProgressApiResponse = {
@@ -96,6 +101,7 @@ export async function GET(request: Request) {
         slug: found.slug,
         done: completedIds.has(found.slug),
         note: noteRead.ok ? { ok: true, body: noteRead.body } : { ok: false },
+        til: noteRead.ok ? noteRead.til : '',
       };
     }
   }

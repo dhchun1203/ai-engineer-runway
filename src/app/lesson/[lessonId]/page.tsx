@@ -8,7 +8,7 @@ import { SectionTape } from "@/components/section-tape";
 import { ProgressProvider } from "@/components/progress-provider";
 import { PrintButton } from "@/components/print-button";
 import { CopyLessonPrompt } from "@/components/lesson-copy-prompt";
-import { CompleteButtonSlot, LessonNoteSlot } from "@/components/progress-slots";
+import { CompleteButtonSlot, LessonNoteSlot, LessonTilSlot } from "@/components/progress-slots";
 import { LastLessonRecorder } from "@/components/last-lesson-recorder";
 import {
   getLessonBySlug,
@@ -127,6 +127,7 @@ export default async function LessonPage(
           )}
           <div data-progress-controls className="flex flex-col gap-6">
             <CompleteButtonSlot lessonId={lesson.slug} />
+            <LessonTilSlot lessonId={lesson.slug} />
             <LessonPager prev={prev} next={next} />
           </div>
         </article>
