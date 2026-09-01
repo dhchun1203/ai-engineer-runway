@@ -104,13 +104,26 @@ function ScheduleBufferRow({ row, isToday, isPast }: { row: ScheduleTableRow; is
   return (
     <li data-schedule-ui="row" id={isToday ? "schedule-today" : undefined}>
       {isToday ? <span data-schedule-ui="today-row" className="hidden" aria-hidden="true" /> : null}
-      <div className={`flex min-h-11 items-center gap-3 px-2 py-3 ${isToday ? TODAY_ROW_CLASS : ""}`}>
-        <span className={`whitespace-nowrap text-label font-normal ${isPast ? PAST_TONE_CLASS : ""}`}>
-          {row.date}
+      <div
+        className={`flex min-h-11 flex-col gap-2 px-2 py-3 sm:flex-row sm:items-center sm:justify-between ${isToday ? TODAY_ROW_CLASS : ""}`}
+      >
+        <span className="flex items-start gap-3">
+          <span className={`whitespace-nowrap text-label font-normal ${isPast ? PAST_TONE_CLASS : ""}`}>
+            {row.date}
+          </span>
+          <span className={`flex-1 text-body font-normal ${isPast ? PAST_TONE_CLASS : ""}`}>
+            복습·정리일 — 밀린 레슨을 따라잡거나 배운 내용을 복습하세요.
+          </span>
         </span>
-        <span className={`flex-1 text-body font-normal ${isPast ? PAST_TONE_CLASS : ""}`}>
-          복습·정리일 — 밀린 레슨을 따라잡거나 배운 내용을 복습하세요.
-        </span>
+        {/* /review로 가는 CTA(F8 해소, round2-h V2절) — 버퍼 행에서 복습 세션으로
+            직행한다. 이 컴포넌트는 서버 렌더 순수 표현 컴포넌트라 이 Link도
+            데이터 조회 없이 고정 href만 쓴다. */}
+        <Link
+          href="/review"
+          className="chip tap-feedback min-h-11 w-fit shrink-0 items-center self-start sm:self-auto"
+        >
+          복습하러 가기 →
+        </Link>
       </div>
     </li>
   );

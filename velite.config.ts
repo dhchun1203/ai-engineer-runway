@@ -74,6 +74,71 @@ function parseTermTable(content: string): { word: string; definition: string }[]
   return terms;
 }
 
+// 스스로 점검 문항 파서 (quick 260901-w04, 설계는
+// .planning/research/edu-sites/round2-h-review-design.md V2절) — parseTermTable과
+// 같은 "라벨 찾기 → 그 뒤만 파싱 → 0개면(여기선 !=2개면) throw" 방어 구조를
+// 그대로 이식했다. parseTermTable과 parseSelfCheck는 같은 "라벨 이후 파싱" 문법의
+// 이중 구현이므로(round2-j 함정 d와 동형) **한쪽 파서/게이트가 바뀌면 다른 쪽도
+// 함께 볼 것**.
+//
+// 코드펜스(삼중 백틱 토글)와 <details>…</details>(깊이 카운터) 내부는 건너뛴다 —
+// 힌트 보기·정답 보기 접기 안의 텍스트(코드 예시 포함)가 문항으로 오인되지 않게
+// 막는 것이 이 파서의 핵심 방어다(quick 260901-etq가 힌트 접기를 정답 접기 앞에
+// 추가했으므로, 두 접기 모두 스킵 대상이다).
+const DETAILS_OPEN_LINE = "<details>";
+const DETAILS_CLOSE_LINE = "</details>";
+
+function parseSelfCheck(content: string): string[] {
+  const lines = content.replace(/\r\n/g, "\n").split("\n");
+  const label = "**스스로 점검**";
+
+  const labelCount = lines.filter((l) => l === label).length;
+  if (labelCount !== 1) {
+    throw new Error(`parseSelfCheck: label "${label}" appears ${labelCount} time(s), expected exactly 1`);
+  }
+  const labelIdx = lines.indexOf(label);
+
+  const questions: string[] = [];
+  let inFence = false;
+  let detailsDepth = 0;
+
+  for (let i = labelIdx + 1; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith("```")) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+
+    if (trimmed.includes(DETAILS_OPEN_LINE)) {
+      detailsDepth += 1;
+      continue;
+    }
+    if (trimmed.includes(DETAILS_CLOSE_LINE)) {
+      detailsDepth = Math.max(0, detailsDepth - 1);
+      continue;
+    }
+    if (detailsDepth > 0) continue;
+
+    const match = /^\d+\.\s+(.+)/.exec(trimmed);
+    if (match) {
+      questions.push(match[1].trim());
+    }
+  }
+
+  // 정확히 2개가 아니면(0개 포함) throw해 velite build를 실패시킨다 — F7(레슨당
+  // 정확히 2문항)을 런타임 빈 세션으로 새는 대신 빌드에서 멈춘다(round2-h V2절).
+  if (questions.length !== 2) {
+    throw new Error(
+      `parseSelfCheck: parsed ${questions.length} self-check question(s), expected exactly 2 — malformed section or parser/gate drift`,
+    );
+  }
+
+  return questions;
+}
+
 export default defineConfig({
   root: ".",
   output: {
@@ -109,6 +174,9 @@ export default defineConfig({
           // hasContent:true인 레슨만 검사하는 것과 정확히 대칭이다(round2-j
           // 권장 경로 1). 현재 스텁 0편이지만 미래 방어로 남긴다.
           terms: data.hasContent ? parseTermTable(meta.content ?? "") : [],
+          // /review 세션(quick 260901-w04)이 소비하는 문항 배열 — 인덱스가 곧
+          // questionIndex다. terms와 정확히 같은 hasContent 게이트 패턴.
+          selfCheck: data.hasContent ? parseSelfCheck(meta.content ?? "") : [],
         })),
     },
     // /about (Making-of) 소개 페이지 소스 — docs/making-of.md 단일 파일만 대상으로 한다.

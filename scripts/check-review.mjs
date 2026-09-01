@@ -30,8 +30,16 @@ function runCase(name, fn) {
 }
 
 async function main() {
-  const { computeDueLessons, nextDueDate, addDays, REVIEW_INTERVALS_DAYS, GRADUATE_COUNT, SELF_CHECK_ANCHOR } =
-    await import(pathToFileURL(REVIEW_PATH).href);
+  const {
+    computeDueLessons,
+    nextDueDate,
+    addDays,
+    REVIEW_INTERVALS_DAYS,
+    GRADUATE_COUNT,
+    SELF_CHECK_ANCHOR,
+    selectReviewQuestions,
+    REVIEW_SESSION_LIMIT,
+  } = await import(pathToFileURL(REVIEW_PATH).href);
 
   // --- addDays: 월말·연말 경계 ---
   runCase('addDays 월말 경계 (8/31 +1 = 9/1)', () => {
@@ -107,6 +115,103 @@ async function main() {
     assert.ok(REVIEW_INTERVALS_DAYS.length >= GRADUATE_COUNT);
   });
 
+  // --- selectReviewQuestions (quick 260901-w04) ---
+  runCase('약한 것(missedQ) tier가 만기·나머지보다 먼저 온다', () => {
+    const completed = new Map([
+      ['l1', '2026-08-01'],
+      ['l2', '2026-08-01'],
+    ]);
+    const states = new Map([['l1', { reviewCount: 0, lastReviewedDate: null, missedQ: [1] }]]);
+    const counts = new Map([
+      ['l1', 2],
+      ['l2', 2],
+    ]);
+    const refs = selectReviewQuestions(completed, states, '2026-09-01', counts);
+    assert.deepStrictEqual(refs[0], { lessonSlug: 'l1', questionIndex: 1 });
+  });
+  runCase('만기(computeDueLessons) tier가 나머지보다 먼저 온다', () => {
+    // l1은 완료 당일이라 만기 아님(나머지 tier), l2는 완료+1일이 지나 만기(due tier).
+    const completed = new Map([
+      ['l1', '2026-09-01'],
+      ['l2', '2026-08-01'],
+    ]);
+    const counts = new Map([
+      ['l1', 2],
+      ['l2', 2],
+    ]);
+    const refs = selectReviewQuestions(completed, new Map(), '2026-09-01', counts);
+    const l2Positions = refs.map((r, i) => (r.lessonSlug === 'l2' ? i : -1)).filter((i) => i !== -1);
+    const l1Positions = refs.map((r, i) => (r.lessonSlug === 'l1' ? i : -1)).filter((i) => i !== -1);
+    assert.ok(Math.max(...l2Positions) < Math.min(...l1Positions), 'l2(만기)가 l1(나머지)보다 먼저 와야 함');
+  });
+  runCase('missedQ가 비어 있으면 약한 tier는 비고 만기·나머지만 나온다', () => {
+    const completed = new Map([['l1', '2026-08-01']]);
+    const states = new Map([['l1', { reviewCount: 0, lastReviewedDate: null, missedQ: [] }]]);
+    const counts = new Map([['l1', 2]]);
+    const refs = selectReviewQuestions(completed, states, '2026-09-01', counts);
+    assert.equal(refs.length, 2);
+  });
+  runCase('완료+문항 있는 레슨만 후보 — 문항 0개인 레슨은 제외', () => {
+    const completed = new Map([
+      ['l1', '2026-08-01'],
+      ['l2', '2026-08-01'],
+    ]);
+    const counts = new Map([
+      ['l1', 2],
+      ['l2', 0],
+    ]);
+    const refs = selectReviewQuestions(completed, new Map(), '2026-09-01', counts);
+    assert.ok(refs.every((r) => r.lessonSlug === 'l1'));
+  });
+  runCase('레슨 라운드로빈 — 여러 레슨이 있으면 연속 두 항목이 같은 레슨이 아니다', () => {
+    const completed = new Map([
+      ['l1', '2026-08-01'],
+      ['l2', '2026-08-01'],
+      ['l3', '2026-08-01'],
+    ]);
+    const counts = new Map([
+      ['l1', 2],
+      ['l2', 2],
+      ['l3', 2],
+    ]);
+    const refs = selectReviewQuestions(completed, new Map(), '2026-09-01', counts);
+    for (let i = 1; i < refs.length; i++) {
+      assert.notEqual(refs[i].lessonSlug, refs[i - 1].lessonSlug, `index ${i}에서 같은 레슨이 연속됨`);
+    }
+  });
+  runCase(`${REVIEW_SESSION_LIMIT}문항에서 자른다`, () => {
+    const completed = new Map();
+    const counts = new Map();
+    for (let i = 0; i < 10; i++) {
+      const slug = `l${i}`;
+      completed.set(slug, '2026-08-01');
+      counts.set(slug, 2);
+    }
+    const refs = selectReviewQuestions(completed, new Map(), '2026-09-01', counts);
+    assert.equal(refs.length, REVIEW_SESSION_LIMIT);
+  });
+  runCase('같은 입력·같은 날짜면 항상 같은 순서(결정적 셔플)', () => {
+    const completed = new Map([
+      ['l1', '2026-08-01'],
+      ['l2', '2026-08-01'],
+      ['l3', '2026-08-01'],
+    ]);
+    const counts = new Map([
+      ['l1', 2],
+      ['l2', 2],
+      ['l3', 2],
+    ]);
+    const refsA = selectReviewQuestions(completed, new Map(), '2026-09-01', counts);
+    const refsB = selectReviewQuestions(completed, new Map(), '2026-09-01', counts);
+    assert.deepStrictEqual(refsA, refsB);
+  });
+  runCase('ReviewState에 missedQ가 없어도(undefined) []로 취급해 깨지지 않는다', () => {
+    const completed = new Map([['l1', '2026-08-01']]);
+    const states = new Map([['l1', { reviewCount: 0, lastReviewedDate: null }]]);
+    const counts = new Map([['l1', 2]]);
+    assert.doesNotThrow(() => selectReviewQuestions(completed, states, '2026-09-01', counts));
+  });
+
   // --- SELF_CHECK_ANCHOR가 빌드 산출물의 실제 heading id와 일치 ---
   if (fs.existsSync(VELITE_LESSONS)) {
     runCase('SELF_CHECK_ANCHOR가 컴파일된 레슨의 실제 id와 일치', () => {
@@ -120,6 +225,20 @@ async function main() {
         `앵커 "${SELF_CHECK_ANCHOR}" 미포함 레슨: ${missing
           .slice(0, 5)
           .map((l) => l.slug)
+          .join(', ')}`,
+      );
+    });
+    runCase('hasContent 레슨의 selfCheck.length가 정확히 2', () => {
+      const lessons = JSON.parse(fs.readFileSync(VELITE_LESSONS, 'utf8'));
+      const withContent = lessons.filter((l) => l.hasContent);
+      assert.ok(withContent.length > 0, 'hasContent 레슨이 없음');
+      const wrong = withContent.filter((l) => !Array.isArray(l.selfCheck) || l.selfCheck.length !== 2);
+      assert.equal(
+        wrong.length,
+        0,
+        `selfCheck가 정확히 2개가 아닌 레슨: ${wrong
+          .slice(0, 5)
+          .map((l) => `${l.slug}(${Array.isArray(l.selfCheck) ? l.selfCheck.length : 'missing'})`)
           .join(', ')}`,
       );
     });
