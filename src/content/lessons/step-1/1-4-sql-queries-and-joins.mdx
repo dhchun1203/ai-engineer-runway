@@ -194,6 +194,10 @@ JOIN(공통 열을 기준으로 두 표를 이어 붙이는 연산)은 두 표�
 
 앞 레슨을 건너뛰었어도 이 블록 하나로 준비가 끝납니다. 연습용 서랍을 먼저 비우고 새로 만들기 때문에, 앞 레슨을 했든 안 했든 · 몇 번을 실행하든 항상 같은 상태에서 시작합니다.
 
+아래 블록들은 이 페이지 안에서 바로 실행할 수 있습니다 — 먼저 셋업 블록의 [실행]을 누른 뒤 그 아래 쿼리 블록들을 실행하세요. 셋업을 누르기 전에 쿼리 블록을 먼저 누르면 표가 아직 없다는 뜻의 에러가 그대로 뜹니다.
+
+<RunSQL>
+
 ```sql
 -- Supabase 대시보드 → SQL 에디터에서 실행합니다.
 -- 연습용 practice 서랍을 통째로 비우고 새로 만듭니다.
@@ -236,7 +240,11 @@ INSERT INTO practice.enrollments (student_id, subject_id, score) VALUES
   (3, 1, 60);
 ```
 
+</RunSQL>
+
 맨 앞의 `DROP SCHEMA ... CASCADE`가 `practice` 서랍을 통째로 비우고 시작하므로, 앞 레슨에서 만든 표가 남아 있어도 충돌하지 않고 `INSERT`가 중복으로 쌓이지도 않습니다. 지워지는 것은 `practice` 서랍뿐이라 사이트 진도 데이터에는 아무 영향이 없습니다.
+
+<RunSQL>
 
 ```sql
 -- 조회: 학년이 2 이상인 학생을 학년 내림차순으로 본다
@@ -246,7 +254,11 @@ WHERE grade >= 2
 ORDER BY grade DESC;
 ```
 
+</RunSQL>
+
 박서연(3학년), 김지현(2학년) 순서로 2행이 나옵니다.
+
+<RunSQL>
 
 ```sql
 -- JOIN: 학생과 과목을 수강 표로 이어 붙인다
@@ -264,7 +276,11 @@ LEFT JOIN practice.subjects sub ON sub.id = e.subject_id
 ORDER BY s.id;
 ```
 
+</RunSQL>
+
 첫 번째 `INNER JOIN`은 수강 기록 개수만큼 5행이 나옵니다. 두 번째 `LEFT JOIN`은 모든 학생이 최소 1행씩 나오는데, 위 준비 데이터에서는 학생 3명 모두 수강 기록이 있어 결과 행 수가 같습니다 — 수강 기록이 없는 학생을 넣으면 그 학생의 과목 자리가 빈 채로(`NULL`) 남는 것이 `LEFT JOIN`의 차이입니다.
+
+<RunSQL>
 
 ```sql
 -- 집계: 학생별 평균 점수, 60점 이상만 남긴다
@@ -276,7 +292,11 @@ HAVING AVG(e.score) >= 60
 ORDER BY 평균점수 DESC;
 ```
 
+</RunSQL>
+
 학생별로 한 줄씩(3행) 나오되, `WHERE`가 아니라 `HAVING`으로 평균을 거르므로 평균이 60점 미만인 학생이 있었다면 그 학생만 결과에서 빠졌을 것입니다.
+
+<RunSQL>
 
 ```sql
 -- 서브쿼리: 전체 평균 점수보다 높은 점수를 받은 수강 기록만 본다
@@ -288,6 +308,8 @@ WHERE e.score > (SELECT AVG(score) FROM practice.enrollments)
 ORDER BY e.score DESC;
 ```
 
+</RunSQL>
+
 괄호 안 `(SELECT AVG(score) FROM practice.enrollments)`가 먼저 계산되어 하나의 숫자(전체 평균)가 되고, 바깥 쿼리의 `WHERE`가 그 숫자보다 높은 점수만 남깁니다.
 
 ### 해보기
@@ -297,6 +319,8 @@ ORDER BY e.score DESC;
 <details>
 <summary>정답 보기</summary>
 
+<RunSQL>
+
 ```sql
 SELECT s.name AS 학생, sub.name AS 과목, e.score AS 점수
 FROM practice.enrollments e
@@ -304,6 +328,8 @@ LEFT JOIN practice.students s ON s.id = e.student_id
 LEFT JOIN practice.subjects sub ON sub.id = e.subject_id
 ORDER BY e.id;
 ```
+
+</RunSQL>
 
 이 예제에서는 `enrollments`가 기준(왼쪽) 표이고 모든 수강 기록이 이미 학생 · 과목을 가리키고 있어 결과 행 수는 그대로 5행입니다. `LEFT JOIN`의 효과는 왼쪽 표에는 있지만 오른쪽 표에 짝이 없는 행이 있을 때 드러납니다 — 이번엔 그런 행이 없었을 뿐입니다.
 
@@ -316,6 +342,8 @@ ORDER BY e.id;
 <details>
 <summary>정답 보기</summary>
 
+<RunSQL>
+
 ```sql
 SELECT sub.name AS 과목, COUNT(e.id) AS 수강수, AVG(e.score) AS 평균점수
 FROM practice.subjects sub
@@ -323,6 +351,8 @@ JOIN practice.enrollments e ON e.subject_id = sub.id
 GROUP BY sub.name
 ORDER BY 평균점수 DESC;
 ```
+
+</RunSQL>
 
 수학 · 영어 · 과학 세 과목이 한 줄씩 나오고, 각 과목을 들은 학생들의 평균 점수가 계산됩니다. `GROUP BY` 기준을 바꾸면 "누구 기준으로 묶을지"가 바뀌어 완전히 다른 표가 나옵니다.
 
@@ -335,6 +365,8 @@ ORDER BY 평균점수 DESC;
 <details>
 <summary>정답 보기</summary>
 
+<RunSQL>
+
 ```sql
 SELECT s.name AS 학생, e.score AS 점수
 FROM practice.enrollments e
@@ -346,6 +378,8 @@ WHERE e.subject_id = (SELECT id FROM practice.subjects WHERE name = '수학')
     WHERE e2.subject_id = (SELECT id FROM practice.subjects WHERE name = '수학')
   );
 ```
+
+</RunSQL>
 
 서브쿼리를 두 곳에서 씁니다 — 하나는 "수학" 과목의 `id`를 찾는 데, 다른 하나는 수학 과목만의 평균 점수를 계산하는 데. 준비 데이터에서 수학 점수는 88 · 72 · 60이고 평균은 약 73.3이므로, 88점을 받은 학생만 결과에 남습니다.
 
