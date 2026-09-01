@@ -6,7 +6,7 @@ status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
 last_updated: "2026-08-31T15:06:55.410Z"
 last_activity: 2026-09-01
-last_activity_desc: 260901-ksv — SQL(PGlite) 파일럿 UAT 승인 + 나머지 SQL 레슨 3편 확장 완료
+last_activity_desc: 260901-r9t — 리서치 2단 착수, /glossary 용어집(247용어·다의어 그룹) 완료
 current_phase: null
 current_phase_name: null
 progress:
@@ -71,9 +71,24 @@ PGlite 두 런타임 기반 "브라우저 안 코드 실행" 재범위화 작업
 안 뜬다 — mdx 수정 후 `node node_modules/velite/bin/velite.js build --clean` 재생성
 (프로덕션은 매 빌드 velite clean이라 영향 없음).
 
-그다음 후보는 리서치 2단 목록: .planning/research/edu-sites/FINAL-REPORT.md
-(/review 세션 — round2-h V2 설계 완성돼 있음, O/△/X 판정, /glossary, 힌트 사다리).
-9/6 이후가 /review 적기(완료 레슨 12편+).
+**2026-09-01 리서치 2단 착수 — /glossary 용어집 완료(quick 260901-r9t)**: 247용어를
+velite 빌드타임 파서(parseTermTable, L5 게이트 로직 이식·실패 시 throw)로 뽑아 정적
+/glossary 페이지 렌더. 214개 고유 단어·다의어 27개 그룹 표시(병합 금지 — 예: 런타임·
+프롬프트가 정의별로 출처 레슨 역링크와 함께). ㄱㄴㄷ + A~W 점프 인덱스, 내비 "용어집"
+링크(커리큘럼·일정표 사이). check-route-rendering에 /glossary 등록. 내장 브라우저
+라이트/다크 실측 확인. 이 페이지는 콘텐츠 무편집·순수 정적이라 아이패드 UAT 불필요.
+
+**리서치 2단 남은 후보**(.planning/research/edu-sites/FINAL-REPORT.md 2단 목록):
+- **시기 게이트 있음**: /review 세션(9/6 이후·완료 12편+), O/△/X 3단 판정(문항 안정 키
+  재설계 필요), 은유 앵커 5~7점(9/15 마감)
+- **자족·바로 가능**: 힌트 사다리(70문항 방향 힌트, 게이트① 완료 전제), 완료 예측일
+  (페이스와 짝), 예측 프롬프트(전량 승격 전제), 반전 박스+안테피스 예고, TIL 한 줄+
+  코넬 큐(별도 컬럼 필수), 홈 manifest→이어서 읽기, 내 노트 단권화(9/20까지),
+  궁금한 것 인박스, skip link+Safari Reader
+- **주의**: 빈칸 파일럿은 리서치 2단에 있으나 클로즈 필사가 8/27 롤백된 이력 있음
+  (Deferred Items 참조) — 성격이 다르나(backward fading) 사용자 아버전 고려
+- 예산 지침: 8일째부터는 어떤 후보도 "그 시간에 레슨 읽기"를 못 이김. 학습 밀리지
+  않는 주에 틈새 편성.
 
 새 마일스톤으로 묶으려면 /gsd-new-milestone.
 
@@ -236,7 +251,8 @@ None yet.
 | 260901-etq | 리서치 1단 10건 일괄 구현 — 복습 사다리(1·3·7·21일 자기 신고+홈 카드+13케이스 게이트), 튜터 프롬프트 v2(모드 메뉴·Feynman·진도 동봉 고장 수리), Step 2 실행 결과 16블록, 문항 11개 왜-형 재작성, 다크 3단 결함 수리, 페이저 제목, 마지막 주 B안 재배정(9/27~29 복습). 코드 실행 재범위화 기록 | 2026-09-01 | a272fc7 외 8 | [260901-etq-tier1-rollout](./quick/260901-etq-tier1-rollout/) |
 | 260901-fast | 레슨 메모장 맞춤법 검사 밑줄 끄기 — 메모 내용이 기술 용어·코드 조각이라 브라우저 사전에 없는 낱말이 계속 걸리고, 빨간 물결선이 노트 괘선 위에 깔려 표면이 지저분해짐 (/gsd-fast) | 2026-09-01 | 4e1a823 | — | 2026-08-31 | 4e1a823 | — |
 | 260901-iqk | 브라우저 안 파이썬 실행 파일럿 — Pyodide 지연 로드(실행 전 0바이트, CDN script 주입·npm 의존성 0), RunPython 컴포넌트(실행/고쳐 보기/원래대로, 에러 원문 표시), 1-3 Python 변수·자료형 레슨 실무 예제에서 실증. e2e-code-run.mjs 게이트 5건·기존 4게이트 회귀 없음. 아이패드 UAT 승인 + 라이트 모드 출력 박스 수리(86ee7e9). Python 확장 1편(1-3 함수·파일 입출력, c0d6d3e) | 2026-09-01 | c880057 | [260901-iqk-python-pyodide-1-3-python](./quick/260901-iqk-python-pyodide-1-3-python/) |
-| 260901-ksv | 브라우저 안 SQL 실행 파일럿 — PGlite 지연 로드(dynamic import ESM·실행 전 0바이트·npm 의존성 0), 페이지 단위 지속 인스턴스(셋업 한 번→쿼리 여러 번), RunSQL 컴포넌트(결과 HTML 표·에러 Postgres 원문), 1-4 SQL 쿼리·조인 레슨 8블록 래핑. 출력 정리(셋업=한 줄, 누적 행 수 버그 제거). e2e-sql-run.mjs 5건·Python 회귀 없음·정적 게이트 통과. **아이패드 사파리 실기기 UAT 대기(WASM 메모리·표 가로 스크롤·터치)** | 2026-09-01 | cd8c915 | [260901-ksv-sql-pglite-1-4-sql](./quick/260901-ksv-sql-pglite-1-4-sql/) |
+| 260901-ksv | 브라우저 안 SQL 실행 파일럿 — PGlite 지연 로드(dynamic import ESM·실행 전 0바이트·npm 의존성 0), 페이지 단위 지속 인스턴스(셋업 한 번→쿼리 여러 번), RunSQL 컴포넌트(결과 HTML 표·에러 Postgres 원문), 1-4 SQL 쿼리·조인 레슨 8블록 래핑. 출력 정리(셋업=한 줄, 누적 행 수 버그 제거). 아이패드 UAT 승인. 나머지 SQL 레슨 3편 확장(f9df735, DROP-first 재실행 안전화+EXPLAIN 콘텐츠 정정) | 2026-09-01 | cd8c915 | [260901-ksv-sql-pglite-1-4-sql](./quick/260901-ksv-sql-pglite-1-4-sql/) |
+| 260901-r9t | 리서치 2단 — /glossary 용어집. 247용어를 velite 빌드타임 파서(L5 게이트 로직 이식·실패 시 throw)로 뽑아 정적 페이지 렌더. 214 고유 단어·다의어 27개 그룹 표시(병합 금지, 정의별 출처 레슨 역링크), ㄱㄴㄷ+A~W 점프 인덱스, 내비 링크. check-route-rendering 등록. 라이트/다크 실측 | 2026-09-01 | 8d7d83c | [260901-r9t-glossary-247-a-z](./quick/260901-r9t-glossary-247-a-z/) |
 
 ## Deferred Items
 
