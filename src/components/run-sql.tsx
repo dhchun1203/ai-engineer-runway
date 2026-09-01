@@ -25,22 +25,11 @@ function extractSourceCode(wrapper: HTMLDivElement | null): string {
   return pre?.textContent ?? '';
 }
 
-// 결과 하나(statement 하나)를 렌더한다. fields가 있으면 결과 표, 없으면
-// DDL/DML 상태 메시지 한 줄. 표는 아이패드 가로 스크롤을 위해 overflow-x-auto
-// div로 감싼다(mdx-content.tsx TableWrapper와 같은 원칙).
-function ResultBlock({ result, index }: { result: PGliteResult; index: number }) {
-  if (result.fields.length === 0) {
-    const label =
-      typeof result.affectedRows === 'number' ? `실행 완료 (${result.affectedRows}행 영향)` : '실행 완료';
-    return (
-      <p key={index} className="text-label font-normal text-muted dark:text-muted-dark">
-        {label}
-      </p>
-    );
-  }
-
+// 결과 표 하나(SELECT statement 하나)를 렌더한다. 아이패드 가로 스크롤을 위해
+// overflow-x-auto div로 감싼다(mdx-content.tsx TableWrapper와 같은 원칙).
+function ResultTable({ result }: { result: PGliteResult }) {
   return (
-    <div key={index} className="overflow-x-auto">
+    <div className="overflow-x-auto">
       <table>
         <thead>
           <tr>
@@ -68,6 +57,32 @@ function ResultBlock({ result, index }: { result: PGliteResult; index: number })
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// 배치 결과를 렌더한다. SELECT처럼 표가 있는 결과(fields 보유)만 순서대로 표로
+// 그린다. 표가 하나도 없는 배치(셋업 블록의 CREATE/INSERT 등 DDL/DML만 있는
+// 경우)는 "실행 완료" 한 줄로 합친다 — statement마다 같은 줄을 반복하지 않는다.
+// 행 수는 표시하지 않는다: PGlite exec()의 affectedRows는 여러 statement를 한
+// 번에 돌리면 배치 누적 합계라(3행 INSERT가 6·11로 보임) 오해를 부른다. 셋업
+// 블록의 교육 포인트는 행 수가 아니라 "데이터가 준비되었다"는 사실이다.
+function ResultView({ results }: { results: PGliteResult[] }) {
+  const tables = results.filter((result) => result.fields.length > 0);
+
+  if (tables.length === 0) {
+    return (
+      <p className="text-label font-normal text-muted dark:text-muted-dark">
+        실행 완료 — 표와 데이터가 준비되었습니다.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {tables.map((result, index) => (
+        <ResultTable key={index} result={result} />
+      ))}
     </div>
   );
 }
@@ -213,11 +228,7 @@ export function RunSQL({ children }: { children: ReactNode }) {
             ) : (
               <>
                 {results.length > 0 ? (
-                  <div className="flex flex-col gap-3">
-                    {results.map((result, index) => (
-                      <ResultBlock key={index} result={result} index={index} />
-                    ))}
-                  </div>
+                  <ResultView results={results} />
                 ) : status === 'done' ? (
                   <p className="text-label font-normal text-muted dark:text-muted-dark">
                     출력이 없습니다.
