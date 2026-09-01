@@ -12,7 +12,7 @@
 // 3215(e2e-mobile-readability/e2e-lesson-note)가 이미 선점돼 있어(preflight 8)
 // 잇달아 돌릴 때 포트 충돌로 인한 위음성 실패가 나지 않게 다음 번호를 쓴다.
 //
-// 판정 5건(A3~A5는 Task 2에서 추가):
+// 판정 5건:
 //   A1 0바이트 계약 — /lesson/1-3-python-variables-and-types를 networkidle까지
 //     열었을 때(실행 버튼을 누르기 전) cdn.jsdelivr.net 호스트로 나간 응답이 0건.
 //   A2 실행 계약 — 실행 버튼 클릭 후 출력 영역에 예제의 결정적 출력이 나타난다
@@ -223,6 +223,71 @@ async function main() {
       a2Detail = e instanceof Error ? e.message : String(e);
     }
     record('A2', '실행 계약(결정적 출력 5줄)', a2Pass, a2Detail);
+
+    // --- A3: 768×1024에서 [data-run-python] 안 button 전부 44px 이상 --------
+    const buttonHeights = await page.evaluate(() => {
+      const root = document.querySelector('[data-run-python]');
+      if (!root) return [];
+      return Array.from(root.querySelectorAll('button')).map((btn) => ({
+        text: (btn.textContent || '').trim().slice(0, 20),
+        height: Math.round(btn.getBoundingClientRect().height * 100) / 100,
+      }));
+    });
+    const shortButtons = buttonHeights.filter((b) => b.height < 44);
+    record(
+      'A3',
+      '터치 타깃(버튼 전부 44px 이상)',
+      buttonHeights.length > 0 && shortButtons.length === 0,
+      buttonHeights.length === 0
+        ? 'button을 찾지 못함'
+        : shortButtons.length > 0
+          ? shortButtons.map((b) => `"${b.text}"=${b.height}px`).join(', ')
+          : '',
+    );
+
+    // --- A4: 고쳐 보기 → 판별 가능한 한 줄짜리 코드로 교체 → 실행 → 반영 ---
+    const A4_MARKER = 'e2e_code_run_marker_9f31';
+    let a4Pass = false;
+    let a4Detail = '';
+    try {
+      await page.locator('[data-run-python] button', { hasText: '고쳐 보기' }).first().click();
+      const textarea = page.locator('[data-run-python] textarea').first();
+      await textarea.waitFor({ state: 'visible' });
+      await textarea.fill(`print("${A4_MARKER}")`);
+      await page.locator('[data-run-python] [data-run]').first().click();
+      await page.waitForFunction(
+        (needle) => {
+          const out = document.querySelector('[data-run-output]');
+          return out !== null && (out.textContent || '').includes(needle);
+        },
+        A4_MARKER,
+        { timeout: RUN_TIMEOUT_MS },
+      );
+      a4Pass = true;
+    } catch (e) {
+      a4Detail = e instanceof Error ? e.message : String(e);
+    }
+    record('A4', '편집 실행(고친 코드의 출력이 반영됨)', a4Pass, a4Detail);
+
+    // --- A5: 파이썬 예외를 내는 코드 실행 → 출력 영역에 예외 이름이 그대로 ---
+    let a5Pass = false;
+    let a5Detail = '';
+    try {
+      const textarea = page.locator('[data-run-python] textarea').first();
+      await textarea.fill('age = 27\nprint(age + "세")');
+      await page.locator('[data-run-python] [data-run]').first().click();
+      await page.waitForFunction(
+        () => {
+          const out = document.querySelector('[data-run-output]');
+          return out !== null && (out.textContent || '').includes('TypeError');
+        },
+        { timeout: RUN_TIMEOUT_MS },
+      );
+      a5Pass = true;
+    } catch (e) {
+      a5Detail = e instanceof Error ? e.message : String(e);
+    }
+    record('A5', '에러 표시(파이썬 예외 이름이 출력 영역에 그대로)', a5Pass, a5Detail);
 
     await context.close();
     await browser.close();
