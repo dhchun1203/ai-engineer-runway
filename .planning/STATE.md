@@ -6,7 +6,7 @@ status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
 last_updated: "2026-08-31T15:06:55.410Z"
 last_activity: 2026-09-01
-last_activity_desc: 260901-r9t — 리서치 2단 착수, /glossary 용어집(247용어·다의어 그룹) 완료
+last_activity_desc: 260901-s8b — 완료 예측일("이 속도면 M월 D일 완주") 추가, 밀리면 미표시
 current_phase: null
 current_phase_name: null
 progress:
@@ -253,6 +253,7 @@ None yet.
 | 260901-iqk | 브라우저 안 파이썬 실행 파일럿 — Pyodide 지연 로드(실행 전 0바이트, CDN script 주입·npm 의존성 0), RunPython 컴포넌트(실행/고쳐 보기/원래대로, 에러 원문 표시), 1-3 Python 변수·자료형 레슨 실무 예제에서 실증. e2e-code-run.mjs 게이트 5건·기존 4게이트 회귀 없음. 아이패드 UAT 승인 + 라이트 모드 출력 박스 수리(86ee7e9). Python 확장 1편(1-3 함수·파일 입출력, c0d6d3e) | 2026-09-01 | c880057 | [260901-iqk-python-pyodide-1-3-python](./quick/260901-iqk-python-pyodide-1-3-python/) |
 | 260901-ksv | 브라우저 안 SQL 실행 파일럿 — PGlite 지연 로드(dynamic import ESM·실행 전 0바이트·npm 의존성 0), 페이지 단위 지속 인스턴스(셋업 한 번→쿼리 여러 번), RunSQL 컴포넌트(결과 HTML 표·에러 Postgres 원문), 1-4 SQL 쿼리·조인 레슨 8블록 래핑. 출력 정리(셋업=한 줄, 누적 행 수 버그 제거). 아이패드 UAT 승인. 나머지 SQL 레슨 3편 확장(f9df735, DROP-first 재실행 안전화+EXPLAIN 콘텐츠 정정) | 2026-09-01 | cd8c915 | [260901-ksv-sql-pglite-1-4-sql](./quick/260901-ksv-sql-pglite-1-4-sql/) |
 | 260901-r9t | 리서치 2단 — /glossary 용어집. 247용어를 velite 빌드타임 파서(L5 게이트 로직 이식·실패 시 throw)로 뽑아 정적 페이지 렌더. 214 고유 단어·다의어 27개 그룹 표시(병합 금지, 정의별 출처 레슨 역링크), ㄱㄴㄷ+A~W 점프 인덱스, 내비 링크. check-route-rendering 등록. 라이트/다크 실측 | 2026-09-01 | 8d7d83c | [260901-r9t-glossary-247-a-z](./quick/260901-r9t-glossary-247-a-z/) |
+| 260901-s8b | 리서치 2단 — 완료 예측일. pace.ts에 순수 함수 computeProjection 추가(computePace 불변·의존성 0 유지, UTC 산술로 타임존 오프바이원 차단), 홈 페이스 패널에 "이 속도면 M월 D일 완주 예정 · 개강 전에 끝나요" 한 줄. 낙담 방지: behind는 예측 미표시(함수 show 플래그 + 컴포넌트 분기 부재 두 겹 방어), 노이즈 가드(완료 0·경과 2일 미만 미표시), ahead=accent·on-track=중성. check-pace 9케이스 신설(38 통과) | 2026-09-01 | acfe445 | [260901-s8b-m-d](./quick/260901-s8b-m-d/) |
 
 ## Deferred Items
 
