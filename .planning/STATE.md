@@ -6,7 +6,7 @@ status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
 last_updated: "2026-08-31T15:06:55.410Z"
 last_activity: 2026-09-01
-last_activity_desc: 260901-x62 — 내 노트 단권화(/notes) + 궁금한 것 인박스(/inbox) 완료
+last_activity_desc: 260902-0rz — 예측 프롬프트(33편) + TIL 한 줄·코넬 큐 완료
 current_phase: null
 current_phase_name: null
 progress:
@@ -117,6 +117,15 @@ selectReviewQuestions 순수 함수, check-review 22케이스. 내가 dev에서 
 클립보드 복사, 서버 액션 unlock 게이트+검증). 내비에 "노트"·"질문함" 추가. 실행자 내장
 브라우저에서 추가·토글·복사·집계 확인(테스트 인박스행은 삭제해 흔적 없음). 아이패드 실기기
 UAT는 사용자 몫.
+
+**2026-09-02 학습 인출 장치 완료(quick 260902-0rz, 병합)**: (1) 예측 프롬프트 —
+`<PredictPrompt>` 공유 콜아웃(의례 문구 baked-in, 항상 보임), 4장에 코드/쿼리 예제가
+있는 레슨 33편 전량에 균일 삽입("전량 승격" — 부분 적용 유해 규칙 준수, 코드 없는 2편은
+경계 밖 제외). mdx-content 매핑·멱등 삽입 스크립트. (2) TIL 한 줄 + 코넬 큐 — lesson_note에
+til 컬럼 추가(라이브+repo 파일, WR-01: body에 결합 안 함), 완료 흐름에 "오늘 배운 것 한 줄?"
+입력(코넬 큐 "내 말로 한 문장으로 설명하면?", 건너뛰기 가능), til-actions 서버 액션(unlock
+게이트+검증). 게이트 전부 통과(경계 33/33 assert). 실행자 브라우저 확인(예측 프롬프트 렌더·
+TIL 저장/복원 흔적 없음). 아이패드 실기기 UAT는 사용자 몫.
 
 **리서치 2단 남은 후보**(.planning/research/edu-sites/FINAL-REPORT.md 2단 목록):
 - **시기 게이트 있음**: /review 세션(9/6 이후·완료 12편+), O/△/X 3단 판정(문항 안정 키
