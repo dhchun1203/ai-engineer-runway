@@ -9,6 +9,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 // 내비 항목 4개는 D-09가 고정한 구조다 — Phase 3가 "오늘의 학습"("/")과 "커리큘럼"
 // ("/curriculum")을 켰다. "일정표"("/schedule")는 Plan 04가 라우트를 채우기
 // 전까지 404이지만, D-09 배치를 그대로 지키기 위해 미리 활성 링크로 켜 둔다.
+// D-09 4항목 확정 이후 "용어집"(5번째)을 리서치 2단 round2-j로 추가했다(quick
+// 260901-r9t) — 커리큘럼과 함께 두는 게 자연스러운 용어 참조 도구다.
 type NavItem = {
   label: string;
   href: string | null; // null = 비활성(준비 중)
@@ -17,6 +19,7 @@ type NavItem = {
 const NAV_ITEMS: readonly NavItem[] = [
   { label: "오늘의 학습", href: "/" },
   { label: "커리큘럼", href: "/curriculum" },
+  { label: "용어집", href: "/glossary" },
   { label: "일정표", href: "/schedule" },
   { label: "소개", href: "/about" },
 ];

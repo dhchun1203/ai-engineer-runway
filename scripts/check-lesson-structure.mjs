@@ -184,6 +184,10 @@ function checkBlankLineRule(slug, lines) {
 }
 
 // --- L5: "이 레슨의 단어" 라벨 1회 + 표 헤더 일치 + 데이터 행 5~8개 ---
+// velite.config.ts의 parseTermTable이 이 함수와 같은 표 문법(라벨 → 헤더 →
+// 구분행 → 데이터 행)을 이식해 실제 { word, definition } 추출에 쓴다
+// (round2-j 함정 d, 파서-게이트 이중 구현). L5는 형식을 "검사"만 하고
+// parseTermTable은 "추출"한다 — **한쪽을 고치면 반드시 다른 쪽도 함께 고칠 것**.
 function checkTermTable(slug, lines) {
   const labelCount = lines.filter((l) => l === TERM_TABLE_LABEL).length;
   if (labelCount !== 1) {
