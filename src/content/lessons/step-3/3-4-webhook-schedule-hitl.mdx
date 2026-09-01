@@ -136,6 +136,24 @@ HITL(Human In The Loop)은 자동화 중간에 사람이 승인하거나 수정�
 
 같은 알림이 네트워크 문제로 두 번 올 수 있습니다. 멱등성(idempotency)은 같은 요청이 여러 번 와도 결과가 한 번만 반영되게 만드는 성질입니다. 같은 주문서를 두 번 받아도 물건은 한 번만 보내는 것과 같습니다.
 
+<svg data-diagram viewBox="0 0 480 260" role="img" aria-labelledby="dia-idempotency-stamp-t">
+  <title id="dia-idempotency-stamp-t">손등 재입장 스탬프 그림이다. ① 처음 입장할 때 스탬프를 찍고, ② 같은 스탬프를 든 사람이 다시 오면 다시 찍지 않고 통과만 시킨다.</title>
+  <rect x="54" y="28" width="372" height="64" fill="var(--diagram-line)" />
+  <rect x="50" y="24" width="372" height="64" fill="var(--diagram-accent)" />
+  <text x="236" y="60" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">① 첫 입장 — 스탬프 쾅</text>
+  <line x1="236" y1="88" x2="236" y2="106" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <polygon points="230,106 242,106 236,116" fill="var(--diagram-ink)" />
+  <rect x="54" y="132" width="372" height="64" fill="var(--diagram-line)" />
+  <rect x="50" y="128" width="372" height="64" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth="2" />
+  <text x="236" y="160" textAnchor="middle" fontSize="15" fill="var(--diagram-ink)">② 같은 스탬프로 재입장</text>
+  <text x="236" y="184" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">다시 안 찍고 통과만</text>
+  <text x="236" y="230" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">같은 스탬프면 다시 처리하지 않는다</text>
+</svg>
+
+이 비유가 안 맞는 부분은, 스탬프는 사람이 눈으로 보고 걸러내지만 멱등성은 저장해 둔 식별자 기록을 시스템이 대조해 걸러낸다는 점입니다.
+
+이 개념을 실제 처리 흐름으로 그리면 다음과 같습니다.
+
 <svg data-diagram viewBox="0 0 552 234" role="img" aria-labelledby="dia-idempotency-t">
   <title id="dia-idempotency-t">같은 식별자를 가진 알림이 두 번 도착해도, 이미 처리했는지 식별자로 먼저 확인하면 처리는 한 번만 일어나고 두 번째는 그냥 응답만 돌려준다.</title>
   <rect x="18" y="34" width="140" height="44" fill="var(--diagram-line)" />
