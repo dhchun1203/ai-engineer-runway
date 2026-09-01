@@ -6,7 +6,7 @@ status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
 last_updated: "2026-08-31T15:06:55.410Z"
 last_activity: 2026-09-01
-last_activity_desc: 260901-ksv — SQL(PGlite) 실행 파일럿 구현(1-4 SQL 쿼리·조인), 아이패드 UAT 대기
+last_activity_desc: 260901-ksv — SQL(PGlite) 파일럿 UAT 승인 + 나머지 SQL 레슨 3편 확장 완료
 current_phase: null
 current_phase_name: null
 progress:
@@ -52,22 +52,24 @@ RunPython 컴포넌트(실행/고쳐 보기/원래대로, 에러 원문 표시),
   눌러도 실패하므로 버튼 없는 편이 낫다.
 - 결론: Pyodide 기반 "Python 레슨 전체 확장"은 사실상 완료.
 
-**2026-09-01 SQL(PGlite) 파일럿 구현 완료(quick 260901-ksv)**: 브라우저 안 SQL 실행 —
-PGlite 지연 로드(dynamic import ESM, 실행 전 0바이트, npm 의존성 0), 페이지 단위 지속
-인스턴스, RunSQL 컴포넌트(결과 HTML 표·Postgres 에러 원문). 1-4-sql-queries-and-joins
-8블록(셋업+쿼리+해보기) 래핑. 내장 브라우저 라이트/다크 실측·게이트 통과. 코드는
-master에 병합됨(cd8c915). 배포 대기(아직 push 안 함 — push 시 프로덕션 배포).
+**2026-09-01 SQL(PGlite) 파일럿 아이패드 UAT 승인 + 나머지 SQL 레슨 확장 완료**:
+- 파일럿(1-4-sql-queries-and-joins, quick 260901-ksv): PGlite 지연 로드(dynamic import
+  ESM·실행 전 0바이트·npm 의존성 0), 페이지 단위 지속 인스턴스, RunSQL(결과 HTML 표·
+  Postgres 에러 원문). 아이패드 UAT 통과. 후속: 셋업 출력 정리·누적 행 수 버그 제거(cd8c915).
+- **확장 3편**(f9df735): 1-4-relational-db-basics, 2-1-ai-data-modeling,
+  2-1-postgres-and-supabase — 레슨당 7블록 래핑, 총 29 RunSQL 블록(4편). 셋 다
+  practice 스키마 표준 Postgres라 PGlite에서 그대로 돎. 셋업 블록을 DROP CASCADE로
+  시작해 재실행 안전화. 콘텐츠 정확성 수정: 2-1-ai-data-modeling의 EXPLAIN 예제가
+  "인덱스 후 Index Scan" 단언 → 실제론 6행이라 Seq Scan 유지, 정정함.
+- 내장 브라우저에서 세 레슨 전부 위→아래 실행 실측(결과 표·집계·EXPLAIN·FK 에러·
+  teardown·재실행 모두 본문과 일치). 게이트·lint 통과.
 
-**다음 작업 = SQL 파일럿 아이패드 UAT (사용자 직접)**:
-1. push → 배포 후 아이패드 사파리로 `/lesson/1-4-sql-queries-and-joins` 열기
-2. 확인: 셋업 블록 먼저 실행(→ "실행 완료 — 표와 데이터가 준비되었습니다.") →
-   쿼리 블록 실행 → 결과 표가 나오는지, 표 가로 스크롤(넓은 JOIN 표)이 되는지,
-   WASM 메모리 문제(PGlite 로드 실패), 라이트/다크 대비, 세로/가로 모드
-3. 승인되면 → **SQL 레슨 확장**: 1-4-relational-db-basics, 2-1-ai-data-modeling,
-   2-1-postgres-and-supabase (각 sql 블록 7개). 단, 자족 실행 가능한 블록만 —
-   Supabase 실제 테이블 참조/RLS 예제 등 PGlite에서 못 도는 건 제외.
-- 주의: 로컬 dev는 .velite stale하면 RunSQL이 안 뜬다 —
-  `node node_modules/velite/bin/velite.js build --clean` 재생성 필요.
+**남은 SQL 후보 = 없음**: Step 1~3에서 sql 블록 보유 레슨은 이 4편이 전부. Pyodide·
+PGlite 두 런타임 기반 "브라우저 안 코드 실행" 재범위화 작업은 사실상 완료.
+
+**주의(향후 SQL/코드 레슨 편집 시)**: 로컬 dev는 .velite stale하면 RunSQL/RunPython이
+안 뜬다 — mdx 수정 후 `node node_modules/velite/bin/velite.js build --clean` 재생성
+(프로덕션은 매 빌드 velite clean이라 영향 없음).
 
 그다음 후보는 리서치 2단 목록: .planning/research/edu-sites/FINAL-REPORT.md
 (/review 세션 — round2-h V2 설계 완성돼 있음, O/△/X 판정, /glossary, 힌트 사다리).
