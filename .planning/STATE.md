@@ -6,7 +6,7 @@ status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
 last_updated: "2026-08-31T15:06:55.410Z"
 last_activity: 2026-09-01
-last_activity_desc: 260901 교육 사이트 리서치 완료 — 3단 추천 목록 산출
+last_activity_desc: 260901-etq — 리서치 1단 10건 구현 완료(복습 사다리 가동)
 current_phase: null
 current_phase_name: null
 progress:
@@ -201,6 +201,7 @@ None yet.
 | 260831-rly | 전 화면 우측 하단 맨 위로 가기 플로팅 버튼 — 480px 이상 스크롤 시 등장. 레슨 메모장 시트를 :has()로 피해 손잡이 위로 올라섬(z 30 vs 40). 도중에 .btn 재사용 시 레이어 밖 transform이 @layer components의 호버 떠오름을 죽이던 문제 발견·수정 | 2026-08-31 | 7398e80 | [260831-rly-scroll-to-top](./quick/260831-rly-scroll-to-top/) |
 | 260831-wlw | 본문 세리프 전환 — 클로드의 "제목 산세 + 본문 세리프" 배치를 OFL 서체로 재현(Newsreader·Noto Serif KR·JetBrains Mono, 제목은 Pretendard 유지). 클로드 실제 서체는 상용 라이선스 + 한글 부재로 사용 불가. Hahmlet은 serif 분류지만 한글이 고딕이라 물림. 서브셋·커버리지 게이트를 다중 폰트로 확장, 그림 확장 때부터 깨져 있던 e2e-typography도 수정 | 2026-08-31 | 5e8fc9c | [260831-wlw-claude-serif-typography](./quick/260831-wlw-claude-serif-typography/) |
 | 260901-edu | 교육 사이트 전수 리서치 — 6라운드·17에이전트·~90곳 조사, 후보 51+8건을 반대 심문 3렌즈(기회비용·학습 효과·유지보수)로 재판해 3단 목록(바로 10건/고려 15건/기록만)으로 추림. 핵심 진단: 읽기·설명은 상위권인데 기억 장치가 0 — 복습 사다리가 최우선. 원문 18편 .planning/research/edu-sites/ | 2026-09-01 | e62ad36~ | [edu-sites](../research/edu-sites/FINAL-REPORT.md) |
+| 260901-etq | 리서치 1단 10건 일괄 구현 — 복습 사다리(1·3·7·21일 자기 신고+홈 카드+13케이스 게이트), 튜터 프롬프트 v2(모드 메뉴·Feynman·진도 동봉 고장 수리), Step 2 실행 결과 16블록, 문항 11개 왜-형 재작성, 다크 3단 결함 수리, 페이저 제목, 마지막 주 B안 재배정(9/27~29 복습). 코드 실행 재범위화 기록 | 2026-09-01 | a272fc7 외 8 | [260901-etq-tier1-rollout](./quick/260901-etq-tier1-rollout/) |
 | 260901-fast | 레슨 메모장 맞춤법 검사 밑줄 끄기 — 메모 내용이 기술 용어·코드 조각이라 브라우저 사전에 없는 낱말이 계속 걸리고, 빨간 물결선이 노트 괘선 위에 깔려 표면이 지저분해짐 (/gsd-fast) | 2026-09-01 | 4e1a823 | — | 2026-08-31 | 4e1a823 | — |
 
 ## Deferred Items
