@@ -6,7 +6,7 @@ status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
 last_updated: "2026-08-31T15:06:55.410Z"
 last_activity: 2026-09-01
-last_activity_desc: 260901-iqk — 코드 실행 파일럿 아이패드 UAT 승인 + 라이트 모드 출력 박스 수리, Python 레슨 확장 대기
+last_activity_desc: 260901-ksv — SQL(PGlite) 실행 파일럿 구현(1-4 SQL 쿼리·조인), 아이패드 UAT 대기
 current_phase: null
 current_phase_name: null
 progress:
@@ -52,14 +52,22 @@ RunPython 컴포넌트(실행/고쳐 보기/원래대로, 에러 원문 표시),
   눌러도 실패하므로 버튼 없는 편이 낫다.
 - 결론: Pyodide 기반 "Python 레슨 전체 확장"은 사실상 완료.
 
-**다음 작업 = SQL(PGlite) 파일럿** (새 런타임, 별도 아이패드 UAT 필요):
-- 대상 레슨: 1-4-sql-queries-and-joins(SQL 블록 보유 확인 필요) 또는 1-4-relational-db-basics
-- pyodide-runtime.ts의 지연 로드 패턴(script 주입 or dynamic import + Promise 캐시)을
-  복제해 PGlite 런타임 모듈을 만들고, RunSQL 컴포넌트를 RunPython과 같은 구조로 작성
-- 주의: 로컬 dev는 .velite 캐시가 stale하면 새 MDX 컴포넌트가 안 뜬다 — mdx 수정 후
-  `node node_modules/velite/bin/velite.js build --clean`로 재생성(프로덕션은 매 빌드
-  velite clean이라 영향 없음). mdx-components.tsx에 RunSQL 매핑 추가 필요.
-- 아이패드 실기기 UAT 다시 필요(PGlite도 WASM)
+**2026-09-01 SQL(PGlite) 파일럿 구현 완료(quick 260901-ksv)**: 브라우저 안 SQL 실행 —
+PGlite 지연 로드(dynamic import ESM, 실행 전 0바이트, npm 의존성 0), 페이지 단위 지속
+인스턴스, RunSQL 컴포넌트(결과 HTML 표·Postgres 에러 원문). 1-4-sql-queries-and-joins
+8블록(셋업+쿼리+해보기) 래핑. 내장 브라우저 라이트/다크 실측·게이트 통과. 코드는
+master에 병합됨(cd8c915). 배포 대기(아직 push 안 함 — push 시 프로덕션 배포).
+
+**다음 작업 = SQL 파일럿 아이패드 UAT (사용자 직접)**:
+1. push → 배포 후 아이패드 사파리로 `/lesson/1-4-sql-queries-and-joins` 열기
+2. 확인: 셋업 블록 먼저 실행(→ "실행 완료 — 표와 데이터가 준비되었습니다.") →
+   쿼리 블록 실행 → 결과 표가 나오는지, 표 가로 스크롤(넓은 JOIN 표)이 되는지,
+   WASM 메모리 문제(PGlite 로드 실패), 라이트/다크 대비, 세로/가로 모드
+3. 승인되면 → **SQL 레슨 확장**: 1-4-relational-db-basics, 2-1-ai-data-modeling,
+   2-1-postgres-and-supabase (각 sql 블록 7개). 단, 자족 실행 가능한 블록만 —
+   Supabase 실제 테이블 참조/RLS 예제 등 PGlite에서 못 도는 건 제외.
+- 주의: 로컬 dev는 .velite stale하면 RunSQL이 안 뜬다 —
+  `node node_modules/velite/bin/velite.js build --clean` 재생성 필요.
 
 그다음 후보는 리서치 2단 목록: .planning/research/edu-sites/FINAL-REPORT.md
 (/review 세션 — round2-h V2 설계 완성돼 있음, O/△/X 판정, /glossary, 힌트 사다리).
@@ -225,7 +233,8 @@ None yet.
 | 260901-edu | 교육 사이트 전수 리서치 — 6라운드·17에이전트·~90곳 조사, 후보 51+8건을 반대 심문 3렌즈(기회비용·학습 효과·유지보수)로 재판해 3단 목록(바로 10건/고려 15건/기록만)으로 추림. 핵심 진단: 읽기·설명은 상위권인데 기억 장치가 0 — 복습 사다리가 최우선. 원문 18편 .planning/research/edu-sites/ | 2026-09-01 | e62ad36~ | [edu-sites](../research/edu-sites/FINAL-REPORT.md) |
 | 260901-etq | 리서치 1단 10건 일괄 구현 — 복습 사다리(1·3·7·21일 자기 신고+홈 카드+13케이스 게이트), 튜터 프롬프트 v2(모드 메뉴·Feynman·진도 동봉 고장 수리), Step 2 실행 결과 16블록, 문항 11개 왜-형 재작성, 다크 3단 결함 수리, 페이저 제목, 마지막 주 B안 재배정(9/27~29 복습). 코드 실행 재범위화 기록 | 2026-09-01 | a272fc7 외 8 | [260901-etq-tier1-rollout](./quick/260901-etq-tier1-rollout/) |
 | 260901-fast | 레슨 메모장 맞춤법 검사 밑줄 끄기 — 메모 내용이 기술 용어·코드 조각이라 브라우저 사전에 없는 낱말이 계속 걸리고, 빨간 물결선이 노트 괘선 위에 깔려 표면이 지저분해짐 (/gsd-fast) | 2026-09-01 | 4e1a823 | — | 2026-08-31 | 4e1a823 | — |
-| 260901-iqk | 브라우저 안 파이썬 실행 파일럿 — Pyodide 지연 로드(실행 전 0바이트, CDN script 주입·npm 의존성 0), RunPython 컴포넌트(실행/고쳐 보기/원래대로, 에러 원문 표시), 1-3 Python 변수·자료형 레슨 실무 예제에서 실증. e2e-code-run.mjs 게이트 5건·기존 4게이트 회귀 없음. **아이패드 사파리 실기기 UAT 대기(WASM 메모리·터치 키보드 스마트따옴표)** | 2026-09-01 | c880057 | [260901-iqk-python-pyodide-1-3-python](./quick/260901-iqk-python-pyodide-1-3-python/) |
+| 260901-iqk | 브라우저 안 파이썬 실행 파일럿 — Pyodide 지연 로드(실행 전 0바이트, CDN script 주입·npm 의존성 0), RunPython 컴포넌트(실행/고쳐 보기/원래대로, 에러 원문 표시), 1-3 Python 변수·자료형 레슨 실무 예제에서 실증. e2e-code-run.mjs 게이트 5건·기존 4게이트 회귀 없음. 아이패드 UAT 승인 + 라이트 모드 출력 박스 수리(86ee7e9). Python 확장 1편(1-3 함수·파일 입출력, c0d6d3e) | 2026-09-01 | c880057 | [260901-iqk-python-pyodide-1-3-python](./quick/260901-iqk-python-pyodide-1-3-python/) |
+| 260901-ksv | 브라우저 안 SQL 실행 파일럿 — PGlite 지연 로드(dynamic import ESM·실행 전 0바이트·npm 의존성 0), 페이지 단위 지속 인스턴스(셋업 한 번→쿼리 여러 번), RunSQL 컴포넌트(결과 HTML 표·에러 Postgres 원문), 1-4 SQL 쿼리·조인 레슨 8블록 래핑. 출력 정리(셋업=한 줄, 누적 행 수 버그 제거). e2e-sql-run.mjs 5건·Python 회귀 없음·정적 게이트 통과. **아이패드 사파리 실기기 UAT 대기(WASM 메모리·표 가로 스크롤·터치)** | 2026-09-01 | cd8c915 | [260901-ksv-sql-pglite-1-4-sql](./quick/260901-ksv-sql-pglite-1-4-sql/) |
 
 ## Deferred Items
 
