@@ -180,6 +180,15 @@ npm --version
 
 버전 번호가 출력되면 설치되어 있는 것입니다. 아무 반응이 없거나 오류가 나오면 Node.js 공식 사이트([nodejs.org](https://nodejs.org))에서 LTS(Long Term Support, 장기 지원) 버전 설치본을 받아 설치합니다.
 
+**실행 결과**
+
+```text
+v24.13.0
+11.6.2
+```
+
+첫 줄이 Node.js, 둘째 줄이 npm 버전입니다. 정확한 숫자는 설치한 시점에 따라 다릅니다.
+
 macOS는 Homebrew 같은 패키지 관리자로도 설치할 수 있습니다. 이 레슨이 안내하는 기준은 **LTS 24.x 이상**입니다.
 
 **2단계 — 프로젝트 초기화.** 실습용 새 폴더를 만들고 그 안에서 아래 명령을 실행합니다.
@@ -229,6 +238,19 @@ console.log(calculateTotal(cart));
 ```powershell
 npx tsx hello.ts
 ```
+
+<details>
+<summary>실행 결과 예측해 보기</summary>
+
+**실행 결과**
+
+```text
+총액: 1230000원
+```
+
+1200000 + 30000을 `reduce`가 더한 값이 템플릿 리터럴(`` `총액: ${total}원` ``)에 끼워져 한 줄로 출력됩니다.
+
+</details>
 
 터미널에 `총액: 1230000원`이 출력되면 성공입니다.
 

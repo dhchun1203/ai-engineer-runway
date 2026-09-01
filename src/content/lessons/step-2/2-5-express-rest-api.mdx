@@ -214,6 +214,14 @@ app.listen(port, () => {
 npx tsx src/server.ts
 ```
 
+**실행 결과**
+
+```text
+서버 실행 중: http://localhost:3000
+```
+
+이 터미널은 서버가 요청을 기다리는 동안 이 상태로 멈춰 있는 것이 정상입니다.
+
 새 터미널을 열어 아래 명령으로 호출을 확인합니다. macOS·리눅스에서는 같은 요청을 `curl`로 보내면 됩니다.
 
 ```powershell
@@ -231,6 +239,23 @@ Invoke-RestMethod -Method Post -Uri http://localhost:3000/products -Body (@{name
   "price": 45000
 }
 ```
+
+<details>
+<summary>실행 결과 예측해 보기</summary>
+
+**실행 결과**
+
+```text
+# 첫 번째 명령 — GET /products 응답 본문 (서버가 보내는 원본 JSON)
+[{"id":1,"name":"무선 이어폰","category":"전자기기","price":89000},{"id":2,"name":"머그컵","category":"생활용품","price":12000},{"id":3,"name":"노트북 파우치","category":"전자기기","price":25000},{"id":4,"name":"손목시계","category":"패션","price":150000},{"id":5,"name":"텀블러","category":"생활용품","price":18000}]
+
+# 두 번째 명령 — POST /products 응답 본문 (201 Created)
+{"id":6,"name":"키보드","category":"전자기기","price":45000}
+```
+
+PowerShell의 `Invoke-RestMethod`는 이 JSON을 파싱해 표 형태로 정리해 보여줍니다. `curl`로 보내면 위 원본 JSON이 그대로 출력됩니다.
+
+</details>
 
 ### 해보기
 

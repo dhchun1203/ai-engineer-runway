@@ -291,6 +291,25 @@ generateProductCopy(sample).then((copy) => console.log(copy));
 npx tsx src/product-copy.ts
 ```
 
+<details>
+<summary>실행 결과 예측해 보기</summary>
+
+**실행 결과**
+
+```text
+{
+  title: '하루 종일 조용한 나만의 시간',
+  tagline: '노이즈 캔슬링과 20시간 배터리로 어디서든 몰입하세요',
+  hashtags: [ '무선이어폰', '노이즈캔슬링', '방수' ]
+}
+```
+
+문구는 모델이 실행마다 새로 지어내므로 매번 다릅니다 — 위 내용은 한 예시입니다. 키 3개와 해시태그 3개라는 형태만 스키마 검증이 보장합니다.
+
+작은따옴표가 붙은 이 모양은 `console.log`가 JavaScript 객체를 출력하는 방식입니다 — JSON 문자열이 아니라 검증을 통과한 객체가 찍힌 것입니다.
+
+</details>
+
 ### 해보기
 
 `buildPrompt`에서 "반드시 JSON 형식으로만 답하세요" 제약 한 줄을 지우고 다시 실행해보세요. 응답 형식이 어떻게 흔들리는지 관찰합니다. API 키가 없다면 `buildPrompt(sample)`만 호출해 프롬프트 문자열이 어떻게 조립되는지 콘솔에 출력해보는 것으로 대신할 수 있습니다.

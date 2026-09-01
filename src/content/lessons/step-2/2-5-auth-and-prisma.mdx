@@ -301,12 +301,37 @@ app.listen(port, () => {
 npx tsx src/auth.ts
 ```
 
+**실행 결과**
+
+```text
+인증 서버 실행 중: http://localhost:3001
+```
+
 새 터미널에서 회원가입과 로그인을 확인합니다. macOS·리눅스에서는 같은 요청을 `curl`로 보내면 됩니다.
 
 ```powershell
 Invoke-RestMethod -Method Post -Uri http://localhost:3001/signup -Body (@{email="student01"; password="test1234"} | ConvertTo-Json) -ContentType "application/json"
 Invoke-RestMethod -Method Post -Uri http://localhost:3001/login -Body (@{email="student01"; password="test1234"} | ConvertTo-Json) -ContentType "application/json"
 ```
+
+<details>
+<summary>실행 결과 예측해 보기</summary>
+
+**실행 결과**
+
+```text
+# 첫 번째 명령 — POST /signup 응답 본문 (201 Created)
+{"id":1,"email":"student01"}
+
+# 두 번째 명령 — POST /login 응답 본문 (200 OK)
+{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}
+```
+
+`...` 뒤의 토큰 나머지 부분(페이로드·서명)은 발급 시각과 `JWT_SECRET`에 따라 매번 다릅니다. `id`는 비어 있는 데이터베이스에서 1부터 시작합니다.
+
+응답에 `passwordHash`가 없는 것도 확인하세요 — 해시조차 클라이언트에 돌려주지 않는 것이 기본입니다.
+
+</details>
 
 ### 해보기
 
