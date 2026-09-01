@@ -663,7 +663,11 @@ async function main() {
         }
       }
       const rowDates = rowMarkerIdx.map((idx) => {
-        const window = body.slice(idx, idx + 500);
+        // 800자 창(원래 500): 오늘 행은 '오늘' 강조·호버 클래스가 붙어 마커에서 날짜
+        // 텍스트까지의 거리가 500자를 넘는다(quick 260901-etq에서 실측 — 디자인
+        // 이식·호버 작업으로 클래스 문자열이 자라며 생긴 잠복 회귀). 의도는 창
+        // 크기가 아니라 '날짜가 자기 행 마커 근처에 있는가'다.
+        const window = body.slice(idx, idx + 800);
         const match = window.match(/\d{4}-\d{2}-\d{2}/);
         return match ? match[0] : null;
       });

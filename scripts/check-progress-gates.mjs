@@ -275,7 +275,7 @@ const DYNAMIC_GATED_PAGES = [
   path.join(ROOT, 'src', 'app', 'schedule', 'page.tsx'),
 ];
 
-const G9_COOKIE_IDENTIFIERS = ['hasUnlockCookie', 'readCompletedLessonIds', 'readLessonNote', 'cookies('];
+const G9_COOKIE_IDENTIFIERS = ['hasUnlockCookie', 'readCompletedLessonIds', 'readProgressRows', 'readReviewStates', 'readLessonNote', 'cookies('];
 
 for (const pagePath of STATIC_SHELL_PAGES) {
   const source = readFileIfExists(pagePath);
@@ -654,6 +654,26 @@ if (sectionTapeSource === null) {
   }
 }
 
+// scroll-to-top.tsx(quick 260831-rly)도 window 스크롤 리스너를 갖는다 — 단,
+// section-tape와 같은 rAF 배칭 계약을 지켜야 허용된다. 무조건 허용 목록에 넣는
+// 대신 같은 검사(rAF/cancelRAF 존재 + rAF 정의가 리스너 등록보다 앞)를 이
+// 파일에도 적용한다(quick 260901-etq).
+const SCROLL_TO_TOP_PATH = path.join(ROOT, 'src', 'components', 'scroll-to-top.tsx');
+const scrollTopSource = readFileIfExists(SCROLL_TO_TOP_PATH);
+if (scrollTopSource !== null) {
+  const codeOnly = stripJsLineComments(scrollTopSource);
+  if (/window\.addEventListener\(\s*["']scroll["']/.test(codeOnly)) {
+    const rafIdx = codeOnly.indexOf('requestAnimationFrame');
+    const cancelRafIdx = codeOnly.indexOf('cancelAnimationFrame');
+    const listenerIdx = codeOnly.indexOf('addEventListener');
+    if (rafIdx === -1 || cancelRafIdx === -1 || rafIdx >= listenerIdx) {
+      fail(
+        `G22 failed: ${path.relative(ROOT, SCROLL_TO_TOP_PATH)} must throttle its scroll listener with requestAnimationFrame/cancelAnimationFrame defined before addEventListener`,
+      );
+    }
+  }
+}
+
 const SCROLL_LISTENER_SCAN_FILES = walkFiles(SRC_DIR, /\.tsx$/);
 const filesWithScrollListener = [];
 
@@ -666,7 +686,9 @@ for (const filePath of SCROLL_LISTENER_SCAN_FILES) {
 }
 
 const unexpectedScrollListenerFiles = filesWithScrollListener.filter(
-  (relPath) => relPath !== path.relative(ROOT, SECTION_TAPE_PATH),
+  (relPath) =>
+    relPath !== path.relative(ROOT, SECTION_TAPE_PATH) &&
+    relPath !== path.relative(ROOT, SCROLL_TO_TOP_PATH),
 );
 
 if (unexpectedScrollListenerFiles.length > 0) {

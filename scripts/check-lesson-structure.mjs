@@ -29,6 +29,17 @@ const TASK_COUNT_MIN = 2;
 const TASK_COUNT_MAX = 3;
 const TASK_HEADING = '### 해보기';
 const ANSWER_SUMMARY_LINE = '<summary>정답 보기</summary>';
+// 접기 종류 허용 목록 (quick 260901-etq). 예전 L3은 "정답 보기" 문구 하나를
+// 하드코딩해 다른 접기(힌트·예측·심화)를 넣는 순간 게이트가 죽었다. 이제
+// 접기마다 여기 등록된 summary만 허용한다 — 목록 밖 문구는 여전히 실패다.
+// 규칙을 느슨하게 푸는 게 아니라, 허용 집합을 명시적으로 넓히는 것이다.
+const ALLOWED_SUMMARY_LINES = [
+  ANSWER_SUMMARY_LINE,
+  '<summary>힌트 보기</summary>',
+  '<summary>먼저 찍어보기</summary>',
+  '<summary>더 깊이</summary>',
+  '<summary>실행 결과 예측해 보기</summary>',
+];
 const DETAILS_OPEN_LINE = '<details>';
 const DETAILS_CLOSE_LINE = '</details>';
 const TERM_TABLE_LABEL = '**이 레슨의 단어**';
@@ -119,29 +130,45 @@ function checkTaskCount(slug, lines) {
   return count;
 }
 
-// --- L3: <details>/<summary>정답 보기</summary>/</details> 개수가 모두 같고 해보기+2 이상 ---
+// --- L3: <details>/<summary>/<\/details> 개수가 모두 같고, summary는 허용 목록만,
+//     정답 접기는 해보기+2 이상 ---
 function checkAnswerBlockPairing(slug, lines, taskCount) {
   const detailsOpen = lines.filter((l) => l.includes(DETAILS_OPEN_LINE)).length;
-  const summary = lines.filter((l) => l.includes(ANSWER_SUMMARY_LINE)).length;
+  const summaryLines = lines.filter((l) => l.includes('<summary>'));
   const detailsClose = lines.filter((l) => l.includes(DETAILS_CLOSE_LINE)).length;
-  if (detailsOpen !== summary || summary !== detailsClose) {
+
+  // 허용 목록 밖 summary 문구는 실패 — 접기 종류를 늘리려면 목록에 등록부터.
+  for (const line of summaryLines) {
+    if (!ALLOWED_SUMMARY_LINES.some((allowed) => line.includes(allowed))) {
+      fail(`L3 (${slug}): summary 문구가 허용 목록에 없음 — "${line.trim()}"`);
+    }
+  }
+
+  if (detailsOpen !== summaryLines.length || summaryLines.length !== detailsClose) {
     fail(
-      `L3 (${slug}): <details>/<summary>정답 보기</summary>/</details> counts do not match (${detailsOpen}/${summary}/${detailsClose})`,
+      `L3 (${slug}): <details>/<summary>/</details> counts do not match (${detailsOpen}/${summaryLines.length}/${detailsClose})`,
     );
     return;
   }
+
+  // 정답 접기 최소 개수 검사는 종전 그대로 "정답 보기"만 센다 — 힌트·예측 접기가
+  // 늘어도 정답 접기가 줄어드는 회귀를 잡는다.
+  const answerCount = lines.filter((l) => l.includes(ANSWER_SUMMARY_LINE)).length;
   const minExpected = taskCount + 2;
-  if (detailsOpen < minExpected) {
+  if (answerCount < minExpected) {
     fail(
-      `L3 (${slug}): expected at least ${minExpected} answer block(s) (해보기 ${taskCount} + 스스로 점검 2), got ${detailsOpen}`,
+      `L3 (${slug}): expected at least ${minExpected} answer block(s) (해보기 ${taskCount} + 스스로 점검 2), got ${answerCount}`,
     );
   }
 }
 
 // --- L4: <summary> 다음 줄, </details> 이전 줄이 반드시 빈 줄 ---
 function checkBlankLineRule(slug, lines) {
+  // L4를 모든 <summary>로 일반화한다(quick 260901-etq). 예전엔 "정답 보기"에만
+  // 걸려 있어, 새 접기(힌트·예측·심화)의 빈 줄 누락 — 접기 안 마크다운이 리터럴
+  // 텍스트로 렌더되는 결함 — 이 무검사 통과하는 사각지대였다.
   lines.forEach((line, idx) => {
-    if (line.includes(ANSWER_SUMMARY_LINE)) {
+    if (line.includes('<summary>')) {
       const nextLine = lines[idx + 1];
       if (nextLine === undefined || nextLine !== '') {
         fail(`L4 (${slug}): line ${idx + 1} (<summary>) is not followed by a blank line`);
