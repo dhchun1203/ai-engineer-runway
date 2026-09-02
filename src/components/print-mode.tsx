@@ -45,6 +45,11 @@ export function PrintMode() {
           el.removeAttribute(OPENED_BY_PRINT);
           el.open = false;
         });
+      // 필기 여백 변형(print-button.tsx의 annotate)이 켜 둔 표식을 여기서
+      // 걷어낸다. 없는 속성에 대한 removeAttribute는 no-op이라 일반 인쇄
+      // 경로에서도 안전하다 — 이 한 곳이 afterprint/matchMedia/언마운트
+      // 세 정리 경로 전부를 커버한다(quick 260902-cet).
+      document.body.removeAttribute("data-print-annotate");
     };
 
     window.addEventListener("beforeprint", enter);

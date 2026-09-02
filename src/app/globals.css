@@ -1644,6 +1644,24 @@ code[data-theme*=" "] span {
     color: inherit;
     text-decoration: underline;
   }
+
+  /* 필기 여백 변형 — "필기 여백으로 저장" 버튼이 인쇄 직전 body에
+     data-print-annotate를 켠다(print-button.tsx). 이 스코프 밖(기본
+     "PDF로 저장")은 여기 규칙에 걸리지 않으므로 무회귀다(quick 260902-cet).
+     본문 오른쪽에 애플펜슬용 빈 세로 컬럼을 비우고, 코드 블록·표·그림·
+     다이어그램처럼 눌리면 안 되는 블록은 그 컬럼 아래로 폭을 되찾는다. */
+  body[data-print-annotate] .prose {
+    margin-right: 40mm;
+    padding-right: 3mm;
+    border-right: 1px solid var(--color-line);
+  }
+
+  body[data-print-annotate] .prose [data-code-block],
+  body[data-print-annotate] .prose table,
+  body[data-print-annotate] .prose figure,
+  body[data-print-annotate] .prose [data-diagram] {
+    margin-right: -40mm;
+  }
 }
 
 /* ── 브라우저 안 파이썬 실행 (quick 260901-iqk) ─────────────────────────────
