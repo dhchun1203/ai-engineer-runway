@@ -196,7 +196,14 @@ DELETE FROM practice.students WHERE id = 1;
 
 <PredictPrompt />
 
-<RunSQL>
+<RunSQL
+  blockGuides={[
+    `먼저 연습용 서랍(practice 스키마)을 새로 마련하는 부분이에요. 서랍이 이미 있으면 통째로 비우고(DROP) 다시 빈 서랍을 만듭니다(CREATE). 여러 번 눌러도 늘 깨끗한 상태에서 시작하도록요 — 사이트의 진짜 데이터가 든 다른 서랍은 건드리지 않아요.`,
+    `학생 표(students)를 새로 만들어요. id는 새 학생이 들어올 때마다 자동으로 붙는 번호(기본키), name은 이름(빈칸 금지), grade는 학년이에요.`,
+    `과목 표(subjects)를 만들어요. id는 자동 번호(기본키), name은 과목 이름(빈칸 금지)이에요.`,
+    `수강 표(enrollments)를 만들어요. 누가(student_id) 어떤 과목을(subject_id) 듣는지 적는 표인데, 두 번호는 각각 학생 표·과목 표에 실제로 있는 번호만 가리킬 수 있어요(외래키 — 두 표를 잇는 실).`,
+  ]}
+>
 
 ```sql
 -- 연습용 서랍(practice 스키마) 안에서만 동작하며, 사이트 진도 데이터와는 무관합니다.
@@ -226,7 +233,13 @@ CREATE TABLE practice.enrollments (
 
 이 블록을 실행하면 "실행 완료 — 표와 데이터가 준비되었습니다."가 뜹니다. 표 세 개(`students`·`subjects`·`enrollments`)가 `practice` 서랍 안에 만들어진 것입니다.
 
-<RunSQL>
+<RunSQL
+  blockGuides={[
+    `학생 표에 학생 세 명을 한꺼번에 넣어요. 이름과 학년을 짝지어 김지현(2학년)·이민준(1학년)·박서연(3학년)을 추가합니다. id 번호는 따로 안 적어도 자동으로 1·2·3이 붙어요.`,
+    `과목 표에 수학·영어·과학 세 과목을 넣어요. 여기도 id는 자동으로 1·2·3이 붙습니다.`,
+    `수강 표에 "누가 무엇을 듣는지"를 네 줄 넣어요. 예를 들어 (1, 1)은 1번 학생이 1번 과목을 듣는다는 뜻이에요 — 학생 번호와 과목 번호를 짝지어 연결합니다.`,
+  ]}
+>
 
 ```sql
 -- 각 표에 데이터를 몇 행씩 넣습니다.
@@ -251,7 +264,12 @@ INSERT INTO practice.enrollments (student_id, subject_id) VALUES
 
 세 표에 데이터가 채워집니다("실행 완료 — 표와 데이터가 준비되었습니다.").
 
-<RunSQL>
+<RunSQL
+  blockGuides={[
+    `학생 표에 든 내용을 그대로 다 꺼내 보여줘요. *는 "모든 열", ORDER BY id는 "번호 순서대로 정렬"이라는 뜻이에요.`,
+    `수강 표를 따라가며 "누가 어떤 과목을 듣는지"를 이름으로 이어 붙여 보여줘요. JOIN은 번호로만 적힌 연결을 실제 학생 이름·과목 이름으로 이어 주는 연결 작업이에요 — 그래서 숫자 대신 사람이 읽을 수 있는 표가 나옵니다.`,
+  ]}
+>
 
 ```sql
 -- 넣은 데이터를 확인합니다.
@@ -275,7 +293,11 @@ ORDER BY e.id;
 <details>
 <summary>정답 보기</summary>
 
-<RunSQL>
+<RunSQL
+  blockGuides={[
+    `교실 표(classrooms)를 새로 만들어요. id는 자동 번호(기본키), room_name은 교실 이름(빈칸 금지), capacity는 수용 인원이에요.`,
+  ]}
+>
 
 ```sql
 CREATE TABLE practice.classrooms (
@@ -298,7 +320,12 @@ CREATE TABLE practice.classrooms (
 <details>
 <summary>정답 보기</summary>
 
-<RunSQL>
+<RunSQL
+  blockGuides={[
+    `학생 표에 새 학생 한 명(홍길동, 2학년)을 추가해요. 이번엔 한 줄만 넣습니다.`,
+    `학생 표를 번호 순서대로 다시 꺼내 봐요. 방금 넣은 홍길동이 맨 아래 4번째 줄로 나타나는지 확인하는 거예요.`,
+  ]}
+>
 
 ```sql
 INSERT INTO practice.students (name, grade) VALUES ('홍길동', 2);
@@ -319,7 +346,11 @@ SELECT * FROM practice.students ORDER BY id;
 <details>
 <summary>정답 보기</summary>
 
-<RunSQL>
+<RunSQL
+  blockGuides={[
+    `수강 표에 일부러 없는 학생 번호(999)로 수강 기록을 넣어 봐요. 학생 표엔 999번이 없으니, 없는 대상을 가리키는 실은 만들 수 없다며 데이터베이스가 이 줄을 막고 빨간 에러를 냅니다 — 이게 외래키가 지켜 주는 규칙이에요.`,
+  ]}
+>
 
 ```sql
 INSERT INTO practice.enrollments (student_id, subject_id) VALUES (999, 1);
@@ -340,7 +371,11 @@ INSERT INTO practice.enrollments (student_id, subject_id) VALUES (999, 1);
 - 연습은 반드시 `practice` 스키마 안에서만 합니다 — 실수로 다른 서랍을 건드리면 되돌릴 수 없습니다.
 - 실습이 끝나면(또는 처음부터 다시 하고 싶으면) 아래 "실습 되돌리기" 블록을 실행해 연습용 서랍을 치웁니다 — 이걸 실행한 뒤 맨 위 블록부터 다시 누르면 깨끗한 상태에서 다시 시작합니다.
 
-<RunSQL>
+<RunSQL
+  blockGuides={[
+    `연습을 처음 상태로 되돌리는 부분이에요. practice 서랍을 안에 든 표까지 통째로 비웁니다(DROP). 이 서랍만 지우므로 사이트의 진짜 진도 데이터는 안전해요 — 실행한 뒤 맨 위 블록부터 다시 누르면 깨끗하게 다시 시작할 수 있어요.`,
+  ]}
+>
 
 ```sql
 -- 실습을 되돌립니다. practice 서랍(스키마)을 통째로 지웁니다.

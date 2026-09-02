@@ -183,7 +183,12 @@ RLS를 켜면 모든 접근이 안전해질 것 같지만 사실 예외가 하�
 
 <PredictPrompt />
 
-<RunSQL>
+<RunSQL
+  blockGuides={[
+    `연습용 서랍(practice 스키마)이 예전에 만들어져 있으면 통째로 비우고 새 서랍을 하나 다시 만드는 부분이에요. 스키마는 표들을 담아두는 이름 붙은 서랍이라고 생각하면 돼요. 여러 번 눌러도 매번 깨끗한 상태에서 시작하니 안전합니다.`,
+    `그 서랍 안에 상품을 적어둘 표(ai_products)를 만드는 부분이에요. 각 칸이 어떤 값을 담을지 미리 정해 둡니다 — id는 자동으로 붙는 번호(primary key, 행마다 겹치지 않는 이름표), name은 글자라 꼭 있어야 하고(not null), price는 숫자, created_at은 넣은 시각이 저절로 채워져요.`,
+  ]}
+>
 
 ```sql
 -- 이전 실습이 남아 있어도 깨끗이 비우고 시작합니다(여러 번 눌러도 안전).
@@ -203,7 +208,11 @@ create table practice.ai_products (
 
 이 블록을 실행하면 `practice` 서랍 안에 `ai_products` 표가 생깁니다("실행 완료 — 표와 데이터가 준비되었습니다."). 진도 데이터가 있는 `public` 스키마는 전혀 건드리지 않습니다.
 
-<RunSQL>
+<RunSQL
+  blockGuides={[
+    `방금 만든 빈 표에 상품 5개를 한 번에 적어 넣는 부분이에요. 이름·가격·분류를 한 줄에 한 상품씩 채웁니다. id와 넣은 시각은 아까 정해둔 대로 저절로 붙으니 우리는 안 적어도 돼요.`,
+  ]}
+>
 
 ```sql
 insert into practice.ai_products (name, price, category) values
@@ -218,7 +227,12 @@ insert into practice.ai_products (name, price, category) values
 
 상품 5개가 들어갑니다.
 
-<RunSQL>
+<RunSQL
+  blockGuides={[
+    `표에서 '전자기기'로 분류된 상품만 골라, 비싼 것부터 최대 5개까지 보여주는 부분이에요. where는 조건에 맞는 행만 고르는 필터, order by ... desc는 큰 값부터 줄 세우기, limit 5는 앞의 5줄까지만 보기예요.`,
+    `이번엔 분류별로 묶어서 "그 분류에 상품이 몇 개인지, 평균 가격은 얼마인지" 계산하는 부분이에요. group by는 같은 분류끼리 한 덩어리로 모으고, count는 개수 세기, avg는 평균 구하기예요.`,
+  ]}
+>
 
 ```sql
 select name, price, category
@@ -271,7 +285,11 @@ category | 상품수 | 평균가격
 <details>
 <summary>정답 보기</summary>
 
-<RunSQL>
+<RunSQL
+  blockGuides={[
+    `전자기기 상품만 먼저 골라낸 다음, 그 가격들의 평균 하나를 구하는 부분이에요. where로 전자기기만 걸러 놓고 avg로 평균을 내니, 딱 한 칸짜리 답이 나옵니다.`,
+  ]}
+>
 
 ```sql
 select avg(price) as 평균가격
@@ -292,7 +310,12 @@ where category = '전자기기';
 <details>
 <summary>정답 보기</summary>
 
-<RunSQL>
+<RunSQL
+  blockGuides={[
+    `표에 '할인율(discount_rate)'이라는 새 칸을 하나 더 붙이는 부분이에요. int라서 그 칸에는 숫자만 들어갑니다. 아직 값은 비어 있어요.`,
+    `방금 만든 빈 할인율 칸을 모든 상품에 대해 10으로 채우는 부분이에요. where(조건)를 안 붙였기 때문에 표의 모든 행이 한꺼번에 10이 됩니다.`,
+  ]}
+>
 
 ```sql
 alter table practice.ai_products add column discount_rate int;
@@ -313,7 +336,11 @@ update practice.ai_products set discount_rate = 10;
 <details>
 <summary>정답 보기</summary>
 
-<RunSQL>
+<RunSQL
+  blockGuides={[
+    `상품을 가격이 비싼 순으로 줄 세운 뒤, 맨 앞의 3개만 보여주는 부분이에요. order by price desc가 비싼 것부터 정렬, limit 3이 앞의 3줄만 보기예요.`,
+  ]}
+>
 
 ```sql
 select name, price
@@ -335,7 +362,11 @@ limit 3;
 - Supabase 무료 티어는 일정 기간 접속이 없으면 프로젝트가 일시정지될 수 있고, 저장 용량에도 한도가 있습니다.
 - 연습이 끝나면(또는 처음부터 다시 하려면) 아래 "실습 되돌리기" 블록을 실행해 `practice` 서랍을 비웁니다.
 
-<RunSQL>
+<RunSQL
+  blockGuides={[
+    `연습이 끝나서 practice 서랍을 통째로 치우는 부분이에요. 그 안의 연습용 표와 데이터가 함께 사라집니다. 진도 데이터가 든 public 서랍은 건드리지 않으니 걱정 없어요.`,
+  ]}
+>
 
 ```sql
 drop schema if exists practice cascade;
