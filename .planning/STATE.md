@@ -6,7 +6,7 @@ status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
 last_updated: "2026-08-31T15:06:55.410Z"
 last_activity: 2026-09-01
-last_activity_desc: 260902-cet — 필기 여백 PDF 완료, 2단 14/15
+last_activity_desc: 260902-czv — 반전 박스+안테피스 예고 컴포넌트·파일럿 2편
 current_phase: null
 current_phase_name: null
 progress:
