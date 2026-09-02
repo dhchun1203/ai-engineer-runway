@@ -24,7 +24,7 @@ export default async function InboxPage() {
   // 동일한 게이트 순서(D8-P 원칙 승계).
   const unlocked = await hasUnlockCookie();
   if (!unlocked) {
-    return <EmptyState message="질문함은 잠금 해제 후 이용할 수 있어요. 홈에서 잠금을 해제해 주세요." />;
+    return <EmptyState message="질문함은 로그인 후 이용할 수 있어요. 상단 메뉴 '계정'에서 로그인해 주세요." />;
   }
 
   const itemsRead = await readInboxItems();

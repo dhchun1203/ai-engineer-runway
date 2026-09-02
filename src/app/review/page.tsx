@@ -52,7 +52,7 @@ export default async function ReviewPage() {
   const unlocked = await hasUnlockCookie();
   if (!unlocked) {
     return (
-      <EmptyState message="복습 세션은 잠금 해제 후 이용할 수 있어요. 홈에서 잠금을 해제해 주세요." />
+      <EmptyState message="복습 세션은 로그인 후 이용할 수 있어요. 상단 메뉴 '계정'에서 로그인해 주세요." />
     );
   }
 

@@ -66,7 +66,7 @@ export function CompleteButtonSlot({ lessonId }: { lessonId: string }) {
         data-locked-notice
         className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark"
       >
-        완료 체크와 진행률 기록은 잠금 해제 후에 사용할 수 있습니다.
+        완료 체크와 진행률 기록은 로그인 후에 사용할 수 있습니다.
       </p>
     );
   }
