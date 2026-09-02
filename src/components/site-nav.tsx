@@ -277,7 +277,11 @@ export function SiteNav() {
           id="site-nav-panel"
           className="nav-panel-reveal hairline sm:hidden"
         >
-          <div className="mx-auto flex w-full max-w-5xl flex-col px-4 pb-2">
+          {/* grid 자식을 overflow:hidden으로 잘라 0fr→1fr 펼침 동안 콘텐츠가 새지
+              않게 하는 클립 래퍼(globals.css .nav-panel-clip). 이 한 겹 외에 로직
+              변경은 없다. */}
+          <div className="nav-panel-clip">
+            <div className="mx-auto flex w-full max-w-5xl flex-col px-4 pb-2">
             {NAV_ITEMS.map((item) => {
               // 드롭다운 부모 — 640px 미만에서는 드롭다운이 아니라 항상 펼친
               // 아코디언. 대메뉴 라벨은 비링크 소제목(span), 그 아래 자식 링크를
@@ -341,6 +345,7 @@ export function SiteNav() {
                 </Link>
               );
             })}
+            </div>
           </div>
         </div>
       )}
