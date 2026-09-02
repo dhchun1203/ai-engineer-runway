@@ -28,11 +28,24 @@ if (!supabaseAnonKey) {
   );
 }
 
+// "로그인 정보 저장" 여부를 기록하는 동반 쿠키. '0'이면 세션 전용(브라우저 닫으면 만료),
+// 그 외/부재면 지속(재시작해도 유지). proxy.ts도 같은 이름을 읽어 리프레시 시 지속성을
+// 보존한다(문자열 상수를 공유하지 않고 각자 선언 — proxy는 server.ts를 import하지 않는다).
+export const PERSIST_COOKIE = 'sb-persist';
+
 // Server Component/Server Action/Route Handler에서 쓰는 쿠키 인지형 클라이언트.
 // setAll은 Server Component 렌더 중에는 실패할 수 있다(쿠키 쓰기 불가) — 그 경우는
 // proxy.ts가 매 요청마다 세션을 리프레시하므로 무시해도 된다(@supabase/ssr 표준 패턴).
-export async function createSupabaseServerClient() {
+//
+// persist: 명시하면 그 값을, 없으면 sb-persist 쿠키로 판단(기본 지속). false면 인증
+// 쿠키에서 maxAge/expires를 떼어 세션 쿠키로 만든다("로그인 정보 저장" 해제).
+export async function createSupabaseServerClient(opts?: { persist?: boolean }) {
   const cookieStore = await cookies();
+
+  const persist =
+    typeof opts?.persist === 'boolean'
+      ? opts.persist
+      : cookieStore.get(PERSIST_COOKIE)?.value !== '0';
 
   return createServerClient(supabaseUrl!, supabaseAnonKey!, {
     cookies: {
@@ -42,7 +55,14 @@ export async function createSupabaseServerClient() {
       setAll(cookiesToSet) {
         try {
           for (const { name, value, options } of cookiesToSet) {
-            cookieStore.set(name, value, options);
+            if (persist) {
+              cookieStore.set(name, value, options);
+            } else {
+              const sessionOptions = { ...(options ?? {}) };
+              delete sessionOptions.maxAge;
+              delete sessionOptions.expires;
+              cookieStore.set(name, value, sessionOptions);
+            }
           }
         } catch {
           // Server Component 렌더 컨텍스트 — 쿠키 쓰기가 막혀 있다. proxy가 대신 리프레시한다.

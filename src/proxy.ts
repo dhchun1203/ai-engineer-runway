@@ -32,12 +32,22 @@ export async function proxy(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
+        // "로그인 정보 저장" 해제 시(sb-persist=0) 리프레시된 인증 쿠키도 세션 쿠키로 유지한다
+        // — 여기서 maxAge를 붙이면 세션 전용이 매 이동마다 지속 쿠키로 바뀌어 버린다.
+        const persist = request.cookies.get('sb-persist')?.value !== '0';
         for (const { name, value } of cookiesToSet) {
           request.cookies.set(name, value);
         }
         response = NextResponse.next({ request });
         for (const { name, value, options } of cookiesToSet) {
-          response.cookies.set(name, value, options);
+          if (persist) {
+            response.cookies.set(name, value, options);
+          } else {
+            const sessionOptions = { ...(options ?? {}) };
+            delete sessionOptions.maxAge;
+            delete sessionOptions.expires;
+            response.cookies.set(name, value, sessionOptions);
+          }
         }
       },
     },

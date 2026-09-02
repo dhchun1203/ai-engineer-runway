@@ -36,6 +36,15 @@ export function LoginForm() {
           className="min-h-11 w-full border-2 border-foreground bg-background px-3 py-2 text-body font-normal text-foreground dark:border-foreground-dark dark:bg-background-dark dark:text-foreground-dark"
         />
       </label>
+      <label className="flex items-center gap-2 text-label font-normal text-muted dark:text-muted-dark">
+        <input
+          name="remember"
+          type="checkbox"
+          defaultChecked
+          className="h-4 w-4 accent-accent dark:accent-accent-dark"
+        />
+        로그인 정보 저장
+      </label>
       {state.error ? (
         <p role="alert" className="text-label font-semibold text-accent dark:text-accent-dark">
           {state.error}
