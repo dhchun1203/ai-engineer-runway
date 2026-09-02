@@ -16,13 +16,20 @@ import { useCallback, useEffect, useRef } from 'react';
 // 안내(guide)와 학습자가 친 값(typed)을 같은 인덱스의 줄끼리 비교해 일치한
 // 줄 수를 센다. 줄 끝 공백만 무시한다(줄 중간 공백·들여쓰기는 그대로 채점) —
 // guide의 줄 수를 total로 삼는다.
+//
+// 학습자가 아직 도달하지 않은 줄(typed에 없는 인덱스)은 세지 않는다. 이 가드가
+// 없으면 빈 입력에서도 guide의 빈 줄들이 undefined→''와 맞아떨어져 매칭으로
+// 잡힌다(따라 치기 진입 직후 "7/34줄 일치" 같은 오표시). 따라 치기는 위에서
+// 아래로 순서대로 치는 연습이므로, 실제로 친 줄 수(typedLines.length)까지만
+// 비교하면 된다 — 빈 입력이면 0/N에서 시작한다.
 export function countMatchingLines(guide: string, typed: string): number {
   const guideLines = guide.split('\n');
   const typedLines = typed.split('\n');
+  const upTo = Math.min(guideLines.length, typedLines.length);
   let matched = 0;
-  for (let i = 0; i < guideLines.length; i++) {
+  for (let i = 0; i < upTo; i++) {
     const guideLine = guideLines[i].replace(/\s+$/, '');
-    const typedLine = (typedLines[i] ?? '').replace(/\s+$/, '');
+    const typedLine = typedLines[i].replace(/\s+$/, '');
     if (guideLine === typedLine) matched += 1;
   }
   return matched;
