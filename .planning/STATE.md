@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-27 after v1.0)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-08-27 — Milestone v1.0 completed and archived
+Last activity: 2026-09-02 — Completed quick task 260902-j1i: 모바일 햄버거 패널 펼침 애니메이션
 
 ### 다음에 할 일
 
@@ -321,6 +321,7 @@ None yet.
 | 260901-r9t | 리서치 2단 — /glossary 용어집. 247용어를 velite 빌드타임 파서(L5 게이트 로직 이식·실패 시 throw)로 뽑아 정적 페이지 렌더. 214 고유 단어·다의어 27개 그룹 표시(병합 금지, 정의별 출처 레슨 역링크), ㄱㄴㄷ+A~W 점프 인덱스, 내비 링크. check-route-rendering 등록. 라이트/다크 실측 | 2026-09-01 | 8d7d83c | [260901-r9t-glossary-247-a-z](./quick/260901-r9t-glossary-247-a-z/) |
 | 260901-s8b | 리서치 2단 — 완료 예측일. pace.ts에 순수 함수 computeProjection 추가(computePace 불변·의존성 0 유지, UTC 산술로 타임존 오프바이원 차단), 홈 페이스 패널에 "이 속도면 M월 D일 완주 예정 · 개강 전에 끝나요" 한 줄. 낙담 방지: behind는 예측 미표시(함수 show 플래그 + 컴포넌트 분기 부재 두 겹 방어), 노이즈 가드(완료 0·경과 2일 미만 미표시), ahead=accent·on-track=중성. check-pace 9케이스 신설(38 통과) | 2026-09-01 | acfe445 | [260901-s8b-m-d](./quick/260901-s8b-m-d/) |
 | 260902-iig | 헤더 내비를 대메뉴 4개 + 소메뉴 2단 구조로 재정리 — 8개 평면 나열을 단독 링크 2개(오늘의 학습·커리큘럼) + 클릭 드롭다운 2개(학습 도구▾: 복습·용어집·노트·질문함 / 일정·정보▾: 일정표·PDF 내보내기·소개)로 압축. 숨어있던 /print를 "일정·정보"로 승격. 아이패드 터치 대응(hover 아닌 클릭 토글·바깥클릭·Esc·상호배타), 모바일 햄버거는 소제목+들여쓴 아코디언, 부모 활성 판정(자식 경로 매치 시 대메뉴 활성). site-nav.tsx 단일 파일. 내장 브라우저 아이패드/모바일 실측(드롭다운·전환·활성·아코디언·/print 확인). tsc·lint·토큰·build 게이트 통과 | 2026-09-02 | b82592f | [260902-iig-2](./quick/260902-iig-2/) |
+| 260902-j1i | 모바일 햄버거 패널 펼침(unfold) 애니메이션 — opacity+translateY 페이드인을 grid-template-rows 0fr→1fr 펼침으로 교체(콘텐츠 auto 높이를 JS 없이 부드럽게 펴는 표준 CSS 기법; max-height 하드코딩·scaleY 왜곡 대비). .nav-panel-clip(overflow:hidden·min-height:0) 래퍼로 0fr 구간 클립, prefers-reduced-motion 존중 유지. globals.css·site-nav.tsx 2파일. 내장 브라우저 모바일 폭 실측: 패널 높이 1px→288px→467px(~180ms) 펼침 확인 | 2026-09-02 | 344f013 | [260902-j1i-mobile-menu-unfold-anim](./quick/260902-j1i-mobile-menu-unfold-anim/) |
 
 ## Deferred Items
 
