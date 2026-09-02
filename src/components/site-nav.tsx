@@ -214,7 +214,7 @@ export function SiteNav() {
         </Link>
         <div
           ref={desktopNavRef}
-          className="hidden flex-1 flex-wrap items-center gap-x-4 gap-y-1 sm:flex"
+          className="hidden flex-1 flex-wrap items-center justify-center gap-x-4 gap-y-1 sm:flex"
         >
           {navItems.map((item, index) => {
             // 드롭다운 부모 — 클릭 토글(hover 아님, 아이패드 터치 대응).
