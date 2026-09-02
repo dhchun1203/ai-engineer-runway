@@ -116,6 +116,22 @@ React에서는 `useState` 함수로 이 기억 상자를 만듭니다. state가 
   <text x="265" y="180" textAnchor="middle" fontSize="14" fill="var(--diagram-accent)">state가 바뀔 때마다 이 과정이 다시 돈다</text>
 </svg>
 
+<TwistBox>
+
+배열 state에 `push`로 항목을 추가하고 `setItems(items)`를 불러도 화면이 안 바뀔 때가 있습니다. 왜 그럴까요?
+
+```tsx
+const [items, setItems] = useState([1, 2, 3]);
+function addItem() {
+  items.push(4); // 원본 배열을 직접 건드림(mutate)
+  setItems(items); // 넘긴 것은 아까 그 배열, 참조가 같다
+}
+```
+
+React는 state가 바뀌었는지 값을 하나씩 비교하지 않고 참조(reference)가 달라졌는지만 봅니다. `items.push`는 같은 배열을 제자리에서 바꾸므로 참조는 그대로이고, React는 "안 바뀌었다"고 판단해 다시 그리지 않습니다. `setItems([...items, 4])`처럼 새 배열을 만들어 넘겨야 참조가 바뀌어 다시 렌더링됩니다.
+
+</TwistBox>
+
 ### props와 state의 결정적 차이
 
 | 구분 | props | state |
@@ -421,3 +437,9 @@ React가 여러 상태 변경을 한꺼번에 모아 처리(batching)할 때, `l
 `setLikeCount((count) => count + 1)`처럼 함수형 업데이트를 쓰면 React가 "가장 최신 값"을 인자로 넘겨주므로 이 문제가 생기지 않습니다.
 
 </details>
+
+<NextTeaser>
+
+지금 `LikeCard`의 상품 정보는 코드 안에 직접 적어뒀는데, 실제 쇼핑몰이라면 이 값들이 어디서 와야 할까요? 진짜 프로젝트를 시작하기 전에 무엇부터 준비해두면 좋을까요?
+
+</NextTeaser>

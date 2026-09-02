@@ -132,6 +132,24 @@ slug: "2-7-prompt-patterns"
   <text x="420" y="232" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">그 자리에서 잡아낸다</text>
 </svg>
 
+<TwistBox>
+
+모델이 스키마에 없는 필드를 하나 더 붙여서 응답하면 어떻게 될까요? 스키마 검증이 그 응답을 막아줄 것 같지만, 사실은 조용히 통과시킵니다.
+
+```typescript
+const ProductCopySchema = z.object({
+  title: z.string(),
+  tagline: z.string(),
+  hashtags: z.array(z.string()).length(3),
+});
+// 모델이 { title, tagline, hashtags, price: 100 }을 돌려줘도
+// ProductCopySchema.parse(...)는 예외 없이 통과한다
+```
+
+`z.object`는 기본적으로 정의된 필드만 검사하고, 그 외의 필드는 있어도 없는 셈 치고 넘어갑니다. 예상치 못한 필드까지 잡아내려면 스키마에 `.strict()`를 붙여야 합니다.
+
+</TwistBox>
+
 ### 🔁 검증 실패 시의 선택지
 
 스키마 검증에 실패했다는 것은 모델이 약속을 어겼다는 뜻입니다. 이때 선택지는 세 가지입니다 — 같은 요청을 한 번 더 보내 재시도하기, 미리 정해둔 기본값으로 대체하기, 사람에게 확인을 넘기기입니다.
@@ -438,3 +456,9 @@ function buildPrompt(product: ProductInfo): string {
 전자는 프롬프트 자체의 설계 문제일 가능성이 크므로 재시도로는 해결되지 않습니다.
 
 </details>
+
+<NextTeaser>
+
+프롬프트 한 줄을 고쳤을 때, 전에는 잘 되던 다른 상품의 문구가 조용히 망가지지 않았는지 어떻게 확인할 수 있을까요? 매번 눈으로 훑어보는 것 말고 더 믿을 만한 방법이 있을까요?
+
+</NextTeaser>

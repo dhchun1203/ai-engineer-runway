@@ -210,6 +210,21 @@ app.listen(port, () => {
 });
 ```
 
+<TwistBox>
+
+위 코드의 `GET /products`에서 `?category=` 처럼 값을 아예 비워서 보내면 어떻게 될까요? 카테고리가 없는 상품만 걸러질 것 같지만, 실제로는 전체 목록이 그대로 돌아옵니다.
+
+```typescript
+const { category } = req.query;
+const result = category
+  ? products.filter((p) => p.category === category)
+  : products; // category가 빈 문자열이면 여기로 온다
+```
+
+빈 문자열 `""`은 JavaScript에서 falsy(거짓으로 취급되는 값)라서, `category ? ... : ...` 삼항식이 `undefined`일 때와 똑같이 "필터링 안 함" 쪽으로 빠집니다. 값이 있는지는 `category !== undefined`처럼 명시적으로 확인해야 이 함정을 피할 수 있습니다.
+
+</TwistBox>
+
 아래 명령으로 서버를 실행합니다.
 
 ```powershell
@@ -383,3 +398,9 @@ app.use((req, res, next) => {
 200은 "요청이 정상적으로 처리되어 원하는 자원을 찾았다"는 뜻입니다. 자원이 없는데 200을 돌려주면 클라이언트는 응답 본문을 직접 열어봐야만 실패를 알 수 있습니다. 404로 명확히 알려주면 클라이언트가 상태 코드만 보고도 존재하지 않음을 바로 처리할 수 있습니다.
 
 </details>
+
+<NextTeaser>
+
+지금 이 상품 목록은 서버를 껐다 켜면 사라지는데, 실제 서비스라면 어떻게 계속 남아있게 만들 수 있을까요? 그리고 "내 정보"처럼 아무나 볼 수 없어야 하는 데이터는 어떻게 지켜야 할까요?
+
+</NextTeaser>

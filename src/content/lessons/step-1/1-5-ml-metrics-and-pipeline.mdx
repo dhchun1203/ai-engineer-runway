@@ -64,6 +64,23 @@ slug: "1-5-ml-metrics-and-pipeline"
 
 정확도 하나만 보면 위험한 상황이 있습니다. 100명 중 1명만 병에 걸린 데이터에서 "전부 정상"이라고만 찍어도 정확도는 99%가 나옵니다. 이런 데이터를 불균형 데이터(imbalanced data, 정답 종류의 비율이 한쪽으로 크게 치우친 데이터)라고 부르는데, 이때는 정밀도·재현율을 함께 봐야 모델이 실제로 쓸모 있는지 알 수 있습니다.
 
+<TwistBox title="어라? 아무것도 안 배운 모델이 99점을 받았어요">
+
+불균형 데이터에서 정확도가 위험하다는 말이 실감 나지 않는다면, 데이터를 전혀 들여다보지 않는 모델로도 99%를 만들 수 있는 코드를 봐도 될까요?
+
+```python
+from sklearn.dummy import DummyClassifier
+
+# 데이터를 전혀 배우지 않고 무조건 다수 클래스만 찍는 모델
+dummy = DummyClassifier(strategy="most_frequent")
+dummy.fit(X_train, y_train)
+print(f"정확도: {dummy.score(X_test, y_test):.2f}")
+```
+
+환자 100명 중 1명만 병에 걸린 데이터라면, 이 코드는 아무것도 배우지 않고도 정확도 0.99를 찍습니다. 병에 걸린 환자는 단 한 명도 찾아내지 못하는데도입니다.
+
+</TwistBox>
+
 <svg data-diagram viewBox="0 0 560 240" role="img" aria-labelledby="dia-precision-recall-t">
   <title id="dia-precision-recall-t">정밀도와 재현율은 같은 결과를 다른 기준으로 잰다. 정밀도는 모델이 맞다고 한 것 중 진짜의 비율이고, 재현율은 실제 정답 중 찾아낸 것의 비율이다.</title>
   <text x="280" y="24" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">같은 결과를 두 가지로 잰다</text>
@@ -292,3 +309,11 @@ print(f"정밀도(macro 평균): {precision_score(y_test, y_pred, average='macro
 데이터 누수가 생길 수 있습니다. 스케일러가 평가용 데이터까지 포함한 전체 데이터를 보고 기준(평균·표준편차 등)을 정하게 되어, 평가용 데이터의 정보가 학습 과정에 미리 섞여 들어갑니다. Pipeline 안에 스케일러를 넣고 학습용 데이터에만 `fit`해야 이 문제를 막을 수 있습니다.
 
 </details>
+
+<NextTeaser>
+
+지금까지 만든 모델과 점수는 스크립트를 실행하는 동안만 메모리에 잠깐 있다가, 프로그램이 끝나면 사라집니다.
+
+만약 이 결과나 진행 상황을 여러 사람이 언제든 다시 열어볼 수 있게 계속 남겨두려면, 데이터를 어디에 저장해야 할까요?
+
+</NextTeaser>

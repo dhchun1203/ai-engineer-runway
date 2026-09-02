@@ -138,6 +138,22 @@ slug: "1-4-relational-db-basics"
   <text x="280" y="238" textAnchor="middle" fontSize="14" fill="var(--diagram-ink)">학생 → 수강 → 과목</text>
 </svg>
 
+<TwistBox>
+
+학생을 표에서 지우면 그 학생의 수강 기록도 자동으로 같이 사라질 것 같지만, 실제로 시도하면 어떤 일이 일어날까요?
+
+```sql
+-- 김지현(id=1)이 이미 수강 기록을 갖고 있는 상태에서 삭제를 시도
+DELETE FROM practice.students WHERE id = 1;
+-- update or delete on table "students" violates foreign key constraint
+```
+
+외래키는 "가리키는 대상이 사라지면 안 된다"는 규칙도 함께 강제합니다. `enrollments`가 `student_id`로 그 학생을 계속 가리키는 한, 삭제 자체가 거부됩니다.
+
+먼저 관련 수강 기록을 지우거나, 표를 설계할 때 `ON DELETE CASCADE` 같은 규칙을 미리 정해둬야 이런 삭제가 가능해집니다.
+
+</TwistBox>
+
 ### 🗄️ 스키마 — 표들을 담는 서랍
 
 스키마(schema, 여러 테이블을 묶어 담는 이름 붙은 서랍)는 테이블들을 그룹으로 묶는 이름표입니다. 이 사이트의 진도 데이터는 같은 Supabase 프로젝트의 다른 서랍(공유 스키마)에 들어 있습니다. 이번 실습은 그 서랍을 절대 건드리지 않도록, `practice`라는 연습용 서랍을 따로 만들어 그 안에서만 표를 만들고 지웁니다.
@@ -389,3 +405,9 @@ DROP SCHEMA IF EXISTS practice CASCADE;
 외래키 제약이 사라져, 존재하지 않는 학생 번호를 넣어도 데이터베이스가 막지 않습니다. 위 해보기 3번에서 본 에러가 더는 발생하지 않고, 아무 것도 가리키지 않는 "끊어진 실"이 조용히 쌓이게 됩니다.
 
 </details>
+
+<NextTeaser>
+
+표를 만들고 데이터를 넣어 `SELECT *`로 전체를 확인해봤습니다. 그런데 조건에 맞는 몇 명만 골라내거나, 학생과 과목을 연결해서 함께 보려면 어떻게 해야 할까요?
+
+</NextTeaser>
