@@ -5,6 +5,8 @@ import { CodeBlock } from "@/components/code-block";
 import { RunPython } from "@/components/run-python";
 import { RunSQL } from "@/components/run-sql";
 import { PredictPrompt } from "@/components/predict-prompt";
+import { TwistBox } from "@/components/twist-box";
+import { NextTeaser } from "@/components/next-teaser";
 
 // Velite는 MDX를 빌드 타임에 함수 본문(code) 문자열로 컴파일한다.
 // 이 컴포넌트는 그 문자열을 다시 React 컴포넌트로 되돌리는 유일하게 올바른 방법이다 —
@@ -38,6 +40,8 @@ const defaultComponents: Record<string, ComponentType> = {
   RunPython: RunPython as ComponentType,
   RunSQL: RunSQL as ComponentType,
   PredictPrompt: PredictPrompt as ComponentType,
+  TwistBox: TwistBox as ComponentType,
+  NextTeaser: NextTeaser as ComponentType,
 };
 
 export const MDXContent = ({
