@@ -11,7 +11,10 @@
 import { useCallback, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { PGliteLoadError, runSql, type PGliteResult } from '@/lib/pglite-runtime';
-import { TraceEditor } from '@/components/trace-editor';
+import { TraceEditor, buildTraceTemplate } from '@/components/trace-editor';
+
+// SQL 전체 줄 주석 접두사('-- '). 모듈 상수로 둬 identity를 고정한다.
+const SQL_COMMENT_PREFIXES = ['--'] as const;
 
 type Status = 'idle' | 'loading' | 'running' | 'done' | 'error-load' | 'error-run';
 // 세 모드는 상호 배타적이다(하나의 유니언으로 표현해 두 불리언이 동시에
@@ -159,7 +162,8 @@ export function RunSQL({
     if (mode !== 'trace') {
       const source = extractSourceCode(staticBlockRef.current);
       setGuideCode(source);
-      setTracedCode('');
+      // 주석·빈 줄은 미리 채우고 코드 줄만 빈칸으로 시작한다(주석은 타이핑 대상 아님).
+      setTracedCode(buildTraceTemplate(source, SQL_COMMENT_PREFIXES));
       setMode('trace');
     }
   }, [mode]);
@@ -221,6 +225,7 @@ export function RunSQL({
             onChange={setTracedCode}
             ariaLabel="따라 친 SQL"
             blockGuides={blockGuides}
+            commentPrefixes={SQL_COMMENT_PREFIXES}
           />
         ) : null}
 

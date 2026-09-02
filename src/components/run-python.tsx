@@ -11,7 +11,11 @@
 import { useCallback, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { PyodideLoadError, runPythonCode } from '@/lib/pyodide-runtime';
-import { TraceEditor } from '@/components/trace-editor';
+import { TraceEditor, buildTraceTemplate } from '@/components/trace-editor';
+
+// 파이썬 전체 줄 주석 접두사. 모듈 상수로 둬 TraceEditor로 넘길 때 identity가
+// 고정되게 한다(매 렌더 새 배열이면 마운트 효과가 계속 재실행된다).
+const PY_COMMENT_PREFIXES = ['#'] as const;
 
 type Status = 'idle' | 'loading' | 'running' | 'done' | 'error-load' | 'error-run';
 // 세 모드는 상호 배타적이다(하나의 유니언으로 표현해 두 불리언이 동시에
@@ -99,7 +103,8 @@ export function RunPython({
     if (mode !== 'trace') {
       const source = extractSourceCode(staticBlockRef.current);
       setGuideCode(source);
-      setTracedCode('');
+      // 주석·빈 줄은 미리 채우고 코드 줄만 빈칸으로 시작한다(주석은 타이핑 대상 아님).
+      setTracedCode(buildTraceTemplate(source, PY_COMMENT_PREFIXES));
       setMode('trace');
     }
   }, [mode]);
@@ -161,6 +166,7 @@ export function RunPython({
             onChange={setTracedCode}
             ariaLabel="따라 친 파이썬 코드"
             blockGuides={blockGuides}
+            commentPrefixes={PY_COMMENT_PREFIXES}
           />
         ) : null}
 
