@@ -98,6 +98,7 @@ export default async function LessonPage(
                     curriculum={curriculum}
                   />
                   <PrintButton />
+                  <PrintButton annotate label="필기 여백으로 저장" />
                 </span>
               ) : null}
             </div>

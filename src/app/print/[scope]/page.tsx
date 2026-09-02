@@ -72,6 +72,7 @@ export default async function PrintScopePage(props: PageProps<"/print/[scope]">)
         </p>
         <div data-print-hide className="flex flex-wrap items-center gap-3 pt-2">
           <PrintButton label="이 묶음 PDF로 저장" />
+          <PrintButton annotate label="필기 여백으로 저장" />
           <Link
             href="/print"
             className="tap-feedback inline-flex min-h-11 items-center text-label font-semibold text-accent dark:text-accent-dark"
