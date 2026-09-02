@@ -254,26 +254,37 @@ export function SiteNav() {
                     // 경계 문법(border-2 border-foreground · bg-background).
                     <div
                       id={panelId}
-                      className="absolute left-0 top-full z-30 flex min-w-44 flex-col border-2 border-foreground bg-background p-1 dark:border-foreground-dark dark:bg-background-dark"
+                      className="absolute left-0 top-full z-30 flex min-w-48 flex-col border-2 border-foreground bg-background dark:border-foreground-dark dark:bg-background-dark"
                     >
-                      {item.children.map((child) => {
-                        if (!child.href) return null;
-                        const childActive = isActiveHref(pathname, child.href);
-                        return (
-                          <Link
-                            key={child.label}
-                            href={child.href}
-                            onClick={() => setOpenMenu(null)}
-                            className={`nav-link tap-feedback flex min-h-11 items-center px-3 text-label font-bold ${
-                              childActive
-                                ? "chip-solid"
-                                : "text-muted dark:text-muted-dark"
-                            }`}
-                          >
-                            {child.label}
-                          </Link>
-                        );
-                      })}
+                      {/* 대메뉴(카테고리) 이름을 가장자리까지 꽉 채운 잉크 머리띠로
+                          얹는다 — 아래 소메뉴 링크는 크림 지면 위에 p-1로 안쪽에
+                          들어앉으므로, 채운 잉크 띠(그룹 이름)와 크림 위 항목이라는
+                          위계가 한눈에 잡힌다. 활성 소메뉴의 chip-solid도 잉크지만
+                          p-1만큼 안으로 들어와 있어 가장자리까지 꽉 찬 머리띠와
+                          구분된다(quick 260902-drop). */}
+                      <span className="bg-foreground px-3 py-1.5 text-label font-bold tracking-wide text-background dark:bg-foreground-dark dark:text-background-dark">
+                        {item.label}
+                      </span>
+                      <div className="flex flex-col p-1">
+                        {item.children.map((child) => {
+                          if (!child.href) return null;
+                          const childActive = isActiveHref(pathname, child.href);
+                          return (
+                            <Link
+                              key={child.label}
+                              href={child.href}
+                              onClick={() => setOpenMenu(null)}
+                              className={`nav-link tap-feedback flex min-h-11 items-center px-3 text-label font-bold ${
+                                childActive
+                                  ? "chip-solid"
+                                  : "text-muted dark:text-muted-dark"
+                              }`}
+                            >
+                              {child.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -353,7 +364,9 @@ export function SiteNav() {
               if (item.children && item.children.length > 0) {
                 return (
                   <div key={item.label} className="flex flex-col">
-                    <span className="flex items-center px-3 pt-3 pb-1 text-label font-semibold text-muted dark:text-muted-dark">
+                    {/* 대메뉴 라벨 — 데스크톱 드롭다운 머리띠와 같은 잉크 블록 문법으로
+                        맞춰, 아래 좌측 잉크 라인으로 들여쓴 소메뉴 링크와 위계를 못 박는다. */}
+                    <span className="mt-2 mb-1 inline-flex self-start bg-foreground px-3 py-1 text-label font-bold tracking-wide text-background dark:bg-foreground-dark dark:text-background-dark">
                       {item.label}
                     </span>
                     <div className="ml-3 flex flex-col border-l-2 border-foreground pl-3 dark:border-foreground-dark">
