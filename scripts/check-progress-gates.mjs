@@ -220,7 +220,16 @@ if (gitignoreSource === null) {
   }
 }
 
-// --- G8: package.json dependencies에 @supabase/ssr가 없다 (D-17이 Supabase Auth를 배제) ---
+// --- G8: package.json dependencies에 @supabase/ssr가 있다 (quick-260902-kau) ---
+//
+// 아키텍처 변경 기록: 원래 이 게이트는 @supabase/ssr의 "부재"를 요구했다 — D-17이
+// Supabase Auth를 배제하고 공유 시크릿 쿠키만 쓰기로 했기 때문이다. quick-260902-kau에서
+// 사용자가 "새 기기마다 시크릿 키를 찾는 불편"을 없애려고 이메일+비밀번호 로그인을
+// 도입하면서 D-17의 그 부분을 명시적으로 대체했다. 로그인은 @supabase/ssr의 서버 사이드
+// 클라이언트(src/lib/supabase/server.ts)와 세션 리프레시 proxy(src/proxy.ts)로 구현하며,
+// 시크릿 쿠키 게이트는 폴백·e2e 하네스용으로 그대로 남겨 두는 additive 설계다.
+// 따라서 이제 게이트의 방향을 뒤집어 @supabase/ssr의 "존재"를 요구한다 — 누군가 실수로
+// 이 의존성을 지우면 로그인이 통째로 깨지는 회귀를 잡는다.
 
 const PACKAGE_JSON_PATH = path.join(ROOT, 'package.json');
 const packageJsonSource = readFileIfExists(PACKAGE_JSON_PATH);
@@ -235,9 +244,9 @@ if (packageJsonSource === null) {
     fail(`G8 failed: could not parse package.json: ${e.message}`);
     packageJson = null;
   }
-  if (packageJson && packageJson.dependencies && packageJson.dependencies['@supabase/ssr']) {
+  if (packageJson && !(packageJson.dependencies && packageJson.dependencies['@supabase/ssr'])) {
     fail(
-      'G8 failed: package.json dependencies contains "@supabase/ssr" — D-17 explicitly excludes Supabase Auth/anonymous sessions in favor of the shared-secret cookie design; its reappearance signals a regression back to per-device anonymous sessions.',
+      'G8 failed: package.json dependencies missing "@supabase/ssr" — 이메일+비밀번호 로그인(quick-260902-kau)이 이 패키지의 서버 사이드 클라이언트/proxy 세션 리프레시에 의존한다. 제거되면 로그인이 깨진다.',
     );
   }
 }
