@@ -769,6 +769,33 @@ textarea,
   }
 }
 
+/* 데스크톱(≥640px) 대메뉴 드롭다운 펼침/접힘 — 모바일 햄버거 패널과 같은
+   unfold 문법(grid-template-rows 0fr→1fr + opacity)을 그대로 재사용한다
+   (quick 260902-dropanim). 640px 미만 패널이 아래로 밀며 펴지는 것과 달리
+   드롭다운은 absolute(문서 흐름 밖)라 헤더 높이·구간 테이프에 영향이 없다.
+   닫힘도 대칭으로 넣되, 패널을 conceal이 끝날 때까지 잠깐 더 마운트해 둔 뒤
+   내린다(site-nav.tsx의 mountedMenu + onAnimationEnd). reduced-motion에선
+   양쪽 animation:none이라 onAnimationEnd가 안 뜨므로 그때만 즉시 언마운트한다. */
+.nav-dropdown-reveal {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+
+.nav-dropdown-reveal[data-state="open"] {
+  animation: nav-panel-reveal 180ms ease-out;
+}
+
+.nav-dropdown-reveal[data-state="closed"] {
+  animation: nav-panel-conceal 160ms ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-dropdown-reveal[data-state="open"],
+  .nav-dropdown-reveal[data-state="closed"] {
+    animation: none;
+  }
+}
+
 /* Section Tape 셀 focus-visible (D-R4K-1) — 이 코드베이스에 focus-visible
    전례가 없어 이 Phase가 처음 정의하는 규칙이다(globals.css 전역 grep 0건).
    accent를 쓰는 이유는 테이프 색으로 accent를 쓰는 것이 아니라 "활성/포커스

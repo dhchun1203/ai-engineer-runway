@@ -96,6 +96,10 @@ export function SiteNav() {
   // 열린 대메뉴 하나만 식별한다(라벨을 키로). 동시에 하나만 열린다 — 다른
   // 트리거를 누르면 그쪽으로 전환된다.
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  // 데스크톱 드롭다운 패널을 실제로 DOM에 두는 대메뉴(햄버거 panelMounted와 같은
+  // 게이트). openMenu(논리)와 분리해 닫힘(conceal) 애니메이션이 끝날 때까지 패널을
+  // 잠깐 더 마운트해 접힘을 보이게 한다(quick 260902-dropanim).
+  const [mountedMenu, setMountedMenu] = useState<string | null>(null);
   // 로그인 상태 — 계정 항목 라벨("로그인"/"프로필")을 고르는 데만 쓴다. null은 "아직 모름"
   // (그 동안 "로그인"으로 보수적으로 표시). /api/auth를 마운트·경로 변경 시 조회한다.
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
@@ -155,6 +159,25 @@ export function SiteNav() {
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
+  }, [openMenu]);
+
+  // 드롭다운 패널 마운트 게이트(햄버거 panelMounted와 대칭, quick 260902-dropanim).
+  // openMenu가 값이면 그 대메뉴를 즉시 마운트해 reveal이 발화한다(다른 대메뉴로
+  // 전환하면 이전 패널은 즉시 언마운트되고 새 패널이 펴진다 — 메뉴바 표준 동작).
+  // openMenu가 null이면 여기서 내리지 않고 conceal 애니메이션이 끝나면 패널의
+  // onAnimationEnd가 mountedMenu를 내린다. 단 reduced-motion에선 animation:none이라
+  // onAnimationEnd가 영영 안 뜨므로(패널이 남음) 그 경우에만 즉시 내린다.
+  useEffect(() => {
+    if (openMenu !== null) {
+      setMountedMenu(openMenu);
+      return;
+    }
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      setMountedMenu(null);
+    }
   }, [openMenu]);
 
   // 패널 마운트 게이트(quick 260902-j7t). open=true면 즉시 마운트해 reveal이 발화한다.
@@ -221,6 +244,7 @@ export function SiteNav() {
             // 드롭다운 부모 — 클릭 토글(hover 아님, 아이패드 터치 대응).
             if (item.children && item.children.length > 0) {
               const isOpen = openMenu === item.label;
+              const isMounted = mountedMenu === item.label;
               const menuActive = isMenuActive(pathname, item);
               const panelId = `nav-dropdown-${index}`;
               return (
@@ -249,42 +273,65 @@ export function SiteNav() {
                       aria-hidden="true"
                     />
                   </button>
-                  {isOpen && (
+                  {isMounted && (
                     // 절대배치(top-full) — 문서 흐름 밖이라 헤더 실측 높이 불변,
-                    // 구간 테이프가 안 흔들린다. 헤더와 같은 크림 지면 + 굵은 잉크
-                    // 경계 문법(border-2 border-foreground · bg-background).
+                    // 구간 테이프가 안 흔들린다. 바깥 껍데기는 unfold 애니메이션
+                    // (grid-rows 0fr→1fr)만 맡고, 크림 지면 + 굵은 잉크 경계
+                    // (border-2 border-foreground · bg-background)는 clip 안쪽의
+                    // 실제 패널이 그린다. data-state로 reveal/conceal을 가르고,
+                    // 닫힘 애니메이션이 끝나면 onAnimationEnd가 이 패널을 언마운트한다.
                     <div
                       id={panelId}
-                      className="absolute left-0 top-full z-30 flex min-w-48 flex-col border-2 border-foreground bg-background dark:border-foreground-dark dark:bg-background-dark"
-                    >
-                      {/* 대메뉴(카테고리) 이름을 가장자리까지 꽉 채운 잉크 머리띠로
-                          얹는다 — 아래 소메뉴 링크는 크림 지면 위에 p-1로 안쪽에
-                          들어앉으므로, 채운 잉크 띠(그룹 이름)와 크림 위 항목이라는
-                          위계가 한눈에 잡힌다. 활성 소메뉴의 chip-solid도 잉크지만
-                          p-1만큼 안으로 들어와 있어 가장자리까지 꽉 찬 머리띠와
-                          구분된다(quick 260902-drop). */}
-                      <span className="bg-foreground px-3 py-1.5 text-label font-bold tracking-wide text-background dark:bg-foreground-dark dark:text-background-dark">
-                        {item.label}
-                      </span>
-                      <div className="flex flex-col p-1">
-                        {item.children.map((child) => {
-                          if (!child.href) return null;
-                          const childActive = isActiveHref(pathname, child.href);
-                          return (
-                            <Link
-                              key={child.label}
-                              href={child.href}
-                              onClick={() => setOpenMenu(null)}
-                              className={`nav-link tap-feedback flex min-h-11 items-center px-3 text-label font-bold ${
-                                childActive
-                                  ? "chip-solid"
-                                  : "text-muted dark:text-muted-dark"
-                              }`}
-                            >
-                              {child.label}
-                            </Link>
+                      data-state={isOpen ? "open" : "closed"}
+                      onAnimationEnd={(e) => {
+                        // 패널 자신의 애니메이션만 본다. 닫히는 중(openMenu가 이
+                        // 대메뉴가 아님)에 끝났으면 이제 언마운트한다.
+                        if (
+                          e.target === e.currentTarget &&
+                          openMenu !== item.label
+                        ) {
+                          setMountedMenu((current) =>
+                            current === item.label ? null : current,
                           );
-                        })}
+                        }
+                      }}
+                      className="nav-dropdown-reveal absolute left-0 top-full z-30 min-w-48"
+                    >
+                      <div className="nav-panel-clip">
+                        <div className="flex min-w-48 flex-col border-2 border-foreground bg-background dark:border-foreground-dark dark:bg-background-dark">
+                          {/* 대메뉴(카테고리) 이름을 가장자리까지 꽉 채운 잉크 머리띠로
+                              얹는다 — 아래 소메뉴 링크는 크림 지면 위에 p-1로 안쪽에
+                              들어앉으므로, 채운 잉크 띠(그룹 이름)와 크림 위 항목이라는
+                              위계가 한눈에 잡힌다. 활성 소메뉴의 chip-solid도 잉크지만
+                              p-1만큼 안으로 들어와 있어 가장자리까지 꽉 찬 머리띠와
+                              구분된다(quick 260902-drop). */}
+                          <span className="bg-foreground px-3 py-1.5 text-label font-bold tracking-wide text-background dark:bg-foreground-dark dark:text-background-dark">
+                            {item.label}
+                          </span>
+                          <div className="flex flex-col p-1">
+                            {item.children.map((child) => {
+                              if (!child.href) return null;
+                              const childActive = isActiveHref(
+                                pathname,
+                                child.href,
+                              );
+                              return (
+                                <Link
+                                  key={child.label}
+                                  href={child.href}
+                                  onClick={() => setOpenMenu(null)}
+                                  className={`nav-link tap-feedback flex min-h-11 items-center px-3 text-label font-bold ${
+                                    childActive
+                                      ? "chip-solid"
+                                      : "text-muted dark:text-muted-dark"
+                                  }`}
+                                >
+                                  {child.label}
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
