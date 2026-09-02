@@ -1850,9 +1850,11 @@ code[data-theme*=" "] span {
   background-color: var(--color-surface-2-dark);
 }
 
-/* 두 겹 공통 — 정렬 불변식. 여기서 갈라지면 고스트가 어긋난다. */
+/* 세 겹 공통 — 정렬 불변식. 여기서 갈라지면 고스트·진단층이 어긋난다.
+   (.trace-diff는 오답 글자만 빨갛게 덮는 진단층, quick 260903-05g) */
 .trace-guide,
-.trace-input {
+.trace-input,
+.trace-diff {
   position: absolute;
   inset: 0;
   margin: 0;
@@ -1908,6 +1910,29 @@ code[data-theme*=" "] span {
 
 .dark .trace-input:focus-visible {
   outline-color: var(--color-accent-dark);
+}
+
+/* 진단층 — 입력층 위(z 2)에 겹쳐, 지금까지 친 글자 중 원본과 다른 글자만
+   빨갛게 덮는다. 맞는 글자는 color: transparent라 아래 입력층 글자가 그대로
+   보이고, 틀린 글자는 .miss가 destructive 색으로 그린다. 친 글자를 그대로
+   같은 자리에 렌더하므로(맞는 글자도 폭을 차지) 한글 2배폭까지 정렬이 유지되고,
+   pointer-events: none이라 캐럿·선택·입력을 가로채지 않는다(IME 무간섭). */
+.trace-diff {
+  overflow: hidden;
+  background: transparent;
+  border-radius: 0;
+  color: transparent;
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+}
+
+.trace-diff .miss {
+  color: var(--color-destructive);
+}
+
+.dark .trace-diff .miss {
+  color: var(--color-destructive-dark);
 }
 
 /* 실행 출력 — 줄바꿈은 보존하되 긴 줄은 감싸지 않고 가로 스크롤한다(코드 블록과

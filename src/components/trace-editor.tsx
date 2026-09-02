@@ -19,6 +19,58 @@
 // 밀리지 않는다(북마크가 겪은 줄 인덱스 취약성 회피).
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
+import type { ReactNode } from 'react';
+
+// 지금까지 친 값(typed)을 원본(guide)과 같은 줄·같은 열끼리 글자 단위로 비교해,
+// 다른 글자만 .miss로 감싼 렌더 트리를 만든다. 진단층(.trace-diff)은 color가
+// transparent라 맞는 글자는 안 보이고(아래 입력층 글자가 비쳐 보임) 틀린 글자만
+// 빨갛게 뜬다. 아직 안 친 줄/글자는 렌더하지 않아 흐린 원본이 그대로 남는다.
+// 맞는 글자도 폭은 그대로 차지하도록 실제 친 글자를 렌더한다(한글 2배폭 정렬 보존).
+function renderDiff(guide: string, typed: string): ReactNode {
+  const guideLines = guide.split('\n');
+  const typedLines = typed.split('\n');
+  const out: ReactNode[] = [];
+  for (let i = 0; i < typedLines.length; i++) {
+    const t = typedLines[i];
+    const g = guideLines[i] ?? '';
+    const segs: ReactNode[] = [];
+    let buf = '';
+    let bufWrong: boolean | null = null;
+    const flush = (key: number) => {
+      if (buf === '') return;
+      segs.push(
+        bufWrong ? (
+          <span key={key} className="miss">
+            {buf}
+          </span>
+        ) : (
+          // 맞는 구간 — 클래스 없이 transparent 상속(투명). key로 배열 경고를 막는다.
+          <span key={key}>{buf}</span>
+        ),
+      );
+      buf = '';
+    };
+    for (let j = 0; j < t.length; j++) {
+      // guide 줄보다 길게 친 글자(j >= g.length)나 값이 다른 글자는 오답이다.
+      const wrong = j >= g.length || t[j] !== g[j];
+      if (bufWrong === null) bufWrong = wrong;
+      if (wrong !== bufWrong) {
+        flush(j);
+        bufWrong = wrong;
+      }
+      buf += t[j];
+    }
+    flush(t.length);
+    // 마지막 줄이 아니면 줄바꿈 문자를 넣는다(white-space: pre라 그대로 개행).
+    out.push(
+      <span key={`line-${i}`}>
+        {segs}
+        {i < typedLines.length - 1 ? '\n' : ''}
+      </span>,
+    );
+  }
+  return out;
+}
 
 // 안내(guide)와 학습자가 친 값(typed)을 같은 인덱스의 줄끼리 비교해 일치한
 // 줄 수를 센다. 줄 끝 공백만 무시한다(줄 중간 공백·들여쓰기는 그대로 채점) —
@@ -95,16 +147,22 @@ export function TraceEditor({
 }) {
   const guideRef = useRef<HTMLPreElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const diffRef = useRef<HTMLPreElement>(null);
 
-  // 입력면 스크롤을 안내층에 그대로 미러링한다 — 안내는 pointer-events: none
-  // 이라 자체 스크롤이 없으므로, 학습자가 긴 줄을 옆으로 넘기거나 캐럿을
-  // 따라 자동 스크롤될 때 아래 안내가 같이 밀리지 않으면 정렬이 깨진다.
+  // 입력면 스크롤을 안내층·진단층에 그대로 미러링한다 — 둘 다 pointer-events:
+  // none이라 자체 스크롤이 없으므로, 학습자가 긴 줄을 옆으로 넘기거나 캐럿을
+  // 따라 자동 스크롤될 때 아래 두 겹이 같이 밀리지 않으면 정렬이 깨진다.
   const syncScroll = useCallback(() => {
     const input = inputRef.current;
-    const guideEl = guideRef.current;
-    if (!input || !guideEl) return;
-    guideEl.scrollTop = input.scrollTop;
-    guideEl.scrollLeft = input.scrollLeft;
+    if (!input) return;
+    if (guideRef.current) {
+      guideRef.current.scrollTop = input.scrollTop;
+      guideRef.current.scrollLeft = input.scrollLeft;
+    }
+    if (diffRef.current) {
+      diffRef.current.scrollTop = input.scrollTop;
+      diffRef.current.scrollLeft = input.scrollLeft;
+    }
   }, []);
 
   // onChange 경로(캐럿 이동에 따른 자동 스크롤)에서도 다음 프레임에 한 번 더
@@ -117,6 +175,9 @@ export function TraceEditor({
   const total = guide.split('\n').length;
   const matched = countMatchingLines(guide, value);
   const complete = total > 0 && matched === total;
+
+  // 오답 글자만 빨갛게 덮는 진단 트리. value가 바뀔 때만 다시 만든다.
+  const diffContent = useMemo(() => renderDiff(guide, value), [guide, value]);
 
   // 완료된 블록의 설명을 순서대로 모은다. blockGuides가 없으면 빈 목록이라
   // 설명 UI 자체가 렌더되지 않는다(기존 동작과 동일).
@@ -158,6 +219,10 @@ export function TraceEditor({
           autoComplete="off"
           aria-label={ariaLabel}
         />
+        {/* 진단층 — 입력층 위에 겹쳐 오답 글자만 빨갛게 덮는다(맞는 글자는 투명). */}
+        <pre ref={diffRef} className="trace-diff" aria-hidden="true">
+          {diffContent}
+        </pre>
       </div>
       <p
         role="status"
