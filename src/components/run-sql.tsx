@@ -92,7 +92,15 @@ function ResultView({ results }: { results: PGliteResult[] }) {
   );
 }
 
-export function RunSQL({ children }: { children: ReactNode }) {
+export function RunSQL({
+  children,
+  blockGuides,
+}: {
+  children: ReactNode;
+  // 따라 치기 블록 설명(quick 260903-05g). MDX에서 SQL 블록의 논리 블록
+  // 순서대로 eli5 설명을 넘긴다. 생략하면 따라 치기에 설명이 붙지 않는다.
+  blockGuides?: readonly string[];
+}) {
   const staticBlockRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<Status>('idle');
   const [results, setResults] = useState<PGliteResult[]>([]);
@@ -212,6 +220,7 @@ export function RunSQL({ children }: { children: ReactNode }) {
             value={tracedCode ?? ''}
             onChange={setTracedCode}
             ariaLabel="따라 친 SQL"
+            blockGuides={blockGuides}
           />
         ) : null}
 

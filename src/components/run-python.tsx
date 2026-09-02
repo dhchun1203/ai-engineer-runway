@@ -30,7 +30,15 @@ function extractSourceCode(wrapper: HTMLDivElement | null): string {
   return pre?.textContent ?? '';
 }
 
-export function RunPython({ children }: { children: ReactNode }) {
+export function RunPython({
+  children,
+  blockGuides,
+}: {
+  children: ReactNode;
+  // 따라 치기 블록 설명(quick 260903-05g). MDX에서 코드 블록의 논리 블록
+  // 순서대로 eli5 설명을 넘긴다. 생략하면 따라 치기에 설명이 붙지 않는다.
+  blockGuides?: readonly string[];
+}) {
   const staticBlockRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<Status>('idle');
   const [output, setOutput] = useState<string | null>(null);
@@ -152,6 +160,7 @@ export function RunPython({ children }: { children: ReactNode }) {
             value={tracedCode ?? ''}
             onChange={setTracedCode}
             ariaLabel="따라 친 파이썬 코드"
+            blockGuides={blockGuides}
           />
         ) : null}
 

@@ -10,8 +10,15 @@
 // 가로채기는 한국어 조합 중인 글자를 깨뜨린다(preflight, 260901-etq 튜터
 // 프롬프트 입력창에서 같은 교훈을 이미 확인함). 정렬은 순전히 globals.css의
 // .trace-overlay/.trace-guide/.trace-input 공유 텍스트 메트릭에 맡긴다.
+//
+// blockGuides(quick 260903-05g): 코드의 논리 블록마다 "이 블록이 뭘 하는지"
+// eli5 설명을 순서대로 얹는다. 블록 = 빈 줄로 나뉘는, 비어있지 않은 줄들의
+// 연속 묶음(# N) 주석 구획과 자연히 일치). 학습자가 한 블록을 다 정확히 치면
+// 그 블록 설명이 아래에 누적으로 뜬다. 위치를 줄 인덱스가 아니라 블록에
+// 묶는 이유: 코드 내부 한두 줄을 고쳐도 블록 경계(빈 줄)는 그대로라 설명이
+// 밀리지 않는다(북마크가 겪은 줄 인덱스 취약성 회피).
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 // 안내(guide)와 학습자가 친 값(typed)을 같은 인덱스의 줄끼리 비교해 일치한
 // 줄 수를 센다. 줄 끝 공백만 무시한다(줄 중간 공백·들여쓰기는 그대로 채점) —
@@ -35,16 +42,56 @@ export function countMatchingLines(guide: string, typed: string): number {
   return matched;
 }
 
+// 가이드 코드를 논리 블록으로 쪼갠다 — 빈 줄(트림하면 '')을 경계로, 비어있지
+// 않은 줄들의 연속 묶음 하나가 한 블록이다. 각 블록을 [start, end](둘 다 포함)
+// 줄 인덱스 범위로 돌려준다. blockGuides 배열은 이 블록 순서에 1:1로 맞춘다.
+export function splitBlocks(guide: string): Array<{ start: number; end: number }> {
+  const lines = guide.split('\n');
+  const blocks: Array<{ start: number; end: number }> = [];
+  let start = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const blank = lines[i].trim() === '';
+    if (!blank && start === -1) {
+      start = i;
+    } else if (blank && start !== -1) {
+      blocks.push({ start, end: i - 1 });
+      start = -1;
+    }
+  }
+  if (start !== -1) blocks.push({ start, end: lines.length - 1 });
+  return blocks;
+}
+
+// 블록의 모든 줄이 (줄 끝 공백 관대하게) 일치하면 완료로 본다. 블록은 비어있지
+// 않은 줄들로만 이뤄지므로, 모두 일치했다는 것은 학습자가 그 줄들을 실제로 다
+// 쳤다는 뜻이다(빈 입력의 undefined→''는 비어있지 않은 코드 줄과 맞지 않는다).
+function isBlockComplete(
+  guideLines: string[],
+  typedLines: string[],
+  block: { start: number; end: number },
+): boolean {
+  for (let i = block.start; i <= block.end; i++) {
+    const g = (guideLines[i] ?? '').replace(/\s+$/, '');
+    const t = (typedLines[i] ?? '').replace(/\s+$/, '');
+    if (g !== t) return false;
+  }
+  return true;
+}
+
 export function TraceEditor({
   guide,
   value,
   onChange,
   ariaLabel,
+  blockGuides,
 }: {
   guide: string;
   value: string;
   onChange: (next: string) => void;
   ariaLabel: string;
+  // 블록 순서대로의 설명. 빈 문자열/생략은 그 블록에 설명 없음(구분선처럼
+  // 자명한 블록). 아예 안 주면 지금까지와 동일하게 설명 UI가 없다.
+  blockGuides?: readonly string[];
 }) {
   const guideRef = useRef<HTMLPreElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -70,6 +117,24 @@ export function TraceEditor({
   const total = guide.split('\n').length;
   const matched = countMatchingLines(guide, value);
   const complete = total > 0 && matched === total;
+
+  // 완료된 블록의 설명을 순서대로 모은다. blockGuides가 없으면 빈 목록이라
+  // 설명 UI 자체가 렌더되지 않는다(기존 동작과 동일).
+  const revealedNotes = useMemo(() => {
+    if (!blockGuides || blockGuides.length === 0) return [] as Array<{ key: number; text: string }>;
+    const guideLines = guide.split('\n');
+    const typedLines = value.split('\n');
+    const blocks = splitBlocks(guide);
+    const notes: Array<{ key: number; text: string }> = [];
+    for (let i = 0; i < blocks.length; i++) {
+      const text = blockGuides[i];
+      if (!text) continue; // 설명 없는 블록(구분선 등)은 건너뛴다
+      if (isBlockComplete(guideLines, typedLines, blocks[i])) {
+        notes.push({ key: i, text });
+      }
+    }
+    return notes;
+  }, [blockGuides, guide, value]);
 
   return (
     <div className="panel mt-2 p-3">
@@ -105,6 +170,22 @@ export function TraceEditor({
       >
         {complete ? '완성! 모든 줄이 원본과 일치해요' : `${matched}/${total}줄 일치`}
       </p>
+
+      {/* 블록을 다 치면 그 블록 설명이 여기 순서대로 쌓인다. 손으로 재생성한
+          직후에 "방금 친 게 뭐였는지"를 읽어 개념을 굳히는 자리 — aria-live로
+          새 설명이 뜰 때 보조기술에도 읽어 준다. */}
+      {revealedNotes.length > 0 ? (
+        <div className="mt-3 flex flex-col gap-3" aria-live="polite">
+          {revealedNotes.map((note) => (
+            <p
+              key={note.key}
+              className="text-label border-l-2 border-foreground pl-3 font-normal leading-relaxed text-foreground dark:border-foreground-dark dark:text-foreground-dark"
+            >
+              {note.text}
+            </p>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
