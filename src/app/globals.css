@@ -208,7 +208,8 @@ textarea,
 [data-section-tape],
 .btn,
 .btn-action,
-.chip {
+.chip,
+.nav-link {
   font-family: var(--font-pretendard), "Pretendard", ui-sans-serif, system-ui, sans-serif;
 }
 
