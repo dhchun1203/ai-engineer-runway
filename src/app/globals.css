@@ -1820,6 +1820,96 @@ code[data-theme*=" "] span {
   outline-color: var(--color-accent-dark);
 }
 
+/* ── 따라 치기(고스트 코드 오버레이, quick 260902-wk7) ───────────────────────
+   trace-editor.tsx가 흐린 원본(.trace-guide, <pre>) 위에 학습자가 직접 치는
+   투명 입력면(.trace-input, <textarea>)을 절대 위치로 겹친다. .code-editor를
+   재사용하지 않는 이유:
+   (1) 위층 입력면은 배경이 투명해야 아래 안내 코드가 비쳐 보이는데
+       .code-editor는 surface-2 면을 칠한다.
+   (2) 두 겹을 절대 위치로 포개므로 크기가 어긋나면 안 되는데 .code-editor의
+       resize: vertical은 한 겹만 리사이즈돼 정렬이 풀린다.
+   (3) 안내는 <pre>, 입력은 <textarea>로 서로 다른 기본 margin·border를
+       가지므로 둘을 0으로 눌러 동일 박스 메트릭으로 맞춰야 한다.
+   (4) 안내 <pre>는 @tailwindcss/typography의 :where(pre) 기본 장식
+       (네이비 배경·패딩·둥근 모서리)을 무력화해야 한다 — .code-output-text에서
+       이미 겪은 것과 같은 교훈이며, 단일 클래스(명세도 0,1,0)가 :where(pre)
+       (0,0,0)를 이긴다.
+   색은 새로 만들지 않고 기존 토큰만 조합한다(check-design-tokens 규칙 a·c:
+   hex 리터럴·임의값 대괄호 금지). */
+.trace-overlay {
+  position: relative;
+  width: 100%;
+  min-height: 20rem;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  background-color: var(--color-surface-2);
+}
+
+.dark .trace-overlay {
+  border-color: var(--color-line-dark);
+  background-color: var(--color-surface-2-dark);
+}
+
+/* 두 겹 공통 — 정렬 불변식. 여기서 갈라지면 고스트가 어긋난다. */
+.trace-guide,
+.trace-input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  border: 0;
+  box-sizing: border-box;
+  padding: 0.75rem;
+  font-family: var(--font-mono), ui-monospace, "JetBrains Mono", monospace;
+  font-size: var(--text-label);
+  line-height: 1.6;
+  letter-spacing: normal;
+  tab-size: 4;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+/* 안내층 — 흐리게(0.3) 깔린 읽기 전용 원본. 스크롤은 JS가 미러링해 몰아준다. */
+.trace-guide {
+  overflow: hidden;
+  background: transparent;
+  border-radius: 0;
+  color: var(--color-foreground);
+  opacity: 0.3;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+.dark .trace-guide {
+  color: var(--color-foreground-dark);
+}
+
+/* 입력층 — 투명 배경으로 안내가 비쳐 보이게 하고, 리사이즈는 정렬을 깨므로
+   막는다. */
+.trace-input {
+  overflow: auto;
+  background-color: transparent;
+  color: var(--color-foreground);
+  caret-color: var(--color-accent);
+  resize: none;
+  z-index: 1;
+}
+
+.dark .trace-input {
+  color: var(--color-foreground-dark);
+  caret-color: var(--color-accent-dark);
+}
+
+.trace-input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.dark .trace-input:focus-visible {
+  outline-color: var(--color-accent-dark);
+}
+
 /* 실행 출력 — 줄바꿈은 보존하되 긴 줄은 감싸지 않고 가로 스크롤한다(코드 블록과
    같은 문법). 에러 원문(TypeError 등)도 같은 상자 안에 색만 달리해 보여준다. */
 .code-output-text {
