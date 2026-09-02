@@ -6,23 +6,32 @@
 //
 // data-print-hide: 자기 자신은 종이에 찍히면 안 된다(globals.css @media print).
 
-import { Printer } from "lucide-react";
+import { PencilLine, Printer } from "lucide-react";
 
 export function PrintButton({
   label = "PDF로 저장",
   className = "",
+  annotate = false,
 }: {
   label?: string;
   className?: string;
+  // true면 필기 여백 변형: 인쇄 전에 body에 data-print-annotate를 켜서
+  // globals.css의 필기 컬럼 스코프를 활성화한다. 정리는 print-mode.tsx의
+  // leave()가 담당한다(afterprint/matchMedia/언마운트 세 경로 전부).
+  annotate?: boolean;
 }) {
+  const Icon = annotate ? PencilLine : Printer;
   return (
     <button
       type="button"
       data-print-hide
-      onClick={() => window.print()}
+      onClick={() => {
+        if (annotate) document.body.setAttribute("data-print-annotate", "");
+        window.print();
+      }}
       className={`btn tap-feedback text-label ${className}`}
     >
-      <Printer className="h-4 w-4 shrink-0" aria-hidden="true" />
+      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
       {label}
     </button>
   );
