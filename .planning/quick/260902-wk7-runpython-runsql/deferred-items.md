@@ -17,3 +17,14 @@ unrelated files are logged here rather than auto-fixed.
 `node scripts/check-design-tokens.mjs` all pass cleanly for the files this plan
 touches. Only the full-repo `npm run lint` step surfaces the unrelated site-nav.tsx
 failure.
+
+### RESOLVED
+
+두 위반을 effect 내부 setState 대신 React "adjusting state during render" 패턴으로
+옮겨 해소했다. `mountedMenu`(드롭다운)·`panelMounted`(햄버거) 마운트 게이트는
+openMenu/open 변화에 맞춰 파생되는 상태이므로, effect가 아니라 렌더 중 값이 실제로
+다를 때만 setState하도록 재작성했다(렌더 루프 방지 가드 포함). reduced-motion 즉시
+언마운트 분기는 `prefersReducedMotion()` 헬퍼로 보존. `npm run lint`가 0에러/0경고로
+통과하며, 드롭다운 reveal/전환/conceal·햄버거 펼침/접힘·onAnimationEnd 언마운트가
+아이패드(768)·모바일(375) 폭에서 회귀 없이 동작함을 실측 확인했다. tsc·build·brand·
+design-token 게이트도 모두 통과.

@@ -85,6 +85,17 @@ function NavBadge() {
   );
 }
 
+// reduced-motion 여부 — SSR(window 없음)에서는 false. 펼침/접힘 패널의 즉시
+// 언마운트 경로가 이 값을 본다: reduced-motion에선 animation:none이라
+// onAnimationEnd가 영영 안 뜨므로 패널을 애니메이션 종료가 아니라 이 판정으로
+// 즉시 내려야 한다(quick 260902-j7t·dropanim).
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
 export function SiteNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -162,40 +173,32 @@ export function SiteNav() {
   }, [openMenu]);
 
   // 드롭다운 패널 마운트 게이트(햄버거 panelMounted와 대칭, quick 260902-dropanim).
+  // effect가 아니라 렌더 중 조정(React "adjusting state during render")으로 둔다 —
+  // openMenu 변화에 맞춰 mountedMenu를 동기화하는 파생 상태이지 외부 시스템과의
+  // 동기화가 아니므로, effect 안에서 setState하면 cascading render를 부른다.
   // openMenu가 값이면 그 대메뉴를 즉시 마운트해 reveal이 발화한다(다른 대메뉴로
-  // 전환하면 이전 패널은 즉시 언마운트되고 새 패널이 펴진다 — 메뉴바 표준 동작).
-  // openMenu가 null이면 여기서 내리지 않고 conceal 애니메이션이 끝나면 패널의
-  // onAnimationEnd가 mountedMenu를 내린다. 단 reduced-motion에선 animation:none이라
-  // onAnimationEnd가 영영 안 뜨므로(패널이 남음) 그 경우에만 즉시 내린다.
-  useEffect(() => {
-    if (openMenu !== null) {
-      setMountedMenu(openMenu);
-      return;
-    }
-    if (
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      setMountedMenu(null);
-    }
-  }, [openMenu]);
+  // 전환하면 mountedMenu가 새 라벨로 바뀌어 이전 패널은 즉시 언마운트되고 새 패널이
+  // 펴진다 — 메뉴바 표준 동작). openMenu가 null이면 여기서 내리지 않고 conceal
+  // 애니메이션이 끝나면 패널의 onAnimationEnd가 mountedMenu를 내린다. 단
+  // reduced-motion에선 animation:none이라 onAnimationEnd가 영영 안 뜨므로(패널이 남음)
+  // 그 경우에만 즉시 내린다. 두 분기 모두 값이 실제로 다를 때만 setState해 렌더
+  // 루프를 막는다.
+  if (openMenu !== null) {
+    if (mountedMenu !== openMenu) setMountedMenu(openMenu);
+  } else if (mountedMenu !== null && prefersReducedMotion()) {
+    setMountedMenu(null);
+  }
 
-  // 패널 마운트 게이트(quick 260902-j7t). open=true면 즉시 마운트해 reveal이 발화한다.
-  // open=false면 여기서 언마운트하지 않는다 — conceal 애니메이션이 끝나면 패널의
-  // onAnimationEnd가 panelMounted를 내린다. 단 reduced-motion에서는 animation:none이라
-  // onAnimationEnd가 영영 안 뜨므로(패널이 남아 클릭을 가로챔), 그 경우에만 즉시 내린다.
-  useEffect(() => {
-    if (open) {
-      setPanelMounted(true);
-      return;
-    }
-    if (
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      setPanelMounted(false);
-    }
-  }, [open]);
+  // 햄버거 패널 마운트 게이트(quick 260902-j7t). 위 드롭다운 게이트와 같은 렌더 중
+  // 조정 패턴. open=true면 즉시 마운트해 reveal이 발화한다. open=false면 여기서
+  // 언마운트하지 않는다 — conceal 애니메이션이 끝나면 패널의 onAnimationEnd가
+  // panelMounted를 내린다. 단 reduced-motion에서는 animation:none이라 onAnimationEnd가
+  // 영영 안 뜨므로(패널이 남아 클릭을 가로챔), 그 경우에만 즉시 내린다.
+  if (open) {
+    if (!panelMounted) setPanelMounted(true);
+  } else if (panelMounted && prefersReducedMotion()) {
+    setPanelMounted(false);
+  }
 
   // 로그인 상태 조회 — 마운트와 경로 변경(로그인/로그아웃 리다이렉트 후 재조회) 때 부른다.
   // setState는 async 콜백 안에서만 부르므로 렌더 중 동기 setState 규칙에 걸리지 않는다.
