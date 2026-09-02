@@ -76,6 +76,22 @@ slug: "1-4-sql-queries-and-joins"
   <text x="265" y="256" textAnchor="middle" fontSize="13" fill="var(--diagram-ink)">FROM practice.students</text>
 </svg>
 
+<TwistBox>
+
+`WHERE grade = 1`처럼 `=`로 비교하는 데 익숙해지면 `WHERE grade = NULL`도 될 것 같지만, 아래 쿼리를 실행하기 전에 결과 행이 몇 개일지 먼저 예측해보세요.
+
+```sql
+-- grade 열 값이 비어 있는(NULL) 학생을 찾으려는 시도
+SELECT name FROM practice.students WHERE grade = NULL;
+-- 결과 행: 0개 (학생이 있어도!)
+```
+
+SQL의 `NULL`은 "값이 없다"가 아니라 "값을 모른다"입니다. 모르는 값끼리는 같은지도 알 수 없어서 `NULL = NULL`조차 `TRUE`가 아니라 `NULL`(미확정)이 됩니다.
+
+그래서 `grade = NULL`은 항상 `NULL`로 평가되어 `WHERE`가 그 행을 버립니다 — `grade`가 실제로 비어 있는 학생이 있어도 결과에 나오지 않습니다. 빈 값을 찾으려면 `=` 대신 `WHERE grade IS NULL`을 써야 합니다.
+
+</TwistBox>
+
 ### 🔗 JOIN — 두 표를 겹쳐 놓기
 
 JOIN(공통 열을 기준으로 두 표를 이어 붙이는 연산)은 두 표에서 같은 값을 가진 열끼리 짝을 맞춰 나란히 붙이는 것입니다. `INNER JOIN`은 양쪽 모두에 짝이 있는 행만 남기고, `LEFT JOIN`은 왼쪽 표의 행을 짝이 없어도 남깁니다 — "짝이 없는 행을 버리느냐, 남기느냐"의 차이입니다.
@@ -456,3 +472,11 @@ DROP SCHEMA IF EXISTS practice CASCADE;
 `LEFT JOIN`은 왼쪽 표를 기준으로, 오른쪽 표에 짝이 없는 행도 남기고 오른쪽 값 자리를 `NULL`로 채웁니다. `INNER JOIN`이라면 버려졌을 "짝 없는 행"까지 결과에 포함되므로, 행 수가 `INNER JOIN`과 같거나 더 많아집니다.
 
 </details>
+
+<NextTeaser>
+
+지금까지 배운 SQL로 학생별 평균 점수를 계산해 순위를 매길 수 있습니다. 그런데 이번에 새로 들어온 학생 한 명의 점수 패턴만 보고, 이 학생이 어떤 등급 그룹에 속할지 미리 알아내려면 어떻게 해야 할까요?
+
+GROUP BY는 이미 표에 있는 데이터를 묶을 뿐입니다. 아직 한 번도 본 적 없는 새 데이터가 어느 그룹에 속할지 예측하는 데도 GROUP BY를 그대로 쓸 수 있을까요?
+
+</NextTeaser>
