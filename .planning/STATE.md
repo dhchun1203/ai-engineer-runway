@@ -6,7 +6,7 @@ status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
 last_updated: "2026-08-31T15:06:55.410Z"
 last_activity: 2026-09-01
-last_activity_desc: 260902-czv — 반전 박스+안테피스 예고 컴포넌트·파일럿 2편
+last_activity_desc: 260902-czv — 반전 박스+안테피스 예고 소급 완료(예고 34·반전 20), 2단 15/15 완료
 current_phase: null
 current_phase_name: null
 progress:
@@ -144,11 +144,17 @@ TIL 저장/복원 흔적 없음). 아이패드 실기기 UAT는 사용자 몫.
   삭제 → npm install로 복구, 빌드·게이트 정상화. 향후 워크트리 정리는 git worktree remove
   우선, rm -rf는 .bin 손상 위험.
 
-**리서치 2단 — 14/15 완료. 반전 박스+안테피스 예고 소급 적용 검토 중(사용자 요청 2026-09-02)**:
-- **반전 박스 + 안테피스 예고** — 당초 "미독 레슨부터"로 보류했으나 사용자가 소급 적용 가능
-  여부 문의. 소급 저작 진행 예정(선택적 — 실제 반전이 있는 레슨에 반전 박스, 다음이 있는
-  레슨에 질문형 예고).
-- (빈칸 파일럿은 클로즈 필사 8/27 롤백 이력·사용자 아버전으로 기각 유지 — Deferred Items)
+**2026-09-02 반전 박스+안테피스 예고 소급 완료(quick 260902-czv 파일럿 d530117 + 확장 e39ad0e)**:
+사용자가 소급 적용 가능 여부 문의 → 진행. TwistBox·NextTeaser 컴포넌트 2종 신설(mdx-content
+매핑). **안테피스 예고**: "다음"이 있는 34편 전부(마지막 3-7 제외)에 질문형 미니 문제(스포일러
+금지). **반전 박스**: 진짜 경계 사례가 있는 20편에만 선택적(git force-push·한국어 토큰·open("w")·
+FK 삭제·LogisticRegression 이름·DummyClassifier 99점·service_role 우회·float·explicit any·배열
+mutate·truthiness·bcrypt 솔트·zod 여분필드·임베딩 반의어·BM25 스케일·LoRA<1%·인젝션 구분자·
+카나리 표본). 프로젝트 가이드·ops 레슨은 억지 반전 없이 예고만. 병렬 배치 5개 저작, 458줄 순수
+추가, 게이트 통과. 아이패드 실기기 UAT는 사용자 몫.
+
+**★ 리서치 2단 15/15 전부 완료·배포.** (빈칸 파일럿만 클로즈 필사 8/27 롤백 이력·사용자
+아버전으로 기각 — Deferred Items)
 
 새 마일스톤으로 묶으려면 /gsd-new-milestone.
 
