@@ -50,11 +50,13 @@ const NAV_ITEMS: readonly NavItem[] = [
       { label: "소개", href: "/about" },
     ],
   },
-  // 계정 — 이메일+비밀번호 로그인/로그아웃 진입점(quick-260902-kau). 로그인 상태와
-  // 무관하게 같은 라벨을 쓴다(내비를 서버 세션에 의존시키면 정적 셸 페이지가 동적으로
-  // 강등된다). 실제 상태 표시·로그아웃은 /login 페이지가 담당한다.
-  { label: "계정", href: "/login" },
 ];
+
+// 계정 항목은 로그인 상태에 따라 라벨이 달라지므로(비로그인 "로그인" / 로그인 "프로필")
+// NAV_ITEMS에 정적으로 넣지 않고 컴포넌트에서 상태로 만들어 덧붙인다. 상태는 서버 세션에
+// 직접 의존하지 않고 클라이언트에서 /api/auth를 한 번 조회해 얻는다 — 루트 레이아웃이
+// 쿠키를 읽으면 정적 셸 페이지(레슨·Step·커리큘럼)가 동적으로 강등되기 때문이다.
+const ACCOUNT_HREF = "/login";
 
 // 데스크톱 행과 640px 미만 패널이 같은 활성 판정을 쓰게 하는 순수 함수 —
 // 두 곳이 나중에 어긋나는 것을 막는다(quick task 260827-g6u).
@@ -93,6 +95,9 @@ export function SiteNav() {
   // 열린 대메뉴 하나만 식별한다(라벨을 키로). 동시에 하나만 열린다 — 다른
   // 트리거를 누르면 그쪽으로 전환된다.
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  // 로그인 상태 — 계정 항목 라벨("로그인"/"프로필")을 고르는 데만 쓴다. null은 "아직 모름"
+  // (그 동안 "로그인"으로 보수적으로 표시). /api/auth를 마운트·경로 변경 시 조회한다.
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
   const headerRef = useRef<HTMLElement>(null);
   // 데스크톱 대메뉴 행 컨테이너 — 바깥 클릭 판정의 경계다. 이 안(트리거·패널)의
   // 클릭은 유지, 밖(로고·토글·본문)의 클릭은 드롭다운을 닫는다.
@@ -168,6 +173,30 @@ export function SiteNav() {
     }
   }, [open]);
 
+  // 로그인 상태 조회 — 마운트와 경로 변경(로그인/로그아웃 리다이렉트 후 재조회) 때 부른다.
+  // setState는 async 콜백 안에서만 부르므로 렌더 중 동기 setState 규칙에 걸리지 않는다.
+  useEffect(() => {
+    let active = true;
+    fetch("/api/auth", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (active) setLoggedIn(Boolean(data?.loggedIn));
+      })
+      .catch(() => {
+        // 조회 실패 시 라벨은 보수적으로 "로그인"에 머문다(기능 영향 없음).
+      });
+    return () => {
+      active = false;
+    };
+  }, [pathname]);
+
+  // 4개 대메뉴 + 상태에 따른 계정 항목("로그인"/"프로필"). 데스크톱·모바일 두 렌더가
+  // 같은 목록을 쓰게 한 벌만 만든다.
+  const navItems: readonly NavItem[] = [
+    ...NAV_ITEMS,
+    { label: loggedIn ? "프로필" : "로그인", href: ACCOUNT_HREF },
+  ];
+
   return (
     // 크림 지면과 같은 색 + 굵은 잉크 밑줄 하나(.site-header) — 얇은 회색 경계선은
     // 이 디자인의 문법이 아니다. sticky로 두어 긴 레슨에서도 내비가 따라온다.
@@ -187,7 +216,7 @@ export function SiteNav() {
           ref={desktopNavRef}
           className="hidden flex-1 flex-wrap items-center gap-x-4 gap-y-1 sm:flex"
         >
-          {NAV_ITEMS.map((item, index) => {
+          {navItems.map((item, index) => {
             // 드롭다운 부모 — 클릭 토글(hover 아님, 아이패드 터치 대응).
             if (item.children && item.children.length > 0) {
               const isOpen = openMenu === item.label;
@@ -317,7 +346,7 @@ export function SiteNav() {
               변경은 없다. */}
           <div className="nav-panel-clip">
             <div className="mx-auto flex w-full max-w-5xl flex-col px-4 pb-2">
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               // 드롭다운 부모 — 640px 미만에서는 드롭다운이 아니라 항상 펼친
               // 아코디언. 대메뉴 라벨은 비링크 소제목(span), 그 아래 자식 링크를
               // 좌측 잉크 라인으로 들여쓴 그룹으로 배치한다.
