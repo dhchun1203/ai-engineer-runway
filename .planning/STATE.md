@@ -4,9 +4,9 @@ milestone: v1.0
 milestone_name: 사전학습 사이트 v1.0
 status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
-last_updated: "2026-09-02T04:25:00.000Z"
+last_updated: "2026-09-02T05:50:00.000Z"
 last_activity: 2026-09-02
-last_activity_desc: 260902-iig — 헤더 내비 대메뉴 4개 + 소메뉴 2단 재정리(드롭다운·아코디언, /print 승격), 아이패드 실측·게이트 통과
+last_activity_desc: 260902-kau — 이메일+비밀번호 로그인 도입(시크릿 쿠키 게이트 위에 additive), 소유자 계정 생성, 아이패드 로그인 왕복 실측·게이트/빌드 통과
 current_phase: null
 current_phase_name: null
 progress:
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-27 after v1.0)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-02 — Completed quick task 260902-j7t: 모바일 햄버거 패널 닫힘 애니메이션
+Last activity: 2026-09-02 — Completed quick task 260902-kau: 이메일+비밀번호 로그인 도입(시크릿 게이트 위 additive)
 
 ### 다음에 할 일
 
@@ -323,6 +323,7 @@ None yet.
 | 260902-iig | 헤더 내비를 대메뉴 4개 + 소메뉴 2단 구조로 재정리 — 8개 평면 나열을 단독 링크 2개(오늘의 학습·커리큘럼) + 클릭 드롭다운 2개(학습 도구▾: 복습·용어집·노트·질문함 / 일정·정보▾: 일정표·PDF 내보내기·소개)로 압축. 숨어있던 /print를 "일정·정보"로 승격. 아이패드 터치 대응(hover 아닌 클릭 토글·바깥클릭·Esc·상호배타), 모바일 햄버거는 소제목+들여쓴 아코디언, 부모 활성 판정(자식 경로 매치 시 대메뉴 활성). site-nav.tsx 단일 파일. 내장 브라우저 아이패드/모바일 실측(드롭다운·전환·활성·아코디언·/print 확인). tsc·lint·토큰·build 게이트 통과 | 2026-09-02 | b82592f | [260902-iig-2](./quick/260902-iig-2/) |
 | 260902-j1i | 모바일 햄버거 패널 펼침(unfold) 애니메이션 — opacity+translateY 페이드인을 grid-template-rows 0fr→1fr 펼침으로 교체(콘텐츠 auto 높이를 JS 없이 부드럽게 펴는 표준 CSS 기법; max-height 하드코딩·scaleY 왜곡 대비). .nav-panel-clip(overflow:hidden·min-height:0) 래퍼로 0fr 구간 클립, prefers-reduced-motion 존중 유지. globals.css·site-nav.tsx 2파일. 내장 브라우저 모바일 폭 실측: 패널 높이 1px→288px→467px(~180ms) 펼침 확인 | 2026-09-02 | 344f013 | [260902-j1i-mobile-menu-unfold-anim](./quick/260902-j1i-mobile-menu-unfold-anim/) |
 | 260902-j7t | 모바일 햄버거 패널 닫힘(접힘) 애니메이션 — 조건부 렌더라 닫자마자 사라지던 것을 접힘 끝까지 유지 후 언마운트로 전환. open(논리)/panelMounted(DOM) 분리, data-state=open\|closed로 reveal/conceal 키프레임 분기(conceal forwards로 재확장 깜빡임 차단), onAnimationEnd 언마운트. reduced-motion은 animationend 미발화라 즉시 언마운트 경로 별도 처리(패널이 클릭 가로채는 함정 방어). 내장 브라우저 375px 실측: 닫기 476→316→언마운트(~180ms), 닫힘 후 DOM 부재 확인 | 2026-09-02 | 4ca54ce | [260902-j7t-mobile-menu-collapse-anim](./quick/260902-j7t-mobile-menu-collapse-anim/) |
+| 260902-kau | 이메일+비밀번호 로그인 도입 — 새 기기마다 시크릿 키 찾던 불편 제거. 기존 공유 시크릿 쿠키 게이트를 제거하지 않고 additive하게 확장: hasUnlockCookie()가 (a)소유자(OWNER_EMAIL) 로그인 세션 또는 (b)기존 runway_unlock 시크릿 중 하나라도 참이면 통과(함수명·순서검사 G4/G14/G17 보존, e2e 하네스·/unlock 존치). @supabase/ssr 서버 사이드 전용(server client + Next16 proxy 세션 리프레시, NEXT_PUBLIC_ 미사용 G3 보존, 게이트 G8 "금지→존재요구" 전환). 소유자 계정 auth.users 직접 생성(email_confirm, 트리거 없음 확인). /login·계정 내비·잠금 문구 로그인화. 데이터 무손상(진도/노트 그대로, ai-news-briefing 테이블 미접촉). 아이패드 크기 로그인/로그아웃 왕복 실측, 빌드·게이트 통과. 배포 후속: Vercel에 OWNER_EMAIL·SUPABASE_ANON_KEY 필요 | 2026-09-02 | d86a94d 외 2 | [260902-kau-email-password-login](./quick/260902-kau-email-password-login/) |
 
 ## Deferred Items
 
