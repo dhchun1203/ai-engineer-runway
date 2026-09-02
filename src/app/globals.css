@@ -712,9 +712,16 @@ textarea,
    unfold로 바꾼다. grid-template-rows를 0fr→1fr로 애니메이트하면 콘텐츠의 auto 높이를
    JS로 재지 않고도 0에서 실측 높이까지 부드럽게 편다(max-height 하드코딩은 잘림·이징
    튐, scaleY는 텍스트가 눌려 찌그러짐 — 둘 다 기각). 대상이 작은 패널 하나(≤7행),
-   지속 ~200ms라 프레임당 레이아웃 비용은 무시할 수준이다. 조건부 렌더로 마운트되므로
-   키프레임이 곧바로 발화한다(스타팅 스타일 불필요). .nav-panel-clip은 grid 자식을
-   overflow:hidden으로 잘라 0fr 구간에서 콘텐츠가 새지 않게 한다(min-height:0 필수). */
+   지속 ~200ms라 프레임당 레이아웃 비용은 무시할 수준이다. .nav-panel-clip은 grid 자식을
+   overflow:hidden으로 잘라 0fr 구간에서 콘텐츠가 새지 않게 한다(min-height:0 필수).
+
+   260902-j7t에서 닫힘(접힘)까지 대칭으로 넣는다. 패널은 조건부 렌더라 닫자마자
+   언마운트되면 접힘을 볼 수 없으므로, site-nav.tsx가 닫힘 애니메이션이 끝날 때까지
+   패널을 잠깐 더 마운트해 둔 뒤 언마운트한다(panelMounted + onAnimationEnd). 어느
+   방향인지는 data-state=open|closed로 가르고, 여기서 각각 reveal/conceal 키프레임을
+   건다. conceal은 forwards로 마지막 0fr·opacity 0을 붙들어 언마운트 직전 한 프레임의
+   재확장 깜빡임을 막는다. reduced-motion에선 양쪽 다 animation:none이라 onAnimationEnd가
+   안 뜨므로, 그 경우 site-nav.tsx가 즉시 언마운트한다. */
 @keyframes nav-panel-reveal {
   from {
     grid-template-rows: 0fr;
@@ -726,10 +733,28 @@ textarea,
   }
 }
 
+@keyframes nav-panel-conceal {
+  from {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+  to {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
 .nav-panel-reveal {
   display: grid;
   grid-template-rows: 1fr;
+}
+
+.nav-panel-reveal[data-state="open"] {
   animation: nav-panel-reveal 200ms ease-out;
+}
+
+.nav-panel-reveal[data-state="closed"] {
+  animation: nav-panel-conceal 180ms ease-in forwards;
 }
 
 .nav-panel-clip {
@@ -738,7 +763,8 @@ textarea,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nav-panel-reveal {
+  .nav-panel-reveal[data-state="open"],
+  .nav-panel-reveal[data-state="closed"] {
     animation: none;
   }
 }

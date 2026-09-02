@@ -81,6 +81,11 @@ function NavBadge() {
 export function SiteNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  // 햄버거 패널을 실제로 DOM에 두는지 여부. open(논리 토글)과 분리한다 — 닫힘
+  // 애니메이션(conceal)이 끝날 때까지 패널을 잠깐 더 마운트해 둬야 접힘이 보인다
+  // (quick 260902-j7t). open=true면 즉시 마운트(reveal 발화), open=false면 여기서
+  // 바로 언마운트하지 않고 onAnimationEnd(또는 reduced-motion 즉시 경로)에서 내린다.
+  const [panelMounted, setPanelMounted] = useState(false);
   // 열린 대메뉴 하나만 식별한다(라벨을 키로). 동시에 하나만 열린다 — 다른
   // 트리거를 누르면 그쪽으로 전환된다.
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -141,6 +146,23 @@ export function SiteNav() {
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [openMenu]);
+
+  // 패널 마운트 게이트(quick 260902-j7t). open=true면 즉시 마운트해 reveal이 발화한다.
+  // open=false면 여기서 언마운트하지 않는다 — conceal 애니메이션이 끝나면 패널의
+  // onAnimationEnd가 panelMounted를 내린다. 단 reduced-motion에서는 animation:none이라
+  // onAnimationEnd가 영영 안 뜨므로(패널이 남아 클릭을 가로챔), 그 경우에만 즉시 내린다.
+  useEffect(() => {
+    if (open) {
+      setPanelMounted(true);
+      return;
+    }
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      setPanelMounted(false);
+    }
+  }, [open]);
 
   return (
     // 크림 지면과 같은 색 + 굵은 잉크 밑줄 하나(.site-header) — 얇은 회색 경계선은
@@ -272,9 +294,18 @@ export function SiteNav() {
           <ThemeToggle />
         </div>
       </nav>
-      {open && (
+      {panelMounted && (
         <div
           id="site-nav-panel"
+          data-state={open ? "open" : "closed"}
+          onAnimationEnd={(e) => {
+            // 패널 자신의 애니메이션만 본다(자식 transition은 animationend를 안 쏘지만
+            // 방어적으로 currentTarget 일치도 확인). 닫히는 중(open=false)에 애니메이션이
+            // 끝났으면 이제 언마운트한다.
+            if (e.target === e.currentTarget && !open) {
+              setPanelMounted(false);
+            }
+          }}
           className="nav-panel-reveal hairline sm:hidden"
         >
           {/* grid 자식을 overflow:hidden으로 잘라 0fr→1fr 펼침 동안 콘텐츠가 새지
