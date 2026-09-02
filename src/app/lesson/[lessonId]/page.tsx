@@ -5,6 +5,8 @@ import { DepthBadge } from "@/components/depth-badge";
 import { EstimatedTime } from "@/components/estimated-time";
 import { LessonBreadcrumb, LessonPager } from "@/components/lesson-nav";
 import { SectionTape } from "@/components/section-tape";
+import { BookmarkButton } from "@/components/bookmark-button";
+import { SectionScrollRestore } from "@/components/section-scroll-restore";
 import { ProgressProvider } from "@/components/progress-provider";
 import { PrintButton } from "@/components/print-button";
 import { CopyLessonPrompt } from "@/components/lesson-copy-prompt";
@@ -106,6 +108,15 @@ export default async function LessonPage(
           {lesson.hasContent ? (
             <>
               <SectionTape articleId={LESSON_ARTICLE_ID} stepId={lesson.stepId as StepId} />
+              {/* 북마크에서 되돌아왔을 때 그 소제목으로 스크롤(화면엔 아무것도 안 그림). */}
+              <SectionScrollRestore articleId={LESSON_ARTICLE_ID} />
+              {/* 좌하단 고정 "이 위치 북마크" 버튼 — 현재 소제목을 지정/해제한다.
+                  자체 fetch로 상태를 관리하므로 진도 아일랜드와 독립이다. */}
+              <BookmarkButton
+                lessonId={lesson.slug}
+                lessonTitle={lesson.title}
+                articleId={LESSON_ARTICLE_ID}
+              />
               {/* data-step: 본문 그림(`[data-diagram]`)의 강조색이 이 레슨의 Step 색을
                   따라가게 하는 유일한 연결 고리다 — globals.css의 `.prose[data-step=...]`
                   규칙이 이 값을 읽는다. 없으면 모든 그림이 Step 1 파랑으로 굳는다. */}

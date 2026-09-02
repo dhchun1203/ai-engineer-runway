@@ -13,7 +13,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 // 소메뉴 2단으로 묶는다:
 //   1. 오늘의 학습 (/)        — 단독 링크
 //   2. 커리큘럼 (/curriculum) — 단독 링크
-//   3. 학습 도구 ▾            — 소메뉴: 복습·용어집·노트·질문함
+//   3. 학습 도구 ▾            — 소메뉴: 복습·용어집·노트·북마크·질문함
 //   4. 일정·정보 ▾            — 소메뉴: 일정표·PDF 내보내기·소개
 // /print(PDF 내보내기)는 지금까지 커리큘럼 페이지 안 버튼으로만 닿던 숨은
 // 진입점 — 이번에 "일정·정보" 소메뉴로 승격한다(라우트 자체는 이미 존재).
@@ -38,6 +38,7 @@ const NAV_ITEMS: readonly NavItem[] = [
       { label: "복습", href: "/review" },
       { label: "용어집", href: "/glossary" },
       { label: "노트", href: "/notes" },
+      { label: "북마크", href: "/bookmarks" },
       { label: "질문함", href: "/inbox" },
     ],
   },
