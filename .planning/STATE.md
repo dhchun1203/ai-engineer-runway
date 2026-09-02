@@ -4,9 +4,9 @@ milestone: v1.0
 milestone_name: 사전학습 사이트 v1.0
 status: Awaiting next milestone
 stopped_at: v1.0 milestone closed
-last_updated: "2026-08-31T15:06:55.410Z"
-last_activity: 2026-09-01
-last_activity_desc: 260902-czv — 반전 박스+안테피스 예고 소급 완료(예고 34·반전 20), 2단 15/15 완료
+last_updated: "2026-09-02T04:25:00.000Z"
+last_activity: 2026-09-02
+last_activity_desc: 260902-iig — 헤더 내비 대메뉴 4개 + 소메뉴 2단 재정리(드롭다운·아코디언, /print 승격), 아이패드 실측·게이트 통과
 current_phase: null
 current_phase_name: null
 progress:
@@ -320,6 +320,7 @@ None yet.
 | 260901-ksv | 브라우저 안 SQL 실행 파일럿 — PGlite 지연 로드(dynamic import ESM·실행 전 0바이트·npm 의존성 0), 페이지 단위 지속 인스턴스(셋업 한 번→쿼리 여러 번), RunSQL 컴포넌트(결과 HTML 표·에러 Postgres 원문), 1-4 SQL 쿼리·조인 레슨 8블록 래핑. 출력 정리(셋업=한 줄, 누적 행 수 버그 제거). 아이패드 UAT 승인. 나머지 SQL 레슨 3편 확장(f9df735, DROP-first 재실행 안전화+EXPLAIN 콘텐츠 정정) | 2026-09-01 | cd8c915 | [260901-ksv-sql-pglite-1-4-sql](./quick/260901-ksv-sql-pglite-1-4-sql/) |
 | 260901-r9t | 리서치 2단 — /glossary 용어집. 247용어를 velite 빌드타임 파서(L5 게이트 로직 이식·실패 시 throw)로 뽑아 정적 페이지 렌더. 214 고유 단어·다의어 27개 그룹 표시(병합 금지, 정의별 출처 레슨 역링크), ㄱㄴㄷ+A~W 점프 인덱스, 내비 링크. check-route-rendering 등록. 라이트/다크 실측 | 2026-09-01 | 8d7d83c | [260901-r9t-glossary-247-a-z](./quick/260901-r9t-glossary-247-a-z/) |
 | 260901-s8b | 리서치 2단 — 완료 예측일. pace.ts에 순수 함수 computeProjection 추가(computePace 불변·의존성 0 유지, UTC 산술로 타임존 오프바이원 차단), 홈 페이스 패널에 "이 속도면 M월 D일 완주 예정 · 개강 전에 끝나요" 한 줄. 낙담 방지: behind는 예측 미표시(함수 show 플래그 + 컴포넌트 분기 부재 두 겹 방어), 노이즈 가드(완료 0·경과 2일 미만 미표시), ahead=accent·on-track=중성. check-pace 9케이스 신설(38 통과) | 2026-09-01 | acfe445 | [260901-s8b-m-d](./quick/260901-s8b-m-d/) |
+| 260902-iig | 헤더 내비를 대메뉴 4개 + 소메뉴 2단 구조로 재정리 — 8개 평면 나열을 단독 링크 2개(오늘의 학습·커리큘럼) + 클릭 드롭다운 2개(학습 도구▾: 복습·용어집·노트·질문함 / 일정·정보▾: 일정표·PDF 내보내기·소개)로 압축. 숨어있던 /print를 "일정·정보"로 승격. 아이패드 터치 대응(hover 아닌 클릭 토글·바깥클릭·Esc·상호배타), 모바일 햄버거는 소제목+들여쓴 아코디언, 부모 활성 판정(자식 경로 매치 시 대메뉴 활성). site-nav.tsx 단일 파일. 내장 브라우저 아이패드/모바일 실측(드롭다운·전환·활성·아코디언·/print 확인). tsc·lint·토큰·build 게이트 통과 | 2026-09-02 | b82592f | [260902-iig-2](./quick/260902-iig-2/) |
 
 ## Deferred Items
 
