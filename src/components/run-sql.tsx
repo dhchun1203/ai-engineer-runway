@@ -11,8 +11,13 @@
 import { useCallback, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { PGliteLoadError, runSql, type PGliteResult } from '@/lib/pglite-runtime';
+import { TraceEditor } from '@/components/trace-editor';
 
 type Status = 'idle' | 'loading' | 'running' | 'done' | 'error-load' | 'error-run';
+// 세 모드는 상호 배타적이다(하나의 유니언으로 표현해 두 불리언이 동시에
+// 참이 되는 버그를 구조적으로 차단한다) — 원본 보기 / 고쳐 보기(편집) /
+// 따라 치기(고스트 오버레이).
+type Mode = 'view' | 'edit' | 'trace';
 
 function extractSourceCode(wrapper: HTMLDivElement | null): string {
   if (!wrapper) return '';
@@ -93,9 +98,11 @@ export function RunSQL({ children }: { children: ReactNode }) {
   const [results, setResults] = useState<PGliteResult[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const [isEditing, setIsEditing] = useState(false);
+  const [mode, setMode] = useState<Mode>('view');
   const [editedCode, setEditedCode] = useState<string | null>(null);
   const [seedCode, setSeedCode] = useState<string | null>(null);
+  const [tracedCode, setTracedCode] = useState<string | null>(null);
+  const [guideCode, setGuideCode] = useState<string | null>(null);
 
   const runCode = useCallback(async (sql: string) => {
     setStatus((prev) => (prev === 'idle' ? 'loading' : 'running'));
@@ -122,23 +129,39 @@ export function RunSQL({ children }: { children: ReactNode }) {
   }, []);
 
   const handleRunClick = useCallback(() => {
-    const sql = isEditing && editedCode !== null ? editedCode : extractSourceCode(staticBlockRef.current);
+    const sql =
+      mode === 'edit'
+        ? (editedCode ?? '')
+        : mode === 'trace'
+          ? (tracedCode ?? '')
+          : extractSourceCode(staticBlockRef.current);
     void runCode(sql);
-  }, [isEditing, editedCode, runCode]);
+  }, [mode, editedCode, tracedCode, runCode]);
 
   const handleEditClick = useCallback(() => {
-    if (!isEditing) {
+    if (mode !== 'edit') {
       const source = extractSourceCode(staticBlockRef.current);
       setSeedCode(source);
       setEditedCode(source);
-      setIsEditing(true);
+      setMode('edit');
     }
-  }, [isEditing]);
+  }, [mode]);
+
+  const handleTraceClick = useCallback(() => {
+    if (mode !== 'trace') {
+      const source = extractSourceCode(staticBlockRef.current);
+      setGuideCode(source);
+      setTracedCode('');
+      setMode('trace');
+    }
+  }, [mode]);
 
   const handleResetClick = useCallback(() => {
-    setIsEditing(false);
+    setMode('view');
     setEditedCode(null);
     setSeedCode(null);
+    setTracedCode(null);
+    setGuideCode(null);
   }, []);
 
   const isBusy = status === 'loading' || status === 'running';
@@ -159,12 +182,12 @@ export function RunSQL({ children }: { children: ReactNode }) {
     <div data-run-sql>
       {/* 원본 하이라이팅 블록은 편집 중에도 언마운트하지 않고 숨기기만 한다 —
           "원래대로"를 누르면 다시 이 DOM에서 코드 원문을 뽑아야 한다. */}
-      <div ref={staticBlockRef} hidden={isEditing}>
+      <div ref={staticBlockRef} hidden={mode !== 'view'}>
         {children}
       </div>
 
       <div data-print-hide>
-        {isEditing ? (
+        {mode === 'edit' ? (
           <div className="panel mt-2 p-3">
             <label className="text-label mb-2 block font-normal text-muted dark:text-muted-dark">
               SQL을 고쳐서 실행할 수 있어요. 다 고쳤으면 아래 실행 버튼을 누르세요.
@@ -183,6 +206,15 @@ export function RunSQL({ children }: { children: ReactNode }) {
           </div>
         ) : null}
 
+        {mode === 'trace' ? (
+          <TraceEditor
+            guide={guideCode ?? ''}
+            value={tracedCode ?? ''}
+            onChange={setTracedCode}
+            ariaLabel="따라 친 SQL"
+          />
+        ) : null}
+
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <button
             type="button"
@@ -196,7 +228,10 @@ export function RunSQL({ children }: { children: ReactNode }) {
           <button type="button" className="btn tap-feedback" onClick={handleEditClick} disabled={isBusy}>
             고쳐 보기
           </button>
-          {isEditing ? (
+          <button type="button" className="btn tap-feedback" onClick={handleTraceClick} disabled={isBusy}>
+            따라 치기
+          </button>
+          {mode !== 'view' ? (
             <button type="button" className="btn tap-feedback" onClick={handleResetClick} disabled={isBusy}>
               원래대로
             </button>
