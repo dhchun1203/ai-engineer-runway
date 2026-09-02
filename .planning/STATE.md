@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-27 after v1.0)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-03 — Completed quick task 260902-wk7: RunPython·RunSQL 따라 치기(고스트 코드 오버레이) 모드
+Last activity: 2026-09-03 — Completed quick task 260903-05g: 따라 치기 블록 설명 가이드(파일럿) + 오답 글자 빨간색 표시
 
 ### 다음에 할 일
 
@@ -325,6 +325,7 @@ None yet.
 | 260902-j7t | 모바일 햄버거 패널 닫힘(접힘) 애니메이션 — 조건부 렌더라 닫자마자 사라지던 것을 접힘 끝까지 유지 후 언마운트로 전환. open(논리)/panelMounted(DOM) 분리, data-state=open\|closed로 reveal/conceal 키프레임 분기(conceal forwards로 재확장 깜빡임 차단), onAnimationEnd 언마운트. reduced-motion은 animationend 미발화라 즉시 언마운트 경로 별도 처리(패널이 클릭 가로채는 함정 방어). 내장 브라우저 375px 실측: 닫기 476→316→언마운트(~180ms), 닫힘 후 DOM 부재 확인 | 2026-09-02 | 4ca54ce | [260902-j7t-mobile-menu-collapse-anim](./quick/260902-j7t-mobile-menu-collapse-anim/) |
 | 260902-kau | 이메일+비밀번호 로그인 도입 — 새 기기마다 시크릿 키 찾던 불편 제거. 기존 공유 시크릿 쿠키 게이트를 제거하지 않고 additive하게 확장: hasUnlockCookie()가 (a)소유자(OWNER_EMAIL) 로그인 세션 또는 (b)기존 runway_unlock 시크릿 중 하나라도 참이면 통과(함수명·순서검사 G4/G14/G17 보존, e2e 하네스·/unlock 존치). @supabase/ssr 서버 사이드 전용(server client + Next16 proxy 세션 리프레시, NEXT_PUBLIC_ 미사용 G3 보존, 게이트 G8 "금지→존재요구" 전환). 소유자 계정 auth.users 직접 생성(email_confirm, 트리거 없음 확인). /login·계정 내비·잠금 문구 로그인화. 데이터 무손상(진도/노트 그대로, ai-news-briefing 테이블 미접촉). 아이패드 크기 로그인/로그아웃 왕복 실측, 빌드·게이트 통과. 배포 후속: Vercel에 OWNER_EMAIL·SUPABASE_ANON_KEY 필요 | 2026-09-02 | d86a94d 외 2 | [260902-kau-email-password-login](./quick/260902-kau-email-password-login/) |
 | 260902-wk7 | RunPython·RunSQL에 "따라 치기"(고스트 코드 오버레이) 모드 추가 — 원본을 흐리게(0.3) 깔고 그 위 투명 입력면에 손으로 따라 치는 연습. 공유 TraceEditor(오버레이·scrollTop/scrollLeft 미러링·줄 끝 공백 관대 'N/M줄 일치'→'완성!' aria-live), mode: view\|edit\|trace 유니언으로 고쳐 보기와 상호배타. 실행은 친 코드를 돌리고 원래대로는 참조 화면 복귀. 내장 브라우저 아이패드 실측: 픽셀 정렬(폰트·행간·패딩·위치 동일)·세로 스크롤 동기·한글 IME·44px, 빈 입력 0/N 시작(아직 안 친 줄 미집계 버그 수정). e2e-code-run·e2e-sql-run 5/5 무회귀 | 2026-09-02 | 17b98f2 외 3 | [260902-wk7-runpython-runsql](./quick/260902-wk7-runpython-runsql/) |
+| 260903-05g | 따라 치기 두 갈래 확장 — (1) 블록 단위 설명 가이드(파일럿 1-3 Python): 코드의 논리 블록(빈 줄 구분)을 다 정확히 치면 그 블록이 뭘 하는지 eli5 설명이 아래 누적. TraceEditor blockGuides + splitBlocks로 위치를 줄이 아닌 블록에 묶어(인덱스 취약성 회피) 빈 문자열=설명없음, prop 미지정 시 기존과 동일(옵트인). (2) 오답 글자 빨간색 표시(전역): 입력층 위 진단층(.trace-diff, z2)이 친 값을 원본과 글자 단위 비교해 다른 글자만 destructive로 그림, 맞는 글자는 transparent라 입력층이 비쳐 보임 — 친 글자 그대로 렌더해 한글 2배폭 정렬 유지, pointer-events none으로 IME 무간섭. 아이패드 실측: 블록 완성 시 노트 노출·완성 7개, 영문/한글 오타 해당 글자만 빨강·전체정답 0개, SQL 블록 노트 0. tsc·lint·brand·design-tokens·build, e2e 5/5. 롤아웃 대기: 승인 후 나머지 실행 블록에 블록 설명 작성 | 2026-09-03 | 24fe3b4, f6e11cc | [260903-05g-1-3-python](./quick/260903-05g-1-3-python/) |
 
 ## Deferred Items
 
