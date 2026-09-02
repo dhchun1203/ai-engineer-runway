@@ -7,7 +7,7 @@ import "./globals.css";
 
 // D-15: 비밀이 아닌 값 — 환경변수가 없어도 빌드가 성공해야 한다.
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ai-engineer-runway.vercel.app";
-const SITE_NAME = "AI Engineer Runway";
+const SITE_NAME = "AI Runway";
 const SITE_DESCRIPTION = "AI Engineer 교육과정 사전학습 사이트 — 커리큘럼을 읽고, 완료를 체크하고, 진행률과 일정을 확인합니다.";
 
 export const metadata: Metadata = {

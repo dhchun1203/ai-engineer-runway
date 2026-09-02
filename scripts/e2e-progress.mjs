@@ -256,7 +256,7 @@ async function main() {
       if (body.includes('data-progress-ui')) {
         throw new FatalError('시나리오 i1 실패 — 쿠키 없는 홈 응답에 data-progress-ui 마커가 존재합니다 (D-20 위반)');
       }
-      if (!body.includes('AI Engineer Runway')) {
+      if (!body.includes('AI Runway')) {
         throw new FatalError('시나리오 i1 실패 — 쿠키 없는 홈 응답에 사이트 제목이 없습니다 (D-18 위반)');
       }
 
