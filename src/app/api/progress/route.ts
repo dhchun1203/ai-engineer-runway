@@ -31,11 +31,15 @@ const NO_STORE_HEADERS = { "Cache-Control": "private, no-store" } as const;
 // til은 note와 별도 필드다(quick 260902-0rz) — note.ok가 false(조회 실패)이면
 // til은 빈 문자열로 채운다. LessonTilSlot은 note.ok에서만 렌더하므로 이 값은
 // note 읽기가 성공했을 때만 실제로 쓰인다(T-0rz-04).
+// needsReview는 til과 같은 왕복(readLessonNote)의 결과값이다 — note.ok가
+// false(조회 실패)이면 신뢰할 수 없으므로 false로 채운다. 소비 슬롯도 note.ok에서만
+// 렌더한다(LessonTilSlot과 동일 규율).
 type ProgressLesson = {
   slug: string;
   done: boolean;
   note: { ok: true; body: string } | { ok: false };
   til: string;
+  needsReview: boolean;
 };
 
 export type ProgressApiResponse = {
@@ -102,6 +106,7 @@ export async function GET(request: Request) {
         done: completedIds.has(found.slug),
         note: noteRead.ok ? { ok: true, body: noteRead.body } : { ok: false },
         til: noteRead.ok ? noteRead.til : '',
+        needsReview: noteRead.ok ? noteRead.needsReview : false,
       };
     }
   }
