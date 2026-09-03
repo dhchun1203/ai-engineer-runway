@@ -203,8 +203,27 @@ function buildPrompt(
   body: string,
   note: string,
   completedTitles: string[],
+  needsReview: boolean,
 ): string {
   const parts = [TEACHER_BRIEF, '', '---', '', `# 오늘 읽은 레슨: ${lessonTitle}`, '', body];
+
+  // "더 공부할 레슨으로 표시"를 켠 레슨이면, 본문 바로 뒤(메모·완료 목록보다 앞)에
+  // 이 신호를 넣는다 — 선생님이 다른 레슨보다 특히 꼼꼼하게, 내가 막히는 지점을
+  // 먼저 찾아가며 가르치도록 방식을 바꾼다. 표시하지 않은 레슨(needsReview=false)이면
+  // 블록을 통째로 생략해 기존 프롬프트와 동일해진다.
+  if (needsReview) {
+    parts.push(
+      '',
+      '---',
+      '',
+      '# 이 레슨은 내가 더 공부해야 하는 부분이야',
+      '',
+      '이 레슨을 아직 잘 이해하지 못했다고 내가 직접 표시해뒀어. 다른 레슨보다 특히 꼼꼼하게 봐줘.',
+      '- 바로 설명부터 하지 말고, 내가 어디서 막히는지부터 같이 찾아줘 — "이 레슨에서 어느 부분이 제일 헷갈렸어?"라고 먼저 물어봐줘.',
+      '- 내가 막힌 지점을 찾으면 거기를 더 작게 쪼개서, 다른 비유로 여러 번 다시 풀어줘.',
+      '- 다 봤다 싶으면 내 말로 다시 설명하게 시켜서 진짜 이해했는지 확인해줘.',
+    );
+  }
 
   const trimmedNote = note.trim();
   if (trimmedNote.length > 0) {
@@ -289,13 +308,17 @@ export function CopyLessonPrompt({
       ? curriculum.filter((l) => completedSet.has(l.slug)).map((l) => l.title)
       : [];
 
+    // "더 공부할 레슨으로 표시"를 켠 레슨이면 프롬프트에 안내 블록을 붙인다.
+    // 진도를 못 읽은 상태(loading/error/locked)면 false — 블록은 생략된다.
+    const needsReview = status === 'ready' && data.lesson ? data.lesson.needsReview : false;
+
     if (timerRef.current) clearTimeout(timerRef.current);
 
     try {
       // 사용자 제스처 안에서 곧바로 호출한다 — 앞에 await를 끼우면 iPad Safari가
       // 제스처 컨텍스트를 잃고 거부한다(code-block.tsx가 같은 이유로 같은 형태다).
       await navigator.clipboard.writeText(
-        buildPrompt(lessonTitle, body, note, completedTitles),
+        buildPrompt(lessonTitle, body, note, completedTitles, needsReview),
       );
       setState('copied');
     } catch {
@@ -304,6 +327,10 @@ export function CopyLessonPrompt({
 
     timerRef.current = setTimeout(() => setState('idle'), FEEDBACK_MS);
   }, [articleId, lessonTitle, status, data, curriculum]);
+
+  // 표시된 레슨이면 버튼을 강조한다(기본 btn → btn-action) — "여기는 더 봐야 할
+  // 레슨"이라는 표시가 이 입구에서도 눈에 띄게 한다. 진도를 못 읽은 상태면 false.
+  const needsReview = status === 'ready' && data?.lesson ? data.lesson.needsReview : false;
 
   const label =
     state === 'copied'
@@ -317,9 +344,10 @@ export function CopyLessonPrompt({
       <button
         type="button"
         data-print-hide
+        data-needs-review-cta={needsReview ? '' : undefined}
         onClick={() => void handleCopy()}
         aria-label="레슨 본문과 질문 틀을 복사해 클로드에 붙여넣기"
-        className="btn tap-feedback text-label"
+        className={`${needsReview ? 'btn-action' : 'btn'} tap-feedback text-label`}
       >
         {state === 'copied' ? (
           <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -338,6 +366,13 @@ export function CopyLessonPrompt({
       >
         {state === 'idle' ? '' : label}
       </span>
+      {/* 표시된 레슨이면, 복사 전에도 "질문 틀에 반영된다"는 걸 이 입구에서 알린다.
+          복사/실패 안내가 뜨는 동안(state≠idle)에는 겹치지 않게 숨긴다. */}
+      {needsReview && state === 'idle' ? (
+        <span className="text-label font-normal text-muted dark:text-muted-dark">
+          더 공부할 레슨으로 표시했어요 — 질문 틀에 반영됩니다.
+        </span>
+      ) : null}
     </span>
   );
 }

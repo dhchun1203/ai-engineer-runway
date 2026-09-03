@@ -16,6 +16,7 @@ import {
 import { CompleteButton } from "@/components/complete-button";
 import { LessonNotepad } from "@/components/lesson-notepad";
 import { LessonTil } from "@/components/lesson-til";
+import { LessonNeedsReview } from "@/components/lesson-needs-review";
 import type { StepId } from "@/content/modules";
 
 /** Step 헤더 배지 자리. locked/error 상태에서는 아무것도 렌더하지 않는다 —
@@ -133,4 +134,26 @@ export function LessonTilSlot({ lessonId }: { lessonId: string }) {
   if (!data.lesson.note.ok) return null;
 
   return <LessonTil lessonId={lessonId} initialTil={data.lesson.til} />;
+}
+
+/** "더 공부할 레슨으로 표시" 토글 자리. LessonTilSlot과 같은 가드 —
+ * loading/error/locked/note 실패에는 아무것도 렌더하지 않는다. needsReview 또한
+ * note 읽기와 같은 왕복의 결과값이라 note.ok에서만 신뢰할 수 있다(route.ts 참고).
+ * 완료 상태와는 무관하게 렌더한다 — 완료하지 않은 레슨도 표시할 수 있다.
+ * onToggled=refresh를 넘겨, 표시하자마자 "클로드에 물어보기" 버튼(같은 useProgress
+ * 소스를 읽는다)의 강조·프롬프트 블록이 함께 갱신되게 한다. */
+export function LessonNeedsReviewSlot({ lessonId }: { lessonId: string }) {
+  const { status, data, refresh } = useProgress();
+
+  if (status !== "ready") return null;
+  if (!data.lesson) return null;
+  if (!data.lesson.note.ok) return null;
+
+  return (
+    <LessonNeedsReview
+      lessonId={lessonId}
+      initialNeedsReview={data.lesson.needsReview}
+      onToggled={refresh}
+    />
+  );
 }

@@ -10,7 +10,7 @@ import { SectionScrollRestore } from "@/components/section-scroll-restore";
 import { ProgressProvider } from "@/components/progress-provider";
 import { PrintButton } from "@/components/print-button";
 import { CopyLessonPrompt } from "@/components/lesson-copy-prompt";
-import { CompleteButtonSlot, LessonNoteSlot, LessonTilSlot } from "@/components/progress-slots";
+import { CompleteButtonSlot, LessonNoteSlot, LessonTilSlot, LessonNeedsReviewSlot } from "@/components/progress-slots";
 import { LastLessonRecorder } from "@/components/last-lesson-recorder";
 import {
   getLessonBySlug,
@@ -140,6 +140,9 @@ export default async function LessonPage(
           <div data-progress-controls className="flex flex-col gap-6">
             <CompleteButtonSlot lessonId={lesson.slug} />
             <LessonTilSlot lessonId={lesson.slug} />
+            {/* "더 공부할 레슨으로 표시" — 켜면 이 레슨의 "클로드에 물어보기"가
+                강조되고 복사 프롬프트에 안내 블록이 붙는다(lesson-copy-prompt.tsx). */}
+            <LessonNeedsReviewSlot lessonId={lesson.slug} />
             <LessonPager prev={prev} next={next} />
           </div>
         </article>
