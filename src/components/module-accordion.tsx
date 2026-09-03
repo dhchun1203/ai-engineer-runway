@@ -14,6 +14,7 @@ import type { getLessonBySlug } from "@/content/curriculum-helpers";
 import { DepthBadge } from "@/components/depth-badge";
 import { EstimatedTime } from "@/components/estimated-time";
 import { ModuleProgressSlot } from "@/components/progress-slots";
+import { NeedsReviewMark, NeedsReviewCount } from "@/components/needs-review-indicator";
 import { useProgress } from "@/components/progress-provider";
 
 // Velite 콘텐츠 매니페스트 모듈을 직접 import하지 않는다 — 타입은
@@ -44,6 +45,13 @@ export function ModuleAccordion({
 }) {
   const { status, data } = useProgress();
   const completedSlugs = status === "ready" ? data.completedSlugs : null;
+  // "더 공부할 레슨으로 표시"한 슬러그 집합 — completedSlugs와 같은 방식으로 읽어
+  // 줄 표식과 모듈 헤더 개수에 쓴다. 못 읽었으면(로딩·잠금·조회 실패) null → 표시 생략.
+  const needsReviewSet =
+    status === "ready" && data.needsReviewSlugs ? new Set(data.needsReviewSlugs) : null;
+  const moduleReviewCount = needsReviewSet
+    ? lessons.reduce((n, l) => (needsReviewSet.has(l.slug) ? n + 1 : n), 0)
+    : 0;
 
   return (
     <details
@@ -62,6 +70,8 @@ export function ModuleAccordion({
         <span className="min-w-0 text-heading font-extrabold">{module.title}</span>
         <span className="flex shrink-0 items-center gap-2 text-label font-normal">
           레슨 {lessons.length}개
+          {/* 아코디언을 열지 않아도 이 모듈에 더 공부할 레슨이 몇 개인지 보이게 한다. */}
+          <NeedsReviewCount count={moduleReviewCount} />
           <ModuleProgressSlot moduleId={module.id} />
           <ChevronDown
             className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180"
@@ -72,9 +82,14 @@ export function ModuleAccordion({
       <ul className="flex flex-col divide-y divide-line px-4 dark:divide-line-dark">
         {lessons.map((lesson) => {
           const isDone = completedSlugs?.includes(lesson.slug) ?? false;
+          const isFlagged = needsReviewSet?.has(lesson.slug) ?? false;
 
           return (
-            <li key={lesson.slug} {...(isDone ? { "data-progress-ui": "lesson-done" } : {})}>
+            <li
+              key={lesson.slug}
+              {...(isDone ? { "data-progress-ui": "lesson-done" } : {})}
+              {...(isFlagged ? { "data-needs-review": "" } : {})}
+            >
               <Link
                 href={`/lesson/${lesson.slug}`}
                 className="card-interactive flex min-h-11 flex-wrap items-center justify-between gap-2 py-3 transition-colors duration-150"
@@ -87,6 +102,8 @@ export function ModuleAccordion({
                         aria-hidden="true"
                       />
                     ) : null}
+                    {/* 완료(✓)와 별개로 표시한다 — 한 레슨이 완료이면서 더 공부 대상일 수 있다. */}
+                    {isFlagged ? <NeedsReviewMark /> : null}
                     <span
                       className={`text-body font-normal ${
                         isDone ? "text-badge-neutral-text dark:text-badge-neutral-text-dark" : ""

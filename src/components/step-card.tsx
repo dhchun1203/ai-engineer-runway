@@ -10,6 +10,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import type { Step, StepId } from "@/content/modules";
 import { ProgressBadge } from "@/components/progress-badge";
+import { NeedsReviewCount } from "@/components/needs-review-indicator";
 import { BarSkeleton, BadgeSkeleton } from "@/components/progress-skeleton";
 import { useProgress } from "@/components/progress-provider";
 
@@ -33,11 +34,16 @@ export function StepCard({
   step,
   moduleCount,
   lessonCount,
+  stepLessonSlugs,
   revealIndex,
 }: {
   step: Step;
   moduleCount: number;
   lessonCount: number;
+  // 이 Step에 속한 레슨 슬러그 전체 — 서버(페이지)가 커리큘럼 매니페스트에서
+  // 계산해 넘긴다(이 컴포넌트는 'use client'라 매니페스트를 직접 부르면 번들에
+  // 끌려온다). needsReviewSlugs와 교집합해 "더 공부 N"을 센다. 없으면 0.
+  stepLessonSlugs?: string[];
   // 08-07 — 있으면 .step-card-reveal 순차 등장을 적용한다(커리큘럼 페이지
   // 전용). 없으면 클래스도 인라인 스타일도 붙이지 않는다 — 이 카드가 다른
   // 화면에 재사용될 때 등장 연출이 딸려오지 않게 한다.
@@ -45,6 +51,13 @@ export function StepCard({
 }) {
   const { status, data } = useProgress();
   const progress = status === "ready" ? (data.steps?.[step.id] ?? null) : null;
+  // "더 공부할 레슨으로 표시"한 슬러그와 이 Step의 슬러그를 교집합해 센다.
+  const needsReviewSet =
+    status === "ready" && data.needsReviewSlugs ? new Set(data.needsReviewSlugs) : null;
+  const stepReviewCount =
+    needsReviewSet && stepLessonSlugs
+      ? stepLessonSlugs.reduce((n, slug) => (needsReviewSet.has(slug) ? n + 1 : n), 0)
+      : 0;
 
   return (
     <Link
@@ -55,6 +68,8 @@ export function StepCard({
       <div className="flex items-baseline gap-2">
         <span className="shrink-0 whitespace-nowrap text-label font-semibold">Step {step.id}</span>
         <h2 className="min-w-0 break-keep text-heading font-extrabold">{step.shortTitle}</h2>
+        {/* 표시한 레슨이 있으면 카드 맨 윗줄에 개수를 띄워 한눈에 보이게 한다. */}
+        <NeedsReviewCount count={stepReviewCount} className="ml-auto self-center" />
       </div>
       <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
         {step.keywords.join(" · ")}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FileText } from "lucide-react";
 import { steps } from "@/content/modules";
-import { getModulesByStep, getLessonCounts } from "@/content/curriculum-helpers";
+import { getModulesByStep, getLessonCounts, getOrderedLessons } from "@/content/curriculum-helpers";
 import { StepCard } from "@/components/step-card";
 import { ProgressProvider } from "@/components/progress-provider";
 import { ProgressSummarySlot } from "@/components/progress-slots";
@@ -21,6 +21,18 @@ import { COURSE_START_DATE } from "@/lib/schedule";
 export default function CurriculumPage() {
   const buildTimeToday = todayInSeoul();
   const initialDaysUntil = daysUntil(COURSE_START_DATE, buildTimeToday);
+
+  // 각 StepCard에 그 Step의 레슨 슬러그를 넘긴다 — StepCard는 'use client'라
+  // 매니페스트를 직접 부를 수 없으므로 서버에서 계산해 prop으로 준다. StepCard가
+  // needsReviewSlugs(진도 API)와 교집합해 "더 공부 N"을 센다. (G9: getOrderedLessons는
+  // 쿠키·진도 식별자가 아니라 정적 콘텐츠 조회다.)
+  const orderedLessons = getOrderedLessons();
+  const stepLessonSlugs = new Map<number, string[]>();
+  for (const lesson of orderedLessons) {
+    const list = stepLessonSlugs.get(lesson.stepId) ?? [];
+    list.push(lesson.slug);
+    stepLessonSlugs.set(lesson.stepId, list);
+  }
 
   return (
     <ProgressProvider>
@@ -46,6 +58,7 @@ export default function CurriculumPage() {
               step={step}
               moduleCount={getModulesByStep(step.id).length}
               lessonCount={getLessonCounts(step.id).total}
+              stepLessonSlugs={stepLessonSlugs.get(step.id) ?? []}
               revealIndex={index}
             />
           ))}
