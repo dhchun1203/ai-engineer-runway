@@ -6,7 +6,9 @@ import 'server-only';
 
 import { supabaseAdmin } from './supabase/admin';
 
-export type NoteRead = { ok: true; body: string; til: string } | { ok: false; error: string };
+export type NoteRead =
+  | { ok: true; body: string; til: string; needsReview: boolean }
+  | { ok: false; error: string };
 
 // T-0y8-02(DoS) — 본문 길이 상한. 초과 시 저장을 거부하고 한국어 오류를 던진다.
 // 클라이언트는 실패를 표시하되 textarea의 글은 그대로 둔다(saveLessonNoteAction이
@@ -19,7 +21,7 @@ const MAX_TIL_LENGTH = 2_000;
 export async function readLessonNote(lessonSlug: string): Promise<NoteRead> {
   const { data, error } = await supabaseAdmin
     .from('lesson_note')
-    .select('body, til')
+    .select('body, til, needs_review')
     .eq('lesson_id', lessonSlug)
     .maybeSingle();
 
@@ -27,9 +29,14 @@ export async function readLessonNote(lessonSlug: string): Promise<NoteRead> {
     return { ok: false, error: error.message };
   }
 
-  // 행이 없으면 "아직 메모 없음"이며 빈 문자열로 성공을 반환한다 — 조회
+  // 행이 없으면 "아직 메모 없음"이며 빈 문자열/false로 성공을 반환한다 — 조회
   // 실패(error 존재)와 타입 수준에서 구분된다.
-  return { ok: true, body: data?.body ?? '', til: data?.til ?? '' };
+  return {
+    ok: true,
+    body: data?.body ?? '',
+    til: data?.til ?? '',
+    needsReview: data?.needs_review ?? false,
+  };
 }
 
 export async function saveLessonNote(lessonSlug: string, body: string): Promise<void> {
@@ -64,6 +71,21 @@ export async function saveLessonTil(lessonSlug: string, til: string): Promise<vo
 
   if (error) {
     throw new Error(`note-store: TIL 저장 실패 (lesson_id=${lessonSlug}): ${error.message}`);
+  }
+}
+
+// saveLessonTil과 대칭 — needs_review만 upsert하고 body/til 키는 payload에 넣지
+// 않는다(WR-01). 불리언 한 값이라 길이 상한은 두지 않는다. "더 공부해야 함"을
+// 켜고 끄는 사용자 신호 하나를 저장할 뿐, 완료 상태와는 완전히 독립이다.
+export async function saveLessonNeedsReview(lessonSlug: string, needsReview: boolean): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('lesson_note')
+    .upsert({ lesson_id: lessonSlug, needs_review: needsReview, updated_at: new Date().toISOString() });
+
+  if (error) {
+    throw new Error(
+      `note-store: 더 공부 표시 저장 실패 (lesson_id=${lessonSlug}): ${error.message}`,
+    );
   }
 }
 
