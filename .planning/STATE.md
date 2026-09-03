@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-27 after v1.0)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-03 — 따라 치기 블록 설명 가이드를 나머지 실행 블록 전체로 확장(5개 레슨 30블록, 파일당 병렬 작성 + 정렬 검증)
+Last activity: 2026-09-04 — Completed quick task 260904-241: 레슨별 "더 공부할 레슨으로 표시" 토글 + 클로드 프롬프트 반영
 
 ### 다음에 할 일
 
@@ -328,6 +328,7 @@ None yet.
 | 260903-0vx | 따라 치기 줄 단위 안내 흐름 — (1) 주석 제외: 주석·빈 줄은 미리 채워진(given) 줄로 두고(buildTraceTemplate이 코드 줄만 빈칸으로 비운 템플릿 생성, 줄 개수 원본과 동일 → 고스트 정렬 불변) 학습자는 코드 줄만 채움, 전체 줄 주석만 제외(인라인 주석은 코드), 'N/M' M=코드 줄 수. (2) 자동 다음 줄 이동: 한 코드 줄을 정확히 치면 다음 코드 줄로 커서 자동 점프(주석·빈 줄 건너뜀), Enter도 다음 코드 줄 이동·새 줄 안 넣음(구조 고정), 한글 조합 중엔 미뤘다 조합 끝에 재시도(composingRef+isComposing 가드)로 IME 무간섭. commentPrefixes는 RunPython '#'·RunSQL '--' 모듈 상수. 아이패드 실측: 진입 0/21·커서 첫 코드 줄, name→age 자동 이동, 변수 블록 후 빈 줄+#1 주석 건너뛰고 print로 점프, 한글 코드 줄·빨간 오답·블록 노트·Enter 이동 확인. build·e2e 5/5 | 2026-09-03 | 693330c | [260903-0vx-trace-comment-skip-autoadvance](./quick/260903-0vx-trace-comment-skip-autoadvance/) |
 | 260903-05g | 따라 치기 두 갈래 확장 — (1) 블록 단위 설명 가이드(파일럿 1-3 Python): 코드의 논리 블록(빈 줄 구분)을 다 정확히 치면 그 블록이 뭘 하는지 eli5 설명이 아래 누적. TraceEditor blockGuides + splitBlocks로 위치를 줄이 아닌 블록에 묶어(인덱스 취약성 회피) 빈 문자열=설명없음, prop 미지정 시 기존과 동일(옵트인). (2) 오답 글자 빨간색 표시(전역): 입력층 위 진단층(.trace-diff, z2)이 친 값을 원본과 글자 단위 비교해 다른 글자만 destructive로 그림, 맞는 글자는 transparent라 입력층이 비쳐 보임 — 친 글자 그대로 렌더해 한글 2배폭 정렬 유지, pointer-events none으로 IME 무간섭. 아이패드 실측: 블록 완성 시 노트 노출·완성 7개, 영문/한글 오타 해당 글자만 빨강·전체정답 0개, SQL 블록 노트 0. tsc·lint·brand·design-tokens·build, e2e 5/5. 롤아웃 완료(아래 260903-05g-rollout) | 2026-09-03 | 24fe3b4, f6e11cc | [260903-05g-1-3-python](./quick/260903-05g-1-3-python/) |
 | 260903-05g-rollout | 블록 설명 가이드를 나머지 실행 블록 전체로 확장(파일럿 승인 후) — 5개 레슨 30블록에 eli5 blockGuides 작성: 1-3 함수·입출력(RunPython, 8그룹), 1-4 관계형 DB 기초(7 RunSQL), 1-4 SQL 쿼리·JOIN(8 RunSQL), 2-1 AI 데이터 모델링(7 RunSQL), 2-1 Postgres·Supabase(7 RunSQL). 파일당 1개 에이전트 병렬 작성, 코드·산문 무변경(여는 태그에 blockGuides prop만 추가). 독립 검증 스크립트로 31블록 전부 blockGuides 개수=블록 수 정렬 확인, brand·design-tokens·build(Velite MDX 컴파일) 통과, 브라우저에서 SQL 7그룹 setup 블록 노트 순서 정렬 실측 | 2026-09-03 | (콘텐츠 커밋) | — |
+| 260904-241 | 레슨별 "더 공부할 레슨으로 표시" 토글 — 표시하면 그 레슨의 "클로드에 물어보기"가 강조(btn→btn-action)되고 복사 질문 틀에 "# 이 레슨은 내가 더 공부해야 하는 부분이야" 블록이 붙어 선생님이 막히는 지점부터 더 꼼꼼히 가르치도록 지시. TIL 기능을 미러링: lesson_note.needs_review 컬럼(til과 한 행 공유·body/til 보존), setLessonNeedsReviewAction(G4 회피 별도 파일), /api/progress·provider에 needsReview, LessonNeedsReview 토글(complete-button 수렴+onToggled=refresh로 복사 버튼 동시 갱신). 라이브 컬럼 관리 API 적용. build 통과, 읽기 경로 end-to-end(curl)·쓰기 형태(upsert) 확인·원복. 게이트 신규 실패 0(잔여 G22는 선행 이슈, 별도 태스크). 대화형 최종확인은 배포 후 아이패드 | 2026-09-04 | 874acf2, b64a2a9, 9626312 | [260904-241-needs-review-flag](./quick/260904-241-needs-review-flag/) |
 
 ## Deferred Items
 
