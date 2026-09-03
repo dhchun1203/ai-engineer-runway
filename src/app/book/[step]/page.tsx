@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MDXContent } from "@/components/mdx-content";
 import { ReadingProgress } from "@/components/reading-progress";
+import { BookBookmark } from "@/components/book-bookmark";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { formatEstimatedTime } from "@/components/estimated-time";
 import { getBookStep, getBookSteps } from "@/content/book-scopes";
@@ -90,7 +91,7 @@ export default async function BookStepPage(props: PageProps<"/book/[step]">) {
 
         {/* -- 챕터(레슨) -------------------------------------------------- */}
         {chapters.map(({ lesson, chapterNumber }) => (
-          <article key={lesson.slug} className="flex flex-col gap-5">
+          <article key={lesson.slug} data-book-chapter={lesson.slug} className="flex flex-col gap-5">
             {/* 챕터 사이 구분 — 첫 장 앞에는 두지 않는다. */}
             {chapterNumber > 1 && (
               <div aria-hidden="true" className="flex items-center justify-center pt-2 text-badge-neutral-text dark:text-badge-neutral-text-dark">
@@ -134,6 +135,7 @@ export default async function BookStepPage(props: PageProps<"/book/[step]">) {
           </div>
         </section>
       </main>
+      <BookBookmark stepId={step.id} />
       <ScrollToTop />
     </>
   );
