@@ -179,6 +179,20 @@ function sliceBookContent(raw: string): string {
 // 같은 @mdx-js/mdx compile을 직접 부른다 — 앵커 중복을 피하려 rehypeSlug는 빼고
 // (책은 앵커가 필요 없다), 표·코드 하이라이트를 위해 remarkGfm·rehypePrettyCode는
 // 켠다. 축약(terser)은 하지 않는다 — new Function은 비축약 function-body도 그대로 돈다.
+// 책 표지에 "약 N분 읽기"를 정직하게 찍기 위한 대략 읽기 시간(분). 잘라낸
+// 마크다운에서 SVG 다이어그램·HTML 태그·코드펜스·마크다운 기호를 걷어내 순수
+// 읽는 글자 수만 세고, 한국어 읽기 속도(대략 분당 500자)로 나눈다. 최소 1분.
+function estimateBookMinutes(md: string): number {
+  if (!md) return 0;
+  const text = md
+    .replace(/<svg[\s\S]*?<\/svg>/gi, "") // 다이어그램은 읽는 시간이 아니다
+    .replace(/```[\s\S]*?```/g, "") // 코드펜스 제거
+    .replace(/<[^>]+>/g, "") // 남은 HTML/JSX 태그
+    .replace(/[#>*_`|~\-]/g, ""); // 마크다운 기호
+  const chars = text.replace(/\s+/g, "").length;
+  return Math.max(1, Math.round(chars / 500));
+}
+
 async function compileBookMdx(md: string): Promise<string> {
   if (!md) return "";
   const { compile } = await import("@mdx-js/mdx");
@@ -229,6 +243,9 @@ export default defineConfig({
           bookCode: data.hasContent
             ? await compileBookMdx(sliceBookContent(meta.content ?? ""))
             : "",
+          bookMinutes: data.hasContent
+            ? estimateBookMinutes(sliceBookContent(meta.content ?? ""))
+            : 0,
           // hasContent:false 스텁은 파싱하지 않는다(terms: []) — L5 게이트가
           // hasContent:true인 레슨만 검사하는 것과 정확히 대칭이다(round2-j
           // 권장 경로 1). 현재 스텁 0편이지만 미래 방어로 남긴다.

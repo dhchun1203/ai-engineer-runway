@@ -669,21 +669,27 @@ if (sectionTapeSource === null) {
   }
 }
 
-// scroll-to-top.tsx(quick 260831-rly)도 window 스크롤 리스너를 갖는다 — 단,
-// section-tape와 같은 rAF 배칭 계약을 지켜야 허용된다. 무조건 허용 목록에 넣는
-// 대신 같은 검사(rAF/cancelRAF 존재 + rAF 정의가 리스너 등록보다 앞)를 이
-// 파일에도 적용한다(quick 260901-etq).
-const SCROLL_TO_TOP_PATH = path.join(ROOT, 'src', 'components', 'scroll-to-top.tsx');
-const scrollTopSource = readFileIfExists(SCROLL_TO_TOP_PATH);
-if (scrollTopSource !== null) {
-  const codeOnly = stripJsLineComments(scrollTopSource);
+// scroll-to-top.tsx(quick 260831-rly)·reading-progress.tsx(quick 260904-a1o)·
+// bookmark-button.tsx도 window 스크롤 리스너를 갖는다 — 단, section-tape와 같은
+// rAF 배칭 계약(rAF/cancelRAF 존재 + rAF 정의가 리스너 등록보다 앞)을 지켜야
+// 허용된다. 무조건 허용하는 대신 같은 검사를 각 파일에 적용한다(quick 260901-etq가
+// 세운 전례). 새 파일이 스크롤 리스너를 들이면 이 목록에 없어 아래 스캔이 잡는다.
+const THROTTLED_SCROLL_ALLOWLIST = [
+  path.join(ROOT, 'src', 'components', 'scroll-to-top.tsx'),
+  path.join(ROOT, 'src', 'components', 'reading-progress.tsx'),
+  path.join(ROOT, 'src', 'components', 'bookmark-button.tsx'),
+];
+for (const allowedPath of THROTTLED_SCROLL_ALLOWLIST) {
+  const source = readFileIfExists(allowedPath);
+  if (source === null) continue;
+  const codeOnly = stripJsLineComments(source);
   if (/window\.addEventListener\(\s*["']scroll["']/.test(codeOnly)) {
     const rafIdx = codeOnly.indexOf('requestAnimationFrame');
     const cancelRafIdx = codeOnly.indexOf('cancelAnimationFrame');
     const listenerIdx = codeOnly.indexOf('addEventListener');
     if (rafIdx === -1 || cancelRafIdx === -1 || rafIdx >= listenerIdx) {
       fail(
-        `G22 failed: ${path.relative(ROOT, SCROLL_TO_TOP_PATH)} must throttle its scroll listener with requestAnimationFrame/cancelAnimationFrame defined before addEventListener`,
+        `G22 failed: ${path.relative(ROOT, allowedPath)} must throttle its scroll listener with requestAnimationFrame/cancelAnimationFrame defined before addEventListener`,
       );
     }
   }
@@ -700,10 +706,11 @@ for (const filePath of SCROLL_LISTENER_SCAN_FILES) {
   }
 }
 
+const ALLOWED_SCROLL_LISTENER_FILES = new Set(
+  [SECTION_TAPE_PATH, ...THROTTLED_SCROLL_ALLOWLIST].map((p) => path.relative(ROOT, p)),
+);
 const unexpectedScrollListenerFiles = filesWithScrollListener.filter(
-  (relPath) =>
-    relPath !== path.relative(ROOT, SECTION_TAPE_PATH) &&
-    relPath !== path.relative(ROOT, SCROLL_TO_TOP_PATH),
+  (relPath) => !ALLOWED_SCROLL_LISTENER_FILES.has(relPath),
 );
 
 if (unexpectedScrollListenerFiles.length > 0) {
