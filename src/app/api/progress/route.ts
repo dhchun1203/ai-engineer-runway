@@ -15,7 +15,7 @@
 import { NextResponse } from "next/server";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readCompletedLessonIds } from "@/lib/progress-store";
-import { readLessonNote } from "@/lib/note-store";
+import { readLessonNote, readNeedsReviewLessonIds } from "@/lib/note-store";
 import { overallProgress, stepProgress, moduleProgress, nextIncompleteLesson } from "@/lib/progress";
 import { getModulesByStep, getLessonBySlug } from "@/content/curriculum-helpers";
 import type { StepId } from "@/content/modules";
@@ -49,6 +49,10 @@ export type ProgressApiResponse = {
   steps: Record<StepId, ProgressCounts> | null;
   modules: Record<string, ProgressCounts> | null;
   completedSlugs: string[] | null;
+  // "더 공부할 레슨으로 표시"한 슬러그 전체. 커리큘럼 목록의 줄 표시·개수 배지가
+  // completedSlugs처럼 교집합해 쓴다. 조회 실패 시 null로 부드럽게 강등한다 —
+  // 진도 응답(ok:true)은 유지하고 이 부가 정보만 비운다.
+  needsReviewSlugs: string[] | null;
   nextLessonSlug: string | null;
   lesson: ProgressLesson | null;
 };
@@ -61,6 +65,7 @@ function emptyBody(unlocked: boolean, ok: boolean): ProgressApiResponse {
     steps: null,
     modules: null,
     completedSlugs: null,
+    needsReviewSlugs: null,
     nextLessonSlug: null,
     lesson: null,
   };
@@ -111,6 +116,11 @@ export async function GET(request: Request) {
     }
   }
 
+  // needsReview는 부가 정보라 실패해도 진도 응답을 깨지 않는다 — 조회 실패면
+  // null로 두고(컴포넌트는 표시를 생략), 성공하면 정렬된 슬러그 배열을 싣는다.
+  const needsReviewRead = await readNeedsReviewLessonIds();
+  const needsReviewSlugs = needsReviewRead.ok ? [...needsReviewRead.ids].sort() : null;
+
   const body: ProgressApiResponse = {
     unlocked: true,
     ok: true,
@@ -118,6 +128,7 @@ export async function GET(request: Request) {
     steps,
     modules,
     completedSlugs: [...completedIds].sort(),
+    needsReviewSlugs,
     nextLessonSlug: nextIncompleteLesson(completedIds)?.slug ?? null,
     lesson,
   };

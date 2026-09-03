@@ -89,6 +89,25 @@ export async function saveLessonNeedsReview(lessonSlug: string, needsReview: boo
   }
 }
 
+export type NeedsReviewRead = { ok: true; ids: Set<string> } | { ok: false; error: string };
+
+/** "더 공부할 레슨으로 표시"(needs_review=true)한 lesson_id 전체를 읽는다 —
+ * readCompletedLessonIds와 동형(Set 반환, 조회 실패와 "0건"을 타입 수준에서 구분).
+ * 커리큘럼 목록의 줄 표시·개수 배지가 이 집합을 completedSlugs처럼 교집합해 쓴다. */
+export async function readNeedsReviewLessonIds(): Promise<NeedsReviewRead> {
+  const { data, error } = await supabaseAdmin
+    .from('lesson_note')
+    .select('lesson_id')
+    .eq('needs_review', true);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  const ids = new Set((data ?? []).map((row) => row.lesson_id as string));
+  return { ok: true, ids };
+}
+
 export type AllNotesRead = { ok: true; notes: Map<string, string> } | { ok: false; error: string };
 
 /** /notes 단권화(quick 260901-x62)를 위한 전 레슨 메모 조회 — readReviewStates가

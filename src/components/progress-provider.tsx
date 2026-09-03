@@ -46,6 +46,7 @@ export type ProgressData = {
   steps: Record<StepId, ProgressCounts> | null;
   modules: Record<string, ProgressCounts> | null;
   completedSlugs: string[] | null;
+  needsReviewSlugs: string[] | null;
   nextLessonSlug: string | null;
   lesson: ProgressLesson | null;
 };
