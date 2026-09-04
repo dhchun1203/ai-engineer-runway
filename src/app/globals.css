@@ -763,6 +763,15 @@ textarea,
   overflow: hidden;
 }
 
+/* 절대배치 오버레이가 된 햄버거 패널(quick 260904-a1o)이 짧은 화면(가로 모드·작은
+   폰)에서 뷰포트를 넘길 때 아래 항목이 손에 닿지 않는 것을 막는다 — 헤더 아래 남은
+   높이로 가두고 내부 스크롤을 준다. dvh는 모바일 툴바 접힘까지 반영한다. */
+.nav-panel-scroll {
+  max-height: calc(100dvh - var(--site-header-height));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nav-panel-reveal[data-state="open"],
   .nav-panel-reveal[data-state="closed"] {

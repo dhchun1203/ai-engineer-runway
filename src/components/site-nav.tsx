@@ -401,13 +401,19 @@ export function SiteNav() {
               setPanelMounted(false);
             }
           }}
-          className="nav-panel-reveal hairline sm:hidden"
+          // 절대배치 오버레이(quick 260904-a1o) — 데스크톱 드롭다운과 같은 이유로
+          // 문서 흐름 밖(absolute top-full)에 둔다. 예전엔 sticky 헤더 안 in-flow
+          // 블록이라 펼치면 헤더가 자라며 아래 본문을 밀어냈다 — 이제 헤더 높이는
+          // 그대로고(--site-header-height 불변) 패널이 본문 위로 덮인다. 흐름 밖이라
+          // 배경을 직접 칠하고(지면색) 아래는 굵은 잉크 선으로 닫는다. 위 경계는
+          // 헤더의 border-bottom이 맡으므로 .hairline은 뺀다.
+          className="nav-panel-reveal absolute inset-x-0 top-full z-30 border-b-2 border-foreground bg-background dark:border-foreground-dark dark:bg-background-dark sm:hidden"
         >
           {/* grid 자식을 overflow:hidden으로 잘라 0fr→1fr 펼침 동안 콘텐츠가 새지
               않게 하는 클립 래퍼(globals.css .nav-panel-clip). 이 한 겹 외에 로직
               변경은 없다. */}
           <div className="nav-panel-clip">
-            <div className="mx-auto flex w-full max-w-5xl flex-col px-4 pb-2">
+            <div className="nav-panel-scroll mx-auto flex w-full max-w-5xl flex-col px-4 pb-2">
             {navItems.map((item) => {
               // 드롭다운 부모 — 640px 미만에서는 드롭다운이 아니라 항상 펼친
               // 아코디언. 대메뉴 라벨은 비링크 소제목(span), 그 아래 자식 링크를
