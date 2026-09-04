@@ -7,6 +7,8 @@ commits:
   - 70ea9ae
   - 7a991cf
   - ee5a49d
+  - fb21105
+  - 465dd94
 ---
 
 # Quick Task 260904-a1o — 스탭별 "책으로 읽기(book reader)"
@@ -71,6 +73,34 @@ commits:
   정확(챕터 앵커 6152 착지). 상시 스크롤 리스너 없음(G22 무관). build·게이트·lint 통과.
   (내장 자동화 창은 `behavior:'smooth'`가 무동작이라 부드러운 이동 애니메이션만
   창에서 안 보였고, 실제 기기는 정상 — 좌표 계산·착지는 확인됨.)
+
+## 추가: 책갈피 기기 간 동기화 (fb21105)
+
+사용자 요청으로 책갈피를 **localStorage → Supabase**로 옮겼다(아이패드에서 꽂은 걸
+데스크톱·아이폰에서 이어 보기). 기존 레슨 북마크와 같은 계약:
+- **`book_bookmark` 테이블**(step_id 단일 키, 단일 소유자, RLS 켜짐·정책 0개 →
+  service_role 전용). 라이브 프로젝트 `wxqteqiuihrgtxmztauc`에 마이그레이션 적용
+  완료(RLS on/정책0/0행 확인, DB 라운드트립 실측 통과).
+- `book-bookmark-store.ts`(read/set) + `/api/book-bookmark` GET + `setBookBookmarkAction`
+  Server Action. 모두 `hasUnlockCookie()` 먼저.
+- `book-bookmark.tsx`: 마운트 시 fetch + 낙관적 저장. **잠금·조회 실패면 FAB 숨김**
+  (레슨 북마크와 동일) — 즉 **로그인해야 책갈피 버튼이 보인다**(비로그인 시 숨김).
+- 위치 앵커(chapter_slug + within_offset + scroll_y)는 그대로.
+- 관련 메모리 갱신: [[bookmark-feature-section-level]]에 "두 종류" 구분 반영.
+
+## 추가: 모바일 햄버거 메뉴 오버레이 (465dd94)
+
+사용자 요청 — 햄버거 메뉴가 펼쳐질 때 아래 본문을 **밀어내지 않고 그 위에 덮이도록**.
+원인은 패널이 sticky 헤더 안 in-flow 블록이라 펼치면 헤더가 자라 본문을 밀어낸 것.
+데스크톱 드롭다운과 같은 **absolute(top-full) 오버레이**로 바꿈(지면색 배경 + 하단
+굵은 잉크 선). 짧은 화면 대비 `.nav-panel-scroll`(max-height: 100dvh − 헤더, 내부
+스크롤)로 하단 항목 도달 보장. 폰 폭 실측: 본문 이동 0px, 오버레이·하단 항목 도달 확인.
+
+## 알아둘 점 (배포/검증)
+
+- 앞서 "아이폰에서 책갈피 버튼 안 보임"은 그 시점 배포가 아직 반영 전(reader 커밋만
+  라이브)이었던 탓. 지금 동기화 버전은 **로그인 상태에서만** FAB가 뜬다 → 아이폰에서도
+  로그인(상단 메뉴 로그인, 10년 쿠키)하면 아이패드와 같은 책갈피가 뜨고 동기화된다.
 
 ## 범위 밖 (후속)
 
