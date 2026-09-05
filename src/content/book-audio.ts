@@ -64,6 +64,25 @@ const BOOK_AUDIO: Partial<Record<StepId, BookAudioStep>> = {
       { slug: '2-7-promptops', title: 'PromptOps로 안정적인 LLM 활용', seconds: 144.9, url: `${BASE}/step2/2-7-promptops.mp3` },
     ],
   },
+  3: {
+    step: 3,
+    engine: 'xtts',
+    chapters: [
+      { slug: '3-1-vector-search-basics', title: '벡터 검색과 메타데이터 설계', seconds: 121.1, url: `${BASE}/step3/3-1-vector-search-basics.mp3` },
+      { slug: '3-1-hybrid-search-reranking', title: '하이브리드 검색과 re-ranking', seconds: 138, url: `${BASE}/step3/3-1-hybrid-search-reranking.mp3` },
+      { slug: '3-2-project-rag-agent', title: '[Project 3] RAG Agent 준비 가이드', seconds: 62.2, url: `${BASE}/step3/3-2-project-rag-agent.mp3` },
+      { slug: '3-3-peft-lora-qlora', title: 'PEFT·LoRA·QLoRA 개념', seconds: 139.9, url: `${BASE}/step3/3-3-peft-lora-qlora.mp3` },
+      { slug: '3-3-tuning-evaluation', title: '모델 튜닝 전후 성능 비교', seconds: 110.4, url: `${BASE}/step3/3-3-tuning-evaluation.mp3` },
+      { slug: '3-4-multi-agent-structure', title: '여러 AI가 함께 일하는 구조', seconds: 153.3, url: `${BASE}/step3/3-4-multi-agent-structure.mp3` },
+      { slug: '3-4-webhook-schedule-hitl', title: 'Webhook·스케줄·HITL 설계', seconds: 141.4, url: `${BASE}/step3/3-4-webhook-schedule-hitl.mp3` },
+      { slug: '3-4-n8n-langgraph', title: 'n8n·LangGraph 자동화 실습 개요', seconds: 107.6, url: `${BASE}/step3/3-4-n8n-langgraph.mp3` },
+      { slug: '3-5-project-orchestration', title: '[Project 4] AI 업무 자동화 준비 가이드', seconds: 53.1, url: `${BASE}/step3/3-5-project-orchestration.mp3` },
+      { slug: '3-6-prompt-versioning-eval', title: '프롬프트 버전관리와 평가 자동화', seconds: 113, url: `${BASE}/step3/3-6-prompt-versioning-eval.mp3` },
+      { slug: '3-6-monitoring-governance', title: '모니터링·알림과 보안 거버넌스', seconds: 146.5, url: `${BASE}/step3/3-6-monitoring-governance.mp3` },
+      { slug: '3-6-structured-output-canary', title: '구조화 출력·카나리 배포·비용 지표', seconds: 157.2, url: `${BASE}/step3/3-6-structured-output-canary.mp3` },
+      { slug: '3-7-project-ax-launch', title: '[Project 5] AX 서비스 런칭 준비 가이드', seconds: 63.7, url: `${BASE}/step3/3-7-project-ax-launch.mp3` },
+    ],
+  },
 };
 
 export function getBookAudio(stepId: StepId): BookAudioStep | undefined {

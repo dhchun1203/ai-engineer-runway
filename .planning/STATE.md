@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-27 after v1.0)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-05 — 260905-vbc 책으로 읽기 음성: /book/1·/book/2 낭독 재생 바 배포. 무료 XTTS(코랩 GPU) Step 1(10챕터)·Step 2(12챕터) MP3를 Supabase Storage 업로드, book-audio.ts 매니페스트 확장. Step 3만 남음
+Last activity: 2026-09-05 — 260905-vbc 책으로 읽기 음성 전 스텝 완료: /book/1·2·3 낭독 재생 바 배포. 무료 XTTS(코랩 GPU) Step1(10)·2(12)·3(13) 챕터 MP3를 Supabase Storage 업로드, book-audio.ts 매니페스트 3스텝 전부. 남은 개선은 문장 단위 하이라이트(선택)
 
 ### 다음에 할 일
 
