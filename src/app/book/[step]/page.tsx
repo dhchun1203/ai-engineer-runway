@@ -4,9 +4,11 @@ import Link from "next/link";
 import { MDXContent } from "@/components/mdx-content";
 import { ReadingProgress } from "@/components/reading-progress";
 import { BookBookmark } from "@/components/book-bookmark";
+import { BookAudioPlayer } from "@/components/book-audio-player";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { formatEstimatedTime } from "@/components/estimated-time";
 import { getBookStep, getBookSteps } from "@/content/book-scopes";
+import { getBookAudio } from "@/content/book-audio";
 import { getModuleTitle } from "@/content/print-scopes";
 import type { StepId } from "@/content/modules";
 
@@ -53,6 +55,8 @@ export default async function BookStepPage(props: PageProps<"/book/[step]">) {
 
   const { step, opening, chapters, totalMinutes } = book;
   const accentBorder = STEP_BORDER_CLASSES[step.id];
+  // 이 스텝의 낭독 음성(있으면). 없으면 플레이어를 렌더하지 않는다(Step 1 파일럿).
+  const audio = getBookAudio(step.id);
 
   return (
     <>
@@ -136,6 +140,7 @@ export default async function BookStepPage(props: PageProps<"/book/[step]">) {
         </section>
       </main>
       <BookBookmark stepId={step.id} />
+      {audio ? <BookAudioPlayer stepId={step.id} chapters={audio.chapters} /> : null}
       <ScrollToTop />
     </>
   );
