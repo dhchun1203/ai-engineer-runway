@@ -128,20 +128,16 @@ export function LessonVideo() {
     };
   }, []);
 
-  // 전체화면 동안 배경 스크롤을 막고, 가짜 전체화면에서도 Esc로 나갈 수 있게 한다.
+  // 전체화면 동안 배경 스크롤을 막는다. (키보드 조작은 재생/이전/다음 콜백이
+  // 정의된 뒤 아래 별도 effect에서 처리한다.)
   useEffect(() => {
     if (!isFull) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') exitFull();
-    };
-    window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = prev;
-      window.removeEventListener('keydown', onKey);
     };
-  }, [isFull, exitFull]);
+  }, [isFull]);
 
   // 자동재생 — 마지막 직전에서 재생을 함께 끈다. 멈춤(setState)은 effect 본문이
   // 아니라 타이머 콜백에서 일어난다(react-hooks/set-state-in-effect).
@@ -175,6 +171,46 @@ export function LessonVideo() {
     setPlaying(false);
     setStep(at);
   }, []);
+
+  // 전체화면 키보드 조작: 스페이스=재생/정지, ←/→=이전/다음 장면,
+  // ↑/↓=속도 증가/감소, Esc=나가기. 재생/이전/다음 콜백을 참조하므로 그 뒤에
+  // 둔다. preventDefault로 스페이스·방향키의 기본 스크롤을 막는다.
+  useEffect(() => {
+    if (!isFull) return;
+    const onKey = (e: KeyboardEvent) => {
+      // 스페이스는 브라우저마다 e.key가 ' '/'Spacebar'로 갈리므로 e.code로도 잡는다.
+      if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        togglePlay();
+        return;
+      }
+      switch (e.key) {
+        case 'Escape':
+          exitFull();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          goPrev();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          goNext();
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setSpeed((s) => SPEEDS[Math.min((SPEEDS as readonly number[]).indexOf(s) + 1, SPEEDS.length - 1)]);
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          setSpeed((s) => SPEEDS[Math.max((SPEEDS as readonly number[]).indexOf(s) - 1, 0)]);
+          break;
+        default:
+          break;
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isFull, exitFull, togglePlay, goPrev, goNext]);
 
   const scene = SCENES[step];
   const trans = reduced ? undefined : 'opacity .4s ease, transform .55s ease';
@@ -356,6 +392,13 @@ export function LessonVideo() {
           </>
         )}
       </p>
+
+      {/* 전체화면 단축키 안내 — 전체화면에서만. */}
+      {isFull && (
+        <p className="text-center text-caption opacity-60">
+          스페이스 재생/정지 · ←/→ 이전·다음 · ↑/↓ 속도 · Esc 나가기
+        </p>
+      )}
     </div>
   );
 }
@@ -386,7 +429,7 @@ function VarStage({ sub, trans }: StageProps) {
       <g style={{ opacity: sub >= 4 ? 1 : 0, transition: trans }}>
         <rect x="206" y="82" width="72" height="30" fill="var(--diagram-accent)" />
         <text x="242" y="103" textAnchor="middle" fontSize="17" fill="var(--diagram-on-accent)">age</text>
-        <line x1="150" y1="97" x2="202" y2="97" stroke="var(--diagram-line)" strokeWidth="2" />
+        <line x1="150" y1="97" x2="202" y2="97" stroke="var(--diagram-ink)" strokeWidth="2" />
         <text x="144" y="102" textAnchor="end" fontSize="13" fill="var(--diagram-ink)">이름표</text>
       </g>
     </>
@@ -471,18 +514,18 @@ function ForStage({ sub, trans }: StageProps) {
         <g key={n}>
           <rect x="10" y={rowY[i]} width="120" height="52" fill="var(--diagram-soft)" stroke="var(--diagram-ink)" strokeWidth={current === i ? 3 : 2} style={{ transition: trans }} />
           <text x="70" y={rowY[i] + 33} textAnchor="middle" fontSize="18" fill="var(--diagram-ink)">{n}</text>
-          <line x1="130" y1={rowY[i] + 26} x2="176" y2={rowY[i] + 26} stroke="var(--diagram-line)" strokeWidth="2" />
+          <line x1="130" y1={rowY[i] + 26} x2="176" y2={rowY[i] + 26} stroke="var(--diagram-ink)" strokeWidth="2" />
         </g>
       ))}
-      <line x1="176" y1="50" x2="176" y2="210" stroke="var(--diagram-line)" strokeWidth="2" />
+      <line x1="176" y1="50" x2="176" y2="210" stroke="var(--diagram-ink)" strokeWidth="2" />
       <line x1="176" y1="130" x2="204" y2="130" stroke="var(--diagram-ink)" strokeWidth="2" />
       <polygon points="204,124 216,130 204,136" fill="var(--diagram-ink)" />
       {/* 같은 코드 */}
       <rect x="220" y="96" width="120" height="72" fill="var(--diagram-accent)" />
       <text x="280" y="128" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">항목마다</text>
       <text x="280" y="150" textAnchor="middle" fontSize="16" fill="var(--diagram-on-accent)">같은 코드</text>
-      <line x1="340" y1="50" x2="340" y2="210" stroke="var(--diagram-line)" strokeWidth="2" />
-      <line x1="332" y1="130" x2="340" y2="130" stroke="var(--diagram-line)" strokeWidth="2" />
+      <line x1="340" y1="50" x2="340" y2="210" stroke="var(--diagram-ink)" strokeWidth="2" />
+      <line x1="332" y1="130" x2="340" y2="130" stroke="var(--diagram-ink)" strokeWidth="2" />
       {/* 인사 출력 — 하나씩 */}
       {FOR_NAMES.map((n, i) => (
         <g key={`out-${n}`} style={{ opacity: sub >= i + 1 ? 1 : 0, transition: trans }}>
