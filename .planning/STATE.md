@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-27 after v1.0)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-05 — 260905-vbc 책으로 읽기 음성 플레이어(Phase C): /book/1에 낭독 재생 바. 무료 XTTS(코랩 GPU)로 만든 Step 1 챕터 10개 MP3를 Supabase Storage에 올리고 재생/이어듣기/잠금화면/챕터 강조 구현. Step 1 파일럿
+Last activity: 2026-09-05 — 260905-vbc 책으로 읽기 음성: /book/1·/book/2 낭독 재생 바 배포. 무료 XTTS(코랩 GPU) Step 1(10챕터)·Step 2(12챕터) MP3를 Supabase Storage 업로드, book-audio.ts 매니페스트 확장. Step 3만 남음
 
 ### 다음에 할 일
 

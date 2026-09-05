@@ -46,6 +46,24 @@ const BOOK_AUDIO: Partial<Record<StepId, BookAudioStep>> = {
       { slug: '1-5-ml-metrics-and-pipeline', title: '평가 지표와 Scikit-learn Pipeline', seconds: 161.5, url: `${BASE}/step1/1-5-ml-metrics-and-pipeline.mp3` },
     ],
   },
+  2: {
+    step: 2,
+    engine: 'xtts',
+    chapters: [
+      { slug: '2-1-postgres-and-supabase', title: 'PostgreSQL과 Supabase 활용', seconds: 160.6, url: `${BASE}/step2/2-1-postgres-and-supabase.mp3` },
+      { slug: '2-1-ai-data-modeling', title: 'AI 서비스 데이터 구조 설계', seconds: 113.5, url: `${BASE}/step2/2-1-ai-data-modeling.mp3` },
+      { slug: '2-2-html-css-js', title: 'HTML·CSS·JavaScript 핵심', seconds: 161.8, url: `${BASE}/step2/2-2-html-css-js.mp3` },
+      { slug: '2-2-browser-and-ui', title: '브라우저 동작 원리와 UI 구현', seconds: 136.5, url: `${BASE}/step2/2-2-browser-and-ui.mp3` },
+      { slug: '2-3-typescript-setup', title: 'TypeScript 개발 환경 구성', seconds: 198.6, url: `${BASE}/step2/2-3-typescript-setup.mp3` },
+      { slug: '2-3-react-components', title: 'React 컴포넌트', seconds: 208.6, url: `${BASE}/step2/2-3-react-components.mp3` },
+      { slug: '2-4-project-ai-shop-frontend', title: '[Project 1] AI 쇼핑몰 프론트엔드 준비 가이드', seconds: 49.8, url: `${BASE}/step2/2-4-project-ai-shop-frontend.mp3` },
+      { slug: '2-5-express-rest-api', title: 'Express RESTful API 구현', seconds: 145.6, url: `${BASE}/step2/2-5-express-rest-api.mp3` },
+      { slug: '2-5-auth-and-prisma', title: '인증·인가와 Prisma ORM', seconds: 171.8, url: `${BASE}/step2/2-5-auth-and-prisma.mp3` },
+      { slug: '2-6-project-ai-shop-backend', title: '[Project 2] AI 쇼핑몰 백엔드 준비 가이드', seconds: 54.9, url: `${BASE}/step2/2-6-project-ai-shop-backend.mp3` },
+      { slug: '2-7-prompt-patterns', title: '프롬프트 패턴과 구조화 출력', seconds: 200, url: `${BASE}/step2/2-7-prompt-patterns.mp3` },
+      { slug: '2-7-promptops', title: 'PromptOps로 안정적인 LLM 활용', seconds: 144.9, url: `${BASE}/step2/2-7-promptops.mp3` },
+    ],
+  },
 };
 
 export function getBookAudio(stepId: StepId): BookAudioStep | undefined {
