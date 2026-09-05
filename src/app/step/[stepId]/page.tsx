@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { getStep, getModulesByStep, getLessonsByModule } from "@/content/curriculum-helpers";
 import { ModuleAccordion } from "@/components/module-accordion";
 import { ProgressProvider } from "@/components/progress-provider";
@@ -39,17 +38,6 @@ export default async function StepPage(props: PageProps<"/step/[stepId]">) {
           <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
             {step.keywords.join(" · ")} · 커리큘럼 원 {step.courseHours}시간
           </p>
-          {/* 책으로 읽기(quick 260904-a1o) — 레슨을 학습하기 전에, 이 스텝을 한 편의
-              이야기로 먼저 훑어 읽는 입구. 이동 중에도 부담 없이 읽게 학습 장치를
-              걷어낸 전용 화면으로 간다. */}
-          <div className="pt-1">
-            <Link
-              href={`/book/${step.id}`}
-              className="btn tap-feedback inline-flex min-h-11 items-center gap-2 px-4 text-label font-semibold"
-            >
-              📖 책으로 읽기
-            </Link>
-          </div>
         </header>
         <ProgressErrorSlot />
         <section className="flex flex-col gap-4">

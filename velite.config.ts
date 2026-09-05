@@ -6,11 +6,6 @@ import rehypePrettyCode from "rehype-pretty-code";
 // section-tape.tsx의 "플러그인 없이 간다" 주석은 테이프 스크롤 문제에 국한된
 // 결정이었다 — 이번엔 서버 렌더 링크의 착지점이 필요하므로 사유가 다르다.
 import rehypeSlug from "rehype-slug";
-// 책으로 읽기(book reader, quick 260904-a1o) 본문 컴파일용. 레슨 개념 섹션에
-// GFM 표(자료형 4종 등)가 있어 remark-gfm이 필요하다 — velite의 s.mdx()도
-// 내부에서 같은 플러그인을 켠다(gfm 기본 on). @mdx-js/mdx의 compile은 아래
-// compileBookMdx에서 동적 import한다(velite 자신도 같은 방식으로 부른다).
-import remarkGfm from "remark-gfm";
 
 // 복사 버튼은 여기서 만들지 않는다. @rehype-pretty/transformers의
 // transformerCopyButton은 인라인 onclick을 *문자열*로 내보내는데, 컴파일된 MDX가
@@ -144,69 +139,6 @@ function parseSelfCheck(content: string): string[] {
   return questions;
 }
 
-// ── 책으로 읽기(book reader, quick 260904-a1o) ──────────────────────────
-// 레슨을 "레슨 모음"이 아니라 한 권의 책처럼 이어 읽게 하는 전용 본문(bookCode)을
-// 빌드 타임에 만든다. 레슨 헤딩 구조는 게이트 L1이 전 레슨 동일하게 강제하므로
-// (## 1.학습목표 / 2.왜 배우나 / 3.개념 설명 / 4.실무 예제 / 5.실무 팁 /
-// 6.핵심 정리·스스로 점검), 고정된 "## N." 헤딩으로 안전하게 잘라낼 수 있다.
-//
-// 남기는 것: "## 2"(왜 배우나) + "## 3"(개념 설명 — 비유·SVG 다이어그램·TwistBox)
-//           본문 + 끝의 <NextTeaser>(다음 챕터로 넘어가는 다리).
-// 걷어내는 것: "## 2"/"## 3" 라벨 헤딩 자체(챕터 제목은 페이지가 레슨 title로
-//           찍는다), 1·4·5·6 섹션과 RunPython/RunSQL/PredictPrompt 학습 장치.
-function sliceBookContent(raw: string): string {
-  const lines = raw.replace(/\r\n/g, "\n").split("\n");
-  const findIdx = (re: RegExp) => lines.findIndex((l) => re.test(l));
-  const i2 = findIdx(/^##\s*2\.\s/);
-  const i4 = findIdx(/^##\s*4\.\s/);
-  // 구조가 어긋나면(게이트가 이미 막지만 방어) 빈 문자열 — 페이지가 폴백한다.
-  if (i2 === -1 || i4 === -1 || i4 <= i2) return "";
-  const body = lines
-    .slice(i2, i4)
-    .filter((l) => !/^##\s*[23]\.\s/.test(l)); // "## 2." / "## 3." 라벨 헤딩 제거
-
-  // <NextTeaser>…</NextTeaser> 블록은 6장 뒤(잘라낸 범위 밖)에 있으므로 따로
-  // 찾아 이어 붙인다. 없는 레슨(예: 마지막 런칭 프로젝트)도 있어 선택적이다.
-  const open = lines.findIndex((l) => l.trim() === "<NextTeaser>");
-  const close = lines.findIndex((l) => l.trim() === "</NextTeaser>");
-  const teaser = open !== -1 && close !== -1 && close > open ? lines.slice(open, close + 1) : [];
-
-  return [body.join("\n").trim(), teaser.join("\n").trim()].filter(Boolean).join("\n\n");
-}
-
-// 잘라낸 마크다운을 렌더 런타임(mdx-content.tsx의 new Function(code))이 그대로
-// 소비할 수 있는 function-body 문자열로 컴파일한다. velite의 s.mdx()가 쓰는 것과
-// 같은 @mdx-js/mdx compile을 직접 부른다 — 앵커 중복을 피하려 rehypeSlug는 빼고
-// (책은 앵커가 필요 없다), 표·코드 하이라이트를 위해 remarkGfm·rehypePrettyCode는
-// 켠다. 축약(terser)은 하지 않는다 — new Function은 비축약 function-body도 그대로 돈다.
-// 책 표지에 "약 N분 읽기"를 정직하게 찍기 위한 대략 읽기 시간(분). 잘라낸
-// 마크다운에서 SVG 다이어그램·HTML 태그·코드펜스·마크다운 기호를 걷어내 순수
-// 읽는 글자 수만 세고, 한국어 읽기 속도(대략 분당 500자)로 나눈다. 최소 1분.
-function estimateBookMinutes(md: string): number {
-  if (!md) return 0;
-  const text = md
-    .replace(/<svg[\s\S]*?<\/svg>/gi, "") // 다이어그램은 읽는 시간이 아니다
-    .replace(/```[\s\S]*?```/g, "") // 코드펜스 제거
-    .replace(/<[^>]+>/g, "") // 남은 HTML/JSX 태그
-    .replace(/[#>*_`|~\-]/g, ""); // 마크다운 기호
-  const chars = text.replace(/\s+/g, "").length;
-  return Math.max(1, Math.round(chars / 500));
-}
-
-async function compileBookMdx(md: string): Promise<string> {
-  if (!md) return "";
-  const { compile } = await import("@mdx-js/mdx");
-  const compiled = await compile(
-    { value: md },
-    {
-      outputFormat: "function-body",
-      remarkPlugins: [remarkGfm],
-      rehypePlugins: [[rehypePrettyCode, rehypePrettyCodeOptions]],
-    },
-  );
-  return String(compiled);
-}
-
 export default defineConfig({
   root: ".",
   output: {
@@ -235,17 +167,9 @@ export default defineConfig({
           hasContent: s.boolean().default(true), // false for placeholder lessons
           code: s.mdx(),
         })
-        .transform(async (data, { meta }) => ({
+        .transform((data, { meta }) => ({
           ...data,
           permalink: `/lesson/${data.slug}`,
-          // 책으로 읽기 전용 본문(quick 260904-a1o). hasContent=false 스텁은
-          // terms/selfCheck와 같은 게이트 패턴으로 빈 문자열이다.
-          bookCode: data.hasContent
-            ? await compileBookMdx(sliceBookContent(meta.content ?? ""))
-            : "",
-          bookMinutes: data.hasContent
-            ? estimateBookMinutes(sliceBookContent(meta.content ?? ""))
-            : 0,
           // hasContent:false 스텁은 파싱하지 않는다(terms: []) — L5 게이트가
           // hasContent:true인 레슨만 검사하는 것과 정확히 대칭이다(round2-j
           // 권장 경로 1). 현재 스텁 0편이지만 미래 방어로 남긴다.
