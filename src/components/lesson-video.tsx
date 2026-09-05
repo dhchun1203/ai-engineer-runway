@@ -66,7 +66,9 @@ export function LessonVideo() {
   const [playing, setPlaying] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [speed, setSpeed] = useState(1);
+  const [isFull, setIsFull] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -75,6 +77,71 @@ export function LessonVideo() {
     mq.addEventListener('change', sync);
     return () => mq.removeEventListener('change', sync);
   }, []);
+
+  // ── 전체화면 ──────────────────────────────────────────────────────────
+  // 진짜 전체화면 API(Fullscreen API)를 먼저 시도하고, 안 되면(구형 iPad
+  // Safari 등 임의 요소 전체화면 미지원) isFull 상태만으로 CSS 가짜 전체화면
+  // (position: fixed로 화면 전체를 덮음)을 적용한다 — 어느 기기에서도 동작하게.
+  const exitFull = useCallback(() => {
+    const doc = document as Document & {
+      webkitFullscreenElement?: Element;
+      webkitExitFullscreen?: () => void;
+    };
+    if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+      (doc.exitFullscreen ?? doc.webkitExitFullscreen)?.call(doc);
+    }
+    setIsFull(false);
+  }, []);
+
+  const enterFull = useCallback(() => {
+    setIsFull(true);
+    const el = containerRef.current as
+      | (HTMLDivElement & { webkitRequestFullscreen?: () => Promise<void> | void })
+      | null;
+    const req = el?.requestFullscreen ?? el?.webkitRequestFullscreen;
+    if (el && req) {
+      try {
+        const p = req.call(el);
+        if (p && typeof (p as Promise<void>).catch === 'function') (p as Promise<void>).catch(() => {});
+      } catch {
+        // 네이티브 전체화면 불가 — 위 setIsFull(true)의 CSS 가짜 전체화면으로 간다.
+      }
+    }
+  }, []);
+
+  const toggleFull = useCallback(() => {
+    if (isFull) exitFull();
+    else enterFull();
+  }, [isFull, enterFull, exitFull]);
+
+  // 네이티브 전체화면을 시스템 UI(Esc·제스처)로 빠져나가면 상태를 맞춘다.
+  useEffect(() => {
+    const onChange = () => {
+      const doc = document as Document & { webkitFullscreenElement?: Element };
+      if (!doc.fullscreenElement && !doc.webkitFullscreenElement) setIsFull(false);
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    document.addEventListener('webkitfullscreenchange', onChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange);
+      document.removeEventListener('webkitfullscreenchange', onChange);
+    };
+  }, []);
+
+  // 전체화면 동안 배경 스크롤을 막고, 가짜 전체화면에서도 Esc로 나갈 수 있게 한다.
+  useEffect(() => {
+    if (!isFull) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') exitFull();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [isFull, exitFull]);
 
   // 자동재생 — 마지막 직전에서 재생을 함께 끈다. 멈춤(setState)은 effect 본문이
   // 아니라 타이머 콜백에서 일어난다(react-hooks/set-state-in-effect).
@@ -118,15 +185,41 @@ export function LessonVideo() {
 
   return (
     <div
+      ref={containerRef}
       data-print-hide
       className="panel-hero my-6 flex flex-col gap-3 p-4"
       role="group"
       aria-label="이 레슨 요약 영상 — 변수·자료형·조건문·반복문"
+      style={
+        isFull
+          ? {
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              margin: 0,
+              maxWidth: 'none',
+              border: 'none',
+              boxShadow: 'none',
+              overflow: 'auto',
+              justifyContent: 'center',
+            }
+          : undefined
+      }
     >
-      {/* 헤더 — 이게 무엇인지 한 줄로. */}
+      {/* 헤더 — 이게 무엇인지 한 줄로 + 전체화면 토글. */}
       <div className="flex items-center justify-between gap-2">
         <p className="text-label font-bold">▶ 레슨 한눈에 보기</p>
-        <p className="text-caption opacity-70">{activeChapter}</p>
+        <div className="flex items-center gap-2">
+          <span className="text-caption opacity-70">{activeChapter}</span>
+          <button
+            type="button"
+            onClick={toggleFull}
+            className="chip tap-feedback text-caption"
+            aria-label={isFull ? '전체화면 나가기' : '전체화면으로 보기'}
+          >
+            {isFull ? '✕ 닫기' : '⛶ 전체화면'}
+          </button>
+        </div>
       </div>
 
       {/* 챕터 건너뛰기 */}
@@ -163,7 +256,13 @@ export function LessonVideo() {
         viewBox="0 0 480 260"
         role="img"
         aria-label={scene.cap}
-        style={{ margin: '0 auto', maxWidth: '34rem' }}
+        // 전체화면에서는 높이 기준으로 키워 화면을 넉넉히 쓴다(폭은 92vw로 제한).
+        // 평소엔 34rem 폭 제한. viewBox 비율은 유지된다.
+        style={
+          isFull
+            ? { margin: '0 auto', height: 'min(52vh, 32rem)', width: 'auto', maxWidth: '92vw' }
+            : { margin: '0 auto', maxWidth: '34rem' }
+        }
       >
         {scene.stage === 'var' && <VarStage sub={scene.sub} trans={trans} />}
         {scene.stage === 'types' && <TypesStage sub={scene.sub} trans={trans} />}
