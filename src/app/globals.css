@@ -984,6 +984,21 @@ body:has(.note-sheet) .bookmark-fab {
   padding-inline: 0;
 }
 
+/* ── 책으로 읽기 책갈피 FAB (quick 260904-a1o) ────────────────────────────
+   .bookmark-fab의 좌하단·safe-area 처리를 물려받되, 책갈피는 "이동/옮기기" 두
+   글자 알약이 세로로 쌓이므로 세로 스택이다(레슨 북마크의 아이콘 1개짜리와 다르다).
+   책 페이지엔 메모장 시트가 없어 :has() 보정은 필요 없다. */
+.book-bookmark-fab {
+  position: fixed;
+  left: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
 /* 지정/해제 직후 잠깐 뜨는 안내. 종이 지면 위에 각진 잉크 칩으로 둔다(.chip-solid의
    결) — 크림 배경/잉크 글자로 버튼 옆에서 또렷하게 읽힌다. */
 .bookmark-fab-flash {
