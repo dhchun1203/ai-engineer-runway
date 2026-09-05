@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-27 after v1.0)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-06 — 책으로 읽기 음성 기능 전체 제거(커밋 8b5ceb6, 사용자 요청): 재생 바·매니페스트·CSS·velite narration 추출·문장 하이라이트 데이터 삭제, velite는 86f00d9^로 복원. 책 텍스트 리더·복습 객관식(210문항)은 유지. 남은 정리: Supabase book-audio 버킷 MP3(삭제 확인 대기)
+Last activity: 2026-09-06 — 책으로 읽기(텍스트 리더) 기능 전체 제거(커밋 b55fe54, 사용자 요청): /book/[step] 리더·book-scopes·velite bookCode/bookMinutes·책 전용 책갈피·읽기 진행 바 삭제. 앞서 음성 기능(8b5ceb6)+Supabase book-audio 버킷도 제거 완료. 레슨·복습(객관식 210)·레슨 책갈피·PDF는 유지. 남은 정리: Supabase book_bookmark 테이블(삭제 확인 대기)
 
 ### 다음에 할 일
 
