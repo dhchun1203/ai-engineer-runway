@@ -6,6 +6,8 @@ import { selectReviewQuestions, SELF_CHECK_ANCHOR } from "@/lib/review";
 import { getLessonBySlug, getOrderedLessons } from "@/content/curriculum-helpers";
 import { todayInSeoul } from "@/lib/today";
 import { ReviewJudgmentButtons } from "@/components/review-judgment-buttons";
+import { ReviewQuizBlock } from "@/components/review-quiz-block";
+import { getReviewQuiz } from "@/content/review-quiz";
 
 // /review 복습 세션(quick 260901-w04, 설계는
 // .planning/research/edu-sites/round2-h-review-design.md V2절). 홈(page.tsx)과
@@ -30,9 +32,13 @@ function EmptyState({ message }: { message: string }) {
 }
 
 function QuestionListItem({ card }: { card: QuestionCard }) {
+  // 자가진단(주관식)과 나란히 붙는 객관식 3문항(quick 260906). 없는 문항은
+  // 빈 배열이라 기존 자가진단만 보인다(파일럿 외 레슨).
+  const quiz = getReviewQuiz(card.lesson.slug, card.questionIndex);
   return (
     <li className="panel flex flex-col gap-3 p-4">
       <p className="text-body font-normal">{card.text}</p>
+      {quiz.length > 0 ? <ReviewQuizBlock questions={quiz} /> : null}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <ReviewJudgmentButtons lessonSlug={card.lesson.slug} questionIndex={card.questionIndex} />
         <Link
