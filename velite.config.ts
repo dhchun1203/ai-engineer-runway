@@ -179,88 +179,18 @@ function sliceBookContent(raw: string): string {
 // 같은 @mdx-js/mdx compile을 직접 부른다 — 앵커 중복을 피하려 rehypeSlug는 빼고
 // (책은 앵커가 필요 없다), 표·코드 하이라이트를 위해 remarkGfm·rehypePrettyCode는
 // 켠다. 축약(terser)은 하지 않는다 — new Function은 비축약 function-body도 그대로 돈다.
-// 공용 스트리핑 헬퍼(narration 낭독, quick 260904-in4) — SVG 다이어그램·코드펜스·
-// 남은 HTML/JSX 태그를 걷어낸다. estimateBookMinutes(마크다운 기호까지 마저 벗겨
-// 글자 수만 세는 용도)와 extractNarration(문장 배열 추출 용도)이 둘 다 이 세 replace를
-// 공유한다 — parseTermTable/parseSelfCheck처럼 같은 문법의 이중 구현이 아니라
-// 애초에 같은 함수를 부르게 해서, 한쪽만 고치고 다른 쪽을 잊는 드리프트를
-// 구조적으로 차단한다.
-function stripBlocks(md: string): string {
-  return md
-    .replace(/<svg[\s\S]*?<\/svg>/gi, "") // 다이어그램은 읽는 시간·낭독 대상이 아니다
-    .replace(/```[\s\S]*?```/g, "") // 코드펜스 제거
-    .replace(/<[^>]+>/g, ""); // 남은 HTML/JSX 태그(TwistBox·NextTeaser·details 등)
-}
-
-// 책 표지에 "약 N분 읽기"를 정직하게 찍기 위한 대략 읽기 시간(분). stripBlocks로
-// 다이어그램·코드펜스·태그를 걷어낸 뒤 마크다운 기호까지 마저 벗겨 순수 읽는
-// 글자 수만 세고, 한국어 읽기 속도(대략 분당 500자)로 나눈다. 최소 1분.
-// 리팩터 전과 바이트 단위로 같은 출력을 내야 한다(드리프트 가드) — 4개 replace를
-// 정확히 같은 순서로 체이닝(stripBlocks의 3개 + 마크다운 기호 1개)한다.
+// 책 표지에 "약 N분 읽기"를 정직하게 찍기 위한 대략 읽기 시간(분). 잘라낸
+// 마크다운에서 SVG 다이어그램·HTML 태그·코드펜스·마크다운 기호를 걷어내 순수
+// 읽는 글자 수만 세고, 한국어 읽기 속도(대략 분당 500자)로 나눈다. 최소 1분.
 function estimateBookMinutes(md: string): number {
   if (!md) return 0;
-  const text = stripBlocks(md).replace(/[#>*_`|~\-]/g, ""); // 마크다운 기호
+  const text = md
+    .replace(/<svg[\s\S]*?<\/svg>/gi, "") // 다이어그램은 읽는 시간이 아니다
+    .replace(/```[\s\S]*?```/g, "") // 코드펜스 제거
+    .replace(/<[^>]+>/g, "") // 남은 HTML/JSX 태그
+    .replace(/[#>*_`|~\-]/g, ""); // 마크다운 기호
   const chars = text.replace(/\s+/g, "").length;
   return Math.max(1, Math.round(chars / 500));
-}
-
-// ── narration 추출(TTS 대본, quick 260904-in4 Phase A) ──────────────────────
-// stripBlocks로 SVG·코드펜스·태그를 걷어낸 뒤, 줄 단위로 GFM 표·빈 줄을 버리고
-// (표는 v1에서 통째로 건너뛴다), 헤딩/리스트/인용 마커와 선두 장식 이모지를
-// 제거하고, 인라인 강조·코드 기호(*, _, ~, 백틱)만 벗겨 내용은 남긴다(단어 내부
-// 하이픈은 보존 — f-string·TypeError 등이 안 깨지게). 문장 분리는 각 원본 줄을
-// 하드 경계로 삼고, 그 안에서는 종결부호(. ? ! …) 바로 앞이 한글 음절 또는 닫는
-// 괄호/따옴표일 때만 자른다 — 그래야 3.14·168.3 같은 소수점이 안 끊긴다.
-const LEADING_HEADING_RE = /^#{1,6}\s*/;
-const LEADING_LIST_MARKER_RE = /^[-*]\s+/; // 리스트 "- "/"* "만 — 단어 내부 하이픈은 무관
-const LEADING_BLOCKQUOTE_RE = /^>\s?/;
-// 줄 맨 앞의 장식 이모지 런(+ 뒤따르는 공백) 제거. \p{Extended_Pictographic}이
-// 이모지 전반을 포괄하고, variation selector(️)·ZWJ(‍)까지 함께 잡는다.
-const LEADING_DECORATION_RE = /^[\p{Extended_Pictographic}️‍\s]+/u;
-const INLINE_EMPHASIS_RE = /[*_~`]/g; // 기호만 제거, 내용(단어 내부 하이픈 포함)은 보존
-// 종결부호 바로 앞 글자가 한글 음절 또는 닫는 괄호/따옴표일 때만 그 뒤에서 자른다.
-// 소수점(3.14) 앞은 숫자라 이 룩비하인드에 걸리지 않아 안전하게 보존된다.
-const SENTENCE_BOUNDARY_RE = /(?<=[가-힣)\]"'」』])[.?!…]+/g;
-
-function splitKoreanSentences(line: string): string[] {
-  const sentences: string[] = [];
-  let lastIndex = 0;
-  SENTENCE_BOUNDARY_RE.lastIndex = 0;
-  let match: RegExpExecArray | null;
-  while ((match = SENTENCE_BOUNDARY_RE.exec(line)) !== null) {
-    const end = match.index + match[0].length;
-    sentences.push(line.slice(lastIndex, end));
-    lastIndex = end;
-  }
-  if (lastIndex < line.length) sentences.push(line.slice(lastIndex));
-  return sentences.map((s) => s.replace(/\s+/g, " ").trim()).filter(Boolean);
-}
-
-function extractNarration(md: string): string[] {
-  const stripped = stripBlocks(md).replace(/\r\n/g, "\n");
-  const lines = stripped.split("\n");
-  const narration: string[] = [];
-
-  for (const rawLine of lines) {
-    const trimmed = rawLine.trim();
-    if (trimmed === "" || trimmed.startsWith("|")) continue; // 빈 줄 · GFM 표(v1 통째 skip)
-
-    let line = trimmed
-      .replace(LEADING_HEADING_RE, "")
-      .replace(LEADING_LIST_MARKER_RE, "")
-      .replace(LEADING_BLOCKQUOTE_RE, "")
-      .replace(LEADING_DECORATION_RE, "")
-      .replace(INLINE_EMPHASIS_RE, "");
-
-    line = line.replace(/\s+/g, " ").trim();
-    if (line === "") continue;
-
-    for (const sentence of splitKoreanSentences(line)) {
-      narration.push(sentence);
-    }
-  }
-
-  return narration;
 }
 
 async function compileBookMdx(md: string): Promise<string> {
@@ -323,12 +253,6 @@ export default defineConfig({
           // /review 세션(quick 260901-w04)이 소비하는 문항 배열 — 인덱스가 곧
           // questionIndex다. terms와 정확히 같은 hasContent 게이트 패턴.
           selfCheck: data.hasContent ? parseSelfCheck(meta.content ?? "") : [],
-          // 낭독(TTS) 대본 문장 배열(quick 260904-in4 Phase A) — bookCode/bookMinutes와
-          // 같은 sliceBookContent 입력을 쓴다. terms/selfCheck와 정확히 같은
-          // hasContent 게이트 패턴. 다음 Phase(오디오 생성)가 소비할 순수 한국어 문장들.
-          narration: data.hasContent
-            ? extractNarration(sliceBookContent(meta.content ?? ""))
-            : [],
         })),
     },
     // /about (Making-of) 소개 페이지 소스 — docs/making-of.md 단일 파일만 대상으로 한다.
