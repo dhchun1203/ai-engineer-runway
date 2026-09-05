@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-27 after v1.0)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-06 — 복습 객관식(병렬) 전체 완료 배포: 35개 레슨 × 자가진단 2문항 × 4지선다 3개 = 210문항. 파일럿(1-3) 승인 후 나머지 34편을 12개 병렬 작업으로 저작 → review-quiz-data.json + review-quiz.ts(import). 즉시 채점·해설·다시풀기, /review에서 자가진단과 병렬. [책 음성 "문장 단위 하이라이트"는 transcript.json 생성까지 하고 일시중지 — 미커밋, 다음 재개]
+Last activity: 2026-09-06 — 책으로 읽기 음성 기능 전체 제거(커밋 8b5ceb6, 사용자 요청): 재생 바·매니페스트·CSS·velite narration 추출·문장 하이라이트 데이터 삭제, velite는 86f00d9^로 복원. 책 텍스트 리더·복습 객관식(210문항)은 유지. 남은 정리: Supabase book-audio 버킷 MP3(삭제 확인 대기)
 
 ### 다음에 할 일
 
