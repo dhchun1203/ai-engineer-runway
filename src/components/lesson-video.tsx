@@ -1,20 +1,20 @@
 'use client';
 
-// 레슨 요약 영상 (파일럿: "Python 변수·자료형"). 레슨 맨 위에 놓여, 이 하나만
-// 끝까지 봐도 레슨 전체 — 변수 → 자료형 4종 → 조건문 → 반복문 → 정리 — 를
-// 이해하도록 만든 챕터형 애니메이션 플레이어다. 본문 각 절의 정적 [data-diagram]
+// 레슨 요약 영상 — 파일럿 "Python 변수·자료형" 전용. 레슨 맨 위에 놓여, 이 하나만
+// 끝까지 봐도 레슨 전체(변수 → 자료형 4종 → 조건문 → 반복문 → 정리)를 이해하도록
+// 개념을 손으로 애니메이션한 무대를 재생한다. 본문 각 절의 정적 [data-diagram]
 // 네 개(상자 / 자료형 4칸 / 갈림길 / 컨베이어벨트)를 움직이는 장면으로 옮겨 담았다.
 //
-// 색·서체: 새로 정하지 않고 data-diagram 토큰을 물려받는다(globals.css 1206~).
-//   SVG에 data-diagram만 달면 레슨 Step 색까지 저절로 따라온다.
-// 움직임: CSS transition(opacity/transform)만. 라이브러리 없음.
-//   prefers-reduced-motion: reduce이면 자동재생·트랜지션 없이 장면만 즉시 바뀐다.
-// 인쇄: data-print-hide로 감춘다 — 본문 각 절의 정적 그림이 종이 몫을 한다.
+// 재생 상태·자동재생·전체화면·키보드·크롬 UI는 lesson-player-core.tsx가 담당하고,
+// 이 파일은 이 레슨의 장면 데이터(SCENES)와 무대 그림(Stage 컴포넌트)만 담는다.
+// 다른 레슨은 lesson-presenter.tsx(본문 그림 자동 재생)를 쓴다.
 //
-// 장면 데이터(SCENES)는 이 레슨용으로 이 파일 안에 담았다. 다른 레슨으로 넓힐 때
-// 이 배열과 stage 렌더러만 갈아끼우면 되도록 플레이어 로직과 분리해 두었다.
+// 색·서체: data-diagram 토큰을 물려받는다(globals.css 1206~). 인쇄: 코어의
+// data-print-hide로 감추고 본문 각 절의 정적 그림이 종이 몫을 한다.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
+import { PlayerFrame, useLessonPlayer } from '@/components/lesson-player-core';
+import type { Chapter } from '@/components/lesson-player-core';
 
 type Stage = 'var' | 'types' | 'if' | 'for' | 'summary';
 type Scene = { ch: string; stage: Stage; sub: number; cap: string; code?: string };
@@ -51,167 +51,15 @@ const SCENES: Scene[] = [
   { ch: '정리', stage: 'summary', sub: 0, cap: '값을 상자에 담고(변수), 종류를 구분하고(자료형), 갈림길에서 고르고(조건문), 하나씩 반복한다(반복문). 이 네 가지가 모든 코드의 재료예요.' },
 ];
 
-const LAST = SCENES.length - 1;
-const BASE_MS = 3800; // 1배속 장면 간격 — 자막을 읽을 시간
-const SPEEDS = [0.75, 1, 1.5, 2] as const;
-
 // 챕터 이름 → 그 챕터가 시작하는 장면 인덱스(건너뛰기용). 등장 순서를 보존한다.
-const CHAPTERS = SCENES.reduce<{ name: string; at: number }[]>((acc, s, i) => {
+const CHAPTERS: Chapter[] = SCENES.reduce<Chapter[]>((acc, s, i) => {
   if (!acc.some((c) => c.name === s.ch)) acc.push({ name: s.ch, at: i });
   return acc;
 }, []);
 
 export function LessonVideo() {
-  const [step, setStep] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const [reduced, setReduced] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [isFull, setIsFull] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const sync = () => setReduced(mq.matches);
-    sync();
-    mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
-  }, []);
-
-  // ── 전체화면 ──────────────────────────────────────────────────────────
-  // 진짜 전체화면 API(Fullscreen API)를 먼저 시도하고, 안 되면(구형 iPad
-  // Safari 등 임의 요소 전체화면 미지원) isFull 상태만으로 CSS 가짜 전체화면
-  // (position: fixed로 화면 전체를 덮음)을 적용한다 — 어느 기기에서도 동작하게.
-  const exitFull = useCallback(() => {
-    const doc = document as Document & {
-      webkitFullscreenElement?: Element;
-      webkitExitFullscreen?: () => void;
-    };
-    if (doc.fullscreenElement || doc.webkitFullscreenElement) {
-      (doc.exitFullscreen ?? doc.webkitExitFullscreen)?.call(doc);
-    }
-    setIsFull(false);
-  }, []);
-
-  const enterFull = useCallback(() => {
-    setIsFull(true);
-    const el = containerRef.current as
-      | (HTMLDivElement & { webkitRequestFullscreen?: () => Promise<void> | void })
-      | null;
-    const req = el?.requestFullscreen ?? el?.webkitRequestFullscreen;
-    if (el && req) {
-      try {
-        const p = req.call(el);
-        if (p && typeof (p as Promise<void>).catch === 'function') (p as Promise<void>).catch(() => {});
-      } catch {
-        // 네이티브 전체화면 불가 — 위 setIsFull(true)의 CSS 가짜 전체화면으로 간다.
-      }
-    }
-  }, []);
-
-  const toggleFull = useCallback(() => {
-    if (isFull) exitFull();
-    else enterFull();
-  }, [isFull, enterFull, exitFull]);
-
-  // 네이티브 전체화면을 시스템 UI(Esc·제스처)로 빠져나가면 상태를 맞춘다.
-  useEffect(() => {
-    const onChange = () => {
-      const doc = document as Document & { webkitFullscreenElement?: Element };
-      if (!doc.fullscreenElement && !doc.webkitFullscreenElement) setIsFull(false);
-    };
-    document.addEventListener('fullscreenchange', onChange);
-    document.addEventListener('webkitfullscreenchange', onChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', onChange);
-      document.removeEventListener('webkitfullscreenchange', onChange);
-    };
-  }, []);
-
-  // 전체화면 동안 배경 스크롤을 막는다. (키보드 조작은 재생/이전/다음 콜백이
-  // 정의된 뒤 아래 별도 effect에서 처리한다.)
-  useEffect(() => {
-    if (!isFull) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [isFull]);
-
-  // 자동재생 — 마지막 직전에서 재생을 함께 끈다. 멈춤(setState)은 effect 본문이
-  // 아니라 타이머 콜백에서 일어난다(react-hooks/set-state-in-effect).
-  useEffect(() => {
-    if (!playing || reduced || step >= LAST) return;
-    timer.current = setTimeout(() => {
-      setStep((s) => Math.min(s + 1, LAST));
-      if (step + 1 >= LAST) setPlaying(false);
-    }, BASE_MS / speed);
-    return () => {
-      if (timer.current) clearTimeout(timer.current);
-    };
-  }, [playing, reduced, step, speed]);
-
-  const togglePlay = useCallback(() => {
-    setPlaying((p) => {
-      if (!p && step >= LAST) setStep(0);
-      return !p;
-    });
-  }, [step]);
-
-  const goPrev = useCallback(() => {
-    setPlaying(false);
-    setStep((s) => Math.max(s - 1, 0));
-  }, []);
-  const goNext = useCallback(() => {
-    setPlaying(false);
-    setStep((s) => Math.min(s + 1, LAST));
-  }, []);
-  const jump = useCallback((at: number) => {
-    setPlaying(false);
-    setStep(at);
-  }, []);
-
-  // 전체화면 키보드 조작: 스페이스=재생/정지, ←/→=이전/다음 장면,
-  // ↑/↓=속도 증가/감소, Esc=나가기. 재생/이전/다음 콜백을 참조하므로 그 뒤에
-  // 둔다. preventDefault로 스페이스·방향키의 기본 스크롤을 막는다.
-  useEffect(() => {
-    if (!isFull) return;
-    const onKey = (e: KeyboardEvent) => {
-      // 스페이스는 브라우저마다 e.key가 ' '/'Spacebar'로 갈리므로 e.code로도 잡는다.
-      if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar') {
-        e.preventDefault();
-        togglePlay();
-        return;
-      }
-      switch (e.key) {
-        case 'Escape':
-          exitFull();
-          break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          goPrev();
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          goNext();
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          setSpeed((s) => SPEEDS[Math.min((SPEEDS as readonly number[]).indexOf(s) + 1, SPEEDS.length - 1)]);
-          break;
-        case 'ArrowDown':
-          e.preventDefault();
-          setSpeed((s) => SPEEDS[Math.max((SPEEDS as readonly number[]).indexOf(s) - 1, 0)]);
-          break;
-        default:
-          break;
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [isFull, exitFull, togglePlay, goPrev, goNext]);
-
+  const player = useLessonPlayer({ count: SCENES.length });
+  const { step, reduced, isFull } = player;
   const scene = SCENES[step];
   const trans = reduced ? undefined : 'opacity .4s ease, transform .55s ease';
   const activeChapter = useMemo(
@@ -220,80 +68,20 @@ export function LessonVideo() {
   );
 
   return (
-    <div
-      ref={containerRef}
-      data-print-hide
-      className="panel-hero my-6 flex flex-col gap-3 p-4"
-      role="group"
-      aria-label="이 레슨 요약 영상 — 변수·자료형·조건문·반복문"
-      style={
-        isFull
-          ? {
-              position: 'fixed',
-              inset: 0,
-              zIndex: 9999,
-              margin: 0,
-              maxWidth: 'none',
-              border: 'none',
-              boxShadow: 'none',
-              overflow: 'auto',
-              justifyContent: 'center',
-            }
-          : undefined
-      }
+    <PlayerFrame
+      player={player}
+      ariaLabel="이 레슨 요약 영상 — 변수·자료형·조건문·반복문"
+      chapters={CHAPTERS}
+      activeChapter={activeChapter}
+      code={scene.code ?? ''}
+      caption={scene.cap}
     >
-      {/* 헤더 — 이게 무엇인지 한 줄로 + 전체화면 토글. */}
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-label font-bold">▶ 레슨 한눈에 보기</p>
-        <div className="flex items-center gap-2">
-          <span className="text-caption opacity-70">{activeChapter}</span>
-          <button
-            type="button"
-            onClick={toggleFull}
-            className="chip tap-feedback text-caption"
-            aria-label={isFull ? '전체화면 나가기' : '전체화면으로 보기'}
-          >
-            {isFull ? '✕ 닫기' : '⛶ 전체화면'}
-          </button>
-        </div>
-      </div>
-
-      {/* 챕터 건너뛰기 */}
-      <div className="flex flex-wrap gap-1.5">
-        {CHAPTERS.map((c) => {
-          const on = c.name === activeChapter;
-          return (
-            <button
-              key={c.name}
-              type="button"
-              onClick={() => jump(c.at)}
-              className="chip tap-feedback text-caption"
-              aria-pressed={on}
-              style={
-                on
-                  ? { backgroundColor: 'var(--color-action)', color: 'var(--color-surface)' }
-                  : undefined
-              }
-            >
-              {c.name}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 코드 한 줄 — 지금 장면과 짝이 되는 코드(있을 때만). */}
-      <p className="text-center font-mono text-body" style={{ minHeight: '1.6em' }}>
-        {scene.code ?? ''}
-      </p>
-
-      {/* 무대 — 챕터에 따라 다른 그림. 높이를 고정해 장면이 바뀌어도 튀지 않는다. */}
+      {/* 무대 — 챕터에 따라 다른 그림. 전체화면에서는 높이 기준으로 키운다. */}
       <svg
         data-diagram
         viewBox="0 0 480 260"
         role="img"
         aria-label={scene.cap}
-        // 전체화면에서는 높이 기준으로 키워 화면을 넉넉히 쓴다(폭은 92vw로 제한).
-        // 평소엔 34rem 폭 제한. viewBox 비율은 유지된다.
         style={
           isFull
             ? { margin: '0 auto', height: 'min(52vh, 32rem)', width: 'auto', maxWidth: '92vw' }
@@ -306,100 +94,7 @@ export function LessonVideo() {
         {scene.stage === 'for' && <ForStage sub={scene.sub} trans={trans} />}
         {scene.stage === 'summary' && <SummaryStage trans={trans} />}
       </svg>
-
-      {/* 자막 — 3줄까지 자리를 잡아 컨트롤이 위아래로 튀지 않게 한다. */}
-      <p
-        className="text-center text-body font-normal"
-        style={{ minHeight: '4.2em' }}
-        aria-live="polite"
-      >
-        {scene.cap}
-      </p>
-
-      {/* 진행 점 */}
-      <div className="flex flex-wrap justify-center gap-1" aria-hidden="true">
-        {SCENES.map((_, i) => (
-          <span
-            key={i}
-            className="h-1.5 w-1.5"
-            style={{ backgroundColor: i <= step ? 'var(--color-action)' : 'var(--color-line)' }}
-          />
-        ))}
-      </div>
-
-      {/* 컨트롤 */}
-      <div className="flex items-center justify-center gap-2">
-        <button
-          type="button"
-          onClick={goPrev}
-          disabled={step === 0}
-          className="btn tap-feedback text-label"
-          aria-label="이전 장면"
-        >
-          ◀
-        </button>
-        <button
-          type="button"
-          onClick={togglePlay}
-          className="btn-action tap-feedback text-label"
-          aria-label={playing ? '일시정지' : '재생'}
-        >
-          {playing ? '❚❚ 일시정지' : step >= LAST ? '↻ 다시 재생' : '▶ 재생'}
-        </button>
-        <button
-          type="button"
-          onClick={goNext}
-          disabled={step >= LAST}
-          className="btn tap-feedback text-label"
-          aria-label="다음 장면"
-        >
-          ▶
-        </button>
-      </div>
-
-      {/* 속도 + 진행 표시 */}
-      <div className="flex items-center justify-center gap-2">
-        <span className="text-caption opacity-70">속도</span>
-        {SPEEDS.map((sp) => {
-          const on = sp === speed;
-          return (
-            <button
-              key={sp}
-              type="button"
-              onClick={() => setSpeed(sp)}
-              className="chip tap-feedback text-caption"
-              aria-pressed={on}
-              style={
-                on
-                  ? { backgroundColor: 'var(--color-action)', color: 'var(--color-surface)' }
-                  : undefined
-              }
-            >
-              {sp}×
-            </button>
-          );
-        })}
-      </div>
-
-      <p className="text-center text-caption opacity-70">
-        {step + 1} / {SCENES.length}
-        {step > 0 && (
-          <>
-            {' · '}
-            <button type="button" onClick={() => jump(0)} className="underline">
-              처음부터
-            </button>
-          </>
-        )}
-      </p>
-
-      {/* 전체화면 단축키 안내 — 전체화면에서만. */}
-      {isFull && (
-        <p className="text-center text-caption opacity-60">
-          스페이스 재생/정지 · ←/→ 이전·다음 · ↑/↓ 속도 · Esc 나가기
-        </p>
-      )}
-    </div>
+    </PlayerFrame>
   );
 }
 
