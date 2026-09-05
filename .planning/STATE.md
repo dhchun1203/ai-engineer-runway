@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-27 after v1.0)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-06 — 복습 객관식(병렬) 파일럿 배포: 각 "스스로 점검" 문항 옆에 3지선다 객관식 3개(정답·해설·다시풀기). review-quiz.ts/review-quiz-block.tsx/review page. 파일럿 1편(Python 변수·자료형) 승인 대기 → 승인 시 나머지 34편 확장(~204문항). [병행 진행 중이던 책 음성 "문장 단위 하이라이트"는 transcript.json(타이밍) 생성까지 하고 일시중지 — 미커밋]
+Last activity: 2026-09-06 — 복습 객관식(병렬) 전체 완료 배포: 35개 레슨 × 자가진단 2문항 × 4지선다 3개 = 210문항. 파일럿(1-3) 승인 후 나머지 34편을 12개 병렬 작업으로 저작 → review-quiz-data.json + review-quiz.ts(import). 즉시 채점·해설·다시풀기, /review에서 자가진단과 병렬. [책 음성 "문장 단위 하이라이트"는 transcript.json 생성까지 하고 일시중지 — 미커밋, 다음 재개]
 
 ### 다음에 할 일
 
