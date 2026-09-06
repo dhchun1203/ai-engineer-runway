@@ -24,6 +24,11 @@ export const newsreader = Newsreader({
   subsets: ["latin"],
   variable: "--font-serif-latin",
   display: "swap",
+  // preload 끔 — 세리프는 읽기 화면(.prose: 레슨·책·소개)에서만 쓴다(globals.css).
+  // 변수를 루트 <html>에 걸면 next/font는 이 폰트를 모든 라우트에 preload 링크로
+  // 심어, 세리프가 한 글자도 안 나오는 홈·대시보드까지 파일을 받게 한다. preload를
+  // 꺼서 .prose가 실제로 렌더될 때만 받도록 한다(display:swap이라 첫 표시는 안 막힘).
+  preload: false,
 });
 
 // 본문 한글 — 가변 명조(OFL). 라틴 세리프에는 한글이 없으므로 폰트 스택에서 이
@@ -44,6 +49,11 @@ export const notoSerifKr = localFont({
   variable: "--font-serif-ko",
   weight: "200 900", // variable font axis range
   display: "swap",
+  // preload 끔 — 이 파일이 ~600KB로 사이트에서 가장 무겁다. 세리프 한글은 읽기
+  // 화면(.prose)에서만 쓰므로(globals.css), 루트 <html> 변수 탓에 홈·대시보드까지
+  // preload되던 것을 막는다. .prose가 렌더되는 레슨·책·소개에서만 내려받는다
+  // (display:swap이라 그 사이 폴백으로 먼저 보이고 도착하면 바뀐다).
+  preload: false,
 });
 
 // 코드 — 지금까지 `ui-monospace`(기기마다 다른 서체가 잡힌다)였다. 코드 정확성이

@@ -179,22 +179,23 @@
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
-  /* Pretendard가 마지막 안전망으로 들어간다: 명조에 없는 글자(①②③ 같은 기호)가
-     기기마다 다른 시스템 폰트로 떨어지는 것을 막는다. 커버리지 게이트가 Pretendard는
-     콘텐츠 전체를, Noto Serif KR은 한글을 덮도록 각각 지키므로 이 스택에 구멍이 없다. */
-  font-family:
-    var(--font-serif-latin), var(--font-serif-ko), var(--font-pretendard), ui-serif, Georgia,
-    serif;
+  /* 기본은 산세(Pretendard) — 홈·일정·용어·커리큘럼처럼 "훑는" 대시보드 화면
+     전체가 여기 해당한다. 세리프(명조)는 긴 글을 "읽는" 화면에서만 쓰며, 그건
+     아래 `.prose` 규칙(레슨·책·소개)이 따로 지정한다. 이렇게 나누면 대시보드가
+     무거운 한글 명조(NotoSerifKR ~600KB)를 불러오지 않는다 — preload도 fonts.ts에서
+     세리프를 끄고 .prose가 실제로 렌더될 때만 받도록 짝을 맞춘다. */
+  font-family: var(--font-pretendard), "Pretendard", ui-sans-serif, system-ui, sans-serif;
   word-break: keep-all;
   overflow-wrap: break-word;
 }
 
-/* 제목·UI는 산세로 남는다. body에서 세리프를 물려받는 요소 중 "읽는 글이 아닌 것"을
-   여기서 되돌린다 — 본문 h1~h4, 그리고 버튼·배지·입력처럼 조작하는 것들.
+/* 제목·UI는 산세로 못박는다. body 기본이 이미 산세이므로 대시보드에서는 사실상
+   확인 사살이지만, 읽기 화면(.prose)에서는 이 규칙이 실질적으로 일한다 — .prose
+   본문은 세리프인데 그 안의 h1~h4 제목은 여기 element 규칙(직접 매칭)이 세리프
+   상속을 이겨 산세로 남긴다("제목 산세 + 본문 세리프" 배치 유지).
 
    폼 요소를 따로 적는 이유: 브라우저 기본 스타일이 input/button에 자기 서체를 주므로
-   body의 상속이 애초에 닿지 않는다(그래서 지금까지도 산세였다). 여기서 명시해야
-   기기마다 다른 서체가 잡히지 않는다. */
+   body의 상속이 애초에 닿지 않는다. 여기서 명시해야 기기마다 다른 서체가 잡히지 않는다. */
 h1,
 h2,
 h3,
@@ -1506,6 +1507,12 @@ code[data-theme*=" "] span {
   line-height: 1.9;
   color: var(--color-foreground);
   max-width: none;
+  /* 읽기 화면 전용 세리프 — 레슨·책·소개(.prose)만 명조로 읽는다. body 기본이
+     산세로 바뀌었으므로(위 body 규칙), 세리프는 여기서만 되살린다. 제목(h1~h4)은
+     위 element 규칙이 산세로 되돌리므로 "제목 산세 + 본문 세리프"가 그대로 유지된다.
+     라틴은 Newsreader, 한글은 NotoSerifKR이 받고, Pretendard가 마지막 안전망이다. */
+  font-family: var(--font-serif-latin), var(--font-serif-ko), var(--font-pretendard), ui-serif,
+    Georgia, serif;
 }
 
 .dark .prose {
