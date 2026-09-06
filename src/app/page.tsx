@@ -42,15 +42,22 @@ export default async function Home() {
 
   // 완료 시각까지 함께 읽는다(readProgressRows) — 복습 만기 계산의 입력.
   // completedIds는 rows에서 파생하므로 조회는 한 번이다.
-  const progressRead = unlocked ? await readProgressRows() : null;
+  //
+  // 진도·복습을 한 번에 병렬로 띄운다(Promise.all) — 복습은 진도 조회가 성공한
+  // 때만 쓰지만(아래 게이트), 두 조회는 서로의 결과에 의존하지 않으므로 동시에
+  // 요청해 Supabase 왕복을 둘에서 하나로 줄인다. 진도가 실패하면 복습 결과는
+  // 버릴 뿐이고(읽기 전용이라 부작용 없음), 표시 로직은 종전과 동일하다.
+  const [progressRead, reviewReadRaw] = unlocked
+    ? await Promise.all([readProgressRows(), readReviewStates()])
+    : [null, null];
   const completedIds = progressRead?.ok
     ? new Set(progressRead.rows.map((row) => row.lessonSlug))
     : null;
 
-  // 복습 상태 — 진도가 정상 조회된 때만 읽는다. 복습 조회가 실패해도 홈의 다른
+  // 복습 상태 — 진도가 정상 조회된 때만 쓴다. 복습 조회가 실패해도 홈의 다른
   // 부분은 살아야 하므로 실패는 "복습 카드 생략"으로 강등한다(진도 조회 실패의
   // ProgressReadError 배너와 달리, 복습은 부가 기능이라 조용한 강등이 맞다).
-  const reviewRead = progressRead?.ok ? await readReviewStates() : null;
+  const reviewRead = progressRead?.ok ? reviewReadRaw : null;
 
   // 일정·오늘 배정 레슨·D-day는 정적 공개 정보라 쿠키 여부와 무관하게 항상
   // 계산한다(D-37) — 완료 체크·페이스 상태만 completedIds 유무로 갈린다.
