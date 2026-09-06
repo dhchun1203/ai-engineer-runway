@@ -36,9 +36,12 @@ export async function GET(request: Request) {
 
   const today = todayInSeoul();
   const hour = hourInSeoul();
-  if (hour !== settings.notifyHour) {
+  // 창(window) 방식: "정확히 그 시각"이 아니라 "그 시각 이후 첫 기회에 하루 한 번".
+  // 트리거(GitHub Actions 매시·Vercel 일 1회 백업)가 조금 밀리거나 일부 틱이 건너뛰어도
+  // 같은 날 안에서 다음 틱이 발송을 잡는다. 중복은 last_sent_on(오늘)이 막는다.
+  if (hour < settings.notifyHour) {
     return NextResponse.json(
-      { ok: true, skipped: 'not-time', hour, notifyHour: settings.notifyHour },
+      { ok: true, skipped: 'too-early', hour, notifyHour: settings.notifyHour },
       { status: 200, headers: NO_STORE },
     );
   }
