@@ -1206,6 +1206,25 @@ code[data-theme*=" "] span {
   color: var(--color-destructive-dark);
 }
 
+/* 복사 버튼 호버 — 데스크톱 포인터에서만. `@media (hover: hover)`로 감싸는 이유는
+   위 .btn/.chip 호버와 같다: 아이패드에서 :hover를 무조건 걸면 탭한 버튼이 손을 뗀
+   뒤에도 하이라이트된 채 남는다(1순위 기기가 아이패드라 가드가 필수).
+   신호는 두 겹 — (1) 조용한 muted 아이콘 색을 본문 잉크로 진하게(칩 호버와 같은 문법),
+   (2) currentColor를 8% 섞은 옅은 배경으로 히트 영역을 드러낸다. currentColor는 이 규칙이
+   막 지정한 잉크색으로 풀리므로, 배경 한 줄이 라이트(어두운 잉크 8%)·다크(밝은 잉크 8%)
+   양쪽에 저절로 맞는다 — 색을 새로 만들지 않는다. idle일 때만 걸어 복사 성공/실패(accent·
+   destructive) 색을 덮지 않는다. */
+@media (hover: hover) {
+  .prose [data-code-block] [data-code-header] button[data-copy-state="idle"]:hover {
+    color: var(--color-foreground);
+    background-color: color-mix(in srgb, currentColor 12%, transparent);
+  }
+
+  .dark .prose [data-code-block] [data-code-header] button[data-copy-state="idle"]:hover {
+    color: var(--color-foreground-dark);
+  }
+}
+
 /* prose 본문 line-height 1.8 + 문단 사이 여백 2.4em (Phase 5 05-01 사용자 리뷰 재작업,
    UX-03 재적용). `@tailwindcss/typography` 플러그인의 실제 기본값은 16px 본문에서
    line-height 1.75(28px)이고 문단 margin은 위아래 각 1.25em(20px)이다 — 이 파일이
