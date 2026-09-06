@@ -19,6 +19,42 @@ import { Check, Copy } from 'lucide-react';
 
 const FEEDBACK_MS = 2_000;
 
+// rehype-pretty-code가 <pre>에 붙이는 data-language(예: "typescript")를 헤더에 보여줄
+// 사람용 라벨로 바꾼다. 축약어(ts)가 아니라 풀어 쓴 이름이 학습자에게 더 친절하다.
+// 목록에 없는 언어는 원문을 대문자로(예: "kotlin" -> "KOTLIN") 그대로 쓴다.
+// 값이 ''인 것(text/plaintext)은 라벨을 숨긴다 — 출력·평문 블록에 언어 딱지는 소음이다.
+const LANGUAGE_LABELS: Record<string, string> = {
+  javascript: 'JavaScript',
+  js: 'JavaScript',
+  typescript: 'TypeScript',
+  ts: 'TypeScript',
+  tsx: 'TSX',
+  jsx: 'JSX',
+  python: 'Python',
+  py: 'Python',
+  sql: 'SQL',
+  bash: 'Shell',
+  sh: 'Shell',
+  shell: 'Shell',
+  'shell-session': 'Shell',
+  powershell: 'PowerShell',
+  ps1: 'PowerShell',
+  json: 'JSON',
+  yaml: 'YAML',
+  yml: 'YAML',
+  html: 'HTML',
+  css: 'CSS',
+  text: '',
+  plaintext: '',
+  txt: '',
+};
+
+function languageLabel(props: Record<string, unknown>): string {
+  const raw = props['data-language'];
+  if (typeof raw !== 'string' || raw.length === 0) return '';
+  return raw in LANGUAGE_LABELS ? LANGUAGE_LABELS[raw] : raw.toUpperCase();
+}
+
 export function CodeBlock({ children, ...props }: ComponentPropsWithoutRef<'pre'>) {
   const preRef = useRef<HTMLPreElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,26 +95,33 @@ export function CodeBlock({ children, ...props }: ComponentPropsWithoutRef<'pre'
 
   const label =
     state === 'copied' ? '코드를 복사했어요' : state === 'failed' ? '복사하지 못했어요' : '코드 복사';
+  const lang = languageLabel(props as Record<string, unknown>);
 
+  // 상단 크롬 바(헤더)에 언어 라벨과 복사 버튼을 나란히 둔다. 버튼을 <pre> 안이나
+  // 그 위에 절대 위치로 띄우지 않고 헤더(스크롤되지 않는 형제)에 두므로, 긴 코드를
+  // 가로 스크롤해도 버튼이 밀려나지 않고 코드 첫 줄을 가리지도 않는다.
   return (
-    <div data-code-block className="relative">
+    <div data-code-block>
+      <div data-code-header>
+        <span data-code-lang>{lang}</span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          data-copy-state={state}
+          // hover가 없는 아이패드에서도 항상 보여야 한다(기존 visibility:"always"와 동등).
+          className="tap-feedback flex h-11 w-11 items-center justify-center"
+          aria-label={label}
+        >
+          {state === 'copied' ? (
+            <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
+          ) : (
+            <Copy className="h-4 w-4 shrink-0" aria-hidden="true" />
+          )}
+        </button>
+      </div>
       <pre {...props} ref={preRef}>
         {children}
       </pre>
-      <button
-        type="button"
-        onClick={handleCopy}
-        data-copy-state={state}
-        // hover가 없는 아이패드에서도 항상 보여야 한다(기존 visibility:"always"와 동등).
-        className="tap-feedback absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-lg border"
-        aria-label={label}
-      >
-        {state === 'copied' ? (
-          <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
-        ) : (
-          <Copy className="h-4 w-4 shrink-0" aria-hidden="true" />
-        )}
-      </button>
       {/* 성공/실패를 시각(아이콘) 말고 보조기술에도 알린다. */}
       <span role="status" aria-live="polite" className="sr-only">
         {state === 'idle' ? '' : label}
