@@ -2058,3 +2058,50 @@ code[data-theme*=" "] span {
 .prose [data-run-output] table {
   margin: 0;
 }
+
+/* ── 학습 알림 설정 모달 (src/components/notification-settings.tsx) ──────────
+   프로필의 "학습 알림" 버튼을 누르면 뜨는 모달. z-index 60은 헤더(20)·모바일 내비
+   패널(50)·스크롤 버튼(30) 위에 확실히 뜨게 하는 값이다. 배경 딤은 새 색을 만들지
+   않고 잉크(--color-foreground)를 반투명으로 섞는다. 다이얼로그 자체는 .panel 클래스가
+   면·테두리·그림자를 이미 주므로 여기서는 자리·크기만 정한다. */
+.notif-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+  background-color: color-mix(in srgb, var(--color-foreground) 45%, transparent);
+}
+
+.notif-dialog {
+  width: 100%;
+  max-width: 30rem;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+}
+
+/* 발송 조건 구획을 위 발송 시각과 얇은 선으로 나눈다 — 패널·표 머리와 같은 잉크 선. */
+.notif-divider {
+  border-top: 1px solid var(--color-line);
+}
+
+.dark .notif-divider {
+  border-top-color: var(--color-line-dark);
+}
+
+/* 시각 선택 <select> — 입력면과 같은 문법(눌린 면 + 잉크 선, 각진 모서리). 네이티브
+   드롭다운 화살표는 남겨 터치로 열기 쉽게 한다. */
+.notif-select {
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-line);
+  color: var(--color-foreground);
+}
+
+.dark .notif-select {
+  background-color: var(--color-surface-2-dark);
+  border-color: var(--color-line-dark);
+  color: var(--color-foreground-dark);
+}

@@ -26,3 +26,18 @@ export function daysUntil(targetDateISO: string, fromDateISO: string): number {
   const fromUTC = Date.UTC(fy, fm - 1, fd);
   return Math.round((targetUTC - fromUTC) / 86_400_000);
 }
+
+/**
+ * Asia/Seoul 기준 현재 시(0-23)를 돌려준다. 학습 알림 크론이 "지금이 사용자가 정한
+ * 발송 시각인가"를 판단하는 데 쓴다. now는 todayInSeoul과 같은 이유로 주입 가능한
+ * 기본값 인자다(자정·정시 경계 테스트). hour12: false는 자정을 '24'로 주는 환경이
+ * 있어 24로 나눈 나머지로 0에 정규화한다.
+ */
+export function hourInSeoul(now: Date = new Date()): number {
+  const hh = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    hour: '2-digit',
+    hour12: false,
+  }).format(now);
+  return Number(hh) % 24;
+}
