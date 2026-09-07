@@ -255,6 +255,30 @@ export default defineConfig({
           selfCheck: data.hasContent ? parseSelfCheck(meta.content ?? "") : [],
         })),
     },
+    // 번외 커리큘럼 "AI 뜯어보기"(concepts) — Step 1~3 정규 레슨과 완전히 별개다.
+    // 진행률(progress-math)·일정(schedule-data)·복습(review)·용어집(glossary)은
+    // 전부 lessons 컬렉션만 소비하므로, 이 컬렉션은 구조적으로 그 어디에도 집계되지
+    // 않는다(2026-09-07 사용자 요구: 진도·일정에 영향 없음). 레슨의 6단 게이트·용어표·
+    // 자가진단 파서도 타지 않는 자유 형식이다 — parseTermTable/parseSelfCheck를 부르지
+    // 않는다. 읽기 시간만 책 리더와 같은 estimateBookMinutes로 정직하게 찍는다.
+    concepts: {
+      name: "Concept",
+      pattern: "src/content/concepts/**/*.mdx",
+      schema: s
+        .object({
+          title: s.string(),
+          order: s.number(), // 번외 내 순서(1..N) — 인접 이동·인덱스 정렬 기준
+          icon: s.string(), // 카드·헤더용 이모지
+          summary: s.string(), // 인덱스 카드 한 줄 훅
+          slug: s.slug("concepts"),
+          code: s.mdx(),
+        })
+        .transform((data, { meta }) => ({
+          ...data,
+          permalink: `/concepts/${data.slug}`,
+          readingMinutes: estimateBookMinutes(meta.content ?? ""),
+        })),
+    },
     // /about (Making-of) 소개 페이지 소스 — docs/making-of.md 단일 파일만 대상으로 한다.
     // 글로브를 넓혀 GSD 계획 산출물 디렉터리를 빨아들이지 않는다 (PLAT-03 threat T-01-14).
     pages: {
