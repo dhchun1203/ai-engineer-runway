@@ -131,9 +131,6 @@ export default function RoadmapPage() {
                   >
                     {String(stage.order).padStart(2, "0")}
                   </span>
-                  <span className="shrink-0 text-2xl leading-none" aria-hidden="true">
-                    {stage.icon}
-                  </span>
                   <div className="flex min-w-0 flex-col gap-1.5">
                     <h3 className="break-keep text-heading font-extrabold">
                       {stage.title}

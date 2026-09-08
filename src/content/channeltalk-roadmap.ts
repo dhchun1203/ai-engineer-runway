@@ -39,8 +39,6 @@ export type RoadmapStage = {
   id: string;
   /** 표시 순서(0부터) */
   order: number;
-  /** 단계를 상징하는 이모지 */
-  icon: string;
   /** 단계 제목 */
   title: string;
   /** 한 줄 부제 */
@@ -116,7 +114,6 @@ export const roadmapStages: readonly RoadmapStage[] = [
   {
     id: "foundations",
     order: 0,
-    icon: "🧱",
     title: "CS 기초와 문제 정의",
     subtitle: "탐구 습관과 사고의 근육 만들기",
     rationale:
@@ -150,7 +147,6 @@ export const roadmapStages: readonly RoadmapStage[] = [
   {
     id: "python-eng",
     order: 1,
-    icon: "🐍",
     title: "Python과 엔지니어링 기본기",
     subtitle: "빠르게 만들고 빠르게 디버깅하기",
     rationale:
@@ -183,7 +179,6 @@ export const roadmapStages: readonly RoadmapStage[] = [
   {
     id: "llm-core",
     order: 2,
-    icon: "🧠",
     title: "LLM의 본질 이해",
     subtitle: "토큰, 컨텍스트, 컨텍스트 엔지니어링",
     rationale:
@@ -218,7 +213,6 @@ export const roadmapStages: readonly RoadmapStage[] = [
   {
     id: "rag",
     order: 3,
-    icon: "🔎",
     title: "RAG와 정보 검색 시스템",
     subtitle: "지식을 AI가 진짜 이해하게 만들기",
     rationale:
@@ -252,7 +246,6 @@ export const roadmapStages: readonly RoadmapStage[] = [
   {
     id: "agents",
     order: 4,
-    icon: "🤖",
     title: "AI 에이전트와 Agentic Workflow",
     subtitle: "답하는 AI에서 행동하는 AI로",
     rationale:
@@ -286,7 +279,6 @@ export const roadmapStages: readonly RoadmapStage[] = [
   {
     id: "evals",
     order: 5,
-    icon: "📏",
     title: "평가와 벤치마크 (Evals)",
     subtitle: "감이 아니라 숫자로 좋아지기",
     rationale:
@@ -320,7 +312,6 @@ export const roadmapStages: readonly RoadmapStage[] = [
   {
     id: "production",
     order: 6,
-    icon: "⚙️",
     title: "프로덕션과 비용 최적화",
     subtitle: "수만 건 상담을 안정적으로, 그리고 싸게",
     rationale:
@@ -354,7 +345,6 @@ export const roadmapStages: readonly RoadmapStage[] = [
   {
     id: "mindset",
     order: 7,
-    icon: "🧭",
     title: "실전 감각과 Forward Deployed 태도",
     subtitle: "0에서 1을 직접 만들어 본 사람",
     rationale:
