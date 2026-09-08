@@ -35,6 +35,9 @@ const NAV_ITEMS: readonly NavItem[] = [
   // 단독 링크로 두어 진입이 한 번에 닿게 한다. isActiveHref가 startsWith라
   // /concepts/[slug] 리더에서도 이 항목이 활성으로 표시된다.
   { label: "AI 뜯어보기", href: "/concepts" },
+  // 취업 목표 트랙 "채널톡 AI Engineer 로드맵"(/roadmap) — 정규 커리큘럼과 별개의
+  // 별도 커리큘럼. AI 뜯어보기와 같은 단독 링크로 두어 한 번에 닿게 한다.
+  { label: "채널톡 로드맵", href: "/roadmap" },
   {
     label: "학습 도구",
     href: null,
