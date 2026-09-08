@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import type { ComponentType } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { MDXContent } from "@/components/mdx-content";
+import { TermPanelProvider, Term } from "@/components/roadmap/term-panel";
 import {
   getRoadmapLessonBySlug,
   getOrderedRoadmapLessons,
@@ -66,9 +68,16 @@ export default async function RoadmapLessonPage(
           </div>
         </header>
 
-        <div className="prose dark:prose-invert max-w-none">
-          <MDXContent code={lesson.code} />
-        </div>
+        {/* 용어 패널 프로바이더로 본문을 감싼다. 본문 안 <Term>이 우측 설명
+            패널을 연다. Term은 MDX 컴포넌트 매핑으로 주입한다. */}
+        <TermPanelProvider>
+          <div className="prose dark:prose-invert max-w-none">
+            <MDXContent
+              code={lesson.code}
+              components={{ Term: Term as ComponentType }}
+            />
+          </div>
+        </TermPanelProvider>
 
         <nav aria-label="로드맵으로 돌아가기" className="hairline pt-6">
           <Link
