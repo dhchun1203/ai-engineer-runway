@@ -279,6 +279,29 @@ export default defineConfig({
           readingMinutes: estimateBookMinutes(meta.content ?? ""),
         })),
     },
+    // 취업 목표 트랙 "채널톡 AI Engineer 로드맵"의 별도 심화 레슨(roadmapLessons).
+    // concepts와 같은 자유 형식 MDX이고, 정규 레슨의 6단 게이트·용어표·자가진단을
+    // 타지 않는다. 다만 concepts(선행 개념 이해)와 목적이 다르다 — 여기는 채널톡이
+    // 실제 요구하는 실무/프로덕션 깊이의 별도 학습 콘텐츠다. 진행률·일정·복습은
+    // lessons 컬렉션만 소비하므로 이 컬렉션도 그 어디에도 집계되지 않는다(격리).
+    roadmapLessons: {
+      name: "RoadmapLesson",
+      pattern: "src/content/roadmap-lessons/**/*.mdx",
+      schema: s
+        .object({
+          title: s.string(),
+          stageId: s.string(), // 로드맵 단계 id(예: "evals") — 단계와 잇는 열쇠
+          order: s.number(), // 트랙 내 순서
+          summary: s.string(), // 로드맵/헤더용 한 줄 훅
+          slug: s.slug("roadmap-lessons"),
+          code: s.mdx(),
+        })
+        .transform((data, { meta }) => ({
+          ...data,
+          permalink: `/roadmap/${data.slug}`,
+          readingMinutes: estimateBookMinutes(meta.content ?? ""),
+        })),
+    },
     // /about (Making-of) 소개 페이지 소스 — docs/making-of.md 단일 파일만 대상으로 한다.
     // 글로브를 넓혀 GSD 계획 산출물 디렉터리를 빨아들이지 않는다 (PLAT-03 threat T-01-14).
     pages: {

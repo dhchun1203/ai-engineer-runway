@@ -30,6 +30,8 @@ export type RoadmapSkill = {
    * separate면 왜 따로 학습해야 하는지 짧은 이유.
    */
   where: string;
+  /** 이 역량을 다루는 별도 심화 레슨의 slug(roadmapLessons). 있으면 로드맵에서 링크한다. */
+  lessonSlug?: string;
   /** 사용자가 나중에 자료 링크나 메모를 붙일 자리(선택) */
   note?: string;
 };
@@ -301,6 +303,7 @@ export const roadmapStages: readonly RoadmapStage[] = [
         title: "할루시네이션과 품질 저하를 잡는 평가 루프",
         coverage: "separate",
         where: "교육과정은 평가 자동화까지, 할루시네이션 특화 평가는 따로 심화",
+        lessonSlug: "evals-hallucination",
       },
       {
         title: "평가를 자동화해 개선 사이클을 빠르게 돌리기",

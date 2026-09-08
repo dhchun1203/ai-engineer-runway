@@ -1,0 +1,306 @@
+---
+title: "할루시네이션을 잡는 평가 시스템 만들기"
+stageId: "evals"
+order: 1
+summary: "감이 아니라 숫자로 상담 품질을 지키는 법. 골든셋, LLM 심판, 근거 충실성, 회귀 게이트까지 실무 수준으로."
+slug: "evals-hallucination"
+---
+
+## 이 레슨의 목표와 눈높이
+
+이건 선행학습이 아닙니다. 채널톡 Applied AI Engineer가 실제로 하는 일, 그 깊이 그대로 갑니다.
+
+채널톡의 상담 에이전트 ALF는 2025년 한 해 동안 해결률을 52%에서 80%로 끌어올렸습니다. 이 숫자가 존재한다는 것 자체가 핵심입니다. 무엇이 좋아졌는지 측정하지 못하면 개선은 운에 맡기는 일이 됩니다. 채용 공고의 주요 업무에도 "AI 상담 평가와 개선 자동화 시스템 설계, 벤치마크 구축"이 그대로 적혀 있습니다.
+
+이 레슨을 끝내면 다음을 직접 만들 수 있습니다.
+
+1. LLM 답변을 자동으로 채점하는 LLM 심판(judge)을 구조화 출력으로 안정적으로 돌리기
+2. 답변이 검색된 근거에 실제로 기반하는지 재는 근거 충실성(groundedness) 지표로 할루시네이션 잡기
+3. 프롬프트나 모델을 바꿀 때 품질이 떨어지지 않았는지 통계적으로 확인하는 회귀 게이트를 CI에 걸기
+
+## 왜 LLM 평가가 어려운가
+
+전통적인 소프트웨어 테스트는 입력에 대해 정답이 하나로 고정됩니다. `add(2, 3)`은 언제나 5입니다.
+
+LLM은 다릅니다. 같은 질문에도 표현이 매번 달라지고(비결정성), 정답이 여러 개일 수 있으며(좋은 답이 하나가 아님), "좋다"의 기준이 주관적입니다. 그래서 문자열 일치로는 채점이 안 됩니다.
+
+핵심 전환은 이겁니다. 정답 문자열을 맞히는 대신, 답이 갖춰야 할 속성을 정의하고 그 속성을 만족하는지를 잽니다. 예를 들어 "검색된 근거에만 기반했는가", "고객의 실제 의도를 해결했는가", "금지된 정보(PII)를 흘리지 않았는가" 같은 속성입니다.
+
+## 두 개의 축: 오프라인과 온라인
+
+평가는 두 곳에서 일어납니다. 둘 다 필요합니다.
+
+오프라인 평가는 배포 전에, 고정된 골든 데이터셋으로 돌립니다. 프롬프트를 바꾸거나 모델을 갈아끼울 때 "이 변경이 품질을 떨어뜨리는가"를 배포 전에 잡는 안전망입니다. 빠르고 반복 가능하며 CI에 걸 수 있습니다.
+
+온라인 평가는 배포 후에, 실제 트래픽으로 잽니다. 진짜 사용자, 진짜 지식베이스, 진짜 엣지케이스가 여기 있습니다. 해결률처럼 프로덕트에 직결되는 지표는 결국 온라인에서 확인됩니다.
+
+오프라인만 보면 실제 분포를 놓치고, 온라인만 보면 이미 사고가 난 뒤입니다. 채널톡식으로 말하면, 오프라인 골든셋으로 회귀를 막고 온라인 해결률로 진짜 성과를 확인하는 두 겹 구조입니다.
+
+## 무엇을 측정할 것인가
+
+상담 에이전트라면 최소한 이 지표들을 나눠서 봅니다. 하나의 종합 점수로 뭉개면 무엇이 망가졌는지 알 수 없습니다.
+
+| 지표 | 무엇을 보는가 | 어떻게 재는가 |
+| --- | --- | --- |
+| 해결률 | 고객의 문제가 실제로 풀렸는가 | 온라인 라벨 또는 후속 상담 발생 여부 |
+| 근거 충실성 | 답이 검색된 근거에 기반하는가 | claim별 근거 대조, 할루시네이션의 반대말 |
+| 정확성 | 사실이 맞는가 | 골든셋 정답과 대조, LLM 심판 |
+| 안전 | PII 유출, 인젝션 순응이 없는가 | 규칙 기반 필터와 심판 병행 |
+| 형식 준수 | 요구한 JSON 구조를 지키는가 | 스키마 검증 |
+| 지연과 비용 | 응답 시간과 토큰 비용 | 서버 로그, `usage` 집계 |
+
+이 레슨은 이 중에서도 가장 위험하고 자동화가 까다로운 두 가지, 정확성 채점과 근거 충실성에 집중합니다.
+
+## 골든 데이터셋부터
+
+평가 시스템의 품질은 골든셋의 품질을 넘지 못합니다. 여기가 가장 지루하고 가장 중요합니다.
+
+좋은 골든셋의 조건은 이렇습니다. 실제 상담 로그에서 뽑아 실제 분포를 반영할 것, 쉬운 질문뿐 아니라 애매하고 여러 의도가 섞인 엣지케이스를 포함할 것, 각 항목에 질문과 기대 정답과 근거가 되는 지식 조각을 함께 담을 것입니다.
+
+한 항목의 모습입니다. 근거(context)를 함께 저장하는 게 뒤에서 근거 충실성을 재는 열쇠입니다.
+
+```python
+# golden_set.py
+# 실제 상담 로그에서 샘플링해 사람이 검수한 평가셋 한 조각.
+# context는 이 질문에 대해 RAG가 검색해 온(또는 검색해 와야 하는) 지식이다.
+golden = [
+    {
+        "id": "refund-window-01",
+        "question": "3일 전에 산 건데 환불 되나요?",
+        "context": [
+            "환불 정책: 미개봉 상품은 구매 후 7일 이내 전액 환불 가능합니다.",
+            "개봉한 상품은 단순 변심 환불이 불가합니다.",
+        ],
+        "expected": "미개봉이라면 7일 이내이므로 환불 가능. 개봉 여부를 먼저 확인해야 함.",
+        # 엣지케이스 표시: 이 질문은 개봉 여부라는 조건이 빠져 있어
+        # 에이전트가 되물어야 정답이다. 되묻지 않고 단정하면 감점.
+        "tags": ["needs_clarification", "policy"],
+    },
+    # ... 최소 수십 개, 이상적으로는 수백 개. 분기마다 갱신한다.
+]
+```
+
+주의할 함정이 두 가지 있습니다. 첫째, 골든셋 오염입니다. 평가셋에 등장한 예시를 프롬프트에 그대로 넣고 튜닝하면, 점수는 오르지만 실제 성능은 그대로인 과적합이 생깁니다. 골든셋은 학습이 아니라 채점에만 씁니다. 둘째, 규모입니다. 20개짜리 골든셋의 5% 변화는 딱 한 개짜리 변화라 통계적으로 무의미합니다. 이 문제는 뒤의 회귀 게이트에서 정면으로 다룹니다.
+
+## LLM을 심판으로 쓰기
+
+정확성처럼 주관이 섞인 지표는 사람 대신 강한 LLM이 채점하게 만듭니다. 이걸 LLM-as-judge라고 합니다. 핵심은 세 가지입니다. 명확한 루브릭, 구조화된 출력, 편향 관리.
+
+아래는 Anthropic SDK로 심판을 구현한 것입니다. 자유 서술로 받으면 파싱이 깨지므로, 도구(tool)를 강제해 스키마가 보장된 JSON으로 받습니다. 심판은 보조 역할이라 비용을 아껴 `claude-sonnet-5`를 쓰되, 더 엄격해야 하면 `claude-opus-5`로 올립니다.
+
+```python
+# judge.py
+import json
+from anthropic import Anthropic
+
+client = Anthropic()  # ANTHROPIC_API_KEY 환경변수에서 자동으로 읽는다
+
+# strict=True로 스키마를 어기지 못하게 못박는다. tool_choice로 이 도구를
+# 반드시 부르게 강제하면, 응답은 항상 이 구조의 JSON이 된다.
+JUDGE_TOOL = {
+    "name": "record_evaluation",
+    "description": "상담 답변에 대한 구조화된 평가를 기록한다.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "resolution": {
+                "type": "string",
+                "enum": ["resolved", "partial", "failed"],
+                "description": "고객의 실제 의도를 해결했는가",
+            },
+            "grounded": {
+                "type": "boolean",
+                "description": "모든 주장이 주어진 근거에만 기반하는가",
+            },
+            "unsupported_claims": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "근거에 없는데 답변이 단정한 문장들",
+            },
+            "score": {"type": "integer", "minimum": 1, "maximum": 5},
+            "reason": {"type": "string", "description": "채점 근거 한두 문장"},
+        },
+        "required": ["resolution", "grounded", "unsupported_claims", "score", "reason"],
+        "additionalProperties": False,
+    },
+    "strict": True,
+}
+
+RUBRIC = """당신은 고객 상담 답변을 채점하는 엄격한 평가자입니다.
+아래 기준으로만 채점하고, 개인적 취향은 배제합니다.
+
+- resolution: 고객의 실제 의도가 해결됐으면 resolved, 일부만이면 partial, 아니면 failed.
+  정보가 부족해 되물어야 하는 상황에서 되물었다면 resolved로 봅니다.
+- grounded: 답변의 모든 사실 주장이 <근거> 안에서 확인되면 true.
+  <근거>에 없는 사실을 하나라도 단정했다면 false이고, 그 문장을 unsupported_claims에 넣습니다.
+- score: 위 둘과 어조, 안전을 종합한 1에서 5.
+"""
+
+
+def judge(question: str, context: list[str], answer: str) -> dict:
+    context_block = "\n".join(f"- {c}" for c in context)
+    prompt = (
+        f"<질문>\n{question}\n</질문>\n\n"
+        f"<근거>\n{context_block}\n</근거>\n\n"
+        f"<평가할_답변>\n{answer}\n</평가할_답변>\n\n"
+        "record_evaluation 도구로 평가를 기록하세요."
+    )
+    resp = client.messages.create(
+        model="claude-sonnet-5",
+        max_tokens=1024,
+        system=RUBRIC,
+        tools=[JUDGE_TOOL],
+        # 이 도구를 반드시 부르게 강제 -> 응답이 항상 스키마대로 온다.
+        tool_choice={"type": "tool", "name": "record_evaluation"},
+        messages=[{"role": "user", "content": prompt}],
+    )
+    for block in resp.content:
+        if block.type == "tool_use":
+            # 모델별로 JSON 이스케이프가 다를 수 있으니 항상 SDK가 파싱한
+            # block.input을 쓴다. 직렬화된 문자열을 손으로 파싱하지 않는다.
+            return block.input
+    raise RuntimeError("심판이 도구를 부르지 않았습니다")
+```
+
+심판을 맹신하면 안 됩니다. LLM 심판에는 알려진 편향이 있습니다. 앞에 놓인 답을 선호하는 위치 편향, 자기 계열 모델의 문체를 후하게 주는 자기 선호 편향, 긴 답을 좋게 보는 장황함 편향입니다. 그래서 심판을 도입하면 반드시 사람 라벨 수십 개와 대조해 일치율(예: Cohen's kappa)을 확인하고, 심판 프롬프트를 사람 판단에 맞게 캘리브레이션합니다. 심판은 사람을 대체하는 게 아니라 사람의 판단을 확장하는 도구입니다.
+
+## 근거 충실성으로 할루시네이션 잡기
+
+할루시네이션은 모델이 근거에 없는 내용을 사실인 양 말하는 것입니다. RAG 상담에서 가장 위험한 실패이고, 채널톡처럼 고객사의 지식으로 답하는 서비스에서는 곧 신뢰 문제로 직결됩니다.
+
+측정의 뼈대는 이렇습니다. 답변을 개별 주장(claim)으로 쪼갠 뒤, 각 주장이 검색된 근거로 뒷받침되는지를 하나씩 확인합니다. 위 심판 도구의 `grounded`와 `unsupported_claims`가 바로 이 일을 합니다. 이제 그걸 골든셋 전체에 돌려 근거 충실성 점수를 냅니다.
+
+```python
+# groundedness.py
+from judge import judge
+
+
+def groundedness_report(records: list[dict], answer_fn) -> dict:
+    """records의 각 항목에 대해 실제 에이전트(answer_fn)를 돌려
+    답을 만들고, 심판으로 근거 충실성을 집계한다."""
+    total = len(records)
+    grounded = 0
+    hallucinations = []  # 사람이 나중에 검수할 실패 목록
+
+    for r in records:
+        answer = answer_fn(r["question"], r["context"])
+        verdict = judge(r["question"], r["context"], answer)
+        if verdict["grounded"]:
+            grounded += 1
+        else:
+            hallucinations.append(
+                {"id": r["id"], "claims": verdict["unsupported_claims"], "answer": answer}
+            )
+
+    return {
+        "groundedness_rate": grounded / total,
+        "hallucination_count": len(hallucinations),
+        "failures": hallucinations,  # 숫자만 보지 말고 실패 사례를 직접 읽어라
+    }
+```
+
+숫자 하나만 보고 끝내면 안 됩니다. `failures`에 담긴 실제 할루시네이션 사례를 눈으로 읽는 게 개선의 출발점입니다. 근거가 부족해서인지, 검색이 엉뚱한 걸 가져와서인지, 프롬프트가 추측을 부추기는지가 거기서 보입니다.
+
+## 회귀 게이트: 바꿨는데 나빠지지 않았는가
+
+이제 실무의 핵심입니다. 프롬프트를 고치거나 모델을 갈아끼울 때, 해결률이 우연히 떨어진 게 아니라 진짜 떨어졌는지 어떻게 아나요.
+
+두 가지가 필요합니다. 첫째, 변경 전후를 같은 골든셋으로 재실행합니다. 둘째, 차이가 통계적으로 유의한지 확인합니다. 골든셋이 작으면 한두 개 항목이 우연히 뒤집히는 것만으로도 몇 퍼센트가 흔들리기 때문입니다.
+
+작은 표본에서 비율의 불확실성을 정직하게 다루는 간단한 방법이 부트스트랩 신뢰구간입니다. 표준 라이브러리만으로 구현합니다.
+
+```python
+# regression.py
+import random
+
+
+def resolution_rate(verdicts: list[dict]) -> float:
+    ok = sum(1 for v in verdicts if v["resolution"] == "resolved")
+    return ok / len(verdicts)
+
+
+def bootstrap_ci(verdicts: list[dict], n_boot: int = 2000, seed: int = 0):
+    """해결률의 95% 부트스트랩 신뢰구간. 표본을 복원추출로 여러 번
+    다시 뽑아 비율이 얼마나 흔들리는지 본다."""
+    rng = random.Random(seed)
+    rates = []
+    for _ in range(n_boot):
+        sample = [rng.choice(verdicts) for _ in verdicts]
+        rates.append(resolution_rate(sample))
+    rates.sort()
+    lo = rates[int(0.025 * n_boot)]
+    hi = rates[int(0.975 * n_boot)]
+    return resolution_rate(verdicts), (lo, hi)
+```
+
+이제 이걸 CI에 게이트로 겁니다. pytest로 짜면 프롬프트 PR을 올릴 때마다 자동으로 돌아, 품질이 기준 아래로 떨어지면 머지를 막습니다. 채널톡이 말하는 "평가 자동화"가 이 지점입니다.
+
+```python
+# test_quality_gate.py
+from golden_set import golden
+from judge import judge
+from regression import resolution_rate, bootstrap_ci
+from my_agent import answer_fn  # 평가 대상 에이전트
+
+BASELINE = 0.78          # 직전 배포의 해결률(버전과 함께 저장해 둔다)
+MIN_ACCEPTABLE = 0.75    # 이 아래로 떨어지면 머지 금지
+
+
+def test_resolution_does_not_regress():
+    verdicts = [
+        judge(r["question"], r["context"], answer_fn(r["question"], r["context"]))
+        for r in golden
+    ]
+    rate, (lo, hi) = bootstrap_ci(verdicts)
+
+    # 하한이 기준 아래면, 우연이 아니라 진짜 나빠졌을 가능성이 크다 -> 실패.
+    assert lo >= MIN_ACCEPTABLE, (
+        f"해결률 {rate:.2%} (95% CI {lo:.2%}~{hi:.2%})가 기준 {MIN_ACCEPTABLE:.0%}를 "
+        f"신뢰구간 하한에서 밑돈다. 이 변경은 회귀다."
+    )
+
+
+def test_no_grounding_regression():
+    grounded = sum(
+        1
+        for r in golden
+        if judge(r["question"], r["context"], answer_fn(r["question"], r["context"]))["grounded"]
+    )
+    assert grounded / len(golden) >= 0.95, "근거 충실성이 95% 아래로 떨어졌다"
+```
+
+여기서 통계가 하는 일이 중요합니다. 단순히 "이번 해결률 76%가 기준 78%보다 낮으니 실패"라고 하면, 표본이 작을 때 우연한 2%p 하락에도 계속 걸립니다. 신뢰구간 하한으로 판정하면 "진짜 나빠졌을 때만" 막습니다. 이게 감이 아니라 숫자로 일하는 방식입니다.
+
+## 온라인으로 잇기
+
+오프라인 게이트를 통과해 배포한 뒤에는 실제 트래픽에서 확인합니다. 전량을 심판에 돌리면 비용이 감당이 안 되니, 트래픽의 일부를 표본으로 뽑아 심판을 돌립니다. 대량 표본 채점처럼 비용이 큰 경로에는 더 싼 `claude-haiku-4-5`를 쓰는 식으로 비용을 관리합니다.
+
+온라인에서는 해결률과 함께 에스컬레이션율(사람 상담사로 넘어간 비율), 재문의율(같은 고객이 곧 다시 묻는지), CSAT 프록시를 봅니다. 새 프롬프트나 모델은 전체가 아니라 트래픽 일부에만 먼저 흘리는 카나리 배포로 내보내고, 지표가 흔들리면 즉시 롤백합니다.
+
+## 채널톡식으로 묶으면
+
+지금까지의 조각을 이으면 하나의 자동화 파이프라인이 됩니다. 골든셋을 관리하고, 변경마다 오프라인 게이트가 회귀를 막고, 배포 후 온라인 표본이 실제 해결률을 감시하고, 실패 사례가 다시 골든셋으로 흘러 들어옵니다. 이 순환이 바로 채용 공고의 "AI 상담 평가와 개선 자동화 시스템, 벤치마크 구축"이고, ALF의 52%에서 80%를 만든 엔진입니다.
+
+## 흔한 함정
+
+심판을 진실로 착각하는 것이 가장 흔합니다. 심판도 모델이라 틀립니다. 반드시 사람 라벨과 대조해 캘리브레이션하세요.
+
+골든셋을 프롬프트 튜닝에 재사용해 과적합시키는 것도 흔합니다. 채점용과 개발용을 분리하세요.
+
+단일 종합 점수로 뭉개는 것도 위험합니다. 해결률은 올랐는데 근거 충실성이 떨어졌다면 그건 개선이 아니라 위험한 거래입니다. 지표를 나눠 보세요.
+
+오프라인만 믿는 것도 함정입니다. 골든셋은 과거의 분포이고, 실제 지식베이스와 신종 질문은 온라인에만 있습니다.
+
+## 직접 해보기
+
+로드맵 앞 단계에서 만든(또는 만들) RAG 챗봇에 이 레슨을 붙여 보세요.
+
+1. 실제로 물어볼 법한 질문 20개로 골든셋을 만들되, 각 항목에 질문과 근거 컨텍스트와 기대 정답을 넣으세요. 되물어야 정답인 엣지케이스를 최소 3개 섞으세요.
+2. `judge`와 `groundedness_report`를 붙여 현재 챗봇의 해결률과 근거 충실성을 재세요. 실패 사례를 직접 읽어 원인을 세 가지로 분류하세요.
+3. 프롬프트를 한 번 개선한 뒤 회귀 게이트를 돌려, 개선이 통계적으로 유의한지 신뢰구간으로 확인하세요.
+
+여기까지 하면 채용 면접에서 "품질을 어떻게 측정하고 지켰나요"라는 질문에, 코드와 숫자로 답할 수 있습니다.
+
+## 더 깊이 파고들 것
+
+다음 세 가지는 이 레슨의 자연스러운 확장입니다. claim 분해를 별도 단계로 떼어 더 정밀하게 근거를 대조하는 법, 심판과 사람의 일치율을 kappa로 정량화해 심판 자체를 평가하는 법, 그리고 안전 지표(PII 유출, 프롬프트 인젝션 순응)를 규칙 기반 필터와 심판으로 함께 재는 법입니다. 각각을 별도 실험으로 만들어 골든셋에 새 축으로 더해 보세요.

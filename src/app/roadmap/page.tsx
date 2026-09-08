@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import {
   talentTraits,
   roadmapStages,
@@ -188,6 +189,15 @@ export default function RoadmapPage() {
                             {skill.where}
                           </span>
                         </span>
+                        {skill.lessonSlug ? (
+                          <Link
+                            href={`/roadmap/${skill.lessonSlug}`}
+                            className="chip w-fit min-h-11 items-center gap-1.5 text-label font-bold text-accent dark:text-accent-dark"
+                          >
+                            심화 레슨 열기
+                            <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+                          </Link>
+                        ) : null}
                       </div>
                     </li>
                   ))}
