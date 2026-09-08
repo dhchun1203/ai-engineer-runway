@@ -11,9 +11,25 @@
 // 표기 규칙: 페이지에 공개되는 프로즈에는 가운데점과 긴하이픈을 쓰지 않는다
 // (쉼표, 괄호, 줄바꿈으로 대신한다).
 
+/**
+ * 이 역량이 기존 AI Engineer 교육과정과 어떤 관계인가.
+ * - reinforce: 교육과정에 이미 있는 내용. 과정을 들으며 채널톡 수준으로 더 깊게 강화한다.
+ * - separate: 교육과정에 없거나 얕게 다뤄서, 따로 챙겨 학습해야 한다.
+ * 분류 근거는 실제 교육과정(Step 1 개발 기반, Step 2 풀스택·LLM, Step 3 RAG·에이전트·LLMOps,
+ * Step 4 기업 프로젝트)을 직접 확인해 매핑한 것이다. 공개 문구에는 기관명을 쓰지 않는다.
+ */
+export type SkillCoverage = "reinforce" | "separate";
+
 export type RoadmapSkill = {
   /** 익혀야 할 역량 한 줄 */
   title: string;
+  /** 교육과정과의 관계 라벨 */
+  coverage: SkillCoverage;
+  /**
+   * reinforce면 교육과정 어디서 다루는지(예: "Step 3 RAG 파이프라인 설계"),
+   * separate면 왜 따로 학습해야 하는지 짧은 이유.
+   */
+  where: string;
   /** 사용자가 나중에 자료 링크나 메모를 붙일 자리(선택) */
   note?: string;
 };
@@ -109,10 +125,26 @@ export const roadmapStages: readonly RoadmapStage[] = [
       "기초를 탄탄히 다지고 싶거나, 그걸 쌓아가고 싶은 분을 원합니다.",
     evidenceSource: "CTO 인터뷰",
     skills: [
-      { title: "자료구조와 알고리즘의 기본기 (배열, 해시, 트리, 그래프, 복잡도)" },
-      { title: "시스템이 어떻게 도는지 왜 이렇게 되어 있는지 파고드는 습관" },
-      { title: "큰 문제를 작은 문제로 정의하고 구조화하는 연습" },
-      { title: "코드 리뷰를 주고받으며 근거로 설득하기" },
+      {
+        title: "자료구조와 알고리즘의 기본기 (배열, 해시, 트리, 그래프, 복잡도)",
+        coverage: "separate",
+        where: "교육과정 Python은 문법 중심이라 자료구조와 알고리즘은 따로 판다",
+      },
+      {
+        title: "시스템이 어떻게 도는지 왜 이렇게 되어 있는지 파고드는 습관",
+        coverage: "separate",
+        where: "모듈이 아니라 태도라, 스스로 훈련해야 한다",
+      },
+      {
+        title: "큰 문제를 작은 문제로 정의하고 구조화하는 연습",
+        coverage: "reinforce",
+        where: "Step 2, 3 실무 프로젝트에서 반복 훈련",
+      },
+      {
+        title: "코드 리뷰를 주고받으며 근거로 설득하기",
+        coverage: "reinforce",
+        where: "Step 1 개발 협업 및 Git PR 흐름",
+      },
     ],
   },
   {
@@ -126,10 +158,26 @@ export const roadmapStages: readonly RoadmapStage[] = [
     evidence: "Python 프로그래밍 능력",
     evidenceSource: "Applied AI Engineer 필수 자격",
     skills: [
-      { title: "Python 실무 (타입 힌트, 비동기, 패키지와 가상환경)" },
-      { title: "Git 협업 흐름과 작은 단위 커밋" },
-      { title: "테스트 작성과 빠른 디버깅" },
-      { title: "간단한 API 서버와 데이터 처리 스크립트 만들기" },
+      {
+        title: "Python 실무 (타입 힌트, 비동기, 패키지와 가상환경)",
+        coverage: "reinforce",
+        where: "Step 1 Python 프로그래밍 기초 (타입 힌트와 비동기는 심화가 필요)",
+      },
+      {
+        title: "Git 협업 흐름과 작은 단위 커밋",
+        coverage: "reinforce",
+        where: "Step 1 개발 협업 및 생성형 AI 이해",
+      },
+      {
+        title: "테스트 작성과 빠른 디버깅",
+        coverage: "separate",
+        where: "자동화 테스트는 교육과정에 별도 모듈이 없어 스스로 챙긴다",
+      },
+      {
+        title: "간단한 API 서버와 데이터 처리 스크립트 만들기",
+        coverage: "reinforce",
+        where: "Step 2 백엔드 아키텍처 및 API 설계",
+      },
     ],
   },
   {
@@ -144,10 +192,26 @@ export const roadmapStages: readonly RoadmapStage[] = [
       "공개 벤치마크 1위 모델이 아닌, 리더보드에도 없는 모델을 선택했습니다.",
     evidenceSource: "기술블로그, 상담 Agent 모델 교체기",
     skills: [
-      { title: "토큰, 임베딩, 컨텍스트 윈도우가 실제로 무엇인지" },
-      { title: "프롬프트와 컨텍스트 엔지니어링 (필요한 정보를 필요한 만큼만)" },
-      { title: "모델별 특성 비교와 선택 기준" },
-      { title: "LLM API를 직접 호출하며 감 잡기" },
+      {
+        title: "토큰, 임베딩, 컨텍스트 윈도우가 실제로 무엇인지",
+        coverage: "reinforce",
+        where: "Step 2 LLM 프롬프트 엔지니어링, 임베딩은 Step 3 RAG",
+      },
+      {
+        title: "프롬프트와 컨텍스트 엔지니어링 (필요한 정보를 필요한 만큼만)",
+        coverage: "reinforce",
+        where: "Step 2 프롬프트 엔지니어링 및 PromptOps",
+      },
+      {
+        title: "모델별 특성 비교와 선택 기준",
+        coverage: "separate",
+        where: "교육과정은 튜닝 중심이라, 모델 선택과 교체 판단은 따로 익힌다",
+      },
+      {
+        title: "LLM API를 직접 호출하며 감 잡기",
+        coverage: "reinforce",
+        where: "Step 2 Project 1, 2에서 GPT와 Anthropic API 연동",
+      },
     ],
     internalLink: { label: "사이트의 AI 뜯어보기로 개념 다지기", href: "/concepts" },
   },
@@ -163,10 +227,26 @@ export const roadmapStages: readonly RoadmapStage[] = [
       "고객 상담 에이전트(ALF)의 RAG 성능 고도화, 멀티모달 지식 검색 시스템 설계.",
     evidenceSource: "Applied AI Engineer 주요 업무",
     skills: [
-      { title: "임베딩과 벡터 검색, 유사도의 원리" },
-      { title: "RAG 파이프라인을 직접 만들고 성능 높이기" },
-      { title: "원천 데이터(PDF, 스프레드시트, 웹페이지)를 지식으로 바꾸는 전처리 파이프라인" },
-      { title: "텍스트와 이미지를 아우르는 멀티모달 지식 검색 감각" },
+      {
+        title: "임베딩과 벡터 검색, 유사도의 원리",
+        coverage: "reinforce",
+        where: "Step 3 RAG 파이프라인 설계 (벡터 검색, 메타데이터)",
+      },
+      {
+        title: "RAG 파이프라인을 직접 만들고 성능 높이기",
+        coverage: "reinforce",
+        where: "Step 3 RAG 파이프라인 및 Project 3 (하이브리드 검색, re-ranking)",
+      },
+      {
+        title: "원천 데이터(PDF, 스프레드시트, 웹페이지)를 지식으로 바꾸는 전처리 파이프라인",
+        coverage: "separate",
+        where: "교육과정 RAG는 검색과 랭킹 중심이라, 다양한 원천 문서 전처리는 따로 심화",
+      },
+      {
+        title: "텍스트와 이미지를 아우르는 멀티모달 지식 검색 감각",
+        coverage: "separate",
+        where: "멀티모달 검색은 교육과정에 없어 따로 학습",
+      },
     ],
   },
   {
@@ -181,10 +261,26 @@ export const roadmapStages: readonly RoadmapStage[] = [
       "회원 정보 조회 후 이메일 수신 차단 해제까지 처리해줍니다.",
     evidenceSource: "ALF v2 해결률 80% 사례",
     skills: [
-      { title: "툴 호출(function calling)과 에이전트 루프의 구조" },
-      { title: "에이전틱 서치 (스스로 정보를 찾아 판단하기)" },
-      { title: "실제 시스템과 연동해 행동을 수행하는 task execution" },
-      { title: "멀티 에이전트 설계와 MCP 같은 도구 생태계" },
+      {
+        title: "툴 호출(function calling)과 에이전트 루프의 구조",
+        coverage: "reinforce",
+        where: "Step 3 Project 3 RAG Agent 및 오케스트레이션",
+      },
+      {
+        title: "에이전틱 서치 (스스로 정보를 찾아 판단하기)",
+        coverage: "reinforce",
+        where: "Step 3 RAG Agent와 오케스트레이션의 연장선 (심화 영역)",
+      },
+      {
+        title: "실제 시스템과 연동해 행동을 수행하는 task execution",
+        coverage: "reinforce",
+        where: "Step 3 워크플로우 오케스트레이션 (Webhook, 외부 툴 연동, HITL)",
+      },
+      {
+        title: "멀티 에이전트 설계와 MCP 같은 도구 생태계",
+        coverage: "reinforce",
+        where: "Step 3 오케스트레이션 (LangGraph, MCP)",
+      },
     ],
   },
   {
@@ -199,10 +295,26 @@ export const roadmapStages: readonly RoadmapStage[] = [
       "AI 상담 평가와 개선 자동화 시스템 설계, 벤치마크 구축.",
     evidenceSource: "Applied AI Engineer 주요 업무",
     skills: [
-      { title: "상담 해결률처럼 프로덕트에 직결되는 지표 정의" },
-      { title: "오프라인 평가셋과 온라인 지표를 나눠 보기" },
-      { title: "할루시네이션과 품질 저하를 잡는 평가 루프" },
-      { title: "평가를 자동화해 개선 사이클을 빠르게 돌리기" },
+      {
+        title: "상담 해결률처럼 프로덕트에 직결되는 지표 정의",
+        coverage: "reinforce",
+        where: "Step 3 LLMOps (성공률, 비용, 지연 지표)",
+      },
+      {
+        title: "오프라인 평가셋과 온라인 지표를 나눠 보기",
+        coverage: "reinforce",
+        where: "Step 3 Project 3 (질문-정답-근거 평가셋) 및 LLMOps",
+      },
+      {
+        title: "할루시네이션과 품질 저하를 잡는 평가 루프",
+        coverage: "separate",
+        where: "교육과정은 평가 자동화까지, 할루시네이션 특화 평가는 따로 심화",
+      },
+      {
+        title: "평가를 자동화해 개선 사이클을 빠르게 돌리기",
+        coverage: "reinforce",
+        where: "Step 3 LLMOps (프롬프트 버전관리, 평가 자동화)",
+      },
     ],
   },
   {
@@ -217,10 +329,26 @@ export const roadmapStages: readonly RoadmapStage[] = [
       "상담과 마케팅을 아우르는 대고객 에이전트 설계, 멀티 LLM 인프라 비용 최적화.",
     evidenceSource: "Applied AI Engineer 주요 업무",
     skills: [
-      { title: "멀티 LLM 인프라와 모델 서빙의 기본" },
-      { title: "컨텍스트 비용을 줄이는 설계 패턴" },
-      { title: "모델을 갈아끼울 때의 벤치마킹과 의사결정" },
-      { title: "모니터링과 장애 알림" },
+      {
+        title: "멀티 LLM 인프라와 모델 서빙의 기본",
+        coverage: "reinforce",
+        where: "Step 3 LLMOps 및 Project 5 배포 (Vercel, Cloud Run)",
+      },
+      {
+        title: "컨텍스트 비용을 줄이는 설계 패턴",
+        coverage: "separate",
+        where: "교육과정은 비용 지표 관측까지, 컨텍스트 비용 절감 설계는 따로 심화",
+      },
+      {
+        title: "모델을 갈아끼울 때의 벤치마킹과 의사결정",
+        coverage: "separate",
+        where: "모델 선택과 교체 판단은 교육과정 밖이라 따로 익힌다",
+      },
+      {
+        title: "모니터링과 장애 알림",
+        coverage: "reinforce",
+        where: "Step 3 LLMOps (모니터링, 알림, 보안 거버넌스)",
+      },
     ],
   },
   {
@@ -235,10 +363,26 @@ export const roadmapStages: readonly RoadmapStage[] = [
       "업무와 프로세스를 AI로 재설계해 본 경험을 우대합니다.",
     evidenceSource: "Forward Deployed Engineer 우대 사항",
     skills: [
-      { title: "모호한 문제를 AI 문제로 바꾸고 빠르게 가설 검증하기" },
-      { title: "작은 AI 프로젝트를 0에서 1까지 직접 출시해 시행착오 쌓기" },
-      { title: "내 업무와 공부를 실제로 AI로 재설계해 보기" },
-      { title: "개발자와 비개발자를 오가며 문제를 함께 정의하는 연습" },
+      {
+        title: "모호한 문제를 AI 문제로 바꾸고 빠르게 가설 검증하기",
+        coverage: "reinforce",
+        where: "Step 3 Project 4, 5 (실무형 AX) 및 Step 4 기업 연계 프로젝트",
+      },
+      {
+        title: "작은 AI 프로젝트를 0에서 1까지 직접 출시해 시행착오 쌓기",
+        coverage: "separate",
+        where: "교육과정 프로젝트는 가이드형 팀 과제라, 내 손으로 여는 사이드 프로젝트는 따로",
+      },
+      {
+        title: "내 업무와 공부를 실제로 AI로 재설계해 보기",
+        coverage: "separate",
+        where: "개인의 실천 영역이라 스스로 만든다",
+      },
+      {
+        title: "개발자와 비개발자를 오가며 문제를 함께 정의하는 연습",
+        coverage: "reinforce",
+        where: "Step 2, 3 팀 프로젝트와 Step 4 기업 발표",
+      },
     ],
   },
 ] as const;

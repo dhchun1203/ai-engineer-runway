@@ -5,7 +5,30 @@ import {
   roadmapStages,
   hiringProcess,
   roadmapSources,
+  type SkillCoverage,
 } from "@/content/channeltalk-roadmap";
+
+// 커버리지 라벨(강화/별도) 배지의 색과 글자를 한곳에서 정한다. 강화는 지면의
+// 강조색(파랑), 별도는 행동색(주황)으로 갈라, "따로 챙겨야 하는 것"이 한눈에
+// 튀게 한다. 라이트와 다크 모두 -dark 토큰으로 짝을 맞춘다.
+const COVERAGE_LABEL: Record<SkillCoverage, string> = {
+  reinforce: "강화",
+  separate: "별도",
+};
+
+function coverageBadgeClass(coverage: SkillCoverage): string {
+  const base =
+    "inline-flex shrink-0 items-center border px-1.5 py-0.5 text-label font-bold leading-none";
+  return coverage === "separate"
+    ? `${base} border-action text-action dark:border-action-dark dark:text-action-dark`
+    : `${base} border-accent text-accent dark:border-accent-dark dark:text-accent-dark`;
+}
+
+function coverageDotClass(coverage: SkillCoverage): string {
+  return coverage === "separate"
+    ? "bg-action dark:bg-action-dark"
+    : "bg-accent dark:bg-accent-dark";
+}
 
 export const metadata: Metadata = {
   title: "채널톡 AI Engineer 로드맵",
@@ -70,13 +93,37 @@ export default function RoadmapPage() {
             함께 녹였습니다. 각 단계에는 채널톡이 직접 한 말을 근거로 달아, 왜
             지금 이걸 익히는지 잊지 않게 했습니다.
           </p>
+
+          {/* 라벨 범례 — 각 역량이 기존 교육과정과 어떤 관계인지 두 갈래로 표시한다.
+              기관명은 쓰지 않고 "AI Engineer 교육과정"으로만 부른다. */}
+          <div className="panel flex flex-col gap-2.5 p-4">
+            <div className="flex items-start gap-2.5">
+              <span className={coverageBadgeClass("reinforce")}>강화</span>
+              <p className="break-keep text-label font-normal leading-relaxed">
+                기존 AI Engineer 교육과정에 있는 내용입니다. 과정을 들으며 채널톡
+                수준으로 더 깊게 파고들 자리이고, 옆에 어느 Step에서 다루는지
+                적어뒀습니다.
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <span className={coverageBadgeClass("separate")}>별도</span>
+              <p className="break-keep text-label font-normal leading-relaxed">
+                교육과정에 없거나 얕게 다뤄서, 따로 챙겨 학습해야 하는 내용입니다.
+              </p>
+            </div>
+          </div>
         </div>
 
         <ol className="flex flex-col gap-5">
-          {roadmapStages.map((stage) => (
+          {roadmapStages.map((stage) => {
+            const reinforceCount = stage.skills.filter(
+              (skill) => skill.coverage === "reinforce",
+            ).length;
+            const separateCount = stage.skills.length - reinforceCount;
+            return (
             <li key={stage.id} id={stage.id}>
               <article className="panel flex flex-col gap-4 p-5 sm:p-6">
-                {/* 단계 머리 — 번호, 아이콘, 제목, 부제 */}
+                {/* 단계 머리 — 번호, 아이콘, 제목, 부제, 커버리지 요약 */}
                 <div className="flex items-start gap-3">
                   <span
                     className="shrink-0 text-label font-black tabular-nums text-accent dark:text-accent-dark"
@@ -87,13 +134,25 @@ export default function RoadmapPage() {
                   <span className="shrink-0 text-2xl leading-none" aria-hidden="true">
                     {stage.icon}
                   </span>
-                  <div className="flex min-w-0 flex-col gap-0.5">
+                  <div className="flex min-w-0 flex-col gap-1.5">
                     <h3 className="break-keep text-heading font-extrabold">
                       {stage.title}
                     </h3>
                     <p className="break-keep text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark">
                       {stage.subtitle}
                     </p>
+                    <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                      {reinforceCount > 0 ? (
+                        <span className={coverageBadgeClass("reinforce")}>
+                          강화 {reinforceCount}
+                        </span>
+                      ) : null}
+                      {separateCount > 0 ? (
+                        <span className={coverageBadgeClass("separate")}>
+                          별도 {separateCount}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
 
@@ -112,18 +171,27 @@ export default function RoadmapPage() {
                   {stage.rationale}
                 </p>
 
-                {/* 익힐 역량 */}
-                <ul className="flex flex-col gap-2">
+                {/* 익힐 역량 — 각 항목에 강화/별도 라벨과 근거를 붙인다. */}
+                <ul className="flex flex-col gap-3.5">
                   {stage.skills.map((skill) => (
-                    <li
-                      key={skill.title}
-                      className="flex items-start gap-2.5 break-keep text-body font-normal leading-relaxed"
-                    >
+                    <li key={skill.title} className="flex items-start gap-2.5">
                       <span
-                        className="mt-2 h-1.5 w-1.5 shrink-0 bg-accent dark:bg-accent-dark"
+                        className={`mt-2 h-1.5 w-1.5 shrink-0 ${coverageDotClass(skill.coverage)}`}
                         aria-hidden="true"
                       />
-                      <span>{skill.title}</span>
+                      <div className="flex min-w-0 flex-col gap-1">
+                        <span className="break-keep text-body font-normal leading-relaxed">
+                          {skill.title}
+                        </span>
+                        <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                          <span className={coverageBadgeClass(skill.coverage)}>
+                            {COVERAGE_LABEL[skill.coverage]}
+                          </span>
+                          <span className="break-keep text-label font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                            {skill.where}
+                          </span>
+                        </span>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -138,7 +206,8 @@ export default function RoadmapPage() {
                 ) : null}
               </article>
             </li>
-          ))}
+            );
+          })}
         </ol>
       </section>
 
