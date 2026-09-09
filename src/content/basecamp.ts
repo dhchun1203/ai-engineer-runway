@@ -87,7 +87,7 @@ export const basecampSteps: readonly BasecampStep[] = [
         officialUrl: `${OFFICIAL_BASE}3d62dc3e-f514-800b-b5c0-e0e9b88d6a1b`,
         summary:
           "리스트 생성과 슬라이싱과 정렬, 튜플과 딕셔너리까지. 데이터를 구조화하고 다루는 자료형을 익힙니다.",
-        ourLessonHref: "/lesson/1-3-python-variables-and-types",
+        ourLessonHref: "/lesson/1-3-python-lists-tuples-dicts",
       },
       {
         id: "s1-final",
