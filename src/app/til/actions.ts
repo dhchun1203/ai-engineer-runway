@@ -1,6 +1,7 @@
 'use server';
 
 import { hasUnlockCookie } from '@/lib/auth';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { compileTilBody } from '@/lib/til/compile';
 import { isTilTemplate } from '@/lib/til/templates';
 import { slugify, uniqueSlug } from '@/lib/til/slug';
@@ -86,4 +87,25 @@ export async function deletePostAction(
   if (!(await hasUnlockCookie())) return { ok: false, error: 'unauthorized' };
   const res = await deletePost(id);
   return res.ok ? { ok: true } : { ok: false, error: res.error };
+}
+
+export async function uploadTilImageAction(
+  formData: FormData,
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  if (!(await hasUnlockCookie())) return { ok: false, error: 'unauthorized' };
+  const file = formData.get('file');
+  if (!(file instanceof File)) return { ok: false, error: '파일이 없습니다' };
+  if (file.size > 5 * 1024 * 1024) return { ok: false, error: '이미지는 5MB 이하만' };
+
+  const ext = (file.name.split('.').pop() ?? 'png').toLowerCase();
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  const { error } = await supabaseAdmin.storage
+    .from('til-image')
+    .upload(path, bytes, { contentType: file.type || 'image/png', upsert: false });
+  if (error) return { ok: false, error: error.message };
+
+  const { data } = supabaseAdmin.storage.from('til-image').getPublicUrl(path);
+  return { ok: true, url: data.publicUrl };
 }

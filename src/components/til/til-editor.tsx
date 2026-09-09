@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { savePostAction, deletePostAction } from '@/app/til/actions';
+import { savePostAction, deletePostAction, uploadTilImageAction } from '@/app/til/actions';
 import { getTemplate } from '@/lib/til/templates';
 import type { TilPost, TilPostInput, TilSeries, TilTemplate } from '@/lib/til/types';
 
@@ -26,8 +26,12 @@ export function TilEditor(props: Props) {
   const [tagsText, setTagsText] = useState((post?.tags ?? []).join(', '));
   const [seriesId, setSeriesId] = useState<string | null>(post?.seriesId ?? null);
   const [newSeriesTitle, setNewSeriesTitle] = useState('');
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(post?.coverImageUrl ?? null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingBodyImage, setUploadingBodyImage] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const bodyImageInputRef = useRef<HTMLInputElement | null>(null);
 
   function buildInput(): TilPostInput {
     return {
@@ -43,8 +47,42 @@ export function TilEditor(props: Props) {
       tags: tagsText.split(',').map((t) => t.trim()).filter(Boolean),
       seriesId,
       newSeriesTitle: newSeriesTitle.trim() || undefined,
-      coverImageUrl: post?.coverImageUrl ?? null,
+      coverImageUrl,
     };
+  }
+
+  async function handleCoverImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadingCover(true);
+    setError(null);
+    const formData = new FormData();
+    formData.set('file', file);
+    const res = await uploadTilImageAction(formData);
+    setUploadingCover(false);
+    if (res.ok) {
+      setCoverImageUrl(res.url);
+    } else {
+      setError(res.error);
+    }
+  }
+
+  async function handleBodyImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadingBodyImage(true);
+    setError(null);
+    const formData = new FormData();
+    formData.set('file', file);
+    const res = await uploadTilImageAction(formData);
+    setUploadingBodyImage(false);
+    if (res.ok) {
+      setBodyMd((prev) => `${prev}${prev.endsWith('\n') || prev === '' ? '' : '\n'}\n![](${res.url})\n`);
+    } else {
+      setError(res.error);
+    }
   }
 
   async function handleSave(publish: boolean) {
@@ -94,13 +132,53 @@ export function TilEditor(props: Props) {
         className={inputClass}
       />
 
-      <textarea
-        value={bodyMd}
-        onChange={(e) => setBodyMd(e.target.value)}
-        rows={16}
-        className={`${inputClass} font-mono`}
-        spellCheck={false}
-      />
+      <div className="flex flex-col gap-2">
+        <span className="text-label font-semibold">커버 이미지</span>
+        {coverImageUrl ? (
+          // eslint 규칙상 next/image 권장이나, 외부 스토리지 URL이라 img로 단순화(til-card.tsx와 동일 판단).
+          <img src={coverImageUrl} alt="" className="aspect-[16/9] w-full rounded object-cover" />
+        ) : null}
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="chip tap-feedback flex min-h-11 cursor-pointer items-center text-label font-semibold">
+            {uploadingCover ? '업로드 중...' : coverImageUrl ? '커버 이미지 바꾸기' : '커버 이미지 올리기'}
+            <input type="file" accept="image/*" onChange={handleCoverImageChange} disabled={uploadingCover} className="hidden" />
+          </label>
+          {coverImageUrl ? (
+            <button
+              type="button"
+              disabled={uploadingCover}
+              onClick={() => setCoverImageUrl(null)}
+              className="min-h-11 text-label font-semibold text-destructive dark:text-destructive-dark"
+            >
+              커버 이미지 제거
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-label font-semibold">본문</span>
+          <label className="chip tap-feedback flex min-h-11 cursor-pointer items-center text-label font-semibold">
+            {uploadingBodyImage ? '업로드 중...' : '본문에 이미지 삽입'}
+            <input
+              ref={bodyImageInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleBodyImageChange}
+              disabled={uploadingBodyImage}
+              className="hidden"
+            />
+          </label>
+        </div>
+        <textarea
+          value={bodyMd}
+          onChange={(e) => setBodyMd(e.target.value)}
+          rows={16}
+          className={`${inputClass} font-mono`}
+          spellCheck={false}
+        />
+      </div>
 
       <input
         value={selfCheck}
