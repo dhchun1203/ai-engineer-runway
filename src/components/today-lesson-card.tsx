@@ -83,7 +83,7 @@ export function TodayLessonCard({
   if (state === "before-start") {
     heading = "곧 시작해요";
     body = `사전학습은 ${SCHEDULE_START}부터 시작됩니다.`;
-    cta = { href: "/schedule", label: "일정표 보기" };
+    cta = { href: "/basecamp", label: "베이스캠프 보기" };
   } else if (state === "after-range") {
     heading = "개강했어요!";
     body = "사전학습 기간이 끝났습니다. 커리큘럼은 계속 이용할 수 있어요.";

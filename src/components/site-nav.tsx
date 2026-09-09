@@ -55,7 +55,6 @@ const NAV_ITEMS: readonly NavItem[] = [
     label: "일정·정보",
     href: null,
     children: [
-      { label: "일정표", href: "/schedule" },
       { label: "PDF 내보내기", href: "/print" },
       { label: "소개", href: "/about" },
     ],

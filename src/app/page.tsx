@@ -1,6 +1,5 @@
 import { ProgressSummary } from "@/components/progress-summary";
 import { ProgressReadError } from "@/components/progress-error";
-import { DDayCountdown } from "@/components/dday-countdown";
 import { TodayLessonCard, type TodayCardState, type TomorrowInfo } from "@/components/today-lesson-card";
 import { PaceStatusPanel } from "@/components/pace-status";
 import { BehindLessonsList, type BehindLessonRow } from "@/components/behind-lessons-list";
@@ -13,7 +12,7 @@ import { computeDueLessons, nextDueDate } from "@/lib/review";
 import { overallProgress, nextIncompleteLesson } from "@/lib/progress";
 import { todayInSeoul, daysUntil } from "@/lib/today";
 import { computePace, computeAheadDetail, computeProjection } from "@/lib/pace";
-import { SCHEDULE_START, COURSE_START_DATE, rowsForDate, firstRowAfter } from "@/lib/schedule";
+import { SCHEDULE_START, rowsForDate, firstRowAfter } from "@/lib/schedule";
 import { getScheduleRows, getLessonMinutesBySlug } from "@/lib/schedule-data";
 import { getLessonBySlug } from "@/content/curriculum-helpers";
 import type { StepId } from "@/content/modules";
@@ -196,10 +195,9 @@ export default async function Home() {
       <header className="flex flex-col gap-2">
         <h1 className="text-display font-black">오늘의 학습</h1>
         <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          AI Engineer 교육과정 사전학습 · 2026-09-30 개강
+          AI Engineer 교육과정 사전학습
         </p>
       </header>
-      <DDayCountdown daysUntil={daysUntil(COURSE_START_DATE, today)} />
       <TodayLessonCard
         todayLessons={todayLessons}
         state={state}
