@@ -53,7 +53,7 @@ export default async function TilDetailPage({
           </p>
         ) : null}
         {unlocked ? (
-          <Link href={`/til/${post.slug}/edit`} className="text-label font-bold text-accent dark:text-accent-dark">
+          <Link href={`/til/${post.slug}/edit`} className="min-h-11 inline-flex items-center text-label font-bold text-accent dark:text-accent-dark">
             편집
           </Link>
         ) : null}

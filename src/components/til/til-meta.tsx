@@ -21,7 +21,7 @@ export function TilMeta({ post }: { post: TilPost }) {
           <span className="chip text-label font-semibold">이해도 {post.understanding}/5</span>
         ) : null}
         {post.tags.map((t) => (
-          <Link key={t} href={`/til/tags/${encodeURIComponent(t)}`} className="chip text-label font-semibold">
+          <Link key={t} href={`/til/tags/${encodeURIComponent(t)}`} className="min-h-11 inline-flex items-center chip text-label font-semibold">
             #{t}
           </Link>
         ))}

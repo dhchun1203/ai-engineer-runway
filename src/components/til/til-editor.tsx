@@ -195,7 +195,7 @@ export function TilEditor(props: Props) {
         className={inputClass}
       />
 
-      <label className="flex items-center gap-2 text-label font-semibold">
+      <label className="flex min-h-11 items-center gap-2 text-label font-semibold">
         이해도
         <select
           value={understanding ?? ''}
