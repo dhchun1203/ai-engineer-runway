@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { MDXContent } from "@/components/mdx-content";
 import { TermPanelProvider, Term } from "@/components/roadmap/term-panel";
+import { LessonToc } from "@/components/roadmap/lesson-toc";
 import {
   getRoadmapLessonBySlug,
   getOrderedRoadmapLessons,
@@ -44,7 +45,10 @@ export default async function RoadmapLessonPage(
   const stage = roadmapStages.find((s) => s.id === lesson.stageId);
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
+    <main className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
+      {/* 데스크탑(xl+) 왼쪽 여백의 스크롤 반응 목차. 본문(lesson-body)의 절을 읽어
+          현재 위치를 실시간 강조한다. 좁은 화면에서는 숨는다. */}
+      <LessonToc contentId="lesson-body" />
       <article className="flex flex-col gap-8">
         <header className="flex flex-col gap-3">
           <Link
@@ -71,7 +75,7 @@ export default async function RoadmapLessonPage(
         {/* 용어 패널 프로바이더로 본문을 감싼다. 본문 안 <Term>이 우측 설명
             패널을 연다. Term은 MDX 컴포넌트 매핑으로 주입한다. */}
         <TermPanelProvider>
-          <div className="prose dark:prose-invert max-w-none">
+          <div id="lesson-body" className="prose dark:prose-invert max-w-none">
             <MDXContent
               code={lesson.code}
               components={{ Term: Term as ComponentType }}
