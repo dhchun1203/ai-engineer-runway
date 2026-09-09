@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readProgressRows } from "@/lib/progress-store";
 import { todayInSeoul, daysUntil } from "@/lib/today";
-import { BasecampCheck } from "@/components/basecamp/basecamp-check";
+import { BasecampStepChecklist } from "@/components/basecamp/basecamp-step-checklist";
 import {
   basecampSteps,
   basecampProgressId,
-  countStepDone,
   BASECAMP_END_DATE,
   BASECAMP_INDEX_URL,
 } from "@/content/basecamp";
@@ -63,86 +61,18 @@ export default async function BasecampPage() {
       </header>
 
       {basecampSteps.map((step) => {
-        const { done, total } = countStepDone(step, doneRawIds);
+        // 완료된 항목 id(접두사 없는 item.id) 목록을 서버 진도에서 만들어 넘긴다.
+        // 이후 즉시 반영(카운터·체크박스 동기)은 클라이언트 컴포넌트가 맡는다.
+        const doneItemIds = step.items
+          .filter((item) => doneRawIds.has(basecampProgressId(item.id)))
+          .map((item) => item.id);
         return (
-          <section key={step.no} className="flex flex-col gap-5">
-            <div className="flex flex-col gap-1.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="chip text-label font-bold">{step.weekLabel}</span>
-                <h2 className="text-heading font-extrabold break-keep">
-                  {step.title}
-                </h2>
-                {unlocked ? (
-                  <span className="text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark">
-                    {done}/{total} 완료
-                  </span>
-                ) : null}
-              </div>
-              <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-                {step.summary}
-              </p>
-            </div>
-
-            <ul className="flex flex-col gap-3">
-              {step.items.map((item) => {
-                const itemDone = doneRawIds.has(basecampProgressId(item.id));
-                return (
-                  <li
-                    key={item.id}
-                    className="panel flex items-start gap-3 p-4 sm:p-5"
-                  >
-                    {unlocked ? (
-                      <BasecampCheck
-                        itemId={item.id}
-                        initialDone={itemDone}
-                        label={item.title}
-                      />
-                    ) : (
-                      <span
-                        className="mt-0.5 h-6 w-6 shrink-0 border-2 border-line dark:border-line-dark"
-                        aria-hidden="true"
-                      />
-                    )}
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="break-keep text-body font-extrabold">
-                          {item.title}
-                        </span>
-                        {item.kind === "assignment" ? (
-                          <span className="chip text-label font-bold text-action dark:text-action-dark">
-                            과제
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="break-keep text-label font-normal leading-relaxed">
-                        {item.summary}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-0.5">
-                        <a
-                          href={item.officialUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="nav-link tap-feedback inline-flex min-h-11 items-center gap-1.5 text-label font-bold text-accent dark:text-accent-dark"
-                        >
-                          공식 과제 열기
-                          <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
-                        </a>
-                        {item.ourLessonHref ? (
-                          <Link
-                            href={item.ourLessonHref}
-                            className="nav-link tap-feedback inline-flex min-h-11 items-center gap-1.5 text-label font-bold text-muted dark:text-muted-dark"
-                          >
-                            우리 레슨으로 깊게
-                            <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
-                          </Link>
-                        ) : null}
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
+          <BasecampStepChecklist
+            key={step.no}
+            step={step}
+            initialDoneIds={doneItemIds}
+            unlocked={unlocked}
+          />
         );
       })}
 
