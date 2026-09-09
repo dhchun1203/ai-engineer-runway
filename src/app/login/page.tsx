@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { LoginForm } from './login-form';
 import { signOutAction } from './actions';
-import { NotificationSettings } from '@/components/notification-settings';
 
 // 세션을 읽어 로그인 상태에 따라 폼/로그아웃을 가르므로 동적 렌더가 필요하다.
 // 로그인 화면은 색인할 이유가 없어 로봇을 막는다(unlock/done과 같은 방침).
@@ -51,9 +50,6 @@ export default async function LoginPage() {
             <Link href="/" className="btn-action tap-feedback min-h-11 text-body">
               홈으로
             </Link>
-            <NotificationSettings
-              vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null}
-            />
             <form action={signOutAction}>
               <button type="submit" className="chip tap-feedback min-h-11 text-body">
                 로그아웃

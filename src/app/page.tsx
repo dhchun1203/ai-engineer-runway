@@ -1,8 +1,6 @@
 import { ProgressSummary } from "@/components/progress-summary";
 import { ProgressReadError } from "@/components/progress-error";
 import { TodayLessonCard, type TodayCardState, type TomorrowInfo } from "@/components/today-lesson-card";
-import { PaceStatusPanel } from "@/components/pace-status";
-import { BehindLessonsList, type BehindLessonRow } from "@/components/behind-lessons-list";
 import { TodayReviewCard, type DueReviewRow } from "@/components/today-review-card";
 import { ContinueReadingCard } from "@/components/continue-reading-card";
 import { hasUnlockCookie } from "@/lib/auth";
@@ -11,11 +9,9 @@ import { readReviewStates } from "@/lib/review-store";
 import { computeDueLessons, nextDueDate } from "@/lib/review";
 import { overallProgress, nextIncompleteLesson } from "@/lib/progress";
 import { todayInSeoul, daysUntil } from "@/lib/today";
-import { computePace, computeAheadDetail, computeProjection } from "@/lib/pace";
 import { SCHEDULE_START, rowsForDate, firstRowAfter } from "@/lib/schedule";
-import { getScheduleRows, getLessonMinutesBySlug } from "@/lib/schedule-data";
+import { getScheduleRows } from "@/lib/schedule-data";
 import { getLessonBySlug } from "@/content/curriculum-helpers";
-import type { StepId } from "@/content/modules";
 import { BasecampPriorityCard } from "@/components/basecamp/basecamp-priority-card";
 import { currentBasecampStep, countStepDone, BASECAMP_END_DATE } from "@/content/basecamp";
 
@@ -25,7 +21,7 @@ import { currentBasecampStep, countStepDone, BASECAMP_END_DATE } from "@/content
 //
 // D8-P(08-06): Phase 8이 레슨·Step·커리큘럼 세 라우트를 정적으로 전환했지만
 // 이 라우트는 동적으로 남긴다 — 오늘 날짜가 곧 페이지 본문 전체다(오늘 배정
-// 레슨, 상태 머신, 페이스, 밀린 레슨, 내일). 정적으로 만들려면 화면 대부분이
+// 레슨, 상태 머신, 내일). 정적으로 만들려면 화면 대부분이
 // 클라이언트 렌더가 되어 정적 셸의 이득이 사라진다. ISR(revalidate)도 쓰지
 // 않는다 — 설치된 Next 16.3.2 문서(node_modules/next/dist/docs/01-app/
 // 02-guides/incremental-static-regeneration.md 100~102행·238행)가 직접
@@ -84,20 +80,6 @@ export default async function Home() {
     .map((row) => (row.lessonSlug ? getLessonBySlug(row.lessonSlug) : null))
     .filter((lesson): lesson is NonNullable<typeof lesson> => Boolean(lesson));
 
-  // 페이스 판정(D-40~D-43)은 completedIds가 non-null일 때만 수행한다 — 진도
-  // 파생 계산이므로 게이트 대상이다(D-37). computePace().missedSlugs가 밀린
-  // 레슨 목록의 유일한 출처다(별도 재계산 금지).
-  const minutesBySlug = getLessonMinutesBySlug();
-  const pace = completedIds ? computePace(rows, minutesBySlug, completedIds, today) : null;
-  // 앞선 정도의 "얼마나"는 판정과 분리된 별도 계산이다(lib/pace.ts 주석 참고).
-  const ahead = completedIds
-    ? computeAheadDetail(rows, minutesBySlug, completedIds, today)
-    : undefined;
-  // 완료 예측일(round2-완료예측일) — pace와 같은 completedIds 게이트 조건을 쓴다.
-  const projection = completedIds
-    ? computeProjection(rows, completedIds, today, SCHEDULE_START)
-    : undefined;
-
   // 오늘 배정 레슨을 전부 완료했을 때만 true — completedIds가 null이면 조회
   // 실패/쿠키 없음을 미완료로 오인시키지 않도록 null을 유지한다.
   const completedToday = completedIds
@@ -106,9 +88,9 @@ export default async function Home() {
       : null
     : null;
 
-  // 오늘 배정을 완료했거나(D-38) 전체 페이스가 ahead면 축하 상태로 전환한다.
-  // 자동 이동은 걸지 않는다 — 카드 내부 CTA를 사용자가 직접 눌러야 이동한다.
-  if (state === "assigned" && (completedToday === true || pace?.status === "ahead")) {
+  // 오늘 배정을 완료했으면(D-38) 축하 상태로 전환한다. 자동 이동은 걸지
+  // 않는다 — 카드 내부 CTA를 사용자가 직접 눌러야 이동한다.
+  if (state === "assigned" && completedToday === true) {
     state = "celebration";
   }
 
@@ -127,28 +109,6 @@ export default async function Home() {
         : { kind: "none" };
     }
   }
-
-  // 밀린 레슨 행 데이터는 missedSlugs를 getLessonBySlug/rows와 조합해서만 만든다
-  // (별도 재계산 금지). 매니페스트/일정 불일치로 조회에 실패한 slug는 조용히
-  // 제외한다 — 계산 로직 결함이 아니라 방어적 필터링이다.
-  const behindRows: BehindLessonRow[] =
-    pace && pace.status === "behind" && pace.missedSlugs.length > 0
-      ? pace.missedSlugs
-          .map((slug) => {
-            const lesson = getLessonBySlug(slug);
-            const row = rows.find((r) => r.lessonSlug === slug);
-            if (!lesson || !row) return null;
-            return {
-              date: row.date,
-              slug: lesson.slug,
-              title: lesson.title,
-              depth: lesson.depth,
-              stepId: lesson.stepId as StepId,
-              estimatedMinutes: lesson.estimatedMinutes,
-            };
-          })
-          .filter((row): row is BehindLessonRow => row !== null)
-      : [];
 
   // 오늘 만기인 복습(간격 사다리 — src/lib/review.ts). 완료 시각(timestamptz)을
   // 서울 날짜로 바꿔 계산한다. 조회 실패 시 빈 카드로 강등.
@@ -213,14 +173,7 @@ export default async function Home() {
       {/* 오늘의 복습 — 새 레슨 카드 아래, 페이스 판정 위. 복습은 권유까지만
           하고 진행을 잠그지 않는다(round2-h·round6 설계 원칙). */}
       {progressRead?.ok ? <TodayReviewCard dueRows={dueRows} nextDue={nextDue} /> : null}
-      {completedIds ? (
-        <>
-          {pace ? <PaceStatusPanel pace={pace} ahead={ahead} projection={projection} /> : null}
-          {behindRows.length > 0 ? <BehindLessonsList rows={behindRows} /> : null}
-        </>
-      ) : progressRead && !progressRead.ok ? (
-        <ProgressReadError />
-      ) : null}
+      {!completedIds && progressRead && !progressRead.ok ? <ProgressReadError /> : null}
       {completedIds ? (
         <ProgressSummary
           counts={overallProgress(completedIds)}

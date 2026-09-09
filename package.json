@@ -21,8 +21,7 @@
     "remark-gfm": "^4.0.1",
     "server-only": "0.0.1",
     "shiki": "^4.4.3",
-    "velite": "^0.4.0",
-    "web-push": "^3.6.7"
+    "velite": "^0.4.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
@@ -31,7 +30,6 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
     "subset-font": "^2.5.0",
