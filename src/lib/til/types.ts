@@ -35,6 +35,7 @@ export type TilPostInput = {
   blockedPoints: string;
   tags: string[];
   seriesId: string | null;
+  newSeriesTitle?: string;
   coverImageUrl: string | null;
 };
 

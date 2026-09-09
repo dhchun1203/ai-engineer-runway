@@ -1,6 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import type { TilPost, TilTemplate, TilStatus } from './types';
+import type { TilPost, TilTemplate, TilStatus, TilSeries } from './types';
 
 export type TilRead<T> = { ok: true; data: T } | { ok: false; error: string };
 export type TilWrite<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -140,4 +140,55 @@ export async function listPublishedDates(): Promise<TilRead<string[]>> {
     .map((r) => (r.published_at ? fmt.format(new Date(r.published_at as string)) : null))
     .filter((d): d is string => Boolean(d));
   return { ok: true, data: dates };
+}
+
+// snake_case til_series 행 → camelCase TilSeries.
+function rowToSeries(row: Record<string, unknown>): TilSeries {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    title: row.title as string,
+    description: (row.description as string) ?? null,
+    createdAt: row.created_at as string,
+  };
+}
+
+export async function listSeries(): Promise<TilRead<TilSeries[]>> {
+  const { data, error } = await supabaseAdmin
+    .from('til_series')
+    .select('id, slug, title, description, created_at')
+    .order('created_at', { ascending: false });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: (data ?? []).map(rowToSeries) };
+}
+
+export async function getSeriesBySlug(slug: string): Promise<TilRead<TilSeries | null>> {
+  const { data, error } = await supabaseAdmin
+    .from('til_series')
+    .select('id, slug, title, description, created_at')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: data ? rowToSeries(data) : null };
+}
+
+export async function listPublishedBySeries(seriesId: string): Promise<TilRead<TilPost[]>> {
+  const { data, error } = await supabaseAdmin
+    .from('til_post')
+    .select(POST_COLUMNS)
+    .eq('status', 'published')
+    .eq('series_id', seriesId)
+    .order('published_at', { ascending: true });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: (data ?? []).map(rowToPost) };
+}
+
+export async function createSeries(title: string, slug: string): Promise<TilWrite<{ id: string }>> {
+  const { data, error } = await supabaseAdmin
+    .from('til_series')
+    .insert({ title, slug })
+    .select('id')
+    .single();
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: { id: data.id as string } };
 }

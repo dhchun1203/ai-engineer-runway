@@ -8,6 +8,7 @@ import {
   upsertPost,
   deletePost,
   slugExists,
+  createSeries,
   type TilPostRow,
 } from '@/lib/til/store';
 import type { TilPostInput } from '@/lib/til/types';
@@ -46,6 +47,16 @@ export async function savePostAction(input: TilPostInput, publish: boolean): Pro
     ? input.existingSlug
     : await uniqueSlug(slugify(title), (s) => slugExists(s));
 
+  // 새 시리즈 제목이 있으면 먼저 생성하고 그 id를 쓴다. 없으면 선택된 seriesId를 그대로 쓴다.
+  // (시리즈 slug 충돌 회피는 요구되지 않음 — createSeries 에러는 액션 에러로 노출.)
+  let seriesId = input.seriesId;
+  const newSeriesTitle = input.newSeriesTitle?.trim();
+  if (newSeriesTitle) {
+    const seriesRes = await createSeries(newSeriesTitle, slugify(newSeriesTitle));
+    if (!seriesRes.ok) return { ok: false, error: seriesRes.error };
+    seriesId = seriesRes.data.id;
+  }
+
   const row: TilPostRow = {
     id: input.id,
     slug,
@@ -58,7 +69,7 @@ export async function savePostAction(input: TilPostInput, publish: boolean): Pro
     understanding: sanitizeUnderstanding(input.understanding),
     blocked_points: input.blockedPoints.trim() || null,
     tags: input.tags.map((t) => t.trim()).filter(Boolean),
-    series_id: input.seriesId,
+    series_id: seriesId,
     cover_image_url: input.coverImageUrl,
     status: publish ? 'published' : 'draft',
     published_at: publish ? new Date().toISOString() : null,

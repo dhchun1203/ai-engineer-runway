@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { hasUnlockCookie } from '@/lib/auth';
 import { TIL_TEMPLATES, isTilTemplate } from '@/lib/til/templates';
+import { listSeries } from '@/lib/til/store';
 import { TilEditor } from '@/components/til/til-editor';
 
 export const dynamic = 'force-dynamic';
@@ -16,9 +17,11 @@ export default async function TilNewPage({
 
   // 템플릿을 이미 고른 상태면 에디터를, 아니면 선택 카드를.
   if (template && isTilTemplate(template)) {
+    const seriesRead = await listSeries();
+    const allSeries = seriesRead.ok ? seriesRead.data : [];
     return (
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-6 lg:px-8">
-        <TilEditor mode="create" template={template} />
+        <TilEditor mode="create" template={template} allSeries={allSeries} />
       </main>
     );
   }
