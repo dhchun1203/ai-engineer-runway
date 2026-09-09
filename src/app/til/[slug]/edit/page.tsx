@@ -11,8 +11,9 @@ export default async function TilEditPage({
   params: Promise<{ slug: string }>;
 }) {
   if (!(await hasUnlockCookie())) redirect('/login');
+  // Next 16은 param을 URL 인코딩된 채로 넘기므로 한글 slug를 디코드한다(태그 페이지와 동일).
   const { slug } = await params;
-  const read = await getPostBySlugAnyStatus(slug);
+  const read = await getPostBySlugAnyStatus(decodeURIComponent(slug));
   if (!read.ok || !read.data) notFound();
   const seriesRead = await listSeries();
   const allSeries = seriesRead.ok ? seriesRead.data : [];

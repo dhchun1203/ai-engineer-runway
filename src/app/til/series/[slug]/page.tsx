@@ -9,8 +9,9 @@ export default async function TilSeriesPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  // Next 16은 param을 URL 인코딩된 채로 넘기므로 한글 slug를 디코드한다(태그 페이지와 동일).
   const { slug } = await params;
-  const s = await getSeriesBySlug(slug);
+  const s = await getSeriesBySlug(decodeURIComponent(slug));
   if (!s.ok || !s.data) notFound();
   const posts = await listPublishedBySeries(s.data.id);
   const list = posts.ok ? posts.data : [];

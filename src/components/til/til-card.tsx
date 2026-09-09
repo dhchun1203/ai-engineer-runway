@@ -13,7 +13,9 @@ export function TilCard({ post }: { post: TilPost }) {
         </>
       ) : null}
       <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
-        {(post.publishedAt ?? post.createdAt).slice(0, 10)}
+        {new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(
+          new Date(post.publishedAt ?? post.createdAt),
+        )}
       </span>
       <span className="text-body font-extrabold break-keep">{post.title}</span>
       {post.summary ? (

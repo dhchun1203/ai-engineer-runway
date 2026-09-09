@@ -13,8 +13,11 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
+  // Next 16은 라우트 param을 URL 인코딩된 채로 넘긴다 — 한글 slug가 %XX로 오므로
+  // 반드시 디코드한다(이미 디코드된 ASCII엔 무해). 태그 페이지와 같은 처리.
   const { slug } = await params;
-  const read = await getPublishedPostBySlug(slug);
+  const decoded = decodeURIComponent(slug);
+  const read = await getPublishedPostBySlug(decoded);
   const title = read.ok && read.data ? read.data.title : 'TIL';
   return { title, description: read.ok && read.data ? (read.data.summary ?? undefined) : undefined };
 }
@@ -24,15 +27,17 @@ export default async function TilDetailPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  // Next 16은 param을 URL 인코딩된 채로 넘기므로 한글 slug를 디코드한다(태그 페이지와 동일).
   const { slug } = await params;
+  const decoded = decodeURIComponent(slug);
   const unlocked = await hasUnlockCookie();
 
   // 공개 발행글 우선. 없고 소유자면 초고/미발행도 미리보기 허용.
-  const pub = await getPublishedPostBySlug(slug);
+  const pub = await getPublishedPostBySlug(decoded);
   let post = pub.ok ? pub.data : null;
   let isDraftPreview = false;
   if (!post && unlocked) {
-    const any = await getPostBySlugAnyStatus(slug);
+    const any = await getPostBySlugAnyStatus(decoded);
     if (any.ok && any.data) {
       post = any.data;
       isDraftPreview = any.data.status !== 'published';
