@@ -125,3 +125,19 @@ export async function slugExists(slug: string, exceptId?: string): Promise<boole
   const { data } = await q.maybeSingle();
   return Boolean(data);
 }
+
+// 발행글의 published_at(timestamptz)을 서울 날짜(YYYY-MM-DD)로 변환한 목록.
+// 잔디/streak 캘린더(TilStreak)가 소비한다. 중복(같은 날 여러 편) 허용.
+export async function listPublishedDates(): Promise<TilRead<string[]>> {
+  const { data, error } = await supabaseAdmin
+    .from('til_post')
+    .select('published_at')
+    .eq('status', 'published')
+    .not('published_at', 'is', null);
+  if (error) return { ok: false, error: error.message };
+  const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' });
+  const dates = (data ?? [])
+    .map((r) => (r.published_at ? fmt.format(new Date(r.published_at as string)) : null))
+    .filter((d): d is string => Boolean(d));
+  return { ok: true, data: dates };
+}

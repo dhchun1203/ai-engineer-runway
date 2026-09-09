@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { listPublishedPosts } from '@/lib/til/store';
+import { listPublishedPosts, listPublishedDates } from '@/lib/til/store';
 import { hasUnlockCookie } from '@/lib/auth';
 import { TilCard } from '@/components/til/til-card';
+import { TilStreak } from '@/components/til/til-streak';
 
 export const metadata: Metadata = {
   title: 'TIL 학습기록',
@@ -16,6 +17,8 @@ export default async function TilListPage() {
   const unlocked = await hasUnlockCookie();
   const read = await listPublishedPosts();
   const posts = read.ok ? read.data : [];
+  const datesRead = await listPublishedDates();
+  const publishedDates = datesRead.ok ? datesRead.data : [];
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
@@ -33,7 +36,7 @@ export default async function TilListPage() {
         ) : null}
       </header>
 
-      {/* 잔디 캘린더는 Task 15에서 여기 상단에 추가한다. */}
+      <TilStreak dates={publishedDates} />
 
       {read.ok ? (
         posts.length > 0 ? (
