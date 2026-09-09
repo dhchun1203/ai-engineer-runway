@@ -20,7 +20,9 @@
 // 배열은 D-78이 허용한 "전체 슬러그와 동일" 단순화를 적용하지 않고 명시 배열을 유지한다 —
 // 동적 비교(매니페스트 전체와 자기 자신을 비교)로 바꾸면 Invariant 10이 아무것도 검사하지
 // 않게 되는 위험이 있기 때문이다(05-13-SUMMARY.md 참고).
-const EXPECTED_HAS_CONTENT_COUNT = 35;
+// 2026-09-09: 베이스캠프 공식 STEP 1-3(리스트/튜플/딕셔너리) 대응 신설 레슨
+// 1-3-python-lists-tuples-dicts 추가로 35 → 36.
+const EXPECTED_HAS_CONTENT_COUNT = 36;
 const EXPECTED_HAS_CONTENT_SLUGS = [
   // Step 1 (Phase 4)
   '1-1-course-orientation',
@@ -29,6 +31,7 @@ const EXPECTED_HAS_CONTENT_SLUGS = [
   '1-2-generative-ai-basics',
   '1-3-python-variables-and-types',
   '1-3-python-functions-and-io',
+  '1-3-python-lists-tuples-dicts',
   '1-4-relational-db-basics',
   '1-4-sql-queries-and-joins',
   '1-5-ml-model-types',
@@ -64,8 +67,10 @@ const EXPECTED_HAS_CONTENT_SLUGS = [
 
 // 기대값 상수: estimatedMinutes 총합·분포 (D-31 — Phase 3 Plan 2에서 일괄 하향 확정).
 // 심화·비프로젝트 150×20 + 개요·비프로젝트 90×10 + 프로젝트 준비 가이드 60×5 = 4,200분(70시간).
-const EXPECTED_TOTAL_MINUTES = 4200;
-const EXPECTED_MINUTES_DISTRIBUTION = { 150: 20, 90: 10, 60: 5 };
+// 2026-09-09: 베이스캠프 STEP 1-3 대응 신설 레슨(1-3-python-lists-tuples-dicts, 심화 150분)
+// 추가로 심화 20→21, 총합 4,200 → 4,350분.
+const EXPECTED_TOTAL_MINUTES = 4350;
+const EXPECTED_MINUTES_DISTRIBUTION = { 150: 21, 90: 10, 60: 5 };
 const EXPECTED_PROJECT_MODULE_COUNT = 5;
 
 import fs from 'node:fs';
@@ -135,9 +140,9 @@ if (projectModuleIds.length !== EXPECTED_PROJECT_MODULE_COUNT) {
   process.exit(1);
 }
 
-// --- 1. 레슨 수가 정확히 35 ---
-if (lessons.length !== 35) {
-  fail(`Invariant 1 failed: expected exactly 35 lessons, got ${lessons.length}`);
+// --- 1. 레슨 수가 정확히 36 ---
+if (lessons.length !== 36) {
+  fail(`Invariant 1 failed: expected exactly 36 lessons, got ${lessons.length}`);
 }
 
 // --- 2. 모듈 id가 정확히 19개이고 모두 유일 ---
@@ -327,6 +332,6 @@ if (errors.length > 0) {
 }
 
 console.log(
-  `check-manifest: all 13 invariants passed (35 lessons, 19 modules, total ${totalMinutes} minutes)`,
+  `check-manifest: all 13 invariants passed (36 lessons, 19 modules, total ${totalMinutes} minutes)`,
 );
 process.exit(0);
