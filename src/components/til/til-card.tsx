@@ -7,7 +7,10 @@ export function TilCard({ post }: { post: TilPost }) {
       {post.coverImageUrl ? (
         // eslint 규칙상 next/image 권장이나, 외부 스토리지 URL이라 img로 단순화.
         // 목록 성능이 문제되면 next/image로 교체.
-        <img src={post.coverImageUrl} alt="" className="mb-1 aspect-[16/9] w-full rounded object-cover" />
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={post.coverImageUrl} alt="" className="mb-1 aspect-[16/9] w-full rounded object-cover" />
+        </>
       ) : null}
       <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
         {(post.publishedAt ?? post.createdAt).slice(0, 10)}

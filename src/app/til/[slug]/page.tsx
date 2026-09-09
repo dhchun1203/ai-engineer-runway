@@ -60,7 +60,13 @@ export default async function TilDetailPage({
       </header>
 
       <article className="prose prose-slate max-w-none dark:prose-invert">
-        <MDXContent code={post.bodyCode} />
+        {post.bodyCode ? (
+          <MDXContent code={post.bodyCode} />
+        ) : (
+          <p className="text-body font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            본문이 아직 없어요.
+          </p>
+        )}
       </article>
 
       <TilMeta post={post} />
