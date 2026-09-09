@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { TilPost } from '@/lib/til/types';
 
 export function TilMeta({ post }: { post: TilPost }) {
@@ -20,7 +21,9 @@ export function TilMeta({ post }: { post: TilPost }) {
           <span className="chip text-label font-semibold">이해도 {post.understanding}/5</span>
         ) : null}
         {post.tags.map((t) => (
-          <span key={t} className="chip text-label font-semibold">#{t}</span>
+          <Link key={t} href={`/til/tags/${encodeURIComponent(t)}`} className="chip text-label font-semibold">
+            #{t}
+          </Link>
         ))}
       </div>
     </section>
