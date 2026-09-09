@@ -128,11 +128,13 @@ export const roadmapStages: readonly RoadmapStage[] = [
         title: "자료구조와 알고리즘의 기본기 (배열, 해시, 트리, 그래프, 복잡도)",
         coverage: "separate",
         where: "교육과정 Python은 문법 중심이라 자료구조와 알고리즘은 따로 판다",
+        lessonSlug: "cs-foundations",
       },
       {
         title: "시스템이 어떻게 도는지 왜 이렇게 되어 있는지 파고드는 습관",
         coverage: "separate",
         where: "모듈이 아니라 태도라, 스스로 훈련해야 한다",
+        lessonSlug: "curiosity-systems",
       },
       {
         title: "큰 문제를 작은 문제로 정의하고 구조화하는 연습",
@@ -170,6 +172,7 @@ export const roadmapStages: readonly RoadmapStage[] = [
         title: "테스트 작성과 빠른 디버깅",
         coverage: "separate",
         where: "자동화 테스트는 교육과정에 별도 모듈이 없어 스스로 챙긴다",
+        lessonSlug: "automated-testing",
       },
       {
         title: "간단한 API 서버와 데이터 처리 스크립트 만들기",
@@ -203,6 +206,7 @@ export const roadmapStages: readonly RoadmapStage[] = [
         title: "모델별 특성 비교와 선택 기준",
         coverage: "separate",
         where: "교육과정은 튜닝 중심이라, 모델 선택과 교체 판단은 따로 익힌다",
+        lessonSlug: "model-selection",
       },
       {
         title: "LLM API를 직접 호출하며 감 잡기",
@@ -237,11 +241,13 @@ export const roadmapStages: readonly RoadmapStage[] = [
         title: "원천 데이터(PDF, 스프레드시트, 웹페이지)를 지식으로 바꾸는 전처리 파이프라인",
         coverage: "separate",
         where: "교육과정 RAG는 검색과 랭킹 중심이라, 다양한 원천 문서 전처리는 따로 심화",
+        lessonSlug: "rag-ingestion",
       },
       {
         title: "텍스트와 이미지를 아우르는 멀티모달 지식 검색 감각",
         coverage: "separate",
         where: "멀티모달 검색은 교육과정에 없어 따로 학습",
+        lessonSlug: "multimodal-search",
       },
     ],
   },
@@ -332,11 +338,13 @@ export const roadmapStages: readonly RoadmapStage[] = [
         title: "컨텍스트 비용을 줄이는 설계 패턴",
         coverage: "separate",
         where: "교육과정은 비용 지표 관측까지, 컨텍스트 비용 절감 설계는 따로 심화",
+        lessonSlug: "context-cost",
       },
       {
         title: "모델을 갈아끼울 때의 벤치마킹과 의사결정",
         coverage: "separate",
         where: "모델 선택과 교체 판단은 교육과정 밖이라 따로 익힌다",
+        lessonSlug: "model-selection",
       },
       {
         title: "모니터링과 장애 알림",
@@ -365,11 +373,13 @@ export const roadmapStages: readonly RoadmapStage[] = [
         title: "작은 AI 프로젝트를 0에서 1까지 직접 출시해 시행착오 쌓기",
         coverage: "separate",
         where: "교육과정 프로젝트는 가이드형 팀 과제라, 내 손으로 여는 사이드 프로젝트는 따로",
+        lessonSlug: "build-01-project",
       },
       {
         title: "내 업무와 공부를 실제로 AI로 재설계해 보기",
         coverage: "separate",
         where: "개인의 실천 영역이라 스스로 만든다",
+        lessonSlug: "redesign-work-ai",
       },
       {
         title: "개발자와 비개발자를 오가며 문제를 함께 정의하는 연습",

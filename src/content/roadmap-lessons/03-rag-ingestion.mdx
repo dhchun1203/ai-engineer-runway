@@ -1,0 +1,476 @@
+---
+title: "PDF와 시트와 웹을 지식으로: RAG 전처리 파이프라인"
+stageId: "rag"
+order: 40
+summary: "검색이 잘되는 RAG는 검색 전에 결정된다. PDF와 표와 웹을 파싱하고, 청킹하고, 맥락과 메타데이터를 붙여 색인 가능한 지식으로 바꾸는 전처리 파이프라인을 실무 수준으로."
+slug: "rag-ingestion"
+---
+
+## 이 레슨의 목표와 눈높이
+
+이건 선행학습이 아닙니다. 채널톡 Applied AI Engineer가 실제로 하는 일, 그 깊이 그대로 갑니다.
+
+채용 공고의 주요 업무에 "다양한 원천(PDF, 스프레드시트, 웹)으로부터 지식을 전처리하는 파이프라인 구축"이 그대로 적혀 있습니다. 상담 에이전트 ALF가 고객사의 지식으로 답하려면, 그 지식이 먼저 검색 가능한 형태로 다듬어져 있어야 합니다.
+
+많은 사람이 <Term id="rag">RAG</Term>를 배울 때 검색 알고리즘부터 봅니다. 하지만 실무에서 검색 품질은 검색을 시작하기 전에 대부분 결정됩니다. 원본을 어떻게 읽어 들이고, 어떤 크기로 자르고, 무슨 정보를 붙여 저장하느냐가 검색의 상한선을 정하기 때문입니다.
+
+이 레슨을 끝내면 다음을 직접 만들 수 있습니다.
+
+1. PDF의 표와 웹 페이지의 본문, 스프레드시트의 행을 각각 살려서 파싱하기
+2. 문서를 검색에 좋은 조각으로 나누는 <Term id="chunking">청킹</Term> 전략을 상황에 맞게 고르기
+3. 각 조각에 맥락과 <Term id="metadata">메타데이터</Term>를 붙여, <Term id="embedding">임베딩</Term>하고 색인할 수 있는 지식으로 바꾸기
+
+## 왜 전처리가 검색보다 먼저인가
+
+옛말로 "쓰레기를 넣으면 쓰레기가 나온다"고 합니다. RAG에서는 이게 특히 매섭습니다. 아무리 좋은 검색 엔진과 좋은 LLM을 써도, 색인된 지식 조각이 엉망이면 검색은 엉뚱한 걸 물어 옵니다.
+
+예를 들어 보겠습니다. 환불 정책 PDF에서 표를 그냥 텍스트로 뽑으면 "미개봉 7 전액 개봉 불가 3일"처럼 숫자와 단어가 뒤엉킵니다. 이걸 임베딩해 저장하면, 나중에 "환불 며칠까지 되나요"로 검색해도 의미가 통하지 않아 안 걸립니다.
+
+핵심은 이겁니다. 검색은 사람이 아니라 <Term id="vector-search">벡터 검색</Term>이 합니다. 벡터 검색은 조각의 의미를 숫자로 바꿔 견주는 방식이라, 조각 하나하나가 그 자체로 의미가 통하는 완결된 덩어리여야 잘 걸립니다. 전처리는 바로 이 "의미가 통하는 덩어리"를 만드는 일입니다.
+
+## 파이프라인 전체 그림
+
+전처리 파이프라인은 여러 단계를 물 흐르듯 잇는 구조입니다. 원천이 PDF든 웹이든, 결국 같은 형태의 색인된 조각으로 모이게 만드는 게 목표입니다.
+
+| 단계 | 하는 일 | 여기서 갈리는 것 |
+| --- | --- | --- |
+| 수집 | 원천에서 파일이나 페이지를 가져온다 | 어떤 원천을 얼마나 자주 |
+| 파싱 | 원천별로 본문과 표를 구조를 살려 뽑는다 | 표와 레이아웃 보존 여부 |
+| 정제 | 공백, 중복, 껍데기를 걷어낸다 | 노이즈가 검색을 흐리는지 |
+| 청킹 | 검색에 좋은 크기로 나눈다 | 조각의 의미 완결성 |
+| 맥락 부착 | 조각에 어디 소속인지 설명을 붙인다 | 짧은 조각의 검색 적중률 |
+| 임베딩 | 각 조각을 벡터로 바꾼다 | 색인과 검색의 모델 일치 |
+| 색인 | 벡터 저장소에 메타데이터와 함께 넣는다 | 필터와 출처 표시 |
+
+이 레슨은 이 중에서 검색 품질을 가장 크게 좌우하는 파싱, 청킹, 맥락 부착에 집중합니다. 하나씩 실제 코드로 내려가 보겠습니다.
+
+## PDF 파싱: 표와 레이아웃을 살리기
+
+PDF는 가장 흔하면서 가장 까다로운 원천입니다. 사람 눈에는 깔끔한 문서지만, 프로그램에는 글자들이 좌표 위에 흩뿌려진 그림에 가깝습니다. 그래서 그냥 텍스트만 뽑으면 표의 칸 구분이 사라지고, 두 단으로 나뉜 레이아웃이 뒤섞입니다.
+
+핵심은 표를 본문과 분리해서, 표는 표답게 보존하는 것입니다. 아래는 `pdfplumber`로 페이지마다 본문과 표를 나눠 뽑는 코드입니다. 표는 마크다운 표로 바꿔, 어떤 값이 어떤 열에 속하는지 살립니다.
+
+```python
+# parse_pdf.py
+# pdfplumber는 글자의 위치와 표의 격자를 함께 읽어, 단순 텍스트 추출보다
+# 레이아웃과 표를 훨씬 잘 살린다.
+import pdfplumber
+
+
+def parse_pdf(path: str) -> list[dict]:
+    """PDF를 페이지 단위로 읽어, 본문 텍스트와 표를 나눠 반환한다.
+    표는 억지로 줄글에 섞지 않고 마크다운 표로 따로 보존한다."""
+    blocks = []
+    with pdfplumber.open(path) as pdf:
+        for page_no, page in enumerate(pdf.pages, start=1):
+            text = page.extract_text() or ""
+            if text.strip():
+                blocks.append({"type": "text", "page": page_no, "content": text})
+            # 표를 격자로 뽑아 마크다운으로. 표를 그냥 텍스트로 뽑으면
+            # 숫자와 헤더가 뒤섞여 검색 때 의미가 깨진다.
+            for table in page.extract_tables():
+                blocks.append(
+                    {"type": "table", "page": page_no, "content": table_to_markdown(table)}
+                )
+    return blocks
+
+
+def table_to_markdown(rows: list[list]) -> str:
+    header = rows[0]
+    lines = ["| " + " | ".join(c or "" for c in header) + " |"]
+    lines.append("| " + " | ".join("---" for _ in header) + " |")
+    for row in rows[1:]:
+        lines.append("| " + " | ".join((c or "").replace("\n", " ") for c in row) + " |")
+    return "\n".join(lines)
+```
+
+여기서 조심할 함정이 하나 있습니다. 스캔한 PDF입니다. 종이를 사진 찍어 만든 PDF는 글자가 진짜 '그림'이라 `extract_text()`가 빈 문자열을 돌려줍니다. 이럴 때는 이미지에서 글자를 읽어내는 <Term id="ocr">OCR</Term>이 필요합니다.
+
+요즘은 전통적 OCR 대신 <Term id="vlm">VLM</Term>에게 페이지 이미지를 보여 주고 읽게 하는 방법도 잘 통합니다. 표가 섞인 복잡한 레이아웃일수록 VLM이 구조까지 이해해 더 낫습니다. 아래는 글자가 안 뽑히는 페이지를 이미지로 만들어 Claude에게 읽히는 대비책입니다.
+
+```python
+# ocr_fallback.py
+import base64
+from anthropic import Anthropic
+
+client = Anthropic()  # ANTHROPIC_API_KEY 환경변수에서 자동으로 읽는다
+
+OCR_PROMPT = (
+    "이 문서 이미지에 있는 내용을 빠짐없이 마크다운으로 옮겨 적으세요. "
+    "표는 마크다운 표로, 제목은 제목으로 구조를 살리세요. "
+    "이미지에 없는 내용을 지어내지 마세요."
+)
+
+
+def read_page_image(png_bytes: bytes) -> str:
+    """글자가 텍스트로 안 뽑히는 스캔 페이지를, VLM으로 읽어 마크다운으로."""
+    b64 = base64.standard_b64encode(png_bytes).decode("utf-8")
+    resp = client.messages.create(
+        model="claude-sonnet-5",  # 정확한 판독이 필요하니 중간 등급
+        max_tokens=4096,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {"type": "base64", "media_type": "image/png", "data": b64},
+                    },
+                    {"type": "text", "text": OCR_PROMPT},
+                ],
+            }
+        ],
+    )
+    return "".join(b.text for b in resp.content if b.type == "text")
+```
+
+이 판독 결과도 결국 앞의 마크다운 블록과 같은 형태라, 뒤의 청킹 단계로 그대로 흘려보낼 수 있습니다. 원천이 무엇이든 같은 형태로 모으는 게 파이프라인의 요령입니다.
+
+## 웹과 스프레드시트 파싱
+
+웹 페이지는 문제가 정반대입니다. 글자는 잘 뽑히는데, 본문보다 껍데기가 더 많습니다. 메뉴, 광고, 사이드바, 푸터가 본문을 둘러싸고 있어서, HTML을 통째로 텍스트로 바꾸면 노이즈가 본문을 덮어 버립니다.
+
+그래서 본문만 골라내는 추출기를 씁니다. `trafilatura`는 본문 추출에 특화돼 있어, `BeautifulSoup`으로 태그를 일일이 지우는 것보다 깔끔하게 본문과 표만 남깁니다.
+
+```python
+# parse_html.py
+# 웹 페이지는 대부분이 메뉴, 광고, 푸터 같은 껍데기다. 본문만 남기는 게 핵심.
+import trafilatura
+
+
+def parse_html(html: str, url: str) -> dict:
+    body = trafilatura.extract(
+        html, include_tables=True, include_comments=False
+    )
+    return {"type": "text", "source_url": url, "content": body or ""}
+```
+
+스프레드시트는 또 다릅니다. 표는 보통 한 행이 하나의 사실입니다. 셀을 그냥 이어 붙이면 "홍길동 30 서울 VIP"처럼 뭐가 뭔지 알 수 없게 됩니다. 그래서 각 행을 "열 이름은 값" 형태의 문장으로 풀어, 조각만 봐도 의미가 통하게 만듭니다.
+
+```python
+# parse_sheet.py
+import pandas as pd
+
+
+def parse_spreadsheet(path: str) -> list[dict]:
+    """각 행을 '열: 값' 문장으로 풀어, 행 하나가 검색되는 조각이 되게 한다."""
+    df = pd.read_excel(path)  # CSV면 pd.read_csv
+    rows = []
+    for i, row in df.iterrows():
+        sentence = ", ".join(f"{col}: {row[col]}" for col in df.columns)
+        rows.append({"type": "row", "row_index": int(i), "content": sentence})
+    return rows
+```
+
+세 원천 모두 결과가 `{"type": ..., "content": ...}` 꼴의 블록 목록이라는 점이 중요합니다. 이제부터는 원천을 구분하지 않고 똑같이 다룰 수 있습니다.
+
+## 정제와 중복 제거
+
+파싱한 블록은 아직 지저분합니다. 깨진 공백 문자, 연속된 빈 줄, 그리고 같은 공지가 여러 페이지에 반복되는 중복이 섞여 있습니다. 이걸 걷어내는 게 정제입니다.
+
+특히 중복은 검색 품질을 조용히 갉아먹습니다. 같은 문장이 열 군데 색인돼 있으면, 검색 상위 결과가 그 문장 복사본으로 도배돼 정작 다른 근거가 밀려납니다. 내용 해시로 완전 중복을 걸러 냅니다.
+
+```python
+# clean.py
+import re
+import hashlib
+
+
+def normalize(text: str) -> str:
+    text = text.replace(" ", " ")       # 깨진 공백 문자를 보통 공백으로
+    text = re.sub(r"[ \t]+", " ", text)       # 연속 공백을 하나로
+    text = re.sub(r"\n{3,}", "\n\n", text)    # 빈 줄 과다를 정리
+    return text.strip()
+
+
+def dedup(blocks: list[dict]) -> list[dict]:
+    """내용 해시로 완전 중복을 제거한다. 같은 공지가 여러 페이지에
+    반복되면 검색 결과가 그걸로 도배되기 때문이다."""
+    seen = set()
+    unique = []
+    for b in blocks:
+        h = hashlib.sha256(b["content"].strip().encode("utf-8")).hexdigest()
+        if h not in seen:
+            seen.add(h)
+            unique.append(b)
+    return unique
+```
+
+여기서는 글자가 완전히 똑같은 경우만 지웠습니다. 실무에서는 거의 같은데 한두 글자만 다른 준중복도 문제인데, 그건 임베딩 유사도로 걸러 냅니다. 다만 그건 임베딩을 만든 뒤라야 가능하니 색인 단계에서 다룹니다.
+
+## 청킹 전략: 어디서 자를 것인가
+
+이제 파이프라인의 심장입니다. 긴 문서를 검색하기 좋은 조각으로 나누는 청킹인데, "어디서 자르느냐"가 검색 성능을 가장 크게 좌우합니다.
+
+직관부터 잡겠습니다. 조각이 너무 크면 관계없는 내용이 한 조각에 섞여, 검색이 "이 조각은 대충 이런 주제"라고 흐릿하게만 봅니다. 반대로 너무 작으면 앞뒤 맥락이 끊겨, "7일 이내 가능"이라는 조각만 남고 무엇이 7일인지 사라집니다. 그 사이의 균형점을 찾는 게 청킹입니다.
+
+전략은 크게 셋입니다.
+
+첫째, 고정 크기 청킹입니다. 대략 몇 토큰마다 기계적으로 자릅니다. 단순하고 어떤 문서에도 통하지만, 문장 한가운데를 자르면 의미가 깨집니다.
+
+둘째, 구조 기반 청킹입니다. 제목이나 문단 같은 문서의 원래 구조를 경계로 자릅니다. FAQ나 정책 문서처럼 구조가 뚜렷하면 이게 의미 단위와 가장 잘 맞습니다.
+
+셋째, 의미 단위 청킹입니다. 문장들의 임베딩이 크게 바뀌는 지점, 즉 화제가 전환되는 곳을 찾아 자릅니다. 가장 정교하지만 비용이 들고 구현이 까다롭습니다.
+
+실무에서는 보통 구조 기반을 먼저 시도하고, 구조가 없는 긴 글에는 고정 크기를 씁니다. 먼저 고정 크기 청킹입니다. 여기서 중요한 장치가 <Term id="chunk-overlap">청크 겹침</Term>(overlap)입니다.
+
+```python
+# chunk.py
+# 청크 크기는 토큰으로 잰다. 여기선 근사치로 세지만, 실제로는
+# 임베딩 모델의 토크나이저로 정확히 세는 게 좋다.
+def approx_tokens(text: str) -> int:
+    # 한국어는 영어보다 토큰이 촘촘하다. 보수적으로 잡는다.
+    return max(1, len(text) // 3)
+
+
+def fixed_chunks(text: str, size: int = 500, overlap: int = 80) -> list[str]:
+    """문단 경계를 지키며 대략 size 토큰 크기로 나누고, 이웃 청크가
+    overlap 토큰만큼 겹치게 한다. 겹침이 있어야 경계에서 잘린 문장의
+    맥락이 적어도 한쪽 청크엔 온전히 남는다."""
+    paras = [p for p in text.split("\n\n") if p.strip()]
+    chunks, cur, cur_tokens = [], [], 0
+    for p in paras:
+        t = approx_tokens(p)
+        if cur_tokens + t > size and cur:
+            chunks.append("\n\n".join(cur))
+            # 꼬리 일부를 다음 청크 머리로 넘겨 겹치게 한다.
+            tail = "\n\n".join(cur)[-overlap * 3:]
+            cur, cur_tokens = [tail], approx_tokens(tail)
+        cur.append(p)
+        cur_tokens += t
+    if cur:
+        chunks.append("\n\n".join(cur))
+    return chunks
+```
+
+<Term id="token">토큰</Term>으로 크기를 재는 이유는, 임베딩 모델이 글을 토큰 단위로 처리하고 대부분 입력 토큰에 상한이 있기 때문입니다. 겹침을 두는 이유는 명확합니다. 어떤 규칙으로 자르든 경계에 걸친 문장은 반드시 생기는데, 겹침이 있으면 그 문장이 한쪽 조각에는 온전히 들어가 검색에 걸립니다.
+
+구조 기반 청킹은 제목을 경계로 삼습니다. 마크다운으로 정리해 둔 문서라면 특히 간단합니다.
+
+```python
+# 구조 기반 청킹: 제목(##)을 경계로 한 절을 한 청크로 둔다.
+def structure_chunks(markdown: str) -> list[dict]:
+    sections, title, buf = [], "서문", []
+    for line in markdown.splitlines():
+        if line.startswith("## "):
+            if buf:
+                sections.append({"title": title, "content": "\n".join(buf).strip()})
+            title, buf = line[3:].strip(), []
+        else:
+            buf.append(line)
+    if buf:
+        sections.append({"title": title, "content": "\n".join(buf).strip()})
+    return sections
+```
+
+한 가지 원칙을 기억하세요. 표는 되도록 쪼개지 않습니다. 표를 중간에서 자르면 헤더와 값이 갈라져 둘 다 쓸모없어집니다. 그래서 앞서 표를 별도 블록으로 뽑아 둔 것이고, 표 블록은 통째로 한 조각으로 둡니다.
+
+## 짧은 조각에 맥락 입히기
+
+청킹을 잘해도 남는 문제가 있습니다. 조각이 그 자체로는 무슨 맥락인지 모를 때가 많습니다. "미개봉 상품은 7일 이내 전액 환불 가능"이라는 조각은, 어떤 상품군의 정책인지 조각 안에 안 적혀 있으면 "전자제품 환불" 검색에 안 걸릴 수 있습니다.
+
+여기서 쓰는 기법이 <Term id="contextual-retrieval">맥락 보강 검색</Term>(contextual retrieval)입니다. 각 조각 앞에, 이 조각이 전체 문서 어디에 속하고 무엇에 관한 것인지 한두 문장 설명을 붙여 함께 임베딩합니다. 조각에 좌표를 붙여 주는 셈입니다.
+
+문제는 비용입니다. 조각마다 LLM을 부르는데, 그때마다 전체 문서를 같이 넣어야 맥락을 잡을 수 있습니다. 문서가 크면 조각 수만큼 같은 문서를 반복해 넣게 되니 비용이 폭발합니다. 이걸 <Term id="prompt-caching">프롬프트 캐싱</Term>으로 해결합니다. 조각마다 바뀌지 않는 문서 부분을 서버가 기억해 재사용하게 하면, 반복되는 앞부분 비용이 크게 줍니다.
+
+```python
+# contextualize.py
+from anthropic import Anthropic
+
+client = Anthropic()
+
+CHUNK_INSTRUCTION = (
+    "위 문서에서 잘라낸 아래 조각이 문서의 어디에 속하고 무엇에 관한 것인지, "
+    "검색이 잘 되도록 한두 문장으로 짧게 설명만 쓰세요. 조각 내용을 그대로 "
+    "반복하지 마세요.\n\n<조각>\n{chunk}\n</조각>"
+)
+
+
+def doc_block(document: str) -> dict:
+    """조각마다 재사용될 문서 블록. cache_control로 이 앞부분을 캐시해,
+    조각이 바뀌어도 문서를 매번 다시 계산하지 않게 한다."""
+    return {
+        "type": "text",
+        "text": f"다음은 전체 문서입니다.\n<문서>\n{document}\n</문서>",
+        "cache_control": {"type": "ephemeral"},
+    }
+
+
+def contextualize(document_block: dict, chunk: str) -> str:
+    """조각 앞에 붙일 짧은 맥락 문장을 만든다. 조각마다 부르므로,
+    싼 모델(haiku)과 프롬프트 캐싱으로 비용을 눌러야 실무에서 쓸 수 있다."""
+    resp = client.messages.create(
+        model="claude-haiku-4-5",  # 조각마다 부르니 가장 싼 등급으로
+        max_tokens=150,
+        messages=[
+            {
+                "role": "user",
+                # 큰 문서 블록을 먼저, 바뀌는 조각 지시를 뒤에 둔다.
+                # 캐시는 앞에서부터 일치하는 만큼만 되므로 순서가 중요하다.
+                "content": [
+                    document_block,
+                    {"type": "text", "text": CHUNK_INSTRUCTION.format(chunk=chunk)},
+                ],
+            }
+        ],
+    )
+    return "".join(b.text for b in resp.content if b.type == "text").strip()
+```
+
+블록 순서가 왜 중요한지 짚고 넘어가겠습니다. 캐시는 앞에서부터 글자가 일치하는 만큼만 재사용됩니다. 그래서 조각마다 똑같은 문서 블록을 앞에, 조각마다 달라지는 지시를 뒤에 둬야 문서 부분이 캐시로 걸립니다. 순서를 뒤집으면 캐시가 통째로 깨져 비용 절감이 사라집니다.
+
+이 맥락 부착은 공짜가 아니니, 모든 조각에 다 붙일 필요는 없습니다. 정책 문서처럼 조각이 짧고 맥락 의존이 큰 원천에 먼저 적용하고, 효과를 검색 평가로 확인한 뒤 넓히는 게 좋습니다.
+
+## 메타데이터 설계와 색인
+
+이제 조각에 부가 정보를 붙일 차례입니다. 메타데이터는 조각에 딸린 꼬리표입니다. 출처 파일, 페이지, 카테고리, 갱신 날짜, 언어 같은 것들이지요. 두 가지 일을 합니다.
+
+첫째, 검색을 좁히는 필터입니다. "이 고객사의 문서 중에서만" 또는 "최근 6개월 내 갱신된 정책만" 찾도록 검색 범위를 제한할 수 있습니다. 둘째, 답변에 근거 출처를 표시하는 재료입니다. "환불 정책 3페이지에 따르면"처럼 근거를 대면 신뢰가 올라갑니다.
+
+조각과 메타데이터, 임베딩을 한데 묶는 그릇을 정의합니다.
+
+```python
+# schema.py
+from dataclasses import dataclass, field
+
+
+@dataclass
+class Chunk:
+    id: str
+    text: str                 # 임베딩할 최종 본문 (맥락 문장 + 원문)
+    embedding: list[float] | None = None
+    metadata: dict = field(default_factory=dict)
+    # metadata 예:
+    # {"source": "refund_policy.pdf", "page": 3, "url": None,
+    #  "section": "환불", "doc_type": "policy",
+    #  "updated_at": "2026-09-01", "lang": "ko"}
+```
+
+임베딩 단계에서 한 가지 원칙을 꼭 지켜야 합니다. 색인할 때 쓰는 임베딩 모델과, 나중에 질문을 검색할 때 쓰는 임베딩 모델이 반드시 같아야 합니다. 모델이 다르면 좌표계가 달라, 뜻이 같은 글도 서로 먼 벡터가 나와 검색이 통째로 깨집니다.
+
+또 하나, 임베딩은 대화 API가 아니라 전용 임베딩 모델로 만듭니다. 조각을 한 번에 한 개씩 보내지 말고 배치로 묶어 보내야 요청 수와 비용이 줍니다.
+
+```python
+# embed.py
+# 임베딩은 대화 API가 아니라 전용 임베딩 모델로 만든다. 아래 embed는
+# 그 자리를 나타내는 껍데기다. 색인용과 검색용 임베딩 모델은 같아야 한다.
+def embed(texts: list[str]) -> list[list[float]]:
+    ...  # 임베딩 모델을 호출해 벡터 목록을 돌려준다
+
+
+def embed_chunks(chunks: list[Chunk], batch: int = 128) -> None:
+    """조각들을 배치로 묶어 임베딩한다. 한 번에 하나씩 부르면 느리고 비싸다."""
+    for i in range(0, len(chunks), batch):
+        part = chunks[i : i + batch]
+        vectors = embed([c.text for c in part])
+        for c, v in zip(part, vectors):
+            c.embedding = v
+```
+
+## 파이프라인으로 묶기
+
+이제 조각들을 하나의 흐름으로 잇습니다. 원천에서 나온 블록을 받아, 정제하고 청킹하고 맥락을 붙여, 메타데이터까지 갖춘 조각 목록을 만드는 함수입니다. 원천이 PDF든 웹이든 이 함수 하나로 처리됩니다.
+
+```python
+# pipeline.py
+import uuid
+from clean import normalize, dedup
+from chunk import fixed_chunks
+from contextualize import doc_block, contextualize
+from embed import embed_chunks
+from schema import Chunk
+
+
+def ingest_document(raw_blocks: list[dict], source_meta: dict) -> list[Chunk]:
+    """한 원천(PDF/HTML/시트)의 블록들을 받아, 정제 -> 청킹 -> 맥락 부착 ->
+    메타데이터까지 붙인 Chunk 목록으로 만든다."""
+    # 정제하고 완전 중복을 지운다.
+    blocks = dedup([{**b, "content": normalize(b["content"])} for b in raw_blocks])
+    full_text = "\n\n".join(b["content"] for b in blocks)
+    doc = doc_block(full_text)  # 맥락 부착에 재사용될 캐시 블록
+
+    chunks = []
+    for b in blocks:
+        # 표는 통째로 한 조각, 본문은 크기 기준으로 나눈다.
+        pieces = [b["content"]] if b["type"] == "table" else fixed_chunks(b["content"])
+        for piece in pieces:
+            context = contextualize(doc, piece)  # 캐시 덕에 저렴하다
+            chunks.append(
+                Chunk(
+                    id=str(uuid.uuid4()),
+                    text=f"{context}\n\n{piece}",  # 맥락 + 원문을 함께 임베딩
+                    metadata={**source_meta, "page": b.get("page"), "block_type": b["type"]},
+                )
+            )
+    embed_chunks(chunks)
+    return chunks
+```
+
+마지막은 벡터 저장소에 넣는 색인입니다. 저장소마다 API는 다르지만 개념은 같습니다. 조각 id, 벡터, 그리고 메타데이터를 함께 올립니다. 메타데이터를 같이 올려야 나중에 필터 검색과 출처 표시가 됩니다.
+
+```python
+# index.py
+def upsert(store, chunks: list[Chunk]) -> None:
+    """벡터, 원문, 메타데이터를 함께 올린다. 같은 id면 덮어써(upsert)
+    문서가 갱신될 때 통째로 다시 넣지 않고 바뀐 것만 갱신할 수 있다."""
+    store.upsert(
+        [
+            {"id": c.id, "vector": c.embedding, "text": c.text, "metadata": c.metadata}
+            for c in chunks
+        ]
+    )
+```
+
+id 기준으로 덮어쓰는 upsert 방식이 실무에서 중요합니다. 정책 문서가 바뀌었을 때 전체를 지우고 다시 넣는 대신, 바뀐 조각만 갱신하면 되기 때문입니다.
+
+## 색인이 끝났으면 품질부터 확인
+
+파이프라인을 다 짰다고 끝이 아닙니다. 채널톡식으로 말하면, 감이 아니라 숫자로 확인해야 합니다. 색인이 제대로 됐는지 재는 가장 간단한 지표는 "검색이 되긴 하나"입니다.
+
+질문과 정답 조각을 짝지은 작은 골든셋을 만들고, 질문을 검색했을 때 상위 몇 개 안에 정답 조각이 들어오는 비율을 봅니다. 이걸 hit@k라고 합니다. 이 숫자가 낮으면 검색 알고리즘을 손대기 전에 전처리부터 의심해야 합니다.
+
+```python
+# eval_retrieval.py
+# 색인이 끝나면 '검색이 되긴 하나'를 먼저 잰다. 질문과 정답 조각을 짝지은
+# 작은 골든셋으로, 상위 k개 안에 정답이 들어오는 비율(hit@k)을 본다.
+def hit_at_k(golden: list[dict], search_fn, k: int = 5) -> float:
+    hits = 0
+    for item in golden:
+        results = search_fn(item["question"], k=k)
+        found_ids = {r.id for r in results}
+        if item["expected_chunk_id"] in found_ids:
+            hits += 1
+    return hits / len(golden)
+```
+
+전처리의 각 선택이 이 숫자에 어떻게 영향을 주는지 실험해 보는 게 실력입니다. 청크 크기를 바꿔 보고, 겹침을 넣고 빼 보고, 맥락 부착을 켜고 꺼 보면서 hit@k가 어떻게 움직이는지 재는 것이지요.
+
+한 가지 덧붙이면, 검색이 정답 조각을 상위 후보에 올려도 순서가 뒤라 LLM이 놓칠 수 있습니다. 그럴 때 1차로 넉넉히 뽑은 뒤 더 정교한 기준으로 순서를 다시 매기는 리랭킹(re-ranking)을 얹습니다. 다만 그건 검색 단계의 이야기이고, 리랭킹으로도 못 구하는 건 애초에 색인이 안 된 지식입니다. 그래서 전처리가 상한선입니다.
+
+이 검색 품질은 다음 단계로 이어집니다. 검색이 정답 근거를 잘 물어 와야, 그 근거에 기반해 답하는 <Term id="groundedness">근거 충실성</Term>이 올라가고 할루시네이션이 줄기 때문입니다. 전처리는 결국 그 신뢰의 맨 밑바닥을 놓는 일입니다.
+
+## 흔한 함정
+
+표를 텍스트로 뭉개는 것이 가장 흔합니다. 표는 별도 블록으로 뽑아 마크다운으로 보존하고, 청킹할 때 쪼개지 마세요.
+
+청크 크기를 감으로 정하는 것도 흔합니다. 정답은 문서와 질문에 따라 다르니, hit@k로 재서 정하세요. 겹침을 아예 빼면 경계 문장이 통째로 사라집니다.
+
+맥락 부착에서 캐시 없이 문서를 반복해 넣는 것도 위험합니다. 조각 수만큼 비용이 붙어 실무에서 못 씁니다. 캐시가 걸리도록 문서 블록을 앞에 두세요.
+
+색인용과 검색용 임베딩 모델이 다른 것은 조용한 재앙입니다. 검색이 전혀 안 되는데 원인 찾기가 어렵습니다. 두 곳의 모델을 반드시 못박아 두세요.
+
+마지막으로 스캔 PDF를 빈 문서로 방치하는 함정입니다. `extract_text()`가 빈 값을 주면 OCR이나 VLM 경로로 보내야, 그 지식이 통째로 누락되지 않습니다.
+
+## 직접 해보기
+
+실제 원천 하나를 골라 파이프라인을 처음부터 끝까지 돌려 보세요.
+
+1. 표가 있는 PDF 하나(예: 요금제 안내나 환불 정책)와 웹 FAQ 페이지 하나를 골라, 파싱해서 블록 목록으로 만드세요. 표가 마크다운으로 잘 보존됐는지 눈으로 확인하세요.
+2. 고정 크기 청킹과 구조 기반 청킹을 둘 다 적용해 보고, 조각이 그 자체로 의미가 통하는지 몇 개를 직접 읽어 비교하세요.
+3. 질문과 정답 조각을 짝지은 골든셋 15개를 만들어 hit@k를 재세요. 그다음 맥락 부착을 켜서 다시 재고, 숫자가 오르는지 확인하세요.
+
+여기까지 하면 면접에서 "다양한 원천으로 지식 파이프라인을 어떻게 만드나요"라는 질문에, 실제로 돌려 본 코드와 hit@k 숫자로 답할 수 있습니다.
+
+## 더 깊이 파고들 것
+
+다음 세 가지는 이 레슨의 자연스러운 확장입니다. 임베딩 유사도로 준중복을 걸러 내는 법, 의미 단위 청킹을 실제로 구현해 화제 전환 지점에서 자르는 법, 그리고 문서가 갱신될 때 바뀐 조각만 다시 색인하는 증분 갱신 파이프라인을 짜는 법입니다. 각각을 작은 실험으로 만들어, hit@k가 어떻게 달라지는지 재 보세요.
