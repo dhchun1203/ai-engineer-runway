@@ -30,6 +30,8 @@ type NavItem = {
 
 const NAV_ITEMS: readonly NavItem[] = [
   { label: "오늘의 학습", href: "/" },
+  // 베이스캠프 선행 과제 — 커리큘럼보다 우선(사용자 결정 2026-09-09). 앞쪽에 둔다.
+  { label: "베이스캠프", href: "/basecamp" },
   { label: "커리큘럼", href: "/curriculum" },
   // 취업 목표 트랙 "채널톡 AI Engineer 로드맵"(/roadmap) — 정규 커리큘럼과 별개의
   // 별도 커리큘럼. 단독 링크로 두어 한 번에 닿게 한다.

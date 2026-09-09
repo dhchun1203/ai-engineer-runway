@@ -17,6 +17,8 @@ import { SCHEDULE_START, COURSE_START_DATE, rowsForDate, firstRowAfter } from "@
 import { getScheduleRows, getLessonMinutesBySlug } from "@/lib/schedule-data";
 import { getLessonBySlug } from "@/content/curriculum-helpers";
 import type { StepId } from "@/content/modules";
+import { BasecampPriorityCard } from "@/components/basecamp/basecamp-priority-card";
+import { currentBasecampStep, countStepDone, BASECAMP_END_DATE } from "@/content/basecamp";
 
 // 홈도 쿠키를 읽으므로 동적 렌더링이 필요하다 — 조건부 쿠키 접근이 캐시된
 // 응답을 내보내는 문제(RESEARCH Pitfall 4)를 원천 차단한다. `/unlock` 직후
@@ -170,8 +172,27 @@ export default async function Home() {
     }
   }
 
+  // 베이스캠프 최우선 카드 데이터(사용자 결정: 베이스캠프 진도가 커리큘럼보다
+  // 우선). 완료 상태는 진도 행에서 bc: 접두사 id로 판별한다 — progressRead가
+  // 없거나 실패하면 진행률은 감추고 안내만 보인다.
+  const bcDoneRawIds = new Set(
+    progressRead?.ok ? progressRead.rows.map((row) => row.lessonSlug) : [],
+  );
+  const bcStep = currentBasecampStep();
+  const bcCount = countStepDone(bcStep, bcDoneRawIds);
+  const bcDaysLeft = daysUntil(BASECAMP_END_DATE, today);
+
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
+      {/* 베이스캠프 최우선 카드 — 오늘의 학습보다 위에 둔다. */}
+      <BasecampPriorityCard
+        weekLabel={bcStep.weekLabel}
+        stepTitle={bcStep.title}
+        done={bcCount.done}
+        total={bcCount.total}
+        showProgress={Boolean(progressRead?.ok)}
+        daysLeft={bcDaysLeft}
+      />
       <header className="flex flex-col gap-2">
         <h1 className="text-display font-black">오늘의 학습</h1>
         <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
