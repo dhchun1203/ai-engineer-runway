@@ -19,27 +19,63 @@ export function TilStreak({ dates }: { dates: readonly string[] }) {
     days.push({ date: iso, count: counts.get(iso) ?? 0 });
   }
 
+  // 열(주) 단위 월 라벨 — GitHub 잔디처럼 각 열의 맨 위 칸이 새 달로 넘어가면 "N월"을 찍는다.
+  // 격자는 grid-flow-col grid-rows-7이라 days[c*7]이 c번째 열의 top 칸이다.
+  const columnCount = days.length / 7;
+  const monthLabels: string[] = [];
+  let prevMonth = '';
+  for (let c = 0; c < columnCount; c++) {
+    const month = days[c * 7].date.slice(5, 7); // 'MM'
+    monthLabels.push(month !== prevMonth ? `${Number(month)}월` : '');
+    prevMonth = month;
+  }
+
+  // 마지막(오늘) 칸의 날짜 — 캡션으로 범위를 알려 준다(아이패드엔 hover 툴팁이 없으므로).
+  const firstDate = days[0].date;
+  const lastDate = days[days.length - 1].date;
+  const fmtKo = (iso: string) => {
+    const [, m, d] = iso.split('-');
+    return `${Number(m)}월 ${Number(d)}일`;
+  };
+
   return (
-    <section aria-label="학습기록 잔디" className="flex flex-col gap-2">
+    <section aria-label="학습기록 잔디" className="flex flex-col gap-1.5">
       {/* 바깥은 좁은 화면에서만 가로 스크롤. 안쪽 격자는 내용 폭으로 왼쪽에 촘촘히
           모인다(inline-grid + 고정 열폭) — 전체 폭으로 늘어나 성글어지는 것을 막는다. */}
       <div className="overflow-x-auto">
-        <div className="inline-grid grid-flow-col grid-rows-7 auto-cols-[0.7rem] gap-1">
-          {days.map((d) => (
-            <span
-              key={d.date}
-              title={`${d.date}: ${d.count}편`}
-              className={`h-[0.7rem] w-[0.7rem] rounded-sm ${
-                d.count === 0
-                  ? 'bg-badge-neutral-bg dark:bg-badge-neutral-bg-dark'
-                  : d.count === 1
-                    ? 'bg-ok/60 dark:bg-ok-dark/60'
-                    : 'bg-ok dark:bg-ok-dark'
-              }`}
-            />
-          ))}
+        <div className="inline-flex flex-col gap-1">
+          {/* 월 라벨 행 — 각 열과 같은 열폭. 라벨은 시작 열에만 찍고 오른쪽으로 흘려
+              넘긴다(빈 열 위로 겹쳐 보이게, whitespace-nowrap). GitHub 잔디와 같은 방식. */}
+          <div className="grid grid-flow-col auto-cols-[0.7rem] gap-1">
+            {monthLabels.map((label, i) => (
+              <span
+                key={i}
+                className="h-3 overflow-visible whitespace-nowrap text-[0.6rem] leading-3 text-badge-neutral-text dark:text-badge-neutral-text-dark"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+          <div className="grid grid-flow-col grid-rows-7 auto-cols-[0.7rem] gap-1">
+            {days.map((d) => (
+              <span
+                key={d.date}
+                title={`${d.date}: ${d.count}편`}
+                className={`h-[0.7rem] w-[0.7rem] rounded-sm ${
+                  d.count === 0
+                    ? 'bg-badge-neutral-bg dark:bg-badge-neutral-bg-dark'
+                    : d.count === 1
+                      ? 'bg-ok/60 dark:bg-ok-dark/60'
+                      : 'bg-ok dark:bg-ok-dark'
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </div>
+      <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+        {fmtKo(firstDate)} ~ {fmtKo(lastDate)} (지난 12주)
+      </p>
     </section>
   );
 }

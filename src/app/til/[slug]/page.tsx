@@ -5,6 +5,8 @@ import { getPublishedPostBySlug, getPostBySlugAnyStatus } from '@/lib/til/store'
 import { hasUnlockCookie } from '@/lib/auth';
 import { MDXContent } from '@/components/mdx-content';
 import { TilMeta } from '@/components/til/til-meta';
+import { TilCopyButton } from '@/components/til/til-copy-button';
+import { postToMarkdown } from '@/lib/til/markdown';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +50,18 @@ export default async function TilDetailPage({
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-12 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-2">
+        {/* 상단 액션(우측 정렬) — 글 전체(제목 포함) 마크다운 복사, 그리고 소유자면 편집. */}
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <TilCopyButton markdown={postToMarkdown(post)} />
+          {unlocked ? (
+            <Link
+              href={`/til/${post.slug}/edit`}
+              className="chip tap-feedback inline-flex min-h-11 items-center text-label font-semibold text-accent dark:text-accent-dark"
+            >
+              편집
+            </Link>
+          ) : null}
+        </div>
         {isDraftPreview ? (
           <span className="chip-solid w-fit text-label font-bold">초고 미리보기</span>
         ) : null}
@@ -56,11 +70,6 @@ export default async function TilDetailPage({
           <p className="text-body font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark break-keep">
             {post.summary}
           </p>
-        ) : null}
-        {unlocked ? (
-          <Link href={`/til/${post.slug}/edit`} className="min-h-11 inline-flex items-center text-label font-bold text-accent dark:text-accent-dark">
-            편집
-          </Link>
         ) : null}
       </header>
 
