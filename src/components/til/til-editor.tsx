@@ -5,6 +5,16 @@ import { useRouter } from 'next/navigation';
 import { savePostAction, deletePostAction, uploadTilImageAction } from '@/app/til/actions';
 import { getTemplate } from '@/lib/til/templates';
 import { TilMarkdownPreview } from '@/components/til/til-markdown-preview';
+import {
+  Bold,
+  Italic,
+  Strikethrough,
+  Quote,
+  Code,
+  SquareCode,
+  Link as LinkIcon,
+  ImagePlus,
+} from 'lucide-react';
 import type { TilPost, TilPostInput, TilSeries, TilTemplate } from '@/lib/til/types';
 
 type Props =
@@ -186,10 +196,11 @@ export function TilEditor(props: Props) {
   const inputClass =
     'w-full border-2 border-foreground bg-background px-3 py-2 text-body dark:border-foreground-dark dark:bg-background-dark';
 
-  // 툴바 버튼: 최소 44px 터치 타깃(아이패드), 위·아래 붙는 눌림 피드백.
+  // 툴바 버튼: 최소 44px 터치 타깃(아이패드). 호버 시 배경 없이 아이콘/글자만 커진다.
   const toolBtn =
-    'inline-flex h-11 min-w-11 items-center justify-center px-2 text-label font-bold tap-feedback ' +
-    'hover:bg-surface dark:hover:bg-surface-dark';
+    'inline-flex h-11 min-w-11 items-center justify-center px-2 text-label font-bold text-muted ' +
+    'transition-transform hover:scale-125 hover:text-foreground disabled:opacity-40 ' +
+    'dark:text-muted-dark dark:hover:text-foreground-dark';
   const toolDivider = 'mx-1 h-6 w-px shrink-0 bg-line dark:bg-line-dark';
 
   return (
@@ -218,15 +229,15 @@ export function TilEditor(props: Props) {
           <button type="button" onClick={() => applyHeading(3)} className={toolBtn} aria-label="제목 3" title="제목 3">H3</button>
           <button type="button" onClick={() => applyHeading(4)} className={toolBtn} aria-label="제목 4" title="제목 4">H4</button>
           <span className={toolDivider} aria-hidden />
-          <button type="button" onClick={() => wrapSelection('**', '**', '굵게')} className={`${toolBtn} font-black`} aria-label="굵게" title="굵게">B</button>
-          <button type="button" onClick={() => wrapSelection('_', '_', '기울임')} className={`${toolBtn} italic`} aria-label="기울임" title="기울임">I</button>
-          <button type="button" onClick={() => wrapSelection('~~', '~~', '취소선')} className={`${toolBtn} line-through`} aria-label="취소선" title="취소선">S</button>
+          <button type="button" onClick={() => wrapSelection('**', '**', '굵게')} className={toolBtn} aria-label="굵게" title="굵게"><Bold className="h-5 w-5" aria-hidden /></button>
+          <button type="button" onClick={() => wrapSelection('_', '_', '기울임')} className={toolBtn} aria-label="기울임" title="기울임"><Italic className="h-5 w-5" aria-hidden /></button>
+          <button type="button" onClick={() => wrapSelection('~~', '~~', '취소선')} className={toolBtn} aria-label="취소선" title="취소선"><Strikethrough className="h-5 w-5" aria-hidden /></button>
           <span className={toolDivider} aria-hidden />
-          <button type="button" onClick={applyQuote} className={toolBtn} aria-label="인용" title="인용">&ldquo;</button>
-          <button type="button" onClick={() => wrapSelection('`', '`', '코드')} className={`${toolBtn} font-mono`} aria-label="인라인 코드" title="인라인 코드">{'</>'}</button>
-          <button type="button" onClick={applyCodeBlock} className={`${toolBtn} font-mono`} aria-label="코드 블록" title="코드 블록">{'{ }'}</button>
+          <button type="button" onClick={applyQuote} className={toolBtn} aria-label="인용" title="인용"><Quote className="h-5 w-5" aria-hidden /></button>
+          <button type="button" onClick={() => wrapSelection('`', '`', '코드')} className={toolBtn} aria-label="인라인 코드" title="인라인 코드"><Code className="h-5 w-5" aria-hidden /></button>
+          <button type="button" onClick={applyCodeBlock} className={toolBtn} aria-label="코드 블록" title="코드 블록"><SquareCode className="h-5 w-5" aria-hidden /></button>
           <span className={toolDivider} aria-hidden />
-          <button type="button" onClick={() => wrapSelection('[', '](https://)', '링크')} className={toolBtn} aria-label="링크" title="링크">🔗</button>
+          <button type="button" onClick={() => wrapSelection('[', '](https://)', '링크')} className={toolBtn} aria-label="링크" title="링크"><LinkIcon className="h-5 w-5" aria-hidden /></button>
           <button
             type="button"
             onClick={() => bodyImageInputRef.current?.click()}
@@ -235,7 +246,7 @@ export function TilEditor(props: Props) {
             aria-label="이미지"
             title="이미지 삽입"
           >
-            {uploadingBodyImage ? '…' : '🖼'}
+            <ImagePlus className="h-5 w-5" aria-hidden />
           </button>
           <input
             ref={bodyImageInputRef}
