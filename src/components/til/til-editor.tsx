@@ -12,6 +12,7 @@ import {
   Quote,
   Code,
   SquareCode,
+  Table,
   Link as LinkIcon,
   ImagePlus,
 } from 'lucide-react';
@@ -133,6 +134,25 @@ export function TilEditor(props: Props) {
     });
   }
 
+  function applyTable() {
+    const ta = bodyRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const before = bodyMd.slice(0, start);
+    // 표는 블록이라 앞에 줄이 필요하면 개행을 넣는다(코드블록과 동일 처리).
+    const needLeadBreak = before !== '' && !before.endsWith('\n') ? '\n' : '';
+    const table = '| 제목 | 제목 |\n| --- | --- |\n| 내용 | 내용 |\n';
+    const next = before + needLeadBreak + table + bodyMd.slice(ta.selectionEnd);
+    setBodyMd(next);
+    // 첫 헤더 셀("제목")을 선택 상태로 둬서 바로 고쳐 쓰게 한다. "| " 다음이 시작.
+    const firstCell = start + needLeadBreak.length + 2;
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.selectionStart = firstCell;
+      ta.selectionEnd = firstCell + 2; // "제목"
+    });
+  }
+
   async function handleCoverImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -236,6 +256,7 @@ export function TilEditor(props: Props) {
           <button type="button" onClick={applyQuote} className={toolBtn} aria-label="인용" title="인용"><Quote className="h-5 w-5" aria-hidden /></button>
           <button type="button" onClick={() => wrapSelection('`', '`', '코드')} className={toolBtn} aria-label="인라인 코드" title="인라인 코드"><Code className="h-5 w-5" aria-hidden /></button>
           <button type="button" onClick={applyCodeBlock} className={toolBtn} aria-label="코드 블록" title="코드 블록"><SquareCode className="h-5 w-5" aria-hidden /></button>
+          <button type="button" onClick={applyTable} className={toolBtn} aria-label="표" title="표 삽입"><Table className="h-5 w-5" aria-hidden /></button>
           <span className={toolDivider} aria-hidden />
           <button type="button" onClick={() => wrapSelection('[', '](https://)', '링크')} className={toolBtn} aria-label="링크" title="링크"><LinkIcon className="h-5 w-5" aria-hidden /></button>
           <button
