@@ -19,7 +19,7 @@ export default async function TilEditPage({
   const allSeries = seriesRead.ok ? seriesRead.data : [];
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-6 lg:px-8">
+    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-12 sm:px-6 lg:px-8">
       <TilEditor mode="edit" post={read.data} allSeries={allSeries} />
     </main>
   );
