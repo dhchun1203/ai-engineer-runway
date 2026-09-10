@@ -1363,7 +1363,7 @@ code[data-theme*=" "] span {
   line-height: 1.6;
 }
 
-/* 인라인 코드 — 리터럴 백틱 글리프 제거 + 배경 칩 (D-R4K-5, D-R4K-4).
+/* 인라인 코드 — 리터럴 백틱 글리프 제거 + 투명 배경(모노 글꼴로만 구분) (D-R4K-5, D-R4K-4).
    `code`의 플러그인 기본 font-weight는 600이다
    (node_modules/@tailwindcss/typography/src/styles.js:1541-1543) — font-size만
    덮으면 굵기 이탈이 그대로 남으므로 반드시 함께 지정한다(06-RESEARCH.md
@@ -1382,12 +1382,12 @@ code[data-theme*=" "] span {
 .prose code:not(pre code) {
   font-size: 0.9375rem; /* 15px */
   font-weight: 400;
-  background-color: var(--color-surface);
+  background-color: transparent; /* 사용자 요청(2026-09-10): 흰 배경 칩 대신 투명 — 모노 글꼴로만 구분 */
   padding-inline: 0.25em;
   border-radius: 0.25rem;
 }
 .dark .prose code:not(pre code) {
-  background-color: var(--color-surface-dark);
+  background-color: transparent;
 }
 
 /* <details>/<summary> 정답 접기 UI 터치 타깃·다크모드 (D-61, RESEARCH Pitfall 3).
