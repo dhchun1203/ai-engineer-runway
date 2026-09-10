@@ -12,7 +12,7 @@
 // 커리큘럼 slug와 섞이지 않도록 "bc:" 접두사를 붙인 id로 넣는다(basecamp/actions.ts).
 
 /** 베이스캠프 종료일(이날까지 매주 STEP 공개). */
-export const BASECAMP_END_DATE = "2026-10-30";
+export const BASECAMP_END_DATE = "2026-10-26";
 
 /** 공식 선행 과제 페이지 베이스 URL. */
 const OFFICIAL_BASE = "https://entrance-test.oopy.io/";
