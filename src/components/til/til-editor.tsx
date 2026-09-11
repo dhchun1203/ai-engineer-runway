@@ -84,7 +84,8 @@ export function TilEditor(props: Props) {
   }
 
   // 선택한 줄(들)의 맨 앞을 transform으로 바꾼다 — 제목·인용에 사용.
-  function transformLines(transform: (line: string) => string) {
+  // collapse=true면 바꾼 블록을 선택하지 않고 끝에 커서만 둔다(제목: 파란 블록 없이 커서만 깜빡).
+  function transformLines(transform: (line: string) => string, collapse = false) {
     const ta = bodyRef.current;
     if (!ta) return;
     const start = ta.selectionStart;
@@ -98,8 +99,14 @@ export function TilEditor(props: Props) {
     setBodyMd(next);
     requestAnimationFrame(() => {
       ta.focus();
-      ta.selectionStart = lineStart;
-      ta.selectionEnd = lineStart + newBlock.length;
+      if (collapse) {
+        const pos = lineStart + newBlock.length;
+        ta.selectionStart = pos;
+        ta.selectionEnd = pos;
+      } else {
+        ta.selectionStart = lineStart;
+        ta.selectionEnd = lineStart + newBlock.length;
+      }
     });
   }
 
@@ -108,7 +115,7 @@ export function TilEditor(props: Props) {
     transformLines((ln) => {
       const cleaned = ln.replace(/^#{1,6}\s+/, '');
       return prefix + cleaned;
-    });
+    }, true);
   }
 
   function applyQuote() {
