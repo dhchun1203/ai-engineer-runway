@@ -29,7 +29,8 @@ type NavItem = {
 };
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { label: "오늘의 학습", href: "/" },
+  // "오늘의 학습(/)"은 네비에서 뺀다(2026-09-12) — 로고(brand-link)가 이미 홈("/")=
+  // 오늘의 학습으로 가므로 중복이다. 최상위는 베이스캠프·커리큘럼·채널톡 로드맵·TIL·더보기▾.
   // 베이스캠프 선행 과제 — 커리큘럼보다 우선(사용자 결정 2026-09-09). 앞쪽에 둔다.
   { label: "베이스캠프", href: "/basecamp" },
   { label: "커리큘럼", href: "/curriculum" },
