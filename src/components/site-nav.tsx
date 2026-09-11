@@ -259,7 +259,7 @@ export function SiteNav() {
           className="brand-link flex min-h-11 shrink-0 items-center gap-2 text-heading font-extrabold"
         >
           <span className="brand-mark" aria-hidden="true" />
-          AI Runway
+          AI Engineer Hub
         </Link>
         <div
           ref={desktopNavRef}
