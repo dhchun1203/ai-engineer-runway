@@ -5,6 +5,7 @@ import 'server-only';
 // 실패를 빈 메모로 오인해 화면에 보여주면 사용자는 메모가 사라졌다고 느낀다.
 
 import { supabaseAdmin } from './supabase/admin';
+import { getCurrentUserId, requireCurrentUserId } from './current-user';
 
 export type NoteRead =
   | { ok: true; body: string; til: string; needsReview: boolean }
@@ -19,9 +20,13 @@ const MAX_NOTE_LENGTH = 50_000;
 const MAX_TIL_LENGTH = 2_000;
 
 export async function readLessonNote(lessonSlug: string): Promise<NoteRead> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, body: '', til: '', needsReview: false };
+
   const { data, error } = await supabaseAdmin
     .from('lesson_note')
     .select('body, til, needs_review')
+    .eq('user_id', userId)
     .eq('lesson_id', lessonSlug)
     .maybeSingle();
 
@@ -46,9 +51,13 @@ export async function saveLessonNote(lessonSlug: string, body: string): Promise<
     );
   }
 
+  const userId = await requireCurrentUserId();
   const { error } = await supabaseAdmin
     .from('lesson_note')
-    .upsert({ lesson_id: lessonSlug, body, updated_at: new Date().toISOString() });
+    .upsert(
+      { user_id: userId, lesson_id: lessonSlug, body, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id,lesson_id' },
+    );
 
   if (error) {
     throw new Error(`note-store: 메모 저장 실패 (lesson_id=${lessonSlug}): ${error.message}`);
@@ -65,9 +74,13 @@ export async function saveLessonTil(lessonSlug: string, til: string): Promise<vo
     );
   }
 
+  const userId = await requireCurrentUserId();
   const { error } = await supabaseAdmin
     .from('lesson_note')
-    .upsert({ lesson_id: lessonSlug, til, updated_at: new Date().toISOString() });
+    .upsert(
+      { user_id: userId, lesson_id: lessonSlug, til, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id,lesson_id' },
+    );
 
   if (error) {
     throw new Error(`note-store: TIL 저장 실패 (lesson_id=${lessonSlug}): ${error.message}`);
@@ -78,9 +91,13 @@ export async function saveLessonTil(lessonSlug: string, til: string): Promise<vo
 // 않는다(WR-01). 불리언 한 값이라 길이 상한은 두지 않는다. "더 공부해야 함"을
 // 켜고 끄는 사용자 신호 하나를 저장할 뿐, 완료 상태와는 완전히 독립이다.
 export async function saveLessonNeedsReview(lessonSlug: string, needsReview: boolean): Promise<void> {
+  const userId = await requireCurrentUserId();
   const { error } = await supabaseAdmin
     .from('lesson_note')
-    .upsert({ lesson_id: lessonSlug, needs_review: needsReview, updated_at: new Date().toISOString() });
+    .upsert(
+      { user_id: userId, lesson_id: lessonSlug, needs_review: needsReview, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id,lesson_id' },
+    );
 
   if (error) {
     throw new Error(
@@ -95,9 +112,13 @@ export type NeedsReviewRead = { ok: true; ids: Set<string> } | { ok: false; erro
  * readCompletedLessonIds와 동형(Set 반환, 조회 실패와 "0건"을 타입 수준에서 구분).
  * 커리큘럼 목록의 줄 표시·개수 배지가 이 집합을 completedSlugs처럼 교집합해 쓴다. */
 export async function readNeedsReviewLessonIds(): Promise<NeedsReviewRead> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, ids: new Set() };
+
   const { data, error } = await supabaseAdmin
     .from('lesson_note')
     .select('lesson_id')
+    .eq('user_id', userId)
     .eq('needs_review', true);
 
   if (error) {
@@ -116,7 +137,13 @@ export type AllNotesRead = { ok: true; notes: Map<string, string> } | { ok: fals
  * 안 쓰고 닫은 경우 등, upsert가 빈 문자열 행을 만들 수 있다). 조회 실패
  * (error 존재)와 "노트 없음"은 여기서도 타입 수준에서 구분된다. */
 export async function readAllLessonNotes(): Promise<AllNotesRead> {
-  const { data, error } = await supabaseAdmin.from('lesson_note').select('lesson_id, body');
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, notes: new Map() };
+
+  const { data, error } = await supabaseAdmin
+    .from('lesson_note')
+    .select('lesson_id, body')
+    .eq('user_id', userId);
 
   if (error) {
     return { ok: false, error: error.message };

@@ -8,6 +8,7 @@ import 'server-only';
 // 마이그레이션 주석 참고 — 본문 개정으로 h2 순서가 바뀌어도 제목으로 되찾기 위한 폴백이다.
 
 import { supabaseAdmin } from './supabase/admin';
+import { getCurrentUserId, requireCurrentUserId } from './current-user';
 
 export type Bookmark = { index: number; title: string };
 
@@ -28,9 +29,13 @@ function isValidIndex(sectionIndex: number): boolean {
  * 버튼이 "현재 섹션이 북마크됐는지" 판정에 쓴다. 행이 없으면 빈 배열로 성공을
  * 반환한다(조회 실패와 타입 수준에서 구분). */
 export async function readLessonBookmarks(lessonSlug: string): Promise<BookmarksRead> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, bookmarks: [] };
+
   const { data, error } = await supabaseAdmin
     .from('lesson_bookmark')
     .select('section_index, section_title')
+    .eq('user_id', userId)
     .eq('lesson_id', lessonSlug)
     .order('section_index', { ascending: true });
 
@@ -59,11 +64,12 @@ export async function addBookmark(
   // 표시·폴백용 보조 데이터라, 길다는 이유로 북마크 지정 자체를 실패시키지 않는다).
   const title = sectionTitle.slice(0, MAX_SECTION_TITLE_LENGTH);
 
+  const userId = await requireCurrentUserId();
   const { error } = await supabaseAdmin
     .from('lesson_bookmark')
     .upsert(
-      { lesson_id: lessonSlug, section_index: sectionIndex, section_title: title },
-      { onConflict: 'lesson_id,section_index' },
+      { user_id: userId, lesson_id: lessonSlug, section_index: sectionIndex, section_title: title },
+      { onConflict: 'user_id,lesson_id,section_index' },
     );
 
   if (error) {
@@ -76,9 +82,11 @@ export async function removeBookmark(lessonSlug: string, sectionIndex: number): 
     throw new Error(`bookmark-store: section_index가 올바르지 않습니다 (lesson_id=${lessonSlug}, index=${sectionIndex}).`);
   }
 
+  const userId = await requireCurrentUserId();
   const { error } = await supabaseAdmin
     .from('lesson_bookmark')
     .delete()
+    .eq('user_id', userId)
     .eq('lesson_id', lessonSlug)
     .eq('section_index', sectionIndex);
 
@@ -100,9 +108,13 @@ export type AllBookmarksRead = { ok: true; rows: AllBookmarksRow[] } | { ok: fal
  * 동형). 커리큘럼 순서 정렬은 페이지가 Velite 매니페스트로 하므로 여기서는 원본
  * 행만 돌려준다. */
 export async function readAllBookmarks(): Promise<AllBookmarksRead> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, rows: [] };
+
   const { data, error } = await supabaseAdmin
     .from('lesson_bookmark')
-    .select('lesson_id, section_index, section_title, created_at');
+    .select('lesson_id, section_index, section_title, created_at')
+    .eq('user_id', userId);
 
   if (error) {
     return { ok: false, error: error.message };

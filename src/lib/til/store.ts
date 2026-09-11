@@ -1,6 +1,10 @@
 import 'server-only';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { getCurrentUserId, requireCurrentUserId } from '@/lib/current-user';
 import type { TilPost, TilTemplate, TilStatus, TilSeries } from './types';
+
+// TIL은 계정별 저장이다 — 모든 조회/쓰기를 현재 로그인 사용자의 user_id로 좁힌다.
+// 비로그인 조회는 빈 결과로 성공을 반환한다(로그인해야 자기 글이 보인다).
 
 export type TilRead<T> = { ok: true; data: T } | { ok: false; error: string };
 export type TilWrite<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -32,9 +36,13 @@ function rowToPost(row: Record<string, unknown>): TilPost {
 }
 
 export async function listPublishedPosts(): Promise<TilRead<TilPost[]>> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, data: [] };
+
   const { data, error } = await supabaseAdmin
     .from('til_post')
     .select(POST_COLUMNS)
+    .eq('user_id', userId)
     .eq('status', 'published')
     .order('published_at', { ascending: false });
   if (error) return { ok: false, error: error.message };
@@ -42,9 +50,13 @@ export async function listPublishedPosts(): Promise<TilRead<TilPost[]>> {
 }
 
 export async function getPublishedPostBySlug(slug: string): Promise<TilRead<TilPost | null>> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, data: null };
+
   const { data, error } = await supabaseAdmin
     .from('til_post')
     .select(POST_COLUMNS)
+    .eq('user_id', userId)
     .eq('slug', slug)
     .eq('status', 'published')
     .maybeSingle();
@@ -53,9 +65,13 @@ export async function getPublishedPostBySlug(slug: string): Promise<TilRead<TilP
 }
 
 export async function getPostBySlugAnyStatus(slug: string): Promise<TilRead<TilPost | null>> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, data: null };
+
   const { data, error } = await supabaseAdmin
     .from('til_post')
     .select(POST_COLUMNS)
+    .eq('user_id', userId)
     .eq('slug', slug)
     .maybeSingle();
   if (error) return { ok: false, error: error.message };
@@ -63,9 +79,13 @@ export async function getPostBySlugAnyStatus(slug: string): Promise<TilRead<TilP
 }
 
 export async function listDraftPosts(): Promise<TilRead<TilPost[]>> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, data: [] };
+
   const { data, error } = await supabaseAdmin
     .from('til_post')
     .select(POST_COLUMNS)
+    .eq('user_id', userId)
     .eq('status', 'draft')
     .order('updated_at', { ascending: false });
   if (error) return { ok: false, error: error.message };
@@ -73,9 +93,13 @@ export async function listDraftPosts(): Promise<TilRead<TilPost[]>> {
 }
 
 export async function listPublishedByTag(tag: string): Promise<TilRead<TilPost[]>> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, data: [] };
+
   const { data, error } = await supabaseAdmin
     .from('til_post')
     .select(POST_COLUMNS)
+    .eq('user_id', userId)
     .eq('status', 'published')
     .contains('tags', [tag])
     .order('published_at', { ascending: false });
@@ -103,7 +127,23 @@ export type TilPostRow = {
 };
 
 export async function upsertPost(row: TilPostRow): Promise<TilWrite<{ slug: string }>> {
-  const payload = { ...row, updated_at: new Date().toISOString() };
+  const userId = await requireCurrentUserId();
+
+  // 수정(id 존재)일 때는 그 글이 정말 이 사용자 것인지 먼저 확인한다 — id로 남의 글을
+  // 갈아엎거나 소유권을 뺏는 것을 막는다(방어적 검사).
+  if (row.id) {
+    const { data: owned, error: ownErr } = await supabaseAdmin
+      .from('til_post')
+      .select('user_id')
+      .eq('id', row.id)
+      .maybeSingle();
+    if (ownErr) return { ok: false, error: ownErr.message };
+    if (owned && (owned.user_id as string) !== userId) {
+      return { ok: false, error: '이 글을 수정할 권한이 없습니다.' };
+    }
+  }
+
+  const payload = { ...row, user_id: userId, updated_at: new Date().toISOString() };
   const { data, error } = await supabaseAdmin
     .from('til_post')
     .upsert(payload, { onConflict: 'id' })
@@ -114,13 +154,22 @@ export async function upsertPost(row: TilPostRow): Promise<TilWrite<{ slug: stri
 }
 
 export async function deletePost(id: string): Promise<TilWrite<void>> {
-  const { error } = await supabaseAdmin.from('til_post').delete().eq('id', id);
+  const userId = await requireCurrentUserId();
+  const { error } = await supabaseAdmin
+    .from('til_post')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', userId);
   if (error) return { ok: false, error: error.message };
   return { ok: true, data: undefined };
 }
 
 export async function slugExists(slug: string, exceptId?: string): Promise<boolean> {
-  let q = supabaseAdmin.from('til_post').select('id').eq('slug', slug);
+  // slug 유일성은 사용자별이다 — 다른 사용자가 같은 slug를 써도 충돌이 아니다.
+  const userId = await getCurrentUserId();
+  if (!userId) return false;
+
+  let q = supabaseAdmin.from('til_post').select('id').eq('user_id', userId).eq('slug', slug);
   if (exceptId) q = q.neq('id', exceptId);
   const { data } = await q.maybeSingle();
   return Boolean(data);
@@ -129,9 +178,13 @@ export async function slugExists(slug: string, exceptId?: string): Promise<boole
 // 발행글의 published_at(timestamptz)을 서울 날짜(YYYY-MM-DD)로 변환한 목록.
 // 잔디/streak 캘린더(TilStreak)가 소비한다. 중복(같은 날 여러 편) 허용.
 export async function listPublishedDates(): Promise<TilRead<string[]>> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, data: [] };
+
   const { data, error } = await supabaseAdmin
     .from('til_post')
     .select('published_at')
+    .eq('user_id', userId)
     .eq('status', 'published')
     .not('published_at', 'is', null);
   if (error) return { ok: false, error: error.message };
@@ -154,18 +207,26 @@ function rowToSeries(row: Record<string, unknown>): TilSeries {
 }
 
 export async function listSeries(): Promise<TilRead<TilSeries[]>> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, data: [] };
+
   const { data, error } = await supabaseAdmin
     .from('til_series')
     .select('id, slug, title, description, created_at')
+    .eq('user_id', userId)
     .order('created_at', { ascending: false });
   if (error) return { ok: false, error: error.message };
   return { ok: true, data: (data ?? []).map(rowToSeries) };
 }
 
 export async function getSeriesBySlug(slug: string): Promise<TilRead<TilSeries | null>> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, data: null };
+
   const { data, error } = await supabaseAdmin
     .from('til_series')
     .select('id, slug, title, description, created_at')
+    .eq('user_id', userId)
     .eq('slug', slug)
     .maybeSingle();
   if (error) return { ok: false, error: error.message };
@@ -173,9 +234,13 @@ export async function getSeriesBySlug(slug: string): Promise<TilRead<TilSeries |
 }
 
 export async function listPublishedBySeries(seriesId: string): Promise<TilRead<TilPost[]>> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, data: [] };
+
   const { data, error } = await supabaseAdmin
     .from('til_post')
     .select(POST_COLUMNS)
+    .eq('user_id', userId)
     .eq('status', 'published')
     .eq('series_id', seriesId)
     .order('published_at', { ascending: true });
@@ -184,9 +249,10 @@ export async function listPublishedBySeries(seriesId: string): Promise<TilRead<T
 }
 
 export async function createSeries(title: string, slug: string): Promise<TilWrite<{ id: string }>> {
+  const userId = await requireCurrentUserId();
   const { data, error } = await supabaseAdmin
     .from('til_series')
-    .insert({ title, slug })
+    .insert({ user_id: userId, title, slug })
     .select('id')
     .single();
   if (error) return { ok: false, error: error.message };

@@ -8,6 +8,7 @@ import 'server-only';
 // 옮긴 것이다. 단일 소유자 데이터라 user_id 없이 step_id만으로 유일하다.
 
 import { supabaseAdmin } from './supabase/admin';
+import { getCurrentUserId, requireCurrentUserId } from './current-user';
 
 export type BookBookmark = { chapter: string | null; within: number; y: number };
 
@@ -34,9 +35,13 @@ function clampCoord(n: number): number {
 export async function readBookBookmark(stepId: number): Promise<BookBookmarkRead> {
   if (!isValidStep(stepId)) return { ok: true, bookmark: null };
 
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, bookmark: null };
+
   const { data, error } = await supabaseAdmin
     .from('book_bookmark')
     .select('chapter_slug, within_offset, scroll_y')
+    .eq('user_id', userId)
     .eq('step_id', stepId)
     .maybeSingle();
 
@@ -65,15 +70,17 @@ export async function setBookBookmark(stepId: number, mark: BookBookmark): Promi
 
   const chapter = mark.chapter ? mark.chapter.slice(0, MAX_SLUG_LENGTH) : null;
 
+  const userId = await requireCurrentUserId();
   const { error } = await supabaseAdmin.from('book_bookmark').upsert(
     {
+      user_id: userId,
       step_id: stepId,
       chapter_slug: chapter,
       within_offset: clampCoord(mark.within),
       scroll_y: clampCoord(mark.y),
       updated_at: new Date().toISOString(),
     },
-    { onConflict: 'step_id' },
+    { onConflict: 'user_id,step_id' },
   );
 
   if (error) {

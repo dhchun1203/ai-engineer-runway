@@ -6,6 +6,7 @@ import 'server-only';
 // 같은 목록을 봐야 한다).
 
 import { supabaseAdmin } from './supabase/admin';
+import { getCurrentUserId, requireCurrentUserId } from './current-user';
 
 export type InboxItem = {
   id: string;
@@ -24,9 +25,13 @@ const MAX_INBOX_LENGTH = 5_000;
 /** 미완료(done=false) 먼저, 그 안에서는 최신순. 질문함을 열었을 때 아직 안 본
  * 질문이 위로 오고, 완료한 질문은 아래로 가라앉아 흐려 보인다(inbox-panel). */
 export async function readInboxItems(): Promise<InboxItemsRead> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, items: [] };
+
   const { data, error } = await supabaseAdmin
     .from('inbox_item')
     .select('id, body, lesson_id, created_at, done')
+    .eq('user_id', userId)
     .order('done', { ascending: true })
     .order('created_at', { ascending: false });
 
@@ -54,9 +59,10 @@ export async function addInboxItem(body: string, lessonId?: string | null): Prom
     throw new Error(`inbox-store: 질문이 너무 깁니다 — 최대 ${MAX_INBOX_LENGTH}자까지 저장할 수 있습니다.`);
   }
 
+  const userId = await requireCurrentUserId();
   const { error } = await supabaseAdmin
     .from('inbox_item')
-    .insert({ body: trimmed, lesson_id: lessonId ?? null });
+    .insert({ user_id: userId, body: trimmed, lesson_id: lessonId ?? null });
 
   if (error) {
     throw new Error(`inbox-store: 질문 저장 실패: ${error.message}`);
@@ -64,7 +70,13 @@ export async function addInboxItem(body: string, lessonId?: string | null): Prom
 }
 
 export async function setInboxItemDone(id: string, done: boolean): Promise<void> {
-  const { error } = await supabaseAdmin.from('inbox_item').update({ done }).eq('id', id);
+  // user_id로도 좁혀 남의 항목을 뒤집지 못하게 한다(id는 uuid라 추측은 어렵지만 방어).
+  const userId = await requireCurrentUserId();
+  const { error } = await supabaseAdmin
+    .from('inbox_item')
+    .update({ done })
+    .eq('id', id)
+    .eq('user_id', userId);
 
   if (error) {
     throw new Error(`inbox-store: 완료 상태 저장 실패 (id=${id}): ${error.message}`);

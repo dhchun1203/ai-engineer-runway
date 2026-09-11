@@ -5,6 +5,7 @@ import 'server-only';
 // (D-31의 전제 — 조회 실패를 진행률 0%로 오인 표시하지 않는다).
 
 import { supabaseAdmin } from './supabase/admin';
+import { getCurrentUserId, requireCurrentUserId } from './current-user';
 
 export type ProgressRead = { ok: true; completedIds: Set<string> } | { ok: false; error: string };
 
@@ -19,7 +20,14 @@ export type ProgressRowsRead =
  * readCompletedLessonIds를 대체한다.
  */
 export async function readProgressRows(): Promise<ProgressRowsRead> {
-  const { data, error } = await supabaseAdmin.from('progress').select('lesson_id, completed_at');
+  // 비로그인이면 개인 진도가 없다 — 빈 목록으로 성공을 반환한다(콘텐츠는 공개, 진도만 개인).
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, rows: [] };
+
+  const { data, error } = await supabaseAdmin
+    .from('progress')
+    .select('lesson_id, completed_at')
+    .eq('user_id', userId);
 
   if (error) {
     return { ok: false, error: error.message };
@@ -33,7 +41,13 @@ export async function readProgressRows(): Promise<ProgressRowsRead> {
 }
 
 export async function readCompletedLessonIds(): Promise<ProgressRead> {
-  const { data, error } = await supabaseAdmin.from('progress').select('lesson_id');
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: true, completedIds: new Set() };
+
+  const { data, error } = await supabaseAdmin
+    .from('progress')
+    .select('lesson_id')
+    .eq('user_id', userId);
 
   if (error) {
     return { ok: false, error: error.message };
@@ -44,17 +58,26 @@ export async function readCompletedLessonIds(): Promise<ProgressRead> {
 }
 
 export async function setLessonCompletion(lessonSlug: string, completed: boolean): Promise<void> {
+  const userId = await requireCurrentUserId();
+
   if (completed) {
     const { error } = await supabaseAdmin
       .from('progress')
-      .upsert({ lesson_id: lessonSlug, completed_at: new Date().toISOString() });
+      .upsert(
+        { user_id: userId, lesson_id: lessonSlug, completed_at: new Date().toISOString() },
+        { onConflict: 'user_id,lesson_id' },
+      );
     if (error) {
       throw new Error(`progress-store: 완료 저장 실패 (lesson_id=${lessonSlug}): ${error.message}`);
     }
     return;
   }
 
-  const { error } = await supabaseAdmin.from('progress').delete().eq('lesson_id', lessonSlug);
+  const { error } = await supabaseAdmin
+    .from('progress')
+    .delete()
+    .eq('user_id', userId)
+    .eq('lesson_id', lessonSlug);
   if (error) {
     throw new Error(`progress-store: 완료 취소 실패 (lesson_id=${lessonSlug}): ${error.message}`);
   }
