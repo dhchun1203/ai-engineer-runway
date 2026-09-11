@@ -56,7 +56,7 @@ export default async function LoginPage() {
   const loggedInEmail = await currentUserEmail();
 
   return (
-    <main className="mx-auto grid w-full max-w-5xl flex-1 grid-cols-1 items-start gap-10 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:py-16">
+    <main className="mx-auto grid w-full max-w-5xl flex-1 grid-cols-1 items-start gap-10 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-14 lg:py-16">
       {/* 소개 — 사이트가 무엇이고 무엇을 할 수 있는지. */}
       <section className="flex flex-col gap-6">
         <div className="flex flex-col gap-3">
@@ -88,8 +88,9 @@ export default async function LoginPage() {
         </ul>
       </section>
 
-      {/* 로그인 — 진입점. 이미 로그인돼 있으면 홈으로 안내한다. */}
-      <section className="panel-hero flex flex-col gap-5 p-6 lg:sticky lg:top-24">
+      {/* 로그인 — 진입점. 이미 로그인돼 있으면 홈으로 안내한다. 넓은 화면에서는 왼쪽
+          소개 열 높이에 맞춰 세로 중앙(그리드 items-center)에 놓인다. */}
+      <section className="panel-hero flex flex-col gap-5 p-6">
         {loggedInEmail ? (
           <div className="flex flex-col gap-4">
             <h2 className="text-heading font-extrabold">이미 로그인됨</h2>
