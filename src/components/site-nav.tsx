@@ -230,10 +230,14 @@ export function SiteNav() {
 
   // 4개 대메뉴 + 상태에 따른 계정 항목("로그인"/"프로필"). 데스크톱·모바일 두 렌더가
   // 같은 목록을 쓰게 한 벌만 만든다.
+  // 슬랙 피드는 소유자 전용이라 소유자일 때만, 그리고 최상위가 아니라 "더보기" 하위 메뉴에
+  // 넣는다(사용자 요청 2026-09-12). "더보기" 항목의 children 끝에 덧붙인다.
   const navItems: readonly NavItem[] = [
-    ...NAV_ITEMS,
-    // 슬랙 피드는 소유자 전용이라 소유자일 때만 내비에 노출한다.
-    ...(isOwner ? [{ label: "슬랙", href: "/slack" } as NavItem] : []),
+    ...NAV_ITEMS.map((item) =>
+      item.label === "더보기" && isOwner
+        ? { ...item, children: [...(item.children ?? []), { label: "슬랙", href: "/slack" }] }
+        : item,
+    ),
     { label: loggedIn ? "프로필" : "로그인", href: ACCOUNT_HREF },
   ];
 
