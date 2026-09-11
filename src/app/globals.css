@@ -807,6 +807,35 @@ textarea,
   }
 }
 
+/* 부드러운 접이식 콘텐츠 — 베이스캠프 "지난 주차" 행 등 상시 마운트된 요소의
+   펼침/접힘. 내비 패널과 같은 기법(grid-template-rows 0fr↔1fr)이되, 마운트/언마운트가
+   아니라 항상 떠 있는 요소를 토글하므로 keyframe·onAnimationEnd 없이 단순 transition으로
+   둔다. data-open으로 상태를 가르고, .collapsible-inner를 overflow:hidden으로 잘라
+   접힘(0fr) 구간에서 콘텐츠가 새지 않게 한다(min-height:0 필수). max-height 하드코딩은
+   잘림·이징 튐, scaleY는 텍스트 찌그러짐 — 둘 다 기각(nav-panel-reveal 주석과 같은 이유).
+   Tailwind 임의값 대괄호(transition-[...]) 금지 규칙(check-design-tokens) 때문에 CSS
+   클래스로 둔다 — .nav-panel-reveal이 세운 전례와 같다. */
+.collapsible {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms ease-out;
+}
+
+.collapsible[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.collapsible-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapsible {
+    transition: none;
+  }
+}
+
 /* Section Tape 셀 focus-visible (D-R4K-1) — 이 코드베이스에 focus-visible
    전례가 없어 이 Phase가 처음 정의하는 규칙이다(globals.css 전역 grep 0건).
    accent를 쓰는 이유는 테이프 색으로 accent를 쓰는 것이 아니라 "활성/포커스

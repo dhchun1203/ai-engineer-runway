@@ -61,17 +61,22 @@ export function BasecampPastStep({
         </span>
       </button>
 
-      {open ? (
-        <div className="border-t border-line px-4 pb-5 pt-4 dark:border-line-dark">
-          <BasecampStepChecklist
-            step={step}
-            initialDoneIds={initialDoneIds}
-            unlocked={unlocked}
-            showHeader={false}
-            onProgress={(d) => setDone(d)}
-          />
+      {/* 부드러운 펼침/접힘 — 항상 마운트해 두고 grid-template-rows 0fr↔1fr로 트랜지션한다
+          (globals.css .collapsible). 접힘 상태에서는 inert로 키보드 포커스·상호작용에서
+          빼고, overflow:hidden(.collapsible-inner)으로 콘텐츠를 잘라 새지 않게 한다. */}
+      <div className="collapsible" data-open={open ? 'true' : 'false'}>
+        <div className="collapsible-inner" inert={!open}>
+          <div className="border-t border-line px-4 pb-5 pt-4 dark:border-line-dark">
+            <BasecampStepChecklist
+              step={step}
+              initialDoneIds={initialDoneIds}
+              unlocked={unlocked}
+              showHeader={false}
+              onProgress={(d) => setDone(d)}
+            />
+          </div>
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }
