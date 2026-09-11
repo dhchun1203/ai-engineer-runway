@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ProgressSummary } from "@/components/progress-summary";
 import { ProgressReadError } from "@/components/progress-error";
 import { TodayLessonCard, type TodayCardState, type TomorrowInfo } from "@/components/today-lesson-card";
@@ -158,28 +159,57 @@ export default async function Home() {
           AI Engineer 교육과정 사전학습
         </p>
       </header>
-      <TodayLessonCard
-        todayLessons={todayLessons}
-        state={state}
-        completed={completedToday}
-        completedIds={completedIds}
-        tomorrow={tomorrow}
-      />
-      {/* 이어서 읽기(quick 260901-v4u) — 마지막으로 연 레슨이 오늘 배정과
-          다를 때만 뜬다. todayLessons가 이미 계산한 slug 목록이 중복 제거의
-          유일한 입력이다(별도 재계산 금지). 클라이언트 컴포넌트라 홈의 동적
-          렌더 계약(/ force-dynamic)에 영향 없음. */}
-      <ContinueReadingCard todaySlugs={todayLessons.map((lesson) => lesson.slug)} />
-      {/* 오늘의 복습 — 새 레슨 카드 아래, 페이스 판정 위. 복습은 권유까지만
-          하고 진행을 잠그지 않는다(round2-h·round6 설계 원칙). */}
-      {progressRead?.ok ? <TodayReviewCard dueRows={dueRows} nextDue={nextDue} /> : null}
-      {!completedIds && progressRead && !progressRead.ok ? <ProgressReadError /> : null}
-      {completedIds ? (
-        <ProgressSummary
-          counts={overallProgress(completedIds)}
-          nextLessonSlug={nextIncompleteLesson(completedIds)?.slug ?? null}
-        />
-      ) : null}
+      {/* 다중 사용자 전환(2026-09-12): "오늘의 학습"은 개인 대시보드(진도·이어서
+          읽기·복습)라 로그인해야 뜬다. 로그아웃 상태에서는 대신 로그인 유도 카드를
+          보여준다 — 레슨 콘텐츠 자체는 커리큘럼 나브로 여전히 공개(D-18). 이렇게
+          하면 브라우저 localStorage에만 기대던 "이어서 읽기"도 로그아웃 상태에서
+          함께 사라져 계정 모델과 어긋나지 않는다. */}
+      {unlocked ? (
+        <>
+          <TodayLessonCard
+            todayLessons={todayLessons}
+            state={state}
+            completed={completedToday}
+            completedIds={completedIds}
+            tomorrow={tomorrow}
+          />
+          {/* 이어서 읽기(quick 260901-v4u) — 마지막으로 연 레슨이 오늘 배정과
+              다를 때만 뜬다. todayLessons가 이미 계산한 slug 목록이 중복 제거의
+              유일한 입력이다(별도 재계산 금지). 클라이언트 컴포넌트라 홈의 동적
+              렌더 계약(/ force-dynamic)에 영향 없음. */}
+          <ContinueReadingCard todaySlugs={todayLessons.map((lesson) => lesson.slug)} />
+          {/* 오늘의 복습 — 새 레슨 카드 아래, 페이스 판정 위. 복습은 권유까지만
+              하고 진행을 잠그지 않는다(round2-h·round6 설계 원칙). */}
+          {progressRead?.ok ? <TodayReviewCard dueRows={dueRows} nextDue={nextDue} /> : null}
+          {!completedIds && progressRead && !progressRead.ok ? <ProgressReadError /> : null}
+          {completedIds ? (
+            <ProgressSummary
+              counts={overallProgress(completedIds)}
+              nextLessonSlug={nextIncompleteLesson(completedIds)?.slug ?? null}
+            />
+          ) : null}
+        </>
+      ) : (
+        <section className="panel flex flex-col items-start gap-4 p-6">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-heading font-extrabold break-keep">
+              로그인하고 오늘의 학습 이어가기
+            </h2>
+            <p className="max-w-xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+              진도, 이어서 읽기, 복습은 로그인한 계정에 저장됩니다. 로그인하면 어느
+              기기에서든 그대로 이어집니다.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href="/login" className="btn-action tap-feedback min-h-11 text-body">
+              로그인
+            </Link>
+            <Link href="/signup" className="btn tap-feedback min-h-11 text-body">
+              회원가입
+            </Link>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
