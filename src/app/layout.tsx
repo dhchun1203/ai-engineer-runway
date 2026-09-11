@@ -6,7 +6,12 @@ import { ScrollToTop } from "@/components/scroll-to-top";
 import "./globals.css";
 
 // D-15: 비밀이 아닌 값 — 환경변수가 없어도 빌드가 성공해야 한다.
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ai-engineer-hub.vercel.app";
+// 짧은 ai-engineer-hub.vercel.app은 타 사용자가 선점 → 우리 프로덕션 도메인은 팀 스코프
+// 별칭(ai-engineer-hub-daehwanchuns-projects.vercel.app)이다. 더 짧은 도메인을 원하면
+// 사용 가능한 이름으로 재명명하고 이 폴백을 갱신하거나 NEXT_PUBLIC_SITE_URL을 설정한다.
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  "https://ai-engineer-hub-daehwanchuns-projects.vercel.app";
 const SITE_NAME = "AI Engineer Hub";
 const SITE_DESCRIPTION = "AI Engineer 교육과정 사전학습 사이트 — 커리큘럼을 읽고, 완료를 체크하고, 진행률과 일정을 확인합니다.";
 
