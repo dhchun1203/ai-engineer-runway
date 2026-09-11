@@ -37,25 +37,22 @@ const NAV_ITEMS: readonly NavItem[] = [
   // 별도 커리큘럼. 단독 링크로 두어 한 번에 닿게 한다.
   { label: "채널톡 로드맵", href: "/roadmap" },
   { label: "TIL", href: "/til" },
+  // 네비 정리(2026-09-12): 최상위가 많아 두 줄로 접히던 것을, "학습 도구"와 "일정·정보"
+  // 두 드롭다운을 "더보기" 하나로 합쳐 최상위 개수를 줄인다(오늘의 학습·베이스캠프·
+  // 커리큘럼·채널톡 로드맵·TIL·더보기▾). 채널톡 로드맵·TIL은 사용자 우선순위라 최상위 유지.
   {
-    label: "학습 도구",
+    label: "더보기",
     href: null,
     children: [
       // 번외 "AI 뜯어보기"(/concepts) — 정규 커리큘럼과 별개의 개념 이해 편.
-      // 학습 도구 소메뉴 맨 앞에 둔다. isActiveHref가 startsWith라 /concepts/[slug]
-      // 리더에서도 이 항목(과 상위 "학습 도구")이 활성으로 표시된다.
+      // isActiveHref가 startsWith라 /concepts/[slug] 리더에서도 이 항목(과 상위
+      // "더보기")이 활성으로 표시된다.
       { label: "AI 뜯어보기", href: "/concepts" },
       { label: "복습", href: "/review" },
       { label: "용어집", href: "/glossary" },
       { label: "노트", href: "/notes" },
       { label: "북마크", href: "/bookmarks" },
       { label: "질문함", href: "/inbox" },
-    ],
-  },
-  {
-    label: "일정·정보",
-    href: null,
-    children: [
       { label: "PDF 내보내기", href: "/print" },
       { label: "소개", href: "/about" },
     ],
@@ -263,7 +260,7 @@ export function SiteNav() {
         </Link>
         <div
           ref={desktopNavRef}
-          className="hidden flex-1 flex-wrap items-center justify-center gap-x-4 gap-y-1 sm:flex"
+          className="hidden flex-1 flex-wrap items-center justify-center gap-x-4 gap-y-1 lg:flex"
         >
           {navItems.map((item, index) => {
             // 드롭다운 부모 — 클릭 토글(hover 아님, 아이패드 터치 대응).
@@ -393,18 +390,20 @@ export function SiteNav() {
             );
           })}
         </div>
-        {/* 640px 미만에서 항목 컨테이너가 사라지면 nav의 justify-between이 로고·햄버거·토글을
-            3등분으로 흩어 놓는다 — 래퍼로 묶어 로고 왼쪽 / 컨트롤 오른쪽을 유지한다.
-            640px 이상에서는 sm:contents로 래퍼가 박스 트리에서 사라져 nav의 직계 자식 구성이
-            변경 전(로고, 항목 컨테이너, 토글 버튼)과 동일해진다(08-05 schedule-table.tsx 패턴). */}
-        <div className="flex items-center gap-1 sm:contents">
+        {/* 1024px 미만(아이패드 세로·폰)에서 항목 컨테이너가 사라지면 nav의 justify-between이
+            로고·햄버거·토글을 3등분으로 흩어 놓는다 — 래퍼로 묶어 로고 왼쪽 / 컨트롤 오른쪽을
+            유지한다. 1024px 이상에서는 lg:contents로 래퍼가 박스 트리에서 사라져 nav의 직계
+            자식 구성이 (로고, 항목 컨테이너, 토글 버튼)과 동일해진다(08-05 패턴). 네비 정리
+            (2026-09-12)로 데스크톱 행/햄버거 분기를 sm→lg로 올려, 아이패드 세로(768)에서
+            최상위 항목이 두 줄로 접히지 않고 깔끔한 햄버거를 쓴다. */}
+        <div className="flex items-center gap-1 lg:contents">
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-controls="site-nav-panel"
             aria-label={open ? "메뉴 닫기" : "메뉴 열기"}
-            className="tap-feedback flex min-h-11 min-w-11 shrink-0 items-center justify-center text-badge-neutral-text hover:bg-badge-neutral-bg dark:text-badge-neutral-text-dark dark:hover:bg-badge-neutral-bg-dark sm:hidden"
+            className="tap-feedback flex min-h-11 min-w-11 shrink-0 items-center justify-center text-badge-neutral-text hover:bg-badge-neutral-bg dark:text-badge-neutral-text-dark dark:hover:bg-badge-neutral-bg-dark lg:hidden"
           >
             {open ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
           </button>
@@ -429,7 +428,7 @@ export function SiteNav() {
           // 그대로고(--site-header-height 불변) 패널이 본문 위로 덮인다. 흐름 밖이라
           // 배경을 직접 칠하고(지면색) 아래는 굵은 잉크 선으로 닫는다. 위 경계는
           // 헤더의 border-bottom이 맡으므로 .hairline은 뺀다.
-          className="nav-panel-reveal absolute inset-x-0 top-full z-30 border-b-2 border-foreground bg-background dark:border-foreground-dark dark:bg-background-dark sm:hidden"
+          className="nav-panel-reveal absolute inset-x-0 top-full z-30 border-b-2 border-foreground bg-background dark:border-foreground-dark dark:bg-background-dark lg:hidden"
         >
           {/* grid 자식을 overflow:hidden으로 잘라 0fr→1fr 펼침 동안 콘텐츠가 새지
               않게 하는 클립 래퍼(globals.css .nav-panel-clip). 이 한 겹 외에 로직
