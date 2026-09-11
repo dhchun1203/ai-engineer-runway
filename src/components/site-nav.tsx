@@ -233,6 +233,13 @@ export function SiteNav() {
     { label: loggedIn ? "프로필" : "로그인", href: ACCOUNT_HREF },
   ];
 
+  // 로그인/회원가입 화면에서는 상단 내비를 숨긴다(전체 로그인 게이트의 유일한 공개
+  // 진입점이자 소개 랜딩 — 로그아웃 상태라 내비 링크는 어차피 다시 /login으로 튕긴다).
+  // 모든 훅 호출과 렌더 중 파생 setState 뒤, return 직전에 둬 Rules of Hooks를 지킨다.
+  if (pathname === "/login" || pathname === "/signup") {
+    return null;
+  }
+
   return (
     // 크림 지면과 같은 색 + 굵은 잉크 밑줄 하나(.site-header) — 얇은 회색 경계선은
     // 이 디자인의 문법이 아니다. sticky로 두어 긴 레슨에서도 내비가 따라온다.
