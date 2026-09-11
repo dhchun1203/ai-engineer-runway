@@ -30,9 +30,17 @@ export default async function TilListPage() {
           </p>
         </div>
         {unlocked ? (
-          <Link href="/til/new" className="btn-action tap-feedback min-h-11 text-body">
-            새 글 쓰기
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/til/drafts"
+              className="chip tap-feedback inline-flex min-h-11 items-center text-label font-semibold"
+            >
+              초고함
+            </Link>
+            <Link href="/til/new" className="btn-action tap-feedback min-h-11 text-body">
+              새 글 쓰기
+            </Link>
+          </div>
         ) : null}
       </header>
 
