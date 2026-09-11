@@ -99,6 +99,35 @@ export const basecampSteps: readonly BasecampStep[] = [
       },
     ],
   },
+  {
+    no: 2,
+    weekLabel: "AI 리터러시",
+    title: "AI Literacy & 프롬프트 엔지니어링",
+    summary:
+      "AI를 잘 쓰는 관점 5가지와, 원하는 결과를 얻어내는 프롬프트 작성법을 익히고 나만의 프롬프트를 만들어 제출합니다.",
+    released: true,
+    // 공식 페이지 URL은 ID 기반 형태를 쓴다(제목 슬러그의 교육기관명이 소스에 남지 않도록).
+    officialUrl: "https://www.notion.so/3d82dc3ef5148019beffc82d3abba952",
+    items: [
+      {
+        id: "ail-basics",
+        title: "AI 리터러시 & 프롬프트 기초",
+        kind: "lesson",
+        officialUrl: "https://www.notion.so/3d82dc3ef5148019beffc82d3abba952",
+        summary:
+          "AI를 쓰는 것과 잘 쓰는 것의 차이, 규칙 기반과 학습 기반, 분류와 생성 AI, 그리고 좋은 프롬프트의 6가지 구성 요소를 배웁니다.",
+        ourLessonHref: "/basecamp/ai-literacy-prompt",
+      },
+      {
+        id: "ail-project",
+        title: "나만의 프롬프트 만들기 (ZEP 활동지)",
+        kind: "assignment",
+        officialUrl: "https://www.notion.so/3d82dc3ef5148019beffc82d3abba952",
+        summary:
+          "배운 6요소로 단순 프롬프트와 구조화 프롬프트를 각각 작성해 결과를 비교하고, ZEP 활동지에 나만의 프롬프트를 제출합니다.",
+      },
+    ],
+  },
 ];
 
 /** action 검증용 — 알려진 항목 id 집합(임의 id로 진도 행이 생기는 것을 막는다). */

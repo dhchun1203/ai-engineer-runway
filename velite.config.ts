@@ -302,6 +302,27 @@ export default defineConfig({
           readingMinutes: estimateBookMinutes(meta.content ?? ""),
         })),
     },
+    // 베이스캠프(개강 전 공식 선행 과제) 전용 학습 레슨(basecampLessons). concepts·
+    // roadmapLessons와 같은 자유 형식 MDX이고, 정규 레슨의 6단 게이트·용어표·자가진단을
+    // 타지 않는다. 목적은 공식 과제 주제를 우리 말(eli5)로 풀어 학습시키는 것 — 진행률·
+    // 일정·복습은 lessons 컬렉션만 소비하므로 이 컬렉션도 어디에도 집계되지 않는다(격리).
+    basecampLessons: {
+      name: "BasecampLesson",
+      pattern: "src/content/basecamp-lessons/**/*.mdx",
+      schema: s
+        .object({
+          title: s.string(),
+          order: s.number(), // 베이스캠프 레슨 내 순서
+          summary: s.string(), // 헤더·연결용 한 줄 훅
+          slug: s.slug("basecampLessons"),
+          code: s.mdx(),
+        })
+        .transform((data, { meta }) => ({
+          ...data,
+          permalink: `/basecamp/${data.slug}`,
+          readingMinutes: estimateBookMinutes(meta.content ?? ""),
+        })),
+    },
     // /about (Making-of) 소개 페이지 소스 — docs/making-of.md 단일 파일만 대상으로 한다.
     // 글로브를 넓혀 GSD 계획 산출물 디렉터리를 빨아들이지 않는다 (PLAT-03 threat T-01-14).
     pages: {
