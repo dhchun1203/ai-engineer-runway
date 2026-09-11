@@ -4,7 +4,7 @@ AI Engineer 교육과정 개강(2026-09-30) 전 사전학습을 위한 웹 사�
 
 ## 배포 주소
 
-https://ai-engineer-hub-daehwanchuns-projects.vercel.app
+https://ai-engineer-hub-kr.vercel.app
 
 저장소 기본 브랜치인 `master`에 푸시할 때마다 위 프로덕션 URL이 자동으로 갱신됩니다 (Vercel Production Branch = `master`).
 
