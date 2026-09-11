@@ -123,6 +123,8 @@ export function SiteNav() {
   // 로그인 상태 — 계정 항목 라벨("로그인"/"프로필")을 고르는 데만 쓴다. null은 "아직 모름"
   // (그 동안 "로그인"으로 보수적으로 표시). /api/auth를 마운트·경로 변경 시 조회한다.
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+  // 소유자 전용 항목("슬랙" 피드)을 내비에 보일지. /api/auth가 함께 내려준다.
+  const [isOwner, setIsOwner] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   // 데스크톱 대메뉴 행 컨테이너 — 바깥 클릭 판정의 경계다. 이 안(트리거·패널)의
   // 클릭은 유지, 밖(로고·토글·본문)의 클릭은 드롭다운을 닫는다.
@@ -216,7 +218,9 @@ export function SiteNav() {
     fetch("/api/auth", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
-        if (active) setLoggedIn(Boolean(data?.loggedIn));
+        if (!active) return;
+        setLoggedIn(Boolean(data?.loggedIn));
+        setIsOwner(Boolean(data?.isOwner));
       })
       .catch(() => {
         // 조회 실패 시 라벨은 보수적으로 "로그인"에 머문다(기능 영향 없음).
@@ -230,6 +234,8 @@ export function SiteNav() {
   // 같은 목록을 쓰게 한 벌만 만든다.
   const navItems: readonly NavItem[] = [
     ...NAV_ITEMS,
+    // 슬랙 피드는 소유자 전용이라 소유자일 때만 내비에 노출한다.
+    ...(isOwner ? [{ label: "슬랙", href: "/slack" } as NavItem] : []),
     { label: loggedIn ? "프로필" : "로그인", href: ACCOUNT_HREF },
   ];
 

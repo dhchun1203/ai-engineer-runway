@@ -4,10 +4,13 @@
 
 import { NextResponse } from 'next/server';
 import { hasUnlockCookie } from '@/lib/auth';
+import { isOwnerSession } from '@/lib/owner';
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0, must-revalidate' };
 
 export async function GET() {
-  const loggedIn = await hasUnlockCookie();
-  return NextResponse.json({ loggedIn }, { status: 200, headers: NO_STORE_HEADERS });
+  // loggedIn: 아무 사용자 로그인 여부(내비 라벨용). isOwner: 소유자 전용 항목(슬랙 피드)
+  // 노출 여부 — 내비가 이 값으로 "슬랙" 링크를 소유자에게만 보인다.
+  const [loggedIn, isOwner] = await Promise.all([hasUnlockCookie(), isOwnerSession()]);
+  return NextResponse.json({ loggedIn, isOwner }, { status: 200, headers: NO_STORE_HEADERS });
 }
