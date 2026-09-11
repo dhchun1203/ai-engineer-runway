@@ -26,6 +26,9 @@ type NavItem = {
   label: string;
   href: string | null;
   children?: readonly NavItem[];
+  // 드롭다운 children 안의 구역 소제목(비링크). true면 렌더러가 링크 대신 muted
+  // 소제목으로 그린다 — "더보기"처럼 항목이 많은 메뉴를 그룹으로 나눠 잡동사니 느낌을 없앤다.
+  heading?: boolean;
 };
 
 const NAV_ITEMS: readonly NavItem[] = [
@@ -45,15 +48,17 @@ const NAV_ITEMS: readonly NavItem[] = [
     label: "더보기",
     href: null,
     children: [
-      // 번외 "AI 뜯어보기"(/concepts) — 정규 커리큘럼과 별개의 개념 이해 편.
-      // isActiveHref가 startsWith라 /concepts/[slug] 리더에서도 이 항목(과 상위
-      // "더보기")이 활성으로 표시된다.
-      { label: "AI 뜯어보기", href: "/concepts" },
+      // 구역 소제목(heading)으로 두 그룹으로 나눠 잡동사니 느낌을 없앤다.
+      { label: "학습 도구", href: null, heading: true },
       { label: "복습", href: "/review" },
       { label: "용어집", href: "/glossary" },
       { label: "노트", href: "/notes" },
       { label: "북마크", href: "/bookmarks" },
       { label: "질문함", href: "/inbox" },
+      // 번외 "AI 뜯어보기"(/concepts) — 정규 커리큘럼과 별개의 개념 이해 편.
+      // isActiveHref가 startsWith라 /concepts/[slug] 리더에서도 활성으로 표시된다.
+      { label: "AI 뜯어보기", href: "/concepts" },
+      { label: "문서·정보", href: null, heading: true },
       { label: "PDF 내보내기", href: "/print" },
       { label: "소개", href: "/about" },
     ],
@@ -336,7 +341,23 @@ export function SiteNav() {
                             {item.label}
                           </span>
                           <div className="flex flex-col p-1">
-                            {item.children.map((child) => {
+                            {item.children.map((child, ci) => {
+                              // 구역 소제목 — 링크가 아니라 muted 소제목. 첫 소제목이
+                              // 아니면 위에 얇은 구분선을 둬 그룹을 나눈다.
+                              if (child.heading) {
+                                return (
+                                  <span
+                                    key={child.label}
+                                    className={`px-3 pb-1 text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark ${
+                                      ci === 0
+                                        ? "pt-1"
+                                        : "mt-1 border-t border-line pt-2 dark:border-line-dark"
+                                    }`}
+                                  >
+                                    {child.label}
+                                  </span>
+                                );
+                              }
                               if (!child.href) return null;
                               const childActive = isActiveHref(
                                 pathname,
@@ -453,7 +474,20 @@ export function SiteNav() {
                       {item.label}
                     </span>
                     <div className="ml-3 flex flex-col border-l-2 border-foreground pl-3 dark:border-foreground-dark">
-                      {item.children.map((child) => {
+                      {item.children.map((child, ci) => {
+                        // 구역 소제목 — 링크가 아니라 muted 소제목(데스크톱 드롭다운과 동형).
+                        if (child.heading) {
+                          return (
+                            <span
+                              key={child.label}
+                              className={`px-3 pb-1 text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark ${
+                                ci === 0 ? "pt-1" : "pt-3"
+                              }`}
+                            >
+                              {child.label}
+                            </span>
+                          );
+                        }
                         if (!child.href) return null;
                         const childActive = isActiveHref(pathname, child.href);
                         return (
