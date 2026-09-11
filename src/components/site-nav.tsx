@@ -342,16 +342,16 @@ export function SiteNav() {
                           </span>
                           <div className="flex flex-col p-1">
                             {item.children.map((child, ci) => {
-                              // 구역 소제목 — 링크가 아니라 muted 소제목. 첫 소제목이
-                              // 아니면 위에 얇은 구분선을 둬 그룹을 나눈다.
+                              // 구역 소제목 — 링크가 아니라, 눌린 면(surface-2) 배경을 깐
+                              // muted 소제목 띠. 크림 지면 위 항목들과 배경으로 구분된다.
+                              // -mx-1로 p-1 컨테이너를 상쇄해 위 "더보기" 잉크 머리띠와 폭을
+                              // 맞춘다(가장자리까지 닿는 띠).
                               if (child.heading) {
                                 return (
                                   <span
                                     key={child.label}
-                                    className={`px-3 pb-1 text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark ${
-                                      ci === 0
-                                        ? "pt-1"
-                                        : "mt-1 border-t border-line pt-2 dark:border-line-dark"
+                                    className={`-mx-1 bg-surface-2 px-3 py-1 text-label font-semibold text-badge-neutral-text dark:bg-surface-2-dark dark:text-badge-neutral-text-dark ${
+                                      ci === 0 ? "" : "mt-1"
                                     }`}
                                   >
                                     {child.label}
@@ -475,13 +475,13 @@ export function SiteNav() {
                     </span>
                     <div className="ml-3 flex flex-col border-l-2 border-foreground pl-3 dark:border-foreground-dark">
                       {item.children.map((child, ci) => {
-                        // 구역 소제목 — 링크가 아니라 muted 소제목(데스크톱 드롭다운과 동형).
+                        // 구역 소제목 — 눌린 면(surface-2) 배경 띠(데스크톱 드롭다운과 동형).
                         if (child.heading) {
                           return (
                             <span
                               key={child.label}
-                              className={`px-3 pb-1 text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark ${
-                                ci === 0 ? "pt-1" : "pt-3"
+                              className={`bg-surface-2 px-3 py-1 text-label font-semibold text-badge-neutral-text dark:bg-surface-2-dark dark:text-badge-neutral-text-dark ${
+                                ci === 0 ? "" : "mt-1"
                               }`}
                             >
                               {child.label}
