@@ -4,11 +4,13 @@ import { hasUnlockCookie } from "@/lib/auth";
 import { readProgressRows } from "@/lib/progress-store";
 import { todayInSeoul, daysUntil } from "@/lib/today";
 import { BasecampStepChecklist } from "@/components/basecamp/basecamp-step-checklist";
+import { BasecampPastStep } from "@/components/basecamp/basecamp-past-step";
 import {
   basecampSteps,
   basecampProgressId,
   BASECAMP_END_DATE,
   BASECAMP_INDEX_URL,
+  type BasecampStep,
 } from "@/content/basecamp";
 
 export const metadata: Metadata = {
@@ -30,6 +32,23 @@ export default async function BasecampPage() {
 
   const today = todayInSeoul();
   const daysLeft = daysUntil(BASECAMP_END_DATE, today);
+
+  // 레이아웃 C — 공개된 STEP을 "지금 집중할 한 주차"와 "지난 주차"로 가른다.
+  // 지금 집중 = 가장 최근 공개된 STEP(맨 아래 것), 지난 주차 = 그 앞의 공개 STEP들.
+  // 이렇게 나눠야 주차가 매주 쌓여도 상단은 늘 이번 주 하나이고, 끝난 주차는
+  // 접힌 한 줄로 남아 스크롤이 늘어나지 않는다.
+  const releasedSteps = basecampSteps.filter((step) => step.released);
+  const currentStep =
+    releasedSteps.length > 0
+      ? releasedSteps[releasedSteps.length - 1]
+      : basecampSteps[0];
+  const pastSteps = releasedSteps.slice(0, -1);
+
+  // 한 STEP의 완료 항목 id(접두사 없는 item.id) 목록을 서버 진도에서 만든다.
+  const doneIdsFor = (step: BasecampStep): string[] =>
+    step.items
+      .filter((item) => doneRawIds.has(basecampProgressId(item.id)))
+      .map((item) => item.id);
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-12 sm:px-6 lg:px-8">
@@ -60,21 +79,36 @@ export default async function BasecampPage() {
         </div>
       </header>
 
-      {basecampSteps.map((step) => {
-        // 완료된 항목 id(접두사 없는 item.id) 목록을 서버 진도에서 만들어 넘긴다.
-        // 이후 즉시 반영(카운터·체크박스 동기)은 클라이언트 컴포넌트가 맡는다.
-        const doneItemIds = step.items
-          .filter((item) => doneRawIds.has(basecampProgressId(item.id)))
-          .map((item) => item.id);
-        return (
-          <BasecampStepChecklist
-            key={step.no}
-            step={step}
-            initialDoneIds={doneItemIds}
-            unlocked={unlocked}
-          />
-        );
-      })}
+      {/* 지금 집중 — 이번 주 STEP 하나를 항상 펼쳐 둔다. */}
+      <section className="flex flex-col gap-3">
+        <span className="w-fit text-label font-bold text-accent dark:text-accent-dark">
+          지금 집중
+        </span>
+        <BasecampStepChecklist
+          step={currentStep}
+          initialDoneIds={doneIdsFor(currentStep)}
+          unlocked={unlocked}
+        />
+      </section>
+
+      {/* 지난 주차 — 끝났거나 지난 STEP은 접힌 한 줄로. 누르면 그 자리에서 펼쳐 복습. */}
+      {pastSteps.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <span className="text-label font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            지난 주차
+          </span>
+          <div className="flex flex-col gap-3">
+            {pastSteps.map((step) => (
+              <BasecampPastStep
+                key={step.no}
+                step={step}
+                initialDoneIds={doneIdsFor(step)}
+                unlocked={unlocked}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* 제출 안내 — 공식 과제는 그쪽 학습 사이트로 제출한다. */}
       <section className="panel flex flex-col gap-2 p-5">

@@ -8,7 +8,7 @@
 // 항목만 되돌리고 표시한다. 서버 재검증(revalidate)은 걸지 않는다 — 다음 전체 로드에
 // 서버 값이 다시 진실이 된다(complete-button.tsx의 낙관적 토글 원칙과 같다).
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, ExternalLink, Check } from 'lucide-react';
 import { toggleBasecampItem } from '@/app/basecamp/actions';
@@ -18,11 +18,19 @@ export function BasecampStepChecklist({
   step,
   initialDoneIds,
   unlocked,
+  showHeader = true,
+  onProgress,
 }: {
   step: BasecampStep;
   /** 완료된 항목 id(접두사 없는 item.id) 목록. unlocked일 때만 의미가 있다. */
   initialDoneIds: readonly string[];
   unlocked: boolean;
+  /** 자체 헤더(주차·제목·요약·카운터)를 그릴지. 과거 주차 행은 바깥에서
+   *  접이식 헤더를 따로 그리므로 false로 넘겨 항목 목록만 렌더한다. */
+  showHeader?: boolean;
+  /** 완료 개수가 바뀔 때 알린다 — 접이식 과거 주차 행의 헤더 카운터가
+   *  펼쳐진 채 토글해도 즉시 따라오게 하려는 용도. */
+  onProgress?: (done: number, total: number) => void;
 }) {
   const [doneIds, setDoneIds] = useState<ReadonlySet<string>>(
     () => new Set(initialDoneIds),
@@ -31,6 +39,14 @@ export function BasecampStepChecklist({
   const [errorIds, setErrorIds] = useState<ReadonlySet<string>>(new Set());
 
   const doneCount = step.items.filter((item) => doneIds.has(item.id)).length;
+
+  // onProgress를 ref로 들고 doneCount 변화에만 반응한다 — 부모가 인라인 콜백을
+  // 넘겨도 effect가 매 렌더 재실행/루프하지 않는다.
+  const onProgressRef = useRef(onProgress);
+  onProgressRef.current = onProgress;
+  useEffect(() => {
+    onProgressRef.current?.(doneCount, step.items.length);
+  }, [doneCount, step.items.length]);
 
   async function handleToggle(itemId: string) {
     if (pendingIds.has(itemId)) return;
@@ -54,20 +70,22 @@ export function BasecampStepChecklist({
 
   return (
     <section className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="chip text-label font-bold">{step.weekLabel}</span>
-          <h2 className="text-heading font-extrabold break-keep">{step.title}</h2>
-          {unlocked ? (
-            <span className="text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark">
-              {doneCount}/{step.items.length} 완료
-            </span>
-          ) : null}
+      {showHeader ? (
+        <div className="flex flex-col gap-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="chip text-label font-bold">{step.weekLabel}</span>
+            <h2 className="text-heading font-extrabold break-keep">{step.title}</h2>
+            {unlocked ? (
+              <span className="text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                {doneCount}/{step.items.length} 완료
+              </span>
+            ) : null}
+          </div>
+          <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            {step.summary}
+          </p>
         </div>
-        <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          {step.summary}
-        </p>
-      </div>
+      ) : null}
 
       <ul className="flex flex-col gap-3">
         {step.items.map((item) => {
