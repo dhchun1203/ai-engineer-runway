@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ExternalLink } from "lucide-react";
 import { pages } from "#site/content";
-import { MDXContent } from "@/components/mdx-content";
+import { AboutContent } from "@/components/about-content";
 
 const GITHUB_REPO_URL = "https://github.com/dhchun1203/ai-engineer-runway";
 
@@ -26,7 +26,7 @@ export default function AboutPage() {
             [&_h3]:before:bg-accent [&_h3]:before:content-[''] dark:[&_h3]:before:bg-accent-dark
             [&_h3]:border-l-2 [&_h3]:border-badge-neutral-bg [&_h3]:pb-2 dark:[&_h3]:border-badge-neutral-bg-dark"
         >
-          <MDXContent code={page.code} />
+          <AboutContent code={page.code} />
         </div>
       ) : null}
 
