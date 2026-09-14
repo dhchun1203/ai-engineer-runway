@@ -5,7 +5,7 @@ import 'server-only';
 // 전용 화면이 이 함수 하나로 접근을 가른다. 요청당 1회만 세션을 검증하도록 캐시한다.
 
 import { cache } from 'react';
-import { createSupabaseServerClient } from './supabase/server';
+import { getSessionClaims } from './current-user';
 
 function ownerEmail(): string | null {
   const raw = process.env.OWNER_EMAIL;
@@ -17,13 +17,10 @@ function ownerEmail(): string | null {
 export const isOwnerSession = cache(async (): Promise<boolean> => {
   const owner = ownerEmail();
   if (!owner) return false;
-  try {
-    const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase.auth.getUser();
-    const email = data.user?.email;
-    if (error || !email) return false;
-    return email.trim().toLowerCase() === owner;
-  } catch {
-    return false;
-  }
+  // getSessionClaims는 JWT를 로컬에서 서명 검증하며(비대칭 키, 왕복 없음) 게이트·데이터
+  // 스토어와 결과를 공유한다(current-user.ts 주석 참고). email 클레임으로 소유자를 가른다.
+  const claims = await getSessionClaims();
+  const email = claims?.email;
+  if (!email) return false;
+  return email.trim().toLowerCase() === owner;
 });

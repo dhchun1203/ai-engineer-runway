@@ -21,7 +21,7 @@
 
 import { cookies } from 'next/headers';
 import { UNLOCK_COOKIE_NAME, isValidUnlockValue } from './unlock-secret';
-import { createSupabaseServerClient } from './supabase/server';
+import { getSessionClaims } from './current-user';
 
 /** 기존 공유 시크릿 쿠키 판정 — 로컬 함수라 값이 변해도 게이트 순서 검사에 영향 없다. */
 async function hasLegacyUnlockCookie(): Promise<boolean> {
@@ -30,19 +30,13 @@ async function hasLegacyUnlockCookie(): Promise<boolean> {
   return isValidUnlockValue(value, process.env.UNLOCK_SECRET);
 }
 
-/** 유효한 로그인 세션(아무 사용자)이 있는지. getUser()는 토큰을 Auth 서버로 검증하므로
- * 위조 쿠키로는 통과할 수 없다. 이제 이메일 화이트리스트는 보지 않는다 — 로그인한
- * 사용자는 누구든 자기 데이터에 접근할 자격이 있다(격리는 user_id가 담당). */
+/** 유효한 로그인 세션(아무 사용자)이 있는지. getSessionClaims()는 JWT 서명을 로컬에서
+ * 검증하므로(비대칭 키) 위조 쿠키로는 통과할 수 없고, 인증 서버 왕복도 없다(current-user.ts
+ * 주석 참고). 요청당 한 번만 검증되며 진도·소유자 판정과 그 결과를 공유한다. 이메일
+ * 화이트리스트는 보지 않는다 — 로그인한 사용자는 누구든 자기 데이터에 접근할 자격이
+ * 있다(격리는 user_id가 담당). */
 async function hasAuthenticatedSession(): Promise<boolean> {
-  try {
-    const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) return false;
-    return true;
-  } catch {
-    // 세션 검증 중 오류(네트워크 등)는 "미인가"로 강등한다 — 실패를 통과로 오인하지 않는다.
-    return false;
-  }
+  return (await getSessionClaims()) !== null;
 }
 
 export async function hasUnlockCookie(): Promise<boolean> {
