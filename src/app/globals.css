@@ -471,11 +471,17 @@ textarea,
   .site-header {
     background-color: var(--color-background);
     border-bottom: 2px solid var(--color-foreground);
+    /* 잉크 밑줄 아래로 각진 하드 그림자 턱을 하나 더 얹는다 — 흐림 0, 아래
+       오프셋만. 소프트/블러 그림자는 이 디자인의 서명(--color-shadow-hard,
+       "흐림 0")을 깨므로 쓰지 않는다. 오프셋 4px은 .panel과 같은 고도라,
+       스티키 헤더가 본문 위에 뜬 하나의 면(panel)처럼 읽힌다. */
+    box-shadow: 0 4px 0 0 var(--color-shadow-hard);
   }
 
   .dark .site-header {
     background-color: var(--color-background-dark);
     border-bottom-color: var(--color-foreground-dark);
+    box-shadow: 0 4px 0 0 var(--color-shadow-hard-dark);
   }
 
   /* 로고 앞의 작은 사각형 — accent 블록에 action 색 하드 그림자. 이 사이트가
