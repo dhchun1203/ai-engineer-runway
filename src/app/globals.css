@@ -2460,4 +2460,14 @@ code[data-theme*=" "] span {
     transform: translateX(-50%);
     max-width: calc(100vw - 1.5rem);
   }
+
+  /* 툴팁도 버튼 왼쪽이 아니라 위쪽에 띄운다 — 가로 바에서 왼쪽에 두면 옆 버튼을
+     가린다(아이패드 탭 시 확인된 문제). 버튼 위 중앙으로 올린다. */
+  .ra-rail [data-ra-tip]::before {
+    right: auto;
+    left: 50%;
+    top: auto;
+    bottom: calc(100% + 0.5rem);
+    transform: translateX(-50%);
+  }
 }
