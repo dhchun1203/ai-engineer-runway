@@ -2142,8 +2142,10 @@ code[data-theme*=" "] span {
   box-shadow: 3px 3px 0 0 var(--color-shadow-hard-dark);
 }
 
-/* 활성 상태의 세로 툴바 — .panel과 같은 4px 하드 그림자 고도. */
+/* 활성 상태의 세로 툴바 — .panel과 같은 4px 하드 그림자 고도. position: relative은
+   단축키 안내 팝오버(.ra-help)의 절대배치 기준이다. */
 .ra-toolbar {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2278,4 +2280,126 @@ code[data-theme*=" "] span {
   .ra-reading [data-ra-block].ra-block-focus {
     transform: none;
   }
+}
+
+/* 호버/포커스 툴팁 — 버튼 왼쪽에 뜨는 잉크 칩(.ra-hint와 같은 문법). 마우스가 있는
+   기기에서만 의미가 있고, 터치에서는 탭이 곧 동작이라 뜨지 않는다. */
+.ra-rail [data-ra-tip] {
+  position: relative;
+}
+.ra-rail [data-ra-tip]::before {
+  content: attr(data-ra-tip);
+  position: absolute;
+  right: calc(100% + 0.5rem);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.2rem 0.45rem;
+  background-color: var(--color-foreground);
+  color: var(--color-background);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 3px 3px 0 0 var(--color-shadow-hard);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+  z-index: 1;
+}
+.ra-rail [data-ra-tip]:hover::before,
+.ra-rail [data-ra-tip]:focus-visible::before {
+  opacity: 1;
+}
+.dark .ra-rail [data-ra-tip]::before {
+  background-color: var(--color-foreground-dark);
+  color: var(--color-background-dark);
+  box-shadow: 3px 3px 0 0 var(--color-shadow-hard-dark);
+}
+
+/* 단축키 안내 팝오버 — 툴바 왼쪽에 뜨는 작은 패널(.panel과 같은 하드 그림자 문법). */
+.ra-help {
+  position: absolute;
+  right: calc(100% + 0.5rem);
+  bottom: 0;
+  width: max-content;
+  max-width: 16rem;
+  padding: 0.625rem 0.75rem;
+  text-align: left;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  border: 2px solid var(--color-foreground);
+  box-shadow: 4px 4px 0 0 var(--color-shadow-hard);
+}
+.dark .ra-help {
+  background-color: var(--color-background-dark);
+  color: var(--color-foreground-dark);
+  border-color: var(--color-foreground-dark);
+  box-shadow: 4px 4px 0 0 var(--color-shadow-hard-dark);
+}
+.ra-help-title {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.ra-help-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+}
+.ra-help-list > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.ra-help-list dt {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.ra-help-list dd {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-badge-neutral-text);
+}
+.dark .ra-help-list dd {
+  color: var(--color-badge-neutral-text-dark);
+}
+/* 좌우 한 쌍의 키캡을 나란히 둔다. */
+.ra-help-keys {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+/* 키캡 — UI 산세를 그대로 쓴다(코드 monospace 규칙을 override). 작은 하드 그림자.
+   아이콘 키캡(화살표)도 중앙에 오도록 inline-flex로 둔다. */
+.ra-help kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.1rem;
+  padding: 0.05rem 0.35rem;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1.5px solid var(--color-foreground);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  box-shadow: 1.5px 1.5px 0 0 var(--color-shadow-hard);
+}
+.dark .ra-help kbd {
+  border-color: var(--color-foreground-dark);
+  background-color: var(--color-background-dark);
+  color: var(--color-foreground-dark);
+  box-shadow: 1.5px 1.5px 0 0 var(--color-shadow-hard-dark);
+}
+.ra-help-note {
+  margin: 0.45rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--color-badge-neutral-text);
+}
+.dark .ra-help-note {
+  color: var(--color-badge-neutral-text-dark);
 }

@@ -16,18 +16,21 @@ import {
 } from '@/components/reading-assistant/reading-engine';
 
 // 읽기 속도 단계. cps = 초당 글자 수(문장 길이에 비례한 체류 시간을 정한다).
-// 한국어 편안한 묵독은 대략 6~10자/초다. 기본값 index 1('느리게', 6자/초)은
-// "집중해서 천천히 보는 속도" — 30자 남짓한 문장이 약 5초 머문다. 더 느린 단계
-// (index 0, 4자/초)도 남겨 둔다.
+// 기본값 index 2('느리게', 6자/초)는 "집중해서 천천히 보는 속도" — 30자 남짓한
+// 문장이 약 5초 머문다. 기본에서 한 칸씩 올릴 때 증가폭이 크지 않도록 단계 간
+// 비율을 약 1.2배로 촘촘하게 둔다(예: 6 → 7.2 → 8.6, 이전 6 → 8.5의 절반 수준).
+// 아래로도 5·4자/초의 더 느린 단계를 남긴다.
 export const SPEED_LEVELS = [
   { label: '아주 느리게', cps: 4 },
+  { label: '더 느리게', cps: 5 },
   { label: '느리게', cps: 6 },
-  { label: '보통', cps: 8.5 },
-  { label: '빠르게', cps: 12 },
-  { label: '아주 빠르게', cps: 17 },
+  { label: '조금 빠르게', cps: 7.2 },
+  { label: '보통', cps: 8.6 },
+  { label: '빠르게', cps: 10.3 },
+  { label: '아주 빠르게', cps: 12.4 },
 ] as const;
 
-export const DEFAULT_SPEED_INDEX = 1;
+export const DEFAULT_SPEED_INDEX = 2;
 
 // 문장별 체류 시간의 바닥·천장(ms). 아주 짧은 문장도 한 박자는 머물고, 아주 긴
 // 문장도 과하게 오래 붙들지 않게 한다.
@@ -49,7 +52,11 @@ export type ReadingController = {
   /** 재생/정지 버튼과 스페이스바가 공유하는 단일 동작. */
   primaryAction: () => void;
   changeSpeed: (delta: number) => void;
-  /** 사용자가 직접 스크롤했을 때(휠·터치·방향키) 호출. */
+  /** 이전 문장으로(좌 화살표). 누르는 순간 자동 재생을 멈춘다. */
+  previous: () => void;
+  /** 다음 문장으로(우 화살표). 누르는 순간 자동 재생을 멈춘다. */
+  next: () => void;
+  /** 사용자가 직접 스크롤했을 때(휠·터치·페이지 키) 호출. */
   userScroll: () => void;
   isActive: () => boolean;
   destroy: () => void;
@@ -229,6 +236,20 @@ export function makeReadingController(articleId: string, ui: ReadingUI): Reading
     }
   }
 
+  // 좌/우 화살표 — 한 스텝(문장·블록) 이동한다. 누르는 순간 자동 재생을 멈춘다
+  // (수동으로 짚어 가는 조작이므로). focusStep은 playing=false이면 다음 예약을 하지
+  // 않으므로 그 자리에 멈춰 선다. 다시 진행하려면 스페이스/재생.
+  function step(delta: number): void {
+    if (!container) return;
+    clearTimer();
+    setPlaying(false);
+    scrolled = false;
+    // 다 읽은 상태(index == length)에서 좌는 마지막 문장으로 돌아온다.
+    const from = index >= steps.length ? steps.length : index;
+    const target = clamp(0, from + delta, steps.length - 1);
+    focusStep(target, true);
+  }
+
   function changeSpeed(delta: number): void {
     const next = clamp(0, speedIndex + delta, SPEED_LEVELS.length - 1);
     if (next !== speedIndex) {
@@ -250,6 +271,8 @@ export function makeReadingController(articleId: string, ui: ReadingUI): Reading
     deactivate,
     primaryAction,
     changeSpeed,
+    previous: () => step(-1),
+    next: () => step(1),
     userScroll,
     isActive: () => container !== null,
     destroy: deactivate,

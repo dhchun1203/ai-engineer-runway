@@ -8,7 +8,19 @@
 // 브라우저 전용 API를 쓰므로 SSR 렌더 중에 만들지 않는다.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BookOpenText, Play, Pause, ChevronUp, ChevronDown, X } from "lucide-react";
+import {
+  BookOpenText,
+  Play,
+  Pause,
+  ChevronUp,
+  ChevronDown,
+  X,
+  HelpCircle,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import {
   makeReadingController,
   SPEED_LEVELS,
@@ -25,28 +37,34 @@ function isEditableTarget(target: EventTarget | null): boolean {
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
 }
 
-// 직접 스크롤로 간주할 방향/페이지 키.
-const SCROLL_KEYS = new Set([
-  "ArrowUp",
-  "ArrowDown",
-  "PageUp",
-  "PageDown",
-  "Home",
-  "End",
-]);
+// 직접 스크롤로 간주해 진행을 멈추는 페이지 이동 키. 방향키는 여기서 뺀다 —
+// ↑↓는 속도, ←→는 이전/다음 문장 단축키로 따로 쓴다.
+const SCROLL_KEYS = new Set(["PageUp", "PageDown", "Home", "End"]);
 
 export function ReadingAssistant({ articleId }: { articleId: string }) {
   const [active, setActive] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [status, setStatus] = useState<ReadingStatus>("reading");
   const [speedIndex, setSpeedIndex] = useState(DEFAULT_SPEED_INDEX);
+  // 단축키 안내 팝오버 표시 여부. Esc가 도우미 해제보다 먼저 이 팝오버를 닫도록
+  // 최신 값을 ref에도 실어, [active]에 묶인 키보드 리스너가 stale 값을 보지 않게 한다.
+  const [showHelp, setShowHelp] = useState(false);
+  const showHelpRef = useRef(false);
+  useEffect(() => {
+    showHelpRef.current = showHelp;
+  }, [showHelp]);
 
   const controllerRef = useRef<ReadingController | null>(null);
 
   const getController = useCallback((): ReadingController => {
     if (!controllerRef.current) {
       controllerRef.current = makeReadingController(articleId, {
-        onActiveChange: setActive,
+        // 비활성으로 바뀌면 안내 팝오버도 함께 닫아, 다시 켰을 때 열린 채로 남지
+        // 않게 한다(effect에서 setState하지 않고 이 이벤트 콜백에서 처리).
+        onActiveChange: (a) => {
+          setActive(a);
+          if (!a) setShowHelp(false);
+        },
         onPlayingChange: setPlaying,
         onStatusChange: setStatus,
         onSpeedChange: setSpeedIndex,
@@ -73,11 +91,38 @@ export function ReadingAssistant({ articleId }: { articleId: string }) {
       }
       if (e.key === "Escape") {
         e.preventDefault();
+        // 단축키 안내가 열려 있으면 Esc는 그것부터 닫는다(도우미는 그대로 유지).
+        if (showHelpRef.current) {
+          setShowHelp(false);
+          return;
+        }
         controller.deactivate();
         return;
       }
+      // ↑↓ = 읽기 속도, ←→ = 이전/다음 문장. 기본 스크롤을 막고 단축키로 쓴다.
+      // 좌/우는 컨트롤러 쪽에서 누르는 순간 자동 재생을 멈춘다.
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        controller.changeSpeed(1);
+        return;
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        controller.changeSpeed(-1);
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        controller.previous();
+        return;
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        controller.next();
+        return;
+      }
       if (SCROLL_KEYS.has(e.key)) {
-        // 방향/페이지 키 스크롤은 막지 않되(사용자가 이동하려는 의도), 진행은 멈춘다.
+        // 페이지 이동 키 스크롤은 막지 않되(사용자가 이동하려는 의도), 진행은 멈춘다.
         controller.userScroll();
       }
     };
@@ -101,6 +146,19 @@ export function ReadingAssistant({ articleId }: { articleId: string }) {
     };
   }, []);
 
+  // 안내 팝오버가 열려 있을 때 레일 바깥을 누르면 닫는다(팝오버·툴바 안 클릭은 유지).
+  useEffect(() => {
+    if (!showHelp) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      if (target && !(target instanceof Element && target.closest(".ra-rail"))) {
+        setShowHelp(false);
+      }
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [showHelp]);
+
   const hint =
     status === "waiting"
       ? "스페이스바로 계속"
@@ -120,7 +178,7 @@ export function ReadingAssistant({ articleId }: { articleId: string }) {
           onClick={() => getController().activate()}
           className="ra-launch tap-feedback"
           aria-label="독서 도우미 켜기"
-          title="독서 도우미"
+          data-ra-tip="독서 도우미 켜기"
         >
           <BookOpenText className="h-5 w-5" aria-hidden="true" />
         </button>
@@ -131,6 +189,7 @@ export function ReadingAssistant({ articleId }: { articleId: string }) {
             onClick={() => getController().primaryAction()}
             className="ra-btn tap-feedback"
             aria-label={playing ? "정지 (스페이스바)" : "재생 (스페이스바)"}
+            data-ra-tip={playing ? "정지 (스페이스바)" : "재생 (스페이스바)"}
           >
             {playing ? (
               <Pause className="h-5 w-5" aria-hidden="true" />
@@ -146,12 +205,17 @@ export function ReadingAssistant({ articleId }: { articleId: string }) {
             onClick={() => getController().changeSpeed(1)}
             className="ra-btn tap-feedback"
             aria-label="빠르게"
+            data-ra-tip="빠르게"
             disabled={speedIndex >= SPEED_LEVELS.length - 1}
           >
             <ChevronUp className="h-4 w-4" aria-hidden="true" />
           </button>
 
-          <span className="ra-dots" aria-label={`읽기 속도 ${SPEED_LEVELS[speedIndex].label}`}>
+          <span
+            className="ra-dots"
+            aria-label={`읽기 속도 ${SPEED_LEVELS[speedIndex].label}`}
+            data-ra-tip={`속도: ${SPEED_LEVELS[speedIndex].label}`}
+          >
             {SPEED_LEVELS.map((_, i) => (
               <span key={i} className={`ra-dot ${i <= speedIndex ? "ra-dot-on" : ""}`} aria-hidden="true" />
             ))}
@@ -162,6 +226,7 @@ export function ReadingAssistant({ articleId }: { articleId: string }) {
             onClick={() => getController().changeSpeed(-1)}
             className="ra-btn tap-feedback"
             aria-label="느리게"
+            data-ra-tip="느리게"
             disabled={speedIndex <= 0}
           >
             <ChevronDown className="h-4 w-4" aria-hidden="true" />
@@ -174,9 +239,66 @@ export function ReadingAssistant({ articleId }: { articleId: string }) {
             onClick={() => getController().deactivate()}
             className="ra-btn tap-feedback"
             aria-label="독서 도우미 끄기 (Esc)"
+            data-ra-tip="끄기 (Esc)"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
+
+          <span className="ra-divider" aria-hidden="true" />
+
+          <button
+            type="button"
+            onClick={() => setShowHelp((v) => !v)}
+            className="ra-btn tap-feedback"
+            aria-label="단축키 안내"
+            aria-expanded={showHelp}
+            data-ra-tip="단축키 안내"
+          >
+            <HelpCircle className="h-5 w-5" aria-hidden="true" />
+          </button>
+
+          {showHelp ? (
+            <div className="ra-help" role="dialog" aria-label="단축키 안내">
+              <p className="ra-help-title">단축키</p>
+              <dl className="ra-help-list">
+                <div>
+                  <dt>
+                    <kbd>스페이스바</kbd>
+                  </dt>
+                  <dd>재생 / 정지</dd>
+                </div>
+                <div>
+                  <dt className="ra-help-keys">
+                    <kbd>
+                      <ArrowLeft className="h-3 w-3" aria-hidden="true" />
+                    </kbd>
+                    <kbd>
+                      <ArrowRight className="h-3 w-3" aria-hidden="true" />
+                    </kbd>
+                  </dt>
+                  <dd>이전 / 다음 문장 (멈춤)</dd>
+                </div>
+                <div>
+                  <dt className="ra-help-keys">
+                    <kbd>
+                      <ArrowUp className="h-3 w-3" aria-hidden="true" />
+                    </kbd>
+                    <kbd>
+                      <ArrowDown className="h-3 w-3" aria-hidden="true" />
+                    </kbd>
+                  </dt>
+                  <dd>속도 올림 / 내림</dd>
+                </div>
+                <div>
+                  <dt>
+                    <kbd>Esc</kbd>
+                  </dt>
+                  <dd>도우미 끄기</dd>
+                </div>
+              </dl>
+              <p className="ra-help-note">표·코드는 스페이스바로 넘겨요. 직접 스크롤하면 멈추고, 스페이스바로 이어봐요.</p>
+            </div>
+          ) : null}
         </div>
       )}
     </div>
