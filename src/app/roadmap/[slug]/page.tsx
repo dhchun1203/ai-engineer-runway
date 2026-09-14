@@ -7,6 +7,7 @@ import { isRoadmapViewer } from "@/lib/roadmap-access";
 import { MDXContent } from "@/components/mdx-content";
 import { TermPanelProvider, Term } from "@/components/roadmap/term-panel";
 import { LessonToc } from "@/components/roadmap/lesson-toc";
+import { ReadingAssistant } from "@/components/reading-assistant/reading-assistant";
 import { getRoadmapLessonBySlug } from "@/content/roadmap-lesson-helpers";
 import { roadmapStages } from "@/content/channeltalk-roadmap";
 
@@ -96,6 +97,9 @@ export default async function RoadmapLessonPage(
           </Link>
         </nav>
       </article>
+
+      {/* 우측 고정 독서 도우미 — 본문을 문장 단위로 확대하며 읽어 준다. */}
+      <ReadingAssistant articleId="lesson-body" />
     </main>
   );
 }

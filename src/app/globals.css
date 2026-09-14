@@ -2401,3 +2401,63 @@ code[data-theme*=" "] span {
 .dark .ra-help-note {
   color: var(--color-badge-neutral-text-dark);
 }
+
+/* 이전/다음 문장 버튼은 기본(마우스)에서 숨긴다 — 데스크톱은 방향키 ←→로 문장을
+   이동하므로 세로 레일을 가볍게 유지한다. 터치에서만(아래) 보인다. */
+.ra-btn-nav {
+  display: none;
+}
+
+/* 터치 기기(아이패드·모바일) — 툴바를 화면 하단 가로 바로 옮겨 엄지로 닿기 쉽게
+   하고, 좌우 방향키를 쓸 수 없으니 이전/다음 문장 버튼을 노출한다. hover가 없어
+   툴팁은 뜨지 않으므로 대신 물음표 도움말과 큰 버튼으로 안내한다. */
+@media (pointer: coarse) {
+  .ra-rail {
+    top: auto;
+    right: 0;
+    left: 0;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
+    transform: none;
+    flex-direction: column; /* 상태 힌트·도움말이 바 위로 쌓이게 */
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  /* 메모 시트가 있는 화면(레슨·베이스캠프)에서는 하단 메모 손잡이 위로 띄운다
+     (scroll-top·bookmark FAB과 같은 처리). */
+  body:has(.note-sheet) .ra-rail {
+    bottom: calc(var(--note-handle-height) + env(safe-area-inset-bottom, 0px) + 0.5rem);
+  }
+
+  .ra-toolbar {
+    flex-direction: row;
+    max-width: calc(100vw - 1rem);
+  }
+
+  .ra-btn-nav {
+    display: inline-flex;
+  }
+
+  /* 공간 최적화: 하단 가로 바에서는 구분선과 도움말(키보드 단축키 안내) 버튼을
+     숨긴다 — 좁은 폭에 핵심 조작(이전·재생·다음·속도·닫기)만 남겨 44px 터치 타깃을
+     지킨다. 도움말은 키 단축키 설명이라 터치에는 불필요하다. */
+  .ra-divider,
+  .ra-help-btn {
+    display: none;
+  }
+
+  /* 속도 게이지도 가로로 — 왼쪽(느림)에서 오른쪽(빠름)으로 찬다. */
+  .ra-dots {
+    flex-direction: row;
+    gap: 2px;
+  }
+
+  /* 도움말 팝오버·상태 힌트를 바 왼쪽이 아니라 위쪽에 띄운다. */
+  .ra-help {
+    right: auto;
+    bottom: calc(100% + 0.5rem);
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 1.5rem);
+  }
+}

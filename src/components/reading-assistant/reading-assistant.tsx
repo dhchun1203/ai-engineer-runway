@@ -184,6 +184,18 @@ export function ReadingAssistant({ articleId }: { articleId: string }) {
         </button>
       ) : (
         <div className="ra-toolbar" role="toolbar" aria-label="독서 도우미">
+          {/* 이전/다음 문장 — 터치(아이패드·모바일)에서만 보인다(하단 가로 바). 데스크톱은
+              방향키 ←→로 대신하므로 CSS로 숨긴다(.ra-btn-nav). */}
+          <button
+            type="button"
+            onClick={() => getController().previous()}
+            className="ra-btn ra-btn-nav tap-feedback"
+            aria-label="이전 문장"
+            data-ra-tip="이전 문장"
+          >
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+          </button>
+
           <button
             type="button"
             onClick={() => getController().primaryAction()}
@@ -196,6 +208,16 @@ export function ReadingAssistant({ articleId }: { articleId: string }) {
             ) : (
               <Play className="h-5 w-5" aria-hidden="true" />
             )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => getController().next()}
+            className="ra-btn ra-btn-nav tap-feedback"
+            aria-label="다음 문장"
+            data-ra-tip="다음 문장"
+          >
+            <ArrowRight className="h-5 w-5" aria-hidden="true" />
           </button>
 
           <span className="ra-divider" aria-hidden="true" />
@@ -246,10 +268,13 @@ export function ReadingAssistant({ articleId }: { articleId: string }) {
 
           <span className="ra-divider" aria-hidden="true" />
 
+          {/* 단축키 안내는 키보드 단축키(스페이스·방향키·Esc)를 설명하므로 터치
+              기기에는 무의미하다 — 하단 가로 바(터치)에서는 CSS로 숨긴다(.ra-help-btn).
+              터치 사용자는 버튼으로 직접 조작한다. */}
           <button
             type="button"
             onClick={() => setShowHelp((v) => !v)}
-            className="ra-btn tap-feedback"
+            className="ra-btn ra-help-btn tap-feedback"
             aria-label="단축키 안내"
             aria-expanded={showHelp}
             data-ra-tip="단축키 안내"

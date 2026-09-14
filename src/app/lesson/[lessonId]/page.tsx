@@ -12,6 +12,7 @@ import { PrintButton } from "@/components/print-button";
 import { CopyLessonPrompt } from "@/components/lesson-copy-prompt";
 import { CompleteButtonSlot, LessonNoteSlot, LessonTilSlot, LessonNeedsReviewSlot } from "@/components/progress-slots";
 import { LastLessonRecorder } from "@/components/last-lesson-recorder";
+import { ReadingAssistant } from "@/components/reading-assistant/reading-assistant";
 import {
   getLessonBySlug,
   getOrderedLessons,
@@ -148,6 +149,11 @@ export default async function LessonPage(
         </article>
         <LessonNoteSlot lessonId={lesson.slug} />
       </ProgressProvider>
+
+      {/* 우측 고정 독서 도우미 — 본문을 문장 단위로 확대하며 읽어 주는 리더.
+          콘텐츠가 있는 레슨에만 붙인다(자리표시 레슨엔 읽을 본문이 없다). 진도
+          아일랜드와 독립이라 ProgressProvider 밖에 둔다. */}
+      {lesson.hasContent ? <ReadingAssistant articleId={LESSON_ARTICLE_ID} /> : null}
     </main>
   );
 }

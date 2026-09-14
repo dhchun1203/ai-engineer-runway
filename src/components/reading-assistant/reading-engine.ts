@@ -24,8 +24,50 @@ export type BuiltSteps = {
   restore: () => void;
 };
 
-// 텍스트로 취급해 문장 단위로 감싸는 블록 태그. 나머지는 전부 block 스텝이다.
+// 텍스트로 취급해 문장 단위로 감싸는 블록 태그.
 const TEXT_TAGS = new Set(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE']);
+
+// 내부를 절대 건드리지 않고 통째로 "확대 후 대기"시키는 원자 블록 태그
+// (코드·표·그림·미디어·폼).
+const ATOMIC_TAGS = new Set([
+  'PRE',
+  'TABLE',
+  'FIGURE',
+  'IMG',
+  'SVG',
+  'CANVAS',
+  'VIDEO',
+  'AUDIO',
+  'IFRAME',
+  'FORM',
+]);
+
+// 무조건 자식으로 파고드는 구조적 시맨틱 태그. 책으로 읽기 페이지처럼 본문이
+// section/article/header로 여러 겹 감싸인 구조를 문장 단위까지 파고든다. MDX
+// 인터랙티브 컴포넌트는 이 태그들로 렌더되지 않으므로(전부 div 루트) 안전하다.
+const RECURSE_TAGS = new Set(['SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'MAIN']);
+
+// 인터랙티브 위젯(시각화 컴포넌트·코드 실행기·프레젠터 등)을 가려낸다. 이런
+// 컨테이너는 재귀로 파고들지 않고 통째로 대기 블록으로 둔다 — 내부를 문장 span으로
+// 재구성하면 React 이벤트 핸들러가 붙은 원본이 클론으로 대체돼 조작이 깨진다.
+//
+// 실제 위젯을 이루는 구체 요소만 본다. [tabindex]·[role]은 넣지 않는다 —
+// rehype-pretty-code가 스크롤용으로 코드 블록(pre)에 tabindex를 달기 때문이다.
+// 코드 블록의 "복사" 버튼(button)이 자손에 있어도, 시맨틱 태그·prose 래퍼는 이
+// 검사를 건너뛰고 무조건 재귀하므로(아래 processNode) 챕터 전체가 블록으로 뭉치지
+// 않는다 — 위젯 검사는 그 밖의 div에만 적용한다.
+const INTERACTIVE_SELECTOR =
+  'button,input,select,textarea,canvas,svg,video,audio,iframe,[data-run-output],[contenteditable="true"]';
+
+function isInteractiveWidget(el: HTMLElement): boolean {
+  return el.matches(INTERACTIVE_SELECTOR) || el.querySelector(INTERACTIVE_SELECTOR) !== null;
+}
+
+// prose 래퍼(@tailwindcss/typography)인지 — 코드 블록의 복사 버튼을 품고 있어도
+// 무조건 재귀해야 하는 본문 컨테이너다.
+function isProseWrapper(el: HTMLElement): boolean {
+  return typeof el.className === 'string' && el.className.split(/\s+/).includes('prose');
+}
 
 // 문장 span·블록 포커스에 쓰는 클래스/속성 이름 상수(엔진과 CSS의 유일한 접점).
 export const RA_SENTENCE_CLASS = 'ra-sentence';
@@ -94,7 +136,16 @@ export function buildSteps(container: HTMLElement): BuiltSteps {
   const modified: ModifiedBlock[] = [];
   const blockEls: HTMLElement[] = [];
 
-  const processBlock = (el: HTMLElement) => {
+  const markBlock = (el: HTMLElement) => {
+    el.setAttribute(RA_BLOCK_ATTR, '');
+    blockEls.push(el);
+    steps.push({ el, kind: 'block' });
+  };
+
+  const processNode = (el: HTMLElement) => {
+    // 장식·숨김 요소(챕터 구분 기호 등)는 스텝으로 만들지 않는다.
+    if (el.getAttribute('aria-hidden') === 'true') return;
+
     const tag = el.tagName;
 
     if (tag === 'UL' || tag === 'OL') {
@@ -113,14 +164,38 @@ export function buildSteps(container: HTMLElement): BuiltSteps {
       return;
     }
 
-    // 그 외(pre·표 래퍼·figure·img·시각화 컴포넌트 루트) — 통째로 대기 블록.
-    el.setAttribute(RA_BLOCK_ATTR, '');
-    blockEls.push(el);
-    steps.push({ el, kind: 'block' });
+    // 코드·표·그림·미디어 — 통째로 대기 블록.
+    if (ATOMIC_TAGS.has(tag)) {
+      markBlock(el);
+      return;
+    }
+
+    // 시맨틱 구조 태그와 prose 래퍼는 위젯 검사를 건너뛰고 무조건 자식으로 파고든다
+    // (코드 블록의 복사 버튼 때문에 본문 컨테이너가 통째로 블록이 되는 것을 막는다).
+    const recurse = () => {
+      for (const child of Array.from(el.children)) {
+        if (isElement(child)) processNode(child);
+      }
+    };
+
+    if (RECURSE_TAGS.has(tag) || isProseWrapper(el)) {
+      recurse();
+      return;
+    }
+
+    // 그 밖의 요소: 인터랙티브 위젯(시각화 컴포넌트·코드 실행기 등)이면 내부를
+    // 건드리지 않도록 통째로 대기 블록. 위젯이 아니면(표 래퍼·링크 등 순수 구조)
+    // 투명하게 자식으로 통과한다 — 인라인·링크만 든 요소는 스텝을 만들지 않는다.
+    if (isInteractiveWidget(el)) {
+      markBlock(el);
+      return;
+    }
+
+    recurse();
   };
 
   for (const child of Array.from(container.children)) {
-    if (isElement(child)) processBlock(child);
+    if (isElement(child)) processNode(child);
   }
 
   const restore = () => {

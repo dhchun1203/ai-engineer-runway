@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, List } from "lucide-react";
 import { MDXContent } from "@/components/mdx-content";
 import { conceptComponents } from "@/components/concepts/concept-components";
+import { ReadingAssistant } from "@/components/reading-assistant/reading-assistant";
 import {
   getConceptBySlug,
   getOrderedConcepts,
@@ -61,7 +62,7 @@ export default async function ConceptPage(props: PageProps<"/concepts/[slug]">) 
           </div>
         </header>
 
-        <div className="prose dark:prose-invert max-w-none">
+        <div id="concept-article" className="prose dark:prose-invert max-w-none">
           <MDXContent code={concept.code} components={conceptComponents} />
         </div>
 
@@ -104,6 +105,9 @@ export default async function ConceptPage(props: PageProps<"/concepts/[slug]">) 
           )}
         </nav>
       </article>
+
+      {/* 우측 고정 독서 도우미 — 본문을 문장 단위로 확대하며 읽어 준다. */}
+      <ReadingAssistant articleId="concept-article" />
     </main>
   );
 }

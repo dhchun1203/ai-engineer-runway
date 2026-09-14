@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MDXContent } from "@/components/mdx-content";
 import { ReadingProgress } from "@/components/reading-progress";
 import { BookBookmark } from "@/components/book-bookmark";
+import { ReadingAssistant } from "@/components/reading-assistant/reading-assistant";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { formatEstimatedTime } from "@/components/estimated-time";
 import { getBookStep, getBookSteps } from "@/content/book-scopes";
@@ -57,7 +58,7 @@ export default async function BookStepPage(props: PageProps<"/book/[step]">) {
   return (
     <>
       <ReadingProgress />
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-12 px-4 py-12 sm:px-6 lg:px-8">
+      <main id="book-article" className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-12 px-4 py-12 sm:px-6 lg:px-8">
         {/* -- 표지 --------------------------------------------------------- */}
         <section className={`flex flex-col gap-4 border-l-4 pl-4 ${accentBorder}`}>
           <p className="text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark">
@@ -135,6 +136,9 @@ export default async function BookStepPage(props: PageProps<"/book/[step]">) {
           </div>
         </section>
       </main>
+      {/* 우측 고정 독서 도우미 — 표지·여는 글·각 챕터·닫는 글을 문장 단위로 이어
+          읽어 준다(엔진이 section/article/header를 파고들어 문장까지 도달). */}
+      <ReadingAssistant articleId="book-article" />
       <BookBookmark stepId={step.id} />
       <ScrollToTop />
     </>
