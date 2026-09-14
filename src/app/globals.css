@@ -23,6 +23,11 @@
   --color-foreground-dark: #e8ecf8;
   --color-muted: #5a6070; /* 보조 텍스트 */
   --color-muted-dark: #8a93ad;
+  /* 독서 도우미에서 비초점 문장을 낮출 때 쓰는 흐림 색. opacity 대신 색으로 낮춰
+     iOS WebKit이 opacity로 합성된 인라인 글자의 상단을 클립하는 문제를 피한다.
+     지면색과 잉크색 사이의 옅은 회색이다. */
+  --color-reading-dim: #b0aca1;
+  --color-reading-dim-dark: #565d70;
   --color-line: #cbc7bd; /* 얇은 구분선 */
   --color-line-dark: #303a5c;
 
@@ -2251,13 +2256,24 @@ code[data-theme*=" "] span {
 
 /* 문장 포커스 — 활성 컨테이너 안에서 모든 문장은 흐리게, 초점 문장만 또렷+확대.
    line-height는 위에서 고정 길이로 상속되므로 여기서 건드리지 않는다(건드리면 다시
-   폰트 비례로 커진다). */
+   폰트 비례로 커진다).
+
+   흐림은 opacity가 아니라 "색"으로 준다 — iOS WebKit(아이폰·아이패드)이 opacity로
+   합성된 인라인 요소의 글자 상단을 잘라내는 문제를 피하려면 인라인에 opacity를 걸면
+   안 된다. 비초점 문장은 색만 옅은 회색으로 낮추고(볼드·코드·링크까지), 초점 문장은
+   원래 색을 되살린다. */
 .ra-reading .ra-sentence {
-  opacity: 0.38;
-  transition: opacity 200ms ease, font-size 220ms ease, color 220ms ease;
+  transition: color 200ms ease, font-size 220ms ease;
+}
+.ra-reading .ra-sentence:not(.ra-focus),
+.ra-reading .ra-sentence:not(.ra-focus) :is(strong, b, em, i, code, a) {
+  color: var(--color-reading-dim);
+}
+.dark .ra-reading .ra-sentence:not(.ra-focus),
+.dark .ra-reading .ra-sentence:not(.ra-focus) :is(strong, b, em, i, code, a) {
+  color: var(--color-reading-dim-dark);
 }
 .ra-reading .ra-sentence.ra-focus {
-  opacity: 1;
   font-size: 1.3em;
   color: var(--color-foreground);
 }
@@ -2289,7 +2305,9 @@ code[data-theme*=" "] span {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ra-reading .ra-sentence,
+  .ra-reading .ra-sentence {
+    transition: color 120ms ease;
+  }
   .ra-reading [data-ra-block] {
     transition: opacity 120ms ease;
   }
