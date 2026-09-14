@@ -153,7 +153,7 @@ export const basecampSteps: readonly BasecampStep[] = [
         officialUrl: `${OFFICIAL_BASE}3db2dc3e-f514-80ad-81b4-cacc012a93ce`,
         summary:
           "조건문과 반복문으로 상황에 따라 프로그램의 흐름을 제어하는 법을 익힙니다.",
-        ourLessonHref: "/lesson/1-3-python-functions-and-io",
+        ourLessonHref: "/basecamp/python-conditionals-loops",
       },
       {
         id: "s2-func",
@@ -162,7 +162,7 @@ export const basecampSteps: readonly BasecampStep[] = [
         officialUrl: `${OFFICIAL_BASE}3db2dc3e-f514-80e1-8419-c828ccb537c4`,
         summary:
           "함수의 개념과 필요성을 이해하고, 함수를 정의하고 호출하는 법을 익힙니다.",
-        ourLessonHref: "/lesson/1-3-python-functions-and-io",
+        ourLessonHref: "/basecamp/python-functions",
       },
       {
         id: "s2-final",
