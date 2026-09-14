@@ -8,7 +8,7 @@
 // + 기록 + 소유자 알림). 비밀번호 일치는 클라이언트에서도 즉시 확인하지만 서버에서 반드시
 // 재검증한다(클라이언트를 신뢰하지 않는다).
 
-import { createAccessRequest } from '@/lib/access';
+import { createAccessRequest, isValidInviteCode } from '@/lib/access';
 import { sendAccessRequestNotice } from '@/lib/email';
 import { type AuthState, readCredentials } from '../login/auth-shared';
 
@@ -31,7 +31,12 @@ export async function signUpAction(_prev: SignupState, formData: FormData): Prom
     return { error: '비밀번호가 일치하지 않아요. 다시 확인해 주세요.', notice: null };
   }
 
-  const result = await createAccessRequest(email, password);
+  // 수업 초대 코드가 맞으면 자동 승인(바로 로그인). 코드는 서버에서만 검증한다.
+  // INVITE_CODE 미설정이면 isValidInviteCode가 항상 false라 기존 수동 승인으로 흐른다.
+  const invite = String(formData.get('invite') ?? '');
+  const autoApprove = isValidInviteCode(invite);
+
+  const result = await createAccessRequest(email, password, autoApprove);
 
   if (result.kind === 'error') {
     return { error: '가입 요청 처리에 실패했어요. 잠시 후 다시 시도해 주세요.', notice: null };
@@ -55,7 +60,15 @@ export async function signUpAction(_prev: SignupState, formData: FormData): Prom
     };
   }
 
-  // 새 요청 접수 성공 -> 소유자에게 알림 메일(실패해도 가입 요청 자체는 유지한다).
+  // 초대 코드로 자동 승인된 경우: 알림 메일 없이 곧바로 로그인 안내.
+  if (result.autoApproved) {
+    return {
+      error: null,
+      notice: '가입이 완료됐어요. 이제 로그인 페이지에서 바로 로그인할 수 있어요.',
+    };
+  }
+
+  // 수동 승인 경로: 소유자에게 알림 메일(실패해도 가입 요청 자체는 유지한다).
   await sendAccessRequestNotice(email);
 
   return {

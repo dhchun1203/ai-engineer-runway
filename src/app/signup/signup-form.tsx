@@ -32,10 +32,25 @@ export function SignupForm() {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-label font-normal leading-relaxed text-muted dark:text-muted-dark">
-        가입은 관리자 승인제로 운영돼요. 제출하면 승인 요청이 접수되고, 관리자가 승인한 뒤에
-        로그인할 수 있어요. 승인되면 입력한 이메일로 알려드려요.
+        수업 초대 코드가 있으면 코드를 입력해 바로 가입할 수 있어요. 코드가 없으면 관리자
+        승인제로 운영돼요. 제출하면 승인 요청이 접수되고, 관리자가 승인한 뒤에 로그인할 수
+        있어요. 승인되면 입력한 이메일로 알려드려요.
       </p>
       <form action={formAction} className="flex flex-col gap-4">
+        <label className="flex flex-col gap-1 text-label font-semibold">
+          수업 초대 코드 <span className="font-normal text-muted dark:text-muted-dark">(있으면 입력)</span>
+          <input
+            name="invite"
+            type="text"
+            autoComplete="off"
+            inputMode="text"
+            className={inputClass}
+            placeholder="수업에서 받은 코드"
+          />
+          <span className="text-label font-normal text-muted dark:text-muted-dark">
+            코드를 입력하면 승인 없이 바로 가입돼요.
+          </span>
+        </label>
         <label className="flex flex-col gap-1 text-label font-semibold">
           이메일
           <input name="email" type="email" autoComplete="email" inputMode="email" required className={inputClass} />

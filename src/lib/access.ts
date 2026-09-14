@@ -8,6 +8,7 @@ import 'server-only';
 // 기록한다. 소유자가 승인하면 차단을 풀고 approved로, 거절하면 rejected로(차단 유지) 바꾼다.
 // 차단된 유저는 Supabase가 로그인을 자동 거부하므로 "승인 전엔 로그인 불가"가 보장된다.
 
+import { timingSafeEqual } from 'node:crypto';
 import { supabaseAdmin } from './supabase/admin';
 
 // 100년 차단 = 사실상 무기한. 승인 시 'none'으로 풀어 준다.
@@ -16,9 +17,25 @@ const BAN_FOREVER = '876000h';
 export type RequestStatus = 'pending' | 'approved' | 'rejected';
 
 export type SignupResult =
-  | { kind: 'created' }
+  | { kind: 'created'; autoApproved: boolean }
   | { kind: 'duplicate'; status: RequestStatus }
   | { kind: 'error' };
+
+/**
+ * 수업 초대 코드 검증. env INVITE_CODE와 상수 시간으로 비교한다 — 맞으면 가입이 즉시
+ * 승인된다(수동 승인 대기 없이 바로 로그인). 코드는 서버에서만 다루며 클라이언트로
+ * 절대 내보내지 않는다(NEXT_PUBLIC_ 접두사 금지). INVITE_CODE가 비어 있으면(미설정)
+ * 항상 false를 돌려 자동 승인 경로가 꺼진다 — 그 경우 모든 가입은 기존 수동 승인으로
+ * 안전하게 흐른다(안전한 기본값). 길이가 다르면 timingSafeEqual이 던지므로 먼저 거른다.
+ */
+export function isValidInviteCode(input: string): boolean {
+  const expected = process.env.INVITE_CODE?.trim();
+  if (!expected || !input) return false;
+  const a = Buffer.from(input);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
 
 export type PendingRequest = {
   userId: string;
@@ -38,22 +55,30 @@ async function findRequestByEmail(email: string): Promise<RequestStatus | null> 
 }
 
 /**
- * 가입 요청을 접수한다. 유저를 차단 상태로 만들고 pending으로 기록한다.
+ * 가입 요청을 접수한다.
+ * - autoApprove=false(기본): 유저를 차단 상태로 만들고 pending으로 기록한다(수동 승인 대기).
+ * - autoApprove=true(초대 코드 일치): 차단하지 않고 곧바로 approved로 기록한다 — 바로 로그인
+ *   할 수 있다. 초대 코드 검증(isValidInviteCode)은 호출부(signUpAction)가 이미 끝냈다.
  * 이미 있는 이메일이면 그 상태(pending/approved/rejected)를 담아 'duplicate'를 돌려준다.
  */
-export async function createAccessRequest(email: string, password: string): Promise<SignupResult> {
+export async function createAccessRequest(
+  email: string,
+  password: string,
+  autoApprove = false,
+): Promise<SignupResult> {
   // 먼저 우리 테이블에서 중복을 본다 — 이 흐름으로 들어온 요청이면 여기서 잡힌다.
   const existing = await findRequestByEmail(email);
   if (existing) return { kind: 'duplicate', status: existing };
 
-  // 차단 상태로 유저 생성. email_confirm: true 로 Supabase 확인 메일을 억제한다(우리가 승인
-  // 흐름을 대신 책임진다). ban_duration을 생성 시 함께 넣되, 버전에 따라 생성 시 무시될 수
-  // 있어 아래에서 updateUserById로 한 번 더 확실히 차단한다.
+  // 유저 생성. email_confirm: true 로 Supabase 확인 메일을 억제한다(우리가 승인 흐름을 대신
+  // 책임진다). autoApprove가 아니면 차단 상태로 만든다(ban_duration을 생성 시 함께 넣되,
+  // 버전에 따라 무시될 수 있어 아래에서 한 번 더 확실히 차단한다). autoApprove면 차단하지
+  // 않아 곧바로 로그인할 수 있다.
   const created = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
-    ban_duration: BAN_FOREVER,
+    ...(autoApprove ? {} : { ban_duration: BAN_FOREVER }),
   });
 
   if (created.error || !created.data.user) {
@@ -68,20 +93,25 @@ export async function createAccessRequest(email: string, password: string): Prom
 
   const userId = created.data.user.id;
 
-  // 확실한 차단(생성 시 무시된 경우 대비).
-  await supabaseAdmin.auth.admin.updateUserById(userId, { ban_duration: BAN_FOREVER });
+  // 수동 승인 경로에서만 확실히 차단한다(생성 시 무시된 경우 대비).
+  if (!autoApprove) {
+    await supabaseAdmin.auth.admin.updateUserById(userId, { ban_duration: BAN_FOREVER });
+  }
 
-  const inserted = await supabaseAdmin
-    .from('access_requests')
-    .insert({ user_id: userId, email, status: 'pending' });
+  const inserted = await supabaseAdmin.from('access_requests').insert({
+    user_id: userId,
+    email,
+    status: autoApprove ? 'approved' : 'pending',
+    ...(autoApprove ? { decided_at: new Date().toISOString() } : {}),
+  });
   if (inserted.error) {
-    // 테이블 기록에 실패하면 방금 만든 차단 유저를 되돌려 고아 계정을 남기지 않는다.
+    // 테이블 기록에 실패하면 방금 만든 유저를 되돌려 고아 계정을 남기지 않는다.
     await supabaseAdmin.auth.admin.deleteUser(userId);
     console.error('createAccessRequest: access_requests insert 실패:', inserted.error);
     return { kind: 'error' };
   }
 
-  return { kind: 'created' };
+  return { kind: 'created', autoApproved: autoApprove };
 }
 
 /** 로그인 실패 문구 분기를 위해 이메일의 요청 상태를 조회한다. 없으면 null. */
