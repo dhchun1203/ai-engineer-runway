@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BookOpenText, Flag, ListChecks, PenLine } from 'lucide-react';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { isOwnerSession } from '@/lib/owner';
 import { LoginForm } from './login-form';
 import { signOutAction } from './actions';
 
@@ -54,6 +55,9 @@ const FEATURES = [
 
 export default async function LoginPage() {
   const loggedInEmail = await currentUserEmail();
+  // 가입 승인(/admin)은 소유자 전용 관리 기능이라 프로필(로그인됨) 화면 안에서만, 그리고
+  // 소유자에게만 노출한다(더보기 메뉴에서 이리로 옮김, 2026-09-14). 로그인 상태일 때만 확인.
+  const isOwner = loggedInEmail ? await isOwnerSession() : false;
 
   return (
     <main className="mx-auto grid w-full max-w-5xl flex-1 grid-cols-1 items-start gap-10 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-14 lg:py-16">
@@ -108,6 +112,21 @@ export default async function LoginPage() {
                 </button>
               </form>
             </div>
+
+            {/* 소유자 전용 관리 — 가입 승인. 소유자가 아니면 이 구역 자체가 없다. */}
+            {isOwner ? (
+              <div className="flex flex-col gap-2 border-t-2 border-line pt-4 dark:border-line-dark">
+                <span className="text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                  관리
+                </span>
+                <Link
+                  href="/admin"
+                  className="chip tap-feedback inline-flex min-h-11 w-fit items-center text-body"
+                >
+                  가입 승인
+                </Link>
+              </div>
+            ) : null}
           </div>
         ) : (
           <>

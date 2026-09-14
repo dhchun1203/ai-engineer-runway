@@ -239,8 +239,9 @@ export function SiteNav() {
 
   // 4개 대메뉴 + 상태에 따른 계정 항목("로그인"/"프로필"). 데스크톱·모바일 두 렌더가
   // 같은 목록을 쓰게 한 벌만 만든다.
-  // 슬랙 피드와 가입 승인은 소유자 전용이라 소유자일 때만, 그리고 최상위가 아니라 "더보기"
-  // 하위 메뉴에 넣는다(사용자 요청 2026-09-12). "더보기" 항목의 children 끝에 덧붙인다.
+  // 슬랙 피드는 소유자 전용이라 소유자일 때만, 그리고 최상위가 아니라 "더보기" 하위 메뉴에
+  // 넣는다(사용자 요청 2026-09-12). 가입 승인(/admin)은 더보기에서 빼 프로필 페이지 안으로
+  // 옮겼다(2026-09-14, 소유자 전용). "더보기" 항목의 children 끝에 슬랙만 덧붙인다.
   const navItems: readonly NavItem[] = [
     ...NAV_ITEMS
       // 채널톡 로드맵은 허용 계정(소유자 + 테스터)에게만 보인다 — 그 외에는 항목 자체를 뺀다.
@@ -252,7 +253,6 @@ export function SiteNav() {
             children: [
               ...(item.children ?? []),
               { label: "슬랙", href: "/slack" },
-              { label: "가입 승인", href: "/admin" },
             ],
           }
         : item,
@@ -365,7 +365,7 @@ export function SiteNav() {
                                   <span
                                     key={child.label}
                                     className={`-mx-1 bg-line px-3 py-1 text-label font-semibold text-badge-neutral-text dark:bg-line-dark dark:text-badge-neutral-text-dark ${
-                                      ci === 0 ? "" : "mt-1"
+                                      ci === 0 ? "-mt-1" : "mt-1"
                                     }`}
                                   >
                                     {child.label}
@@ -382,7 +382,7 @@ export function SiteNav() {
                                   key={child.label}
                                   href={child.href}
                                   onClick={() => setOpenMenu(null)}
-                                  className={`nav-link tap-feedback flex min-h-11 items-center px-3 text-label font-bold ${
+                                  className={`nav-link tap-feedback flex min-h-11 items-center pl-6 pr-3 text-label font-bold ${
                                     childActive
                                       ? "chip-solid"
                                       : "text-muted dark:text-muted-dark"
