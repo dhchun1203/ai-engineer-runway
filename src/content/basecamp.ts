@@ -144,7 +144,7 @@ export const basecampSteps: readonly BasecampStep[] = [
         officialUrl: `${OFFICIAL_BASE}3db2dc3e-f514-8049-8947-d08289cf51e2`,
         summary:
           "딕셔너리의 키와 값 구조를 이해하고, 데이터를 저장하고 조회하는 법을 익힙니다.",
-        ourLessonHref: "/lesson/1-3-python-lists-tuples-dicts",
+        ourLessonHref: "/basecamp/python-dictionaries",
       },
       {
         id: "s2-flow",
