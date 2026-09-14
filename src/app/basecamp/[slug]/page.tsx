@@ -7,6 +7,7 @@ import {
   getBasecampLessonBySlug,
   getOrderedBasecampLessons,
 } from "@/content/basecamp-lesson-helpers";
+import { BasecampNote } from "@/components/basecamp-note";
 
 // 베이스캠프 전용 학습 레슨 리더 — 완전 정적. concepts·roadmap 리더와 같은 셸이되
 // 진도·완료·복습·북마크가 전혀 없다(격리 컬렉션). 콘텐츠는 basecampLessons에서 온다.
@@ -41,7 +42,10 @@ export default async function BasecampLessonPage({
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
+    // note-page-spacer: 하단 고정 메모 시트가 마지막 콘텐츠를 가리지 않도록 하단
+    // 여백을 준다(정규 레슨 페이지와 동일). 메모가 잠겨 렌더되지 않아도 여백만
+    // 조금 남을 뿐이라, 마운트 후 잠금 여부가 확정되기 전 레이아웃 시프트를 피한다.
+    <main className="note-page-spacer mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
       <article className="flex flex-col gap-8">
         <header className="flex flex-col gap-3">
           <Link
@@ -74,6 +78,10 @@ export default async function BasecampLessonPage({
           </Link>
         </nav>
       </article>
+
+      {/* 하단 고정 메모장(정규 레슨과 동일 UI). 완전 정적 페이지 위에 얹는 얇은
+          클라이언트 아일랜드로, 마운트 후 자기 메모만 읽어 온다. */}
+      <BasecampNote slug={lesson.slug} />
     </main>
   );
 }

@@ -27,9 +27,16 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'failed';
 export function LessonNotepad({
   lessonId,
   initialBody,
+  // 저장 경로만 주입받는다 — UI·자동 저장·아이패드 키보드 보정은 정규 레슨과
+  // 베이스캠프가 완전히 동일하다. 기본값은 정규 레슨 액션이라 기존 호출부
+  // (progress-slots.tsx)는 이 prop을 넘기지 않아도 동작이 그대로다. 베이스캠프
+  // 아일랜드(basecamp-note.tsx)만 saveBasecampNoteAction을 넘겨, 슬러그 검증과
+  // `basecamp:` 키 접두사가 다른 격리 경로로 저장되게 한다.
+  saveAction = saveLessonNoteAction,
 }: {
   lessonId: string;
   initialBody: string;
+  saveAction?: (lessonId: string, body: string) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(initialBody);
@@ -64,7 +71,7 @@ export function LessonNotepad({
     if (current === lastSavedRef.current) return;
     if (mountedRef.current) setStatus('saving');
     try {
-      await saveLessonNoteAction(lessonId, current);
+      await saveAction(lessonId, current);
       lastSavedRef.current = current;
       if (mountedRef.current) setStatus('saved');
     } catch {
