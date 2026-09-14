@@ -7,7 +7,7 @@ import 'server-only';
 // 기기 간 동기화(quick 260904-a1o 후속)를 위해 원래 localStorage였던 책갈피를 서버로
 // 옮긴 것이다. 단일 소유자 데이터라 user_id 없이 step_id만으로 유일하다.
 
-import { supabaseAdmin } from './supabase/admin';
+import { getUserDb } from './supabase/db';
 import { getCurrentUserId, requireCurrentUserId } from './current-user';
 
 export type BookBookmark = { chapter: string | null; within: number; y: number };
@@ -38,7 +38,8 @@ export async function readBookBookmark(stepId: number): Promise<BookBookmarkRead
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, bookmark: null };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('book_bookmark')
     .select('chapter_slug, within_offset, scroll_y')
     .eq('user_id', userId)
@@ -71,7 +72,8 @@ export async function setBookBookmark(stepId: number, mark: BookBookmark): Promi
   const chapter = mark.chapter ? mark.chapter.slice(0, MAX_SLUG_LENGTH) : null;
 
   const userId = await requireCurrentUserId();
-  const { error } = await supabaseAdmin.from('book_bookmark').upsert(
+  const db = await getUserDb();
+  const { error } = await db.from('book_bookmark').upsert(
     {
       user_id: userId,
       step_id: stepId,

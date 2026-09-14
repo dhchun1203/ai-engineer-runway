@@ -7,7 +7,7 @@ import 'server-only';
 // (lesson_id, section_index) 복합 키를 쓴다. section_title을 함께 저장·반환하는 이유는
 // 마이그레이션 주석 참고 — 본문 개정으로 h2 순서가 바뀌어도 제목으로 되찾기 위한 폴백이다.
 
-import { supabaseAdmin } from './supabase/admin';
+import { getUserDb } from './supabase/db';
 import { getCurrentUserId, requireCurrentUserId } from './current-user';
 
 export type Bookmark = { index: number; title: string };
@@ -32,7 +32,8 @@ export async function readLessonBookmarks(lessonSlug: string): Promise<Bookmarks
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, bookmarks: [] };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('lesson_bookmark')
     .select('section_index, section_title')
     .eq('user_id', userId)
@@ -65,7 +66,8 @@ export async function addBookmark(
   const title = sectionTitle.slice(0, MAX_SECTION_TITLE_LENGTH);
 
   const userId = await requireCurrentUserId();
-  const { error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { error } = await db
     .from('lesson_bookmark')
     .upsert(
       { user_id: userId, lesson_id: lessonSlug, section_index: sectionIndex, section_title: title },
@@ -83,7 +85,8 @@ export async function removeBookmark(lessonSlug: string, sectionIndex: number): 
   }
 
   const userId = await requireCurrentUserId();
-  const { error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { error } = await db
     .from('lesson_bookmark')
     .delete()
     .eq('user_id', userId)
@@ -111,7 +114,8 @@ export async function readAllBookmarks(): Promise<AllBookmarksRead> {
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, rows: [] };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('lesson_bookmark')
     .select('lesson_id, section_index, section_title, created_at')
     .eq('user_id', userId);

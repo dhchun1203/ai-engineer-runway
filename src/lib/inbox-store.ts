@@ -1,11 +1,11 @@
 import 'server-only';
 
 // inbox_item 테이블의 유일한 데이터 접근 계층 — review-store.ts와 동형
-// (server-only + supabaseAdmin + ok/error 판별 유니온). localStorage가 아니다 —
+// (server-only + getUserDb + ok/error 판별 유니온). localStorage가 아니다 —
 // Supabase 저장이 기기 간 공유의 핵심(D-17 전제 위에서도 질문함은 기기 어디서나
 // 같은 목록을 봐야 한다).
 
-import { supabaseAdmin } from './supabase/admin';
+import { getUserDb } from './supabase/db';
 import { getCurrentUserId, requireCurrentUserId } from './current-user';
 
 export type InboxItem = {
@@ -28,7 +28,8 @@ export async function readInboxItems(): Promise<InboxItemsRead> {
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, items: [] };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('inbox_item')
     .select('id, body, lesson_id, created_at, done')
     .eq('user_id', userId)
@@ -60,7 +61,8 @@ export async function addInboxItem(body: string, lessonId?: string | null): Prom
   }
 
   const userId = await requireCurrentUserId();
-  const { error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { error } = await db
     .from('inbox_item')
     .insert({ user_id: userId, body: trimmed, lesson_id: lessonId ?? null });
 
@@ -72,7 +74,8 @@ export async function addInboxItem(body: string, lessonId?: string | null): Prom
 export async function setInboxItemDone(id: string, done: boolean): Promise<void> {
   // user_id로도 좁혀 남의 항목을 뒤집지 못하게 한다(id는 uuid라 추측은 어렵지만 방어).
   const userId = await requireCurrentUserId();
-  const { error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { error } = await db
     .from('inbox_item')
     .update({ done })
     .eq('id', id)

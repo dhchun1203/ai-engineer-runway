@@ -1,10 +1,10 @@
 import 'server-only';
 
 // lesson_review 테이블의 유일한 데이터 접근 계층 — progress-store.ts와 동형
-// (server-only + supabaseAdmin + ok/error 판별 유니온). 만기 계산(순수)은
+// (server-only + getUserDb + ok/error 판별 유니온). 만기 계산(순수)은
 // src/lib/review.ts가, 저장은 이 파일이 맡는다.
 
-import { supabaseAdmin } from './supabase/admin';
+import { getUserDb } from './supabase/db';
 import { getCurrentUserId, requireCurrentUserId } from './current-user';
 import type { ReviewState, ReviewJudgment } from './review';
 
@@ -19,7 +19,8 @@ export async function readReviewStates(): Promise<ReviewStatesRead> {
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, states: new Map() };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('lesson_review')
     .select('lesson_id, review_count, last_reviewed_at, missed_q')
     .eq('user_id', userId);
@@ -47,9 +48,10 @@ export async function readReviewStates(): Promise<ReviewStatesRead> {
  * 판정의 정확도보다 회상 시도 자체가 효과의 대부분이다). */
 export async function markLessonReviewed(lessonSlug: string): Promise<void> {
   const userId = await requireCurrentUserId();
+  const db = await getUserDb();
   // upsert로는 "기존 값 +1"을 원자적으로 못 쓰므로 read-modify-write.
   // 한 사용자 한 기기가 전제라 경합은 실질적으로 없다.
-  const { data, error: readError } = await supabaseAdmin
+  const { data, error: readError } = await db
     .from('lesson_review')
     .select('review_count')
     .eq('user_id', userId)
@@ -61,7 +63,7 @@ export async function markLessonReviewed(lessonSlug: string): Promise<void> {
   }
 
   const nextCount = ((data?.review_count as number | undefined) ?? 0) + 1;
-  const { error } = await supabaseAdmin.from('lesson_review').upsert(
+  const { error } = await db.from('lesson_review').upsert(
     {
       user_id: userId,
       lesson_id: lessonSlug,
@@ -90,7 +92,8 @@ export async function recordReviewJudgment(
   judgment: ReviewJudgment,
 ): Promise<void> {
   const userId = await requireCurrentUserId();
-  const { data, error: readError } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error: readError } = await db
     .from('lesson_review')
     .select('missed_q')
     .eq('user_id', userId)
@@ -109,7 +112,7 @@ export async function recordReviewJudgment(
         ? current
         : [...current, questionIndex].sort((a, b) => a - b);
 
-  const { error } = await supabaseAdmin.from('lesson_review').upsert(
+  const { error } = await db.from('lesson_review').upsert(
     {
       user_id: userId,
       lesson_id: lessonSlug,

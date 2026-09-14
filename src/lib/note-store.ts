@@ -4,7 +4,7 @@ import 'server-only';
 // 미러링한다. 조회 실패와 "아직 메모 없음"을 타입 수준에서 구분해 반환한다 — 조회
 // 실패를 빈 메모로 오인해 화면에 보여주면 사용자는 메모가 사라졌다고 느낀다.
 
-import { supabaseAdmin } from './supabase/admin';
+import { getUserDb } from './supabase/db';
 import { getCurrentUserId, requireCurrentUserId } from './current-user';
 
 export type NoteRead =
@@ -23,7 +23,8 @@ export async function readLessonNote(lessonSlug: string): Promise<NoteRead> {
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, body: '', til: '', needsReview: false };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('lesson_note')
     .select('body, til, needs_review')
     .eq('user_id', userId)
@@ -52,7 +53,8 @@ export async function saveLessonNote(lessonSlug: string, body: string): Promise<
   }
 
   const userId = await requireCurrentUserId();
-  const { error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { error } = await db
     .from('lesson_note')
     .upsert(
       { user_id: userId, lesson_id: lessonSlug, body, updated_at: new Date().toISOString() },
@@ -75,7 +77,8 @@ export async function saveLessonTil(lessonSlug: string, til: string): Promise<vo
   }
 
   const userId = await requireCurrentUserId();
-  const { error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { error } = await db
     .from('lesson_note')
     .upsert(
       { user_id: userId, lesson_id: lessonSlug, til, updated_at: new Date().toISOString() },
@@ -92,7 +95,8 @@ export async function saveLessonTil(lessonSlug: string, til: string): Promise<vo
 // 켜고 끄는 사용자 신호 하나를 저장할 뿐, 완료 상태와는 완전히 독립이다.
 export async function saveLessonNeedsReview(lessonSlug: string, needsReview: boolean): Promise<void> {
   const userId = await requireCurrentUserId();
-  const { error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { error } = await db
     .from('lesson_note')
     .upsert(
       { user_id: userId, lesson_id: lessonSlug, needs_review: needsReview, updated_at: new Date().toISOString() },
@@ -115,7 +119,8 @@ export async function readNeedsReviewLessonIds(): Promise<NeedsReviewRead> {
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, ids: new Set() };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('lesson_note')
     .select('lesson_id')
     .eq('user_id', userId)
@@ -140,7 +145,8 @@ export async function readAllLessonNotes(): Promise<AllNotesRead> {
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, notes: new Map() };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('lesson_note')
     .select('lesson_id, body')
     .eq('user_id', userId);

@@ -7,9 +7,10 @@ import 'server-only';
 // 진도·메모·북마크를 함께 읽어도 세션 검증은 한 번뿐이다. getUser()는 토큰을 Auth
 // 서버로 검증하므로 위조 쿠키로는 통과할 수 없다.
 //
-// 격리 원칙: 데이터 접근은 여전히 service_role(supabaseAdmin)로 하되, 모든 쿼리를 이
-// user_id로 필터/삽입해 사용자별 격리를 애플리케이션 계층에서 강제한다. 이 파일이
-// 그 user_id의 유일한 출처다.
+// 격리 원칙(2겹): 데이터 접근은 로그인 본인 자격(supabase/db.ts의 getUserDb, RLS 적용)으로
+// 하고 — DB의 auth.uid()=user_id 정책이 본인 행 외 접근을 차단한다 — 그 위에 모든 쿼리를
+// 이 user_id로도 필터/삽입해 애플리케이션 계층에서 한 번 더 강제한다. 이 파일이 그 user_id의
+// 유일한 출처다. (service_role 우회 접근은 가입 승인 등 관리 작업 전용으로만 남긴다 — admin.ts)
 
 import { cache } from 'react';
 import { createSupabaseServerClient } from './supabase/server';

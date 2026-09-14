@@ -1,10 +1,12 @@
 import 'server-only';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { getUserDb } from '@/lib/supabase/db';
 import { getCurrentUserId, requireCurrentUserId } from '@/lib/current-user';
 import type { TilPost, TilTemplate, TilStatus, TilSeries } from './types';
 
 // TIL은 계정별 저장이다 — 모든 조회/쓰기를 현재 로그인 사용자의 user_id로 좁힌다.
 // 비로그인 조회는 빈 결과로 성공을 반환한다(로그인해야 자기 글이 보인다).
+// 데이터 접근은 getUserDb()(로그인 본인 자격, RLS 적용)로 한다 — DB의 auth.uid()=user_id
+// 정책이 격리를 강제하고, 아래 .eq('user_id', userId)가 앱 계층 방어를 겹친다(2겹).
 
 export type TilRead<T> = { ok: true; data: T } | { ok: false; error: string };
 export type TilWrite<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -39,7 +41,8 @@ export async function listPublishedPosts(): Promise<TilRead<TilPost[]>> {
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, data: [] };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('til_post')
     .select(POST_COLUMNS)
     .eq('user_id', userId)
@@ -53,7 +56,8 @@ export async function getPublishedPostBySlug(slug: string): Promise<TilRead<TilP
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, data: null };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('til_post')
     .select(POST_COLUMNS)
     .eq('user_id', userId)
@@ -68,7 +72,8 @@ export async function getPostBySlugAnyStatus(slug: string): Promise<TilRead<TilP
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, data: null };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('til_post')
     .select(POST_COLUMNS)
     .eq('user_id', userId)
@@ -82,7 +87,8 @@ export async function listDraftPosts(): Promise<TilRead<TilPost[]>> {
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, data: [] };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('til_post')
     .select(POST_COLUMNS)
     .eq('user_id', userId)
@@ -96,7 +102,8 @@ export async function listPublishedByTag(tag: string): Promise<TilRead<TilPost[]
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, data: [] };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('til_post')
     .select(POST_COLUMNS)
     .eq('user_id', userId)
@@ -128,11 +135,13 @@ export type TilPostRow = {
 
 export async function upsertPost(row: TilPostRow): Promise<TilWrite<{ slug: string }>> {
   const userId = await requireCurrentUserId();
+  const db = await getUserDb();
 
   // 수정(id 존재)일 때는 그 글이 정말 이 사용자 것인지 먼저 확인한다 — id로 남의 글을
-  // 갈아엎거나 소유권을 뺏는 것을 막는다(방어적 검사).
+  // 갈아엎거나 소유권을 뺏는 것을 막는다(방어적 검사). RLS도 남의 행을 숨기지만, 앱
+  // 계층에서 명시적 권한 오류를 돌려주기 위해 이 검사를 유지한다.
   if (row.id) {
-    const { data: owned, error: ownErr } = await supabaseAdmin
+    const { data: owned, error: ownErr } = await db
       .from('til_post')
       .select('user_id')
       .eq('id', row.id)
@@ -144,7 +153,7 @@ export async function upsertPost(row: TilPostRow): Promise<TilWrite<{ slug: stri
   }
 
   const payload = { ...row, user_id: userId, updated_at: new Date().toISOString() };
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await db
     .from('til_post')
     .upsert(payload, { onConflict: 'id' })
     .select('slug')
@@ -155,7 +164,8 @@ export async function upsertPost(row: TilPostRow): Promise<TilWrite<{ slug: stri
 
 export async function deletePost(id: string): Promise<TilWrite<void>> {
   const userId = await requireCurrentUserId();
-  const { error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { error } = await db
     .from('til_post')
     .delete()
     .eq('id', id)
@@ -169,7 +179,8 @@ export async function slugExists(slug: string, exceptId?: string): Promise<boole
   const userId = await getCurrentUserId();
   if (!userId) return false;
 
-  let q = supabaseAdmin.from('til_post').select('id').eq('user_id', userId).eq('slug', slug);
+  const db = await getUserDb();
+  let q = db.from('til_post').select('id').eq('user_id', userId).eq('slug', slug);
   if (exceptId) q = q.neq('id', exceptId);
   const { data } = await q.maybeSingle();
   return Boolean(data);
@@ -181,7 +192,8 @@ export async function listPublishedDates(): Promise<TilRead<string[]>> {
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, data: [] };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('til_post')
     .select('published_at')
     .eq('user_id', userId)
@@ -210,7 +222,8 @@ export async function listSeries(): Promise<TilRead<TilSeries[]>> {
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, data: [] };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('til_series')
     .select('id, slug, title, description, created_at')
     .eq('user_id', userId)
@@ -223,7 +236,8 @@ export async function getSeriesBySlug(slug: string): Promise<TilRead<TilSeries |
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, data: null };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('til_series')
     .select('id, slug, title, description, created_at')
     .eq('user_id', userId)
@@ -237,7 +251,8 @@ export async function listPublishedBySeries(seriesId: string): Promise<TilRead<T
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, data: [] };
 
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('til_post')
     .select(POST_COLUMNS)
     .eq('user_id', userId)
@@ -250,7 +265,8 @@ export async function listPublishedBySeries(seriesId: string): Promise<TilRead<T
 
 export async function createSeries(title: string, slug: string): Promise<TilWrite<{ id: string }>> {
   const userId = await requireCurrentUserId();
-  const { data, error } = await supabaseAdmin
+  const db = await getUserDb();
+  const { data, error } = await db
     .from('til_series')
     .insert({ user_id: userId, title, slug })
     .select('id')
