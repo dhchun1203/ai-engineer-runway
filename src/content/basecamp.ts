@@ -128,6 +128,52 @@ export const basecampSteps: readonly BasecampStep[] = [
       },
     ],
   },
+  {
+    no: 3,
+    weekLabel: "2주차",
+    title: "Python 문법 확장",
+    summary:
+      "딕셔너리로 데이터를 다루고, 조건문과 반복문으로 흐름을 제어하고, 함수로 코드를 구조화합니다. 마지막에 배운 문법을 조합해 직접 코드를 짜서 제출합니다.",
+    released: true,
+    officialUrl: `${OFFICIAL_BASE}3db2dc3e-f514-8023-8ace-c1dd519f6002`,
+    items: [
+      {
+        id: "s2-dict",
+        title: "딕셔너리 알아보기",
+        kind: "lesson",
+        officialUrl: `${OFFICIAL_BASE}3db2dc3e-f514-8049-8947-d08289cf51e2`,
+        summary:
+          "딕셔너리의 키와 값 구조를 이해하고, 데이터를 저장하고 조회하는 법을 익힙니다.",
+        ourLessonHref: "/lesson/1-3-python-lists-tuples-dicts",
+      },
+      {
+        id: "s2-flow",
+        title: "조건문과 반복문",
+        kind: "lesson",
+        officialUrl: `${OFFICIAL_BASE}3db2dc3e-f514-80ad-81b4-cacc012a93ce`,
+        summary:
+          "조건문과 반복문으로 상황에 따라 프로그램의 흐름을 제어하는 법을 익힙니다.",
+        ourLessonHref: "/lesson/1-3-python-functions-and-io",
+      },
+      {
+        id: "s2-func",
+        title: "함수 이해하기",
+        kind: "lesson",
+        officialUrl: `${OFFICIAL_BASE}3db2dc3e-f514-80e1-8419-c828ccb537c4`,
+        summary:
+          "함수의 개념과 필요성을 이해하고, 함수를 정의하고 호출하는 법을 익힙니다.",
+        ourLessonHref: "/lesson/1-3-python-functions-and-io",
+      },
+      {
+        id: "s2-final",
+        title: "최종 과제 실습 (기본 / 심화 중 선택)",
+        kind: "assignment",
+        officialUrl: `${OFFICIAL_BASE}3db2dc3e-f514-8023-8ace-c1dd519f6002`,
+        summary:
+          "배운 문법을 조합해 간단한 문제를 스스로 해결하는 코드를 작성해 제출합니다. 기본과 심화 두 버전 중 본인 수준에 맞는 하나를 골라 진행합니다.",
+      },
+    ],
+  },
 ];
 
 /** action 검증용 — 알려진 항목 id 집합(임의 id로 진도 행이 생기는 것을 막는다). */
