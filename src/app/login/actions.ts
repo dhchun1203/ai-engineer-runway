@@ -10,6 +10,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient, PERSIST_COOKIE } from '@/lib/supabase/server';
+import { getStatusForEmail } from '@/lib/access';
 import { UNLOCK_COOKIE_NAME } from '@/lib/unlock-secret';
 import {
   type AuthState,
@@ -28,10 +29,18 @@ export async function authAction(_prev: LoginState, formData: FormData): Promise
     return { error: '이메일과 비밀번호를 모두 입력해 주세요.', notice: null };
   }
 
-  // 다중 사용자 전환: 이메일 화이트리스트는 없앴다 — 가입한 누구나 로그인할 수 있다.
+  // 승인제 가입: 로그인 자체는 가입한 누구나 시도할 수 있지만, 승인 전(차단 상태) 계정은
+  // Supabase가 자동으로 거부한다. 실패 시 요청 상태를 조회해 "대기 중/거절됨"을 구분해 안내한다.
   const supabase = await createSupabaseServerClient({ persist: remember });
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
+    const status = await getStatusForEmail(email);
+    if (status === 'pending') {
+      return { error: '아직 승인 대기 중이에요. 관리자가 승인하면 로그인할 수 있어요.', notice: null };
+    }
+    if (status === 'rejected') {
+      return { error: '이 계정은 가입이 승인되지 않았어요. 관리자에게 문의해 주세요.', notice: null };
+    }
     return { error: '이메일 또는 비밀번호가 올바르지 않습니다.', notice: null };
   }
 

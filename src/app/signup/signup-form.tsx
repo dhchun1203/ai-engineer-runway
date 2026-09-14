@@ -31,6 +31,10 @@ export function SignupForm() {
 
   return (
     <div className="flex flex-col gap-4">
+      <p className="text-label font-normal leading-relaxed text-muted dark:text-muted-dark">
+        가입은 관리자 승인제로 운영돼요. 제출하면 승인 요청이 접수되고, 관리자가 승인한 뒤에
+        로그인할 수 있어요. 승인되면 입력한 이메일로 알려드려요.
+      </p>
       <form action={formAction} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1 text-label font-semibold">
           이메일
@@ -68,11 +72,6 @@ export function SignupForm() {
             </span>
           ) : null}
         </label>
-        <label className="flex items-center gap-2 text-label font-normal text-muted dark:text-muted-dark">
-          <input name="remember" type="checkbox" defaultChecked className="h-4 w-4 accent-accent dark:accent-accent-dark" />
-          로그인 정보 저장
-        </label>
-
         {state.error ? (
           <div role="alert" className="flex flex-col gap-1">
             <p className="text-label font-semibold text-accent dark:text-accent-dark">{state.error}</p>
@@ -97,7 +96,7 @@ export function SignupForm() {
           disabled={pending || mismatch}
           className="btn-action tap-feedback min-h-11 text-body"
         >
-          {pending ? '가입 중…' : '회원가입'}
+          {pending ? '요청 보내는 중…' : '가입 요청 보내기'}
         </button>
       </form>
       <Link

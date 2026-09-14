@@ -33,7 +33,7 @@ export default async function SignupPage() {
       <header className="flex flex-col gap-2">
         <h1 className="text-heading font-extrabold">회원가입</h1>
         <p className="text-label font-normal text-muted dark:text-muted-dark">
-          이메일과 비밀번호로 계정을 만들면 어느 기기에서든 진도·메모가 그대로 이어집니다.
+          이메일과 비밀번호로 가입을 신청하는 곳이에요.
         </p>
       </header>
 
