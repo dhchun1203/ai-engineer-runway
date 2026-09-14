@@ -2235,9 +2235,25 @@ code[data-theme*=" "] span {
   box-shadow: 3px 3px 0 0 var(--color-shadow-hard-dark);
 }
 
-/* 문장 포커스 — 활성 컨테이너 안에서 모든 문장은 흐리게, 초점 문장만 또렷+확대. */
+/* 읽기 중에는 문단·목록의 줄 높이를 "고정 길이"(em)로 못박는다. @tailwindcss/typography의
+   기본 line-height는 unitless(예: 1.9)라, 문장이 확대되면(1.3em) 그 인라인 요소의 줄
+   높이가 1.9 × 확대폰트로 함께 커져 줄 높이가 들쭉날쭉해진다 — 이 줄 높이 변동을
+   아이패드 WebKit이 인접(페이드) 줄의 상단을 클립하는 형태로 렌더한다. em 길이로 주면
+   확대된 문장도 이 "고정 길이"를 상속받아 줄 높이가 커지지 않으므로, 글자만 커지고 줄
+   간격은 그대로다(리플로우·클립 없음, 애니메이션도 매끄러움). 값 2.15em은 16px 본문에서
+   약 34px로, 확대 문장(20.8px)을 여유 있게 담는다. 제목(hN)은 단일 문장이라 인접
+   페이드 줄과 겹칠 일이 없어 제외한다. */
+.ra-reading p,
+.ra-reading li,
+.ra-reading blockquote {
+  line-height: 2.15em;
+}
+
+/* 문장 포커스 — 활성 컨테이너 안에서 모든 문장은 흐리게, 초점 문장만 또렷+확대.
+   line-height는 위에서 고정 길이로 상속되므로 여기서 건드리지 않는다(건드리면 다시
+   폰트 비례로 커진다). */
 .ra-reading .ra-sentence {
-  opacity: 0.32;
+  opacity: 0.38;
   transition: opacity 200ms ease, font-size 220ms ease, color 220ms ease;
 }
 .ra-reading .ra-sentence.ra-focus {
