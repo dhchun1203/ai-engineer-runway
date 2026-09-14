@@ -8,6 +8,7 @@ import {
   getOrderedBasecampLessons,
 } from "@/content/basecamp-lesson-helpers";
 import { BasecampNote } from "@/components/basecamp-note";
+import { ReadingAssistant } from "@/components/reading-assistant/reading-assistant";
 
 // 베이스캠프 전용 학습 레슨 리더 — 완전 정적. concepts·roadmap 리더와 같은 셸이되
 // 진도·완료·복습·북마크가 전혀 없다(격리 컬렉션). 콘텐츠는 basecampLessons에서 온다.
@@ -64,7 +65,7 @@ export default async function BasecampLessonPage({
           </div>
         </header>
 
-        <div className="prose dark:prose-invert max-w-none">
+        <div id="basecamp-article" className="prose dark:prose-invert max-w-none">
           <MDXContent code={lesson.code} />
         </div>
 
@@ -82,6 +83,10 @@ export default async function BasecampLessonPage({
       {/* 하단 고정 메모장(정규 레슨과 동일 UI). 완전 정적 페이지 위에 얹는 얇은
           클라이언트 아일랜드로, 마운트 후 자기 메모만 읽어 온다. */}
       <BasecampNote slug={lesson.slug} />
+
+      {/* 우측 고정 독서 도우미 — 본문(#basecamp-article)을 문장 단위로 확대하며
+          읽어 주는 karaoke식 리더. 완전 정적 페이지 위에 얹는 클라이언트 아일랜드. */}
+      <ReadingAssistant articleId="basecamp-article" />
     </main>
   );
 }

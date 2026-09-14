@@ -2093,3 +2093,189 @@ code[data-theme*=" "] span {
 .prose [data-run-output] table {
   margin: 0;
 }
+
+/* ── 독서 도우미 (Reading Assistant) ──────────────────────────────────────
+   karaoke식 문장 포커스 리더. 활성화하면 본문 문장 하나만 또렷+확대되고 나머지는
+   흐려진다. 이 규칙들은 레이어 밖(unlayered)에 둔다 — 초점 문장의 font-size가
+   @tailwindcss/typography(.prose, @layer 안)를 이겨야 하기 때문이다(위 1370행
+   주석과 같은 근거). 그림자·경계는 이 사이트의 서명(각짐 + 흐림 0 하드 그림자)을
+   그대로 따른다. */
+
+/* 우측 세로 레일 — 고정 위치라 스크롤에 따라온다. 자식만 클릭을 받게 해 레일
+   빈 영역이 본문 클릭을 막지 않는다. */
+.ra-rail {
+  position: fixed;
+  right: max(0.5rem, env(safe-area-inset-right, 0px));
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+.ra-rail > * {
+  pointer-events: auto;
+}
+@media print {
+  .ra-rail {
+    display: none;
+  }
+}
+
+/* 비활성 상태의 시작 버튼(BookOpen). 브랜드마크와 같은 3px 하드 그림자. */
+.ra-launch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  border: 2px solid var(--color-foreground);
+  box-shadow: 3px 3px 0 0 var(--color-shadow-hard);
+}
+.dark .ra-launch {
+  background-color: var(--color-background-dark);
+  color: var(--color-foreground-dark);
+  border-color: var(--color-foreground-dark);
+  box-shadow: 3px 3px 0 0 var(--color-shadow-hard-dark);
+}
+
+/* 활성 상태의 세로 툴바 — .panel과 같은 4px 하드 그림자 고도. */
+.ra-toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem;
+  background-color: var(--color-background);
+  border: 2px solid var(--color-foreground);
+  box-shadow: 4px 4px 0 0 var(--color-shadow-hard);
+}
+.dark .ra-toolbar {
+  background-color: var(--color-background-dark);
+  border-color: var(--color-foreground-dark);
+  box-shadow: 4px 4px 0 0 var(--color-shadow-hard-dark);
+}
+
+.ra-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 2.75rem;
+  color: var(--color-foreground);
+  background-color: transparent;
+}
+.ra-btn:hover {
+  background-color: var(--color-badge-neutral-bg);
+}
+.ra-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.dark .ra-btn {
+  color: var(--color-foreground-dark);
+}
+.dark .ra-btn:hover {
+  background-color: var(--color-badge-neutral-bg-dark);
+}
+
+.ra-divider {
+  width: 1.25rem;
+  height: 2px;
+  background-color: var(--color-foreground);
+  opacity: 0.25;
+}
+.dark .ra-divider {
+  background-color: var(--color-foreground-dark);
+}
+
+/* 속도 게이지 — 아래에서 위로 차오른다(볼륨식). column-reverse로 index 0이 맨 아래. */
+.ra-dots {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 0;
+}
+.ra-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: var(--color-badge-neutral-bg);
+}
+.ra-dot-on {
+  background-color: var(--color-accent);
+}
+.dark .ra-dot {
+  background-color: var(--color-badge-neutral-bg-dark);
+}
+.dark .ra-dot-on {
+  background-color: var(--color-accent-dark);
+}
+
+/* 상태 안내 칩(대기/이어보기/다 읽음) — 툴바 왼쪽에 붙는 잉크 칩. */
+.ra-hint {
+  padding: 0.25rem 0.5rem;
+  background-color: var(--color-foreground);
+  color: var(--color-background);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 3px 3px 0 0 var(--color-shadow-hard);
+}
+.dark .ra-hint {
+  background-color: var(--color-foreground-dark);
+  color: var(--color-background-dark);
+  box-shadow: 3px 3px 0 0 var(--color-shadow-hard-dark);
+}
+
+/* 문장 포커스 — 활성 컨테이너 안에서 모든 문장은 흐리게, 초점 문장만 또렷+확대. */
+.ra-reading .ra-sentence {
+  opacity: 0.32;
+  transition: opacity 200ms ease, font-size 220ms ease, color 220ms ease;
+}
+.ra-reading .ra-sentence.ra-focus {
+  opacity: 1;
+  font-size: 1.3em;
+  color: var(--color-foreground);
+}
+.dark .ra-reading .ra-sentence.ra-focus {
+  color: var(--color-foreground-dark);
+}
+
+/* 볼드 키워드 — 문장 확대에 얹혀 조금 더 커지고 강조색으로 바뀐다. */
+.ra-reading .ra-sentence.ra-focus strong,
+.ra-reading .ra-sentence.ra-focus b {
+  font-size: 1.12em;
+  color: var(--color-accent);
+  transition: font-size 220ms ease, color 220ms ease;
+}
+.dark .ra-reading .ra-sentence.ra-focus strong,
+.dark .ra-reading .ra-sentence.ra-focus b {
+  color: var(--color-accent-dark);
+}
+
+/* 대기 블록(표·코드·이미지·시각화) — 흐리게 두었다가 초점 시 또렷+살짝 확대. */
+.ra-reading [data-ra-block] {
+  opacity: 0.32;
+  transition: opacity 200ms ease, transform 220ms ease;
+}
+.ra-reading [data-ra-block].ra-block-focus {
+  opacity: 1;
+  transform: scale(1.04);
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ra-reading .ra-sentence,
+  .ra-reading [data-ra-block] {
+    transition: opacity 120ms ease;
+  }
+  .ra-reading [data-ra-block].ra-block-focus {
+    transform: none;
+  }
+}
