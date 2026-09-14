@@ -135,6 +135,12 @@ export function buildSteps(container: HTMLElement): BuiltSteps {
   const steps: Step[] = [];
   const modified: ModifiedBlock[] = [];
   const blockEls: HTMLElement[] = [];
+  // 접힌 details의 원래 열림 상태를 기록해 해제 시 되돌린다(읽는 동안 자동으로
+  // 펼쳤어도 원래 접혀 있던 것은 다시 접어 페이지를 원상복구한다).
+  const detailsStates = [...container.querySelectorAll('details')].map((d) => ({
+    el: d as HTMLDetailsElement,
+    wasOpen: (d as HTMLDetailsElement).open,
+  }));
 
   const markBlock = (el: HTMLElement) => {
     el.setAttribute(RA_BLOCK_ATTR, '');
@@ -166,6 +172,14 @@ export function buildSteps(container: HTMLElement): BuiltSteps {
 
     // 코드·표·그림·미디어 — 통째로 대기 블록.
     if (ATOMIC_TAGS.has(tag)) {
+      markBlock(el);
+      return;
+    }
+
+    // 접힌 details(정답 확인 등) — 통째로 대기 블록으로 두고, 포커스되면 펼친다
+    // (applyFocus). 재귀로 파고들지 않는다: 접힌 내용은 감춰져 있어 문장 분리가
+    // 의미 없다. 원래 열림 상태는 아래에서 기록해 해제 시 되돌린다.
+    if (tag === 'DETAILS') {
       markBlock(el);
       return;
     }
@@ -209,15 +223,29 @@ export function buildSteps(container: HTMLElement): BuiltSteps {
       el.removeAttribute(RA_BLOCK_ATTR);
       el.classList.remove(RA_BLOCK_FOCUS_CLASS);
     }
+    // details: 원래 열림 상태로 되돌린다.
+    for (const { el, wasOpen } of detailsStates) {
+      el.open = wasOpen;
+    }
   };
 
   return { steps, restore };
 }
 
 // 초점 이동 — 이전 초점을 지우고 새 스텝에 초점 클래스를 얹는다. 반환은 없다.
+// 블록이 접힌 details(또는 그것을 품은 요소)면 펼쳐, 다음으로 넘어올 때 내용이
+// 바로 보이게 한다(스크롤 정렬은 focusStep이 펼친 뒤 측정하므로 확장 높이를 반영한다).
 export function applyFocus(step: Step): void {
-  if (step.kind === 'sentence') step.el.classList.add(RA_FOCUS_CLASS);
-  else step.el.classList.add(RA_BLOCK_FOCUS_CLASS);
+  if (step.kind === 'sentence') {
+    step.el.classList.add(RA_FOCUS_CLASS);
+    return;
+  }
+  step.el.classList.add(RA_BLOCK_FOCUS_CLASS);
+  const details =
+    step.el instanceof HTMLDetailsElement
+      ? step.el
+      : step.el.querySelector<HTMLDetailsElement>('details');
+  if (details) details.open = true;
 }
 
 export function clearFocus(step: Step): void {
