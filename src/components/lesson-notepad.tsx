@@ -62,6 +62,18 @@ export function LessonNotepad({
     };
   }, []);
 
+  // 구형 안드로이드 브라우저(삼성 인터넷 <21 등, :has() 미지원) 폴백용 표식.
+  // 최신 브라우저는 globals.css의 body:has(.note-sheet) 규칙이 플로팅 버튼(맨 위로·
+  // 북마크·독서 도우미)을 메모 손잡이 위로 띄운다. :has()가 없으면 그 규칙이 통째로
+  // 무시돼 버튼이 손잡이에 가리므로, 메모장이 뜬 동안 body에 클래스를 달아 @supports
+  // not (selector(:has(*))) 폴백이 같은 오프셋을 적용하게 한다.
+  useEffect(() => {
+    document.body.classList.add('has-lesson-notepad');
+    return () => {
+      document.body.classList.remove('has-lesson-notepad');
+    };
+  }, []);
+
   async function flush() {
     const current = valueRef.current;
     if (timerRef.current) {
