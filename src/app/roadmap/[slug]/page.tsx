@@ -1,23 +1,19 @@
 import type { Metadata } from "next";
 import type { ComponentType } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { isRoadmapViewer } from "@/lib/roadmap-access";
 import { MDXContent } from "@/components/mdx-content";
 import { TermPanelProvider, Term } from "@/components/roadmap/term-panel";
 import { LessonToc } from "@/components/roadmap/lesson-toc";
-import {
-  getRoadmapLessonBySlug,
-  getOrderedRoadmapLessons,
-} from "@/content/roadmap-lesson-helpers";
+import { getRoadmapLessonBySlug } from "@/content/roadmap-lesson-helpers";
 import { roadmapStages } from "@/content/channeltalk-roadmap";
 
-// 채널톡 로드맵 별도 심화 레슨 리더 — 완전 정적. concepts 리더와 같은 셸이되
-// 진도·완료·복습·북마크가 전혀 없다. 콘텐츠는 roadmapLessons 컬렉션에서 온다.
-
-export function generateStaticParams() {
-  return getOrderedRoadmapLessons().map((lesson) => ({ slug: lesson.slug }));
-}
+// 채널톡 로드맵 별도 심화 레슨 리더 — 소유자 개인용. 허용 계정(소유자 + 테스터)만
+// 접근할 수 있게 세션을 확인하므로 동적 렌더다. 진도·완료·복습·북마크는 전혀 없고
+// 콘텐츠는 roadmapLessons 컬렉션에서 온다.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(
   props: PageProps<"/roadmap/[slug]">,
@@ -28,12 +24,19 @@ export async function generateMetadata(
   return {
     title: `${lesson.title} · 채널톡 로드맵`,
     description: lesson.summary,
+    // 소유자 개인용 페이지라 색인을 막는다(목록 페이지와 같은 방침).
+    robots: { index: false, follow: false },
   };
 }
 
 export default async function RoadmapLessonPage(
   props: PageProps<"/roadmap/[slug]">,
 ) {
+  // 허용 계정이 아니면(비로그인 포함) 홈으로 — 목록 페이지와 같은 서버 게이트.
+  if (!(await isRoadmapViewer())) {
+    redirect("/");
+  }
+
   const { slug } = await props.params;
   const lesson = getRoadmapLessonBySlug(slug);
 

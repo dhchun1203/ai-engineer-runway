@@ -128,6 +128,9 @@ export function SiteNav() {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
   // 소유자 전용 항목("슬랙" 피드)을 내비에 보일지. /api/auth가 함께 내려준다.
   const [isOwner, setIsOwner] = useState(false);
+  // 채널톡 로드맵을 볼 수 있는 계정인지(소유자 + 허용 테스터). 아니면 "채널톡 로드맵"
+  // 항목을 아예 숨긴다. /api/auth가 함께 내려준다.
+  const [roadmapViewer, setRoadmapViewer] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   // 데스크톱 대메뉴 행 컨테이너 — 바깥 클릭 판정의 경계다. 이 안(트리거·패널)의
   // 클릭은 유지, 밖(로고·토글·본문)의 클릭은 드롭다운을 닫는다.
@@ -224,6 +227,7 @@ export function SiteNav() {
         if (!active) return;
         setLoggedIn(Boolean(data?.loggedIn));
         setIsOwner(Boolean(data?.isOwner));
+        setRoadmapViewer(Boolean(data?.roadmapViewer));
       })
       .catch(() => {
         // 조회 실패 시 라벨은 보수적으로 "로그인"에 머문다(기능 영향 없음).
@@ -238,7 +242,10 @@ export function SiteNav() {
   // 슬랙 피드와 가입 승인은 소유자 전용이라 소유자일 때만, 그리고 최상위가 아니라 "더보기"
   // 하위 메뉴에 넣는다(사용자 요청 2026-09-12). "더보기" 항목의 children 끝에 덧붙인다.
   const navItems: readonly NavItem[] = [
-    ...NAV_ITEMS.map((item) =>
+    ...NAV_ITEMS
+      // 채널톡 로드맵은 허용 계정(소유자 + 테스터)에게만 보인다 — 그 외에는 항목 자체를 뺀다.
+      .filter((item) => item.href !== "/roadmap" || roadmapViewer)
+      .map((item) =>
       item.label === "더보기" && isOwner
         ? {
             ...item,
@@ -349,15 +356,15 @@ export function SiteNav() {
                           </span>
                           <div className="flex flex-col p-1">
                             {item.children.map((child, ci) => {
-                              // 구역 소제목 — 링크가 아니라, 눌린 면(surface-2) 배경을 깐
-                              // muted 소제목 띠. 크림 지면 위 항목들과 배경으로 구분된다.
+                              // 구역 소제목 — 링크가 아니라, 한 단계 진한 면(line) 배경을 깐
+                              // muted 소제목 띠. 크림 지면 위 항목들과 배경으로 또렷이 구분된다.
                               // -mx-1로 p-1 컨테이너를 상쇄해 위 "더보기" 잉크 머리띠와 폭을
                               // 맞춘다(가장자리까지 닿는 띠).
                               if (child.heading) {
                                 return (
                                   <span
                                     key={child.label}
-                                    className={`-mx-1 bg-surface-2 px-3 py-1 text-label font-semibold text-badge-neutral-text dark:bg-surface-2-dark dark:text-badge-neutral-text-dark ${
+                                    className={`-mx-1 bg-line px-3 py-1 text-label font-semibold text-badge-neutral-text dark:bg-line-dark dark:text-badge-neutral-text-dark ${
                                       ci === 0 ? "" : "mt-1"
                                     }`}
                                   >
@@ -482,12 +489,12 @@ export function SiteNav() {
                     </span>
                     <div className="ml-3 flex flex-col border-l-2 border-foreground pl-3 dark:border-foreground-dark">
                       {item.children.map((child, ci) => {
-                        // 구역 소제목 — 눌린 면(surface-2) 배경 띠(데스크톱 드롭다운과 동형).
+                        // 구역 소제목 — 한 단계 진한 면(line) 배경 띠(데스크톱 드롭다운과 동형).
                         if (child.heading) {
                           return (
                             <span
                               key={child.label}
-                              className={`bg-surface-2 px-3 py-1 text-label font-semibold text-badge-neutral-text dark:bg-surface-2-dark dark:text-badge-neutral-text-dark ${
+                              className={`bg-line px-3 py-1 text-label font-semibold text-badge-neutral-text dark:bg-line-dark dark:text-badge-neutral-text-dark ${
                                 ci === 0 ? "" : "mt-1"
                               }`}
                             >

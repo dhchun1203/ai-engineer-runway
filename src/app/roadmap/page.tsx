@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowRight } from "lucide-react";
+import { isRoadmapViewer } from "@/lib/roadmap-access";
 import {
   talentTraits,
   roadmapStages,
@@ -35,13 +37,22 @@ export const metadata: Metadata = {
   title: "채널톡 AI Engineer 로드맵",
   description:
     "채널톡(채널코퍼레이션) 채용 공고와 기술블로그를 분석해 뽑은 AI Engineer 진입 로드맵 — 기초부터 실전 태도까지 여덟 단계. 정규 학습 커리큘럼과 별개의 취업 목표 트랙.",
+  // 소유자 개인용 페이지라 검색 색인을 막는다(/slack·/admin과 같은 방침).
+  robots: { index: false, follow: false },
 };
 
-// 채널톡 AI Engineer 진입 로드맵 — 완전 정적 단일 페이지. 정규 커리큘럼과 달리
-// 진도 프로바이더나 완료 상태를 전혀 읽지 않는 정적 셸이다(/concepts와 같은
-// 방침). 콘텐츠는 src/content/channeltalk-roadmap.ts에서 온다 — 사용자가 그
-// 데이터 파일을 편집해 앞으로 단계와 스킬을 채워나간다.
-export default function RoadmapPage() {
+// 소유자 개인용 페이지다 — 허용 계정(소유자 + 테스터)만 접근할 수 있게 세션을 확인하므로
+// 동적 렌더가 필요하다. 콘텐츠 자체는 src/content/channeltalk-roadmap.ts에서 오는 정적
+// 데이터이지만, 접근 판정(isRoadmapViewer)이 요청별 세션을 읽는다.
+export const dynamic = "force-dynamic";
+
+export default async function RoadmapPage() {
+  // 허용 계정이 아니면(비로그인 포함) 홈으로 돌려보낸다 — 메뉴 숨김과 별개로 URL 직접
+  // 접근도 막는 서버 게이트다.
+  if (!(await isRoadmapViewer())) {
+    redirect("/");
+  }
+
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-14 px-4 py-12 sm:px-6 lg:px-8">
       {/* 머리글 — 이 트랙이 학습 진도, 일정과 별개임을 분명히 밝힌다. */}
