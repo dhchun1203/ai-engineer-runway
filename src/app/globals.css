@@ -2294,7 +2294,7 @@ code[data-theme*=" "] span {
   color: var(--color-reading-dim-dark);
 }
 .ra-reading .ra-sentence.ra-focus {
-  font-size: 1.3em;
+  font-size: 1.2em;
   color: var(--color-foreground);
 }
 .dark .ra-reading .ra-sentence.ra-focus {
