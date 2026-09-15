@@ -256,3 +256,35 @@ export function clearFocus(step: Step): void {
 export function scrollStepIntoView(step: Step, smooth: boolean): void {
   step.el.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' });
 }
+
+// 지금 화면(뷰포트)에 보이는 첫 문장 스텝의 인덱스를 찾는다. 독서 도우미를 켤 때 맨
+// 처음(0)이 아니라 "사용자가 지금 보고 있는 문장"부터 시작하기 위한 것이다.
+//
+// 스티키 헤더(--site-header-height)에 가린 문장은 보이는 것으로 치지 않는다 — 헤더
+// 아래로 실제 노출된 첫 문장을 고른다. 문장(sentence)을 우선하되, 보이는 문장이 없으면
+// (표·코드 같은 블록만 보이거나, 본문을 아래로 다 지나친 경우) 보이는 첫 스텝을, 그것도
+// 없으면 0을 돌려준다. buildSteps로 문장 span을 만든 직후에 호출해야 위치가 정확하다
+// (span이 원래 텍스트 자리를 그대로 차지하므로 레이아웃은 보존된다).
+export function firstVisibleStepIndex(steps: Step[]): number {
+  if (typeof window === 'undefined' || steps.length === 0) return 0;
+
+  const headerVar = getComputedStyle(document.documentElement).getPropertyValue(
+    '--site-header-height',
+  );
+  const top = Number.parseFloat(headerVar) || 0; // "56px" -> 56, 없으면 0
+  const bottom = window.innerHeight;
+
+  const isVisible = (el: HTMLElement): boolean => {
+    const r = el.getBoundingClientRect();
+    // 헤더 아래로 얼마라도 보이고(bottom이 헤더선 아래), 뷰포트 안(top이 아래끝 위)이면 보임.
+    return r.bottom > top + 4 && r.top < bottom;
+  };
+
+  let firstVisibleAny = -1;
+  for (let i = 0; i < steps.length; i += 1) {
+    if (!isVisible(steps[i].el)) continue;
+    if (firstVisibleAny === -1) firstVisibleAny = i;
+    if (steps[i].kind === 'sentence') return i;
+  }
+  return firstVisibleAny === -1 ? 0 : firstVisibleAny;
+}

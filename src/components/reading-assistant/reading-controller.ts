@@ -11,6 +11,7 @@ import {
   applyFocus,
   clearFocus,
   scrollStepIntoView,
+  firstVisibleStepIndex,
   RA_READING_CLASS,
   type Step,
 } from '@/components/reading-assistant/reading-engine';
@@ -163,13 +164,16 @@ export function makeReadingController(articleId: string, ui: ReadingUI): Reading
     restore = built.restore;
     container = el;
     container.classList.add(RA_READING_CLASS);
-    index = 0;
     scrolled = false;
+    // 맨 처음이 아니라 지금 화면에 보이는 첫 문장부터 시작한다 — 사용자가 스크롤해 둔
+    // 자리에서 이어 읽게 한다. 보이는 문장이 없으면 0으로 폴백한다(firstVisibleStepIndex).
+    const start = firstVisibleStepIndex(steps);
+    index = start;
 
     ui.onActiveChange(true);
     setPlaying(true);
     ui.onStatusChange('reading');
-    focusStep(0, true);
+    focusStep(start, true);
   }
 
   function deactivate(): void {
