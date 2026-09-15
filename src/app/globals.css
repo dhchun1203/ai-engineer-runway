@@ -2515,13 +2515,12 @@ code[data-theme*=" "] span {
     max-width: calc(100vw - 1.5rem);
   }
 
-  /* 툴팁도 버튼 왼쪽이 아니라 위쪽에 띄운다 — 가로 바에서 왼쪽에 두면 옆 버튼을
-     가린다(아이패드 탭 시 확인된 문제). 버튼 위 중앙으로 올린다. */
+  /* 터치(가로 바)에서는 버튼 툴팁을 끈다. 손가락으로 탭한 뒤 :hover/:focus 상태가
+     남아(모바일 sticky hover) 인접 버튼의 툴팁과 겹쳐 보이는 문제가 있었다(아이폰/
+     아이패드에서 확인). 각 툴팁이 좁은 버튼 위에 중앙 정렬되는데 문구가 넓어 서로
+     포개진다. 버튼은 aria-label과 아이콘으로 식별되므로, 툴팁은 마우스 호버가 있는
+     데스크톱에서만 보이게 한다(::before 자체를 없앤다). */
   .ra-rail [data-ra-tip]::before {
-    right: auto;
-    left: 50%;
-    top: auto;
-    bottom: calc(100% + 0.5rem);
-    transform: translateX(-50%);
+    content: none;
   }
 }
