@@ -102,7 +102,7 @@ export async function createAccessRequest(
     user_id: userId,
     email,
     status: autoApprove ? 'approved' : 'pending',
-    ...(autoApprove ? { decided_at: new Date().toISOString() } : {}),
+    ...(autoApprove ? { decided_at: new Date().toISOString(), approved_via: 'invite' } : {}),
   });
   if (inserted.error) {
     // 테이블 기록에 실패하면 방금 만든 유저를 되돌려 고아 계정을 남기지 않는다.
@@ -137,12 +137,15 @@ export type DecidedRequest = {
   email: string;
   status: 'approved' | 'rejected';
   decidedAt: string | null;
+  // 승인 방식: 'invite'(초대 코드 자동) | 'manual'(직접 승인) | null(거절이거나 컬럼
+  // 추가 이전의 옛 기록). 거절은 방식이 없어 null이다.
+  approvedVia: 'invite' | 'manual' | null;
 };
 
 export async function listDecidedRequests(): Promise<DecidedRequest[]> {
   const { data, error } = await supabaseAdmin
     .from('access_requests')
-    .select('user_id, email, status, decided_at')
+    .select('user_id, email, status, decided_at, approved_via')
     .in('status', ['approved', 'rejected'])
     .order('decided_at', { ascending: false, nullsFirst: false });
   if (error || !data) return [];
@@ -151,6 +154,7 @@ export async function listDecidedRequests(): Promise<DecidedRequest[]> {
     email: r.email as string,
     status: r.status as 'approved' | 'rejected',
     decidedAt: (r.decided_at as string | null) ?? null,
+    approvedVia: (r.approved_via as 'invite' | 'manual' | null) ?? null,
   }));
 }
 
@@ -171,7 +175,7 @@ export async function approveRequest(userId: string): Promise<{ email: string } 
 
   const updated = await supabaseAdmin
     .from('access_requests')
-    .update({ status: 'approved', decided_at: new Date().toISOString() })
+    .update({ status: 'approved', decided_at: new Date().toISOString(), approved_via: 'manual' })
     .eq('user_id', userId);
   if (updated.error) {
     console.error('approveRequest: status 갱신 실패:', updated.error);

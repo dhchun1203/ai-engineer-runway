@@ -101,7 +101,7 @@ export default async function AdminPage() {
                 className="panel flex flex-col gap-1 p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <span className="text-body font-semibold break-all">{req.email}</span>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   <span
                     className={`text-label font-bold ${
                       req.status === 'approved'
@@ -111,6 +111,11 @@ export default async function AdminPage() {
                   >
                     {req.status === 'approved' ? '승인됨' : '거절됨'}
                   </span>
+                  {req.status === 'approved' && req.approvedVia ? (
+                    <span className="border-2 border-line px-2 py-0.5 text-label font-semibold text-badge-neutral-text dark:border-line-dark dark:text-badge-neutral-text-dark">
+                      {req.approvedVia === 'invite' ? '초대 코드' : '직접 승인'}
+                    </span>
+                  ) : null}
                   {req.decidedAt ? (
                     <span className="text-label font-normal text-muted dark:text-muted-dark">
                       {formatKst(req.decidedAt)}
