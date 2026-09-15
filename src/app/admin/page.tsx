@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { isOwnerSession } from '@/lib/owner';
-import { listPendingRequests } from '@/lib/access';
+import { listPendingRequests, listDecidedRequests } from '@/lib/access';
 import { approveAction, rejectAction } from './actions';
 
 // 소유자 전용 + 대기 목록을 열 때마다 최신으로 조회하므로 동적 렌더가 필요하다. 개인
@@ -34,7 +34,7 @@ export default async function AdminPage() {
     redirect('/');
   }
 
-  const pending = await listPendingRequests();
+  const [pending, decided] = await Promise.all([listPendingRequests(), listDecidedRequests()]);
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-12 sm:px-6 lg:px-8">
@@ -87,6 +87,41 @@ export default async function AdminPage() {
           ))}
         </ul>
       )}
+
+      {decided.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-heading font-extrabold break-keep">처리 이력</h2>
+          <p className="text-label font-normal text-muted dark:text-muted-dark">
+            승인하거나 거절한 요청 기록이에요. 초대 코드로 바로 가입한 사람도 함께 표시됩니다.
+          </p>
+          <ul className="flex flex-col gap-2">
+            {decided.map((req) => (
+              <li
+                key={req.userId}
+                className="panel flex flex-col gap-1 p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <span className="text-body font-semibold break-all">{req.email}</span>
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`text-label font-bold ${
+                      req.status === 'approved'
+                        ? 'text-ok dark:text-ok-dark'
+                        : 'text-muted dark:text-muted-dark'
+                    }`}
+                  >
+                    {req.status === 'approved' ? '승인됨' : '거절됨'}
+                  </span>
+                  {req.decidedAt ? (
+                    <span className="text-label font-normal text-muted dark:text-muted-dark">
+                      {formatKst(req.decidedAt)}
+                    </span>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </main>
   );
 }

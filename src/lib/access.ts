@@ -130,6 +130,30 @@ export async function listPendingRequests(): Promise<PendingRequest[]> {
   return data.map((r) => ({ userId: r.user_id as string, email: r.email as string, createdAt: r.created_at as string }));
 }
 
+/** 이미 처리된 요청(승인/거절) 이력. 처리 시각 최신순. 초대 코드로 자동 승인된
+ *  가입도 status=approved라 여기에 함께 포함된다(처리 시각=가입 시각). */
+export type DecidedRequest = {
+  userId: string;
+  email: string;
+  status: 'approved' | 'rejected';
+  decidedAt: string | null;
+};
+
+export async function listDecidedRequests(): Promise<DecidedRequest[]> {
+  const { data, error } = await supabaseAdmin
+    .from('access_requests')
+    .select('user_id, email, status, decided_at')
+    .in('status', ['approved', 'rejected'])
+    .order('decided_at', { ascending: false, nullsFirst: false });
+  if (error || !data) return [];
+  return data.map((r) => ({
+    userId: r.user_id as string,
+    email: r.email as string,
+    status: r.status as 'approved' | 'rejected',
+    decidedAt: (r.decided_at as string | null) ?? null,
+  }));
+}
+
 /** 요청 승인: 차단 해제 + status=approved. 성공 시 요청자 이메일을 돌려준다(승인 메일 발송용). */
 export async function approveRequest(userId: string): Promise<{ email: string } | null> {
   const { data, error } = await supabaseAdmin
