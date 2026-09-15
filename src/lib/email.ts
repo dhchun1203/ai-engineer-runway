@@ -38,7 +38,14 @@ function ownerAddress(): string | null {
 export async function sendAccessRequestNotice(requesterEmail: string): Promise<boolean> {
   const transport = getTransport();
   const owner = ownerAddress();
-  if (!transport || !owner) return false;
+  if (!transport || !owner) {
+    // 무음 실패 방지 — 자격증명이 없어 건너뛴 경우를 로그로 남긴다(예전엔 완전히 무음이라
+    // "메일이 왜 안 오지"를 로그로 진단할 수 없었다). 어느 값이 비었는지도 남긴다(값은 노출 안 함).
+    console.warn(
+      `sendAccessRequestNotice 건너뜀: 메일 자격증명 미설정 (OWNER_EMAIL=${owner ? 'set' : 'MISSING'}, GMAIL_APP_PASSWORD=${transport ? 'set' : 'MISSING'})`,
+    );
+    return false;
+  }
 
   const adminUrl = `${SITE_URL}/admin`;
   try {
@@ -52,6 +59,7 @@ export async function sendAccessRequestNotice(requesterEmail: string): Promise<b
         `승인 또는 거절하려면 관리자 페이지를 여세요:\n${adminUrl}\n\n` +
         `승인하면 요청자에게 자동으로 승인 안내 메일이 발송됩니다.`,
     });
+    console.info(`sendAccessRequestNotice 성공: to=${owner}`);
     return true;
   } catch (err) {
     console.error('sendAccessRequestNotice 실패:', err);
@@ -63,7 +71,12 @@ export async function sendAccessRequestNotice(requesterEmail: string): Promise<b
 export async function sendApprovalNotice(requesterEmail: string): Promise<boolean> {
   const transport = getTransport();
   const owner = ownerAddress();
-  if (!transport || !owner) return false;
+  if (!transport || !owner) {
+    console.warn(
+      `sendApprovalNotice 건너뜀: 메일 자격증명 미설정 (OWNER_EMAIL=${owner ? 'set' : 'MISSING'}, GMAIL_APP_PASSWORD=${transport ? 'set' : 'MISSING'})`,
+    );
+    return false;
+  }
 
   const loginUrl = `${SITE_URL}/login`;
   try {
@@ -76,6 +89,7 @@ export async function sendApprovalNotice(requesterEmail: string): Promise<boolea
         `이제 아래 주소에서 가입할 때 정한 이메일과 비밀번호로 로그인할 수 있어요:\n${loginUrl}\n\n` +
         `학습을 시작해 보세요.`,
     });
+    console.info(`sendApprovalNotice 성공: to=${requesterEmail}`);
     return true;
   } catch (err) {
     console.error('sendApprovalNotice 실패:', err);
