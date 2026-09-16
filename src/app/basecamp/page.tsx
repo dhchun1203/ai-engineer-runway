@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { ExternalLink, ArrowRight } from "lucide-react";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readProgressRows } from "@/lib/progress-store";
 import { todayInSeoul, daysUntil } from "@/lib/today";
@@ -10,6 +11,8 @@ import {
   basecampProgressId,
   BASECAMP_END_DATE,
   BASECAMP_INDEX_URL,
+  STEP2_ADVANCED_URL,
+  step2AdvancedPrepLessons,
   type BasecampStep,
 } from "@/content/basecamp";
 
@@ -89,6 +92,51 @@ export default async function BasecampPage() {
           initialDoneIds={doneIdsFor(currentStep)}
           unlocked={unlocked}
         />
+      </section>
+
+      {/* 심화 과제 보강 레슨 — 최종 과제의 심화 버전을 스스로 풀 수 있도록 각 기법을
+          더 깊게 다루는 우리 레슨 묶음. 진도 체크리스트를 부풀리지 않도록 별도 섹션에
+          링크만 둔다. 문제를 대신 풀어 주지 않고 다른 예제로 기법을 익히게 한다. */}
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1.5">
+          <span className="w-fit text-label font-bold text-accent dark:text-accent-dark">
+            심화 과제 보강
+          </span>
+          <h2 className="text-heading font-extrabold break-keep">심화 과제 보강 레슨</h2>
+          <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            최종 과제의 심화 버전을 스스로 풀 수 있도록, 필요한 기법을 더 깊게 다루는
+            레슨입니다. 문제를 대신 풀어 주지 않고, 같은 기법을 다른 예제로 익혀 직접
+            적용하도록 돕습니다.
+          </p>
+          <a
+            href={STEP2_ADVANCED_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="nav-link tap-feedback inline-flex min-h-11 w-fit items-center gap-1.5 text-label font-bold text-accent dark:text-accent-dark"
+          >
+            공식 심화 과제 열기
+            <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
+          </a>
+        </div>
+        <ul className="flex flex-col gap-3">
+          {step2AdvancedPrepLessons.map((lesson) => (
+            <li key={lesson.href} className="panel flex items-start gap-3 p-4 sm:p-5">
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <span className="break-keep text-body font-extrabold">{lesson.title}</span>
+                <p className="break-keep text-label font-normal leading-relaxed">
+                  {lesson.summary}
+                </p>
+                <Link
+                  href={lesson.href}
+                  className="nav-link tap-feedback inline-flex min-h-11 w-fit items-center gap-1.5 text-label font-bold text-accent dark:text-accent-dark"
+                >
+                  레슨 열기
+                  <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+                </Link>
+              </div>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {/* 지난 주차 — 끝났거나 지난 STEP은 접힌 한 줄로. 누르면 그 자리에서 펼쳐 복습. */}

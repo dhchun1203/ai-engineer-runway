@@ -184,6 +184,51 @@ export const basecampItemIds: ReadonlySet<string> = new Set(
 /** 공식 선행 과제 모음(전체 인덱스) 링크. */
 export const BASECAMP_INDEX_URL = `${OFFICIAL_BASE}3d52dc3e-f514-8060-8372-fb45fd534b0c`;
 
+/** STEP 2(2주차) 최종 과제의 "심화" 버전 공식 페이지. */
+export const STEP2_ADVANCED_URL = `${OFFICIAL_BASE}3db2dc3e-f514-8045-a70e-cf0bc333d7b8`;
+
+export type BasecampPrepLesson = {
+  title: string;
+  summary: string;
+  href: string;
+};
+
+/** 심화 최종 과제를 스스로 풀 수 있도록 각 기법을 더 깊게 다루는 보강 레슨 묶음.
+ *  문제를 대신 풀어 주지 않고, 같은 기법을 다른 예제로 익혀 직접 적용하도록 돕는다.
+ *  진도 체크와 별개로 링크만 제공한다(기본 체크리스트를 부풀리지 않는다). */
+export const step2AdvancedPrepLessons: readonly BasecampPrepLesson[] = [
+  {
+    title: "중첩 딕셔너리 다루기",
+    summary:
+      "딕셔너리 안의 딕셔너리를 순회하고, 항목마다 평균을 구하고, 최고값을 찾고, 컴프리헨션으로 한 줄에 표현합니다.",
+    href: "/basecamp/python-nested-dictionaries",
+  },
+  {
+    title: "조건문 심화: 복합 조건과 표 기반 판별",
+    summary:
+      "and와 or, all()과 any()로 여러 조건을 한 번에 다루고, 긴 if/elif 대신 표를 순회해 판별합니다.",
+    href: "/basecamp/python-advanced-conditionals",
+  },
+  {
+    title: "반복문으로 알고리즘 직접 구현하기",
+    summary:
+      "선택 정렬, 이진 탐색, 소수 판별을 반복문으로 직접 짜 봅니다.",
+    href: "/basecamp/python-loop-algorithms",
+  },
+  {
+    title: "함수 심화: 재귀와 유연한 인자",
+    summary:
+      "함수가 자기 자신을 부르는 재귀, 입력 검증, 그리고 개수가 정해지지 않은 키워드 인수(**kwargs)를 익힙니다.",
+    href: "/basecamp/python-advanced-functions",
+  },
+  {
+    title: "여러 함수로 작은 시스템 만들기",
+    summary:
+      "추가, 삭제, 수정, 조회 함수를 조합해 작은 관리 시스템을 만들고, 표준편차를 직접 계산합니다.",
+    href: "/basecamp/python-mini-system",
+  },
+];
+
 /** 진도 접두사를 붙인 저장 id. */
 export function basecampProgressId(itemId: string): string {
   return `${BASECAMP_PROGRESS_PREFIX}${itemId}`;
