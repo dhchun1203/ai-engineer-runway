@@ -270,22 +270,22 @@ function buildPrompt(
   return parts.join('\n');
 }
 
-export function CopyLessonPrompt({
-  lessonTitle,
-  articleId,
-  curriculum,
+// 버튼 UI + 복사 메커니즘의 프레젠테이션 코어 — 진도(useProgress)에 의존하지
+// 않는다. 정규 레슨(CopyLessonPrompt)과 베이스캠프(BasecampCopyPrompt)가 이걸
+// 공유해 TEACHER_BRIEF·buildPrompt를 단 한 벌만 두게 한다.
+//
+// buildText는 클릭 순간에 동기로 프롬프트 문자열을 만든다 — clipboard.writeText
+// 앞에 await를 끼우면 iPad Safari가 사용자 제스처 컨텍스트를 잃고 거부하므로,
+// 문자열 조립(DOM 읽기 포함)은 반드시 await 이전에 끝나야 한다.
+function CopyPromptButton({
+  buildText,
+  needsReview = false,
 }: {
-  lessonTitle: string;
-  articleId: string;
-  /**
-   * 커리큘럼 순서의 전체 레슨 {slug, title} 목록 — 서버 페이지가
-   * getOrderedLessons()에서 추려 내려준다. 이 컴포넌트가 curriculum-helpers를
-   * 직접 import하지 않는 이유: #site/content의 레슨에는 컴파일된 MDX(code)가
-   * 통째로 들어 있어, 클라이언트에서 당기면 35개 레슨 본문이 전부 번들에 실린다.
-   */
-  curriculum: { slug: string; title: string }[];
+  buildText: () => string;
+  // 정규 레슨에서 "더 공부할 레슨으로 표시"를 켠 경우 — 버튼을 강조(btn-action)하고
+  // 안내 문구를 붙인다. 진도가 없는 베이스캠프에서는 항상 false.
+  needsReview?: boolean;
 }) {
-  const { status, data } = useProgress();
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -296,41 +296,20 @@ export function CopyLessonPrompt({
   }, []);
 
   const handleCopy = useCallback(async () => {
-    const body = readArticleText(articleId);
-    const note = status === 'ready' && data.lesson?.note.ok ? data.lesson.note.body : '';
-
-    // 완료 슬러그(도착 순서 무보장)를 curriculum(커리큘럼 순서)으로 필터해
-    // 제목 목록을 만든다. 진도를 못 읽은 상태(loading/error/locked)면 빈 배열
-    // — buildPrompt가 블록을 생략해 기존 동작 그대로다.
-    const completedSet =
-      status === 'ready' && data.completedSlugs ? new Set(data.completedSlugs) : null;
-    const completedTitles = completedSet
-      ? curriculum.filter((l) => completedSet.has(l.slug)).map((l) => l.title)
-      : [];
-
-    // "더 공부할 레슨으로 표시"를 켠 레슨이면 프롬프트에 안내 블록을 붙인다.
-    // 진도를 못 읽은 상태(loading/error/locked)면 false — 블록은 생략된다.
-    const needsReview = status === 'ready' && data.lesson ? data.lesson.needsReview : false;
+    // await보다 먼저 문자열을 완성한다(제스처 컨텍스트 유지).
+    const text = buildText();
 
     if (timerRef.current) clearTimeout(timerRef.current);
 
     try {
-      // 사용자 제스처 안에서 곧바로 호출한다 — 앞에 await를 끼우면 iPad Safari가
-      // 제스처 컨텍스트를 잃고 거부한다(code-block.tsx가 같은 이유로 같은 형태다).
-      await navigator.clipboard.writeText(
-        buildPrompt(lessonTitle, body, note, completedTitles, needsReview),
-      );
+      await navigator.clipboard.writeText(text);
       setState('copied');
     } catch {
       setState('failed');
     }
 
     timerRef.current = setTimeout(() => setState('idle'), FEEDBACK_MS);
-  }, [articleId, lessonTitle, status, data, curriculum]);
-
-  // 표시된 레슨이면 버튼을 강조한다(기본 btn → btn-action) — "여기는 더 봐야 할
-  // 레슨"이라는 표시가 이 입구에서도 눈에 띄게 한다. 진도를 못 읽은 상태면 false.
-  const needsReview = status === 'ready' && data?.lesson ? data.lesson.needsReview : false;
+  }, [buildText]);
 
   const label =
     state === 'copied'
@@ -375,4 +354,67 @@ export function CopyLessonPrompt({
       ) : null}
     </span>
   );
+}
+
+export function CopyLessonPrompt({
+  lessonTitle,
+  articleId,
+  curriculum,
+}: {
+  lessonTitle: string;
+  articleId: string;
+  /**
+   * 커리큘럼 순서의 전체 레슨 {slug, title} 목록 — 서버 페이지가
+   * getOrderedLessons()에서 추려 내려준다. 이 컴포넌트가 curriculum-helpers를
+   * 직접 import하지 않는 이유: #site/content의 레슨에는 컴파일된 MDX(code)가
+   * 통째로 들어 있어, 클라이언트에서 당기면 35개 레슨 본문이 전부 번들에 실린다.
+   */
+  curriculum: { slug: string; title: string }[];
+}) {
+  const { status, data } = useProgress();
+
+  const buildText = useCallback(() => {
+    const body = readArticleText(articleId);
+    const note = status === 'ready' && data.lesson?.note.ok ? data.lesson.note.body : '';
+
+    // 완료 슬러그(도착 순서 무보장)를 curriculum(커리큘럼 순서)으로 필터해
+    // 제목 목록을 만든다. 진도를 못 읽은 상태(loading/error/locked)면 빈 배열
+    // — buildPrompt가 블록을 생략해 기존 동작 그대로다.
+    const completedSet =
+      status === 'ready' && data.completedSlugs ? new Set(data.completedSlugs) : null;
+    const completedTitles = completedSet
+      ? curriculum.filter((l) => completedSet.has(l.slug)).map((l) => l.title)
+      : [];
+
+    // "더 공부할 레슨으로 표시"를 켠 레슨이면 프롬프트에 안내 블록을 붙인다.
+    // 진도를 못 읽은 상태(loading/error/locked)면 false — 블록은 생략된다.
+    const needsReview = status === 'ready' && data.lesson ? data.lesson.needsReview : false;
+
+    return buildPrompt(lessonTitle, body, note, completedTitles, needsReview);
+  }, [articleId, lessonTitle, status, data, curriculum]);
+
+  // 표시된 레슨이면 버튼을 강조한다(기본 btn → btn-action) — "여기는 더 봐야 할
+  // 레슨"이라는 표시가 이 입구에서도 눈에 띄게 한다. 진도를 못 읽은 상태면 false.
+  const needsReview = status === 'ready' && data?.lesson ? data.lesson.needsReview : false;
+
+  return <CopyPromptButton buildText={buildText} needsReview={needsReview} />;
+}
+
+// 베이스캠프 학습 레슨용 "클로드에 물어보기" — 격리 컬렉션이라 진도·완료·메모가
+// 없다. 그래서 useProgress를 쓰지 않고(ProgressProvider도 없다), 선생님 지침 +
+// 본문만 담는다. 완료 목록·메모·"더 공부할 레슨" 블록은 buildPrompt가 빈 값에서
+// 통째로 생략하므로 정규 레슨과 같은 조립 경로를 그대로 탄다.
+export function BasecampCopyPrompt({
+  lessonTitle,
+  articleId,
+}: {
+  lessonTitle: string;
+  articleId: string;
+}) {
+  const buildText = useCallback(
+    () => buildPrompt(lessonTitle, readArticleText(articleId), '', [], false),
+    [lessonTitle, articleId],
+  );
+
+  return <CopyPromptButton buildText={buildText} />;
 }
