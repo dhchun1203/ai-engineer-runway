@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, ExternalLink, Check } from 'lucide-react';
 import { toggleBasecampItem } from '@/app/basecamp/actions';
+import { withToggled, withAdded, withRemoved } from '@/components/basecamp/toggle-set';
 import type { BasecampStep } from '@/content/basecamp';
 
 export function BasecampStepChecklist({
@@ -155,21 +156,4 @@ export function BasecampStepChecklist({
       </ul>
     </section>
   );
-}
-
-// Set 불변 갱신 헬퍼 — React 상태로 안전하게 다루기 위해 매번 새 Set을 만든다.
-function withToggled(set: ReadonlySet<string>, id: string, present: boolean): ReadonlySet<string> {
-  return present ? withAdded(set, id) : withRemoved(set, id);
-}
-function withAdded(set: ReadonlySet<string>, id: string): ReadonlySet<string> {
-  if (set.has(id)) return set;
-  const next = new Set(set);
-  next.add(id);
-  return next;
-}
-function withRemoved(set: ReadonlySet<string>, id: string): ReadonlySet<string> {
-  if (!set.has(id)) return set;
-  const next = new Set(set);
-  next.delete(id);
-  return next;
 }
