@@ -13,6 +13,7 @@ import {
   BASECAMP_INDEX_URL,
   STEP2_ADVANCED_URL,
   step2AdvancedPrepLessons,
+  step3ChatbotLessons,
   type BasecampStep,
 } from "@/content/basecamp";
 
@@ -52,6 +53,12 @@ export default async function BasecampPage() {
     step.items
       .filter((item) => doneRawIds.has(basecampProgressId(item.id)))
       .map((item) => item.id);
+
+  // 보강 레슨 묶음(step2/step3)의 완료 id 목록. STEP 항목과 같은 bc: 진도를 읽는다.
+  const prepDoneIds = (lessons: readonly { id: string }[]): string[] =>
+    lessons
+      .filter((lesson) => doneRawIds.has(basecampProgressId(lesson.id)))
+      .map((lesson) => lesson.id);
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-12 sm:px-6 lg:px-8">
@@ -94,18 +101,40 @@ export default async function BasecampPage() {
         />
       </section>
 
-      {/* 심화 과제 보강 레슨 — 최종 과제의 심화 버전을 스스로 풀 수 있도록 각 기법을
-          더 깊게 다루는 우리 레슨 묶음. 각 레슨에 완료 체크박스가 붙되(사용자 요청),
-          완료 개수는 이 섹션 자체 카운터로만 세고 STEP 2의 "N/M 완료"에는 섞지 않는다
+      {/* STEP 3 과제 보강 — 최종 과제(Q&A 챗봇)를 세 편에 걸쳐 직접 만들며 필요한
+          개념을 중간중간 익히는 빌드-얼롱 레슨 묶음. 지금 집중(STEP 3) 바로 아래 둔다.
+          완료 체크박스는 이 섹션 자체 카운터로만 센다(STEP의 "N/M 완료"와 분리). */}
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1.5">
+          <span className="w-fit text-label font-bold text-accent dark:text-accent-dark">
+            STEP 3 과제 보강
+          </span>
+          <h2 className="text-heading font-extrabold break-keep">Q&A 챗봇 함께 만들기</h2>
+          <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            STEP 3 최종 과제인 Q&A 챗봇을 세 편에 걸쳐 직접 만들며, 필요한 개념을 그때그때
+            익히는 레슨입니다. 예시 데이터로 챗봇을 처음부터 끝까지 완성한 뒤, 여러분이 고른
+            데이터로 바꿔 과제로 제출하면 됩니다.
+          </p>
+        </div>
+        <BasecampPrepChecklist
+          lessons={step3ChatbotLessons}
+          initialDoneIds={prepDoneIds(step3ChatbotLessons)}
+          unlocked={unlocked}
+        />
+      </section>
+
+      {/* 심화 과제 보강 레슨(STEP 2) — 최종 과제의 심화 버전을 스스로 풀 수 있도록 각
+          기법을 더 깊게 다루는 우리 레슨 묶음. 각 레슨에 완료 체크박스가 붙되(사용자 요청),
+          완료 개수는 이 섹션 자체 카운터로만 세고 STEP의 "N/M 완료"에는 섞지 않는다
           (기본 체크리스트를 부풀리지 않는다는 원칙 유지). */}
       <section className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
           <span className="w-fit text-label font-bold text-accent dark:text-accent-dark">
-            심화 과제 보강
+            STEP 2 과제 보강
           </span>
           <h2 className="text-heading font-extrabold break-keep">심화 과제 보강 레슨</h2>
           <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-            최종 과제의 심화 버전을 스스로 풀 수 있도록, 필요한 기법을 더 깊게 다루는
+            STEP 2 최종 과제의 심화 버전을 스스로 풀 수 있도록, 필요한 기법을 더 깊게 다루는
             레슨입니다. 문제를 대신 풀어 주지 않고, 같은 기법을 다른 예제로 익혀 직접
             적용하도록 돕습니다.
           </p>
@@ -121,9 +150,7 @@ export default async function BasecampPage() {
         </div>
         <BasecampPrepChecklist
           lessons={step2AdvancedPrepLessons}
-          initialDoneIds={step2AdvancedPrepLessons
-            .filter((lesson) => doneRawIds.has(basecampProgressId(lesson.id)))
-            .map((lesson) => lesson.id)}
+          initialDoneIds={prepDoneIds(step2AdvancedPrepLessons)}
           unlocked={unlocked}
         />
       </section>

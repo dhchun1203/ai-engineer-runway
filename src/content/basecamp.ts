@@ -260,11 +260,41 @@ export const step2AdvancedPrepLessons: readonly BasecampPrepLesson[] = [
   },
 ];
 
+/** STEP 3(Python 실전 활용) 과제를 직접 만들며 익히는 보강 레슨 묶음. STEP 2 보강과
+ *  형식이 다르다 — 개념을 따로 익히는 게 아니라, Q&A 챗봇 과제를 세 조각으로 나눠
+ *  함께 만들며 필요한 개념을 중간중간 배운다(사용자 요청 2026-09-21). 예시 데이터로
+ *  완성한 뒤 학습자 데이터로 바꿔 제출하도록 넘긴다. 완료 체크박스는 STEP 2 보강과
+ *  동일하게 이 섹션 자체 카운터로만 센다. */
+export const step3ChatbotLessons: readonly BasecampPrepLesson[] = [
+  {
+    id: "s3build-data",
+    title: "챗봇 만들기 (1) 데이터 준비하기",
+    summary:
+      "직접 고른 Kaggle 데이터를 pandas로 불러옵니다. DataFrame 개념부터 read_csv로 열고 훑어보기까지.",
+    href: "/basecamp/python-chatbot-load-data",
+  },
+  {
+    id: "s3build-search",
+    title: "챗봇 만들기 (2) 검색 기능과 화면 붙이기",
+    summary:
+      "원하는 데이터만 찾아 주는 검색을 조건 검색, 함수, 반복문으로 만들고, Gradio로 입력창과 결과 화면을 붙입니다.",
+    href: "/basecamp/python-chatbot-search-gradio",
+  },
+  {
+    id: "s3build-ai",
+    title: "챗봇 만들기 (3) Gemini API로 답변 완성하기",
+    summary:
+      "검색 결과를 Gemini API에 건네, 데이터를 근거로 자연스럽게 답하는 진짜 Q&A 챗봇을 완성합니다.",
+    href: "/basecamp/python-chatbot-gemini-api",
+  },
+];
+
 /** action 검증용 — 알려진 항목 id 집합(임의 id로 진도 행이 생기는 것을 막는다).
  *  STEP 항목 id와 보강 레슨 id를 모두 포함한다(둘 다 toggleBasecampItem을 쓴다). */
 export const basecampItemIds: ReadonlySet<string> = new Set([
   ...basecampSteps.flatMap((step) => step.items.map((item) => item.id)),
   ...step2AdvancedPrepLessons.map((lesson) => lesson.id),
+  ...step3ChatbotLessons.map((lesson) => lesson.id),
 ]);
 
 /** 진도 접두사를 붙인 저장 id. */
