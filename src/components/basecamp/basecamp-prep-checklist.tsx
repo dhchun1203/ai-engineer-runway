@@ -7,7 +7,7 @@
 // 그래서 컴포넌트를 따로 두되, 낙관적 토글 규칙과 Set 헬퍼는 STEP 체크리스트와
 // 공유한다. 이 섹션의 완료 개수는 STEP의 "N/M 완료"에 섞이지 않고 여기서만 센다.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Check } from 'lucide-react';
 import { toggleBasecampItem } from '@/app/basecamp/actions';
@@ -18,11 +18,19 @@ export function BasecampPrepChecklist({
   lessons,
   initialDoneIds,
   unlocked,
+  showCounter = true,
+  onProgress,
 }: {
   lessons: readonly BasecampPrepLesson[];
   /** 완료된 보강 레슨 id(접두사 없는 lesson.id) 목록. unlocked일 때만 의미가 있다. */
   initialDoneIds: readonly string[];
   unlocked: boolean;
+  /** 자체 "N/M 완료" 카운터를 그릴지. 접이식 행(BasecampPastPrep)이 헤더에서 세는
+   *  경우 false로 넘겨 중복을 막는다. */
+  showCounter?: boolean;
+  /** 완료 개수가 바뀔 때 알린다 — 접이식 행 헤더 카운터가 펼친 채 토글해도 즉시
+   *  따라오게 하는 용도(basecamp-step-checklist.tsx와 같은 패턴). */
+  onProgress?: (done: number, total: number) => void;
 }) {
   const [doneIds, setDoneIds] = useState<ReadonlySet<string>>(
     () => new Set(initialDoneIds),
@@ -31,6 +39,12 @@ export function BasecampPrepChecklist({
   const [errorIds, setErrorIds] = useState<ReadonlySet<string>>(new Set());
 
   const doneCount = lessons.filter((lesson) => doneIds.has(lesson.id)).length;
+
+  // 완료 개수가 바뀌면 부모(접이식 행)에 알린다. onProgress는 부모가 useCallback으로
+  // 안정화해 넘기므로, 이 effect는 실질적으로 doneCount가 바뀔 때만 돈다.
+  useEffect(() => {
+    onProgress?.(doneCount, lessons.length);
+  }, [doneCount, lessons.length, onProgress]);
 
   async function handleToggle(id: string) {
     if (pendingIds.has(id)) return;
@@ -54,7 +68,7 @@ export function BasecampPrepChecklist({
 
   return (
     <div className="flex flex-col gap-3">
-      {unlocked ? (
+      {showCounter && unlocked ? (
         <span className="text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark">
           {doneCount}/{lessons.length} 완료
         </span>

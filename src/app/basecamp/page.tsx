@@ -6,6 +6,7 @@ import { todayInSeoul, daysUntil } from "@/lib/today";
 import { BasecampStepChecklist } from "@/components/basecamp/basecamp-step-checklist";
 import { BasecampPastStep } from "@/components/basecamp/basecamp-past-step";
 import { BasecampPrepChecklist } from "@/components/basecamp/basecamp-prep-checklist";
+import { BasecampPastPrep } from "@/components/basecamp/basecamp-past-prep";
 import {
   basecampSteps,
   basecampProgressId,
@@ -123,39 +124,9 @@ export default async function BasecampPage() {
         />
       </section>
 
-      {/* 심화 과제 보강 레슨(STEP 2) — 최종 과제의 심화 버전을 스스로 풀 수 있도록 각
-          기법을 더 깊게 다루는 우리 레슨 묶음. 각 레슨에 완료 체크박스가 붙되(사용자 요청),
-          완료 개수는 이 섹션 자체 카운터로만 세고 STEP의 "N/M 완료"에는 섞지 않는다
-          (기본 체크리스트를 부풀리지 않는다는 원칙 유지). */}
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1.5">
-          <span className="w-fit text-label font-bold text-accent dark:text-accent-dark">
-            STEP 2 과제 보강
-          </span>
-          <h2 className="text-heading font-extrabold break-keep">심화 과제 보강 레슨</h2>
-          <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-            STEP 2 최종 과제의 심화 버전을 스스로 풀 수 있도록, 필요한 기법을 더 깊게 다루는
-            레슨입니다. 문제를 대신 풀어 주지 않고, 같은 기법을 다른 예제로 익혀 직접
-            적용하도록 돕습니다.
-          </p>
-          <a
-            href={STEP2_ADVANCED_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="nav-link tap-feedback inline-flex min-h-11 w-fit items-center gap-1.5 text-label font-bold text-accent dark:text-accent-dark"
-          >
-            공식 심화 과제 열기
-            <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
-          </a>
-        </div>
-        <BasecampPrepChecklist
-          lessons={step2AdvancedPrepLessons}
-          initialDoneIds={prepDoneIds(step2AdvancedPrepLessons)}
-          unlocked={unlocked}
-        />
-      </section>
-
-      {/* 지난 주차 — 끝났거나 지난 STEP은 접힌 한 줄로. 누르면 그 자리에서 펼쳐 복습. */}
+      {/* 지난 주차 — 끝났거나 지난 STEP은 접힌 한 줄로. 누르면 그 자리에서 펼쳐 복습.
+          STEP 3가 지금 집중이 된 뒤, STEP 2 과제 보강도 여기에 접힌 행으로 함께 둔다
+          (사용자 요청 2026-09-21). */}
       {pastSteps.length > 0 ? (
         <section className="flex flex-col gap-3">
           <span className="text-label font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark">
@@ -170,6 +141,17 @@ export default async function BasecampPage() {
                 unlocked={unlocked}
               />
             ))}
+            {/* STEP 2 과제 보강 — 지난 주차로 내려온 접이식 보강 묶음. */}
+            <BasecampPastPrep
+              label="STEP 2 과제 보강"
+              title="심화 과제 보강 레슨"
+              description="STEP 2 최종 과제의 심화 버전을 스스로 풀 수 있도록, 필요한 기법을 더 깊게 다루는 레슨입니다. 문제를 대신 풀어 주지 않고, 같은 기법을 다른 예제로 익혀 직접 적용하도록 돕습니다."
+              officialUrl={STEP2_ADVANCED_URL}
+              officialLabel="공식 심화 과제 열기"
+              lessons={step2AdvancedPrepLessons}
+              initialDoneIds={prepDoneIds(step2AdvancedPrepLessons)}
+              unlocked={unlocked}
+            />
           </div>
         </section>
       ) : null}
