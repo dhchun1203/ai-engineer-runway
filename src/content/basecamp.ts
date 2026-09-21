@@ -174,6 +174,33 @@ export const basecampSteps: readonly BasecampStep[] = [
       },
     ],
   },
+  {
+    no: 4,
+    weekLabel: "3주차",
+    title: "Python 실전 활용",
+    summary:
+      "STEP 1,2에서 익힌 파이썬 문법을 실제 데이터에 적용합니다. Kaggle 데이터를 pandas로 불러오고, 조건문과 반복문과 함수로 검색 기능을 만든 뒤, Gemini API를 붙여 나만의 Q&A 챗봇을 완성합니다.",
+    released: true,
+    officialUrl: `${OFFICIAL_BASE}3e22dc3e-f514-80fc-b623-fbb2bfb75679`,
+    items: [
+      {
+        id: "s3-search",
+        title: "데이터 조회와 출력 기능 만들기",
+        kind: "lesson",
+        officialUrl: `${OFFICIAL_BASE}3e22dc3e-f514-8078-a64b-f313fd69df62`,
+        summary:
+          "pandas로 Kaggle 데이터를 불러오고, 조건문과 반복문과 함수로 원하는 데이터를 검색한 뒤, Gradio로 결과를 보여주는 간단한 UI까지 만듭니다.",
+      },
+      {
+        id: "s3-chatbot",
+        title: "API로 AI 챗봇 완성하기",
+        kind: "assignment",
+        officialUrl: `${OFFICIAL_BASE}3e22dc3e-f514-808e-bd68-c794154bcef7`,
+        summary:
+          "앞에서 만든 검색 기능에 Gemini API를 연결해, 질문을 이해하고 데이터에서 관련 정보를 찾아 자연스러운 답변을 생성하는 Q&A 챗봇을 완성해 제출합니다.",
+      },
+    ],
+  },
 ];
 
 /** 공식 선행 과제 모음(전체 인덱스) 링크. */
