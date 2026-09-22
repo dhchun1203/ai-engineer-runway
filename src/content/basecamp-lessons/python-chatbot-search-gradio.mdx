@@ -1,28 +1,28 @@
 ---
 title: "Q&A 챗봇 만들기 (2) 검색 기능과 화면 붙이기"
 order: 21
-summary: "불러온 데이터에서 원하는 것만 찾아 주는 검색을 조건 검색, 함수, 반복문으로 만들고, Gradio로 입력창과 결과 화면까지 붙입니다."
+summary: "불러온 웹툰 데이터에서 원하는 것만 찾아 주는 검색을 조건 검색, 함수, 반복문으로 만들고, Gradio로 입력창과 결과 화면까지 붙입니다."
 slug: "python-chatbot-search-gradio"
 ---
 
 1편에서 데이터를 파이썬 안으로 불러왔어요. 이제 표는 손안에 있죠.
 
-그런데 챗봇은 표를 통째로 보여 주는 게 아니에요. 사용자가 "액션 영화 보여 줘"라고 하면, 그중 액션 영화만 골라서 답해야 하죠.
+그런데 챗봇은 표를 통째로 보여 주는 게 아니에요. 사용자가 "화산귀환 알려 줘"라고 하면, 그중 화산귀환만 골라서 답해야 하죠.
 
 그래서 오늘(2편)은 두 조각을 만들어요. 하나는 원하는 것만 찾아 주는 검색 기능, 다른 하나는 사용자가 검색어를 입력할 수 있는 화면이에요.
 
-> 이번 편도 Google Colab에 직접 쳐 보며 따라와 주세요. 1편에서 만든 영화 표를 계속 이어서 씁니다.
+> 이번 편도 Google Colab에 직접 쳐 보며 따라와 주세요. 1편에서 만든 웹툰 표를 계속 이어서 씁니다.
 
-시작하기 전에, 이번 편에서 계속 쓸 영화 표를 다시 만들어 둘게요. (진짜 과제에서는 1편에서 `read_csv`로 불러온 그 데이터를 쓰면 돼요.)
+시작하기 전에, 이번 편에서 계속 쓸 웹툰 표를 다시 만들어 둘게요. (진짜 과제에서는 1편에서 `read_csv`로 불러온 그 데이터를 쓰면 돼요.)
 
 ```python
 import pandas as pd
 
-movies = pd.DataFrame({
-    "제목": ["인터스텔라", "기생충", "라라랜드", "매드맥스", "코코"],
-    "연도": [2014, 2019, 2016, 2015, 2017],
-    "장르": ["SF", "드라마", "뮤지컬", "액션", "애니메이션"],
-    "평점": [8.6, 8.5, 8.0, 8.1, 8.4],
+webtoons = pd.DataFrame({
+    "title": ["신의 탑", "여신강림", "화산귀환", "전지적 독자 시점", "마루는 강쥐"],
+    "author": ["SIU", "야옹이", "비가", "슬리피-C", "모죠"],
+    "genre": ["판타지", "로맨스", "무협", "판타지", "일상"],
+    "rating": [9.7, 9.2, 9.9, 9.9, 9.9],
 })
 ```
 
@@ -32,20 +32,20 @@ movies = pd.DataFrame({
 2. (오늘) 원하는 데이터만 골라내는 검색 기능 만들기, 화면 붙이기
 3. (3편) 검색 결과에 AI 답변을 붙여 챗봇 완성하기
 
-오늘 목표는 "검색어를 받으면 맞는 영화를 찾아 보기 좋게 돌려주는 기능"을 만들고, 거기에 웹 화면을 씌우는 거예요.
+오늘 목표는 "검색어를 받으면 맞는 웹툰을 찾아 보기 좋게 돌려주는 기능"을 만들고, 거기에 웹 화면을 씌우는 거예요.
 
 ## 글자로 검색하기
 
-1편에서는 `평점 >= 9.0`처럼 숫자로 걸러 봤어요. 그런데 챗봇에서는 "코코" 같은 글자로 찾는 일이 더 많죠.
+1편에서는 `rating >= 9.5`처럼 숫자로 걸러 봤어요. 그런데 챗봇에서는 "화산귀환" 같은 글자로 찾는 일이 더 많죠.
 
 글자 검색에는 `.str.contains()`를 써요. "이 열의 글자 안에 이 단어가 들어 있니?"를 줄마다 물어봐요.
 
 ```python
-# 제목에 "맥스"가 들어 있는 영화만 남겨요
-print(movies[movies["제목"].str.contains("맥스", na=False)])
+# 제목에 "화산"이 들어 있는 웹툰만 남겨요
+print(webtoons[webtoons["title"].str.contains("화산", na=False)])
 # 출력:
-#      제목    연도  장르   평점
-# 3  매드맥스  2015  액션  8.1
+#    title author genre  rating
+# 2   화산귀환     비가     무협     9.9
 ```
 
 `na=False`는 값이 비어 있는 칸을 만나도 오류 없이 그냥 넘어가라는 뜻이에요. 진짜 데이터에는 빈 칸이 종종 있어서 붙여 두면 안전해요.
@@ -53,8 +53,8 @@ print(movies[movies["제목"].str.contains("맥스", na=False)])
 장르로도 똑같이 찾을 수 있어요. 열 이름만 바꾸면 돼요.
 
 ```python
-# 장르가 "액션"인 영화 찾기
-print(movies[movies["장르"].str.contains("액션", na=False)])
+# 장르가 "판타지"인 웹툰 찾기
+print(webtoons[webtoons["genre"].str.contains("판타지", na=False)])
 ```
 
 ## 함수로 묶기
@@ -64,54 +64,54 @@ print(movies[movies["장르"].str.contains("액션", na=False)])
 함수는 STEP 2에서 배웠죠. 입력을 받아 정해진 일을 하고 결과를 돌려주는 작은 기계였어요. 검색어를 입력으로 받는 기계를 만드는 거예요.
 
 ```python
-# keyword(검색어)를 받아, 제목에 그 글자가 든 영화들을 돌려주는 함수
-def search_movies(keyword):
-    result = movies[movies["제목"].str.contains(keyword, na=False)]
+# keyword(검색어)를 받아, 제목에 그 글자가 든 웹툰들을 돌려주는 함수
+def search_webtoons(keyword):
+    result = webtoons[webtoons["title"].str.contains(keyword, na=False)]
     return result
 
 # 이제 검색어만 바꿔 부르면 돼요
-print(search_movies("코코"))
+print(search_webtoons("여신"))
 # 출력:
-#    제목    연도    장르   평점
-# 4  코코  2017  애니메이션  8.4
+#    title author genre  rating
+# 1   여신강림    야옹이    로맨스     9.2
 ```
 
 `keyword` 자리에 무엇을 넣든, 함수가 알아서 그 글자로 검색해 줘요. 코드를 다시 고칠 필요가 없어졌죠. 이게 함수로 묶는 이유예요.
 
 ## 반복문으로 답을 보기 좋게 만들기
 
-`search_movies`는 표를 돌려줘요. 그런데 챗봇의 답으로는 표보다 읽기 좋은 문장이 나아요. "인터스텔라 (2014, SF, 평점 8.6)"처럼요.
+`search_webtoons`는 표를 돌려줘요. 그런데 챗봇의 답으로는 표보다 읽기 좋은 문장이 나아요. "신의 탑 (SIU, 판타지, 평점 9.7)"처럼요.
 
 표의 줄을 하나씩 돌면서 문장으로 바꿔 볼게요. 줄을 하나씩 도는 데는 `.iterrows()`를 써요. 반복문으로 줄마다 꺼내 오는 도구예요.
 
 ```python
 def search_as_text(keyword):
-    result = movies[movies["제목"].str.contains(keyword, na=False)]
+    result = webtoons[webtoons["title"].str.contains(keyword, na=False)]
 
     # 찾은 게 없으면 그렇다고 말해 줘요
     if len(result) == 0:
-        return "찾는 영화가 없어요."
+        return "찾는 웹툰이 없어요."
 
     # 줄을 하나씩 돌며 문장으로 바꿔 모아요
     lines = []
     for _, row in result.iterrows():
-        lines.append(f'{row["제목"]} ({row["연도"]}, {row["장르"]}, 평점 {row["평점"]})')
+        lines.append(f'{row["title"]} ({row["author"]}, {row["genre"]}, 평점 {row["rating"]})')
 
     # 문장들을 줄바꿈으로 이어 하나의 답으로
     return "\n".join(lines)
 
-print(search_as_text("코코"))
-# 출력: 코코 (2017, 애니메이션, 평점 8.4)
+print(search_as_text("여신"))
+# 출력: 여신강림 (야옹이, 로맨스, 평점 9.2)
 ```
 
 한 줄씩 뜯어볼게요.
 
-- `if len(result) == 0:` 은 찾은 영화가 없을 때를 대비해요. 아무것도 없으면 빈 답 대신 "찾는 영화가 없어요"라고 알려 줘요.
+- `if len(result) == 0:` 은 찾은 웹툰이 없을 때를 대비해요. 아무것도 없으면 빈 답 대신 "찾는 웹툰이 없어요"라고 알려 줘요.
 - `for _, row in result.iterrows():` 는 표를 한 줄씩 돌아요. `row`에 그 줄의 내용이 담기고, 앞의 `_`는 행 번호인데 안 쓸 거라 밑줄로 버렸어요.
-- `row["제목"]` 처럼 대괄호에 열 이름을 적어 그 줄의 값을 꺼내요.
+- `row["title"]` 처럼 대괄호에 열 이름을 적어 그 줄의 값을 꺼내요.
 - `"\n".join(lines)` 는 모아 둔 문장들을 줄바꿈(`\n`)으로 이어 붙여요.
 
-이제 `search_as_text("액션")`이든 무엇이든, 검색어를 넣으면 읽기 좋은 답이 나와요. 챗봇의 심장이 만들어진 거예요.
+이제 `search_as_text("판타지")`든 무엇이든, 검색어를 넣으면 읽기 좋은 답이 나와요. 챗봇의 심장이 만들어진 거예요.
 
 ## Gradio가 뭐예요?
 
@@ -154,23 +154,23 @@ demo.launch()
 
 ## 스스로 확인하기
 
-아래 표로 직접 만들어 보세요. 영화 대신 음악 데이터로 바꿔 봤어요.
+아래 표로 직접 만들어 보세요. 웹툰 몇 편을 다른 걸로 바꿔 봤어요.
 
 ```python
 import pandas as pd
 
-songs = pd.DataFrame({
-    "제목": ["봄날", "밤편지", "좋은 날", "행복", "밤하늘의 별"],
-    "가수": ["방탄소년단", "아이유", "아이유", "볼빨간사춘기", "경서"],
-    "연도": [2017, 2017, 2010, 2023, 2020],
+webtoons = pd.DataFrame({
+    "title": ["외모지상주의", "나 혼자만 레벨업", "김비서가 왜 그럴까", "denma", "유미의 세포들"],
+    "author": ["박태준", "장성락", "정경윤", "양영순", "이동건"],
+    "genre": ["액션", "액션", "로맨스", "SF", "로맨스"],
 })
 ```
 
-Q1. 제목에 "밤"이 들어간 노래만 남겨서 출력해 보세요. (`.str.contains`, `na=False`)
+Q1. 제목에 "레벨업"이 들어간 웹툰만 남겨서 출력해 보세요. (`.str.contains`, `na=False`)
 
-Q2. 가수 이름을 받아, 그 가수의 노래만 돌려주는 `search_songs(name)` 함수를 만들어 보세요.
+Q2. 장르 이름을 받아, 그 장르의 웹툰만 돌려주는 `search_by_genre(name)` 함수를 만들어 보세요.
 
-Q3. `search_songs("아이유")`를 불러 결과를 확인해 보세요.
+Q3. `search_by_genre("로맨스")`를 불러 결과를 확인해 보세요.
 
 <details>
 <summary>정답 확인</summary>
@@ -178,29 +178,28 @@ Q3. `search_songs("아이유")`를 불러 결과를 확인해 보세요.
 ```python
 import pandas as pd
 
-songs = pd.DataFrame({
-    "제목": ["봄날", "밤편지", "좋은 날", "행복", "밤하늘의 별"],
-    "가수": ["방탄소년단", "아이유", "아이유", "볼빨간사춘기", "경서"],
-    "연도": [2017, 2017, 2010, 2023, 2020],
+webtoons = pd.DataFrame({
+    "title": ["외모지상주의", "나 혼자만 레벨업", "김비서가 왜 그럴까", "denma", "유미의 세포들"],
+    "author": ["박태준", "장성락", "정경윤", "양영순", "이동건"],
+    "genre": ["액션", "액션", "로맨스", "SF", "로맨스"],
 })
 
-# Q1. 제목 열에서 "밤"이 든 줄만 남겨요
-print(songs[songs["제목"].str.contains("밤", na=False)])
+# Q1. 제목 열에서 "레벨업"이 든 줄만 남겨요
+print(webtoons[webtoons["title"].str.contains("레벨업", na=False)])
 # 출력:
-#         제목  가수    연도
-# 1      밤편지  아이유  2017
-# 4  밤하늘의 별   경서  2020
+#         title author genre
+# 1  나 혼자만 레벨업    장성락    액션
 
-# Q2. 가수 이름(name)을 받아 그 가수의 노래만 돌려주는 함수
-def search_songs(name):
-    return songs[songs["가수"].str.contains(name, na=False)]
+# Q2. 장르 이름(name)을 받아 그 장르의 웹툰만 돌려주는 함수
+def search_by_genre(name):
+    return webtoons[webtoons["genre"].str.contains(name, na=False)]
 
 # Q3. 함수를 불러 확인
-print(search_songs("아이유"))
+print(search_by_genre("로맨스"))
 # 출력:
-#      제목   가수    연도
-# 1   밤편지  아이유  2017
-# 2  좋은 날  아이유  2010
+#          title author genre
+# 2  김비서가 왜 그럴까    정경윤   로맨스
+# 4     유미의 세포들    이동건   로맨스
 ```
 
 </details>
