@@ -179,10 +179,19 @@ export const basecampSteps: readonly BasecampStep[] = [
     weekLabel: "3주차",
     title: "Python 실전 활용",
     summary:
-      "STEP 1,2에서 익힌 파이썬 문법을 실제 데이터에 적용합니다. Kaggle 데이터를 pandas로 불러오고, 조건문과 반복문과 함수로 검색 기능을 만든 뒤, Gemini API를 붙여 나만의 Q&A 챗봇을 완성합니다.",
+      "STEP 1,2에서 익힌 파이썬 문법을 실제 데이터에 적용합니다. NumPy와 Pandas로 데이터를 다루는 첫걸음을 뗀 뒤, Kaggle 데이터를 불러와 조건문과 반복문과 함수로 검색 기능을 만들고, Gemini API를 붙여 나만의 Q&A 챗봇을 완성합니다.",
     released: true,
     officialUrl: `${OFFICIAL_BASE}3e22dc3e-f514-80fc-b623-fbb2bfb75679`,
     items: [
+      {
+        id: "s3-data",
+        title: "데이터 분석 첫걸음 (NumPy, Pandas)",
+        kind: "lesson",
+        officialUrl: `${OFFICIAL_BASE}3e22dc3e-f514-80bd-bc8f-f6e331342bdb`,
+        summary:
+          "숫자 계산을 한 줄로 끝내는 NumPy와 표 데이터를 다루는 Pandas를 처음 익히고, 실제 CSV를 불러와 구조와 결측치를 확인한 뒤 try/except로 지저분한 값을 걸러냅니다.",
+        ourLessonHref: "/basecamp/python-data-analysis-numpy-pandas",
+      },
       {
         id: "s3-search",
         title: "데이터 조회와 출력 기능 만들기",
