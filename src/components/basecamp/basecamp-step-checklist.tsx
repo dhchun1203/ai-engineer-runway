@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, ExternalLink, Check } from 'lucide-react';
 import { toggleBasecampItem } from '@/app/basecamp/actions';
+import { writeOrQueue } from '@/lib/offline/sync';
 import { withToggled, withAdded, withRemoved } from '@/components/basecamp/toggle-set';
 import type { BasecampStep } from '@/content/basecamp';
 
@@ -59,7 +60,11 @@ export function BasecampStepChecklist({
     setErrorIds((prev) => withRemoved(prev, itemId));
 
     try {
-      await toggleBasecampItem(itemId, wasDone);
+      // 연결이 끊겨 있으면 기기 대기열에 목표 상태로 넣는다(오프라인 모드 설계 3.4).
+      await writeOrQueue(
+        { kind: 'basecampItem', key: itemId, value: !wasDone },
+        () => toggleBasecampItem(itemId, wasDone),
+      );
     } catch {
       // 이 항목만 되돌린다(카운터도 자동 복원).
       setDoneIds((prev) => withToggled(prev, itemId, wasDone));

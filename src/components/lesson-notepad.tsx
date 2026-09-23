@@ -13,6 +13,8 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { saveLessonNoteAction } from '@/app/lesson/[lessonId]/note-actions';
+import { NOTE_KEY_PREFIX } from '@/lib/offline/offline-logic';
+import { writeOrQueue } from '@/lib/offline/sync';
 
 // 근거: 800ms 아래는 한글 어절 사이 자연스러운 멈춤마다 저장이 걸려 요청이
 // 잘게 쪼개지고, 1500ms 위는 탭을 갑자기 닫았을 때 잃는 꼬리가 길어진다.
@@ -22,7 +24,8 @@ const SAVE_DEBOUNCE_MS = 1000;
 // 툴바는 60px 미만이라 그 사이 어디를 잘라도 되지만 여유를 두어 120px로 둔다.
 const KEYBOARD_MIN_INSET_PX = 120;
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'failed';
+// queued: 오프라인이라 기기 대기열에 넣었다(연결되면 자동으로 서버에 보낸다).
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'queued' | 'failed';
 
 export function LessonNotepad({
   lessonId,
@@ -33,10 +36,14 @@ export function LessonNotepad({
   // 아일랜드(basecamp-note.tsx)만 saveBasecampNoteAction을 넘겨, 슬러그 검증과
   // `basecamp:` 키 접두사가 다른 격리 경로로 저장되게 한다.
   saveAction = saveLessonNoteAction,
+  // 오프라인 대기열의 메모 키 접두사(서버 저장 키와 같은 규칙). 정규 레슨은 없음,
+  // 베이스캠프는 "basecamp:", 아티클은 "article:"(NOTE_KEY_PREFIX).
+  noteKeyPrefix = NOTE_KEY_PREFIX.lesson,
 }: {
   lessonId: string;
   initialBody: string;
   saveAction?: (lessonId: string, body: string) => Promise<void>;
+  noteKeyPrefix?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(initialBody);
@@ -83,9 +90,13 @@ export function LessonNotepad({
     if (current === lastSavedRef.current) return;
     if (mountedRef.current) setStatus('saving');
     try {
-      await saveAction(lessonId, current);
+      // 오프라인이거나 연결이 끊겼으면 기기 대기열에 넣는다(오프라인 모드 설계 3.4).
+      const result = await writeOrQueue(
+        { kind: 'note', key: `${noteKeyPrefix}${lessonId}`, value: current },
+        () => saveAction(lessonId, current),
+      );
       lastSavedRef.current = current;
-      if (mountedRef.current) setStatus('saved');
+      if (mountedRef.current) setStatus(result === 'queued' ? 'queued' : 'saved');
     } catch {
       // 저장 경로는 어떤 경우에도 setValue를 호출하지 않는다 — 실패해도
       // textarea의 글은 그대로 남는다.
@@ -239,6 +250,7 @@ export function LessonNotepad({
           {/* 저장이 끝난 상태(저장됨 / 저장하지 못했어요)만 라이브 영역에 담는다. */}
           <span role="status" aria-live="polite">
             {status === 'saved' ? '저장됨' : ''}
+            {status === 'queued' ? '기기에 저장했어요. 연결되면 자동으로 서버에 보내요.' : ''}
             {status === 'failed' ? '저장하지 못했어요. 방금 쓴 글은 그대로 남아 있어요.' : ''}
           </span>
         </div>

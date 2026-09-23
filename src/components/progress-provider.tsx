@@ -19,6 +19,15 @@
 //
 // lib/supabase/admin이나 lib/progress-store를 절대 import하지 않는다
 // (check-progress-gates.mjs G2).
+//
+// 오프라인 모드(설계 3.4): 받은 응답은 기기 사본으로 남기고, 동기화 안 된 쓰기(대기열)를
+// 얹어 보여 준다. 받기가 실패하면(오프라인) 사본에 대기열을 얹어 ready로 그린다. 사본이
+// 없을 때만 기존처럼 error다.
+//
+// 사본 저장(IndexedDB 쓰기)은 화면을 그리는 것을 절대 막지 않는다 — 응답이 오면 먼저
+// setState로 화면부터 그리고, 그 뒤에야 백그라운드로 사본을 남긴다. 대기열이 비어 있으면
+// (흔한 경우) 그걸로 끝이다 — countQueue()로 값싸게 확인만 하고 다시 그리지 않는다.
+// 대기열이 있을 때만 keepProgressCopy가 얹어 준 값으로 한 번 더 바꿔 끼운다.
 
 import {
   createContext,
@@ -30,6 +39,8 @@ import {
 } from "react";
 import type { StepId } from "@/content/modules";
 import type { ProgressCounts } from "@/lib/progress-math";
+import { countQueue } from "@/lib/offline/queue";
+import { keepProgressCopy, readProgressCopy } from "@/lib/offline/snapshots";
 
 export type ProgressLesson = {
   slug: string;
@@ -101,26 +112,56 @@ export function ProgressProvider({
       .then((res) => res.json() as Promise<ProgressData>)
       .then((data) => {
         if (controller.signal.aborted) return;
+        // 응답이 오면 먼저 화면부터 그린다 — 사본 저장은 그 뒤 백그라운드에서 한다
+        // (기기 저장소 왕복이 매 레슨 로드의 첫 그리기를 늦추지 않게).
         setState(toState(data));
+        Promise.all([countQueue(), keepProgressCopy(lessonId, data)])
+          .then(([queued, kept]) => {
+            if (controller.signal.aborted) return;
+            // 대기열이 비어 있으면(흔한 경우) 다시 그리지 않는다. 있을 때만 대기열이
+            // 얹힌 값으로 바꿔 끼운다.
+            if (queued > 0) setState(toState(kept));
+          })
+          .catch((error: unknown) => {
+            console.warn("[offline] applying offline queue overlay failed", error);
+          });
       })
       .catch(() => {
         if (controller.signal.aborted) return;
-        setState({ status: "error", data: null });
+        readProgressCopy(lessonId).then((copy) => {
+          if (controller.signal.aborted) return;
+          setState(copy ? toState(copy) : { status: "error", data: null });
+        });
       });
 
     return () => controller.abort();
-  }, [url]);
+  }, [url, lessonId]);
 
-  // 재조회는 화면을 비우지 않는다 — status를 loading으로 되돌리지 않고, 응답이
+  // 재조회는 화면을 비우지 않는다. status를 loading으로 되돌리지 않고, 응답이
   // 도착한 뒤에만 상태를 바꿔 끼운다. 돌려주는 Promise는 완료 버튼이 자기 임시
-  // 상태를 언제 풀지 판단하는 신호다.
+  // 상태를 언제 풀지 판단하는 신호다 — 응답이 도착해 화면이 갱신된 시점에 곧바로
+  // resolve하고, 사본 저장(+대기열 반영)은 그 뒤 백그라운드에서 마저 한다. 오프라인이면
+  // 사본(+대기열)으로 바꿔 끼운다.
   const refresh = useCallback(
     () =>
       fetch(url, { cache: "no-store" })
         .then((res) => res.json() as Promise<ProgressData>)
-        .then((data) => setState(toState(data)))
-        .catch(() => setState({ status: "error", data: null })),
-    [url],
+        .then((data) => {
+          setState(toState(data));
+          Promise.all([countQueue(), keepProgressCopy(lessonId, data)])
+            .then(([queued, kept]) => {
+              if (queued > 0) setState(toState(kept));
+            })
+            .catch((error: unknown) => {
+              console.warn("[offline] applying offline queue overlay failed", error);
+            });
+        })
+        .catch(() =>
+          readProgressCopy(lessonId).then((copy) =>
+            setState(copy ? toState(copy) : { status: "error", data: null }),
+          ),
+        ),
+    [url, lessonId],
   );
 
   return (

@@ -108,6 +108,45 @@ function readFirstConceptSlug() {
 }
 const CONCEPT_ROUTE = `/concepts/${readFirstConceptSlug()}`;
 
+// 아티클/베이스캠프 메모의 오프라인 대기열 검사(D4/D5, E3/E4)에 쓰는 슬러그. 각
+// 매니페스트의 첫 항목이면 충분하다(메모 저장 경로 자체를 보는 것이지 특정 글 내용은
+// 상관없다).
+function readFirstArticleSlug() {
+  const articlesPath = path.join(ROOT, '.velite', 'articles.json');
+  if (!fs.existsSync(articlesPath)) {
+    console.error(`${LOG}: ${path.relative(ROOT, articlesPath)}가 없습니다. \`npm run build\`를 먼저 실행하세요.`);
+    process.exit(1);
+  }
+  const articles = JSON.parse(fs.readFileSync(articlesPath, 'utf8'));
+  const first = articles[0];
+  if (!first) {
+    console.error(`${LOG}: 아티클 매니페스트가 비어 있습니다.`);
+    process.exit(1);
+  }
+  return first.slug;
+}
+const ARTICLE_SLUG = readFirstArticleSlug();
+const ARTICLE_ROUTE = `/articles/${ARTICLE_SLUG}`;
+const ARTICLE_NOTE_ID = `article:${ARTICLE_SLUG}`;
+
+function readFirstBasecampLessonSlug() {
+  const basecampPath = path.join(ROOT, '.velite', 'basecampLessons.json');
+  if (!fs.existsSync(basecampPath)) {
+    console.error(`${LOG}: ${path.relative(ROOT, basecampPath)}가 없습니다. \`npm run build\`를 먼저 실행하세요.`);
+    process.exit(1);
+  }
+  const lessons = JSON.parse(fs.readFileSync(basecampPath, 'utf8'));
+  const first = lessons[0];
+  if (!first) {
+    console.error(`${LOG}: 베이스캠프 레슨 매니페스트가 비어 있습니다.`);
+    process.exit(1);
+  }
+  return first.slug;
+}
+const BASECAMP_SLUG = readFirstBasecampLessonSlug();
+const BASECAMP_ROUTE = `/basecamp/${BASECAMP_SLUG}`;
+const BASECAMP_NOTE_ID = `basecamp:${BASECAMP_SLUG}`;
+
 function killServerTree(child) {
   if (!child || child.exitCode !== null) return;
   if (process.platform === 'win32') {
@@ -334,6 +373,36 @@ async function restoreProbe(admin, userId, backup) {
   if (note.error) throw new Error(`메모 행 복원 실패: ${note.error.message}`);
 }
 
+// 아티클/베이스캠프 메모(D4/D5, E3/E4)는 프로브 레슨과 다른 lesson_id(article:/basecamp:
+// 접두사)를 쓰므로 백업·복원을 프로브와 분리해 일반화한다.
+async function backupNoteRow(admin, userId, noteId) {
+  const { data, error } = await admin
+    .from('lesson_note')
+    .select('body, til, needs_review')
+    .eq('user_id', userId)
+    .eq('lesson_id', noteId)
+    .maybeSingle();
+  if (error) throw new FatalError(`메모 행 백업 조회 실패(${noteId}): ${error.message}`);
+  return data;
+}
+
+async function restoreNoteRow(admin, userId, noteId, noteRow) {
+  const note = noteRow
+    ? await admin.from('lesson_note').upsert(
+        {
+          user_id: userId,
+          lesson_id: noteId,
+          body: noteRow.body,
+          til: noteRow.til,
+          needs_review: noteRow.needs_review,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,lesson_id' },
+      )
+    : await admin.from('lesson_note').delete().eq('user_id', userId).eq('lesson_id', noteId);
+  if (note.error) throw new Error(`메모 행 복원 실패(${noteId}): ${note.error.message}`);
+}
+
 async function main() {
   const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -341,6 +410,8 @@ async function main() {
   let browser;
   let userId = null;
   let backup = null;
+  let articleNoteBackup = null;
+  let basecampNoteBackup = null;
 
   try {
     await startServer();
@@ -360,6 +431,11 @@ async function main() {
     backup = await backupProbe(admin, userId);
     console.log(
       `${LOG}: 테스터 프로브 행 백업 완료 (완료 행=${Boolean(backup.progressRow)}, 메모 행=${Boolean(backup.noteRow)})`,
+    );
+    articleNoteBackup = await backupNoteRow(admin, userId, ARTICLE_NOTE_ID);
+    basecampNoteBackup = await backupNoteRow(admin, userId, BASECAMP_NOTE_ID);
+    console.log(
+      `${LOG}: 아티클/베이스캠프 메모 행 백업 완료 (아티클=${Boolean(articleNoteBackup)}, 베이스캠프=${Boolean(basecampNoteBackup)})`,
     );
 
     // === A. /sw.js 응답과 서비스 워커 등록 ===
@@ -599,6 +675,126 @@ async function main() {
     }
     if (server === null) await goOnline(context);
 
+    // === D. 오프라인 완료 체크와 메모가 대기열에 쌓인다 ===
+    const offlineNote = `오프라인메모-${Date.now()}-한글`;
+    let expectedDone = null;
+    let offlineArticleNote = null;
+    let offlineBasecampNote = null;
+    try {
+      await goOffline(context);
+      await page.goto(`${BASE_URL}${PROBE_ROUTE}`, { waitUntil: 'domcontentloaded' });
+      await waitForProgressSettled(page);
+      const islandState = await page.getAttribute('[data-progress-island]', 'data-progress-state');
+      record('D1', '오프라인에서 진도 아일랜드가 기기 사본으로 준비됨', islandState === 'ready', `state=${islandState}`);
+
+      const before = await page.getAttribute('[data-progress-ui="complete-button"]', 'data-complete-state');
+      expectedDone = before !== 'done';
+      await page.click('[data-progress-ui="complete-button"] button');
+      await page.waitForSelector(
+        `[data-progress-ui="complete-button"][data-complete-state="${expectedDone ? 'done' : 'todo'}"]`,
+        { timeout: 10_000 },
+      );
+      const afterToggle = await queueCount(page);
+      record('D2', '오프라인 완료 체크가 화면에 반영되고 대기열에 1건', afterToggle === 1, `before=${before} queue=${afterToggle}`);
+
+      await page.click('[data-notepad] button[aria-expanded]');
+      await page.waitForSelector('[data-notepad-input]');
+      await page.fill('[data-notepad-input]', offlineNote);
+      await page.waitForTimeout(1800);
+      const noteStatus = await page.getAttribute('[data-notepad-status]', 'data-notepad-status');
+      const afterNote = await queueCount(page);
+      record('D3', '오프라인 메모가 기기에 저장됨 상태로 대기열에 들어감', noteStatus === 'queued' && afterNote === 2, `status=${noteStatus} queue=${afterNote}`);
+
+      // 아티클/베이스캠프 메모(진도·완료가 없는 격리 화면)도 같은 writeOrQueue 경로를 타는지
+      // 본다. 두 페이지 모두 "전체 받기"(B)가 이미 저장해 둔 콘텐츠라 오프라인에서도 열린다.
+      await page.goto(`${BASE_URL}${ARTICLE_ROUTE}`, { waitUntil: 'domcontentloaded' });
+      await page.click('[data-notepad] button[aria-expanded]');
+      await page.waitForSelector('[data-notepad-input]');
+      offlineArticleNote = `오프라인아티클메모-${Date.now()}-한글`;
+      await page.fill('[data-notepad-input]', offlineArticleNote);
+      await page.waitForTimeout(1800);
+      const articleNoteStatus = await page.getAttribute('[data-notepad-status]', 'data-notepad-status');
+      const afterArticleNote = await queueCount(page);
+      record(
+        'D4',
+        '오프라인 아티클 메모가 기기에 저장됨 상태로 대기열에 들어감',
+        articleNoteStatus === 'queued' && afterArticleNote === 3,
+        `status=${articleNoteStatus} queue=${afterArticleNote}`,
+      );
+
+      await page.goto(`${BASE_URL}${BASECAMP_ROUTE}`, { waitUntil: 'domcontentloaded' });
+      await page.click('[data-notepad] button[aria-expanded]');
+      await page.waitForSelector('[data-notepad-input]');
+      offlineBasecampNote = `오프라인베이스캠프메모-${Date.now()}-한글`;
+      await page.fill('[data-notepad-input]', offlineBasecampNote);
+      await page.waitForTimeout(1800);
+      const basecampNoteStatus = await page.getAttribute('[data-notepad-status]', 'data-notepad-status');
+      const afterBasecampNote = await queueCount(page);
+      record(
+        'D5',
+        '오프라인 베이스캠프 메모가 기기에 저장됨 상태로 대기열에 들어감',
+        basecampNoteStatus === 'queued' && afterBasecampNote === 4,
+        `status=${basecampNoteStatus} queue=${afterBasecampNote}`,
+      );
+    } catch (e) {
+      record('D', '오프라인 쓰기', false, `예외: ${e.message}`);
+    }
+
+    // === E. 온라인 복귀 후 자동 동기화와 서버 반영 ===
+    try {
+      if (server === null) await goOnline(context);
+      const drained = await waitForQueueEmpty(page, 40_000);
+      const { data: progressRow } = await admin
+        .from('progress')
+        .select('lesson_id')
+        .eq('user_id', userId)
+        .eq('lesson_id', PROBE_SLUG)
+        .maybeSingle();
+      const { data: noteRow } = await admin
+        .from('lesson_note')
+        .select('body')
+        .eq('user_id', userId)
+        .eq('lesson_id', PROBE_SLUG)
+        .maybeSingle();
+      const serverDone = progressRow !== null;
+      const pass = drained && expectedDone !== null && serverDone === expectedDone && noteRow?.body === offlineNote;
+      record('E1', '복귀하면 대기열이 비고 서버에 완료와 메모가 반영됨', pass, JSON.stringify({ drained, expectedDone, serverDone, noteMatches: noteRow?.body === offlineNote }));
+
+      const { data: articleNoteRow } = await admin
+        .from('lesson_note')
+        .select('body')
+        .eq('user_id', userId)
+        .eq('lesson_id', ARTICLE_NOTE_ID)
+        .maybeSingle();
+      record(
+        'E3',
+        '오프라인 아티클 메모가 온라인 복귀 후 서버에 반영됨',
+        articleNoteRow?.body === offlineArticleNote,
+        JSON.stringify({ bodyMatches: articleNoteRow?.body === offlineArticleNote }),
+      );
+
+      const { data: basecampNoteRow } = await admin
+        .from('lesson_note')
+        .select('body')
+        .eq('user_id', userId)
+        .eq('lesson_id', BASECAMP_NOTE_ID)
+        .maybeSingle();
+      record(
+        'E4',
+        '오프라인 베이스캠프 메모가 온라인 복귀 후 서버에 반영됨',
+        basecampNoteRow?.body === offlineBasecampNote,
+        JSON.stringify({ bodyMatches: basecampNoteRow?.body === offlineBasecampNote }),
+      );
+
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await waitForProgressSettled(page);
+      const uiState = await page.getAttribute('[data-progress-ui="complete-button"]', 'data-complete-state');
+      record('E2', '새로고침 후 화면도 서버 값과 같음', uiState === (expectedDone ? 'done' : 'todo'), `ui=${uiState}`);
+    } catch (e) {
+      record('E', '동기화', false, `예외: ${e.message}`);
+    }
+    if (server === null) await goOnline(context);
+
     // === H. 로그아웃하면 기기 저장본이 모두 지워진다(항상 마지막) ===
     // 로그아웃 뒤에는 로그인이 필요한 시나리오를 돌릴 수 없다. 새 시나리오는 이 주석 위에 넣는다.
     try {
@@ -651,6 +847,17 @@ async function main() {
         console.log(`${LOG}: 테스터 프로브 행 복원 완료`);
       } catch (e) {
         console.error(`${LOG}: 복원 실패. 수동 확인이 필요합니다: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+    if (userId) {
+      try {
+        await restoreNoteRow(admin, userId, ARTICLE_NOTE_ID, articleNoteBackup);
+        await restoreNoteRow(admin, userId, BASECAMP_NOTE_ID, basecampNoteBackup);
+        console.log(`${LOG}: 아티클/베이스캠프 메모 행 복원 완료`);
+      } catch (e) {
+        console.error(
+          `${LOG}: 아티클/베이스캠프 메모 복원 실패. 수동 확인이 필요합니다: ${e instanceof Error ? e.message : String(e)}`,
+        );
       }
     }
   }

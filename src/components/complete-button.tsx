@@ -20,6 +20,7 @@
 import { useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { toggleLessonComplete } from '@/app/lesson/[lessonId]/actions';
+import { writeOrQueue } from '@/lib/offline/sync';
 
 const SAVE_ERROR_MESSAGE = '저장하지 못했습니다. 다시 시도해주세요.';
 
@@ -50,7 +51,12 @@ export function CompleteButton({
     setPendingDone(next);
     setError(null);
     try {
-      await toggleLessonComplete(lessonId, initialDone);
+      // 오프라인이거나 연결이 끊겨 있으면 기기 대기열에 목표 상태로 넣고 성공처럼 진행한다
+      // (연결되면 자동 동기화, 설계 3.4). 서버에 닿는데 실패한 것만 아래 catch로 간다.
+      await writeOrQueue(
+        { kind: 'lessonComplete', key: lessonId, value: next },
+        () => toggleLessonComplete(lessonId, initialDone),
+      );
       // 재조회까지 기다린 뒤에 임시 상태를 푼다 — 여기서 먼저 풀면 아직 옛
       // 값인 initialDone이 한 프레임 드러난다(그게 바로 되돌아가 보이던 증상).
       await onToggled?.();
