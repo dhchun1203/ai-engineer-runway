@@ -24,7 +24,11 @@ export function BasecampStepChecklist({
   onProgress,
 }: {
   step: BasecampStep;
-  /** 완료된 항목 id(접두사 없는 item.id) 목록. unlocked일 때만 의미가 있다. */
+  /** 완료된 항목 id(접두사 없는 item.id) 목록. unlocked일 때만 의미가 있다. 서버가
+   *  내려준 값 그대로이고, 오프라인 대기열의 미동기화 토글은 얹지 않는다(의도적).
+   *  베이스캠프 허브(이 목록을 그리는 상위 화면)는 오프라인에서 캐시되지 않는 개인
+   *  화면이라(설계 2절, Ruling E), 여기서 대기열을 보는 경로는 네트워크가 불안정한
+   *  드문 경우뿐이라 그 값까지 매번 다시 계산하는 비용을 들이지 않는다. */
   initialDoneIds: readonly string[];
   unlocked: boolean;
   /** 자체 헤더(주차·제목·요약·카운터)를 그릴지. 과거 주차 행은 바깥에서

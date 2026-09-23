@@ -14,6 +14,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { saveLessonNoteAction } from '@/app/lesson/[lessonId]/note-actions';
 import { NOTE_KEY_PREFIX } from '@/lib/offline/offline-logic';
+import { useQueueCount } from '@/lib/offline/queue';
 import { writeOrQueue } from '@/lib/offline/sync';
 
 // 근거: 800ms 아래는 한글 어절 사이 자연스러운 멈춤마다 저장이 걸려 요청이
@@ -48,6 +49,14 @@ export function LessonNotepad({
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(initialBody);
   const [status, setStatus] = useState<SaveStatus>('idle');
+  const queueCount = useQueueCount();
+  // 재생(replayQueue)이 이 메모를 서버로 보내면 대기열 전체 개수가 준다. status를 다시
+  // setState하는 effect를 두는 대신(그 자체로 또 한 번의 렌더를 부른다), 그리는 시점에
+  // queued를 saved로 바꿔서 보여준다. status는 그대로 queued로 남아 있어도 화면은
+  // 대기열이 빈 순간 곧바로 saved로 넘어간다. 이 메모 하나만 보는 값이 아니라 기기
+  // 대기열 전체 개수라, 다른 항목이 아직 남아 있으면 이 메모가 이미 갔어도 saved 표시가
+  // 조금 늦게 나온다(허용 가능한 오차).
+  const displayStatus: SaveStatus = status === 'queued' && queueCount === 0 ? 'saved' : status;
 
   // 마지막으로 성공 저장된 문자열 — flush 시점에 이 값과 같으면 저장을 건너뛴다.
   const lastSavedRef = useRef(initialBody);
@@ -241,17 +250,17 @@ export function LessonNotepad({
           className="note-paper flex-1"
         />
         <div
-          data-notepad-status={status}
+          data-notepad-status={displayStatus}
           className="flex items-center gap-2 pb-4 text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark"
         >
           {/* saving 중간 상태는 라이브 영역 밖에서 aria-hidden으로 조용히
               표시한다 — 키 입력마다 스크린리더가 떠들지 않게 한다. */}
-          <span aria-hidden="true">{status === 'saving' ? '저장 중…' : ''}</span>
+          <span aria-hidden="true">{displayStatus === 'saving' ? '저장 중…' : ''}</span>
           {/* 저장이 끝난 상태(저장됨 / 저장하지 못했어요)만 라이브 영역에 담는다. */}
           <span role="status" aria-live="polite">
-            {status === 'saved' ? '저장됨' : ''}
-            {status === 'queued' ? '기기에 저장했어요. 연결되면 자동으로 서버에 보내요.' : ''}
-            {status === 'failed' ? '저장하지 못했어요. 방금 쓴 글은 그대로 남아 있어요.' : ''}
+            {displayStatus === 'saved' ? '저장됨' : ''}
+            {displayStatus === 'queued' ? '기기에 저장했어요. 연결되면 자동으로 서버에 보내요.' : ''}
+            {displayStatus === 'failed' ? '저장하지 못했어요. 방금 쓴 글은 그대로 남아 있어요.' : ''}
           </span>
         </div>
       </div>

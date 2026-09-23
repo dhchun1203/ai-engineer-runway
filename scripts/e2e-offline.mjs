@@ -412,6 +412,11 @@ async function main() {
   let backup = null;
   let articleNoteBackup = null;
   let basecampNoteBackup = null;
+  // null이 "백업 없음"(원래 행이 없었음)과 "아직 백업하지 못함"을 구분하지 못해서,
+  // 백업 호출이 실제로 성공했는지는 이 두 플래그로 따로 표시한다. finally에서 이 플래그가
+  // false인 채로 복원을 돌리면, 백업이 실패했을 때 테스터의 실제 메모 행을 지워 버린다.
+  let articleNoteBackedUp = false;
+  let basecampNoteBackedUp = false;
 
   try {
     await startServer();
@@ -433,7 +438,9 @@ async function main() {
       `${LOG}: 테스터 프로브 행 백업 완료 (완료 행=${Boolean(backup.progressRow)}, 메모 행=${Boolean(backup.noteRow)})`,
     );
     articleNoteBackup = await backupNoteRow(admin, userId, ARTICLE_NOTE_ID);
+    articleNoteBackedUp = true;
     basecampNoteBackup = await backupNoteRow(admin, userId, BASECAMP_NOTE_ID);
+    basecampNoteBackedUp = true;
     console.log(
       `${LOG}: 아티클/베이스캠프 메모 행 백업 완료 (아티클=${Boolean(articleNoteBackup)}, 베이스캠프=${Boolean(basecampNoteBackup)})`,
     );
@@ -855,10 +862,12 @@ async function main() {
         console.error(`${LOG}: 복원 실패. 수동 확인이 필요합니다: ${e instanceof Error ? e.message : String(e)}`);
       }
     }
-    if (userId) {
+    if (userId && (articleNoteBackedUp || basecampNoteBackedUp)) {
       try {
-        await restoreNoteRow(admin, userId, ARTICLE_NOTE_ID, articleNoteBackup);
-        await restoreNoteRow(admin, userId, BASECAMP_NOTE_ID, basecampNoteBackup);
+        // 백업이 실제로 성공한 쪽만 복원한다(위 플래그 선언부 참고). 백업하지 못한
+        // 쪽을 null로 복원하면 지우기(delete)가 되어 테스터의 실제 메모를 잃는다.
+        if (articleNoteBackedUp) await restoreNoteRow(admin, userId, ARTICLE_NOTE_ID, articleNoteBackup);
+        if (basecampNoteBackedUp) await restoreNoteRow(admin, userId, BASECAMP_NOTE_ID, basecampNoteBackup);
         console.log(`${LOG}: 아티클/베이스캠프 메모 행 복원 완료`);
       } catch (e) {
         console.error(
