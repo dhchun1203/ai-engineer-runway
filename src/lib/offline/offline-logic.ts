@@ -207,14 +207,17 @@ export function snapshotSourceFor(pageUrl: string): SnapshotSource | null {
 
 // ---------------------------------------------------------------------------
 // /api/auth 응답 해석. userId가 없으면(시크릿 쿠키 로그인 등) null.
+// buildId는 서버의 현재 빌드 id. 대기열 재생 전에 페이지의 빌드 id와 비교한다(다르면
+// 새로 불러온 뒤 재생한다. 빌드마다 서버 작업 식별자가 달라지기 때문). 읽지 못하면 null.
 
-export type AuthState = { loggedIn: boolean; userId: string | null };
+export type AuthState = { loggedIn: boolean; userId: string | null; buildId: string | null };
 
 export function parseAuthState(json: unknown): AuthState {
-  if (typeof json !== "object" || json === null) return { loggedIn: false, userId: null };
-  const record = json as { loggedIn?: unknown; userId?: unknown };
+  if (typeof json !== "object" || json === null) return { loggedIn: false, userId: null, buildId: null };
+  const record = json as { loggedIn?: unknown; userId?: unknown; buildId?: unknown };
   const userId = typeof record.userId === "string" && record.userId.length > 0 ? record.userId : null;
-  return { loggedIn: Boolean(record.loggedIn), userId };
+  const buildId = typeof record.buildId === "string" && record.buildId.length > 0 ? record.buildId : null;
+  return { loggedIn: Boolean(record.loggedIn), userId, buildId };
 }
 
 // ---------------------------------------------------------------------------

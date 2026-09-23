@@ -3,6 +3,7 @@ import { pretendard, newsreader, notoSerifKr, jetbrainsMono } from "@/lib/fonts"
 import { SiteNav } from "@/components/site-nav";
 import { PrintMode } from "@/components/print-mode";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { OfflineRuntime } from "@/components/offline/offline-runtime";
 import "./globals.css";
 
 // D-15: 비밀이 아닌 값 — 환경변수가 없어도 빌드가 성공해야 한다.
@@ -83,6 +84,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* 맨 위로 가기 — 어느 화면에서든 같은 자리에 있어야 하므로 루트에 한 번만
             둔다. 자기 자리는 스스로 안다(.scroll-top). */}
         <ScrollToTop />
+        {/* 오프라인 모드 런타임(서비스 워커 등록과 해제, 계정 대조, 동기화, 오프라인 링크
+            이동). 화면에는 아무것도 그리지 않는다. */}
+        <OfflineRuntime />
       </body>
     </html>
   );

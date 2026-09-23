@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { signOutAction } from '../login/actions';
 import { SignupForm } from './signup-form';
+import { SignOutForm } from '@/components/offline/sign-out-form';
 
 // 세션을 읽어 로그인 상태에 따라 폼/안내를 가르므로 동적 렌더가 필요하다. 회원가입 화면은
 // 색인할 이유가 없어 로봇을 막는다(login/unlock/done과 같은 방침).
@@ -46,11 +47,11 @@ export default async function SignupPage() {
             <Link href="/" className="btn-action tap-feedback min-h-11 text-body">
               홈으로
             </Link>
-            <form action={signOutAction}>
+            <SignOutForm action={signOutAction}>
               <button type="submit" className="chip tap-feedback min-h-11 text-body">
                 로그아웃
               </button>
-            </form>
+            </SignOutForm>
           </div>
         </div>
       ) : (

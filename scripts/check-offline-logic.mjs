@@ -261,11 +261,18 @@ async function main() {
   });
 
   runCase('parseAuthState', () => {
-    assert.deepEqual(parseAuthState({ loggedIn: true, userId: 'u1' }), { loggedIn: true, userId: 'u1' });
-    assert.deepEqual(parseAuthState({ loggedIn: 1 }), { loggedIn: true, userId: null });
-    assert.deepEqual(parseAuthState({ loggedIn: true, userId: 5 }), { loggedIn: true, userId: null });
-    assert.deepEqual(parseAuthState({ loggedIn: true, userId: '' }), { loggedIn: true, userId: null });
-    assert.deepEqual(parseAuthState(null), { loggedIn: false, userId: null });
+    assert.deepEqual(parseAuthState({ loggedIn: true, userId: 'u1' }), { loggedIn: true, userId: 'u1', buildId: null });
+    assert.deepEqual(parseAuthState({ loggedIn: 1 }), { loggedIn: true, userId: null, buildId: null });
+    assert.deepEqual(parseAuthState({ loggedIn: true, userId: 5 }), { loggedIn: true, userId: null, buildId: null });
+    assert.deepEqual(parseAuthState({ loggedIn: true, userId: '' }), { loggedIn: true, userId: null, buildId: null });
+    assert.deepEqual(parseAuthState(null), { loggedIn: false, userId: null, buildId: null });
+    assert.deepEqual(parseAuthState({ loggedIn: false, userId: null, buildId: 'b1' }), {
+      loggedIn: false,
+      userId: null,
+      buildId: 'b1',
+    });
+    assert.equal(parseAuthState({ loggedIn: true, userId: 'u1', buildId: '' }).buildId, null);
+    assert.equal(parseAuthState({ loggedIn: true, userId: 'u1', buildId: 7 }).buildId, null);
   });
 
   runCase('formatBytes', () => {

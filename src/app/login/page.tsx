@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { isOwnerSession } from '@/lib/owner';
 import { LoginForm } from './login-form';
 import { signOutAction } from './actions';
+import { SignOutForm } from '@/components/offline/sign-out-form';
 
 // 세션을 읽어 로그인 상태에 따라 폼/로그아웃을 가르므로 동적 렌더가 필요하다.
 export const dynamic = 'force-dynamic';
@@ -106,11 +107,11 @@ export default async function LoginPage() {
               <Link href="/" className="btn-action tap-feedback min-h-11 text-body">
                 홈으로
               </Link>
-              <form action={signOutAction}>
+              <SignOutForm action={signOutAction}>
                 <button type="submit" className="chip tap-feedback min-h-11 text-body">
                   로그아웃
                 </button>
-              </form>
+              </SignOutForm>
             </div>
 
             {/* 소유자 전용 관리 — 가입 승인. 소유자가 아니면 이 구역 자체가 없다. */}

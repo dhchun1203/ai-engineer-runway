@@ -1,0 +1,439 @@
+#!/usr/bin/env node
+// 오프라인 모드 브라우저 게이트(docs/superpowers/specs/2026-09-23-offline-mode-design.md 5절).
+// e2e-lesson-note.mjs의 부트스트랩(서버 spawn/대기/Windows taskkill 종료/FatalError/finally
+// 정리/"검사 0건 = 실패"/한국어 로그)을 복제한다. 기존 게이트처럼 공유 모듈로 빼지 않는다.
+//
+// 다른 게이트와 다른 점 두 가지.
+// 1) 개발 서버가 아니라 프로덕션 서버(next start)를 띄운다. 서비스 워커는 production에서만
+//    등록되고(offline-runtime.tsx), 개발 서버(Turbopack)의 청크 주소는 해시가 아니라 캐시
+//    먼저 전략과 맞지 않는다. 그래서 호출자가 먼저 `npm run build`를 해 둬야 한다.
+// 2) 시크릿 쿠키(runway_unlock)가 아니라 테스터 계정으로 실제 로그인한다. 대기열 동기화는
+//    Server Action이 로그인 사용자 id로 저장하는데, 시크릿 쿠키에는 사용자 id가 없다.
+//
+// "오프라인"은 두 겹으로 만든다. context.setOffline(true)(navigator.onLine과 offline 이벤트)와
+// 서버 프로세스 종료(서비스 워커의 네트워크 요청까지 확실히 실패). 복귀는 서버 재기동 후
+// setOffline(false).
+//
+// 실행: E2E_TESTER_EMAIL=... E2E_TESTER_PASSWORD=... node --env-file=.env.local scripts/e2e-offline.mjs
+// (값은 테스터 계정. 문서와 코드에 쓰지 않는다.)
+// 포트 3218(3210~3217은 기존 게이트). E2E_OFFLINE_PORT로 덮어쓸 수 있다.
+// 테스터의 프로브 레슨 완료 행과 메모 행을 시작 때 백업하고 finally에서 복원한다.
+// 어떤 출력에도 쿠키 값, 비밀번호, 이메일을 찍지 않는다.
+
+import { chromium } from '@playwright/test';
+import { createClient } from '@supabase/supabase-js';
+import { spawn, execSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, '..');
+
+const LOG = 'e2e-offline';
+const PORT = process.env.E2E_OFFLINE_PORT ? Number(process.env.E2E_OFFLINE_PORT) : 3218;
+const HOST = '127.0.0.1';
+const BASE_URL = `http://${HOST}:${PORT}`;
+const SERVER_READY_TIMEOUT_MS = 180_000;
+const FETCH_TIMEOUT_MS = 30_000;
+
+class FatalError extends Error {}
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const TESTER_EMAIL = process.env.E2E_TESTER_EMAIL;
+const TESTER_PASSWORD = process.env.E2E_TESTER_PASSWORD;
+
+for (const [name, value] of [
+  ['SUPABASE_URL', SUPABASE_URL],
+  ['SUPABASE_SERVICE_ROLE_KEY', SUPABASE_SERVICE_ROLE_KEY],
+  ['E2E_TESTER_EMAIL', TESTER_EMAIL],
+  ['E2E_TESTER_PASSWORD', TESTER_PASSWORD],
+]) {
+  if (!value) {
+    console.error(
+      `${LOG}: ${name} 환경 변수가 비어 있습니다. \`E2E_TESTER_EMAIL=... E2E_TESTER_PASSWORD=... node --env-file=.env.local scripts/e2e-offline.mjs\`로 실행하세요.`,
+    );
+    process.exit(1);
+  }
+}
+
+if (!fs.existsSync(path.join(ROOT, '.next', 'BUILD_ID'))) {
+  console.error(`${LOG}: .next/BUILD_ID가 없습니다. 먼저 \`npm run build\`를 실행하세요(이 게이트는 next start로 돈다).`);
+  process.exit(1);
+}
+
+// 앱 코드를 import하지 않는다. .velite/lessons.json을 독립 재파싱한다.
+function readLessonsManifest() {
+  const lessonsPath = path.join(ROOT, '.velite', 'lessons.json');
+  if (!fs.existsSync(lessonsPath)) {
+    console.error(`${LOG}: ${path.relative(ROOT, lessonsPath)}가 없습니다. \`npm run build\`를 먼저 실행하세요.`);
+    process.exit(1);
+  }
+  return JSON.parse(fs.readFileSync(lessonsPath, 'utf8'));
+}
+
+const LESSONS = readLessonsManifest();
+const PROBE_LESSON = LESSONS.find((l) => l.hasContent === true);
+if (!PROBE_LESSON) {
+  console.error(`${LOG}: hasContent가 참인 레슨을 매니페스트에서 찾지 못했습니다.`);
+  process.exit(1);
+}
+const PROBE_SLUG = PROBE_LESSON.slug;
+const PROBE_ROUTE = `/lesson/${PROBE_SLUG}`;
+
+function killServerTree(child) {
+  if (!child || child.exitCode !== null) return;
+  if (process.platform === 'win32') {
+    try {
+      execSync(`taskkill /pid ${child.pid} /T /F`, { stdio: 'ignore' });
+    } catch (e) {
+      // 이미 종료되었을 수 있다. 남아 있으면 waitForServerDown이 잡는다.
+      console.warn(`${LOG}: 서버 프로세스 종료 명령 실패(이미 종료되었을 수 있음): ${e instanceof Error ? e.message : String(e)}`);
+    }
+  } else {
+    try {
+      child.kill('SIGKILL');
+    } catch (e) {
+      console.warn(`${LOG}: 서버 프로세스 종료 실패(이미 종료되었을 수 있음): ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+}
+
+async function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function waitForServerReady() {
+  const deadline = Date.now() + SERVER_READY_TIMEOUT_MS;
+  let lastError = null;
+  while (Date.now() < deadline) {
+    try {
+      const res = await fetchWithTimeout(BASE_URL, { redirect: 'manual' });
+      if (res.status < 500) return;
+      lastError = `HTTP ${res.status}`;
+    } catch (e) {
+      // 아직 기동 중. 재시도하고, 끝내 실패하면 마지막 오류를 함께 보고한다.
+      lastError = e instanceof Error ? e.message : String(e);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+  throw new FatalError(`서버가 제한 시간(180초) 안에 기동하지 않았습니다. 마지막 오류: ${lastError ?? '없음'}`);
+}
+
+async function waitForServerDown() {
+  const deadline = Date.now() + 15_000;
+  while (Date.now() < deadline) {
+    try {
+      await fetchWithTimeout(BASE_URL, { redirect: 'manual' });
+    } catch {
+      // 연결 실패가 곧 "내려갔다"는 신호다(삼키는 오류가 아니라 성공 조건).
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+  throw new FatalError('서버가 15초 안에 내려가지 않았습니다.');
+}
+
+const serverOutput = [];
+let server = null;
+
+async function startServer() {
+  const nextBin = path.join(ROOT, 'node_modules', 'next', 'dist', 'bin', 'next');
+  server = spawn(process.execPath, [nextBin, 'start', '--port', String(PORT), '--hostname', HOST], {
+    cwd: ROOT,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: process.env,
+  });
+  server.stdout.on('data', (d) => serverOutput.push(d.toString()));
+  server.stderr.on('data', (d) => serverOutput.push(d.toString()));
+  try {
+    await waitForServerReady();
+  } catch (e) {
+    throw new FatalError(`${e.message}\n--- 서버 출력(마지막 부분) ---\n${serverOutput.join('').slice(-4000)}`);
+  }
+}
+
+async function stopServer() {
+  killServerTree(server);
+  server = null;
+  await waitForServerDown();
+}
+
+async function goOffline(context) {
+  await context.setOffline(true);
+  await stopServer();
+}
+
+async function goOnline(context) {
+  await startServer();
+  await context.setOffline(false);
+}
+
+// --- 결과 누적기. 실패는 항목 순서대로 모아 마지막에 한 번에 출력한다 ---
+const results = [];
+function record(id, label, pass, detail) {
+  results.push({ id, label, pass, detail: detail ?? '' });
+  console.log(`${LOG}: ${id} ${label}: ${pass ? 'OK' : 'FAIL'}${detail ? ` (${detail})` : ''}`);
+}
+
+async function pollUntil(read, isDone, timeoutMs, intervalMs = 500) {
+  const deadline = Date.now() + timeoutMs;
+  let value = await read();
+  while (!isDone(value) && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    value = await read();
+  }
+  return value;
+}
+
+async function login(page) {
+  await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded' });
+  await page.fill('input[name="email"]', TESTER_EMAIL);
+  await page.fill('input[name="password"]', TESTER_PASSWORD);
+  await Promise.all([
+    page.waitForURL((url) => url.pathname === '/', { timeout: 30_000 }),
+    page.click('button[type="submit"]'),
+  ]);
+}
+
+async function readAuth(page) {
+  return page.evaluate(() => fetch('/api/auth', { cache: 'no-store' }).then((r) => r.json()));
+}
+
+// e2e-lesson-note.mjs와 같은 신호: 진도 아일랜드가 loading을 벗어날 때까지 기다린다.
+async function waitForProgressSettled(page) {
+  await page.waitForSelector('[data-progress-island]');
+  await page.waitForFunction(() => {
+    const el = document.querySelector('[data-progress-island]');
+    return el !== null && el.getAttribute('data-progress-state') !== 'loading';
+  });
+}
+
+async function waitForServiceWorker(page) {
+  return page.evaluate(() =>
+    Promise.race([
+      navigator.serviceWorker.ready.then((registration) => Boolean(registration.active)),
+      new Promise((resolve) => setTimeout(() => resolve(false), 20_000)),
+    ]),
+  );
+}
+
+// offline-db 한 저장소의 키 목록. DB가 없으면 만들지 않고 빈 목록(open만 하면 빈 v1 DB가
+// 생겨 앱의 저장소 생성을 막는다).
+async function idbKeys(page, storeName) {
+  return page.evaluate(async (name) => {
+    const dbs = typeof indexedDB.databases === 'function' ? await indexedDB.databases() : [];
+    if (!dbs.some((d) => d.name === 'offline-db')) return [];
+    return new Promise((resolve) => {
+      const request = indexedDB.open('offline-db');
+      request.onerror = () => resolve([]);
+      request.onsuccess = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(name)) {
+          db.close();
+          resolve([]);
+          return;
+        }
+        const keysRequest = db.transaction(name, 'readonly').objectStore(name).getAllKeys();
+        keysRequest.onsuccess = () => {
+          db.close();
+          resolve(keysRequest.result.map(String));
+        };
+        keysRequest.onerror = () => {
+          db.close();
+          resolve([]);
+        };
+      };
+    });
+  }, storeName);
+}
+
+async function queueCount(page) {
+  return (await idbKeys(page, 'queue')).length;
+}
+
+async function waitForQueueEmpty(page, timeoutMs) {
+  const count = await pollUntil(() => queueCount(page), (n) => n === 0, timeoutMs, 1000);
+  return count === 0;
+}
+
+async function backupProbe(admin, userId) {
+  const { data: progressRow, error: progressError } = await admin
+    .from('progress')
+    .select('completed_at')
+    .eq('user_id', userId)
+    .eq('lesson_id', PROBE_SLUG)
+    .maybeSingle();
+  if (progressError) throw new FatalError(`완료 행 백업 조회 실패: ${progressError.message}`);
+  const { data: noteRow, error: noteError } = await admin
+    .from('lesson_note')
+    .select('body, til, needs_review')
+    .eq('user_id', userId)
+    .eq('lesson_id', PROBE_SLUG)
+    .maybeSingle();
+  if (noteError) throw new FatalError(`메모 행 백업 조회 실패: ${noteError.message}`);
+  return { progressRow, noteRow };
+}
+
+async function restoreProbe(admin, userId, backup) {
+  const progress = backup.progressRow
+    ? await admin
+        .from('progress')
+        .upsert(
+          { user_id: userId, lesson_id: PROBE_SLUG, completed_at: backup.progressRow.completed_at },
+          { onConflict: 'user_id,lesson_id' },
+        )
+    : await admin.from('progress').delete().eq('user_id', userId).eq('lesson_id', PROBE_SLUG);
+  if (progress.error) throw new Error(`완료 행 복원 실패: ${progress.error.message}`);
+  const note = backup.noteRow
+    ? await admin.from('lesson_note').upsert(
+        {
+          user_id: userId,
+          lesson_id: PROBE_SLUG,
+          body: backup.noteRow.body,
+          til: backup.noteRow.til,
+          needs_review: backup.noteRow.needs_review,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,lesson_id' },
+      )
+    : await admin.from('lesson_note').delete().eq('user_id', userId).eq('lesson_id', PROBE_SLUG);
+  if (note.error) throw new Error(`메모 행 복원 실패: ${note.error.message}`);
+}
+
+async function main() {
+  const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  let browser;
+  let userId = null;
+  let backup = null;
+
+  try {
+    await startServer();
+    console.log(`${LOG}: 프로덕션 서버 기동 완료 (probe lesson: ${PROBE_SLUG})`);
+
+    browser = await chromium.launch();
+    // 1024 폭: 램프 글자(ON AIR)가 보이는 폭(640px 이상)에서 본다.
+    const context = await browser.newContext({ viewport: { width: 1024, height: 768 } });
+    const page = await context.newPage();
+
+    await login(page);
+    const auth = await readAuth(page);
+    if (typeof auth?.userId !== 'string' || auth.userId.length === 0) {
+      throw new FatalError('/api/auth가 userId를 돌려주지 않습니다. 테스터 로그인과 /api/auth 변경을 확인하세요.');
+    }
+    userId = auth.userId;
+    backup = await backupProbe(admin, userId);
+    console.log(
+      `${LOG}: 테스터 프로브 행 백업 완료 (완료 행=${Boolean(backup.progressRow)}, 메모 행=${Boolean(backup.noteRow)})`,
+    );
+
+    // === A. /sw.js 응답과 서비스 워커 등록 ===
+    try {
+      const res = await fetchWithTimeout(`${BASE_URL}/sw.js?v=e2e`, { redirect: 'manual' });
+      const info = {
+        status: res.status,
+        cacheControl: res.headers.get('cache-control') ?? '',
+        contentType: res.headers.get('content-type') ?? '',
+        allowed: res.headers.get('service-worker-allowed'),
+      };
+      const pass =
+        info.status === 200 &&
+        info.cacheControl.includes('no-store') &&
+        info.contentType.includes('javascript') &&
+        info.allowed === '/';
+      record('A1', '/sw.js 헤더(쿠키 없이 200, no-store, javascript, Service-Worker-Allowed)', pass, JSON.stringify(info));
+    } catch (e) {
+      record('A1', '/sw.js 헤더', false, `예외: ${e.message}`);
+    }
+
+    try {
+      await page.goto(`${BASE_URL}${PROBE_ROUTE}`, { waitUntil: 'domcontentloaded' });
+      const active = await waitForServiceWorker(page);
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(800);
+      const state = await page.evaluate(async () => {
+        const offlineKeys = (await caches.keys()).filter((k) => k.startsWith('offline-'));
+        return {
+          controlled: navigator.serviceWorker.controller !== null,
+          offlineKeys,
+          lessonCached: Boolean(await caches.match(location.pathname)),
+        };
+      });
+      const pass = active && state.controlled && state.offlineKeys.length === 1 && state.lessonCached;
+      record('A2', '로그인 후 서비스 워커 활성, 페이지 제어, 빌드 캐시 1개, 방문한 레슨 저장', pass, JSON.stringify({ active, ...state }));
+    } catch (e) {
+      record('A2', '서비스 워커 등록', false, `예외: ${e.message}`);
+    }
+
+    // === H. 로그아웃하면 기기 저장본이 모두 지워진다(항상 마지막) ===
+    // 로그아웃 뒤에는 로그인이 필요한 시나리오를 돌릴 수 없다. 새 시나리오는 이 주석 위에 넣는다.
+    try {
+      if (server === null) await goOnline(context);
+      await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded' });
+      await page.click('button:has-text("로그아웃")');
+      await page.waitForSelector('input[name="email"]', { timeout: 30_000 });
+      const after = await pollUntil(
+        () =>
+          page.evaluate(async () => {
+            const offlineCaches = (await caches.keys()).filter((k) => k.startsWith('offline-')).length;
+            const dbs = typeof indexedDB.databases === 'function' ? await indexedDB.databases() : [];
+            const registrations = (await navigator.serviceWorker.getRegistrations()).length;
+            return { offlineCaches, offlineDb: dbs.some((d) => d.name === 'offline-db'), registrations };
+          }),
+        (v) => v.offlineCaches === 0 && !v.offlineDb && v.registrations === 0,
+        10_000,
+      );
+      const pass = after.offlineCaches === 0 && !after.offlineDb && after.registrations === 0;
+      record('H', '로그아웃하면 저장본, IndexedDB, 서비스 워커가 모두 사라짐', pass, JSON.stringify(after));
+    } catch (e) {
+      record('H', '로그아웃 정리', false, `예외: ${e.message}`);
+    }
+
+    await browser.close();
+    browser = undefined;
+
+    console.log(`${LOG}: 수행한 검사 수 = ${results.length}`);
+    if (results.length === 0) {
+      throw new FatalError('수행한 검사가 0건입니다. 시나리오 목록을 확인하세요.');
+    }
+    const failures = results.filter((r) => !r.pass);
+    if (failures.length > 0) {
+      console.error(`${LOG}: ${failures.length}건의 위반이 발견되었습니다:\n`);
+      for (const f of failures) console.error(`  - [${f.id}] ${f.label}: ${f.detail}`);
+      throw new FatalError(`${failures.length}건의 위반으로 게이트 실패`);
+    }
+    console.log(`${LOG}: 검사한 ${results.length}건 전부 통과`);
+  } finally {
+    if (browser) {
+      await browser.close().catch((e) => {
+        console.warn(`${LOG}: 브라우저 종료 실패: ${e instanceof Error ? e.message : String(e)}`);
+      });
+    }
+    killServerTree(server);
+    server = null;
+    if (backup && userId) {
+      try {
+        await restoreProbe(admin, userId, backup);
+        console.log(`${LOG}: 테스터 프로브 행 복원 완료`);
+      } catch (e) {
+        console.error(`${LOG}: 복원 실패. 수동 확인이 필요합니다: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+  }
+}
+
+main()
+  .then(() => process.exit(0))
+  .catch((e) => {
+    console.error(`${LOG}: ${e instanceof Error ? e.message : String(e)}`);
+    process.exit(1);
+  });
