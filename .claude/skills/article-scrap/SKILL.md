@@ -83,10 +83,14 @@ MDX 주의: 본문 산문에 `{`, `}`, `<`를 그대로 쓰지 않는다(JSX로 
 1. `git pull --rebase origin master`
 2. 아래 출처에서 최근 14일 안의 글 후보를 모은다.
 3. 2편을 고른다: 기사 자체의 가치(현업의 설계 판단, 수치, 시행착오가 분명하고 AI Engineer 실무에 의미 있는 글)로 고른다. 우리 레슨과의 연결은 고려하지 않는다. 국내 1편과 해외 1편을 섞되 한쪽에 적합한 글이 없으면 예외, 광고와 채용 공고와 행사 홍보와 얕은 글 제외, 이미 올린 url 제외. 적합한 글이 2편 미만이면 있는 만큼만.
-4. 각 글을 위 절차 1~5로 쓴다. `origin: "auto"`.
-5. 검사를 통과한 글만 `git add src/content/articles/<slug>.mdx src/content/terms.ts` 후 커밋: `feat(articles): 자동 수집 <제목>` + Co-Authored-By 줄. 통과 못 한 글은 파일을 지우고, 그 글 때문에 사전에 넣은 새 용어도 되돌린다(`git checkout src/content/terms.ts` 후 통과한 글의 용어만 다시 추가).
-6. `git pull --rebase origin master && git push origin master`
-7. 마지막 응답에 올린 글(제목, 원문 링크, 사이트 경로)과 버린 후보(이유)를 적는다.
+4. 고른 글을 **한 편씩 차례로** 처리한다. `velite build`와 `check-articles.mjs`는 컬렉션 전체를 검사하므로, 두 편을 한꺼번에 쓰면 한 편의 오류가 다른 편의 검사까지 실패시킨다. 그래서 한 편을 끝내야(커밋 또는 버림) 다음 편을 시작한다. 글마다:
+   1. 위 절차 1~4로 글 파일과(필요하면) 새 용어를 쓴다. `origin: "auto"`.
+   2. 위 절차 5의 검사 목록을 전부 돌린다. 실패하면 고쳐서 다시 돌린다.
+   3. 전부 통과하면 `git add src/content/articles/<slug>.mdx src/content/terms.ts` 후 커밋: `feat(articles): 자동 수집 <제목>` + Co-Authored-By 줄.
+   4. 고칠 수 없으면 그 글 파일을 지우고 `git checkout src/content/terms.ts`로 이번 글 때문에 넣은 용어를 되돌린다(앞 글의 용어는 이미 커밋돼 있어 그대로 남는다). 버린 이유를 적어 둔다.
+   5. `git status --short`로 이번 글의 흔적이 남지 않았는지 확인하고 다음 글로 넘어간다.
+5. 모든 글을 처리한 뒤 한 번만 push한다: `git pull --rebase origin master && git push origin master`
+6. 마지막 응답에 올린 글(제목, 원문 링크, 사이트 경로)과 버린 후보(이유)를 적는다.
 
 ### 출처
 
