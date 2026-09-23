@@ -1,8 +1,11 @@
+import { existsSync, readdirSync } from "node:fs";
+import { basename, extname, join } from "node:path";
 import { defineConfig, s } from "velite";
 import {
   ARTICLE_OPTIONAL_SECTIONS,
   ARTICLE_SECTIONS,
   ARTICLE_TAGS,
+  isArticleTag,
 } from "./src/content/article-tags";
 import rehypePrettyCode from "rehype-pretty-code";
 // 헤딩 id 생성 (quick 260901-etq). 복습 카드가 레슨의 "6. 핵심 정리 및 스스로 점검"
@@ -246,6 +249,25 @@ function articleUrlKey(raw: string): string {
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
+// articles 파일 목록을 디스크에서 직접 훑는다(velite의 pattern glob과 별개 구현).
+// 이유: velite는 non-strict 모드에서 필드 하나가 "타입 자체"를 못 맞추면(예: enum에
+// 없는 값) 이슈만 콘솔에 찍고 그 문서를 조용히 컬렉션에서 통째로 제외한다 —
+// .transform()도 돌지 않으므로 위 tags/summary 재검사(prepare 안)조차 그 문서를
+// 못 본다. 파일 수와 실제 articles.length를 대조해 "빠진 문서가 있다"를 잡아내는
+// 마지막 방어선이다.
+function listArticleMdxFiles(dir: string): string[] {
+  if (!existsSync(dir)) return [];
+  const out: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...listArticleMdxFiles(full));
+    else if (entry.isFile() && extname(entry.name) === ".mdx") out.push(full);
+  }
+  return out;
+}
+
+const ARTICLES_DIR = "src/content/articles";
+
 export default defineConfig({
   root: ".",
   output: {
@@ -410,15 +432,68 @@ export default defineConfig({
     },
   },
   // 컬렉션 전체를 봐야 하는 검사 — 원문 url 중복은 항목 단위 transform으로는 못 잡는다.
+  //
+  // tags/summary 재검사(일부러 스키마와 중복): velite는 기본(non-strict) 모드에서
+  // zod 스키마 위반(.min/.max/.length 등)을 빌드 실패로 이어가지 않고 콘솔에
+  // info/warning으로만 찍고 넘어간다(config.strict를 true로 켜야 throw하는데,
+  // 이 프로젝트는 전역 strict를 켜지 않기로 함). Spec 3.2가 "summary 개수, tags
+  // 범위 위반은 velite 빌드 실패로 막는다"를 명시하므로, 여기서 같은 규칙을
+  // 다시 한 번 명시적으로 검사해 throw한다. **articles 스키마의 tags/summary
+  // 제약을 바꾸면 이 블록도 반드시 함께 바꿀 것.**
   prepare: ({ articles }) => {
+    const problems: string[] = [];
+
+    for (const article of articles) {
+      const where = `${article.slug} (${article.url})`;
+
+      if (
+        !Array.isArray(article.tags) ||
+        article.tags.length < 1 ||
+        article.tags.length > 3 ||
+        article.tags.some((t) => !isArticleTag(t))
+      ) {
+        problems.push(
+          `articles: ${where}의 tags는 ARTICLE_TAGS 안에서 1~3개여야 합니다. 실제: [${(article.tags ?? []).join(" / ")}]`,
+        );
+      }
+
+      if (
+        !Array.isArray(article.summary) ||
+        article.summary.length !== 3 ||
+        article.summary.some((line) => typeof line !== "string" || line.trim() === "")
+      ) {
+        problems.push(
+          `articles: ${where}의 summary는 빈 줄 없이 정확히 3줄이어야 합니다. 실제: ${article.summary?.length ?? 0}줄`,
+        );
+      }
+    }
+
     const seen = new Map<string, string>();
     for (const article of articles) {
       const key = articleUrlKey(article.url);
       const prev = seen.get(key);
       if (prev) {
-        throw new Error(`articles: 원문 url 중복 ${article.url} (${prev}, ${article.slug})`);
+        problems.push(`articles: 원문 url 중복 ${article.url} (${prev}, ${article.slug})`);
+      } else {
+        seen.set(key, article.slug);
       }
-      seen.set(key, article.slug);
+    }
+
+    // 마지막 방어선: 위 tags/summary 재검사는 "문서가 articles 배열에 있다"를
+    // 전제한다. enum에 없는 값처럼 타입 자체가 안 맞는 위반은 velite가 문서를
+    // 통째로 배열에서 빼버려 위 검사가 아예 못 본다 — 그래서 디스크의 .mdx 파일
+    // 수와 실제 articles.length를 대조해 조용히 빠진 문서가 있는지 확인한다.
+    const onDisk = listArticleMdxFiles(ARTICLES_DIR);
+    if (onDisk.length !== articles.length) {
+      const presentSlugs = new Set(articles.map((a) => a.slug));
+      const missing = onDisk.filter((f) => !presentSlugs.has(basename(f, ".mdx")));
+      problems.push(
+        `articles: ${ARTICLES_DIR}에 .mdx 파일이 ${onDisk.length}개인데 컬렉션에는 ${articles.length}개만 있습니다 — 스키마 검증에 실패해 조용히 제외된 문서가 있습니다(바로 위 velite issues 로그 참고). 의심 파일: ${missing.length > 0 ? missing.join(", ") : "(파일명으로 특정 불가, 위 issues 로그 참고)"}`,
+      );
+    }
+
+    if (problems.length > 0) {
+      throw new Error(problems.join("\n"));
     }
   },
 });
