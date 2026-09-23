@@ -64,13 +64,13 @@ function absolute(path) {
   return new URL(path, self.location.origin).href;
 }
 
-// 현재 캐시(CACHE_NAME)에서 먼저 찾고, 없으면 모든 offline-* 캐시를 뒤진다(옛 배포의
+// 현재 캐시(CACHE_NAME)에서 먼저 찾고, allCaches면 모든 offline-* 캐시를 뒤진다(옛 배포의
 // HTML이 옛 캐시에 있던 자기 조각을 그 캐시에서 찾을 수 있게 — 다른 배포가 캐시를
-// 지우지 않으므로 여러 개가 함께 남아 있을 수 있다).
-async function matchAnyCache(request) {
-  const current = await caches.open(CACHE_NAME);
-  const hit = await current.match(request, { ignoreVary: true });
-  if (hit) return hit;
+// 지우지 않으므로 여러 개가 함께 남아 있을 수 있다). caches.open은 없는 캐시를 새로
+// 만들어 로그아웃 때 지운 캐시를 되살리므로, 찾기에는 cacheName을 준 caches.match만 쓴다.
+async function matchAnyCache(request, allCaches = true) {
+  const hit = await caches.match(request, { cacheName: CACHE_NAME, ignoreVary: true });
+  if (hit || !allCaches) return hit;
   return caches.match(request, { ignoreVary: true });
 }
 
@@ -108,7 +108,7 @@ async function precacheOfflinePage() {
     extractAssetPaths(html).map(async (assetPath) => {
       try {
         const asset = await fetch(assetPath, { credentials: "same-origin" });
-        if (asset.ok) await cache.put(absolute(assetPath), asset);
+        if (asset.ok && !asset.redirected) await cache.put(absolute(assetPath), asset);
       } catch (error) {
         // 받지 못한 파일은 다음 온라인 방문 때 캐시 먼저 규칙이 채운다.
       }
@@ -154,11 +154,22 @@ async function handleNavigation(event, url, kind) {
   }
 }
 
-async function cacheFirst(event, request) {
-  const cached = await matchAnyCache(request);
+// 이름에 해시가 든 /_next/static 파일만 옛 캐시에서 바로 꺼내 쓴다. 해시 없는 파일
+// (글꼴, 아이콘)은 옛 캐시 것이 낡았을 수 있어 네트워크가 안 될 때만 옛 캐시로 대신한다.
+async function cacheFirst(event, request, url) {
+  const hashed = url.pathname.startsWith("/_next/static/");
+  const cached = await matchAnyCache(request, hashed);
   if (cached) return cached;
-  const response = await fetch(request);
-  if (response.ok && response.type === "basic") {
+  let response;
+  try {
+    response = await fetch(request);
+  } catch (error) {
+    const stale = hashed ? undefined : await caches.match(request, { ignoreVary: true });
+    if (stale) return stale;
+    throw error;
+  }
+  // 로그아웃 상태의 /apple-icon처럼 /login으로 튕긴 응답은 저장하지 않는다.
+  if (response.ok && response.type === "basic" && !response.redirected) {
     const copy = response.clone();
     event.waitUntil(cachePut(request, copy).catch((err) => console.warn("[sw] cache write failed", err)));
   }
@@ -179,6 +190,6 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (isStaticAssetPath(url.pathname)) {
-    event.respondWith(cacheFirst(event, request));
+    event.respondWith(cacheFirst(event, request, url));
   }
 });
