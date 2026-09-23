@@ -14,6 +14,16 @@ const STORE_NAMES: readonly StoreName[] = ["progressSnapshot", "noteSnapshots", 
 let dbPromise: Promise<IDBDatabase> | null = null;
 // 지금 dbPromise가 가리키는 연결. 옛 연결의 onclose가 새로 연 연결을 잊게 만들지 않도록 대조한다.
 let openedDb: IDBDatabase | null = null;
+// 정리(deleteOfflineDb)로 DB를 지운 뒤에는 이 페이지에서 다시 열지 않는다. 여는 순간 빈 DB가
+// 새로 생기기 때문이다. 지우기 전에 시작한 재생이나 옮기기가 뒤늦게 열면 로그아웃한 뒤에도
+// DB가 남는다. 로그인이 확인되면 계정 대조(offline-runtime.tsx)가 allowOfflineDbReopen()으로
+// 푼다.
+let reopenBlocked = false;
+
+/** 로그인이 확인된 뒤 계정 대조가 부른다. 정리로 막아 둔 DB 열기를 다시 허용한다. */
+export function allowOfflineDbReopen(): void {
+  reopenBlocked = false;
+}
 
 function forgetConnection(db: IDBDatabase | null): void {
   if (db !== null && openedDb !== db) return;
@@ -23,6 +33,9 @@ function forgetConnection(db: IDBDatabase | null): void {
 
 function openDb(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
+  if (reopenBlocked) {
+    return Promise.reject(new Error("offline-db was deleted on this page; reopening waits for a confirmed login"));
+  }
   const opening = new Promise<IDBDatabase>((resolve, reject) => {
     if (typeof indexedDB === "undefined") {
       reject(new Error("indexedDB unavailable"));
@@ -180,6 +193,8 @@ export async function offlineDbExists(): Promise<boolean> {
 }
 
 export async function deleteOfflineDb(): Promise<void> {
+  // 닫기보다 먼저 막는다. 닫힌 연결을 만난 작업이 다시 열어 DB를 새로 만들지 않게 한다.
+  reopenBlocked = true;
   if (dbPromise) {
     try {
       (await dbPromise).close();

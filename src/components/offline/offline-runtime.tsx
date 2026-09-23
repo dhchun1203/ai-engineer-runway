@@ -16,7 +16,7 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { BUILD_ID } from "@/lib/offline/cache";
 import { isOnline, subscribeOnline } from "@/lib/offline/connectivity";
-import { getMeta, offlineDbExists, setMeta } from "@/lib/offline/db";
+import { allowOfflineDbReopen, getMeta, offlineDbExists, setMeta } from "@/lib/offline/db";
 import { startMigrationOnce } from "@/lib/offline/migration";
 import { countQueue } from "@/lib/offline/queue";
 import { fetchAuthState, markNeedsLogin, replayQueue } from "@/lib/offline/sync";
@@ -89,12 +89,16 @@ async function reconcileAccount(): Promise<boolean> {
 
   let switchedAccount = false;
   if (auth.userId) {
+    // 로그인이 확인됐다. 이 페이지에서 앞서 로그아웃 정리로 막아 둔 DB 열기를 푼다(db.ts).
+    allowOfflineDbReopen();
     const owner = await getMeta<string>("userId").catch((error: unknown) => {
       console.warn("[offline] reading device data owner failed", error);
       return undefined;
     });
     if (owner && owner !== auth.userId) {
       await wipeOfflineData({ keepRegistration: true });
+      // 계정만 바뀐 정리다. 새 계정의 사본은 바로 이어서 저장하므로 다시 연다.
+      allowOfflineDbReopen();
       switchedAccount = true;
     }
     await setMeta("userId", auth.userId).catch((error: unknown) => {

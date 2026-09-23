@@ -2,7 +2,7 @@
 // "kind|key"라 같은 항목을 다시 넣으면 앞의 것을 덮어쓴다(마지막 것만 남는다).
 
 import { useSyncExternalStore } from "react";
-import { idbCount, idbDeleteIf, idbGet, idbGetAll, idbPut } from "./db";
+import { idbCount, idbDeleteIf, idbGet, idbGetAll, idbPut, offlineDbExists } from "./db";
 import {
   queueItemId,
   sortQueue,
@@ -22,6 +22,9 @@ function emit(): void {
 
 export async function countQueue(): Promise<number> {
   try {
+    // 세기만 하려고 DB를 열면 없던 빈 DB가 새로 생긴다. 로그아웃 정리 직후 화면(헤더 램프가
+    // 잠깐 다시 붙는 경우 포함)에서 지운 DB가 되살아나지 않게, 없으면 열지 않고 0으로 본다.
+    if (!(await offlineDbExists())) return 0;
     return await idbCount("queue");
   } catch (error) {
     console.warn("[offline] counting queue failed", error);
