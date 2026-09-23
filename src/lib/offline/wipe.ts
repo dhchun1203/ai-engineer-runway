@@ -5,7 +5,7 @@
 // 지울 것이 없는 단계는 건너뛴다(로그아웃 방문자가 이동할 때마다 삭제 요청을 보내지 않게).
 
 import { OFFLINE_CACHE_PREFIX, clearOfflineCaches } from "./cache";
-import { deleteOfflineDb, offlineDbExists } from "./db";
+import { deleteOfflineDb, idbCount, offlineDbExists } from "./db";
 import { resetQueueCount } from "./queue";
 import { clearCopies } from "./snapshots";
 
@@ -29,8 +29,10 @@ async function serviceWorkerRegistrations(): Promise<readonly ServiceWorkerRegis
 export async function hasOfflineData(): Promise<boolean> {
   try {
     if (await hasOfflineCaches()) return true;
-    if (await offlineDbExists()) return true;
-    return (await serviceWorkerRegistrations()).length > 0;
+    if ((await serviceWorkerRegistrations()).length > 0) return true;
+    // 대기열만 남은 DB(세션 만료로 사본만 지운 상태)는 지울 것이 아니다. 사본이 있을 때만 센다.
+    if (!(await offlineDbExists())) return false;
+    return (await idbCount("progressSnapshot")) + (await idbCount("noteSnapshots")) > 0;
   } catch (error) {
     // 확인하지 못하면 "있다"로 본다(지워야 할 저장본을 놓치지 않는 쪽).
     console.warn("[offline] checking for device data failed", error);

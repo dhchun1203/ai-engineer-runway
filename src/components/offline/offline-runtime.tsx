@@ -27,9 +27,6 @@ const SERVICE_WORKER_URL = `/sw.js?v=${encodeURIComponent(BUILD_ID)}`;
 // 기다렸다가 한 번 더 묻는다.
 const LOGGED_OUT_RECHECK_MS = 2_000;
 
-// 로그아웃 상태에서 정리를 이미 마쳤으면 이동할 때마다 다시 확인하지 않는다. 로그인이 보이면 풀린다.
-let settledWhileLoggedOut = false;
-
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -58,9 +55,9 @@ async function requestReprecache(): Promise<void> {
  * 돌려주는 값: 로그인 상태(계속 진행), "stop"(동기화 금지), "unknown"(판단 불가, 저장본 유지).
  */
 async function handleLoggedOut(): Promise<AuthState | "stop" | "unknown"> {
-  if (settledWhileLoggedOut) return "stop";
+  // 이동할 때마다 확인한다(값싼 기기 안 조회 세 번). 다른 탭에서 받은 저장본도 놓치지 않는다.
   if (!(await hasOfflineData())) {
-    settledWhileLoggedOut = true;
+    if ((await offlineDbExists()) && (await countQueue()) > 0) markNeedsLogin();
     return "stop";
   }
   await wait(LOGGED_OUT_RECHECK_MS);
@@ -71,7 +68,6 @@ async function handleLoggedOut(): Promise<AuthState | "stop" | "unknown"> {
   await wipeOfflineData({ keepQueue });
   // 동기화 안 된 쓰기가 남았다. 재생이 돌지 않으니 여기서 "다시 로그인하면 동기화돼요"를 켠다.
   if (keepQueue) markNeedsLogin();
-  settledWhileLoggedOut = true;
   return "stop";
 }
 
@@ -88,7 +84,6 @@ async function reconcileAccount(): Promise<boolean> {
     if (outcome === "unknown") return true;
     auth = outcome;
   }
-  settledWhileLoggedOut = false;
 
   let switchedAccount = false;
   if (auth.userId) {
