@@ -98,7 +98,11 @@ async function migrate(): Promise<void> {
   if (auth.buildId === null || auth.buildId !== BUILD_ID) return;
   attempted = true;
   const attempts = await readAttempts();
-  if (attempts >= MAX_ATTEMPTS) return;
+  // 이 빌드에서 이미 여러 번 실패했다. 다시 시도하지 않되 안내는 계속 보인다.
+  if (attempts >= MAX_ATTEMPTS) {
+    setState({ status: "error" });
+    return;
+  }
   await setMeta(ATTEMPTS_KEY, attempts + 1).catch((error: unknown) => {
     console.warn("[offline] saving migration attempts failed", error);
   });
