@@ -135,14 +135,17 @@ export async function removeIfUnchanged(item: QueueItem): Promise<void> {
 }
 
 /**
- * 서버가 이 항목을 거절했다. 같은 값이 아직 대기 중이면 거절 횟수를 하나 늘리고, 한도
- * (MAX_QUEUE_REJECTIONS)에 닿으면 버린다. 그 사이 새 값이 들어왔으면 손대지 않는다.
+ * 서버가 이 항목을 거절했다. 같은 값이 아직 대기 중이면 거절을 센다(앞서 센 거절에서 30분이
+ * 지났을 때만, offline-logic.ts afterRejection). 한도(MAX_QUEUE_REJECTIONS)에 닿으면 버린다.
+ * 그 사이 새 값이 들어왔으면 손대지 않는다.
  */
 export async function recordRejection(item: QueueItem): Promise<void> {
   try {
     const outcome = await idbUpdateIf<QueueItem>("queue", item.id, (current) => {
       if (current === undefined || current.at !== item.at || current.value !== item.value) return undefined;
-      return afterRejection(current);
+      const next = afterRejection(current, Date.now());
+      // 30분 안의 거절은 세지 않는다(그대로 둔다).
+      return next === current ? undefined : next;
     });
     if (outcome === "deleted") {
       console.warn(

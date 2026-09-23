@@ -18,8 +18,9 @@ export type QueueInput =
 export type QueueKind = QueueInput["kind"];
 
 // userId: 넣을 때 확인된 계정(모르면 없음). 없으면 기기 저장본의 주인(meta.userId)의 것으로
-// 본다(이 필드가 생기기 전에 넣은 항목 포함). rejections: 서버가 거절한 횟수(없으면 0).
-type QueueItemBase = { id: string; at: number; userId?: string; rejections?: number };
+// 본다(이 필드가 생기기 전에 넣은 항목 포함). rejections: 서버가 거절한 횟수 중 센 것(없으면 0).
+// lastRejectedAt: 마지막으로 센 거절의 시각. 같은 키에 새 값을 넣으면 두 필드 모두 없어진다.
+type QueueItemBase = { id: string; at: number; userId?: string; rejections?: number; lastRejectedAt?: number };
 
 export type QueueItem =
   | (QueueItemBase & { kind: "lessonComplete"; key: string; value: boolean })
@@ -53,12 +54,20 @@ export function itemsForAccount(
 // 서버가 같은 항목을 이만큼 거절하면 대기열에서 버린다(배포로 없어진 레슨 등). 남겨 두면 대기
 // 개수 배지가 영영 안 사라지고, 로그아웃할 때마다 확인을 묻고, 같은 키의 이후 변경도 계속
 // 대기열로 간다.
+// 단 거절은 앞서 센 거절에서 30분이 지나야 한 번 더 센다. 서버 저장소가 잠시 멈춘 동안에도
+// 로그인 확인(/api/auth)은 통과해 모든 재생이 "거절"로 보인다. 페이지를 몇 번 옮기는 것만으로
+// 한도를 채워 오프라인에서 쓴 변경을 버리지 않게, 센 거절 세 번이 적어도 한 시간에 걸치게 한다.
 export const MAX_QUEUE_REJECTIONS = 3;
+export const REJECTION_SPACING_MS = 30 * 60 * 1000;
 
-/** 거절을 한 번 더 센 항목. 한도에 닿으면 null(버린다). 입력은 바꾸지 않는다. */
-export function afterRejection(item: QueueItem): QueueItem | null {
+/**
+ * 거절을 한 번 반영한 항목. 앞서 센 거절에서 30분이 안 지났으면 입력을 그대로(같은 객체) 돌려준다.
+ * 세면 rejections와 lastRejectedAt을 바꾼 새 객체, 한도에 닿으면 null(버린다). 입력은 바꾸지 않는다.
+ */
+export function afterRejection(item: QueueItem, now: number): QueueItem | null {
+  if (item.lastRejectedAt !== undefined && now - item.lastRejectedAt < REJECTION_SPACING_MS) return item;
   const rejections = (item.rejections ?? 0) + 1;
-  return rejections >= MAX_QUEUE_REJECTIONS ? null : { ...item, rejections };
+  return rejections >= MAX_QUEUE_REJECTIONS ? null : { ...item, rejections, lastRejectedAt: now };
 }
 
 /** 넣은 순서(at 오름차순). 원본 배열은 바꾸지 않는다. */

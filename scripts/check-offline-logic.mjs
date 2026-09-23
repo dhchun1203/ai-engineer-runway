@@ -108,6 +108,7 @@ async function main() {
     itemsForAccount,
     afterRejection,
     MAX_QUEUE_REJECTIONS,
+    REJECTION_SPACING_MS,
     sortQueue,
     queuedNote,
     overlayProgress,
@@ -156,15 +157,38 @@ async function main() {
     assert.deepEqual(itemsForAccount(queue, 'user-b', null), [mine, legacy]);
   });
 
-  runCase('afterRejection은 세 번째 거절에서 버린다(원본 불변)', () => {
+  runCase('afterRejection: 30분 안의 거절은 한 번만 센다(원본 불변)', () => {
+    const t0 = 1_000_000;
     const item = toQueueItem({ kind: 'lessonComplete', key: 'gone', value: true }, 1);
-    const once = afterRejection(item);
+    const once = afterRejection(item, t0);
     assert.equal(once.rejections, 1);
+    assert.equal(once.lastRejectedAt, t0);
     assert.equal(item.rejections, undefined);
-    const twice = afterRejection(once);
+    assert.equal(item.lastRejectedAt, undefined);
+    // 서버 장애 동안 페이지를 옮길 때마다 재생이 거절돼도 30분 안이면 그대로(같은 객체).
+    for (const later of [t0 + 1, t0 + 60_000, t0 + REJECTION_SPACING_MS - 1]) {
+      assert.equal(afterRejection(once, later), once);
+    }
+    assert.equal(REJECTION_SPACING_MS, 30 * 60 * 1000);
+  });
+
+  runCase('afterRejection: 30분 간격으로 센 세 번째 거절에서 버린다', () => {
+    const t0 = 1_000_000;
+    const item = toQueueItem({ kind: 'note', key: 'gone', value: '본문' }, 1);
+    const once = afterRejection(item, t0);
+    const twice = afterRejection(once, t0 + REJECTION_SPACING_MS);
     assert.equal(twice.rejections, 2);
-    assert.equal(afterRejection(twice), null);
+    assert.equal(twice.lastRejectedAt, t0 + REJECTION_SPACING_MS);
+    assert.equal(afterRejection(twice, t0 + REJECTION_SPACING_MS + 1), twice);
+    assert.equal(afterRejection(twice, t0 + 2 * REJECTION_SPACING_MS), null);
     assert.equal(MAX_QUEUE_REJECTIONS, 3);
+  });
+
+  runCase('같은 키에 새 값을 넣으면 거절 횟수가 없어진다', () => {
+    const fresh = toQueueItem({ kind: 'note', key: 'gone', value: '새 본문' }, 2);
+    assert.equal(fresh.rejections, undefined);
+    assert.equal(fresh.lastRejectedAt, undefined);
+    assert.equal(afterRejection(fresh, 5).rejections, 1);
   });
 
   runCase('같은 kind와 key는 같은 id(대기열에서 마지막 것만 남는다)', () => {

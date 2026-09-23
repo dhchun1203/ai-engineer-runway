@@ -92,12 +92,12 @@ export type ProgressContextValue = ProgressState & { refresh: () => Promise<void
 
 const ProgressContext = createContext<ProgressContextValue | null>(null);
 
-/** 응답 한 벌을 화면 상태로 옮기는 유일한 판정 — 최초 로드와 재조회가 공유한다. */
 /** 대기열 개수. 기기 저장소가 멈추면 0으로 보고 넘어간다. */
 function countQueueBounded(): Promise<number> {
   return withTimeout(countQueue(), STORAGE_READ_TIMEOUT_MS, 0, "counting the write queue");
 }
 
+/** 응답 한 벌을 화면 상태로 옮기는 유일한 판정 — 최초 로드와 재조회가 공유한다. */
 function toState(data: ProgressData): ProgressState {
   if (!data.unlocked) return { status: "locked", data };
   if (!data.ok) return { status: "error", data: null };
