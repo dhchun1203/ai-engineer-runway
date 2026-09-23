@@ -38,7 +38,8 @@ function getLastLessonServerRaw(): string | null {
   return null;
 }
 
-function parseLastLesson(raw: string | null): { slug: string; title: string } | null {
+// /offline 화면(offline-center.tsx)의 "이어서 읽기"도 같은 검증을 쓴다.
+export function parseLastLesson(raw: string | null): { slug: string; title: string } | null {
   if (!raw) return null;
   try {
     const parsed: unknown = JSON.parse(raw);

@@ -47,6 +47,13 @@
   --color-warn-dark: #ffb020;
   --color-destructive: #c02033;
   --color-destructive-dark: #ff4d6d;
+  /* ON AIR 램프(오프라인 모드, 2026-09-23). 온라인은 ok, 오프라인은 destructive와 같은
+     값이다. 따로 이름을 두는 이유: 램프 색을 바꿀 때 완료, 경고 표시까지 같이 바뀌지
+     않게 한다. */
+  --color-onair: #15803d;
+  --color-onair-dark: #2fd48a;
+  --color-offair: #c02033;
+  --color-offair-dark: #ff4d6d;
 
   /* Step 상징 색 (D-04) — 세 Step을 구분하는 역할은 그대로 두되 값은 위
      팔레트 안에서만 고른다. 파랑·주황·황토는 서로 충분히 구분되고 종이
@@ -2522,5 +2529,87 @@ code[data-theme*=" "] span {
      데스크톱에서만 보이게 한다(::before 자체를 없앤다). */
   .ra-rail [data-ra-tip]::before {
     content: none;
+  }
+}
+
+/* ON AIR 램프(오프라인 모드, src/components/offline/on-air-lamp.tsx). 색은 요소의 글자색
+   (text-onair / text-offair 유틸리티, @theme 토큰)을 currentColor로 받아 배경과 빛 번짐에
+   쓴다. 새 색 리터럴 없음. 온라인은 약 3초 주기로 천천히 숨 쉬고(밝기와 번짐만), 오프라인은
+   1초 주기로 또렷하게 깜빡인다. 방송 램프라 이 디자인에서 예외적으로 둥글다(.rounded-full은
+   이 사이트에서 각지게 덮이므로 여기서 직접 둥글게 한다).
+   애니메이션은 opacity만 바꾼다(합성 단계에서 처리되어 매 프레임 다시 그리지 않는다). 빛
+   번짐은 ::after에 고정된 box-shadow로 두고 그 opacity만 숨 쉬게 한다. box-shadow 자체를
+   애니메이션하면 헤더가 떠 있는 내내 매 프레임 다시 그린다. e2e(scripts/e2e-offline.mjs F1,
+   F2, F3)는 .onair-lamp 요소 자체의 animation-name(lamp-breathe, lamp-blink, none)을 읽는다. */
+@keyframes lamp-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes lamp-glow {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes lamp-blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.onair-lamp {
+  position: relative;
+  display: inline-block;
+  border-radius: 9999px;
+  background-color: currentColor;
+  animation: lamp-breathe 3s ease-in-out infinite;
+}
+
+.onair-lamp::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 35%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  animation: lamp-glow 3s ease-in-out infinite;
+}
+
+.onair-lamp[data-state="off"] {
+  animation: lamp-blink 1s step-end infinite;
+}
+
+.onair-lamp[data-state="off"]::after {
+  animation: none;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onair-lamp,
+  .onair-lamp[data-state="off"] {
+    animation: none;
+    opacity: 1;
+  }
+
+  .onair-lamp::after {
+    animation: none;
+    opacity: 0;
   }
 }

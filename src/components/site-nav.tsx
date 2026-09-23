@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { OnAirLamp } from "@/components/offline/on-air-lamp";
+import { fetchAuthJson } from "@/lib/offline/auth";
 
 // 내비 구조는 D-09가 고정한 4항목 골격을 계승·확장한 것이다. Phase 3가 "오늘의
 // 학습"("/")과 "커리큘럼"("/curriculum")을 켰고, 리서치 2단에서 도구 라우트가
@@ -62,6 +64,8 @@ const NAV_ITEMS: readonly NavItem[] = [
       { label: "아티클", href: "/articles" },
       { label: "문서·정보", href: null, heading: true },
       { label: "PDF 내보내기", href: "/print" },
+      // 오프라인 저장(/offline): 전체 받기와 저장본 관리, 오프라인이면 목차 화면.
+      { label: "오프라인 저장", href: "/offline" },
       { label: "소개", href: "/about" },
     ],
   },
@@ -221,19 +225,17 @@ export function SiteNav() {
 
   // 로그인 상태 조회 — 마운트와 경로 변경(로그인/로그아웃 리다이렉트 후 재조회) 때 부른다.
   // setState는 async 콜백 안에서만 부르므로 렌더 중 동기 setState 규칙에 걸리지 않는다.
+  // 조회는 오프라인 런타임과 함께 쓰는 auth.ts를 거친다(같은 이동에서 요청이 한 번만 나간다).
+  // 조회가 실패하면(null, 경고는 auth.ts가 남긴다) 라벨은 보수적으로 "로그인"에 머문다.
   useEffect(() => {
     let active = true;
-    fetch("/api/auth", { cache: "no-store" })
-      .then((res) => res.json())
-      .then((data) => {
-        if (!active) return;
-        setLoggedIn(Boolean(data?.loggedIn));
-        setIsOwner(Boolean(data?.isOwner));
-        setRoadmapViewer(Boolean(data?.roadmapViewer));
-      })
-      .catch(() => {
-        // 조회 실패 시 라벨은 보수적으로 "로그인"에 머문다(기능 영향 없음).
-      });
+    void fetchAuthJson().then((json) => {
+      if (!active || typeof json !== "object" || json === null) return;
+      const data = json as { loggedIn?: unknown; isOwner?: unknown; roadmapViewer?: unknown };
+      setLoggedIn(Boolean(data.loggedIn));
+      setIsOwner(Boolean(data.isOwner));
+      setRoadmapViewer(Boolean(data.roadmapViewer));
+    });
     return () => {
       active = false;
     };
@@ -439,6 +441,9 @@ export function SiteNav() {
             (2026-09-12)로 데스크톱 행/햄버거 분기를 sm→lg로 올려, 아이패드 세로(768)에서
             최상위 항목이 두 줄로 접히지 않고 깔끔한 햄버거를 쓴다. */}
         <div className="flex items-center gap-1 lg:contents">
+          {/* ON AIR 램프(오프라인 모드). 로그인 상태에서만. 1024px 이상에서는 래퍼가
+              contents라 nav의 직계 자식(로고, 항목, 램프, 테마 버튼)으로 선다. */}
+          {loggedIn ? <OnAirLamp /> : null}
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}

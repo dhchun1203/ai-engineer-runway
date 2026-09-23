@@ -13,6 +13,7 @@
 import { useState } from 'react';
 import { Flag } from 'lucide-react';
 import { setLessonNeedsReviewAction } from '@/app/lesson/[lessonId]/needs-review-actions';
+import { useOnline } from '@/lib/offline/connectivity';
 
 const SAVE_ERROR_MESSAGE = '저장하지 못했어요. 다시 시도해주세요.';
 
@@ -30,6 +31,8 @@ export function LessonNeedsReview({
   // null = 저장 중이 아님(서버 값을 그대로 보여준다).
   const [pending, setPending] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // 다시 보기 표시는 오프라인 대기열 대상이 아니다. 오프라인이면 잠근다(설계 3.7).
+  const online = useOnline();
 
   const isPending = pending !== null;
   const shown = pending ?? initialNeedsReview;
@@ -60,7 +63,7 @@ export function LessonNeedsReview({
         type="button"
         data-print-hide
         onClick={handleToggle}
-        disabled={isPending}
+        disabled={isPending || !online}
         aria-busy={isPending}
         aria-pressed={shown}
         aria-label={shown ? '더 공부할 레슨 표시 해제하기' : '더 공부할 레슨으로 표시하기'}
@@ -71,6 +74,11 @@ export function LessonNeedsReview({
         <Flag className={`h-4 w-4 shrink-0 ${shown ? 'fill-current' : ''}`} aria-hidden="true" />
         {shown ? '더 공부할 레슨으로 표시됨 ✓' : '더 공부할 레슨으로 표시'}
       </button>
+      {!online ? (
+        <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+          인터넷 연결 후 표시할 수 있어요.
+        </p>
+      ) : null}
       {shown ? (
         <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
           이 레슨은 “클로드에 물어보기”가 강조되고, 복사되는 질문 틀에 “더 공부해야 하는 부분”이라는 안내가 함께 담겨요.
@@ -79,7 +87,12 @@ export function LessonNeedsReview({
       {error ? (
         <div className="flex items-center gap-2 text-label font-normal">
           <span role="status" aria-live="polite">{error}</span>
-          <button type="button" onClick={handleToggle} className="btn tap-feedback text-label">
+          <button
+            type="button"
+            onClick={handleToggle}
+            disabled={!online}
+            className="btn tap-feedback text-label"
+          >
             다시 시도
           </button>
         </div>

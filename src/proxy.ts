@@ -20,7 +20,9 @@ import { UNLOCK_COOKIE_NAME, isValidUnlockValue } from './lib/unlock-secret';
 
 // 로그인 없이도 접근 가능한 경로. AUTH_PREFIXES는 자신과 그 하위 경로 전부를 연다.
 const AUTH_PREFIXES = ['/login', '/signup', '/unlock', '/api/auth'];
-const PUBLIC_EXACT = new Set(['/manifest.webmanifest', '/icon', '/robots.txt', '/sitemap.xml']);
+// /sw.js(오프라인 모드 서비스 워커)는 로그아웃 상태에서도 열려야 한다. 브라우저는 등록된
+// 서비스 워커를 주기적으로 다시 받는데, 로그아웃 뒤 /login으로 튕기면 갱신과 해제가 꼬인다.
+const PUBLIC_EXACT = new Set(['/manifest.webmanifest', '/icon', '/robots.txt', '/sitemap.xml', '/sw.js']);
 
 function isPublicPath(pathname: string): boolean {
   // 프레임워크 내부(_next: RSC·데이터·dev HMR 소켓 등)는 절대 게이트하지 않는다 —

@@ -12,6 +12,7 @@ import { useCallback, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { PyodideLoadError, runPythonCode } from '@/lib/pyodide-runtime';
 import { TraceEditor, buildTraceTemplate } from '@/components/trace-editor';
+import { useOnline } from '@/lib/offline/connectivity';
 
 // 파이썬 전체 줄 주석 접두사. 모듈 상수로 둬 TraceEditor로 넘길 때 identity가
 // 고정되게 한다(매 렌더 새 배열이면 마운트 효과가 계속 재실행된다).
@@ -45,6 +46,8 @@ export function RunPython({
 }) {
   const staticBlockRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<Status>('idle');
+  // 실행 엔진을 CDN에서 받으므로 오프라인이면 실행을 막고 안내한다(오프라인 모드 설계 3.7).
+  const online = useOnline();
   const [output, setOutput] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -176,7 +179,7 @@ export function RunPython({
             data-run
             className="btn-action tap-feedback"
             onClick={handleRunClick}
-            disabled={isBusy}
+            disabled={isBusy || !online}
           >
             {isBusy ? '실행 중…' : '실행'}
           </button>
@@ -191,7 +194,11 @@ export function RunPython({
               원래대로
             </button>
           ) : null}
-          {status === 'idle' ? (
+          {!online ? (
+            <span className="text-label font-normal text-muted dark:text-muted-dark">
+              인터넷 연결 후 실행할 수 있어요.
+            </span>
+          ) : status === 'idle' ? (
             <span className="text-label font-normal text-muted dark:text-muted-dark">
               처음 실행은 파이썬 환경을 내려받느라 시간이 걸려요(10초 이상 걸릴 수 있어요).
             </span>
@@ -211,7 +218,7 @@ export function RunPython({
                 <p className="text-label font-normal text-destructive dark:text-destructive-dark">
                   {errorMessage}
                 </p>
-                <button type="button" className="btn tap-feedback mt-2" onClick={handleRunClick}>
+                <button type="button" className="btn tap-feedback mt-2" onClick={handleRunClick} disabled={!online}>
                   다시 시도
                 </button>
               </div>

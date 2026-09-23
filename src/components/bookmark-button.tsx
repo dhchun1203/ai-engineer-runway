@@ -18,6 +18,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Bookmark } from "lucide-react";
 import type { BookmarksApiResponse } from "@/app/api/bookmarks/route";
 import { addBookmarkAction, removeBookmarkAction } from "@/app/lesson/[lessonId]/bookmark-actions";
+import { useOnline } from "@/lib/offline/connectivity";
 
 type CurrentSection = { index: number; title: string };
 
@@ -61,6 +62,8 @@ export function BookmarkButton({
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [currentIndex, setCurrentIndex] = useState(0);
   const [pending, setPending] = useState(false);
+  // 북마크는 서버에만 저장한다. 오프라인이면 잠그고 안내한다(오프라인 모드 설계 3.7).
+  const online = useOnline();
   // 지정/해제 직후 잠깐 뜨는 안내. null이면 숨김.
   const [flash, setFlash] = useState<string | null>(null);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -170,10 +173,22 @@ export function BookmarkButton({
       <button
         type="button"
         onClick={handleToggle}
-        disabled={pending}
+        disabled={pending || !online}
         aria-pressed={isCurrentBookmarked}
-        aria-label={isCurrentBookmarked ? "이 위치 북마크 해제" : "이 위치 북마크"}
-        title={isCurrentBookmarked ? "이 위치 북마크 해제" : "이 위치 북마크"}
+        aria-label={
+          !online
+            ? "인터넷 연결 후 북마크할 수 있어요"
+            : isCurrentBookmarked
+              ? "이 위치 북마크 해제"
+              : "이 위치 북마크"
+        }
+        title={
+          !online
+            ? "인터넷 연결 후 북마크할 수 있어요"
+            : isCurrentBookmarked
+              ? "이 위치 북마크 해제"
+              : "이 위치 북마크"
+        }
         className="btn bookmark-fab-btn tap-feedback"
       >
         <Bookmark

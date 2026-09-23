@@ -12,6 +12,7 @@ import { useCallback, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { PGliteLoadError, runSql, type PGliteResult } from '@/lib/pglite-runtime';
 import { TraceEditor, buildTraceTemplate } from '@/components/trace-editor';
+import { useOnline } from '@/lib/offline/connectivity';
 
 // SQL 전체 줄 주석 접두사('-- '). 모듈 상수로 둬 identity를 고정한다.
 const SQL_COMMENT_PREFIXES = ['--'] as const;
@@ -106,6 +107,8 @@ export function RunSQL({
 }) {
   const staticBlockRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<Status>('idle');
+  // 실행 엔진을 CDN에서 받으므로 오프라인이면 실행을 막고 안내한다(오프라인 모드 설계 3.7).
+  const online = useOnline();
   const [results, setResults] = useState<PGliteResult[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -235,7 +238,7 @@ export function RunSQL({
             data-run
             className="btn-action tap-feedback"
             onClick={handleRunClick}
-            disabled={isBusy}
+            disabled={isBusy || !online}
           >
             {isBusy ? '실행 중…' : '실행'}
           </button>
@@ -250,7 +253,11 @@ export function RunSQL({
               원래대로
             </button>
           ) : null}
-          {status === 'idle' ? (
+          {!online ? (
+            <span className="text-label font-normal text-muted dark:text-muted-dark">
+              인터넷 연결 후 실행할 수 있어요.
+            </span>
+          ) : status === 'idle' ? (
             <span className="text-label font-normal text-muted dark:text-muted-dark">
               처음 실행은 SQL 환경을 내려받느라 시간이 걸려요(10초 이상 걸릴 수 있어요).
             </span>
@@ -270,7 +277,7 @@ export function RunSQL({
                 <p className="text-label font-normal text-destructive dark:text-destructive-dark">
                   {errorMessage}
                 </p>
-                <button type="button" className="btn tap-feedback mt-2" onClick={handleRunClick}>
+                <button type="button" className="btn tap-feedback mt-2" onClick={handleRunClick} disabled={!online}>
                   다시 시도
                 </button>
               </div>
