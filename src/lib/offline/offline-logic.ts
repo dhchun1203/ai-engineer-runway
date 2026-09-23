@@ -17,17 +17,48 @@ export type QueueInput =
 
 export type QueueKind = QueueInput["kind"];
 
+// userId: 넣을 때 확인된 계정(모르면 없음). 없으면 기기 저장본의 주인(meta.userId)의 것으로
+// 본다(이 필드가 생기기 전에 넣은 항목 포함). rejections: 서버가 거절한 횟수(없으면 0).
+type QueueItemBase = { id: string; at: number; userId?: string; rejections?: number };
+
 export type QueueItem =
-  | { id: string; at: number; kind: "lessonComplete"; key: string; value: boolean }
-  | { id: string; at: number; kind: "basecampItem"; key: string; value: boolean }
-  | { id: string; at: number; kind: "note"; key: string; value: string };
+  | (QueueItemBase & { kind: "lessonComplete"; key: string; value: boolean })
+  | (QueueItemBase & { kind: "basecampItem"; key: string; value: boolean })
+  | (QueueItemBase & { kind: "note"; key: string; value: string });
 
 export function queueItemId(kind: QueueKind, key: string): string {
   return `${kind}|${key}`;
 }
 
-export function toQueueItem(input: QueueInput, at: number): QueueItem {
-  return { ...input, id: queueItemId(input.kind, input.key), at };
+export function toQueueItem(input: QueueInput, at: number, userId: string | null = null): QueueItem {
+  const item: QueueItem = { ...input, id: queueItemId(input.kind, input.key), at };
+  return userId === null ? item : { ...item, userId };
+}
+
+/**
+ * 이 계정(accountId)의 항목만 고른다. accountId를 모르면(null) 기기 저장본의 주인(metaOwner)을
+ * 지금 계정으로 본다. userId가 없는 항목은 metaOwner의 것이고, 둘 다 모르면 지금 계정의 것으로
+ * 본다(예전 동작). 다른 계정이 남긴 변경을 화면에 얹거나 서버로 보내지 않기 위해서다.
+ */
+export function itemsForAccount(
+  queue: readonly QueueItem[],
+  accountId: string | null,
+  metaOwner: string | null,
+): QueueItem[] {
+  const current = accountId ?? metaOwner;
+  if (current === null) return [...queue];
+  return queue.filter((item) => (item.userId ?? metaOwner ?? current) === current);
+}
+
+// 서버가 같은 항목을 이만큼 거절하면 대기열에서 버린다(배포로 없어진 레슨 등). 남겨 두면 대기
+// 개수 배지가 영영 안 사라지고, 로그아웃할 때마다 확인을 묻고, 같은 키의 이후 변경도 계속
+// 대기열로 간다.
+export const MAX_QUEUE_REJECTIONS = 3;
+
+/** 거절을 한 번 더 센 항목. 한도에 닿으면 null(버린다). 입력은 바꾸지 않는다. */
+export function afterRejection(item: QueueItem): QueueItem | null {
+  const rejections = (item.rejections ?? 0) + 1;
+  return rejections >= MAX_QUEUE_REJECTIONS ? null : { ...item, rejections };
 }
 
 /** 넣은 순서(at 오름차순). 원본 배열은 바꾸지 않는다. */

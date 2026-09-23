@@ -11,15 +11,22 @@
 //   3) 오프라인 링크 이동: Next의 클라이언트 이동은 HTML이 아니라 RSC 데이터를 받아서
 //      오프라인에서는 실패한다. 오프라인이면 같은 출처 <a> 클릭을 캡처 단계에서 가로채
 //      location.assign으로 전체 이동시킨다. 그러면 서비스 워커가 저장된 HTML을 준다.
+//   4) 끄기 스위치(flag.ts, NEXT_PUBLIC_OFFLINE_MODE=off로 빌드): 위 1)에서 3)을 모두 하지 않고,
+//      페이지를 열 때 한 번 이 기기의 서비스 워커를 모두 해제하고 offline-* 캐시와 offline-db를
+//      지운다. 문서 요청은 네트워크 먼저라 재배포 뒤 첫 페이지 로드가 이 코드를 받아 실행한다.
+//
+// /api/auth 조회는 내비와 함께 쓰는 auth.ts를 거친다(같은 이동에서 요청이 한 번만 나간다).
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { BUILD_ID } from "@/lib/offline/cache";
+import { fetchAuthState } from "@/lib/offline/auth";
 import { isOnline, subscribeOnline } from "@/lib/offline/connectivity";
 import { allowOfflineDbReopen, getMeta, offlineDbExists, setMeta } from "@/lib/offline/db";
+import { OFFLINE_MODE_OFF } from "@/lib/offline/flag";
 import { startMigrationOnce } from "@/lib/offline/migration";
 import { countQueue } from "@/lib/offline/queue";
-import { fetchAuthState, markNeedsLogin, replayQueue } from "@/lib/offline/sync";
+import { markNeedsLogin, replayQueue } from "@/lib/offline/sync";
 import { hasOfflineData, wipeOfflineData } from "@/lib/offline/wipe";
 import type { AuthState } from "@/lib/offline/offline-logic";
 
@@ -63,7 +70,8 @@ async function handleLoggedOut(): Promise<AuthState | "stop" | "unknown"> {
     return "stop";
   }
   await wait(LOGGED_OUT_RECHECK_MS);
-  const again = await fetchAuthState();
+  // 앞 응답을 다시 쓰지 않고 새로 묻는다(auth.ts는 같은 경로의 응답을 잠시 다시 쓴다).
+  const again = await fetchAuthState({ fresh: true });
   if (again === null) return "unknown";
   if (again.loggedIn) return again;
   const keepQueue = (await offlineDbExists()) && (await countQueue()) > 0;
@@ -116,6 +124,18 @@ async function reconcileAccount(): Promise<boolean> {
   return true;
 }
 
+// 끄기 스위치가 켜진 빌드에서 페이지 로드마다 한 번만 정리한다.
+let offlineModeTurnedOff = false;
+
+/** 오프라인 모드를 끈 빌드: 이 기기의 서비스 워커를 모두 해제하고 캐시와 DB를 지운다. */
+function turnOffOfflineModeOnce(): void {
+  if (offlineModeTurnedOff) return;
+  offlineModeTurnedOff = true;
+  wipeOfflineData().catch((error: unknown) => {
+    console.warn("[offline] removing offline mode from this device failed", error);
+  });
+}
+
 function isPlainLeftClick(event: MouseEvent): boolean {
   return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
 }
@@ -126,6 +146,10 @@ export function OfflineRuntime() {
   const canSyncRef = useRef(false);
 
   useEffect(() => {
+    if (OFFLINE_MODE_OFF) {
+      turnOffOfflineModeOnce();
+      return;
+    }
     let active = true;
     reconcileAccount()
       .catch((error: unknown) => {
@@ -162,7 +186,7 @@ export function OfflineRuntime() {
 
   useEffect(() => {
     function handleClick(event: MouseEvent) {
-      if (isOnline() || event.defaultPrevented || !isPlainLeftClick(event)) return;
+      if (OFFLINE_MODE_OFF || isOnline() || event.defaultPrevented || !isPlainLeftClick(event)) return;
       const target = event.target instanceof Element ? event.target.closest("a[href]") : null;
       if (!(target instanceof HTMLAnchorElement)) return;
       if (target.target && target.target !== "_self") return;

@@ -31,7 +31,7 @@
 // 마운트 시 한 번만 읽으므로 그 사이에 옛 서버 값으로 마운트되어 오프라인에서 쓴 메모가
 // 화면에서 사라진 것처럼 보이고, 그 상태에서 사용자가 다시 타이핑하면 자동 저장이 서버의
 // 옛 값으로 오프라인 메모를 덮어써 버린다(완료 버튼도 한 프레임 되돌아간 것처럼 보인다).
-// 그래서 대기열이 있을 때는 keepProgressCopy가 다 얹어 줄 때까지 기다렸다가 그 값 하나로만
+// 그래서 대기열이 있을 때는 overlayQueuedProgress가 다 얹어 줄 때까지 기다렸다가 그 값 하나로만
 // 그린다. status가 loading에서 곧장 최종값으로만 넘어가고, 중간에 옛 값이 끼어들 틈이 없다.
 // (서버 조회와 대기열 조회 사이의 아주 좁은 경합은 감수한다. 그 사이에 재생이 이 항목을
 // 지우면 다음 로드에서 맞는 값으로 정리된다.)
@@ -39,6 +39,10 @@
 // 겹치는 재조회(effect 재실행, refresh()의 중복 호출)가 있으면 더 늦게 시작한 요청의
 // 결과만 반영한다(requestSeqRef). 먼저 시작한 요청이 응답만 늦게 오면, 이미 새 요청이
 // 그려 둔 최신 값을 옛 값으로 덮어쓸 수 있기 때문이다.
+//
+// 기기 저장소 읽기(대기열 개수, 대기열과 사본)에는 시간 제한이 있다(lib/offline/timeout.ts).
+// 옛 WebKit은 IndexedDB 호출을 실패시키지 않고 멈춰 두기도 하는데, 그러면 온라인에서도 완료
+// 버튼이 스켈레톤에서 멈춘다. 시간이 지나면 경고를 남기고 대기열이 없는 것으로 보고 그린다.
 
 import {
   createContext,
@@ -52,7 +56,8 @@ import {
 import type { StepId } from "@/content/modules";
 import type { ProgressCounts } from "@/lib/progress-math";
 import { countQueue } from "@/lib/offline/queue";
-import { keepProgressCopy, readProgressCopy } from "@/lib/offline/snapshots";
+import { overlayQueuedProgress, readProgressCopy, saveProgressCopy } from "@/lib/offline/snapshots";
+import { STORAGE_READ_TIMEOUT_MS, withTimeout } from "@/lib/offline/timeout";
 
 export type ProgressLesson = {
   slug: string;
@@ -88,6 +93,11 @@ export type ProgressContextValue = ProgressState & { refresh: () => Promise<void
 const ProgressContext = createContext<ProgressContextValue | null>(null);
 
 /** 응답 한 벌을 화면 상태로 옮기는 유일한 판정 — 최초 로드와 재조회가 공유한다. */
+/** 대기열 개수. 기기 저장소가 멈추면 0으로 보고 넘어간다. */
+function countQueueBounded(): Promise<number> {
+  return withTimeout(countQueue(), STORAGE_READ_TIMEOUT_MS, 0, "counting the write queue");
+}
+
 function toState(data: ProgressData): ProgressState {
   if (!data.unlocked) return { status: "locked", data };
   if (!data.ok) return { status: "error", data: null };
@@ -130,7 +140,7 @@ export function ProgressProvider({
       fetch(url, { signal: controller.signal, cache: "no-store" }).then(
         (res) => res.json() as Promise<ProgressData>,
       ),
-      countQueue(),
+      countQueueBounded(),
     ])
       .then(async ([data, queued]) => {
         if (!isCurrent()) return;
@@ -138,16 +148,15 @@ export function ProgressProvider({
           // 대기열이 없으면(흔한 경우) 응답이 오자마자 바로 그린다. 사본 저장은 그 뒤
           // 백그라운드에서 한다(기기 저장소 왕복이 매 레슨 로드의 첫 그리기를 늦추지 않게).
           setState(toState(data));
-          keepProgressCopy(lessonId, data).catch((error: unknown) => {
-            console.warn("[offline] keeping progress copy failed", error);
-          });
+          void saveProgressCopy(lessonId, data);
           return;
         }
         // 대기열이 있으면 서버 값을 먼저 그리지 않는다(위 파일 헤더 주석 참고). 대기열이
         // 얹힌 값이 갖춰질 때까지 기다렸다가 그 값 하나로만 그린다.
-        const kept = await keepProgressCopy(lessonId, data);
+        const shown = await overlayQueuedProgress(data);
         if (!isCurrent()) return;
-        setState(toState(kept));
+        setState(toState(shown));
+        void saveProgressCopy(lessonId, data);
       })
       .catch(() => {
         if (!isCurrent()) return;
@@ -171,20 +180,19 @@ export function ProgressProvider({
 
     return Promise.all([
       fetch(url, { cache: "no-store" }).then((res) => res.json() as Promise<ProgressData>),
-      countQueue(),
+      countQueueBounded(),
     ])
       .then(async ([data, queued]) => {
         if (!isCurrent()) return;
         if (queued === 0) {
           setState(toState(data));
-          keepProgressCopy(lessonId, data).catch((error: unknown) => {
-            console.warn("[offline] keeping progress copy failed", error);
-          });
+          void saveProgressCopy(lessonId, data);
           return;
         }
-        const kept = await keepProgressCopy(lessonId, data);
+        const shown = await overlayQueuedProgress(data);
         if (!isCurrent()) return;
-        setState(toState(kept));
+        setState(toState(shown));
+        void saveProgressCopy(lessonId, data);
       })
       .catch(() => {
         if (!isCurrent()) return;

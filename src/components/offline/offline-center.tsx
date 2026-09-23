@@ -10,6 +10,7 @@
 // 전체 받기와 저장본 지우기를 막는다.
 // 목차 링크는 prefetch를 끈다(백 개가 넘는 링크의 RSC 미리 받기를 막는다). 오프라인에서
 // 누르면 offline-runtime.tsx가 전체 이동으로 바꿔 서비스 워커가 저장본을 준다.
+// 오프라인 모드를 끈 빌드(flag.ts)에서는 전체 받기와 저장본 지우기 대신 짧은 안내만 보인다.
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
@@ -18,6 +19,7 @@ import { parseLastLesson } from "@/components/continue-reading-card";
 import { listCachedPaths } from "@/lib/offline/cache";
 import { useOnline } from "@/lib/offline/connectivity";
 import { getMeta } from "@/lib/offline/db";
+import { OFFLINE_MODE_OFF } from "@/lib/offline/flag";
 import {
   clearSavedPages,
   loadManifest,
@@ -61,10 +63,12 @@ async function loadOverview(): Promise<Overview> {
   const [manifest, cached, lastDownloadAt, usage] = await Promise.all([
     loadManifest(),
     listCachedPaths(),
-    getMeta<number>("lastDownloadAt").catch((error: unknown) => {
-      console.warn("[offline] reading lastDownloadAt failed", error);
-      return undefined;
-    }),
+    OFFLINE_MODE_OFF
+      ? Promise.resolve(undefined)
+      : getMeta<number>("lastDownloadAt").catch((error: unknown) => {
+          console.warn("[offline] reading lastDownloadAt failed", error);
+          return undefined;
+        }),
     readStorageUsage(),
   ]);
   return { manifest, cached, lastDownloadAt: lastDownloadAt ?? null, usage };
@@ -235,7 +239,11 @@ export function OfflineCenter() {
             새 버전으로 옮기지 못한 저장본이 있어요. 전체 받기를 누르면 새로 받을 수 있어요.
           </p>
         ) : null}
-        {online ? (
+        {OFFLINE_MODE_OFF ? (
+          <p data-offline-disabled className="break-keep text-body font-normal">
+            지금은 오프라인 저장을 잠시 쉬고 있어요. 페이지는 인터넷으로 열어 주세요.
+          </p>
+        ) : online ? (
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"

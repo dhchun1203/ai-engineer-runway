@@ -3,7 +3,11 @@
 //   같은 계정으로 다시 로그인하면 동기화된다. 다른 계정이면 계정 대조가 모두 지운다).
 // keepRegistration: 서비스 워커는 남긴다(계정만 바뀐 경우).
 // 지울 것이 없는 단계는 건너뛴다(로그아웃 방문자가 이동할 때마다 삭제 요청을 보내지 않게).
+// 오프라인 모드를 끈 빌드(flag.ts)도 이 함수로 서비스 워커, 캐시, DB를 모두 지운다.
+// 정리할 때 /api/auth 응답 기억(auth.ts)도 버린다. 정리 전에 떠난 요청의 늦은 "로그인" 응답이
+// 막아 둔 DB 열기를 다시 풀거나 지운 계정을 지금 계정으로 기억하지 않게 한다.
 
+import { invalidateAuthCache } from "./auth";
 import { OFFLINE_CACHE_PREFIX, clearOfflineCaches } from "./cache";
 import { deleteOfflineDb, idbCount, offlineDbExists } from "./db";
 import { resetQueueCount } from "./queue";
@@ -41,6 +45,7 @@ export async function hasOfflineData(): Promise<boolean> {
 }
 
 export async function wipeOfflineData(options: WipeOptions = {}): Promise<void> {
+  invalidateAuthCache();
   try {
     if (await hasOfflineCaches()) await clearOfflineCaches();
   } catch (error) {

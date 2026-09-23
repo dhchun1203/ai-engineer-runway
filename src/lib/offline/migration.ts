@@ -20,9 +20,10 @@ import { useSyncExternalStore } from "react";
 import { BUILD_ID, copyIconsFrom, currentCacheName, deleteCaches, olderCacheNames } from "./cache";
 import { isOnline } from "./connectivity";
 import { getMeta, setMeta } from "./db";
+import { OFFLINE_MODE_OFF } from "./flag";
 import { downloadUrls, fetchManifest, isDownloadRunning, saveManifestResponse } from "./download";
 import { classifyOfflinePath } from "./offline-logic";
-import { fetchAuthState } from "./sync";
+import { fetchAuthState } from "./auth";
 
 export type MigrationState =
   | { status: "idle" }
@@ -139,7 +140,7 @@ async function migrate(): Promise<void> {
  * 전체 받기가 도는 중이면 이번 기회는 쓰지 않고 넘어간다(다음 경로 이동 때 다시 본다).
  */
 export function startMigrationOnce(): void {
-  if (attempted || inFlight) return;
+  if (OFFLINE_MODE_OFF || attempted || inFlight) return;
   if (typeof window === "undefined" || !("caches" in window)) return;
   if (!isOnline() || isDownloadRunning()) return;
   inFlight = true;

@@ -105,6 +105,9 @@ async function main() {
   const {
     queueItemId,
     toQueueItem,
+    itemsForAccount,
+    afterRejection,
+    MAX_QUEUE_REJECTIONS,
     sortQueue,
     queuedNote,
     overlayProgress,
@@ -129,6 +132,39 @@ async function main() {
       id: 'note|basecamp:x',
       at: 5,
     });
+  });
+
+  runCase('toQueueItem은 계정을 알면 userId를 적고, 모르면 적지 않는다', () => {
+    assert.equal(toQueueItem({ kind: 'note', key: 'a', value: '1' }, 1, 'user-a').userId, 'user-a');
+    assert.equal('userId' in toQueueItem({ kind: 'note', key: 'a', value: '1' }, 1, null), false);
+  });
+
+  runCase('itemsForAccount는 지금 계정의 항목만 고른다(userId 없는 항목은 기기 주인 것)', () => {
+    const mine = toQueueItem({ kind: 'note', key: 'a', value: '내 것' }, 1, 'user-b');
+    const theirs = toQueueItem({ kind: 'lessonComplete', key: 'b', value: true }, 2, 'user-a');
+    const legacy = toQueueItem({ kind: 'note', key: 'c', value: '예전 항목' }, 3);
+    const queue = [mine, theirs, legacy];
+    // 기기 주인이 A인데 B가 로그인했다: B의 항목만.
+    assert.deepEqual(itemsForAccount(queue, 'user-b', 'user-a'), [mine]);
+    // A 자신: A의 항목과 userId 없는 예전 항목.
+    assert.deepEqual(itemsForAccount(queue, 'user-a', 'user-a'), [theirs, legacy]);
+    // 계정을 모르면 기기 주인을 지금 계정으로 본다.
+    assert.deepEqual(itemsForAccount(queue, null, 'user-a'), [theirs, legacy]);
+    // 둘 다 모르면 전부(예전 동작).
+    assert.deepEqual(itemsForAccount(queue, null, null), queue);
+    // 기기 주인을 모르면 userId 없는 항목은 지금 계정의 것.
+    assert.deepEqual(itemsForAccount(queue, 'user-b', null), [mine, legacy]);
+  });
+
+  runCase('afterRejection은 세 번째 거절에서 버린다(원본 불변)', () => {
+    const item = toQueueItem({ kind: 'lessonComplete', key: 'gone', value: true }, 1);
+    const once = afterRejection(item);
+    assert.equal(once.rejections, 1);
+    assert.equal(item.rejections, undefined);
+    const twice = afterRejection(once);
+    assert.equal(twice.rejections, 2);
+    assert.equal(afterRejection(twice), null);
+    assert.equal(MAX_QUEUE_REJECTIONS, 3);
   });
 
   runCase('같은 kind와 key는 같은 id(대기열에서 마지막 것만 남는다)', () => {

@@ -5,6 +5,8 @@
 //   queue:            QueueItem(offline-logic.ts). id가 "kind|key"라 같은 항목은 덮어써진다
 //   meta:             { id: "userId" | "lastDownloadAt" | "lastSyncAt", value }
 
+import { OFFLINE_MODE_OFF } from "./flag";
+
 export type StoreName = "progressSnapshot" | "noteSnapshots" | "queue" | "meta";
 
 const DB_NAME = "offline-db";
@@ -16,11 +18,11 @@ let dbPromise: Promise<IDBDatabase> | null = null;
 let openedDb: IDBDatabase | null = null;
 // 정리(deleteOfflineDb)로 DB를 지운 뒤에는 이 페이지에서 다시 열지 않는다. 여는 순간 빈 DB가
 // 새로 생기기 때문이다. 지우기 전에 시작한 재생이나 옮기기가 뒤늦게 열면 로그아웃한 뒤에도
-// DB가 남는다. 로그인이 확인되면 계정 대조(offline-runtime.tsx)가 allowOfflineDbReopen()으로
-// 푼다.
+// DB가 남는다. 로그인과 사용자 id가 확인된 /api/auth 응답(auth.ts)과 계정 대조
+// (offline-runtime.tsx)가 allowOfflineDbReopen()으로 푼다.
 let reopenBlocked = false;
 
-/** 로그인이 확인된 뒤 계정 대조가 부른다. 정리로 막아 둔 DB 열기를 다시 허용한다. */
+/** 로그인이 확인된 뒤 부른다. 정리로 막아 둔 DB 열기를 다시 허용한다. */
 export function allowOfflineDbReopen(): void {
   reopenBlocked = false;
 }
@@ -33,6 +35,9 @@ function forgetConnection(db: IDBDatabase | null): void {
 
 function openDb(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
+  // 오프라인 모드를 끈 빌드(flag.ts)에서는 열지 않는다. 런타임이 지운 DB가 되살아나지 않게 하는
+  // 마지막 방어선이다(호출부는 꺼져 있으면 여기까지 오지 않는다).
+  if (OFFLINE_MODE_OFF) return Promise.reject(new Error("offline mode is turned off"));
   if (reopenBlocked) {
     return Promise.reject(new Error("offline-db was deleted on this page; reopening waits for a confirmed login"));
   }
@@ -73,29 +78,48 @@ function openDb(): Promise<IDBDatabase> {
   return dbPromise;
 }
 
-function isInvalidState(error: unknown): boolean {
-  return typeof DOMException !== "undefined" && error instanceof DOMException && error.name === "InvalidStateError";
+/**
+ * 연결이 끊겨 다시 열면 되는 오류인가. InvalidStateError: 이미 닫힌 연결. UnknownError: WebKit이
+ * IndexedDB 서버와의 연결을 잃었을 때("Connection to Indexed Database server lost") 내는 오류.
+ */
+function isConnectionLost(error: unknown): boolean {
+  return (
+    typeof DOMException !== "undefined" &&
+    error instanceof DOMException &&
+    (error.name === "InvalidStateError" || error.name === "UnknownError")
+  );
 }
 
 /**
- * 트랜잭션 하나를 연다. 연결이 이미 닫혀 있으면(InvalidStateError) 연결을 잊고 한 번만
- * 다시 열어 재시도한다(onclose가 오지 않는 브라우저 대비).
+ * 트랜잭션 하나를 연다. 연결이 이미 닫혀 있으면 연결을 잊고 한 번만 다시 열어 재시도한다
+ * (onclose가 오지 않는 브라우저 대비).
  */
 async function openTransaction(name: StoreName, mode: IDBTransactionMode): Promise<IDBTransaction> {
   const db = await openDb();
   try {
     return db.transaction(name, mode);
   } catch (error) {
-    if (!isInvalidState(error)) throw error;
+    if (!isConnectionLost(error)) throw error;
     console.warn("[offline] offline-db connection was closed, reopening once", error);
     forgetConnection(db);
     return (await openDb()).transaction(name, mode);
   }
 }
 
+function runTransaction<T>(tx: IDBTransaction, name: StoreName, body: (store: IDBObjectStore) => () => T): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const read = body(tx.objectStore(name));
+    tx.oncomplete = () => resolve(read());
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  });
+}
+
 /**
  * 한 트랜잭션 안에서 body가 요청을 걸고, 트랜잭션이 끝나면 body가 돌려준 함수로 결과를 읽는다.
- * 여러 요청(읽고 조건부로 지우기)을 하나의 트랜잭션으로 묶을 때 쓴다.
+ * 여러 요청(읽고 조건부로 지우기)을 하나의 트랜잭션으로 묶을 때 쓴다. 트랜잭션이 연결 끊김으로
+ * 실패하면 그 연결을 잊고 한 번만 다시 열어 처음부터 다시 한다(body는 다시 실행해도 결과가 같은
+ * 요청만 건다).
  */
 async function transact<T>(
   name: StoreName,
@@ -103,12 +127,14 @@ async function transact<T>(
   body: (store: IDBObjectStore) => () => T,
 ): Promise<T> {
   const tx = await openTransaction(name, mode);
-  return new Promise<T>((resolve, reject) => {
-    const read = body(tx.objectStore(name));
-    tx.oncomplete = () => resolve(read());
-    tx.onerror = () => reject(tx.error);
-    tx.onabort = () => reject(tx.error);
-  });
+  try {
+    return await runTransaction(tx, name, body);
+  } catch (error) {
+    if (!isConnectionLost(error)) throw error;
+    console.warn("[offline] offline-db transaction lost its connection, reopening once", error);
+    forgetConnection(tx.db);
+    return runTransaction(await openTransaction(name, mode), name, body);
+  }
 }
 
 function run<T>(
@@ -157,6 +183,33 @@ export function idbDeleteIf<T>(
       }
     };
     return () => deleted;
+  });
+}
+
+/**
+ * 읽고 바꾸거나 지우기를 한 readwrite 트랜잭션으로 한다. update가 undefined를 돌려주면 그대로
+ * 두고, null이면 지우고, 값이면 그 값으로 쓴다. 돌려주는 값은 한 일.
+ */
+export function idbUpdateIf<T extends { id: string }>(
+  name: StoreName,
+  id: string,
+  update: (current: T | undefined) => T | null | undefined,
+): Promise<"kept" | "updated" | "deleted"> {
+  return transact(name, "readwrite", (store) => {
+    let outcome: "kept" | "updated" | "deleted" = "kept";
+    const read = store.get(id) as IDBRequest<T | undefined>;
+    read.onsuccess = () => {
+      const next = update(read.result);
+      if (next === undefined) return;
+      if (next === null) {
+        store.delete(id);
+        outcome = "deleted";
+      } else {
+        store.put(next);
+        outcome = "updated";
+      }
+    };
+    return () => outcome;
   });
 }
 

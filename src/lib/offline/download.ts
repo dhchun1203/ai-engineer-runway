@@ -19,8 +19,9 @@ import { useSyncExternalStore } from "react";
 import type { ProgressData } from "@/components/progress-provider";
 import { clearOfflineCaches, currentCacheName, olderCacheNames } from "./cache";
 import { getMeta, offlineDbExists, setMeta } from "./db";
-import { clearCopies, keepProgressCopy, saveNoteCopy } from "./snapshots";
-import { fetchAuthState } from "./sync";
+import { OFFLINE_MODE_OFF } from "./flag";
+import { fetchAuthState } from "./auth";
+import { clearCopies, saveNoteCopy, saveProgressCopy } from "./snapshots";
 import {
   classifyOfflinePath,
   extractStaticAssetPaths,
@@ -342,7 +343,7 @@ async function saveSnapshot(source: SnapshotSource, owner: string | null): Promi
       const data = (await res.json()) as ProgressData;
       if (!data.unlocked || !data.ok) return "failed";
       if (!(await deviceOwnerIs(owner))) return "account";
-      await keepProgressCopy(source.key === "" ? undefined : source.key, data);
+      await saveProgressCopy(source.key === "" ? undefined : source.key, data);
       return "saved";
     }
     const data = (await res.json()) as NoteApiResponse;
@@ -432,7 +433,7 @@ export async function downloadAll(onProgress: (progress: DownloadProgress) => vo
     });
     // 사본을 다 쓴 뒤에도 한 번 더 본다(쓰는 사이 계정이 바뀌었으면 섞였을 수 있는 사본을 비운다).
     if (!accountChanged && owner !== null) {
-      const after = await fetchAuthState();
+      const after = await fetchAuthState({ fresh: true });
       if (after !== null && after.userId !== owner) accountChanged = true;
     }
     if (accountChanged) {
@@ -454,7 +455,8 @@ export async function downloadAll(onProgress: (progress: DownloadProgress) => vo
  * 기기가 저장본을 함부로 지우지 않게 persist를 요청한다(거절되면 화면이 안내만 한다).
  */
 export function startDownload(): void {
-  if (downloadRunning || downloadState.status === "running") return;
+  // 오프라인 모드를 끈 빌드(flag.ts)에서는 받지 않는다(화면도 버튼을 숨긴다).
+  if (OFFLINE_MODE_OFF || downloadRunning || downloadState.status === "running") return;
   setDownloadState({ status: "running", progress: null, reason: null });
   void (async () => {
     try {

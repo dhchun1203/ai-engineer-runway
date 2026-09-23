@@ -10,12 +10,17 @@
 // 지운다. 로그인이 풀려 있으면 멈추고 "다시 로그인하면 동기화돼요"를 켠다. 완료 토글은
 // 목표 상태로 보낸다. 서버는 !currentlyDone을 저장하므로 currentlyDone = !목표로 부른다.
 // 서버가 한 항목을 거절하면(예: 배포로 이름이 바뀐 레슨) 그 항목은 대기열에 남기고 다음
-// 항목으로 넘어간다. 네트워크가 끊겼거나 로그인이 풀렸을 때만 재생을 멈춘다.
+// 항목으로 넘어간다. 거절은 항목마다 세고, 같은 값이 세 번 거절되면 대기열에서 버린다
+// (queue.ts recordRejection). 네트워크가 끊겼거나 로그인이 풀렸을 때만 재생을 멈춘다.
+// 지금 로그인한 계정의 항목만 보낸다(offline-logic.ts itemsForAccount). 다른 계정이 남긴
+// 항목은 계정 대조(offline-runtime.tsx)가 지운다.
 // 보내기 전에 서버의 현재 빌드 id와 이 페이지의 빌드 id를 비교한다. 다르면 이 페이지의
 // Server Action 식별자가 서버에 없을 수 있어 보내지 않는다. 앱 시작(경로 이동 포함)과
 // 화면이 다시 보일 때의 재생만 한 번 새로 불러온다(새 페이지가 재생한다). 쓰기 직후의
 // 재생은 입력 중일 수 있어 새로 부르지 않고 재생만 건너뛴다. 서버 빌드 id를 읽지 못하면
 // 새로 불러오지 않고 그대로 재생한다.
+//
+// 오프라인 모드를 끈 빌드(flag.ts)에서는 쓰기를 예전처럼 바로 보내고 재생하지 않는다.
 
 import { useSyncExternalStore } from "react";
 import { toggleLessonComplete } from "@/app/lesson/[lessonId]/actions";
@@ -23,12 +28,14 @@ import { saveLessonNoteAction } from "@/app/lesson/[lessonId]/note-actions";
 import { toggleBasecampItem } from "@/app/basecamp/actions";
 import { saveBasecampNoteAction } from "@/app/basecamp/[slug]/note-actions";
 import { saveArticleNoteAction } from "@/app/articles/[slug]/note-actions";
+import { confirmedAccountId, fetchAuthState } from "./auth";
 import { BUILD_ID } from "./cache";
 import { isOnline, markOffline, probeOnline } from "./connectivity";
-import { getMeta, setMeta } from "./db";
-import { enqueue, hasQueued, readQueue, removeIfUnchanged } from "./queue";
+import { setMeta } from "./db";
+import { OFFLINE_MODE_OFF } from "./flag";
+import { enqueue, hasQueued, readQueue, readQueueOwner, recordRejection, removeIfUnchanged } from "./queue";
 import { saveNoteCopy } from "./snapshots";
-import { parseAuthState, parseNoteKey, type AuthState, type QueueInput, type QueueItem } from "./offline-logic";
+import { itemsForAccount, parseNoteKey, type QueueInput, type QueueItem } from "./offline-logic";
 
 export type WriteResult = "sent" | "queued";
 
@@ -71,9 +78,19 @@ export function markNeedsLogin(): void {
   setNeedsLogin(true);
 }
 
+/** 대기열에 넣을 때 적을 계정. 이 페이지에서 확인된 계정, 모르면 기기 저장본의 주인. */
+async function accountForWrite(): Promise<string | null> {
+  return (await confirmedAccountId()) ?? (await readQueueOwner());
+}
+
 export async function writeOrQueue(input: QueueInput, send: () => Promise<void>): Promise<WriteResult> {
-  if (!isOnline() || (await hasQueued(input.kind, input.key))) {
-    await enqueue(input);
+  if (OFFLINE_MODE_OFF) {
+    await send();
+    return "sent";
+  }
+  const account = await accountForWrite();
+  if (!isOnline() || (await hasQueued(input.kind, input.key, account))) {
+    await enqueue(input, account);
     if (isOnline()) void replayQueue();
     return "queued";
   }
@@ -82,25 +99,11 @@ export async function writeOrQueue(input: QueueInput, send: () => Promise<void>)
   } catch (error) {
     if (await probeOnline()) throw error;
     markOffline();
-    await enqueue(input);
+    await enqueue(input, account);
     return "queued";
   }
   if (input.kind === "note") await saveNoteCopy(input.key, input.value);
   return "sent";
-}
-
-/** 로그인 상태 조회. 서버에 닿지 않으면 null. */
-export async function fetchAuthState(): Promise<AuthState | null> {
-  try {
-    const res = await fetch("/api/auth", { cache: "no-store" });
-    if (!res.ok) return null;
-    return parseAuthState(await res.json());
-  } catch (error) {
-    // 오프라인에서 나는 네트워크 오류(TypeError)는 예상된 실패라 경고로 남기지 않는다.
-    const expectedOffline = error instanceof TypeError && typeof navigator !== "undefined" && !navigator.onLine;
-    if (!expectedOffline) console.warn("[offline] fetching auth state failed", error);
-    return null;
-  }
 }
 
 /**
@@ -147,7 +150,8 @@ async function sendOne(item: QueueItem): Promise<SendOutcome> {
       markOffline();
       return "stop";
     }
-    const again = await fetchAuthState();
+    // 방금 실패했으니 다시 쓴 응답이 아니라 새로 묻는다.
+    const again = await fetchAuthState({ fresh: true });
     // 로그인 상태를 확인할 수 없으면 네트워크 문제로 보고 멈춘다.
     if (again === null) return "stop";
     if (!again.userId) {
@@ -165,7 +169,9 @@ function attemptKey(item: QueueItem): string {
 }
 
 async function runReplay(): Promise<void> {
-  // 이번 재생에서 서버가 거절한 항목. 다음 바퀴에서 같은 값을 되풀이해 보내지 않는다.
+  if (OFFLINE_MODE_OFF) return;
+  // 이번 재생에서 서버가 거절한 항목. 다음 바퀴에서 같은 값을 되풀이해 보내지 않는다(거절
+  // 횟수도 재생 한 번에 한 번만 는다).
   const rejected = new Set<string>();
   for (let round = 0; round < MAX_REPLAY_ROUNDS; round += 1) {
     if (!isOnline()) return;
@@ -174,8 +180,6 @@ async function runReplay(): Promise<void> {
       setNeedsLogin(false);
       return;
     }
-    const items = queue.filter((item) => !rejected.has(attemptKey(item)));
-    if (items.length === 0) return;
     const auth = await fetchAuthState();
     if (auth === null) return;
     if (!pageMatchesServerBuild(auth.buildId, reloadAllowed)) return;
@@ -183,13 +187,12 @@ async function runReplay(): Promise<void> {
       setNeedsLogin(true);
       return;
     }
-    // 다른 계정의 대기열이면 보내지 않는다. 계정 대조(offline-runtime.tsx)가 지운다.
-    const owner = await getMeta<string>("userId").catch((error: unknown) => {
-      console.warn("[offline] reading queue owner failed", error);
-      return undefined;
-    });
-    if (owner && owner !== auth.userId) return;
     setNeedsLogin(false);
+    // 지금 계정의 항목만 보낸다. 다른 계정의 항목은 계정 대조(offline-runtime.tsx)가 지운다.
+    const items = itemsForAccount(queue, auth.userId, await readQueueOwner()).filter(
+      (item) => !rejected.has(attemptKey(item)),
+    );
+    if (items.length === 0) return;
 
     for (const item of items) {
       if (!isOnline()) return;
@@ -197,6 +200,7 @@ async function runReplay(): Promise<void> {
       if (outcome === "stop") return;
       if (outcome === "rejected") {
         rejected.add(attemptKey(item));
+        await recordRejection(item);
         continue;
       }
       await removeIfUnchanged(item);

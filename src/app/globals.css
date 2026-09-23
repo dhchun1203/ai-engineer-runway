@@ -2536,16 +2536,28 @@ code[data-theme*=" "] span {
    (text-onair / text-offair 유틸리티, @theme 토큰)을 currentColor로 받아 배경과 빛 번짐에
    쓴다. 새 색 리터럴 없음. 온라인은 약 3초 주기로 천천히 숨 쉬고(밝기와 번짐만), 오프라인은
    1초 주기로 또렷하게 깜빡인다. 방송 램프라 이 디자인에서 예외적으로 둥글다(.rounded-full은
-   이 사이트에서 각지게 덮이므로 여기서 직접 둥글게 한다). */
+   이 사이트에서 각지게 덮이므로 여기서 직접 둥글게 한다).
+   애니메이션은 opacity만 바꾼다(합성 단계에서 처리되어 매 프레임 다시 그리지 않는다). 빛
+   번짐은 ::after에 고정된 box-shadow로 두고 그 opacity만 숨 쉬게 한다. box-shadow 자체를
+   애니메이션하면 헤더가 떠 있는 내내 매 프레임 다시 그린다. e2e(scripts/e2e-offline.mjs F1,
+   F2, F3)는 .onair-lamp 요소 자체의 animation-name(lamp-breathe, lamp-blink, none)을 읽는다. */
 @keyframes lamp-breathe {
   0%,
   100% {
     opacity: 0.55;
-    box-shadow: 0 0 0 0 transparent;
   }
   50% {
     opacity: 1;
-    box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 35%, transparent);
+  }
+}
+
+@keyframes lamp-glow {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
   }
 }
 
@@ -2562,14 +2574,31 @@ code[data-theme*=" "] span {
 }
 
 .onair-lamp {
+  position: relative;
   display: inline-block;
   border-radius: 9999px;
   background-color: currentColor;
   animation: lamp-breathe 3s ease-in-out infinite;
 }
 
+.onair-lamp::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 35%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  animation: lamp-glow 3s ease-in-out infinite;
+}
+
 .onair-lamp[data-state="off"] {
   animation: lamp-blink 1s step-end infinite;
+}
+
+.onair-lamp[data-state="off"]::after {
+  animation: none;
+  opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2577,5 +2606,10 @@ code[data-theme*=" "] span {
   .onair-lamp[data-state="off"] {
     animation: none;
     opacity: 1;
+  }
+
+  .onair-lamp::after {
+    animation: none;
+    opacity: 0;
   }
 }

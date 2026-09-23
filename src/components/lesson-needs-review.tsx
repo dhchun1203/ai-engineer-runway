@@ -87,7 +87,12 @@ export function LessonNeedsReview({
       {error ? (
         <div className="flex items-center gap-2 text-label font-normal">
           <span role="status" aria-live="polite">{error}</span>
-          <button type="button" onClick={handleToggle} className="btn tap-feedback text-label">
+          <button
+            type="button"
+            onClick={handleToggle}
+            disabled={!online}
+            className="btn tap-feedback text-label"
+          >
             다시 시도
           </button>
         </div>

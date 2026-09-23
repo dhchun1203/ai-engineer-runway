@@ -4,8 +4,8 @@
  * 외부 라이브러리 없이 직접 쓴다. 등록은 src/components/offline/offline-runtime.tsx가
  * 로그인 상태에서만 /sw.js?v=<빌드 id>로 한다. 캐시 이름은 "offline-" + 그 빌드 id다.
  * 새 배포는 새 등록 주소라 새 서비스 워커가 설치된다. 새 배포가 와도 옛 캐시는 지우지
- * 않는다(activate에서 다른 offline-* 캐시를 지우지 않음) — 옛 캐시를 새 캐시로 다시
- * 받은 뒤 지우는 일은 페이지 쪽 런타임(이후 단계)이 한다. 같은 빌드의 HTML과 JS 조각을
+ * 않는다(activate에서 다른 offline-* 캐시를 지우지 않음). 옛 캐시를 새 캐시로 다시
+ * 받은 뒤 지우는 일은 페이지 쪽 런타임(src/lib/offline/migration.ts)이 한다. 같은 빌드의 HTML과 JS 조각을
  * 한 캐시에 묶어, 옛 HTML이 없는 조각을 찾는 일이 없게 한다.
  *
  * 요청 규칙
@@ -18,7 +18,7 @@
  *     없으면 모든 offline-* 캐시).
  *   그 밖(GET이 아닌 요청, Server Action, /api, 외부 출처): 손대지 않는다(항상 네트워크).
  *
- * 캐시 쓰기는 caches.has(CACHE_NAME)이 참일 때만 한다(install이 이 캐시를 만든다 —
+ * 캐시 쓰기는 caches.has(CACHE_NAME)이 참일 때만 한다(install이 이 캐시를 만든다.
  * 아직 설치가 끝나지 않았거나 캐시가 통째로 지워진 상태에서 쓰지 않기 위해서). 쓰기는
  * event.waitUntil로 살려 두고, 실패해도 응답에는 영향이 없도록 콘솔 경고로만 남긴다.
  *
@@ -65,7 +65,7 @@ function absolute(path) {
 }
 
 // 현재 캐시(CACHE_NAME)에서 먼저 찾고, allCaches면 모든 offline-* 캐시를 뒤진다(옛 배포의
-// HTML이 옛 캐시에 있던 자기 조각을 그 캐시에서 찾을 수 있게 — 다른 배포가 캐시를
+// HTML이 옛 캐시에 있던 자기 조각을 그 캐시에서 찾을 수 있게. 다른 배포가 캐시를
 // 지우지 않으므로 여러 개가 함께 남아 있을 수 있다). caches.open은 없는 캐시를 새로
 // 만들어 로그아웃 때 지운 캐시를 되살리므로, 찾기에는 cacheName을 준 caches.match만 쓴다.
 async function matchAnyCache(request, allCaches = true) {
@@ -75,7 +75,7 @@ async function matchAnyCache(request, allCaches = true) {
 }
 
 // CACHE_NAME이 이미 만들어져 있을 때만 쓴다(install이 만든다). 캐시가 통째로 지워졌거나
-// 아직 설치 전이면 조용히 아무 것도 하지 않는다 — 호출부는 이 promise를 event.waitUntil로
+// 아직 설치 전이면 조용히 아무 것도 하지 않는다. 호출부는 이 promise를 event.waitUntil로
 // 살려 두고 실패를 콘솔 경고로만 남긴다.
 async function cachePut(request, response) {
   if (!(await caches.has(CACHE_NAME))) return;
@@ -145,8 +145,8 @@ self.addEventListener("message", (event) => {
   event.waitUntil(precacheOfflinePage().catch((err) => console.warn("[sw] reprecache failed", err)));
 });
 
-// 옛 배포의 caches는 여기서 지우지 않는다(컨트롤러 판단) — 새 배포가 와도 옛 캐시는
-// 그대로 둔다. 옛 캐시를 새 캐시로 다시 받은 뒤 지우는 일은 페이지 쪽 런타임(이후 단계)이
+// 옛 배포의 caches는 여기서 지우지 않는다. 새 배포가 와도 옛 캐시는 그대로 둔다. 옛
+// 캐시를 새 캐시로 다시 받은 뒤 지우는 일은 페이지 쪽 런타임(src/lib/offline/migration.ts)이
 // 한다.
 self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
