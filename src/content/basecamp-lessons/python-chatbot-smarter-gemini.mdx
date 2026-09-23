@@ -1,0 +1,294 @@
+---
+title: "Q&A 챗봇 만들기 (4) 더 똑똑하게: 질문 이해와 안전장치"
+order: 23
+summary: "공식 2단계 심화 A. 자연어 질문에서 검색 키워드를 뽑고, 못 찾거나 AI가 실패해도 멈추지 않는 이중 안전장치를 넣은 뒤, 대화형 채팅창에 연결합니다."
+slug: "python-chatbot-smarter-gemini"
+---
+
+3편까지 오셨다면 챗봇은 이미 완성이에요. 데이터를 불러오고, 검색하고, Gemini가 자연스럽게 답해 주죠.
+
+그런데 공식 과제에는 2단계가 하나 더 있어요. 두 가지 심화 과정 중 하나를 골라 진행하는 거예요.
+
+- A. Gemini로 챗봇을 더 똑똑하게 만들기 (이번 편)
+- B. 챗봇 화면과 사용성(UX) 다듬기 (5편)
+
+관심 있는 쪽 하나만 해도 되고, 시간이 남으면 둘 다 도전해 보세요. 이번 편은 A예요.
+
+> 이번 편도 Google Colab에서 따라 해 주세요. Gemini API 키는 3편에서 보안 비밀(`GEMINI_API_KEY`)에 넣어 둔 걸 그대로 씁니다.
+
+## 오늘 만들 조각
+
+3편의 챗봇에는 약한 곳이 세 군데 있었어요.
+
+1. 검색 결과가 없어도 Gemini를 불러요. 쓸데없는 호출이죠.
+2. Gemini가 실패하면(할당량 초과, 네트워크 오류) 챗봇이 통째로 멈춰요.
+3. "무협 웹툰 추천해 줘"처럼 문장으로 물으면 검색이 안 돼요.
+
+오늘은 이 세 곳을 하나씩 막고, 마지막에 카카오톡 같은 대화형 채팅창에 연결할 거예요.
+
+## 준비: 데이터와 검색 함수 정리하기
+
+먼저 웹툰 표와 2편의 검색 함수를 다시 올려 둘게요. 웹툰을 몇 편 더 넣어 검색할 거리를 늘렸어요. 여러분 과제 노트북에 이미 이 함수들이 있다면 이 칸은 건너뛰어도 돼요. (세션이 끊겼다면 1단계 코드를 처음부터 다시 실행하면 복원돼요.)
+
+```python
+import pandas as pd
+
+df = pd.DataFrame({
+    "title": ["신의 탑", "여신강림", "화산귀환", "전지적 독자 시점", "마루는 강쥐",
+              "나 혼자만 레벨업", "유미의 세포들", "외모지상주의"],
+    "author": ["SIU", "야옹이", "비가", "슬리피-C", "모죠", "장성락", "이동건", "박태준"],
+    "genre": ["판타지", "로맨스", "무협", "판타지", "일상", "액션", "로맨스", "액션"],
+    "rating": [9.7, 9.2, 9.9, 9.9, 9.9, 9.8, 9.9, 9.6],
+    "description": [
+        "자신의 모든 것이었던 소녀를 쫓아 탑에 들어온 소년의 이야기.",
+        "외모 콤플렉스를 화장으로 극복한 소녀의 학원 로맨스.",
+        "화산파의 고수가 백 년 뒤 어린 몸으로 되살아나 다시 강해지는 이야기.",
+        "평범한 독자였던 주인공이 자신만 아는 소설 속 세계로 들어간다.",
+        "강아지 마루와 함께하는 따뜻하고 귀여운 일상 이야기.",
+        "가장 약한 헌터가 혼자만 레벨업하는 능력을 얻어 성장하는 이야기.",
+        "머릿속 세포들의 눈으로 본 유미의 연애와 일상.",
+        "하룻밤 사이 두 개의 몸을 갖게 된 소년의 학교 생활.",
+    ],
+})
+
+title_column = "title"                                      # 이름(제목) 열
+search_columns = ["author", "genre", "rating", "description"]  # 함께 검색하고 보여 줄 특징 열
+
+for col in search_columns:
+    df[col] = df[col].fillna("정보없음")   # 빈 칸은 "정보없음"으로 (1편)
+
+def search_data(keyword, top_n=3):
+    keyword = str(keyword).strip().lower()
+    # 제목 열과 특징 열 가운데 하나라도 keyword를 품은 줄을 찾아요 (2편)
+    mask = df[[title_column] + search_columns].apply(
+        lambda col: col.astype(str).str.lower().str.contains(keyword, na=False, regex=False)
+    ).any(axis=1)
+    results = df[mask]
+    if len(results) == 0:
+        return None            # 못 찾으면 None
+    return results.head(top_n)  # 찾으면 위에서 top_n개만
+
+def format_answer(results, title_column):
+    if results is None:
+        return "음... 관련된 웹툰을 찾지 못했어요. 다른 단어로 물어봐 주실래요?"
+    answer = f"이런 웹툰을 찾았어요! 총 {len(results)}편이에요.\n\n"
+    for _, row in results.iterrows():
+        answer += f"- {row[title_column]}\n"
+        for col in search_columns:
+            answer += f"   - {col}: {row[col]}\n"
+        answer += "\n"
+    return answer
+```
+
+2편에서 만든 `search_data`, `format_answer`와 똑같아요. 제목, 작가, 장르, 평점, 줄거리를 한 번에 뒤지고, 못 찾으면 `None`을 돌려주죠. 그래서 "무협"만 쳐도 장르에서 찾아 줘요.
+
+Gemini 창구도 다시 열어 둘게요.
+
+```python
+from google.colab import userdata
+from google import genai
+
+GEMINI_API_KEY = userdata.get("GEMINI_API_KEY")
+client = genai.Client(api_key=GEMINI_API_KEY)
+```
+
+## 1. 못 찾으면 부르지 말고, 실패해도 멈추지 않기
+
+3편의 방식을 부르는 이름이 있어요. 검색해서 찾은 자료를 근거로 AI가 답을 만드는 방식, RAG(Retrieval-Augmented Generation)예요. 이름은 어려워 보여도, 우리가 이미 만든 "찾고, 담고, 묻기" 흐름이 바로 그거예요.
+
+이번엔 그 흐름에 안전장치 두 개를 더한 `ask_gemini` 함수를 만들어요.
+
+```python
+NOT_FOUND = "음... 관련된 웹툰을 찾지 못했어요. 다른 단어로 물어봐 주실래요?"
+
+def ask_gemini(user_input, results, title_column):
+    # 안전장치 1: 찾은 게 없으면 Gemini를 부를 필요가 없어요
+    if results is None:
+        return NOT_FOUND
+
+    # 찾은 줄들을 Gemini가 읽기 좋은 글(컨텍스트)로 정리해요
+    context = ""
+    for _, row in results.iterrows():
+        context += f"- {row[title_column]}: "
+        context += ", ".join([f"{col}={row[col]}" for col in search_columns])
+        context += "\n"
+
+    prompt = f"""너는 친절한 웹툰 안내 챗봇이야. 아래는 사용자 질문과 관련해 데이터에서 찾은 정보야.
+
+[사용자 질문]
+{user_input}
+
+[검색된 데이터]
+{context}
+[답변 규칙]
+1. 반드시 위 데이터에 있는 내용만 근거로 답해. 데이터에 없는 내용은 지어내지 마.
+2. 친근하고 자연스러운 말투로 설명해 줘.
+3. 항목을 나열만 하지 말고, 질문에 맞춰 요약하거나 비교해 줘.
+4. 답은 5문장 이내로 짧게 써 줘."""
+
+    # 안전장치 2: Gemini가 실패해도 챗봇이 멈추지 않게
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+        )
+        return response.text
+    except Exception as e:
+        print("Gemini 호출 오류:", e)
+        return format_answer(results, title_column)  # 대신 검색 결과를 그대로 보여줘요
+
+print(ask_gemini("화산귀환 어때?", search_data("화산귀환"), title_column))
+```
+
+안전장치 두 개를 뜯어볼게요.
+
+- 첫째, `results is None`이면 바로 안내 문구를 돌려줘요. 재료가 없는데 요리사를 부를 이유가 없죠. 무료 호출 횟수도 아껴요.
+- 둘째, `try`/`except`로 Gemini 호출을 감쌌어요. 오류가 나면 `except`로 넘어가 `format_answer`로 만든 검색 결과를 대신 돌려줘요. 멋진 문장은 아니어도, 사용자는 답을 받아요.
+
+`except Exception as e`의 `e`에는 무슨 오류였는지가 담겨요. 그걸 `print`로 찍어 두면 나중에 원인을 찾기 쉬워요.
+
+프롬프트의 규칙 1번("데이터에 없는 내용은 지어내지 마")이 가장 중요해요. 이게 없으면 Gemini가 우리 표에 없는 내용을 그럴듯하게 지어낼 수 있어요.
+
+### 모델 고르기 팁
+
+Gemini에는 여러 모델이 있어요. 이 레슨에서는 두 가지를 써요.
+
+- `gemini-2.5-flash`: 답변 품질과 속도가 균형 잡힌 모델. 기본값으로 써요.
+- `gemini-2.5-flash-lite`: 더 가볍고 빠르고, 무료로 쓸 수 있는 횟수가 더 넉넉해요.
+
+챗봇이 자주 막힌다면(할당량 초과) `model="gemini-2.5-flash-lite"`로 바꿔 보세요. 참고로 결제 계정(카드)을 연결하지 않았다면 실수로 요금이 나갈 일은 없어요. 무료 한도만 있을 뿐이에요.
+
+## 2. 문장으로 물어도 알아듣게: 키워드 뽑기
+
+이제 세 번째 약점이에요. 직접 확인해 볼게요.
+
+```python
+print(search_data("무협"))              # 찾아요 (화산귀환)
+print(search_data("무협 웹툰 추천해 줘"))  # None
+```
+
+왜 두 번째는 못 찾을까요? `search_data`는 입력한 글자 덩어리가 데이터 안에 그대로 들어 있어야 찾아요. "무협 웹툰 추천해 줘"라는 긴 문장은 데이터 어디에도 없죠.
+
+그래서 검색하기 전에 Gemini에게 먼저 물어봐요. "이 질문에서 검색할 핵심 단어가 뭐야?" 사람으로 치면, 손님의 긴 말을 듣고 메모지에 "무협"이라고만 적는 점원이에요.
+
+```python
+def extract_keyword(user_input):
+    prompt = f"""다음은 사용자가 웹툰 데이터에서 무언가를 찾으려고 입력한 질문이야.
+데이터의 값은 한국어로 되어 있어(예: 장르 판타지, 로맨스, 무협).
+이 질문에서 검색에 쓸 핵심 키워드 1개만 뽑아 줘.
+설명 없이 키워드 단어(또는 짧은 구)만 출력해.
+
+질문: "{user_input}"
+키워드:"""
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash-lite",  # 짧은 일이라 가벼운 모델로 충분해요
+            contents=prompt,
+        )
+        return response.text.strip()   # 앞뒤 공백과 줄바꿈을 걷어내요
+    except Exception as e:
+        print("키워드 추출 오류:", e)
+        return user_input              # 실패하면 원래 입력을 그대로 써요
+
+print(extract_keyword("무협 웹툰 추천해 줘"))   # 예: 무협
+```
+
+눈여겨볼 곳이 세 군데 있어요.
+
+- 프롬프트에 "설명 없이 키워드만"이라고 못 박았어요. 안 그러면 "핵심 키워드는 무협입니다!" 같은 문장이 와서 검색이 또 실패해요.
+- `.strip()`은 답 앞뒤에 붙은 공백과 줄바꿈을 지워요. " 무협\n"과 "무협"은 컴퓨터에겐 다른 글자거든요.
+- 실패하면 원래 입력을 돌려줘요. 여기서도 챗봇이 멈추지 않게 하는 거예요.
+
+> 여러분 데이터의 값이 영어라면(예: 레시피 데이터의 chicken), "데이터의 값은 영어로 되어 있어"라고 알려 주세요. 그러면 "닭고기 요리"라는 질문에서도 chicken을 뽑아 줘요. 이게 이 기능의 진짜 힘이에요.
+
+## 3. 조각 합치기: 이중 안전장치가 든 최종 챗봇
+
+Gemini가 뽑은 키워드가 항상 정확하진 않아요. 그래서 최종 함수는 세 번에 걸쳐 시도해요.
+
+```python
+def chatbot_v2(user_input, title_column):
+    # 1차: 문장에서 키워드를 뽑아 검색
+    keyword = extract_keyword(user_input)
+    results = search_data(keyword)
+
+    # 2차: 키워드로 못 찾았으면 원래 입력으로 한 번 더
+    if results is None:
+        results = search_data(user_input)
+
+    # 3차: 그래도 없으면 정직하게 못 찾았다고
+    if results is None:
+        return NOT_FOUND
+
+    # 찾았으면 Gemini에게 자연스러운 답을 부탁
+    return ask_gemini(user_input, results, title_column)
+
+print(chatbot_v2("무협 웹툰 추천해 줘", title_column))
+```
+
+흐름을 그림으로 그리면 이래요.
+
+1. 문장 → 키워드 뽑기 → 검색
+2. 못 찾음 → 원래 문장으로 다시 검색
+3. 또 못 찾음 → "못 찾았어요"
+4. 찾음 → Gemini가 데이터를 근거로 답
+
+어느 단계에서 무엇이 실패해도 챗봇은 멈추지 않아요. `extract_keyword`와 `ask_gemini` 안에 이미 `try`/`except`가 있으니, 무료 할당량(분당, 하루 요청 수)을 넘겨도 검색 결과로 대신 답해 줘요.
+
+## 4. 대화형 채팅창에 연결하기
+
+2, 3편에서는 `gr.Interface`로 입력창 하나, 결과창 하나를 만들었어요. 이번엔 말풍선이 오가는 채팅창, `gr.ChatInterface`를 써 볼게요.
+
+```python
+!pip install -q gradio
+```
+
+```python
+import gradio as gr
+
+def gradio_chatbot_v2(message, history):
+    return chatbot_v2(message, title_column)
+
+demo = gr.ChatInterface(
+    fn=gradio_chatbot_v2,
+    title="나만의 웹툰 챗봇 (Gemini 연결)",
+    description="자연스러운 문장으로 편하게 물어보세요!",
+    examples=["무협 웹툰 추천해 줘", "강아지 나오는 웹툰 있어?"],  # 본인 데이터에 맞게 바꾸세요
+)
+
+demo.launch(share=True)
+```
+
+`gr.ChatInterface`가 부르는 함수는 꼭 두 개를 받아야 해요.
+
+- `message`: 사용자가 방금 친 말
+- `history`: 지금까지 주고받은 대화 기록. 오늘은 안 쓰지만 자리는 비워 둬야 해요.
+
+`examples`에 적은 문장은 채팅창 아래 버튼으로 떠서, 누르면 바로 질문이 들어가요. `share=True`는 한동안(최대 1주일 정도) 쓸 수 있는 임시 공개 링크를 만들어 줘요. Colab 세션이 끊기면 링크도 함께 멈춰요. 친구에게 보내 써 보게 할 수 있어요.
+
+> 채팅창을 더 예쁘게 꾸미고 싶다면, 5편(UX 다듬기)의 기법을 `gradio_chatbot_v2`에도 그대로 붙일 수 있어요.
+
+## 스스로 확인하기
+
+Q1. `ask_gemini`에서 `results is None`일 때 Gemini를 부르지 않고 바로 돌려주는 이유 두 가지는?
+
+Q2. `extract_keyword`의 프롬프트에서 "설명 없이 키워드만 출력해"를 빼면 어떤 일이 생길까요?
+
+Q3. `chatbot_v2`에서 2차 시도(원래 입력으로 한 번 더 검색)가 필요한 경우를 하나 떠올려 보세요.
+
+<details>
+<summary>정답 확인</summary>
+
+A1. 재료(검색 결과)가 없으니 Gemini가 근거 삼을 데이터가 없어요. 부르면 지어낸 답이 나올 위험만 커져요. 그리고 무료 호출 횟수를 쓸데없이 쓰게 돼요.
+
+A2. Gemini가 "이 질문의 핵심 키워드는 무협입니다." 같은 문장으로 답할 수 있어요. 그 문장 전체가 검색어가 되니 데이터에서 찾지 못해요.
+
+A3. 예를 들어 사용자가 "화산귀환"처럼 이미 딱 맞는 단어를 쳤는데 Gemini가 "무협"이나 "화산파"처럼 다른 단어로 바꿔 버린 경우예요. 키워드 추출이 오히려 방해가 됐을 때, 원래 입력이 구원투수가 돼요. 키워드 추출이 실패해서 원래 입력이 돌아온 경우에도 마찬가지로 동작해요.
+
+</details>
+
+## 한 줄 정리
+
+검색 결과가 없으면 Gemini를 부르지 않고, 실패하면 `try`/`except`로 검색 결과를 대신 보여 주며, 문장 질문은 `extract_keyword`로 핵심 단어를 뽑아 검색하고, 그래도 못 찾으면 원래 입력으로 한 번 더 찾는 `chatbot_v2`를 `gr.ChatInterface` 채팅창에 연결했어요.
+
+이 흐름을 여러분이 고른 데이터로 바꿔 끼우면 공식 2단계 A 과제가 됩니다. 화면까지 다듬고 싶다면 5편으로 넘어가세요.

@@ -1,7 +1,7 @@
 ---
 title: "Q&A 챗봇 만들기 (2) 검색 기능과 화면 붙이기"
 order: 21
-summary: "불러온 웹툰 데이터에서 원하는 것만 찾아 주는 검색을 조건 검색, 함수, 반복문으로 만들고, Gradio로 입력창과 결과 화면까지 붙입니다."
+summary: "불러온 웹툰 데이터에서 원하는 것만 찾아 주는 검색을 조건 검색, 함수, 반복문으로 만들고, 여러 열을 한 번에 뒤지는 search_data와 챗봇 말투, while 대화, Gradio 채팅창과 공유 링크까지 붙입니다."
 slug: "python-chatbot-search-gradio"
 ---
 
@@ -29,10 +29,10 @@ webtoons = pd.DataFrame({
 ## 오늘 만들 조각
 
 1. (1편) 데이터를 파이썬 안으로 불러오기 (완료)
-2. (오늘) 원하는 데이터만 골라내는 검색 기능 만들기, 화면 붙이기
+2. (오늘) 원하는 데이터만 골라내는 검색 기능 만들기, 채팅 화면 붙이기
 3. (3편) 검색 결과에 AI 답변을 붙여 챗봇 완성하기
 
-오늘 목표는 "검색어를 받으면 맞는 웹툰을 찾아 보기 좋게 돌려주는 기능"을 만들고, 거기에 웹 화면을 씌우는 거예요.
+오늘 목표는 "검색어를 받으면 맞는 웹툰을 찾아 보기 좋게 돌려주는 기능"을 만들고, 거기에 채팅 화면을 씌우는 거예요. 공식 과제 1단계의 Step 5~7(검색 함수, 챗봇 완성, 테스트)이 오늘 범위예요.
 
 ## 글자로 검색하기
 
@@ -111,7 +111,117 @@ print(search_as_text("여신"))
 - `row["title"]` 처럼 대괄호에 열 이름을 적어 그 줄의 값을 꺼내요.
 - `"\n".join(lines)` 는 모아 둔 문장들을 줄바꿈(`\n`)으로 이어 붙여요.
 
-이제 `search_as_text("판타지")`든 무엇이든, 검색어를 넣으면 읽기 좋은 답이 나와요. 챗봇의 심장이 만들어진 거예요.
+이제 검색어를 넣으면 읽기 좋은 답이 나와요. 챗봇의 심장이 만들어진 거예요.
+
+그런데 아직 아쉬운 점이 있어요. 제목에서만 찾으니까 `search_as_text("판타지")`는 "찾는 웹툰이 없어요"라고 답해요. 판타지는 제목이 아니라 장르 열에 있거든요.
+
+## 여러 열을 한 번에: search_data 만들기
+
+이제 공식 과제의 검색 함수 `search_data(keyword, top_n=3)`를 만들어요. 1편의 챗봇 설계도에서 고른 열들을 한꺼번에 뒤지는 함수예요. 해야 할 일은 세 가지예요.
+
+1. 검색어를 소문자로 통일하기 (영어 데이터라면 "Chicken"과 "chicken"을 같게 보려고요)
+2. 제목 열과 특징 열 가운데 하나라도 검색어를 품은 줄을 찾기
+3. 못 찾으면 `None`, 찾으면 최대 `top_n`개까지만 돌려주기
+
+1편에서 불러온 표는 `df`라는 이름이었죠. 여기서도 `df`로 이어 갈게요.
+
+```python
+df = webtoons              # 진짜 과제에서는 1편에서 read_csv로 불러온 df를 그대로 써요
+
+title_column = "title"                       # 설계도 1번: 제목 열
+search_columns = ["author", "genre", "rating"]  # 설계도 2, 3번: 특징 열과 정보 열
+
+for col in search_columns:
+    df[col] = df[col].fillna("정보없음")      # 1편에서 한 빈 칸 정리
+
+def search_data(keyword, top_n=3):
+    keyword = keyword.lower()
+
+    # 고른 열마다 "이 칸에 keyword가 들어 있니?"를 묻고,
+    # 한 줄에서 하나라도 예면 그 줄을 남겨요
+    mask = df[[title_column] + search_columns].apply(
+        lambda col: col.astype(str).str.lower().str.contains(keyword, na=False, regex=False)
+    ).any(axis=1)
+
+    results = df[mask]
+
+    if len(results) == 0:
+        return None
+    return results.head(top_n)
+
+print(search_data("판타지"))   # 이제 장르에서 찾아요
+print(search_data("화산귀환"))  # 제목에서도 찾아요
+print(search_data("없는말"))    # None
+```
+
+처음 보는 도구가 몇 개 있으니 차근차근 볼게요.
+
+- `df[[title_column] + search_columns]`는 제목 열과 특징 열만 골라낸 작은 표예요. `[title_column] + search_columns`는 리스트 두 개를 이어 붙인 거예요.
+- `.apply(lambda col: ...)`는 그 작은 표의 열 하나하나에 같은 일을 시켜요. 여기서는 "글자로 바꾸고(`astype(str)`), 소문자로 바꾸고(`str.lower()`), 검색어가 들어 있는지 묻기(`str.contains`)"예요. 결과는 칸마다 예(True), 아니오(False)가 적힌 표예요.
+- `.any(axis=1)`은 줄마다 "예가 하나라도 있니?"를 물어요. `axis=1`은 가로 방향(한 줄 안에서)으로 보라는 뜻이에요. 그래서 제목이든 장르든 어디 한 곳에만 걸려도 그 줄이 남아요.
+- `regex=False`는 검색어를 글자 그대로 찾으라는 뜻이에요. 사용자가 `?`나 `(` 같은 기호를 쳐도 오류가 나지 않게 해 줘요.
+- `results.head(top_n)`은 위에서 `top_n`개만 잘라요. 결과가 수백 개여도 챗봇 답이 너무 길어지지 않게요.
+
+`rating` 같은 숫자 열도 `astype(str)`로 글자로 바꾼 뒤 찾기 때문에, "9.9"로 검색해도 걸려요.
+
+> 1편의 공식 예시는 특징 열(`search_columns`)에서만 찾아요. 우리는 제목으로도 물어볼 수 있게 제목 열을 함께 넣었어요. 여러분 데이터에 맞게 골라 쓰세요.
+
+## 챗봇 말투로 답하기: format_answer와 chatbot
+
+`search_data`는 표를 돌려줘요. 이걸 사람이 읽기 좋은 챗봇 말투로 바꾸는 함수와, 검색과 말투를 한 번에 해 주는 함수를 만들어요.
+
+```python
+def format_answer(results, title_column):
+    if results is None:
+        return "음... 관련된 웹툰을 찾지 못했어요. 다른 단어로 물어봐 주실래요?"
+
+    answer = f"이런 웹툰을 찾았어요! 총 {len(results)}편이에요.\n\n"
+    for _, row in results.iterrows():
+        answer += f"- {row[title_column]}\n"
+        for col in search_columns:
+            answer += f"   - {col}: {row[col]}\n"
+        answer += "\n"
+    return answer
+
+def chatbot(user_input, title_column):
+    results = search_data(user_input)
+    return format_answer(results, title_column)
+
+print(chatbot("무협", title_column))
+# 출력:
+# 이런 웹툰을 찾았어요! 총 1편이에요.
+#
+# - 화산귀환
+#    - author: 비가
+#    - genre: 무협
+#    - rating: 9.9
+```
+
+`format_answer`는 앞에서 만든 `search_as_text`와 같은 원리예요. 반복문으로 줄마다 제목을 적고, 안쪽 반복문으로 특징 열의 값을 하나씩 붙여요. 못 찾았을 때는 에러 대신 다시 물어봐 달라고 정중하게 말해요.
+
+> `title_column`을 여러분 데이터의 진짜 제목 열 이름으로 바꾸지 않으면 에러(KeyError)가 나요. 가장 흔한 실수예요. 1편에서 확인한 열 이름을 정확히 적어 주세요.
+
+## 대화처럼 계속 묻기: while 반복문
+
+지금은 질문 하나에 답 하나로 끝나요. 진짜 대화처럼 계속 묻고 답하다가, "종료"라고 치면 멈추게 해 볼게요.
+
+```python
+print("안녕하세요! 무엇이든 물어보세요. (그만하려면 '종료' 입력)")
+
+while True:
+    user_input = input("\n나: ")
+    if user_input == "종료":
+        print("챗봇을 종료합니다. 안녕히 가세요!")
+        break
+    answer = chatbot(user_input, title_column)
+    print(f"\n챗봇: {answer}")
+```
+
+- `while True:`는 "영원히 반복해"예요. 멈추는 방법은 안쪽의 `break`뿐이에요.
+- `input("나: ")`는 화면에 입력칸을 띄우고, 사용자가 친 글자를 돌려줘요. Colab에서는 칸 아래에 입력창이 나타나요.
+- 사용자가 "종료"를 치면 `break`로 반복을 빠져나와요. 그 외에는 `chatbot`에 물어 답을 보여 주고, 다시 맨 위로 돌아가 다음 질문을 기다려요.
+
+실행해 보고 끝낼 때는 꼭 "종료"를 쳐 주세요. 그래야 다음 칸을 실행할 수 있어요.
 
 ## Gradio가 뭐예요?
 
@@ -151,6 +261,45 @@ demo.launch()
 - `outputs="text"` 는 함수가 돌려준 글자를 결과창에 보여 주라는 뜻이에요.
 
 `demo.launch()`를 실행하면 Colab 안에 작은 웹 페이지가 뜨고, 검색어를 넣으면 우리 함수가 찾은 답이 나와요. 방금 만든 검색 기능이 진짜 화면 위에서 움직이는 거예요.
+
+## 말풍선 채팅창으로 바꾸기
+
+입력칸 하나, 결과칸 하나도 좋지만, 챗봇이라면 말풍선이 오가는 채팅창이 어울리죠. 공식 과제의 마지막 단계도 이거예요. `gr.ChatInterface`를 쓰면 채팅창을 통째로 만들어 줘요.
+
+```python
+import gradio as gr
+
+def gradio_chatbot(message, history):
+    answer = chatbot(message, title_column)
+    return answer
+
+demo = gr.ChatInterface(
+    fn=gradio_chatbot,
+    title="나만의 웹툰 챗봇",
+    description="궁금한 제목이나 장르를 물어보세요! (데이터: 네이버 웹툰)",
+    examples=["판타지", "화산귀환", "야옹이"],   # 여러분 데이터에 실제로 있는 단어로
+)
+
+demo.launch(share=True)
+```
+
+`gr.Interface`와 다른 점은 이래요.
+
+- 부를 함수가 `message`(방금 친 말)와 `history`(지금까지 대화 기록) 두 개를 받아야 해요. 오늘은 `history`를 쓰지 않지만 자리는 꼭 있어야 해요.
+- `examples`에 적은 단어는 채팅창 아래 버튼으로 떠요. 누르면 바로 질문이 들어가요.
+- `share=True`를 주면 실행 결과에 `Running on public URL: https://xxxxx.gradio.live` 같은 공개 링크가 찍혀요. 이 링크를 열면 코딩을 모르는 사람도 브라우저에서 바로 내 챗봇과 대화할 수 있어요. 임시 링크라 Colab 세션이 끝나면 함께 멈춰요.
+
+## 테스트하고 다듬기
+
+완성한 챗봇을 아래 체크리스트로 스스로 점검해 보세요.
+
+- 데이터에 실제로 있는 단어로 물으면 결과가 잘 나오나요?
+- 데이터에 없는 엉뚱한 단어로 물으면 에러 없이 "못 찾았어요"라고 정직하게 답하나요?
+- 빈 칸(결측치)이 있는 줄을 검색해도 멈추지 않나요?
+- 서로 다른 질문으로 다섯 번 이상 시험해 봤나요?
+- 답이 사람이 읽기 편한 모양인가요? (줄바꿈, 이모지 등)
+
+> 막히면 ChatGPT나 Claude에게 물어보세요. 에러 난 부분을 캡처해 함께 보여 주거나, "이 코드가 에러가 나. (에러 메시지 붙여넣기) 내 데이터 열은 이렇게 생겼어: (df.columns 결과 붙여넣기). 어떻게 고쳐야 해?"처럼 에러 메시지와 열 목록을 같이 주면 훨씬 정확하게 도와줘요. 여유가 있다면 "이 챗봇에 이런 기능을 더하고 싶어"라고 AI에게 기능 추가를 부탁해 보는 것도 공식 과제가 권하는 선택 심화예요.
 
 ## 스스로 확인하기
 
@@ -206,6 +355,6 @@ print(search_by_genre("로맨스"))
 
 ## 한 줄 정리
 
-`.str.contains()`로 글자를 검색하고, 그 검색을 함수로 묶어 검색어만 바꿔 부를 수 있게 한 뒤, `.iterrows()` 반복문으로 결과를 읽기 좋은 문장으로 만들고, `gr.Interface`로 입력창과 결과창이 달린 화면까지 붙였어요.
+`.str.contains()`로 글자를 검색하고 함수로 묶은 뒤, `apply`와 `any(axis=1)`로 여러 열을 한 번에 뒤지는 `search_data`를 만들고, `format_answer`로 챗봇 말투를 입혀 `while` 반복으로 대화하다가, `gr.ChatInterface`와 `share=True`로 누구나 쓸 수 있는 채팅창까지 붙였어요.
 
 다음 편에서는 이 검색 결과를 그대로 보여 주는 대신, Gemini API에 건네 자연스러운 말로 답하게 만들어요. 드디어 챗봇의 마지막 조각이에요.

@@ -296,6 +296,22 @@ export const step3ChatbotLessons: readonly BasecampPrepLesson[] = [
       "검색 결과를 Gemini API에 건네, 데이터를 근거로 자연스럽게 답하는 진짜 Q&A 챗봇을 완성합니다.",
     href: "/basecamp/python-chatbot-gemini-api",
   },
+  // 공식 2단계는 심화 A(Gemini로 더 똑똑하게)와 B(UX 다듬기) 중 하나를 골라 진행한다.
+  // 두 갈래를 각각 한 편씩 보강한다(2026-09-23).
+  {
+    id: "s3build-smarter",
+    title: "챗봇 만들기 (4) 심화 A: 질문 이해와 안전장치",
+    summary:
+      "자연어 질문에서 검색 키워드를 뽑고, 못 찾거나 AI 호출이 실패해도 멈추지 않는 이중 안전장치를 넣어 채팅창에 연결합니다.",
+    href: "/basecamp/python-chatbot-smarter-gemini",
+  },
+  {
+    id: "s3build-ux",
+    title: "챗봇 만들기 (5) 심화 B: 챗봇 UX 다듬기",
+    summary:
+      "답변 꾸미기, 빠른 질문 버튼, 테마와 아바타, 타이핑 효과, 사이드바 레이아웃까지. 최신 Gradio에서 그대로 돌아가는 코드로 익힙니다.",
+    href: "/basecamp/python-chatbot-ux",
+  },
 ];
 
 /** action 검증용 — 알려진 항목 id 집합(임의 id로 진도 행이 생기는 것을 막는다).

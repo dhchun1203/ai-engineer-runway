@@ -114,7 +114,8 @@ export default async function BasecampPage() {
           <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
             STEP 3 최종 과제인 Q&A 챗봇을 세 편에 걸쳐 직접 만들며, 필요한 개념을 그때그때
             익히는 레슨입니다. 예시 데이터로 챗봇을 처음부터 끝까지 완성한 뒤, 여러분이 고른
-            데이터로 바꿔 과제로 제출하면 됩니다.
+            데이터로 바꿔 과제로 제출하면 됩니다. 4편과 5편은 공식 2단계의 선택 심화(A: 더
+            똑똑하게, B: UX 다듬기)로, 둘 중 하나를 골라 진행하세요.
           </p>
         </div>
         <BasecampPrepChecklist

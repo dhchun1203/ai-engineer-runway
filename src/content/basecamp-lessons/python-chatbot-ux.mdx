@@ -1,0 +1,291 @@
+---
+title: "Q&A 챗봇 만들기 (5) 챗봇 UX 다듬기"
+order: 24
+summary: "공식 2단계 심화 B. 답변을 보기 좋게 꾸미고, 빠른 질문 버튼, 테마와 아바타, 타이핑 효과, 사이드바 레이아웃까지 챗봇 화면과 사용성을 다듬습니다. 최신 Gradio에서 그대로 돌아가는 코드로."
+slug: "python-chatbot-ux"
+---
+
+챗봇이 똑똑한 것만큼 중요한 게 있어요. 쓰기 편하고, 보기 좋은 것이죠.
+
+같은 답이라도 한 덩어리 글자로 오는 것과, 1위, 2위가 강조되고 줄이 딱딱 나뉘어 오는 것은 느낌이 완전히 달라요. 이렇게 "쓰는 사람이 느끼는 경험"을 다듬는 일을 UX(User Experience, 사용자 경험)라고 불러요.
+
+이번 편은 공식 과제 2단계의 심화 B예요. 4편(A)과 둘 중 하나를 골라 하면 되고, 시간이 남으면 둘 다 해 보세요.
+
+> 여기 나오는 코드는 예시일 뿐이에요. 그대로 따라 하기보다, 여러분만의 아이디어를 하나씩 더해 보세요. 작은 디테일 하나만 바꿔도 나만의 개성이 담긴 챗봇이 돼요.
+
+이번 편은 Gemini 없이도 할 수 있어요. 2편의 검색 챗봇만 있으면 돼요. 물론 4편의 `chatbot_v2`에 똑같이 붙여도 됩니다.
+
+## 먼저 알아 둘 것: Gradio 버전 차이
+
+Colab에서 `pip install gradio`를 하면 최신 Gradio(6 버전대)가 깔려요. 그런데 공식 예시 코드 몇 군데는 이전 버전(5) 방식으로 적혀 있어서, 그대로 치면 오류가 나요. 직접 돌려 보고 확인한 차이는 두 가지예요.
+
+- `gr.Chatbot(type="messages")`에서 `type`이 없어졌어요. 6 버전은 원래 이 방식만 쓰기 때문에, `type=...`을 넣으면 `TypeError`가 나요. 그냥 빼면 돼요.
+- 테마(`theme=`)는 `gr.Blocks(...)`나 `gr.ChatInterface(...)`가 아니라 `demo.launch(theme=...)`에 넣어요. `gr.ChatInterface(theme=...)`는 `TypeError`, `gr.Blocks(theme=...)`는 경고만 나고 테마가 적용되지 않아요.
+
+이 레슨의 코드는 모두 최신 버전에 맞춰 두었어요. 혹시 이전 버전을 쓰는 환경이라면 반대로 공식 예시 방식이 맞아요.
+
+## 준비: 데이터와 검색 함수
+
+4편과 같은 웹툰 표와 2편의 검색 함수예요. 과제 노트북에 이미 있다면 건너뛰어도 돼요.
+
+```python
+import pandas as pd
+
+df = pd.DataFrame({
+    "title": ["신의 탑", "여신강림", "화산귀환", "전지적 독자 시점", "마루는 강쥐",
+              "나 혼자만 레벨업", "유미의 세포들", "외모지상주의"],
+    "author": ["SIU", "야옹이", "비가", "슬리피-C", "모죠", "장성락", "이동건", "박태준"],
+    "genre": ["판타지", "로맨스", "무협", "판타지", "일상", "액션", "로맨스", "액션"],
+    "rating": [9.7, 9.2, 9.9, 9.9, 9.9, 9.8, 9.9, 9.6],
+    "description": [
+        "자신의 모든 것이었던 소녀를 쫓아 탑에 들어온 소년의 이야기.",
+        "외모 콤플렉스를 화장으로 극복한 소녀의 학원 로맨스.",
+        "화산파의 고수가 백 년 뒤 어린 몸으로 되살아나 다시 강해지는 이야기.",
+        "평범한 독자였던 주인공이 자신만 아는 소설 속 세계로 들어간다.",
+        "강아지 마루와 함께하는 따뜻하고 귀여운 일상 이야기.",
+        "가장 약한 헌터가 혼자만 레벨업하는 능력을 얻어 성장하는 이야기.",
+        "머릿속 세포들의 눈으로 본 유미의 연애와 일상.",
+        "하룻밤 사이 두 개의 몸을 갖게 된 소년의 학교 생활.",
+    ],
+})
+
+title_column = "title"
+search_columns = ["author", "genre", "rating", "description"]
+
+for col in search_columns:
+    df[col] = df[col].fillna("정보없음")
+
+def search_data(keyword, top_n=3):
+    keyword = str(keyword).strip().lower()
+    mask = df[[title_column] + search_columns].apply(
+        lambda col: col.astype(str).str.lower().str.contains(keyword, na=False, regex=False)
+    ).any(axis=1)
+    results = df[mask]
+    if len(results) == 0:
+        return None
+    return results.head(top_n)
+```
+
+```python
+!pip install -q gradio
+```
+
+## 1. 답변 메시지 예쁘게 꾸미기
+
+2편의 `format_answer`는 결과를 글자로 늘어놓기만 했어요. 이번엔 제목 강조, 순위 이모지, 구분선을 넣어 훨씬 읽기 편하게 만들어요.
+
+비밀은 Gradio 채팅창이 마크다운(Markdown)을 알아듣는다는 데 있어요. 마크다운은 글자에 간단한 기호를 붙여 모양을 내는 약속이에요.
+
+- `### 글자`: 작은 제목
+- `**글자**`: 굵게
+- `- 글자`: 목록 한 줄
+- `---`: 가로 구분선
+
+```python
+NOT_FOUND = "음... 관련된 웹툰을 찾지 못했어요. 다른 단어로 물어봐 주실래요?"
+
+def format_answer_v2(results, title_column):
+    if results is None:
+        return NOT_FOUND
+
+    rank_emojis = ["🥇", "🥈", "🥉"]   # 상위 세 개를 강조해요
+    answer = f"### 이런 웹툰을 찾았어요! 총 **{len(results)}편**이에요 👇\n\n"
+
+    for i, (_, row) in enumerate(results.iterrows()):
+        emoji = rank_emojis[i] if i < len(rank_emojis) else "🔹"
+        answer += f"{emoji} **{row[title_column]}**\n"
+        for col in search_columns:
+            answer += f"- **{col}**: {row[col]}\n"
+        answer += "\n---\n\n"
+
+    return answer
+
+def chatbot_v3(user_input, title_column):
+    results = search_data(user_input)
+    return format_answer_v2(results, title_column)
+
+print(chatbot_v3("판타지", title_column))
+```
+
+새로 나온 도구는 `enumerate`예요. 반복문을 돌면서 "지금 몇 번째인지"(0, 1, 2...)도 함께 알려 줘요. 그 번호로 `rank_emojis`에서 순위 이모지를 꺼내고, 네 번째부터는 파란 마름모를 붙여요.
+
+`rank_emojis[i] if i < len(rank_emojis) else "🔹"`는 한 줄짜리 if예요. "i가 목록 길이보다 작으면 순위 이모지, 아니면 마름모"라는 뜻이에요.
+
+> 공식 예시는 항목 줄에 인용 기호(`>`)를 썼는데, 인용 줄을 연달아 쓰면 채팅창에서 한 줄로 뭉쳐 보여요. 그래서 여기서는 목록 기호(`-`)로 바꿨어요. 줄마다 따로 보이는지 직접 비교해 보세요.
+
+## 2. 빠른 질문 버튼 만들기
+
+매번 타이핑하지 않고, 버튼만 눌러도 질문이 들어가게 해 볼게요. 이번엔 `gr.ChatInterface` 대신 `gr.Blocks`를 써요.
+
+`gr.ChatInterface`가 완성된 채팅 세트라면, `gr.Blocks`는 레고 블록이에요. 채팅창, 입력칸, 버튼을 하나씩 꺼내 원하는 자리에 끼울 수 있어요.
+
+```python
+import gradio as gr
+
+# 여러분 데이터에서 자주 찾을 만한 키워드 3~5개로 바꾸세요
+quick_keywords = ["판타지", "로맨스", "무협", "일상"]
+
+with gr.Blocks() as demo:
+    gr.Markdown("## 나만의 웹툰 챗봇")
+
+    chatbot_ui = gr.Chatbot(height=400)
+    msg = gr.Textbox(placeholder="궁금한 걸 물어보세요!", label="질문 입력")
+
+    with gr.Row():   # 버튼들을 가로 한 줄로
+        quick_buttons = [gr.Button(kw) for kw in quick_keywords]
+
+    def respond(message, history):
+        answer = chatbot_v3(message, title_column)
+        history = history + [
+            {"role": "user", "content": message},
+            {"role": "assistant", "content": answer},
+        ]
+        return history, ""   # 새 대화 기록, 그리고 입력칸 비우기
+
+    msg.submit(respond, [msg, chatbot_ui], [chatbot_ui, msg])
+
+    # 버튼을 누르면 버튼 글자를 질문으로 보내요
+    for btn in quick_buttons:
+        btn.click(respond, [btn, chatbot_ui], [chatbot_ui, msg])
+
+demo.launch(share=True)
+```
+
+처음 보는 게 많으니 하나씩 볼게요.
+
+- `with gr.Blocks() as demo:` 안에 적은 부품들이 위에서 아래로 화면에 쌓여요. `with gr.Row():` 안의 부품은 가로로 나란히 놓여요.
+- `[gr.Button(kw) for kw in quick_keywords]`는 키워드마다 버튼을 하나씩 만들어 목록에 담는 한 줄 반복문이에요.
+- 대화 기록(`history`)은 말풍선 하나하나를 딕셔너리로 담은 리스트예요. `"role"`은 누가 말했는지(`user`는 사용자, `assistant`는 챗봇), `"content"`는 한 말이에요. 새 질문과 답을 뒤에 붙여서 돌려주면 채팅창에 말풍선 두 개가 생겨요.
+- `msg.submit(함수, 입력들, 출력들)`은 "입력칸에서 엔터를 치면 이 함수를 불러라"예요. 입력으로 질문칸과 현재 대화 기록을 주고, 돌려받은 값으로 채팅창과 입력칸을 바꿔요.
+- `btn.click(...)`도 같은 약속이에요. 입력 자리에 버튼을 넣으면 버튼에 적힌 글자가 질문으로 들어가요.
+
+> 카테고리 필터도 달고 싶다면 `gr.Dropdown(choices=["전체", "판타지", "로맨스"], label="장르")`를 추가해 보세요. 고른 값을 `respond`의 입력으로 함께 받고, `search_data()`를 부르기 전에 `df`를 그 장르로 먼저 걸러 두면 돼요.
+
+## 3. 채팅창 테마와 아바타 꾸미기
+
+Gradio에는 미리 만들어 둔 테마(색과 모양 세트)가 있고, 챗봇 말풍선 옆에 얼굴(아바타) 그림도 붙일 수 있어요. 챗봇의 성격에 맞게 꾸며 볼게요.
+
+```python
+demo = gr.ChatInterface(
+    fn=lambda message, history: chatbot_v3(message, title_column),
+    title="웹툰 탐험대",                          # 여러분 데이터 컨셉에 맞게
+    description="궁금한 장르나 작가를 물어보세요!",
+    chatbot=gr.Chatbot(
+        avatar_images=(
+            None,  # 사용자 아바타 (None이면 기본 모양)
+            "https://em-content.zobj.net/source/apple/391/robot_1f916.png",  # 챗봇 아바타 그림 주소
+        ),
+        height=450,
+    ),
+    examples=["판타지", "로맨스"],
+)
+
+# 테마는 launch()에 넣어요 (최신 Gradio 방식)
+demo.launch(share=True, theme=gr.themes.Soft(primary_hue="orange"))
+```
+
+- `lambda message, history: ...`는 이름 없는 한 줄 함수예요. `def`로 따로 만들기 귀찮을 때 그 자리에서 바로 써요.
+- `avatar_images`에는 (사용자 그림, 챗봇 그림) 두 개를 짝으로 넣어요. 인터넷 그림 주소도 되고, Colab에 올린 그림 파일 이름도 돼요.
+- `gr.themes.Soft`, `gr.themes.Glass`, `gr.themes.Monochrome` 등 여러 테마를 바꿔 끼워 보세요. `primary_hue`는 주요 색이에요(`"orange"`, `"green"`, `"pink"` 등).
+
+## 4. 실시간 타이핑 효과 넣기
+
+AI를 부르지 않아도, 이미 만든 답을 한 글자씩 흘려 보여 주면 챗봇이 살아 있는 것처럼 느껴져요.
+
+```python
+import time
+
+def chatbot_typing_effect(message, history):
+    full_answer = chatbot_v3(message, title_column)
+
+    partial = ""
+    for ch in full_answer:
+        partial += ch
+        yield partial        # 지금까지 쓴 만큼 화면에 보내요
+        time.sleep(0.01)     # 숫자를 바꿔 타이핑 속도를 조절해 보세요
+
+demo = gr.ChatInterface(fn=chatbot_typing_effect, title="타이핑 효과 챗봇")
+demo.launch(share=True)
+```
+
+핵심은 `return` 대신 쓴 `yield`예요.
+
+`return`은 답을 한 번 돌려주고 함수가 끝나요. `yield`는 "일단 여기까지 보내고, 멈췄다가 이어서 할게"예요. 그래서 한 글자 붙일 때마다 화면이 조금씩 바뀌어요. Gradio는 `yield`를 쓰는 함수를 알아서 이렇게 흘려 보여 줘요.
+
+`time.sleep(0.01)`은 0.01초 쉬라는 뜻이에요. 숫자가 크면 천천히, 작으면 빨리 타이핑해요.
+
+## 5. 사이드바 레이아웃으로 완성하기
+
+지금까지 만든 요소를 `gr.Blocks`로 한 화면에 모아, 결과 개수 조절 슬라이더와 최근 검색어 사이드바까지 갖춘 완성형 화면을 만들어요.
+
+```python
+recent_searches = []   # 이번 세션 동안 최근 검색어를 기억할 리스트
+
+def respond_with_sidebar(message, history, top_n):
+    results = search_data(message, top_n=int(top_n))
+    answer = format_answer_v2(results, title_column)
+
+    recent_searches.insert(0, message)   # 맨 앞에 새 검색어
+    del recent_searches[5:]              # 최근 5개만 남기고 지워요
+
+    history = history + [
+        {"role": "user", "content": message},
+        {"role": "assistant", "content": answer},
+    ]
+    sidebar_text = "### 최근 검색어\n" + "\n".join([f"- {s}" for s in recent_searches])
+    return history, "", sidebar_text
+
+with gr.Blocks() as demo:
+    gr.Markdown("## 나만의 웹툰 챗봇 (완성형 화면)")
+
+    with gr.Row():
+        with gr.Column(scale=3):   # 왼쪽 넓은 칸: 채팅
+            chatbot_ui = gr.Chatbot(height=430)
+            msg = gr.Textbox(placeholder="궁금한 걸 물어보세요!", label="질문 입력")
+            top_n_slider = gr.Slider(1, 10, value=3, step=1, label="결과 개수")
+
+        with gr.Column(scale=1):   # 오른쪽 좁은 칸: 사이드바
+            sidebar = gr.Markdown("### 최근 검색어\n(아직 없음)")
+
+    msg.submit(
+        respond_with_sidebar,
+        [msg, chatbot_ui, top_n_slider],
+        [chatbot_ui, msg, sidebar],
+    )
+
+demo.launch(share=True, theme=gr.themes.Soft())
+```
+
+- `gr.Row()` 안에 `gr.Column` 두 개를 두면 칸이 좌우로 나뉘어요. `scale=3`과 `scale=1`은 너비 비율이에요. 왼쪽이 오른쪽의 세 배 넓어요.
+- `gr.Slider(1, 10, value=3, step=1)`은 1부터 10까지 1씩 움직이는 슬라이더이고, 처음 값은 3이에요. 이 값이 `top_n`으로 들어가 결과 개수를 정해요. 슬라이더 값은 소수로 올 수 있어 `int()`로 정수로 바꿔 넘겨요.
+- 함수가 값 세 개(대화 기록, 빈 입력칸, 사이드바 글)를 돌려주고, 출력 목록의 세 부품이 차례로 받아요. 순서가 맞아야 해요.
+- `recent_searches`는 함수 밖의 리스트예요. `insert`와 `del`로 리스트 안쪽을 고치기만 하므로 함수 안에서도 그대로 쓸 수 있어요.
+
+## 마무리
+
+2단계까지 완성한 여러분의 챗봇은 어떤 모습인가요? Gemini를 붙여 더 똑똑해진 챗봇일 수도 있고, 화면을 다듬어 개성이 담긴 챗봇일 수도 있어요.
+
+이 과제의 목표는 정해진 하나의 결과물이 아니에요. 파이썬으로 데이터를 조회하고, AI를 연결하거나 UX를 직접 다듬으며, 배운 것으로 나만의 무언가를 만들어 보는 경험 자체예요.
+
+## 스스로 확인하기
+
+Q1. `format_answer_v2`에서 네 번째 결과에는 어떤 이모지가 붙을까요? 그 이유는?
+
+Q2. 최신 Gradio에서 공식 예시의 `gr.Chatbot(type="messages", height=400)`를 실행하면 어떻게 되고, 어떻게 고치면 될까요?
+
+Q3. 타이핑 효과 함수에서 `yield partial`을 `return partial`로 바꾸면 화면에 무엇이 보일까요?
+
+<details>
+<summary>정답 확인</summary>
+
+A1. 🔹(파란 마름모)가 붙어요. 네 번째는 `i`가 3인데, `rank_emojis`는 세 개뿐이라 `i < len(rank_emojis)`가 거짓이 되기 때문이에요.
+
+A2. `type` 인자가 없어졌다는 `TypeError`가 나요. `gr.Chatbot(height=400)`처럼 `type=...`만 빼면 돼요. 최신 버전은 원래 딕셔너리(`role`, `content`) 방식만 쓰거든요.
+
+A3. 첫 글자 하나만 보여요. `return`을 만나는 순간 함수가 끝나 버려서, 반복문의 첫 바퀴에서 만든 한 글자만 돌려주기 때문이에요.
+
+</details>
+
+## 한 줄 정리
+
+마크다운과 순위 이모지로 답을 꾸미고(`format_answer_v2`), `gr.Blocks`로 빠른 질문 버튼과 사이드바, 슬라이더를 원하는 자리에 배치하고, 아바타와 테마(`launch(theme=...)`)로 분위기를 입히고, `yield`로 타이핑 효과를 주면, 같은 챗봇도 훨씬 쓰기 좋은 챗봇이 돼요.
