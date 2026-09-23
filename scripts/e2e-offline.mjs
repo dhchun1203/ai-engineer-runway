@@ -36,6 +36,10 @@ const HOST = '127.0.0.1';
 const BASE_URL = `http://${HOST}:${PORT}`;
 const SERVER_READY_TIMEOUT_MS = 180_000;
 const FETCH_TIMEOUT_MS = 30_000;
+// 정상 완주 때 기록되는 검사 수. A1, A2, B0, B, C1~C5, M1, M2, D1~D5, E1~E4, F1~F6,
+// G 세 폭, H = 30건. 시나리오를 더하거나 빼면 이 값도 고친다. 모두 통과했는데 수가
+// 다르면(검사가 조용히 빠졌으면) 실패로 본다.
+const EXPECTED_CHECKS = 30;
 
 class FatalError extends Error {}
 
@@ -808,6 +812,96 @@ async function main() {
     }
     if (server === null) await goOnline(context);
 
+    // === F. ON AIR 램프, 동작 줄이기, 온라인 전용 기능 잠금, 대기 개수 배지 ===
+    {
+      const readLamp = () =>
+        page.evaluate(() => {
+          const link = document.querySelector('[data-onair]');
+          const dot = link?.querySelector('.onair-lamp');
+          return {
+            mode: link?.getAttribute('data-onair') ?? null,
+            pending: link?.getAttribute('data-pending') ?? null,
+            text: link?.textContent ?? '',
+            animation: dot ? getComputedStyle(dot).animationName : null,
+          };
+        });
+      try {
+        await page.goto(`${BASE_URL}${PROBE_ROUTE}`, { waitUntil: 'domcontentloaded' });
+        await waitForProgressSettled(page);
+        await page.waitForSelector('[data-onair="on"]', { timeout: 15_000 });
+        const on = await readLamp();
+        record('F1', '온라인: ON AIR, 숨 쉬는 불빛', on.text.includes('ON AIR') && on.animation === 'lamp-breathe', JSON.stringify(on));
+
+        await goOffline(context);
+        await page.waitForSelector('[data-onair="off"]', { timeout: 10_000 });
+        const off = await readLamp();
+        record('F2', '오프라인: OFF AIR, 깜빡임', off.text.includes('OFF AIR') && off.animation === 'lamp-blink', JSON.stringify(off));
+
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        const reduced = await readLamp();
+        await page.emulateMedia({ reducedMotion: 'no-preference' });
+        record('F3', '동작 줄이기 설정이면 램프 애니메이션 없음', reduced.animation === 'none', JSON.stringify(reduced));
+
+        const locks = await page.evaluate(() => ({
+          needsReview: document.querySelector('[data-needs-review] button')?.disabled ?? null,
+          til: document.querySelector('[data-til] button')?.disabled ?? null,
+        }));
+        record('F4', '오프라인이면 다시 보기 표시와 TIL 저장이 잠김', locks.needsReview === true && locks.til === true, JSON.stringify(locks));
+
+        // 완료를 두 번 누른다. 같은 항목이라 대기열에서 1건으로 합쳐지고, 최종 목표가 서버
+        // 값과 같아 동기화 후에도 서버 값은 바뀌지 않는다.
+        await page.click('[data-progress-ui="complete-button"] button');
+        await page.waitForSelector('[data-onair][data-pending="1"]', { timeout: 10_000 });
+        const badge = await page.evaluate(() => document.querySelector('[data-onair-badge]')?.textContent ?? null);
+        await page.click('[data-progress-ui="complete-button"] button');
+        await page.waitForTimeout(800);
+        const afterTwo = await readLamp();
+        record('F5', '대기 개수 배지(같은 항목 두 번은 1건으로 합쳐짐)', badge === '1' && afterTwo.pending === '1', JSON.stringify({ badge, afterTwo }));
+
+        await goOnline(context);
+        await page.waitForSelector('[data-onair="on"][data-pending="0"]', { timeout: 40_000 });
+        const back = await readLamp();
+        record('F6', '복귀하면 ON AIR, 대기 0', back.mode === 'on' && back.pending === '0', JSON.stringify(back));
+      } catch (e) {
+        record('F', '램프', false, `예외: ${e.message}`);
+      }
+      if (server === null) await goOnline(context);
+    }
+
+    // === G. 헤더 한 줄 유지(램프 추가 후 375/768/1024), 가로 넘침 없음 ===
+    {
+      const storageState = await context.storageState();
+      for (const vp of [
+        { width: 375, height: 667, label: '375x667' },
+        { width: 768, height: 1024, label: '768x1024' },
+        { width: 1024, height: 768, label: '1024x768' },
+      ]) {
+        try {
+          const vpContext = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, storageState });
+          const vpPage = await vpContext.newPage();
+          await vpPage.goto(`${BASE_URL}${PROBE_ROUTE}`, { waitUntil: 'domcontentloaded' });
+          await vpPage.waitForSelector('[data-onair]', { timeout: 15_000 });
+          const m = await vpPage.evaluate(() => ({
+            navHeight: document.querySelector('header nav')?.getBoundingClientRect().height ?? null,
+            lampWidth: document.querySelector('[data-onair]')?.getBoundingClientRect().width ?? null,
+            lampHeight: document.querySelector('[data-onair]')?.getBoundingClientRect().height ?? null,
+            scrollWidth: document.documentElement.scrollWidth,
+            clientWidth: document.documentElement.clientWidth,
+          }));
+          const pass =
+            m.navHeight !== null &&
+            m.navHeight <= 64 &&
+            m.lampWidth >= 44 &&
+            m.lampHeight >= 44 &&
+            m.scrollWidth <= m.clientWidth;
+          record(`G-${vp.label}`, '헤더 한 줄, 램프 터치 타깃 44px, 가로 넘침 없음', pass, JSON.stringify(m));
+          await vpContext.close();
+        } catch (e) {
+          record(`G-${vp.label}`, '헤더 한 줄', false, `예외: ${e.message}`);
+        }
+      }
+    }
+
     // === H. 로그아웃하면 기기 저장본이 모두 지워진다(항상 마지막) ===
     // 로그아웃 뒤에는 로그인이 필요한 시나리오를 돌릴 수 없다. 새 시나리오는 이 주석 위에 넣는다.
     try {
@@ -844,6 +938,9 @@ async function main() {
       console.error(`${LOG}: ${failures.length}건의 위반이 발견되었습니다:\n`);
       for (const f of failures) console.error(`  - [${f.id}] ${f.label}: ${f.detail}`);
       throw new FatalError(`${failures.length}건의 위반으로 게이트 실패`);
+    }
+    if (results.length !== EXPECTED_CHECKS) {
+      throw new FatalError(`검사 수가 ${results.length}건으로 예상(${EXPECTED_CHECKS}건)과 다릅니다. 시나리오 목록을 확인하세요.`);
     }
     console.log(`${LOG}: 검사한 ${results.length}건 전부 통과`);
   } finally {

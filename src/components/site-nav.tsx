@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { OnAirLamp } from "@/components/offline/on-air-lamp";
 
 // 내비 구조는 D-09가 고정한 4항목 골격을 계승·확장한 것이다. Phase 3가 "오늘의
 // 학습"("/")과 "커리큘럼"("/curriculum")을 켰고, 리서치 2단에서 도구 라우트가
@@ -441,6 +442,9 @@ export function SiteNav() {
             (2026-09-12)로 데스크톱 행/햄버거 분기를 sm→lg로 올려, 아이패드 세로(768)에서
             최상위 항목이 두 줄로 접히지 않고 깔끔한 햄버거를 쓴다. */}
         <div className="flex items-center gap-1 lg:contents">
+          {/* ON AIR 램프(오프라인 모드). 로그인 상태에서만. 1024px 이상에서는 래퍼가
+              contents라 nav의 직계 자식(로고, 항목, 램프, 테마 버튼)으로 선다. */}
+          {loggedIn ? <OnAirLamp /> : null}
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}

@@ -107,10 +107,8 @@ export default async function LoginPage() {
               <Link href="/" className="btn-action tap-feedback min-h-11 text-body">
                 홈으로
               </Link>
-              <SignOutForm action={signOutAction}>
-                <button type="submit" className="chip tap-feedback min-h-11 text-body">
-                  로그아웃
-                </button>
+              <SignOutForm action={signOutAction} className="chip tap-feedback min-h-11 text-body">
+                로그아웃
               </SignOutForm>
             </div>
 

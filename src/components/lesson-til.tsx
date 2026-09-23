@@ -13,6 +13,7 @@
 
 import { useState } from 'react';
 import { saveLessonTilAction } from '@/app/lesson/[lessonId]/til-actions';
+import { useOnline } from '@/lib/offline/connectivity';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'failed';
 
@@ -25,6 +26,8 @@ export function LessonTil({
 }) {
   const [value, setValue] = useState(initialTil);
   const [status, setStatus] = useState<SaveStatus>('idle');
+  // TIL은 오프라인 대기열 대상이 아니다. 오프라인이면 저장 버튼을 잠근다(설계 3.7).
+  const online = useOnline();
 
   // onChange 핸들러는 오직 setValue만 한다 — 값의 길이·문자 종류를 들여다보는
   // 로직을 넣지 않는다(한글 IME 안전, lesson-notepad.tsx 원칙).
@@ -67,13 +70,14 @@ export function LessonTil({
         <button
           type="button"
           onClick={() => void handleSave()}
-          disabled={status === 'saving'}
+          disabled={status === 'saving' || !online}
           aria-busy={status === 'saving'}
           className="btn-action tap-feedback min-h-11 px-4 text-label font-bold"
         >
           저장
         </button>
         <span role="status" aria-live="polite" className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+          {!online ? '인터넷 연결 후 저장할 수 있어요.' : ''}
           {status === 'saved' ? '저장됨' : ''}
           {status === 'failed' ? '저장하지 못했어요. 방금 쓴 글은 그대로 남아 있어요.' : ''}
         </span>
