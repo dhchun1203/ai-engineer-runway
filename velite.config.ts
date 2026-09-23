@@ -1,4 +1,9 @@
 import { defineConfig, s } from "velite";
+import {
+  ARTICLE_OPTIONAL_SECTIONS,
+  ARTICLE_SECTIONS,
+  ARTICLE_TAGS,
+} from "./src/content/article-tags";
 import rehypePrettyCode from "rehype-pretty-code";
 // 헤딩 id 생성 (quick 260901-etq). 복습 카드가 레슨의 "6. 핵심 정리 및 스스로 점검"
 // 섹션으로 직행하는 앵커가 필요해 들였다. 35편이 같은 헤딩을 쓰므로(게이트 L1이
@@ -207,6 +212,40 @@ async function compileBookMdx(md: string): Promise<string> {
   return String(compiled);
 }
 
+// 아티클 본문 h2 검사 — ARTICLE_SECTIONS 순서와 같아야 하고, 선택 h2
+// (ARTICLE_OPTIONAL_SECTIONS)만 빠질 수 있다. 모르는 h2나 중복은 실패.
+// 코드펜스 안의 "## "는 헤딩이 아니므로 건너뛴다(parseSelfCheck와 같은 방어).
+function assertArticleSections(content: string, file: string): void {
+  const lines = content.replace(/\r\n/g, "\n").split("\n");
+  const headings: string[] = [];
+  let inFence = false;
+  for (const line of lines) {
+    if (line.trim().startsWith("```")) {
+      inFence = !inFence;
+      continue;
+    }
+    if (!inFence && /^## /.test(line)) headings.push(line.slice(3).trim());
+  }
+  const expected = ARTICLE_SECTIONS.filter(
+    (s) => headings.includes(s) || !ARTICLE_OPTIONAL_SECTIONS.includes(s),
+  );
+  const ok =
+    headings.length === expected.length && headings.every((h, i) => h === expected[i]);
+  if (!ok) {
+    throw new Error(
+      `articles: ${file}의 h2는 [${ARTICLE_SECTIONS.join(" / ")}] 순서여야 합니다(선택: ${ARTICLE_OPTIONAL_SECTIONS.join(", ")}). 실제: [${headings.join(" / ")}]`,
+    );
+  }
+}
+
+// 원문 url 중복 판별 키 — 호스트(소문자) + 끝 슬래시 뗀 경로. 쿼리와 해시는 무시한다.
+function articleUrlKey(raw: string): string {
+  const u = new URL(raw);
+  return `${u.host.toLowerCase()}${u.pathname.replace(/\/+$/, "")}`;
+}
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
 export default defineConfig({
   root: ".",
   output: {
@@ -323,6 +362,39 @@ export default defineConfig({
           readingMinutes: estimateBookMinutes(meta.content ?? ""),
         })),
     },
+    // 아티클(현업 엔지니어링 기사를 우리 말로 푼 요약) — 격리 컬렉션. 진도·일정·
+    // 복습은 lessons만 소비하므로 어디에도 집계되지 않는다. 설계:
+    // docs/superpowers/specs/2026-09-23-articles-section-design.md
+    articles: {
+      name: "Article",
+      pattern: "src/content/articles/**/*.mdx",
+      schema: s
+        .object({
+          title: s.string(),
+          originalTitle: s.string(),
+          source: s.string(),
+          author: s.string().optional(),
+          publishedAt: s.string().regex(ISO_DAY),
+          addedAt: s.string().regex(ISO_DAY),
+          url: s.string().url(),
+          tags: s.array(s.enum(ARTICLE_TAGS)).min(1).max(3),
+          summary: s.array(s.string().min(1)).length(3),
+          related: s
+            .array(s.object({ label: s.string(), href: s.string().regex(/^\/(?!\/)/) }))
+            .default([]),
+          origin: s.enum(["manual", "auto"]),
+          slug: s.slug("articles"),
+          code: s.mdx(),
+        })
+        .transform((data, { meta }) => {
+          assertArticleSections(meta.content ?? "", String(meta.path));
+          return {
+            ...data,
+            permalink: `/articles/${data.slug}`,
+            readingMinutes: estimateBookMinutes(meta.content ?? ""),
+          };
+        }),
+    },
     // /about (Making-of) 소개 페이지 소스 — docs/making-of.md 단일 파일만 대상으로 한다.
     // 글로브를 넓혀 GSD 계획 산출물 디렉터리를 빨아들이지 않는다 (PLAT-03 threat T-01-14).
     pages: {
@@ -336,5 +408,17 @@ export default defineConfig({
         })
         .transform((data) => ({ ...data, permalink: `/${data.slug}` })),
     },
+  },
+  // 컬렉션 전체를 봐야 하는 검사 — 원문 url 중복은 항목 단위 transform으로는 못 잡는다.
+  prepare: ({ articles }) => {
+    const seen = new Map<string, string>();
+    for (const article of articles) {
+      const key = articleUrlKey(article.url);
+      const prev = seen.get(key);
+      if (prev) {
+        throw new Error(`articles: 원문 url 중복 ${article.url} (${prev}, ${article.slug})`);
+      }
+      seen.set(key, article.slug);
+    }
   },
 });
