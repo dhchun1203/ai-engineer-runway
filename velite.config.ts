@@ -19,6 +19,7 @@ import rehypeSlug from "rehype-slug";
 // 내부에서 같은 플러그인을 켠다(gfm 기본 on). @mdx-js/mdx의 compile은 아래
 // compileBookMdx에서 동적 import한다(velite 자신도 같은 방식으로 부른다).
 import remarkGfm from "remark-gfm";
+import { terms } from "./src/content/terms";
 
 // 복사 버튼은 여기서 만들지 않는다. @rehype-pretty/transformers의
 // transformerCopyButton은 인라인 onclick을 *문자열*로 내보내는데, 컴파일된 MDX가
@@ -247,6 +248,12 @@ function articleUrlKey(raw: string): string {
   return `${u.host.toLowerCase()}${u.pathname.replace(/\/+$/, "")}`;
 }
 
+// 본문의 <Term id="..."> 사용처를 뽑는다. 용어 카드의 "이 용어가 나온 곳"과
+// 사전 누락 검사(prepare)가 이 목록을 쓴다.
+function extractTermIds(content: string): string[] {
+  return [...new Set([...content.matchAll(/<Term\s+id="([^"]+)"/g)].map((m) => m[1]))];
+}
+
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 // articles 파일 목록을 디스크에서 직접 훑는다(velite의 pattern glob과 별개 구현).
@@ -361,6 +368,7 @@ export default defineConfig({
           ...data,
           permalink: `/roadmap/${data.slug}`,
           readingMinutes: estimateBookMinutes(meta.content ?? ""),
+          termIds: extractTermIds(meta.content ?? ""),
         })),
     },
     // 베이스캠프(개강 전 공식 선행 과제) 전용 학습 레슨(basecampLessons). concepts·
@@ -414,6 +422,7 @@ export default defineConfig({
             ...data,
             permalink: `/articles/${data.slug}`,
             readingMinutes: estimateBookMinutes(meta.content ?? ""),
+            termIds: extractTermIds(meta.content ?? ""),
           };
         }),
     },
@@ -440,7 +449,11 @@ export default defineConfig({
   // 범위 위반은 velite 빌드 실패로 막는다"를 명시하므로, 여기서 같은 규칙을
   // 다시 한 번 명시적으로 검사해 throw한다. **articles 스키마의 tags/summary
   // 제약을 바꾸면 이 블록도 반드시 함께 바꿀 것.**
-  prepare: ({ articles }) => {
+  //
+  // 용어 사전 누락·개념 편 참조 검사: <Term id="...">가 src/content/terms.ts에
+  // 없거나, terms의 concept가 존재하지 않는 AI 뜯어보기 편 slug를 가리키면
+  // 빌드를 실패시킨다(articles-section Task 3).
+  prepare: ({ articles, roadmapLessons, concepts }) => {
     const problems: string[] = [];
 
     for (const article of articles) {
@@ -490,6 +503,21 @@ export default defineConfig({
       problems.push(
         `articles: ${ARTICLES_DIR}에 .mdx 파일이 ${onDisk.length}개인데 컬렉션에는 ${articles.length}개만 있습니다 — 스키마 검증에 실패해 조용히 제외된 문서가 있습니다(바로 위 velite issues 로그 참고). 의심 파일: ${missing.length > 0 ? missing.join(", ") : "(파일명으로 특정 불가, 위 issues 로그 참고)"}`,
       );
+    }
+
+    for (const doc of [...articles, ...roadmapLessons]) {
+      for (const id of doc.termIds) {
+        if (!terms[id]) {
+          problems.push(`${doc.permalink}: <Term id="${id}">가 src/content/terms.ts에 없습니다`);
+        }
+      }
+    }
+
+    const conceptSlugs = new Set(concepts.map((c) => c.slug));
+    for (const [id, entry] of Object.entries(terms)) {
+      if (entry.concept && !conceptSlugs.has(entry.concept)) {
+        problems.push(`terms.${id}.concept "${entry.concept}"는 없는 AI 뜯어보기 편입니다`);
+      }
     }
 
     if (problems.length > 0) {

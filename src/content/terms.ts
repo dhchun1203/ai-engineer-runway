@@ -1,19 +1,20 @@
-// 채널톡 로드맵 심화 레슨의 어려운 용어 사전. 레슨 본문에서 <Term id="...">로
-// 감싼 단어를 클릭하면 우측 패널이 이 설명을 펼친다(term-panel.tsx).
+// 공용 용어 사전 — 로드맵 심화 레슨과 아티클(기사 요약)이 함께 쓴다. 본문에서
+// <Term id="...">로 감싼 단어를 누르면 우측 패널이 이 설명을 펼치고(term-panel.tsx),
+// 각 항목은 AI 뜯어보기의 "용어 사전" 층(/concepts/terms/<id>)에 카드 페이지가 된다.
 //
-// 레슨마다 정의를 다시 쓰지 않도록 한곳에 모은다. 여러 레슨이 같은 용어(RAG,
-// 할루시네이션 등)를 공유하므로 id로 재사용한다. 설명 프로즈에는 가운데점과
-// 긴하이픈을 쓰지 않는다(쉼표, 괄호, 줄바꿈으로 대신). body의 빈 줄(\n\n)은
-// 문단 구분으로 렌더된다.
+// concept: AI 뜯어보기 깊은 편의 slug. 그 편이 **실제로 같은 개념을 다룰 때만**
+// 채운다(억지 연결 금지). 빌드(velite prepare)가 존재하지 않는 slug를 막는다.
 
-export type RoadmapTerm = {
-  /** 패널 제목 */
+export type TermEntry = {
+  /** 패널, 카드 제목 */
   title: string;
   /** 설명 본문. 빈 줄로 문단을 나눈다. */
   body: string;
+  /** 같은 개념을 깊게 다루는 AI 뜯어보기 편 slug (있을 때만) */
+  concept?: string;
 };
 
-export const roadmapTerms: Record<string, RoadmapTerm> = {
+export const terms: Record<string, TermEntry> = {
   groundedness: {
     title: "근거 충실성 (groundedness)",
     body: "답변이 검색해 온 근거 안의 내용에만 기반하는 정도입니다. 근거에 없는 사실을 지어내면 근거 충실성이 낮은 것이고, 그 반대편에 있는 실패가 할루시네이션입니다.\n\n채널톡처럼 고객사의 지식으로 답하는 서비스에서는 이 지표가 곧 신뢰의 핵심입니다. 답이 그럴듯해도 근거가 없으면 위험합니다.",
@@ -21,6 +22,7 @@ export const roadmapTerms: Record<string, RoadmapTerm> = {
   hallucination: {
     title: "할루시네이션 (hallucination)",
     body: "모델이 근거에 없는 내용을 사실인 양 지어내는 현상입니다. 문장은 자연스러워서 사람이 놓치기 쉬운데, 상담에서는 잘못된 정책이나 없는 기능을 안내하는 사고로 이어집니다.\n\n검색된 근거와 답변의 각 주장을 대조하는 방식으로 잡아냅니다.",
+    concept: "hallucination",
   },
   "llm-judge": {
     title: "LLM 심판 (LLM-as-judge)",
@@ -53,6 +55,7 @@ export const roadmapTerms: Record<string, RoadmapTerm> = {
   rag: {
     title: "RAG (검색 증강 생성)",
     body: "질문에 맞는 지식을 먼저 검색해 컨텍스트로 넣고, 그 근거를 바탕으로 답하게 하는 방식입니다.\n\n채널톡의 상담 에이전트 ALF가 고객사의 지식으로 답하는 핵심 구조가 바로 이것입니다.",
+    concept: "rag",
   },
   pii: {
     title: "PII (개인식별정보)",
@@ -67,6 +70,7 @@ export const roadmapTerms: Record<string, RoadmapTerm> = {
   embedding: {
     title: "임베딩 (embedding)",
     body: "글이나 이미지를 의미가 담긴 숫자 목록(벡터)으로 바꾼 것입니다.\n\n뜻이 비슷하면 숫자도 가깝게 나오도록 만들어져서, 이 가까움을 재면 의미가 통하는 것끼리 찾을 수 있습니다. 검색과 추천의 바탕입니다.",
+    concept: "embeddings",
   },
   "vector-search": {
     title: "벡터 검색",
@@ -79,10 +83,12 @@ export const roadmapTerms: Record<string, RoadmapTerm> = {
   token: {
     title: "토큰 (token)",
     body: "모델이 글을 처리하는 가장 작은 단위입니다. 단어보다 잘게 쪼갠 조각이라고 보면 됩니다.\n\n모델의 비용과 입력 길이는 모두 이 토큰의 개수로 셉니다.",
+    concept: "tokens",
   },
   "context-window": {
     title: "컨텍스트 윈도우 (context window)",
     body: "모델이 한 번에 볼 수 있는 토큰의 최대 크기입니다.\n\n이 창을 넘는 내용은 한 번에 넣을 수 없어서, 무엇을 넣고 무엇을 뺄지 고르는 일이 중요해집니다.",
+    concept: "context-window",
   },
   "prompt-caching": {
     title: "프롬프트 캐싱 (prompt caching)",
@@ -99,6 +105,7 @@ export const roadmapTerms: Record<string, RoadmapTerm> = {
   "fine-tuning": {
     title: "파인튜닝 (fine-tuning)",
     body: "미리 학습된 모델을 내 데이터로 조금 더 학습시켜 특정 일에 맞게 다듬는 것입니다.\n\n검색해 온 지식을 그때그때 넣어 주는 RAG와는 목적이 다릅니다. 파인튜닝은 모델 자체의 버릇을 바꾸고, RAG는 아는 내용을 갈아 끼웁니다.",
+    concept: "training-stages",
   },
   "unit-test": {
     title: "단위 테스트 (unit test)",
