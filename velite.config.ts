@@ -418,6 +418,15 @@ export default defineConfig({
         })
         .transform((data, { meta }) => {
           assertArticleSections(meta.content ?? "", String(meta.path));
+          // 설계상 slug는 파일 이름과 같다. prepare의 파일 수 검사가 빠진 문서를
+          // 파일 이름으로 찾아 알려 주므로, 둘이 어긋나면 그 안내가 틀려진다.
+          const filePath = String(meta.path);
+          const fileSlug = basename(filePath, extname(filePath));
+          if (data.slug !== fileSlug) {
+            throw new Error(
+              `articles: ${filePath}의 slug "${data.slug}"가 파일 이름 "${fileSlug}"와 다릅니다. slug는 파일 이름(확장자 제외)과 같아야 합니다.`,
+            );
+          }
           return {
             ...data,
             permalink: `/articles/${data.slug}`,

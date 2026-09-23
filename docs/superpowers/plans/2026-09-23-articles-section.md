@@ -23,7 +23,7 @@
 - 본문 h2(이 순서): `먼저 알아 둘 개념`, `핵심 내용 정리`, `취업과 면접 포인트`, `내 학습과 연결`(선택), `스스로 확인하기`. 선택 외에는 각 정확히 한 번.
 - 용어 정의는 `src/content/terms.ts` 한 곳에만. 새 용어는 사전에 추가하고, 있거나 같은 뜻의 다른 표기가 있으면 재사용한다. `concept`(AI 뜯어보기 편 연결)는 실제로 같은 개념일 때만.
 - 연결은 억지로 만들지 않는다(사용자 원칙): 우리 레슨, 로드맵과 실제로 같은 내용을 다룰 때만 `내 학습과 연결`과 `related`를 쓴다. 기사 선정 기준에 "우리 레슨과 이어지는가"를 넣지 않는다.
-- 커밋 메시지 끝: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
+- 커밋 메시지 끝: `Co-Authored-By: (세션이 안내한 attribution 줄)`
 - 기존 상태 참고: `node scripts/check-font-glyph-coverage.mjs`는 **작업 전부터** Pretendard 비한글 21자(U+00F7, U+014D, U+203B, U+2197, U+21A9, U+21BA, U+21BB, U+2260, U+2423, U+2500, U+25B3, U+25B6, U+25BE, U+25C0, U+300A, U+300B, U+627F, U+71B1, U+7D50, U+8D77, U+8F49) 누락으로 실패한다. 이 작업의 기준은 "이 목록 밖의 새 누락이 생기지 않는 것"이다. `node scripts/check-brand.mjs`도 작업 전부터 기존 spec 문서 3곳 때문에 실패한다. 기준은 "새 위반이 없는 것"이다.
 
 ## File Structure
@@ -313,7 +313,7 @@ Run: `npx velite build; echo "exit=$?"` → Expected: 성공, `exit=0`.
 git add src/content/article-tags.ts src/content/article-helpers.ts velite.config.ts
 git commit -m "feat(articles): 아티클 컬렉션과 빌드 시점 검사(태그, 요약, h2 순서, url 중복)
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+Co-Authored-By: (세션이 안내한 attribution 줄)"
 ```
 
 ---
@@ -380,7 +380,7 @@ if (files.length === 0 && !scanTerms) {
 const FORBIDDEN = [
   { re: /·/, why: '가운데점(·) 금지' },
   { re: /—/, why: '긴하이픈(—) 금지' },
-  { re: /kant/i, why: '교육기관명 금지' },
+  // 교육기관명 검사는 scripts/check-articles.mjs의 FORBIDDEN 목록 참고
 ];
 
 // 한글 음절, 출력 가능한 ASCII, 공백류, 그리고 이 기호들만 허용한다.
@@ -459,7 +459,7 @@ Expected: Global Constraints의 기존 21자 목록과 **같은** 누락만 보�
 git add scripts/check-articles.mjs scripts/check-font-glyph-coverage.mjs scripts/subset-font.mjs
 git commit -m "feat(articles): 기사 원문 문자 게이트와 글리프 스캔 범위 추가
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+Co-Authored-By: (세션이 안내한 attribution 줄)"
 ```
 
 ---
@@ -744,7 +744,7 @@ git commit -m "feat(terms): 로드맵 용어 사전을 공용 용어 사전으�
 
 (Step 5의 concept 채움 결정 목록)
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+Co-Authored-By: (세션이 안내한 attribution 줄)"
 ```
 
 ---
@@ -955,7 +955,7 @@ Run: `npx tsc --noEmit -p .` → 출력 없음.
 git add src/app/concepts/terms "src/app/concepts/terms/[id]/page.tsx" src/app/concepts/page.tsx
 git commit -m "feat(terms): AI 뜯어보기에 용어 사전 층(목록, 용어 카드, 나온 곳) 추가
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+Co-Authored-By: (세션이 안내한 attribution 줄)"
 ```
 
 ---
@@ -1162,7 +1162,7 @@ Expected: `기사 1편 + 용어 사전 통과`; velite 오류 없음(`<Term>` �
 git add .claude/skills/article-scrap/SKILL.md src/content/articles/linear-ci-bottleneck.mdx src/content/terms.ts
 git commit -m "feat(articles): 작성 스킬과 첫 글(Linear CI 병목 기사)
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+Co-Authored-By: (세션이 안내한 attribution 줄)"
 ```
 
 ---
@@ -1517,7 +1517,7 @@ dev 서버(`preview_start` name `dev`)를 켜고 테스터 계정으로 로그�
 git add src/lib/article-note.ts src/app/api/article-note/route.ts "src/app/articles/[slug]/note-actions.ts" src/components/article-note.tsx "src/app/articles/[slug]/page.tsx"
 git commit -m "feat(articles): 아티클 상세 페이지와 하단 메모장
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+Co-Authored-By: (세션이 안내한 attribution 줄)"
 ```
 
 ---
@@ -1673,7 +1673,7 @@ Run: `npx tsc --noEmit -p .` → 출력 없음.
 git add src/app/articles/page.tsx src/components/site-nav.tsx
 git commit -m "feat(articles): 아티클 목록, 분야 태그 필터, 네비 항목
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+Co-Authored-By: (세션이 안내한 attribution 줄)"
 ```
 
 ---
