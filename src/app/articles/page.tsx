@@ -10,7 +10,7 @@ import { isArticleTag } from "@/content/article-tags";
 export const metadata: Metadata = {
   title: "아티클",
   description:
-    "현업 엔지니어링 기사를 우리 말로 풀어 모은 곳. 개념 풀이, 핵심 정리, 면접 포인트, 내 학습과의 연결까지.",
+    "현업 엔지니어링 기사를 우리 말로 풀어 모은 곳. 개념 풀이, 핵심 정리, 면접 포인트를 담고, 이어지는 레슨이 있으면 연결해 둡니다. 글은 계속 더해집니다.",
 };
 
 // 아티클 목록 — 태그 필터를 쿼리스트링(?tag=)으로 받으므로 요청마다 렌더링된다
@@ -36,9 +36,9 @@ export default async function ArticlesPage({
         <span className="chip w-fit text-label font-bold">현업 읽기</span>
         <h1 className="text-display font-black break-keep">아티클</h1>
         <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          현업 엔지니어링 기사를 우리 말로 풀어 모았습니다. 기사마다 먼저 알아 둘 개념,
-          핵심 정리, 면접에서 쓸 포인트, 내 학습과의 연결을 담았고, 원문은 언제든 링크로
-          열 수 있어요. 매주 새 글이 더해집니다.
+          현업 엔지니어링 기사를 우리 말로 풀어 모았습니다. 기사마다 먼저 알아 둘 개념 풀이,
+          핵심 정리, 면접에서 쓸 포인트를 담았고, 이어지는 레슨이 있으면 연결해 뒀어요.
+          원문은 언제든 링크로 열 수 있고, 글은 계속 더해집니다.
         </p>
       </header>
 
