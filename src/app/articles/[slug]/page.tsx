@@ -76,9 +76,9 @@ export default async function ArticlePage({
                 <Link
                   key={tag}
                   href={`/articles?tag=${encodeURIComponent(tag)}`}
-                  className="chip tap-feedback inline-flex min-h-11 items-center text-label font-semibold"
+                  className="tap-feedback inline-flex min-h-11 items-center"
                 >
-                  {tag}
+                  <span className="chip text-label font-semibold">{tag}</span>
                 </Link>
               ))}
               <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
