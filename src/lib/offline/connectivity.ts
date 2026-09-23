@@ -13,6 +13,10 @@ const PROBE_TIMEOUT_MS = 5_000;
 let online = true;
 let started = false;
 let probeTimer: ReturnType<typeof setInterval> | null = null;
+// 오프라인이 될 때마다 1씩 는다. 확인 요청은 시작할 때의 값을 기억하고, 그 사이에 다시
+// 오프라인이 됐으면(값이 바뀌었으면) 결과를 버린다. 오프라인 이벤트 전에 떠난 느린 확인이
+// 뒤늦게 성공해 다시 온라인으로 뒤집는 일을 막는다.
+let offlineEpoch = 0;
 const listeners = new Set<() => void>();
 
 function emit(): void {
@@ -26,18 +30,27 @@ function stopProbing(): void {
   }
 }
 
+/** 확인 요청을 보내고, 그 사이 새 오프라인 신호가 없었을 때만 결과를 반영한다. */
+function probeAndApply(onUnreachable?: () => void): void {
+  const epoch = offlineEpoch;
+  void probeOnline().then((reachable) => {
+    if (epoch !== offlineEpoch) return;
+    if (reachable) setOnline(true);
+    else onUnreachable?.();
+  });
+}
+
 function startProbing(): void {
   if (probeTimer !== null) return;
-  probeTimer = setInterval(() => {
-    void probeOnline().then((reachable) => {
-      if (reachable) setOnline(true);
-    });
-  }, PROBE_INTERVAL_MS);
+  probeTimer = setInterval(() => probeAndApply(), PROBE_INTERVAL_MS);
 }
 
 function setOnline(next: boolean): void {
   if (next) stopProbing();
-  else startProbing();
+  else {
+    offlineEpoch += 1;
+    startProbing();
+  }
   if (next === online) return;
   online = next;
   emit();
@@ -49,12 +62,7 @@ function start(): void {
   online = navigator.onLine;
   if (!online) startProbing();
   window.addEventListener("offline", () => setOnline(false));
-  window.addEventListener("online", () => {
-    void probeOnline().then((reachable) => {
-      if (reachable) setOnline(true);
-      else startProbing();
-    });
-  });
+  window.addEventListener("online", () => probeAndApply(startProbing));
 }
 
 /** 서버에 닿는지만 본다(응답 코드는 보지 않는다). */
@@ -64,8 +72,8 @@ export async function probeOnline(): Promise<boolean> {
   try {
     await fetch(PROBE_URL, { method: "HEAD", cache: "no-store", signal: controller.signal });
     return true;
-  } catch (error) {
-    console.warn("[offline] connectivity probe failed", error);
+  } catch {
+    // 오프라인이면 늘 실패하는 확인이라(10초마다) 경고로 남기지 않는다. 결과 false가 곧 보고다.
     return false;
   } finally {
     clearTimeout(timer);

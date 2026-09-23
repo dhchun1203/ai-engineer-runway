@@ -124,6 +124,27 @@ self.addEventListener("install", (event) => {
   );
 });
 
+// 페이지가 보내는 요청. "reprecache": 계정 전환으로 저장본을 지운 뒤 페이지 런타임
+// (offline-runtime.tsx)이 보낸다. 등록 주소가 같아 다시 설치되지 않으므로, 설치 때 하던
+// 오프라인 목차 받기를 다시 해서 현재 빌드 캐시를 다시 만든다(그래야 이후 캐시 쓰기가 된다).
+// 같은 출처의 페이지(Client)가 보낸 것만 받는다.
+function isSameOriginClient(source) {
+  if (!source || typeof source.url !== "string") return false;
+  try {
+    return new URL(source.url).origin === self.location.origin;
+  } catch (error) {
+    console.warn("[sw] unreadable message source url", error);
+    return false;
+  }
+}
+
+self.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.type !== "reprecache") return;
+  if (!isSameOriginClient(event.source)) return;
+  event.waitUntil(precacheOfflinePage().catch((err) => console.warn("[sw] reprecache failed", err)));
+});
+
 // 옛 배포의 caches는 여기서 지우지 않는다(컨트롤러 판단) — 새 배포가 와도 옛 캐시는
 // 그대로 둔다. 옛 캐시를 새 캐시로 다시 받은 뒤 지우는 일은 페이지 쪽 런타임(이후 단계)이
 // 한다.

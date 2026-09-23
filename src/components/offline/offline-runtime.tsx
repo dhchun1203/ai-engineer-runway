@@ -17,24 +17,80 @@ import { BUILD_ID } from "@/lib/offline/cache";
 import { isOnline, subscribeOnline } from "@/lib/offline/connectivity";
 import { getMeta, offlineDbExists, setMeta } from "@/lib/offline/db";
 import { countQueue } from "@/lib/offline/queue";
-import { fetchAuthState, replayQueue } from "@/lib/offline/sync";
-import { wipeOfflineData } from "@/lib/offline/wipe";
+import { fetchAuthState, markNeedsLogin, replayQueue } from "@/lib/offline/sync";
+import { hasOfflineData, wipeOfflineData } from "@/lib/offline/wipe";
+import type { AuthState } from "@/lib/offline/offline-logic";
 
 const SERVICE_WORKER_URL = `/sw.js?v=${encodeURIComponent(BUILD_ID)}`;
 
+// 한 번의 "로그아웃" 응답은 일시적일 수 있다(인증 서버 키 조회 실패 등). 지우기 전에 이만큼
+// 기다렸다가 한 번 더 묻는다.
+const LOGGED_OUT_RECHECK_MS = 2_000;
+
+// 로그아웃 상태에서 정리를 이미 마쳤으면 이동할 때마다 다시 확인하지 않는다. 로그인이 보이면 풀린다.
+let settledWhileLoggedOut = false;
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isServiceWorkerEnabled(): boolean {
+  return process.env.NODE_ENV === "production" && "serviceWorker" in navigator;
+}
+
+/**
+ * 계정 전환으로 저장본을 지운 뒤 부른다. 등록은 그대로라 서비스 워커가 다시 설치되지 않고,
+ * 캐시는 설치 때만 만들어지므로 활성 서비스 워커에게 오프라인 목차를 다시 받게 한다(이때
+ * 현재 빌드 캐시가 다시 생긴다).
+ */
+async function requestReprecache(): Promise<void> {
+  try {
+    const registration = await navigator.serviceWorker.getRegistration("/");
+    registration?.active?.postMessage({ type: "reprecache" });
+  } catch (error) {
+    console.warn("[offline] asking service worker to reprecache failed", error);
+  }
+}
+
+/**
+ * 로그아웃 응답을 받았을 때. 지울 것이 없으면 바로 끝낸다. 있으면 잠시 뒤 한 번 더 확인하고
+ * 그래도 로그아웃이면 지운다. 다시 물었더니 로그인이면 그 상태를 돌려준다(이어서 로그인 처리).
+ * 돌려주는 값: 로그인 상태(계속 진행), "stop"(동기화 금지), "unknown"(판단 불가, 저장본 유지).
+ */
+async function handleLoggedOut(): Promise<AuthState | "stop" | "unknown"> {
+  if (settledWhileLoggedOut) return "stop";
+  if (!(await hasOfflineData())) {
+    settledWhileLoggedOut = true;
+    return "stop";
+  }
+  await wait(LOGGED_OUT_RECHECK_MS);
+  const again = await fetchAuthState();
+  if (again === null) return "unknown";
+  if (again.loggedIn) return again;
+  const keepQueue = (await offlineDbExists()) && (await countQueue()) > 0;
+  await wipeOfflineData({ keepQueue });
+  // 동기화 안 된 쓰기가 남았다. 재생이 돌지 않으니 여기서 "다시 로그인하면 동기화돼요"를 켠다.
+  if (keepQueue) markNeedsLogin();
+  settledWhileLoggedOut = true;
+  return "stop";
+}
+
 /** 로그인 상태를 확인해 저장본을 정리하고 서비스 워커를 등록한다. 돌려주는 값은 "동기화를 시도해도 되는가". */
 async function reconcileAccount(): Promise<boolean> {
-  const auth = await fetchAuthState();
+  let auth = await fetchAuthState();
   // 서버에 닿지 않는다(오프라인). 판단할 수 없으니 저장본은 그대로 두고 동기화는 허용한다.
   // 동기화 엔진이 보내기 전에 로그인을 다시 확인한다.
   if (auth === null) return true;
 
   if (!auth.loggedIn) {
-    const keepQueue = (await offlineDbExists()) && (await countQueue()) > 0;
-    await wipeOfflineData({ keepQueue });
-    return false;
+    const outcome = await handleLoggedOut();
+    if (outcome === "stop") return false;
+    if (outcome === "unknown") return true;
+    auth = outcome;
   }
+  settledWhileLoggedOut = false;
 
+  let switchedAccount = false;
   if (auth.userId) {
     const owner = await getMeta<string>("userId").catch((error: unknown) => {
       console.warn("[offline] reading device data owner failed", error);
@@ -42,14 +98,19 @@ async function reconcileAccount(): Promise<boolean> {
     });
     if (owner && owner !== auth.userId) {
       await wipeOfflineData({ keepRegistration: true });
+      switchedAccount = true;
     }
     await setMeta("userId", auth.userId).catch((error: unknown) => {
       console.warn("[offline] saving device data owner failed", error);
     });
   }
 
-  if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
-    await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" });
+  if (isServiceWorkerEnabled()) {
+    // 옛 빌드의 탭이 옛 주소(/sw.js?v=<옛 id>)를 다시 등록하면 새 서비스 워커를 옛 것으로
+    // 덮는다. 서버 빌드가 다르면 등록을 건너뛴다(새 페이지가 등록한다).
+    const staleBuild = auth.buildId !== null && auth.buildId !== BUILD_ID;
+    if (!staleBuild) await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" });
+    if (switchedAccount) await requestReprecache();
   }
   return true;
 }
@@ -74,7 +135,8 @@ export function OfflineRuntime() {
       .then((canSync) => {
         if (!active) return;
         canSyncRef.current = canSync;
-        if (canSync) void replayQueue();
+        // 앱 시작과 경로 이동: 입력 중이 아니라 빌드가 다르면 한 번 새로 불러와도 된다.
+        if (canSync) void replayQueue({ allowReload: true });
       });
     return () => {
       active = false;
@@ -86,7 +148,7 @@ export function OfflineRuntime() {
       if (isOnline() && canSyncRef.current) void replayQueue();
     });
     function handleVisibility() {
-      if (document.visibilityState === "visible" && canSyncRef.current) void replayQueue();
+      if (document.visibilityState === "visible" && canSyncRef.current) void replayQueue({ allowReload: true });
     }
     document.addEventListener("visibilitychange", handleVisibility);
     return () => {

@@ -2,7 +2,7 @@
 // "kind|key"라 같은 항목을 다시 넣으면 앞의 것을 덮어쓴다(마지막 것만 남는다).
 
 import { useSyncExternalStore } from "react";
-import { idbCount, idbDelete, idbGet, idbGetAll, idbPut } from "./db";
+import { idbCount, idbDeleteIf, idbGet, idbGetAll, idbPut } from "./db";
 import {
   queueItemId,
   sortQueue,
@@ -89,13 +89,17 @@ export async function readQueue(): Promise<QueueItem[]> {
   }
 }
 
-/** 보낸 항목을 지운다. 보내는 사이에 같은 항목이 새 값으로 바뀌었으면 남긴다. */
+/**
+ * 보낸 항목을 지운다. 보내는 사이에 같은 항목이 새 값으로 바뀌었으면 남긴다. 읽기와 삭제를
+ * 한 트랜잭션으로 해서, 그 사이에 들어온 새 값(메모 자동 저장 등)이 지워지지 않게 한다.
+ */
 export async function removeIfUnchanged(item: QueueItem): Promise<void> {
   try {
-    const current = await idbGet<QueueItem>("queue", item.id);
-    if (current && current.at === item.at && current.value === item.value) {
-      await idbDelete("queue", item.id);
-    }
+    await idbDeleteIf<QueueItem>(
+      "queue",
+      item.id,
+      (current) => current !== undefined && current.at === item.at && current.value === item.value,
+    );
   } catch (error) {
     // 지우지 못하면 다음 동기화에서 같은 값을 한 번 더 보낸다(결과는 같다).
     console.warn("[offline] removing sent queue item failed", error);

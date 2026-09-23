@@ -9,9 +9,13 @@
 // replayQueue: 대기열을 넣은 순서대로 기존 Server Action으로 다시 부른다. 성공한 항목만
 // 지운다. 로그인이 풀려 있으면 멈추고 "다시 로그인하면 동기화돼요"를 켠다. 완료 토글은
 // 목표 상태로 보낸다. 서버는 !currentlyDone을 저장하므로 currentlyDone = !목표로 부른다.
+// 서버가 한 항목을 거절하면(예: 배포로 이름이 바뀐 레슨) 그 항목은 대기열에 남기고 다음
+// 항목으로 넘어간다. 네트워크가 끊겼거나 로그인이 풀렸을 때만 재생을 멈춘다.
 // 보내기 전에 서버의 현재 빌드 id와 이 페이지의 빌드 id를 비교한다. 다르면 이 페이지의
-// Server Action 식별자가 서버에 없을 수 있어 보내지 않고, 한 번만 새로 불러온다(새 페이지가
-// 재생한다). 서버 빌드 id를 읽지 못하면 새로 불러오지 않고 그대로 재생한다.
+// Server Action 식별자가 서버에 없을 수 있어 보내지 않는다. 앱 시작(경로 이동 포함)과
+// 화면이 다시 보일 때의 재생만 한 번 새로 불러온다(새 페이지가 재생한다). 쓰기 직후의
+// 재생은 입력 중일 수 있어 새로 부르지 않고 재생만 건너뛴다. 서버 빌드 id를 읽지 못하면
+// 새로 불러오지 않고 그대로 재생한다.
 
 import { useSyncExternalStore } from "react";
 import { toggleLessonComplete } from "@/app/lesson/[lessonId]/actions";
@@ -62,6 +66,11 @@ export function useNeedsLogin(): boolean {
   return useSyncExternalStore(subscribeNeedsLogin, getNeedsLogin, getServerNeedsLogin);
 }
 
+/** 로그인이 풀렸는데 동기화 안 된 대기열이 남았을 때 부른다(계정 대조가 재생 없이 알게 된 경우). */
+export function markNeedsLogin(): void {
+  setNeedsLogin(true);
+}
+
 export async function writeOrQueue(input: QueueInput, send: () => Promise<void>): Promise<WriteResult> {
   if (!isOnline() || (await hasQueued(input.kind, input.key))) {
     await enqueue(input);
@@ -87,17 +96,20 @@ export async function fetchAuthState(): Promise<AuthState | null> {
     if (!res.ok) return null;
     return parseAuthState(await res.json());
   } catch (error) {
-    console.warn("[offline] fetching auth state failed", error);
+    // 오프라인에서 나는 네트워크 오류(TypeError)는 예상된 실패라 경고로 남기지 않는다.
+    const expectedOffline = error instanceof TypeError && typeof navigator !== "undefined" && !navigator.onLine;
+    if (!expectedOffline) console.warn("[offline] fetching auth state failed", error);
     return null;
   }
 }
 
 /**
  * 이 페이지가 서버와 같은 빌드인가. 같거나 서버 빌드 id를 모르면 true(재생해도 된다).
- * 다르면 false이고, 이 서버 빌드로 아직 새로 불러온 적이 없으면 한 번 새로 불러온다.
+ * 다르면 false이고, allowReload이며 이 서버 빌드로 아직 새로 불러온 적이 없으면 한 번 새로 불러온다.
  */
-function pageMatchesServerBuild(serverBuildId: string | null): boolean {
+function pageMatchesServerBuild(serverBuildId: string | null, allowReload: boolean): boolean {
   if (serverBuildId === null || serverBuildId === BUILD_ID) return true;
+  if (!allowReload) return false;
   const flag = `${RELOAD_FLAG_PREFIX}${serverBuildId}`;
   let alreadyReloaded: boolean;
   try {
@@ -122,17 +134,51 @@ function sendQueued(item: QueueItem): Promise<void> {
   return saveLessonNoteAction(slug, item.value);
 }
 
+type SendOutcome = "sent" | "rejected" | "stop";
+
+/** 한 항목을 보낸다. 서버가 거절했으면 "rejected", 네트워크나 로그인 문제면 "stop". */
+async function sendOne(item: QueueItem): Promise<SendOutcome> {
+  try {
+    await sendQueued(item);
+    return "sent";
+  } catch (error) {
+    console.warn("[offline] replaying queued write failed", item.kind, item.key, error);
+    if (!(await probeOnline())) {
+      markOffline();
+      return "stop";
+    }
+    const again = await fetchAuthState();
+    // 로그인 상태를 확인할 수 없으면 네트워크 문제로 보고 멈춘다.
+    if (again === null) return "stop";
+    if (!again.userId) {
+      setNeedsLogin(true);
+      return "stop";
+    }
+    // 서버가 이 항목만 거절했다. 대기열에 남기고(다음 계기에 다시 시도) 다음 항목으로 넘어간다.
+    return "rejected";
+  }
+}
+
+// 같은 값으로 다시 보내지 않으려고 id와 넣은 시각을 함께 본다(새 값이 들어오면 다시 시도한다).
+function attemptKey(item: QueueItem): string {
+  return `${item.id}@${item.at}`;
+}
+
 async function runReplay(): Promise<void> {
+  // 이번 재생에서 서버가 거절한 항목. 다음 바퀴에서 같은 값을 되풀이해 보내지 않는다.
+  const rejected = new Set<string>();
   for (let round = 0; round < MAX_REPLAY_ROUNDS; round += 1) {
     if (!isOnline()) return;
-    const items = await readQueue();
-    if (items.length === 0) {
+    const queue = await readQueue();
+    if (queue.length === 0) {
       setNeedsLogin(false);
       return;
     }
+    const items = queue.filter((item) => !rejected.has(attemptKey(item)));
+    if (items.length === 0) return;
     const auth = await fetchAuthState();
     if (auth === null) return;
-    if (!pageMatchesServerBuild(auth.buildId)) return;
+    if (!pageMatchesServerBuild(auth.buildId, reloadAllowed)) return;
     if (!auth.userId) {
       setNeedsLogin(true);
       return;
@@ -146,18 +192,12 @@ async function runReplay(): Promise<void> {
     setNeedsLogin(false);
 
     for (const item of items) {
-      try {
-        await sendQueued(item);
-      } catch (error) {
-        console.warn("[offline] replaying queued write failed", error);
-        if (!(await probeOnline())) {
-          markOffline();
-          return;
-        }
-        const again = await fetchAuthState();
-        if (again !== null && !again.userId) setNeedsLogin(true);
-        // 서버가 거절했다. 대기열은 지우지 않고 다음 계기에 다시 시도한다.
-        return;
+      if (!isOnline()) return;
+      const outcome = await sendOne(item);
+      if (outcome === "stop") return;
+      if (outcome === "rejected") {
+        rejected.add(attemptKey(item));
+        continue;
       }
       await removeIfUnchanged(item);
       if (item.kind === "note") await saveNoteCopy(item.key, item.value);
@@ -169,9 +209,20 @@ async function runReplay(): Promise<void> {
 }
 
 let running: Promise<void> | null = null;
+// 지금 도는 재생이 빌드가 다를 때 새로 불러와도 되는가. 앱 시작과 화면 복귀 계기만 켠다.
+let reloadAllowed = false;
 
-/** 동시에 한 번만 돈다. 이미 돌고 있으면 그 약속을 돌려준다. */
-export function replayQueue(): Promise<void> {
+export type ReplayOptions = {
+  /** 빌드가 다르면 한 번 새로 불러와도 된다(앱 시작, 화면이 다시 보일 때만). */
+  allowReload?: boolean;
+};
+
+/**
+ * 동시에 한 번만 돈다. 이미 돌고 있으면 그 약속을 돌려준다. 돌고 있는 재생에 allowReload를
+ * 얹으면 그 재생이 아직 빌드를 비교하기 전일 때만 반영된다(아니면 다음 계기로 미룬다).
+ */
+export function replayQueue(options: ReplayOptions = {}): Promise<void> {
+  if (options.allowReload) reloadAllowed = true;
   if (!running) {
     running = runReplay()
       .catch((error: unknown) => {
@@ -179,6 +230,7 @@ export function replayQueue(): Promise<void> {
       })
       .finally(() => {
         running = null;
+        reloadAllowed = false;
       });
   }
   return running;
