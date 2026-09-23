@@ -7,6 +7,7 @@
 //      production에서만 /sw.js?v=<빌드 id>를 등록한다. 개발 서버의 청크 주소는 해시가
 //      아니라 캐시 먼저 전략과 맞지 않는다.
 //   2) 동기화 계기: 앱 시작(위 대조 직후), 온라인 복귀, 화면이 다시 보일 때.
+//   2-1) 새 배포 뒤 옛 저장본 옮기기(migration.ts): 대조가 끝난 뒤 한 번 부른다.
 //   3) 오프라인 링크 이동: Next의 클라이언트 이동은 HTML이 아니라 RSC 데이터를 받아서
 //      오프라인에서는 실패한다. 오프라인이면 같은 출처 <a> 클릭을 캡처 단계에서 가로채
 //      location.assign으로 전체 이동시킨다. 그러면 서비스 워커가 저장된 HTML을 준다.
@@ -16,6 +17,7 @@ import { usePathname } from "next/navigation";
 import { BUILD_ID } from "@/lib/offline/cache";
 import { isOnline, subscribeOnline } from "@/lib/offline/connectivity";
 import { getMeta, offlineDbExists, setMeta } from "@/lib/offline/db";
+import { startMigrationOnce } from "@/lib/offline/migration";
 import { countQueue } from "@/lib/offline/queue";
 import { fetchAuthState, markNeedsLogin, replayQueue } from "@/lib/offline/sync";
 import { hasOfflineData, wipeOfflineData } from "@/lib/offline/wipe";
@@ -132,6 +134,8 @@ export function OfflineRuntime() {
         canSyncRef.current = canSync;
         // 앱 시작과 경로 이동: 입력 중이 아니라 빌드가 다르면 한 번 새로 불러와도 된다.
         if (canSync) void replayQueue({ allowReload: true });
+        // 새 배포 뒤 옛 저장본을 지금 빌드 캐시로 옮긴다(페이지 로드마다 한 번, 조건은 migration.ts).
+        if (canSync) startMigrationOnce();
       });
     return () => {
       active = false;

@@ -62,6 +62,8 @@ const NAV_ITEMS: readonly NavItem[] = [
       { label: "아티클", href: "/articles" },
       { label: "문서·정보", href: null, heading: true },
       { label: "PDF 내보내기", href: "/print" },
+      // 오프라인 저장(/offline): 전체 받기와 저장본 관리, 오프라인이면 목차 화면.
+      { label: "오프라인 저장", href: "/offline" },
       { label: "소개", href: "/about" },
     ],
   },

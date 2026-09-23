@@ -82,6 +82,32 @@ if (!PROBE_LESSON) {
 const PROBE_SLUG = PROBE_LESSON.slug;
 const PROBE_ROUTE = `/lesson/${PROBE_SLUG}`;
 
+// 옛 빌드 캐시 옮기기(M)에 쓰는 레슨. 프로브와 다른, 본문이 있는 마지막 레슨.
+const MIGRATION_LESSON = [...LESSONS].reverse().find((l) => l.hasContent === true && l.slug !== PROBE_SLUG);
+if (!MIGRATION_LESSON) {
+  console.error(`${LOG}: 옮기기 검사에 쓸 두 번째 레슨(hasContent)을 매니페스트에서 찾지 못했습니다.`);
+  process.exit(1);
+}
+const MIGRATION_ROUTE = `/lesson/${MIGRATION_LESSON.slug}`;
+const OLD_CACHE_NAME = 'offline-old';
+
+// AI 뜯어보기(그림이 움직이는 편) 검사(C5)에 쓰는 개념. .velite/concepts.json의 첫 편(order 순).
+function readFirstConceptSlug() {
+  const conceptsPath = path.join(ROOT, '.velite', 'concepts.json');
+  if (!fs.existsSync(conceptsPath)) {
+    console.error(`${LOG}: ${path.relative(ROOT, conceptsPath)}가 없습니다. \`npm run build\`를 먼저 실행하세요.`);
+    process.exit(1);
+  }
+  const concepts = JSON.parse(fs.readFileSync(conceptsPath, 'utf8'));
+  const first = [...concepts].sort((a, b) => a.order - b.order)[0];
+  if (!first) {
+    console.error(`${LOG}: 개념 매니페스트가 비어 있습니다.`);
+    process.exit(1);
+  }
+  return first.slug;
+}
+const CONCEPT_ROUTE = `/concepts/${readFirstConceptSlug()}`;
+
 function killServerTree(child) {
   if (!child || child.exitCode !== null) return;
   if (process.platform === 'win32') {
@@ -373,6 +399,205 @@ async function main() {
     } catch (e) {
       record('A2', '서비스 워커 등록', false, `예외: ${e.message}`);
     }
+
+    // === B0. 서비스 워커 설치 때 /offline이 미리 저장됨(전체 받기 전) ===
+    // A에서 로그인 직후 설치됐고, 아직 /offline을 방문하지 않았다.
+    try {
+      const precached = await page.evaluate(async () => Boolean(await caches.match('/offline')));
+      record('B0', '설치 때 오프라인 목차(/offline) 미리 저장', precached, `precached=${precached}`);
+    } catch (e) {
+      record('B0', '설치 때 /offline 미리 저장', false, `예외: ${e.message}`);
+    }
+
+    // === B. /offline에서 전체 받기 ===
+    try {
+      await page.goto(`${BASE_URL}/offline`, { waitUntil: 'domcontentloaded' });
+      await page.click('[data-offline-download]');
+      await page.waitForSelector('[data-offline-status="done"], [data-offline-status="error"]', { timeout: 300_000 });
+      await page.waitForFunction(
+        () => Number(document.querySelector('[data-offline-count]')?.getAttribute('data-saved') ?? '0') > 1,
+        null,
+        { timeout: 15_000 },
+      );
+      const summary = await page.evaluate(async (probeRoute) => {
+        const count = document.querySelector('[data-offline-count]');
+        return {
+          status: document.querySelector('[data-offline-status]')?.getAttribute('data-offline-status') ?? null,
+          saved: Number(count?.getAttribute('data-saved') ?? '0'),
+          total: Number(count?.getAttribute('data-total') ?? '0'),
+          progress: document.querySelector('[data-offline-progress]')?.textContent ?? '',
+          probeCached: Boolean(await caches.match(probeRoute)),
+          manifestCached: Boolean(await caches.match('/offline-manifest.json')),
+          tocLinks: document.querySelectorAll('[data-offline-toc] a').length,
+        };
+      }, PROBE_ROUTE);
+      const snapshotKeys = await idbKeys(page, 'progressSnapshot');
+      const pass =
+        summary.status === 'done' &&
+        summary.total > 0 &&
+        summary.saved >= Math.floor(summary.total * 0.9) &&
+        summary.probeCached &&
+        summary.manifestCached &&
+        summary.tocLinks > 0 &&
+        snapshotKeys.includes(PROBE_SLUG);
+      record(
+        'B',
+        '전체 받기 완료(페이지 90% 이상, 프로브 레슨, 목록 파일, 내 진도 사본)',
+        pass,
+        JSON.stringify({ ...summary, snapshotHasProbe: snapshotKeys.includes(PROBE_SLUG) }),
+      );
+    } catch (e) {
+      record('B', '전체 받기', false, `예외: ${e.message}`);
+    }
+
+    // === C. 오프라인 읽기(새로고침, 링크 이동, 개인 화면 대체, 저장 안 된 페이지) ===
+    try {
+      await page.goto(`${BASE_URL}${PROBE_ROUTE}`, { waitUntil: 'domcontentloaded' });
+      const nextHref = await page.getAttribute('a[data-pager="next"]', 'href');
+      await goOffline(context);
+
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      const title = (await page.textContent('h1'))?.trim() ?? null;
+      record('C1', '오프라인 새로고침에도 레슨 본문이 보임', title === PROBE_LESSON.title, `h1=${title}`);
+
+      if (nextHref) {
+        await Promise.all([
+          page.waitForURL((url) => url.pathname === nextHref, { timeout: 15_000 }),
+          page.click('a[data-pager="next"]'),
+        ]);
+        const nextTitle = (await page.textContent('h1'))?.trim() ?? '';
+        record('C2', '오프라인 링크 이동(저장된 다음 레슨)', nextTitle.length > 0, `path=${nextHref} h1=${nextTitle}`);
+      } else {
+        record('C2', '오프라인 링크 이동', false, '프로브 레슨에 다음 레슨 링크가 없음');
+      }
+
+      await page.goto(`${BASE_URL}/`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('[data-offline-toc] a', { timeout: 15_000 });
+      await page.waitForSelector('[data-offline-missing]', { timeout: 15_000 });
+      const home = await page.evaluate(() => ({
+        path: location.pathname,
+        from: new URLSearchParams(location.search).get('from'),
+        links: document.querySelectorAll('[data-offline-toc] a').length,
+      }));
+      record('C3', '오프라인 홈(/)은 오프라인 목차로 대체', home.path === '/offline' && home.from === '/' && home.links > 0, JSON.stringify(home));
+
+      await page.goto(`${BASE_URL}/lesson/offline-e2e-not-saved`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('[data-offline-missing]', { timeout: 15_000 });
+      const missing = await page.evaluate(() => ({
+        path: location.pathname,
+        text: document.querySelector('[data-offline-missing]')?.textContent ?? '',
+      }));
+      record('C4', '저장 안 된 콘텐츠 주소는 안내 화면', missing.path === '/offline' && missing.text.includes('아직 기기에 저장되지'), JSON.stringify(missing));
+    } catch (e) {
+      record('C', '오프라인 읽기', false, `예외: ${e.message}`);
+    }
+    if (server === null) await goOnline(context);
+
+    // === C5. 그림이 움직이는 편(AI 뜯어보기)은 온라인에서 한 번 열면 오프라인에서도 열린다 ===
+    // 지연 로딩 조각은 HTML에 주소가 없어 전체 받기가 모른다. 온라인 방문 때 서비스 워커가
+    // 캐시 먼저 규칙으로 저장한 것을 오프라인에서 쓰는지 본다.
+    try {
+      await page.goto(`${BASE_URL}${CONCEPT_ROUTE}`, { waitUntil: 'networkidle' });
+      const onlineTitle = (await page.textContent('h1'))?.trim() ?? '';
+      await goOffline(context);
+      const failedStatic = [];
+      const onFailed = (request) => {
+        const url = new URL(request.url());
+        if (url.pathname.startsWith('/_next/static/')) failedStatic.push(url.pathname);
+      };
+      page.on('requestfailed', onFailed);
+      try {
+        await page.goto(`${BASE_URL}${CONCEPT_ROUTE}`, { waitUntil: 'domcontentloaded' });
+        await page.waitForSelector('h1', { timeout: 15_000 });
+        await page.waitForTimeout(1500);
+      } finally {
+        page.off('requestfailed', onFailed);
+      }
+      const offline = await page.evaluate(() => ({
+        path: location.pathname,
+        h1: document.querySelector('h1')?.textContent?.trim() ?? '',
+        fallback: document.querySelector('[data-offline-missing]') !== null,
+      }));
+      const pass =
+        onlineTitle.length > 0 &&
+        offline.path === CONCEPT_ROUTE &&
+        offline.h1 === onlineTitle &&
+        !offline.fallback &&
+        failedStatic.length === 0;
+      record(
+        'C5',
+        '한 번 열어 둔 AI 뜯어보기 편은 오프라인에서도 열림(제목, 화면 파일 실패 없음)',
+        pass,
+        JSON.stringify({ route: CONCEPT_ROUTE, onlineTitle, ...offline, failedStatic }),
+      );
+    } catch (e) {
+      record('C5', '오프라인 AI 뜯어보기', false, `예외: ${e.message}`);
+    }
+    if (server === null) await goOnline(context);
+
+    // === M. 새 배포 뒤 옮기기: 옛 빌드 캐시에만 있는 페이지 ===
+    // 가짜 옛 캐시(offline-old)에 레슨 하나를 넣고 지금 빌드 캐시에서는 뺀다. 오프라인이면 옛
+    // 캐시에서 읽히고(M1), 온라인에서 페이지를 새로 열면 런타임이 지금 빌드 캐시로 다시 받은 뒤
+    // 옛 캐시를 지운다(M2).
+    try {
+      const { buildId } = await readAuth(page);
+      const currentCache = `offline-${buildId}`;
+      // 이번 로드의 옮기기 확인(런타임)이 끝난 뒤에 심는다.
+      await page.goto(`${BASE_URL}/offline`, { waitUntil: 'networkidle' });
+      await page.waitForTimeout(1000);
+      const names = { route: MIGRATION_ROUTE, oldName: OLD_CACHE_NAME, currentName: currentCache };
+      const seeded = await page.evaluate(async ({ route, oldName, currentName }) => {
+        const res = await fetch(route, { credentials: 'same-origin', cache: 'no-store' });
+        if (!res.ok || res.redirected) return { ok: false, status: res.status };
+        await (await caches.open(oldName)).put(route, res);
+        if (await caches.has(currentName)) await (await caches.open(currentName)).delete(route);
+        return { ok: true };
+      }, names);
+      await page.waitForTimeout(500);
+      const before = await page.evaluate(
+        async ({ route, oldName, currentName }) => ({
+          inOld: Boolean(await caches.match(route, { cacheName: oldName })),
+          inCurrent: Boolean(await caches.match(route, { cacheName: currentName })),
+        }),
+        names,
+      );
+
+      await goOffline(context);
+      await page.goto(`${BASE_URL}${MIGRATION_ROUTE}`, { waitUntil: 'domcontentloaded' });
+      const oldTitle = (await page.textContent('h1'))?.trim() ?? '';
+      const offlinePath = await page.evaluate(() => location.pathname);
+      record(
+        'M1',
+        '오프라인에서 옛 빌드 캐시에만 있는 레슨이 열림',
+        seeded.ok && before.inOld && !before.inCurrent && offlinePath === MIGRATION_ROUTE && oldTitle === MIGRATION_LESSON.title,
+        JSON.stringify({ seeded, before, path: offlinePath, h1: oldTitle }),
+      );
+
+      await goOnline(context);
+      await page.goto(`${BASE_URL}/offline`, { waitUntil: 'domcontentloaded' });
+      const after = await pollUntil(
+        () =>
+          page.evaluate(
+            async ({ route, oldName, currentName }) => ({
+              inCurrent: Boolean(await caches.match(route, { cacheName: currentName })),
+              oldExists: await caches.has(oldName),
+              offlineCaches: (await caches.keys()).filter((k) => k.startsWith('offline-')),
+            }),
+            names,
+          ),
+        (v) => v.inCurrent && !v.oldExists,
+        60_000,
+      );
+      record(
+        'M2',
+        '온라인이 되면 옛 캐시의 레슨을 지금 빌드 캐시로 옮기고 옛 캐시를 지움',
+        after.inCurrent && !after.oldExists && after.offlineCaches.length === 1,
+        JSON.stringify(after),
+      );
+    } catch (e) {
+      record('M', '옛 빌드 캐시 옮기기', false, `예외: ${e.message}`);
+    }
+    if (server === null) await goOnline(context);
 
     // === H. 로그아웃하면 기기 저장본이 모두 지워진다(항상 마지막) ===
     // 로그아웃 뒤에는 로그인이 필요한 시나리오를 돌릴 수 없다. 새 시나리오는 이 주석 위에 넣는다.
