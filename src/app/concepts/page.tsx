@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { getOrderedConcepts } from "@/content/concept-helpers";
+import { getSortedTerms } from "@/content/term-helpers";
 
 export const metadata: Metadata = {
   title: "AI 뜯어보기",
@@ -13,6 +15,7 @@ export const metadata: Metadata = {
 // 머리글에서 분명히 밝혀, 여기서 읽는다고 진행률이 오르지 않는다는 점을 알린다.
 export default function ConceptsIndexPage() {
   const concepts = getOrderedConcepts();
+  const termCount = getSortedTerms().length;
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
@@ -54,6 +57,21 @@ export default function ConceptsIndexPage() {
           </li>
         ))}
       </ol>
+
+      <section className="hairline flex flex-col gap-3 pt-6">
+        <span className="w-fit text-label font-bold text-accent dark:text-accent-dark">용어 사전</span>
+        <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+          기사와 로드맵 레슨에 나온 용어 {termCount}개를 짧은 카드로 모았어요. 위 편들이
+          깊게 파고든다면, 용어 사전은 빠르게 뜻을 확인하는 곳입니다.
+        </p>
+        <Link
+          href="/concepts/terms"
+          className="card-interactive panel flex min-h-11 items-center justify-between gap-2 p-4 text-body font-bold"
+        >
+          용어 사전 열기
+          <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+        </Link>
+      </section>
     </main>
   );
 }
