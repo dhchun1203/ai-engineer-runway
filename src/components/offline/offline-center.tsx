@@ -18,13 +18,19 @@ import { parseLastLesson } from "@/components/continue-reading-card";
 import { listCachedPaths } from "@/lib/offline/cache";
 import { useOnline } from "@/lib/offline/connectivity";
 import { getMeta } from "@/lib/offline/db";
-import { clearSavedPages, downloadAll, loadManifest, type DownloadProgress } from "@/lib/offline/download";
+import {
+  clearSavedPages,
+  loadManifest,
+  startDownload,
+  useDownloadState,
+  type DownloadProgress,
+  type DownloadState,
+  type DownloadStopReason,
+} from "@/lib/offline/download";
 import { useMigrationState } from "@/lib/offline/migration";
 import { classifyOfflinePath, formatBytes, type OfflineManifest } from "@/lib/offline/offline-logic";
 import { useQueueCount } from "@/lib/offline/queue";
 import { useNeedsLogin } from "@/lib/offline/sync";
-
-type Status = "idle" | "running" | "done" | "error";
 
 type Overview = {
   manifest: OfflineManifest | null;
@@ -85,9 +91,36 @@ function readNothing(): null {
   return null;
 }
 
+const STOP_MESSAGE: Record<DownloadStopReason, string> = {
+  login: "로그인이 풀렸어요. 다시 로그인한 뒤 받아 주세요.",
+  network: "받지 못했어요. 연결을 확인하고 다시 눌러 주세요.",
+  quota: "기기 저장 공간이 부족해서 받기를 멈췄어요. 공간을 비운 뒤 다시 눌러 주세요.",
+  wiped: "받는 중에 저장본이 지워져서 받기를 멈췄어요.",
+  account: "받는 중에 계정이 바뀌어서 받기를 멈췄어요.",
+  busy: "이미 받는 중이에요.",
+};
+
 function describeProgress(progress: DownloadProgress): string {
   const failed = progress.failed > 0 ? ` | 받지 못한 항목 ${progress.failed}개` : "";
   return `${PHASE_LABEL[progress.phase]} ${progress.done}/${progress.total} | 받은 용량 ${formatBytes(progress.bytes)}${failed}`;
+}
+
+/** 끝난 뒤의 결과 문구. 도는 중이거나 시작 전이면 빈 문자열. */
+function describeResult(download: DownloadState): string {
+  if (download.status === "error") return STOP_MESSAGE[download.reason ?? "network"];
+  if (download.status !== "done") return "";
+  const failed = download.progress?.failed ?? 0;
+  return failed === 0 ? "다 받았어요." : `받지 못한 항목이 ${failed}개 있어요. 전체 받기를 다시 눌러 주세요.`;
+}
+
+/**
+ * 화면 읽기 프로그램에 알릴 문구. 단계가 바뀔 때와 끝났을 때만 바뀐다(진행 숫자마다 읽지 않게).
+ */
+function describeAnnouncement(download: DownloadState): string {
+  if (download.status === "running") {
+    return download.progress ? `${PHASE_LABEL[download.progress.phase]} 받는 중` : "받기를 시작했어요";
+  }
+  return describeResult(download);
 }
 
 export function OfflineCenter() {
@@ -99,11 +132,11 @@ export function OfflineCenter() {
   const lastLesson = parseLastLesson(useSyncExternalStore(subscribeNothing, readLastLessonRaw, readNothing));
   const [overview, setOverview] = useState<Overview>(EMPTY_OVERVIEW);
   const [reloadKey, setReloadKey] = useState(0);
-  const [status, setStatus] = useState<Status>("idle");
-  const [progress, setProgress] = useState<DownloadProgress | null>(null);
-  const [persisted, setPersisted] = useState<boolean | null>(null);
+  // 전체 받기는 모듈의 공유 저장소에서 읽는다(화면을 떠났다 돌아와도 진행이 이어져 보인다).
+  const download = useDownloadState();
+  const { status, progress, persisted } = download;
 
-  // 옮기기가 끝나면(migration.status가 바뀌면) 저장 현황을 다시 읽는다.
+  // 옮기기나 전체 받기의 상태가 바뀌면(끝나면) 저장 현황을 다시 읽는다.
   useEffect(() => {
     let active = true;
     loadOverview().then((next) => {
@@ -112,25 +145,10 @@ export function OfflineCenter() {
     return () => {
       active = false;
     };
-  }, [reloadKey, migration.status]);
+  }, [reloadKey, migration.status, status]);
 
   const migrating = migration.status === "running";
   const busy = status === "running" || migrating;
-
-  async function handleDownload() {
-    setStatus("running");
-    setProgress(null);
-    try {
-      // 기기가 저장본을 함부로 지우지 않게 요청한다(거절되면 안내만 한다).
-      if (navigator.storage?.persist) setPersisted(await navigator.storage.persist());
-      setProgress(await downloadAll(setProgress));
-      setStatus("done");
-    } catch (error) {
-      console.warn("[offline] download all failed", error);
-      setStatus("error");
-    }
-    setReloadKey((key) => key + 1);
-  }
 
   async function handleClear() {
     if (!window.confirm("기기에 저장한 페이지를 모두 지울까요? 동기화를 기다리는 체크와 메모는 지우지 않아요.")) return;
@@ -139,8 +157,6 @@ export function OfflineCenter() {
     } catch (error) {
       console.warn("[offline] clearing saved pages failed", error);
     }
-    setProgress(null);
-    setStatus("idle");
     setReloadKey((key) => key + 1);
   }
 
@@ -206,11 +222,17 @@ export function OfflineCenter() {
         {migration.status === "running" ? (
           <p
             data-offline-migrating
-            role="status"
-            aria-live="polite"
             className="break-keep text-body font-bold text-accent dark:text-accent-dark"
           >
             새 버전으로 다시 받는 중 {migration.done}/{migration.total}
+          </p>
+        ) : null}
+        {migration.status === "error" ? (
+          <p
+            data-offline-migration-error
+            className="break-keep text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark"
+          >
+            새 버전으로 옮기지 못한 저장본이 있어요. 전체 받기를 누르면 새로 받을 수 있어요.
           </p>
         ) : null}
         {online ? (
@@ -218,7 +240,7 @@ export function OfflineCenter() {
             <button
               type="button"
               data-offline-download
-              onClick={() => void handleDownload()}
+              onClick={startDownload}
               disabled={busy}
               aria-busy={status === "running"}
               className="btn-action tap-feedback min-h-11 text-body"
@@ -241,10 +263,28 @@ export function OfflineCenter() {
             지금은 오프라인이에요. 새로 받기는 인터넷에 연결된 뒤에 할 수 있어요.
           </p>
         )}
-        <p role="status" aria-live="polite" data-offline-progress className="break-keep text-label font-normal">
+        {status === "running" && progress ? (
+          <div
+            role="progressbar"
+            aria-label={`${PHASE_LABEL[progress.phase]} 받기`}
+            aria-valuenow={progress.done}
+            aria-valuemin={0}
+            aria-valuemax={progress.total}
+            className="h-2 w-full overflow-hidden border border-line bg-surface-2 dark:border-line-dark dark:bg-surface-2-dark"
+          >
+            <div
+              className="h-full bg-action dark:bg-action-dark"
+              style={{ width: `${progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0}%` }}
+            />
+          </div>
+        ) : null}
+        <p data-offline-progress className="break-keep text-label font-normal">
           {progress ? describeProgress(progress) : ""}
-          {status === "done" ? " | 다 받았어요." : ""}
-          {status === "error" ? "받지 못했어요. 연결을 확인하고 다시 눌러 주세요." : ""}
+          {progress && status !== "running" && describeResult(download) ? " | " : ""}
+          {describeResult(download)}
+        </p>
+        <p role="status" aria-live="polite" className="sr-only">
+          {migrating ? "새 버전으로 다시 받는 중" : describeAnnouncement(download)}
         </p>
         {persisted === false ? (
           <p className="break-keep text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">

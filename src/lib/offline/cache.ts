@@ -46,10 +46,34 @@ export async function olderCacheNames(): Promise<string[]> {
   return (await offlineCacheNames()).filter((name) => name !== current);
 }
 
-/** 옛 빌드 캐시를 지운다. 옛 캐시의 주소를 새 캐시로 다시 받은 뒤에만 부른다. */
-export async function deleteOlderCaches(): Promise<void> {
-  const names = await olderCacheNames();
-  await Promise.all(names.map((name) => caches.delete(name)));
+/**
+ * 이름을 받은 캐시만 지운다. 옛 캐시의 주소를 새 캐시로 다시 받은 뒤에만 부른다. 지울 이름은
+ * 옮기기를 시작할 때 고른 목록이다. 지우는 순간에 다시 고르면, 그 사이 더 새 배포의 서비스
+ * 워커가 만든 캐시까지 지울 수 있다.
+ */
+export async function deleteCaches(names: readonly string[]): Promise<void> {
+  const current = currentCacheName();
+  await Promise.all(names.filter((name) => name !== current).map((name) => caches.delete(name)));
+}
+
+// 해시 없는 아이콘 경로. 옛 캐시를 지우기 전에 지금 캐시에 없으면 옮겨 둔다(오프라인 아이콘).
+const ICON_PATHS = new Set(["/icon", "/apple-icon", "/favicon.ico"]);
+
+/** 옛 캐시(names)의 아이콘 항목 중 지금 캐시에 없는 것을 지금 캐시로 옮긴다. 지금 캐시가 없으면 하지 않는다. */
+export async function copyIconsFrom(names: readonly string[]): Promise<void> {
+  const current = currentCacheName();
+  if (!(await caches.has(current))) return;
+  const target = await caches.open(current);
+  for (const name of names) {
+    if (name === current || !(await caches.has(name))) continue;
+    const source = await caches.open(name);
+    for (const request of await source.keys()) {
+      if (!ICON_PATHS.has(new URL(request.url).pathname)) continue;
+      if (await target.match(request)) continue;
+      const response = await source.match(request);
+      if (response) await target.put(request, response);
+    }
+  }
 }
 
 export async function clearOfflineCaches(): Promise<void> {
