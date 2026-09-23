@@ -7,7 +7,9 @@
 // 실행: node scripts/check-offline-logic.mjs
 
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -271,6 +273,39 @@ async function main() {
     assert.equal(formatBytes(512), '512 B');
     assert.equal(formatBytes(1536), '1.5 KB');
     assert.equal(formatBytes(5 * 1024 * 1024), '5.0 MB');
+  });
+
+  // --- public/sw.js 대조: 서비스 워커는 TS를 import할 수 없어 규칙을 복제한다. 복제본이
+  // offline-logic.ts와 같은 판정을 내는지 같은 표로 확인한다. sw.js는 classic 스크립트라
+  // 최상위 function 선언이 vm 컨텍스트의 전역 속성이 된다.
+  const SW_PATH = path.join(ROOT, 'public', 'sw.js');
+  const sw = vm.createContext({
+    self: {
+      location: { search: '?v=check', origin: 'http://127.0.0.1:3216' },
+      addEventListener() {},
+    },
+    URL,
+    URLSearchParams,
+  });
+  vm.runInContext(fs.readFileSync(SW_PATH, 'utf8'), sw, { filename: 'sw.js' });
+
+  runCase('sw.js classifyPath가 offline-logic.ts와 같은 판정', () => {
+    for (const [pathname, expected] of PATH_TABLE) {
+      assert.equal(sw.classifyPath(pathname), expected, pathname);
+    }
+  });
+
+  runCase('sw.js extractAssetPaths가 offline-logic.ts와 같은 결과', () => {
+    assert.deepEqual(Array.from(sw.extractAssetPaths(ASSET_SAMPLE)).sort(), ASSET_EXPECTED);
+  });
+
+  runCase('sw.js isStaticAssetPath', () => {
+    for (const p of ['/_next/static/chunks/a.js', '/fonts/PretendardVariable.subset.woff2', '/static/x.png', '/icon', '/apple-icon', '/favicon.ico']) {
+      assert.equal(sw.isStaticAssetPath(p), true, p);
+    }
+    for (const p of ['/api/progress', '/lesson/a', '/_next/image', '/manifest.webmanifest', '/offline']) {
+      assert.equal(sw.isStaticAssetPath(p), false, p);
+    }
   });
 
   report();
