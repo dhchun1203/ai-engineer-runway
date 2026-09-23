@@ -1,19 +1,20 @@
-// 채널톡 로드맵 심화 레슨의 어려운 용어 사전. 레슨 본문에서 <Term id="...">로
-// 감싼 단어를 클릭하면 우측 패널이 이 설명을 펼친다(term-panel.tsx).
+// 공용 용어 사전 — 로드맵 심화 레슨과 아티클(기사 요약)이 함께 쓴다. 본문에서
+// <Term id="...">로 감싼 단어를 누르면 우측 패널이 이 설명을 펼치고(term-panel.tsx),
+// 각 항목은 AI 뜯어보기의 "용어 사전" 층(/concepts/terms/<id>)에 카드 페이지가 된다.
 //
-// 레슨마다 정의를 다시 쓰지 않도록 한곳에 모은다. 여러 레슨이 같은 용어(RAG,
-// 할루시네이션 등)를 공유하므로 id로 재사용한다. 설명 프로즈에는 가운데점과
-// 긴하이픈을 쓰지 않는다(쉼표, 괄호, 줄바꿈으로 대신). body의 빈 줄(\n\n)은
-// 문단 구분으로 렌더된다.
+// concept: AI 뜯어보기 깊은 편의 slug. 그 편이 **실제로 같은 개념을 다룰 때만**
+// 채운다(억지 연결 금지). 빌드(velite prepare)가 존재하지 않는 slug를 막는다.
 
-export type RoadmapTerm = {
-  /** 패널 제목 */
+export type TermEntry = {
+  /** 패널, 카드 제목 */
   title: string;
   /** 설명 본문. 빈 줄로 문단을 나눈다. */
   body: string;
+  /** 같은 개념을 깊게 다루는 AI 뜯어보기 편 slug (있을 때만) */
+  concept?: string;
 };
 
-export const roadmapTerms: Record<string, RoadmapTerm> = {
+export const terms: Record<string, TermEntry> = {
   groundedness: {
     title: "근거 충실성 (groundedness)",
     body: "답변이 검색해 온 근거 안의 내용에만 기반하는 정도입니다. 근거에 없는 사실을 지어내면 근거 충실성이 낮은 것이고, 그 반대편에 있는 실패가 할루시네이션입니다.\n\n채널톡처럼 고객사의 지식으로 답하는 서비스에서는 이 지표가 곧 신뢰의 핵심입니다. 답이 그럴듯해도 근거가 없으면 위험합니다.",
@@ -21,6 +22,7 @@ export const roadmapTerms: Record<string, RoadmapTerm> = {
   hallucination: {
     title: "할루시네이션 (hallucination)",
     body: "모델이 근거에 없는 내용을 사실인 양 지어내는 현상입니다. 문장은 자연스러워서 사람이 놓치기 쉬운데, 상담에서는 잘못된 정책이나 없는 기능을 안내하는 사고로 이어집니다.\n\n검색된 근거와 답변의 각 주장을 대조하는 방식으로 잡아냅니다.",
+    concept: "hallucination",
   },
   "llm-judge": {
     title: "LLM 심판 (LLM-as-judge)",
@@ -53,6 +55,7 @@ export const roadmapTerms: Record<string, RoadmapTerm> = {
   rag: {
     title: "RAG (검색 증강 생성)",
     body: "질문에 맞는 지식을 먼저 검색해 컨텍스트로 넣고, 그 근거를 바탕으로 답하게 하는 방식입니다.\n\n채널톡의 상담 에이전트 ALF가 고객사의 지식으로 답하는 핵심 구조가 바로 이것입니다.",
+    concept: "rag",
   },
   pii: {
     title: "PII (개인식별정보)",
@@ -67,6 +70,7 @@ export const roadmapTerms: Record<string, RoadmapTerm> = {
   embedding: {
     title: "임베딩 (embedding)",
     body: "글이나 이미지를 의미가 담긴 숫자 목록(벡터)으로 바꾼 것입니다.\n\n뜻이 비슷하면 숫자도 가깝게 나오도록 만들어져서, 이 가까움을 재면 의미가 통하는 것끼리 찾을 수 있습니다. 검색과 추천의 바탕입니다.",
+    concept: "embeddings",
   },
   "vector-search": {
     title: "벡터 검색",
@@ -79,10 +83,12 @@ export const roadmapTerms: Record<string, RoadmapTerm> = {
   token: {
     title: "토큰 (token)",
     body: "모델이 글을 처리하는 가장 작은 단위입니다. 단어보다 잘게 쪼갠 조각이라고 보면 됩니다.\n\n모델의 비용과 입력 길이는 모두 이 토큰의 개수로 셉니다.",
+    concept: "tokens",
   },
   "context-window": {
     title: "컨텍스트 윈도우 (context window)",
     body: "모델이 한 번에 볼 수 있는 토큰의 최대 크기입니다.\n\n이 창을 넘는 내용은 한 번에 넣을 수 없어서, 무엇을 넣고 무엇을 뺄지 고르는 일이 중요해집니다.",
+    concept: "context-window",
   },
   "prompt-caching": {
     title: "프롬프트 캐싱 (prompt caching)",
@@ -99,6 +105,7 @@ export const roadmapTerms: Record<string, RoadmapTerm> = {
   "fine-tuning": {
     title: "파인튜닝 (fine-tuning)",
     body: "미리 학습된 모델을 내 데이터로 조금 더 학습시켜 특정 일에 맞게 다듬는 것입니다.\n\n검색해 온 지식을 그때그때 넣어 주는 RAG와는 목적이 다릅니다. 파인튜닝은 모델 자체의 버릇을 바꾸고, RAG는 아는 내용을 갈아 끼웁니다.",
+    concept: "training-stages",
   },
   "unit-test": {
     title: "단위 테스트 (unit test)",
@@ -289,5 +296,23 @@ export const roadmapTerms: Record<string, RoadmapTerm> = {
   guardrail: {
     title: "가드레일 (guardrail)",
     body: "AI 자동화가 위험한 동작을 하지 못하도록 앞에 세워 두는 안전장치입니다.\n\n결제, 발송, 삭제처럼 되돌리기 어려운 동작은 AI가 초안만 만들고 실행 버튼은 사람이 누르게 막는 식입니다. 편리함을 얻으면서도 사고의 범위를 작게 유지합니다.",
+  },
+
+  // ── 아티클(기사 요약)에서 추가된 용어 ─────────────────────────────────────
+  runner: {
+    title: "러너 (CI runner)",
+    body: "CI 검사를 실제로 돌리는 컴퓨터입니다. PR이 올라오면 러너 한 대를 빌려 코드를 받고, 필요한 도구를 설치하고, 테스트를 돌린 뒤 반납합니다.\n\n러너를 쓴 시간만큼 비용이 들어서, 회사들은 기다리는 시간과 함께 러너를 쓴 총시간(러너 분)도 줄이려고 애씁니다.",
+  },
+  "critical-path": {
+    title: "크리티컬 패스 (critical path)",
+    body: "여러 일이 동시에 진행될 때, 전체가 끝나는 시간을 정하는 가장 긴 순서의 줄입니다. 라면 물이 끓는 동안 파를 썰면, 전체 시간은 물 끓는 시간이 정합니다.\n\n그래서 속도를 높이려면 크리티컬 패스 위의 일부터 줄여야 합니다. 옆길의 일을 아무리 줄여도 전체는 빨라지지 않습니다.",
+  },
+  "test-shard": {
+    title: "샤드 (test shard)",
+    body: "많은 테스트를 여러 묶음으로 나눠 여러 러너에서 동시에 돌릴 때, 그 한 묶음을 샤드라고 합니다. 시험지 더미를 채점자 여러 명에게 나눠 주는 것과 같습니다.\n\n샤드를 늘리면 기다리는 시간은 줄지만, 샤드마다 준비 비용(러너 켜기, 설치)이 붙어 총비용은 늘 수 있습니다. 가장 느린 샤드가 끝나야 전체가 끝납니다.",
+  },
+  cache: {
+    title: "캐시 (cache)",
+    body: "한 번 만든 결과를 저장해 두었다가 다음에 다시 쓰는 것입니다. 매번 새로 만드는 대신 꺼내 쓰니 보통 빨라집니다.\n\n다만 꺼내 오는 데도 시간이 듭니다. 저장한 결과가 크면 되살리는 비용이 커지고, 입력이 자주 바뀌면 저장해 둔 결과가 들어맞는 일(캐시 적중)이 드물어집니다. 어느 쪽이든 꺼내 쓰는 비용이 새로 만드는 비용보다 클 수 있으니, 캐시는 측정해 보고 결정합니다.",
   },
 };

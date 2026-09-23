@@ -9,8 +9,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { X } from "lucide-react";
-import { roadmapTerms, type RoadmapTerm } from "@/content/roadmap-terms";
+import { ArrowRight, X } from "lucide-react";
+import Link from "next/link";
+import { terms, type TermEntry } from "@/content/terms";
 
 // 로드맵 심화 레슨의 용어 설명 패널. 본문의 <Term id="...">단어</Term>를 누르면
 // 우측에서 패널이 미끄러져 나와 해당 용어를 설명한다. 진도·저장 같은 것과 무관한
@@ -21,8 +22,10 @@ import { roadmapTerms, type RoadmapTerm } from "@/content/roadmap-terms";
 // 부드럽게 처리하되(들어올 때 rAF로 상태 전환, 나갈 때 transitionend 뒤 언마운트),
 // prefers-reduced-motion에서는 즉시 전환된다(motion-reduce:transition-none).
 
+type ActiveTerm = { id: string; entry: TermEntry };
+
 type TermPanelContextValue = {
-  open: (term: RoadmapTerm) => void;
+  open: (id: string) => void;
 };
 
 const TermPanelContext = createContext<TermPanelContextValue | null>(null);
@@ -37,18 +40,20 @@ function useTermPanel(): TermPanelContextValue {
 
 export function TermPanelProvider({ children }: { children: ReactNode }) {
   // active: DOM에 패널을 마운트할지(내용 포함). shown: 화면에 밀어 넣었는지(트랜지션).
-  const [active, setActive] = useState<RoadmapTerm | null>(null);
+  const [active, setActive] = useState<ActiveTerm | null>(null);
   const [shown, setShown] = useState(false);
   // 패널을 연 트리거로 닫을 때 포커스를 되돌린다(접근성).
   const triggerRef = useRef<HTMLElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  const open = useCallback((term: RoadmapTerm) => {
+  const open = useCallback((id: string) => {
+    const entry = terms[id];
+    if (!entry) return;
     triggerRef.current =
       typeof document !== "undefined"
         ? (document.activeElement as HTMLElement | null)
         : null;
-    setActive(term);
+    setActive({ id, entry });
   }, []);
 
   const close = useCallback(() => {
@@ -102,7 +107,7 @@ export function TermPanelProvider({ children }: { children: ReactNode }) {
           <aside
             role="dialog"
             aria-modal="true"
-            aria-label={`용어 설명: ${active.title}`}
+            aria-label={`용어 설명: ${active.entry.title}`}
             onTransitionEnd={handleTransitionEnd}
             className={`fixed inset-y-0 right-0 z-50 flex w-[min(24rem,88vw)] flex-col gap-4 overflow-y-auto border-l-2 border-foreground bg-background p-6 transition-transform duration-200 ease-out motion-reduce:transition-none dark:border-foreground-dark dark:bg-background-dark ${
               shown ? "translate-x-0" : "translate-x-full"
@@ -121,10 +126,10 @@ export function TermPanelProvider({ children }: { children: ReactNode }) {
               </button>
             </div>
             <h2 className="break-keep text-heading font-extrabold">
-              {active.title}
+              {active.entry.title}
             </h2>
             <div className="flex flex-col gap-3">
-              {active.body.split("\n\n").map((paragraph, index) => (
+              {active.entry.body.split("\n\n").map((paragraph, index) => (
                 <p
                   key={index}
                   className="break-keep text-body font-normal leading-relaxed"
@@ -132,6 +137,24 @@ export function TermPanelProvider({ children }: { children: ReactNode }) {
                   {paragraph}
                 </p>
               ))}
+            </div>
+            <div className="flex flex-col gap-2 pt-2">
+              <Link
+                href={`/concepts/terms/${active.id}`}
+                className="card-interactive panel flex min-h-11 items-center justify-between gap-2 p-3 text-label font-bold"
+              >
+                용어 페이지 열기
+                <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+              </Link>
+              {active.entry.concept ? (
+                <Link
+                  href={`/concepts/${active.entry.concept}`}
+                  className="card-interactive panel flex min-h-11 items-center justify-between gap-2 p-3 text-label font-bold"
+                >
+                  AI 뜯어보기에서 자세히
+                  <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+                </Link>
+              ) : null}
             </div>
           </aside>
         </>
@@ -145,13 +168,13 @@ export function TermPanelProvider({ children }: { children: ReactNode }) {
 // 강조색 점선 밑줄로 누를 수 있음을 알린다.
 export function Term({ id, children }: { id: string; children: ReactNode }) {
   const { open } = useTermPanel();
-  const term = roadmapTerms[id];
-  if (!term) return <>{children}</>;
+  const entry = terms[id];
+  if (!entry) return <>{children}</>;
   return (
     <button
       type="button"
-      onClick={() => open(term)}
-      aria-label={`용어 설명 열기: ${term.title}`}
+      onClick={() => open(id)}
+      aria-label={`용어 설명 열기: ${entry.title}`}
       className="[font:inherit] cursor-pointer bg-transparent p-0 text-accent underline decoration-dashed underline-offset-2 dark:text-accent-dark"
     >
       {children}

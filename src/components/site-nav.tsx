@@ -58,6 +58,8 @@ const NAV_ITEMS: readonly NavItem[] = [
       // 번외 "AI 뜯어보기"(/concepts) — 정규 커리큘럼과 별개의 개념 이해 편.
       // isActiveHref가 startsWith라 /concepts/[slug] 리더에서도 활성으로 표시된다.
       { label: "AI 뜯어보기", href: "/concepts" },
+      // 아티클(/articles) — 현업 기사를 우리 말로 푼 요약 모음(격리 컬렉션).
+      { label: "아티클", href: "/articles" },
       { label: "문서·정보", href: null, heading: true },
       { label: "PDF 내보내기", href: "/print" },
       { label: "소개", href: "/about" },

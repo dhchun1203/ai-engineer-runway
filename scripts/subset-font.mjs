@@ -241,7 +241,9 @@ function listTopLevelFiles(absDir, extFilter) {
 
 const contentFiles = [
   ...walkFiles(path.join(ROOT, 'src', 'content', 'lessons'), /\.mdx$/),
+  ...walkFiles(path.join(ROOT, 'src', 'content', 'articles'), /\.mdx$/),
   path.join(ROOT, 'src', 'content', 'modules.ts'),
+  path.join(ROOT, 'src', 'content', 'terms.ts'),
   ...walkFiles(path.join(ROOT, 'src'), /\.tsx$/),
   ...listTopLevelFiles(path.join(ROOT, 'docs'), /\.md$/),
 ].filter((p) => fs.existsSync(p));

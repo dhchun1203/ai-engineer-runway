@@ -1,4 +1,12 @@
+import { existsSync, readdirSync } from "node:fs";
+import { basename, extname, join } from "node:path";
 import { defineConfig, s } from "velite";
+import {
+  ARTICLE_OPTIONAL_SECTIONS,
+  ARTICLE_SECTIONS,
+  ARTICLE_TAGS,
+  isArticleTag,
+} from "./src/content/article-tags";
 import rehypePrettyCode from "rehype-pretty-code";
 // 헤딩 id 생성 (quick 260901-etq). 복습 카드가 레슨의 "6. 핵심 정리 및 스스로 점검"
 // 섹션으로 직행하는 앵커가 필요해 들였다. 35편이 같은 헤딩을 쓰므로(게이트 L1이
@@ -11,6 +19,7 @@ import rehypeSlug from "rehype-slug";
 // 내부에서 같은 플러그인을 켠다(gfm 기본 on). @mdx-js/mdx의 compile은 아래
 // compileBookMdx에서 동적 import한다(velite 자신도 같은 방식으로 부른다).
 import remarkGfm from "remark-gfm";
+import { terms } from "./src/content/terms";
 
 // 복사 버튼은 여기서 만들지 않는다. @rehype-pretty/transformers의
 // transformerCopyButton은 인라인 onclick을 *문자열*로 내보내는데, 컴파일된 MDX가
@@ -207,6 +216,65 @@ async function compileBookMdx(md: string): Promise<string> {
   return String(compiled);
 }
 
+// 아티클 본문 h2 검사 — ARTICLE_SECTIONS 순서와 같아야 하고, 선택 h2
+// (ARTICLE_OPTIONAL_SECTIONS)만 빠질 수 있다. 모르는 h2나 중복은 실패.
+// 코드펜스 안의 "## "는 헤딩이 아니므로 건너뛴다(parseSelfCheck와 같은 방어).
+function assertArticleSections(content: string, file: string): void {
+  const lines = content.replace(/\r\n/g, "\n").split("\n");
+  const headings: string[] = [];
+  let inFence = false;
+  for (const line of lines) {
+    if (line.trim().startsWith("```")) {
+      inFence = !inFence;
+      continue;
+    }
+    if (!inFence && /^## /.test(line)) headings.push(line.slice(3).trim());
+  }
+  const expected = ARTICLE_SECTIONS.filter(
+    (s) => headings.includes(s) || !ARTICLE_OPTIONAL_SECTIONS.includes(s),
+  );
+  const ok =
+    headings.length === expected.length && headings.every((h, i) => h === expected[i]);
+  if (!ok) {
+    throw new Error(
+      `articles: ${file}의 h2는 [${ARTICLE_SECTIONS.join(" / ")}] 순서여야 합니다(선택: ${ARTICLE_OPTIONAL_SECTIONS.join(", ")}). 실제: [${headings.join(" / ")}]`,
+    );
+  }
+}
+
+// 원문 url 중복 판별 키 — 호스트(소문자) + 끝 슬래시 뗀 경로. 쿼리와 해시는 무시한다.
+function articleUrlKey(raw: string): string {
+  const u = new URL(raw);
+  return `${u.host.toLowerCase()}${u.pathname.replace(/\/+$/, "")}`;
+}
+
+// 본문의 <Term id="..."> 사용처를 뽑는다. 용어 카드의 "이 용어가 나온 곳"과
+// 사전 누락 검사(prepare)가 이 목록을 쓴다.
+function extractTermIds(content: string): string[] {
+  return [...new Set([...content.matchAll(/<Term\s+id="([^"]+)"/g)].map((m) => m[1]))];
+}
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+// articles 파일 목록을 디스크에서 직접 훑는다(velite의 pattern glob과 별개 구현).
+// 이유: velite는 non-strict 모드에서 필드 하나가 "타입 자체"를 못 맞추면(예: enum에
+// 없는 값) 이슈만 콘솔에 찍고 그 문서를 조용히 컬렉션에서 통째로 제외한다 —
+// .transform()도 돌지 않으므로 위 tags/summary 재검사(prepare 안)조차 그 문서를
+// 못 본다. 파일 수와 실제 articles.length를 대조해 "빠진 문서가 있다"를 잡아내는
+// 마지막 방어선이다.
+function listArticleMdxFiles(dir: string): string[] {
+  if (!existsSync(dir)) return [];
+  const out: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...listArticleMdxFiles(full));
+    else if (entry.isFile() && extname(entry.name) === ".mdx") out.push(full);
+  }
+  return out;
+}
+
+const ARTICLES_DIR = "src/content/articles";
+
 export default defineConfig({
   root: ".",
   output: {
@@ -300,6 +368,7 @@ export default defineConfig({
           ...data,
           permalink: `/roadmap/${data.slug}`,
           readingMinutes: estimateBookMinutes(meta.content ?? ""),
+          termIds: extractTermIds(meta.content ?? ""),
         })),
     },
     // 베이스캠프(개강 전 공식 선행 과제) 전용 학습 레슨(basecampLessons). concepts·
@@ -323,6 +392,49 @@ export default defineConfig({
           readingMinutes: estimateBookMinutes(meta.content ?? ""),
         })),
     },
+    // 아티클(현업 엔지니어링 기사를 우리 말로 푼 요약) — 격리 컬렉션. 진도·일정·
+    // 복습은 lessons만 소비하므로 어디에도 집계되지 않는다. 설계:
+    // docs/superpowers/specs/2026-09-23-articles-section-design.md
+    articles: {
+      name: "Article",
+      pattern: "src/content/articles/**/*.mdx",
+      schema: s
+        .object({
+          title: s.string(),
+          originalTitle: s.string(),
+          source: s.string(),
+          author: s.string().optional(),
+          publishedAt: s.string().regex(ISO_DAY),
+          addedAt: s.string().regex(ISO_DAY),
+          url: s.string().url(),
+          tags: s.array(s.enum(ARTICLE_TAGS)).min(1).max(3),
+          summary: s.array(s.string().min(1)).length(3),
+          related: s
+            .array(s.object({ label: s.string(), href: s.string().regex(/^\/(?!\/)/) }))
+            .default([]),
+          origin: s.enum(["manual", "auto"]),
+          slug: s.slug("articles"),
+          code: s.mdx(),
+        })
+        .transform((data, { meta }) => {
+          assertArticleSections(meta.content ?? "", String(meta.path));
+          // 설계상 slug는 파일 이름과 같다. prepare의 파일 수 검사가 빠진 문서를
+          // 파일 이름으로 찾아 알려 주므로, 둘이 어긋나면 그 안내가 틀려진다.
+          const filePath = String(meta.path);
+          const fileSlug = basename(filePath, extname(filePath));
+          if (data.slug !== fileSlug) {
+            throw new Error(
+              `articles: ${filePath}의 slug "${data.slug}"가 파일 이름 "${fileSlug}"와 다릅니다. slug는 파일 이름(확장자 제외)과 같아야 합니다.`,
+            );
+          }
+          return {
+            ...data,
+            permalink: `/articles/${data.slug}`,
+            readingMinutes: estimateBookMinutes(meta.content ?? ""),
+            termIds: extractTermIds(meta.content ?? ""),
+          };
+        }),
+    },
     // /about (Making-of) 소개 페이지 소스 — docs/making-of.md 단일 파일만 대상으로 한다.
     // 글로브를 넓혀 GSD 계획 산출물 디렉터리를 빨아들이지 않는다 (PLAT-03 threat T-01-14).
     pages: {
@@ -336,5 +448,89 @@ export default defineConfig({
         })
         .transform((data) => ({ ...data, permalink: `/${data.slug}` })),
     },
+  },
+  // 컬렉션 전체를 봐야 하는 검사 — 원문 url 중복은 항목 단위 transform으로는 못 잡는다.
+  //
+  // tags/summary 재검사(일부러 스키마와 중복): velite는 기본(non-strict) 모드에서
+  // zod 스키마 위반(.min/.max/.length 등)을 빌드 실패로 이어가지 않고 콘솔에
+  // info/warning으로만 찍고 넘어간다(config.strict를 true로 켜야 throw하는데,
+  // 이 프로젝트는 전역 strict를 켜지 않기로 함). Spec 3.2가 "summary 개수, tags
+  // 범위 위반은 velite 빌드 실패로 막는다"를 명시하므로, 여기서 같은 규칙을
+  // 다시 한 번 명시적으로 검사해 throw한다. **articles 스키마의 tags/summary
+  // 제약을 바꾸면 이 블록도 반드시 함께 바꿀 것.**
+  //
+  // 용어 사전 누락·개념 편 참조 검사: <Term id="...">가 src/content/terms.ts에
+  // 없거나, terms의 concept가 존재하지 않는 AI 뜯어보기 편 slug를 가리키면
+  // 빌드를 실패시킨다(articles-section Task 3).
+  prepare: ({ articles, roadmapLessons, concepts }) => {
+    const problems: string[] = [];
+
+    for (const article of articles) {
+      const where = `${article.slug} (${article.url})`;
+
+      if (
+        !Array.isArray(article.tags) ||
+        article.tags.length < 1 ||
+        article.tags.length > 3 ||
+        article.tags.some((t) => !isArticleTag(t))
+      ) {
+        problems.push(
+          `articles: ${where}의 tags는 ARTICLE_TAGS 안에서 1~3개여야 합니다. 실제: [${(article.tags ?? []).join(" / ")}]`,
+        );
+      }
+
+      if (
+        !Array.isArray(article.summary) ||
+        article.summary.length !== 3 ||
+        article.summary.some((line) => typeof line !== "string" || line.trim() === "")
+      ) {
+        problems.push(
+          `articles: ${where}의 summary는 빈 줄 없이 정확히 3줄이어야 합니다. 실제: ${article.summary?.length ?? 0}줄`,
+        );
+      }
+    }
+
+    const seen = new Map<string, string>();
+    for (const article of articles) {
+      const key = articleUrlKey(article.url);
+      const prev = seen.get(key);
+      if (prev) {
+        problems.push(`articles: 원문 url 중복 ${article.url} (${prev}, ${article.slug})`);
+      } else {
+        seen.set(key, article.slug);
+      }
+    }
+
+    // 마지막 방어선: 위 tags/summary 재검사는 "문서가 articles 배열에 있다"를
+    // 전제한다. enum에 없는 값처럼 타입 자체가 안 맞는 위반은 velite가 문서를
+    // 통째로 배열에서 빼버려 위 검사가 아예 못 본다 — 그래서 디스크의 .mdx 파일
+    // 수와 실제 articles.length를 대조해 조용히 빠진 문서가 있는지 확인한다.
+    const onDisk = listArticleMdxFiles(ARTICLES_DIR);
+    if (onDisk.length !== articles.length) {
+      const presentSlugs = new Set(articles.map((a) => a.slug));
+      const missing = onDisk.filter((f) => !presentSlugs.has(basename(f, ".mdx")));
+      problems.push(
+        `articles: ${ARTICLES_DIR}에 .mdx 파일이 ${onDisk.length}개인데 컬렉션에는 ${articles.length}개만 있습니다 — 스키마 검증에 실패해 조용히 제외된 문서가 있습니다(바로 위 velite issues 로그 참고). 의심 파일: ${missing.length > 0 ? missing.join(", ") : "(파일명으로 특정 불가, 위 issues 로그 참고)"}`,
+      );
+    }
+
+    for (const doc of [...articles, ...roadmapLessons]) {
+      for (const id of doc.termIds) {
+        if (!terms[id]) {
+          problems.push(`${doc.permalink}: <Term id="${id}">가 src/content/terms.ts에 없습니다`);
+        }
+      }
+    }
+
+    const conceptSlugs = new Set(concepts.map((c) => c.slug));
+    for (const [id, entry] of Object.entries(terms)) {
+      if (entry.concept && !conceptSlugs.has(entry.concept)) {
+        problems.push(`terms.${id}.concept "${entry.concept}"는 없는 AI 뜯어보기 편입니다`);
+      }
+    }
+
+    if (problems.length > 0) {
+      throw new Error(problems.join("\n"));
+    }
   },
 });
