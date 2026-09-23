@@ -694,7 +694,12 @@ async function main() {
         `[data-progress-ui="complete-button"][data-complete-state="${expectedDone ? 'done' : 'todo'}"]`,
         { timeout: 10_000 },
       );
-      const afterToggle = await queueCount(page);
+      // 화면은 먼저 바뀌고 대기열 쓰기(IndexedDB)는 그 뒤에 끝난다. 잠시 기다리며 센다.
+      let afterToggle = await queueCount(page);
+      for (let i = 0; i < 20 && afterToggle !== 1; i++) {
+        await page.waitForTimeout(250);
+        afterToggle = await queueCount(page);
+      }
       record('D2', '오프라인 완료 체크가 화면에 반영되고 대기열에 1건', afterToggle === 1, `before=${before} queue=${afterToggle}`);
 
       await page.click('[data-notepad] button[aria-expanded]');
@@ -786,7 +791,8 @@ async function main() {
         JSON.stringify({ bodyMatches: basecampNoteRow?.body === offlineBasecampNote }),
       );
 
-      await page.reload({ waitUntil: 'domcontentloaded' });
+      // D4, D5가 아티클과 베이스캠프 화면으로 옮겨 갔으므로 프로브 레슨을 다시 연다.
+      await page.goto(`${BASE_URL}${PROBE_ROUTE}`, { waitUntil: 'domcontentloaded' });
       await waitForProgressSettled(page);
       const uiState = await page.getAttribute('[data-progress-ui="complete-button"]', 'data-complete-state');
       record('E2', '새로고침 후 화면도 서버 값과 같음', uiState === (expectedDone ? 'done' : 'todo'), `ui=${uiState}`);
