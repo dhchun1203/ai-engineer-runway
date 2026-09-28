@@ -279,9 +279,10 @@ const STATIC_SHELL_PAGES = [
   path.join(ROOT, 'src', 'app', 'curriculum', 'page.tsx'),
 ];
 
+// /schedule은 no-deadline 결정(마감일 폐기)으로 페이지 자체가 제거됐다 —
+// 동적 유지 계약 대상에서 뺀다. 홈(/)만 남는다.
 const DYNAMIC_GATED_PAGES = [
   path.join(ROOT, 'src', 'app', 'page.tsx'),
-  path.join(ROOT, 'src', 'app', 'schedule', 'page.tsx'),
 ];
 
 const G9_COOKIE_IDENTIFIERS = ['hasUnlockCookie', 'readCompletedLessonIds', 'readProgressRows', 'readReviewStates', 'readLessonNote', 'cookies('];
@@ -494,9 +495,10 @@ if (fs.existsSync(DASHBOARD_SEGMENT_PATH)) {
 // T-03-01). /curriculum은 08-06이 정적으로 전환해 두 식별자가 사라졌으므로
 // 08-02에서 이미 뺐다 — 그 계약은 G9의 STATIC_SHELL_PAGES로 옮겨갔다 ---
 
+// /schedule은 no-deadline 결정으로 제거됐으므로 쿠키 게이트 순서 계약 대상도
+// 홈(/)만 남는다.
 const G17_GATED_PAGES = [
   path.join(ROOT, 'src', 'app', 'page.tsx'),
-  path.join(ROOT, 'src', 'app', 'schedule', 'page.tsx'),
 ];
 
 for (const pagePath of G17_GATED_PAGES) {
@@ -670,14 +672,16 @@ if (sectionTapeSource === null) {
 }
 
 // scroll-to-top.tsx(quick 260831-rly)·reading-progress.tsx(quick 260904-a1o)·
-// bookmark-button.tsx도 window 스크롤 리스너를 갖는다 — 단, section-tape와 같은
-// rAF 배칭 계약(rAF/cancelRAF 존재 + rAF 정의가 리스너 등록보다 앞)을 지켜야
-// 허용된다. 무조건 허용하는 대신 같은 검사를 각 파일에 적용한다(quick 260901-etq가
-// 세운 전례). 새 파일이 스크롤 리스너를 들이면 이 목록에 없어 아래 스캔이 잡는다.
+// bookmark-button.tsx·roadmap/lesson-toc.tsx도 window 스크롤 리스너를 갖는다 —
+// 단, section-tape와 같은 rAF 배칭 계약(rAF/cancelRAF 존재 + rAF 정의가 리스너
+// 등록보다 앞)을 지켜야 허용된다. 무조건 허용하는 대신 같은 검사를 각 파일에
+// 적용한다(quick 260901-etq가 세운 전례). 새 파일이 스크롤 리스너를 들이면 이
+// 목록에 없어 아래 스캔이 잡는다.
 const THROTTLED_SCROLL_ALLOWLIST = [
   path.join(ROOT, 'src', 'components', 'scroll-to-top.tsx'),
   path.join(ROOT, 'src', 'components', 'reading-progress.tsx'),
   path.join(ROOT, 'src', 'components', 'bookmark-button.tsx'),
+  path.join(ROOT, 'src', 'components', 'roadmap', 'lesson-toc.tsx'),
 ];
 for (const allowedPath of THROTTLED_SCROLL_ALLOWLIST) {
   const source = readFileIfExists(allowedPath);
