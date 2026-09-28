@@ -689,6 +689,26 @@ if (scrollTopSource !== null) {
   }
 }
 
+// bookmark-button.tsx(quick 260902-bkm)도 window 스크롤 리스너를 갖는다 — 현재
+// 소제목을 추적하려고 스크롤 위치를 읽는다. scroll-to-top와 동일하게 rAF 배칭
+// 계약(rAF/cancelRAF 존재 + rAF 정의가 리스너 등록보다 앞)을 이 파일에도
+// 적용해서 무조건 허용이 아니라 실제 스로틀을 확인한 뒤 예외 처리한다.
+const BOOKMARK_BUTTON_PATH = path.join(ROOT, 'src', 'components', 'bookmark-button.tsx');
+const bookmarkButtonSource = readFileIfExists(BOOKMARK_BUTTON_PATH);
+if (bookmarkButtonSource !== null) {
+  const codeOnly = stripJsLineComments(bookmarkButtonSource);
+  if (/window\.addEventListener\(\s*["']scroll["']/.test(codeOnly)) {
+    const rafIdx = codeOnly.indexOf('requestAnimationFrame');
+    const cancelRafIdx = codeOnly.indexOf('cancelAnimationFrame');
+    const listenerIdx = codeOnly.indexOf('addEventListener');
+    if (rafIdx === -1 || cancelRafIdx === -1 || rafIdx >= listenerIdx) {
+      fail(
+        `G22 failed: ${path.relative(ROOT, BOOKMARK_BUTTON_PATH)} must throttle its scroll listener with requestAnimationFrame/cancelAnimationFrame defined before addEventListener`,
+      );
+    }
+  }
+}
+
 const SCROLL_LISTENER_SCAN_FILES = walkFiles(SRC_DIR, /\.tsx$/);
 const filesWithScrollListener = [];
 
@@ -703,7 +723,8 @@ for (const filePath of SCROLL_LISTENER_SCAN_FILES) {
 const unexpectedScrollListenerFiles = filesWithScrollListener.filter(
   (relPath) =>
     relPath !== path.relative(ROOT, SECTION_TAPE_PATH) &&
-    relPath !== path.relative(ROOT, SCROLL_TO_TOP_PATH),
+    relPath !== path.relative(ROOT, SCROLL_TO_TOP_PATH) &&
+    relPath !== path.relative(ROOT, BOOKMARK_BUTTON_PATH),
 );
 
 if (unexpectedScrollListenerFiles.length > 0) {
