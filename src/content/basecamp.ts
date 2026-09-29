@@ -210,6 +210,43 @@ export const basecampSteps: readonly BasecampStep[] = [
       },
     ],
   },
+  {
+    no: 5,
+    weekLabel: "4주차",
+    title: "엑셀 자동화",
+    summary:
+      "그동안 배운 파이썬으로 매주 반복되는 엑셀 업무를 자동화합니다. 함수와 리스트, 딕셔너리로 표 데이터를 다루고, 엑셀과 CSV 파일을 읽고 쓰고, 예외처리로 깨진 파일에도 멈추지 않는 정리 툴을 만든 뒤, AI에게 기능을 요청해 붙이고 결과를 검증합니다.",
+    released: true,
+    officialUrl: `${OFFICIAL_BASE}3ea2dc3e-f514-80f4-9b11-f8d64e127d0f`,
+    items: [
+      {
+        id: "s4-data",
+        title: "파이썬으로 데이터 담고 다루기",
+        kind: "lesson",
+        officialUrl: `${OFFICIAL_BASE}3ea2dc3e-f514-8099-93cc-dcb9d8a8da89`,
+        summary:
+          "함수로 반복 계산에 이름을 붙이고, \"4,500\"처럼 글자로 된 숫자와 앞뒤 공백을 정리하고, 리스트와 딕셔너리로 엑셀 표를 담아 지점별 합계(SUMIF)를 구합니다.",
+        ourLessonHref: "/basecamp/python-excel-data-basics",
+      },
+      {
+        id: "s4-files",
+        title: "엑셀 파일 읽고 쓰기, 멈추지 않는 코드 만들기",
+        kind: "lesson",
+        officialUrl: `${OFFICIAL_BASE}3ea2dc3e-f514-80f7-8e40-fdf5d82a372d`,
+        summary:
+          "실습 파일을 Colab에 올리고, openpyxl과 csv로 엑셀과 CSV를 읽고 새 엑셀 파일로 저장합니다. 에러 메시지 읽는 법과 try/except로 깨진 파일은 건너뛰고 기록하는 법을 익힙니다.",
+        ourLessonHref: "/basecamp/python-excel-files-exceptions",
+      },
+      {
+        id: "s4-final",
+        title: "나만의 엑셀 자동 정리 툴 만들기",
+        kind: "assignment",
+        officialUrl: `${OFFICIAL_BASE}3ea2dc3e-f514-8035-aee8-edff6adba970`,
+        summary:
+          "업무를 단계로 쪼개고 빈칸 7개를 채워 지점 파일 정리 툴을 완성합니다. 새 지점 파일을 넣고 다시 실행해 보고, AI에게 품목별 합계 기능을 요청해 붙인 뒤 결과를 코드로 검증해 Colab 링크로 제출합니다.",
+      },
+    ],
+  },
 ];
 
 /** 공식 선행 과제 모음(전체 인덱스) 링크. */
@@ -314,12 +351,38 @@ export const step3ChatbotLessons: readonly BasecampPrepLesson[] = [
   },
 ];
 
+/** STEP 3 최종 과제(Q&A 챗봇) 공식 페이지. STEP 4가 지금 집중이 된 뒤 지난 주차의
+ *  STEP 3 보강 묶음에 거는 링크. */
+export const STEP3_CHATBOT_URL = `${OFFICIAL_BASE}3e22dc3e-f514-808e-bd68-c794154bcef7`;
+
+/** STEP 4(엑셀 자동화) 최종 과제를 서점 예시로 함께 만들며 익히는 보강 레슨 묶음.
+ *  STEP 3 보강과 같은 빌드-얼롱 형식이다. 공식 과제는 빈칸 채우기라, 같은 흐름을
+ *  다른 데이터로 끝까지 완성해 보고 공식 빈칸은 스스로 채우도록 넘긴다(2026-09-29).
+ *  완료 체크박스는 이 섹션 자체 카운터로만 센다. */
+export const step4AutomationLessons: readonly BasecampPrepLesson[] = [
+  {
+    id: "s4build-merge",
+    title: "엑셀 자동 정리 툴 만들기 (1) 업무 쪼개기부터 파일 합치기까지",
+    summary:
+      "손으로 하던 업무를 규칙과 판단으로 나누고, 정리 함수와 읽기 함수를 만든 뒤, 깨진 파일이 섞인 폴더 전체를 한 번에 합칩니다.",
+    href: "/basecamp/python-excel-automation-build",
+  },
+  {
+    id: "s4build-report",
+    title: "엑셀 자동 정리 툴 만들기 (2) 결과 파일, AI로 기능 더하고 검증하기",
+    summary:
+      "지점별 합계와 시트 세 개짜리 결과 파일을 만들고, 새 파일을 넣어 다시 실행한 뒤, AI에게 기능을 요청해 붙이고 코드로 검증합니다.",
+    href: "/basecamp/python-excel-automation-report",
+  },
+];
+
 /** action 검증용 — 알려진 항목 id 집합(임의 id로 진도 행이 생기는 것을 막는다).
  *  STEP 항목 id와 보강 레슨 id를 모두 포함한다(둘 다 toggleBasecampItem을 쓴다). */
 export const basecampItemIds: ReadonlySet<string> = new Set([
   ...basecampSteps.flatMap((step) => step.items.map((item) => item.id)),
   ...step2AdvancedPrepLessons.map((lesson) => lesson.id),
   ...step3ChatbotLessons.map((lesson) => lesson.id),
+  ...step4AutomationLessons.map((lesson) => lesson.id),
 ]);
 
 /** 진도 접두사를 붙인 저장 id. */

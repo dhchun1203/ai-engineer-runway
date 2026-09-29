@@ -15,6 +15,8 @@ import {
   STEP2_ADVANCED_URL,
   step2AdvancedPrepLessons,
   step3ChatbotLessons,
+  STEP3_CHATBOT_URL,
+  step4AutomationLessons,
   type BasecampStep,
 } from "@/content/basecamp";
 
@@ -102,32 +104,31 @@ export default async function BasecampPage() {
         />
       </section>
 
-      {/* STEP 3 과제 보강 — 최종 과제(Q&A 챗봇)를 세 편에 걸쳐 직접 만들며 필요한
-          개념을 중간중간 익히는 빌드-얼롱 레슨 묶음. 지금 집중(STEP 3) 바로 아래 둔다.
-          완료 체크박스는 이 섹션 자체 카운터로만 센다(STEP의 "N/M 완료"와 분리). */}
+      {/* STEP 4 과제 보강 — 최종 과제(엑셀 자동 정리 툴)를 서점 예시로 두 편에 걸쳐
+          직접 만들며 필요한 개념을 중간중간 익히는 빌드-얼롱 레슨 묶음. 지금 집중(STEP 4)
+          바로 아래 둔다. 완료 체크박스는 이 섹션 자체 카운터로만 센다(STEP의 "N/M 완료"와 분리). */}
       <section className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
           <span className="w-fit text-label font-bold text-accent dark:text-accent-dark">
-            STEP 3 과제 보강
+            STEP 4 과제 보강
           </span>
-          <h2 className="text-heading font-extrabold break-keep">Q&A 챗봇 함께 만들기</h2>
+          <h2 className="text-heading font-extrabold break-keep">엑셀 자동 정리 툴 함께 만들기</h2>
           <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-            STEP 3 최종 과제인 Q&A 챗봇을 세 편에 걸쳐 직접 만들며, 필요한 개념을 그때그때
-            익히는 레슨입니다. 예시 데이터로 챗봇을 처음부터 끝까지 완성한 뒤, 여러분이 고른
-            데이터로 바꿔 과제로 제출하면 됩니다. 4편과 5편은 공식 2단계의 선택 심화(A: 더
-            똑똑하게, B: UX 다듬기)로, 둘 중 하나를 골라 진행하세요.
+            STEP 4 최종 과제인 엑셀 자동 정리 툴을 두 편에 걸쳐 직접 만들며, 필요한 개념을
+            그때그때 익히는 레슨입니다. 서점 지점 파일로 툴을 처음부터 끝까지 완성해 본 뒤,
+            공식 과제의 카페 데이터로 빈칸을 스스로 채워 제출하면 됩니다.
           </p>
         </div>
         <BasecampPrepChecklist
-          lessons={step3ChatbotLessons}
-          initialDoneIds={prepDoneIds(step3ChatbotLessons)}
+          lessons={step4AutomationLessons}
+          initialDoneIds={prepDoneIds(step4AutomationLessons)}
           unlocked={unlocked}
         />
       </section>
 
       {/* 지난 주차 — 끝났거나 지난 STEP은 접힌 한 줄로. 누르면 그 자리에서 펼쳐 복습.
-          STEP 3가 지금 집중이 된 뒤, STEP 2 과제 보강도 여기에 접힌 행으로 함께 둔다
-          (사용자 요청 2026-09-21). */}
+          지금 집중이 바뀔 때마다 직전 STEP의 과제 보강도 여기에 접힌 행으로 내려온다
+          (STEP 2 보강은 2026-09-21, STEP 3 보강은 2026-09-29). */}
       {pastSteps.length > 0 ? (
         <section className="flex flex-col gap-3">
           <span className="text-label font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark">
@@ -142,6 +143,17 @@ export default async function BasecampPage() {
                 unlocked={unlocked}
               />
             ))}
+            {/* STEP 3 과제 보강 — 지난 주차로 내려온 접이식 보강 묶음(최근 것이 위). */}
+            <BasecampPastPrep
+              label="STEP 3 과제 보강"
+              title="Q&A 챗봇 함께 만들기"
+              description="STEP 3 최종 과제인 Q&A 챗봇을 직접 만들며 필요한 개념을 그때그때 익히는 레슨입니다. 1~3편이 기본이고, 4편과 5편은 공식 2단계의 선택 심화(A: 더 똑똑하게, B: UX 다듬기)입니다."
+              officialUrl={STEP3_CHATBOT_URL}
+              officialLabel="공식 챗봇 과제 열기"
+              lessons={step3ChatbotLessons}
+              initialDoneIds={prepDoneIds(step3ChatbotLessons)}
+              unlocked={unlocked}
+            />
             {/* STEP 2 과제 보강 — 지난 주차로 내려온 접이식 보강 묶음. */}
             <BasecampPastPrep
               label="STEP 2 과제 보강"
