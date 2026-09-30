@@ -6,7 +6,10 @@
 // orderedSlugs 인자 순서에서 파생된다(D-32/D-33). SCHEDULE_START·DOUBLE_LESSON_DATES만
 // 상수로 고정한다.
 export const SCHEDULE_START = '2026-08-28';
-export const COURSE_START_DATE = '2026-09-30';
+// 실제 개강일. 사전학습 일정(SCHEDULE_START~9/29)은 처음 계획한 9/30 개강에 맞춰
+// 짜였지만 개강이 10/26으로 정해졌다(사용자 확인 2026-10-01). 일정이 끝난 뒤
+// 이날 전까지는 홈이 "개강했어요"가 아니라 "사전학습 일정 완료" 상태를 보인다.
+export const COURSE_START_DATE = '2026-10-26';
 
 // 사용자가 2026-08-26에 학습 시작일을 8/25 → 8/28로 옮기기로 결정했다. 8/28~9/29는
 // 33일이다.

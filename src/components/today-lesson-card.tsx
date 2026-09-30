@@ -4,7 +4,7 @@ import type { StepId } from "@/content/modules";
 import type { getLessonBySlug } from "@/content/curriculum-helpers";
 import { DepthBadge } from "@/components/depth-badge";
 import { EstimatedTime } from "@/components/estimated-time";
-import { SCHEDULE_START } from "@/lib/schedule";
+import { SCHEDULE_START, COURSE_START_DATE } from "@/lib/schedule";
 
 // 홈의 오늘 배정 레슨 카드 — progress-summary.tsx와 같은 형태의 서버 렌더 가능한
 // 순수 표현 컴포넌트. 데이터 조회를 스스로 하지 않고 홈 페이지가 계산한
@@ -14,7 +14,13 @@ import { SCHEDULE_START } from "@/lib/schedule";
 // 반환 타입에서 파생한다(progress.ts와 같은 경계).
 type Lesson = NonNullable<ReturnType<typeof getLessonBySlug>>;
 
-export type TodayCardState = "before-start" | "assigned" | "buffer" | "after-range" | "celebration";
+export type TodayCardState =
+  | "before-start"
+  | "assigned"
+  | "buffer"
+  | "before-course"
+  | "after-range"
+  | "celebration";
 
 export type TomorrowInfo =
   | { kind: "lesson"; slug: string; title: string }
@@ -83,6 +89,10 @@ export function TodayLessonCard({
   if (state === "before-start") {
     heading = "곧 시작해요";
     body = `사전학습은 ${SCHEDULE_START}부터 시작됩니다.`;
+    cta = { href: "/basecamp", label: "베이스캠프 보기" };
+  } else if (state === "before-course") {
+    heading = "사전학습 일정을 마쳤어요";
+    body = `개강(${COURSE_START_DATE})까지 베이스캠프 과제와 복습으로 기초를 다져 보세요.`;
     cta = { href: "/basecamp", label: "베이스캠프 보기" };
   } else if (state === "after-range") {
     heading = "개강했어요!";

@@ -10,7 +10,7 @@ import { readReviewStates } from "@/lib/review-store";
 import { computeDueLessons, nextDueDate } from "@/lib/review";
 import { overallProgress, nextIncompleteLesson } from "@/lib/progress";
 import { todayInSeoul, daysUntil } from "@/lib/today";
-import { SCHEDULE_START, rowsForDate, firstRowAfter } from "@/lib/schedule";
+import { SCHEDULE_START, COURSE_START_DATE, rowsForDate, firstRowAfter } from "@/lib/schedule";
 import { getScheduleRows } from "@/lib/schedule-data";
 import { getLessonBySlug } from "@/content/curriculum-helpers";
 import { BasecampPriorityCard } from "@/components/basecamp/basecamp-priority-card";
@@ -72,6 +72,10 @@ export default async function Home() {
     state = todayRows[0].isBuffer ? "buffer" : "assigned";
   } else if (today < SCHEDULE_START) {
     state = "before-start";
+  } else if (today < COURSE_START_DATE) {
+    // 사전학습 일정은 끝났지만 아직 개강 전 — 일정이 옛 개강 계획(9/30)에 맞춰
+    // 짜여 있어서 이 구간이 생긴다.
+    state = "before-course";
   } else {
     state = "after-range";
   }

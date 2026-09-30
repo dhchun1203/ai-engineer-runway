@@ -48,7 +48,7 @@ const UNLOCK_COOKIE_NAME = 'runway_unlock';
 // schedule.ts는 import가 0개인 순수 모듈이라 Node 22.6+ 타입 스트리핑으로 트랜스파일러
 // 없이 그대로 동적 import할 수 있다(check-schedule.mjs가 이미 쓰는 패턴).
 const SCHEDULE_TS_PATH = path.join(ROOT, 'src', 'lib', 'schedule.ts');
-const { SCHEDULE_START, DOUBLE_LESSON_DATES, SCHEDULE_SPAN_DAYS } = await import(pathToFileURL(SCHEDULE_TS_PATH).href);
+const { SCHEDULE_START, COURSE_START_DATE, DOUBLE_LESSON_DATES, SCHEDULE_SPAN_DAYS } = await import(pathToFileURL(SCHEDULE_TS_PATH).href);
 
 const PORT = process.env.E2E_PORT ? Number(process.env.E2E_PORT) : 3211;
 const HOST = '127.0.0.1';
@@ -301,6 +301,10 @@ async function main() {
       } else if (today < SCHEDULE_START) {
         if (!body.includes('곧 시작해요')) {
           throw new FatalError('시나리오 t2 실패 — 시작 전(before-start) 상태 문구가 없습니다');
+        }
+      } else if (today < COURSE_START_DATE) {
+        if (!body.includes('사전학습 일정을 마쳤어요')) {
+          throw new FatalError('시나리오 t2 실패 — 일정 종료 후 개강 전(before-course) 상태 문구가 없습니다');
         }
       } else {
         if (!body.includes('개강했어요!')) {
