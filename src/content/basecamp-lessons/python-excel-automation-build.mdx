@@ -41,15 +41,75 @@ slug: "python-excel-automation-build"
 
 ### 재료 파일 만들기
 
-새 Colab 노트를 만들어 주세요. 첫 칸에 [엑셀 파일 읽고 쓰기 레슨](/basecamp/python-excel-files-exceptions)의 "우리 레슨의 준비 칸"을 그대로 붙여 넣어 실행하면 돼요.
+공식 과제는 실습 zip 파일(카페 지점 파일)을 올리고 시작하죠. 이 보강 레슨에서는 그 파일을 쓰지 않고, 같은 구성의 서점 지점 파일을 코드로 직접 만들어 써요. 공식 과제와 다른 데이터로 한 번 끝까지 만들어 봐야, 공식 과제의 빈칸은 스스로 채울 수 있거든요.
 
-아래 목록이 찍히면 준비 완료예요.
+새 Colab 노트를 만들고 첫 칸에 아래를 붙여 넣어 실행하세요. 지금 이 코드를 다 이해할 필요는 없어요. 절반쯤은 [엑셀 파일 읽고 쓰기 레슨](/basecamp/python-excel-files-exceptions)에서 배운 "엑셀 쓰기" 코드예요.
+
+```python
+# 준비 칸: 노트를 열 때마다 맨 처음 한 번 실행하세요
+import csv
+from pathlib import Path
+from openpyxl import Workbook
+
+Path("data").mkdir(exist_ok=True)          # data 폴더 만들기
+Path("추가파일").mkdir(exist_ok=True)       # 추가파일 폴더 만들기
+header = ["날짜", "지점", "분야", "권수", "가격"]
+
+def make_xlsx(path, rows):
+    wb = Workbook()
+    sheet = wb.active
+    sheet.append(header)
+    for row in rows:
+        sheet.append(row)
+    wb.save(path)
+
+# 종로점: 깔끔한 엑셀 파일
+make_xlsx("data/종로점.xlsx", [
+    ["2026-10-05", "종로점", "소설", 12, 15000],
+    ["2026-10-05", "종로점", "에세이", 8, 13000],
+    ["2026-10-05", "종로점", "IT", 5, 32000],
+])
+# 신촌점: 숫자가 "15,000" 같은 글자로, 분야 앞뒤에 공백이 있는 파일
+make_xlsx("data/신촌점.xlsx", [
+    ["2026-10-05", "신촌점", " 소설 ", "20", "15,000"],
+    ["2026-10-05", "신촌점", " 에세이", "6", "13,000"],
+    ["2026-10-05", "신촌점", "IT ", "9", "32,000"],
+])
+# 해운대점: 엑셀이 아닌 CSV 파일
+with open("data/해운대점.csv", "w", encoding="utf-8-sig", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(header)
+    writer.writerow(["2026-10-05", "해운대점", "소설", 15, 15000])
+    writer.writerow(["2026-10-05", "해운대점", "에세이", 10, 13000])
+    writer.writerow(["2026-10-05", "해운대점", "IT", 3, 32000])
+# 광주점: 이름만 .xlsx 이고 속은 깨진 파일 (예외처리 연습용)
+Path("data/광주점.xlsx").write_text("이 파일은 일부러 깨뜨린 파일이에요")
+# 대구점: 다음 주에 새로 도착할 파일 (과제 보강 레슨에서 사용)
+make_xlsx("추가파일/대구점.xlsx", [
+    ["2026-10-05", "대구점", "소설", 7, 15000],
+    ["2026-10-05", "대구점", "에세이", 11, 13000],
+    ["2026-10-05", "대구점", "IT", 4, 32000],
+])
+print(sorted(p.name for p in Path("data").iterdir()))
+```
+
+마지막에 이 줄이 보이면 준비 완료예요.
 
 ```text
 ['광주점.xlsx', '신촌점.xlsx', '종로점.xlsx', '해운대점.csv']
 ```
 
-공식 과제에서는 이 단계가 실습 zip 파일을 올리는 준비 칸이에요. 그 칸이 무슨 일을 하는지도 같은 레슨에서 한 줄씩 풀어 뒀어요.
+만들어진 파일은 공식 실습 파일과 구성이 똑같아요.
+
+| 폴더 | 서점 파일 | 어떤 파일인가요 | 공식 실습 파일에서는 |
+| --- | --- | --- | --- |
+| data | 종로점.xlsx | 깔끔한 엑셀 파일 | 강남점.xlsx |
+| data | 신촌점.xlsx | 숫자가 "15,000" 같은 글자로, 분야 앞뒤에 공백 | 홍대점.xlsx |
+| data | 해운대점.csv | 엑셀이 아닌 CSV 파일 | 부산점.csv |
+| data | 광주점.xlsx | 일부러 깨뜨린 파일 | 대전점.xlsx |
+| 추가파일 | 대구점.xlsx | 다음 주에 새로 도착할 파일 | 판교점.xlsx |
+
+공식 과제의 준비 칸(zip 올리기)은 [엑셀 파일 읽고 쓰기 레슨](/basecamp/python-excel-files-exceptions)에서 한 줄씩 풀어 뒀어요. 그 칸을 실행하면 `/content/step4`로 이동하지만, 이 준비 칸은 Colab 기본 위치(`/content`)에 바로 폴더를 만들어요. 그래서 이 레슨의 코드도 `data` 폴더를 그대로 찾을 수 있어요.
 
 ### 도구 불러오기
 
