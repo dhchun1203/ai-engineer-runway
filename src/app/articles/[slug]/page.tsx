@@ -16,7 +16,10 @@ import { TermPanelProvider, Term } from "@/components/roadmap/term-panel";
 import type { ComponentType } from "react";
 
 // 아티클 상세 — 완전 정적. basecamp/[slug] 리더와 같은 셸에 출처, 원문 열기,
-// 세 줄 요약 카드, 함께 보기를 얹는다. 진도와 복습은 없다(격리 컬렉션).
+// 세 줄 요약, 함께 보기를 얹는다. 진도와 복습은 없다(격리 컬렉션).
+// 지면은 목록(/articles)과 같은 신문 컨셉이다: 이중 괘선 아래 꼬리표와 명조 제목,
+// 바이라인 줄, 요약 상자, 굵은 괘선으로 나뉜 소제목, 끝 표시. 본문은 읽기 편하도록
+// 한 단으로 둔다. 형태 규칙은 globals.css의 .news-* 클래스에 있다.
 
 const ARTICLE_BODY_ID = "article-body";
 
@@ -59,29 +62,39 @@ export default async function ArticlePage({
             <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
             아티클
           </Link>
-          <h1 className="text-display font-black break-keep">{article.title}</h1>
-          <p className="break-keep text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
-            <span>{article.source}</span>
-            {article.author ? <span>, {article.author}</span> : null}
-            <span className="mx-2" aria-hidden="true">|</span>
-            <span>{formatKoreanDate(article.publishedAt)}</span>
-          </p>
-          <p lang="en" className="break-words text-label font-normal text-muted dark:text-muted-dark">
-            원제: {article.originalTitle}
-          </p>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="chip text-label font-bold">아티클</span>
+
+          {/* 신문 기사 머리: 이중 괘선 아래 분야 꼬리표, 명조 제목, 원제(부제), 바이라인 줄. */}
+          <div className="news-sheet flex flex-col gap-4 pt-5">
+            <div className="flex flex-wrap items-center gap-x-4">
               {article.tags.map((tag) => (
                 <Link
                   key={tag}
                   href={`/articles?tag=${encodeURIComponent(tag)}`}
-                  className="tap-feedback inline-flex min-h-11 items-center"
+                  className="news-kicker-link tap-feedback inline-flex min-h-11 items-center text-label font-bold text-action dark:text-action-dark"
                 >
-                  <span className="chip text-label font-semibold">{tag}</span>
+                  {tag}
                 </Link>
               ))}
-              <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            </div>
+            <h1 className="news-serif -mt-2 text-display font-black break-keep">{article.title}</h1>
+            {/* 기울임은 영어 원제에만 — 한글은 기울임 자형이 없어 억지로 비스듬해진다. */}
+            <p className="news-serif break-words text-subhead font-normal text-muted dark:text-muted-dark">
+              원제:{" "}
+              <span lang="en" className="italic">
+                {article.originalTitle}
+              </span>
+            </p>
+            {/* 바이라인은 두 줄로 고정한다. 한 줄에 몰면 좁은 화면에서 "| 약 10분 읽기"처럼
+                구분선을 단 채 다음 줄로 넘어간다. */}
+            <div className="flex flex-col gap-0.5 border-y border-line py-3 text-label dark:border-line-dark">
+              <span className="font-bold break-keep">
+                {article.author ? `${article.source}, ${article.author}` : article.source}
+              </span>
+              <span className="font-semibold text-muted dark:text-muted-dark">
+                {formatKoreanDate(article.publishedAt)}
+                <span className="mx-2" aria-hidden="true">
+                  |
+                </span>
                 약 {article.readingMinutes}분 읽기
               </span>
             </div>
@@ -103,18 +116,20 @@ export default async function ArticlePage({
         </header>
 
         {/* 용어 패널 프로바이더로 본문을 감싼다. 본문 안 <Term>이 우측 설명 패널을
-            연다(로드맵 레슨과 같은 부품, 공용 용어 사전). */}
+            연다(로드맵 레슨과 같은 부품, 공용 용어 사전). news-article은 신문 지면용
+            본문 덧칠(globals.css)이다. */}
         <TermPanelProvider>
-        <div id={ARTICLE_BODY_ID} className="prose dark:prose-invert max-w-none">
-          <div className="not-prose panel flex flex-col gap-2 p-5">
-            <p className="text-label font-bold text-accent dark:text-accent-dark">세 줄 요약</p>
-            <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-body leading-relaxed break-keep">
+        <div id={ARTICLE_BODY_ID} className="news-article prose dark:prose-invert max-w-none">
+          <div className="news-summary not-prose flex flex-col gap-3 py-5">
+            <p className="text-label font-bold">세 줄 요약</p>
+            <ol className="news-serif flex list-decimal flex-col gap-2 pl-6 text-subhead leading-relaxed break-keep">
               {article.summary.map((line) => (
                 <li key={line}>{line}</li>
               ))}
             </ol>
           </div>
           <MDXContent code={article.code} components={{ Term: Term as ComponentType }} />
+          <span className="news-endmark not-prose" aria-hidden="true" />
         </div>
         </TermPanelProvider>
 

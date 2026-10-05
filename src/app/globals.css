@@ -2657,3 +2657,102 @@ code[data-theme*=" "] span {
     text-underline-offset: 0.18em;
   }
 }
+
+/* ── 아티클 기사 페이지: 신문 지면 (2026-10-06) ─────────────────────────────
+   목록과 같은 신문 컨셉을 기사 본문에 입힌다. .prose(레슨 공용 읽기 규칙) 위에
+   .news-article을 함께 붙여 덧칠만 한다 — 레슨 화면에는 아무 영향이 없다.
+   명시도는 `.news-article.prose ...`로 .prose 규칙(0,1,x)보다 한 단계 높게 잡는다.
+
+   가독성 결정:
+   - 본문은 한 단. 신문처럼 여러 단으로 나누면 화면에서는 위아래로 오가며 읽어야 한다.
+   - 글자는 17px(subhead 토큰) 명조, 줄 간격 1.85. 아이패드 세로 기준 한 줄 40자 안팎.
+   - 문단 간격(1.5em)은 줄 사이 여백보다 확실히 넓고, 레슨의 2.4em보다는 촘촘하게 둬서
+     기사처럼 이어 읽히게 한다. 소제목 위 간격은 그보다 크게 둬 위계를 지킨다. */
+.news-article.prose {
+  font-size: var(--text-subhead);
+  line-height: 1.85;
+}
+
+.news-article.prose > p {
+  margin-block: 1.5em;
+}
+
+.news-article.prose > ul > li,
+.news-article.prose > ol > li {
+  margin-block: 0.5em;
+}
+
+/* 소제목 — 산세를 못박는 element 규칙을 이겨 명조로, 위에는 굵은 잉크 괘선.
+   첫 소제목도 같은 괘선을 둔다(요약 상자와 본문을 가르는 선이 된다). */
+.news-article.prose h2,
+.news-article.prose h3,
+.news-article.prose h4 {
+  font-family: var(--font-serif-latin), var(--font-serif-ko), var(--font-pretendard), ui-serif,
+    Georgia, serif;
+}
+
+.news-article.prose > h2,
+.news-article.prose > h2:first-of-type {
+  border-top: 2px solid var(--color-foreground);
+  padding-top: 0.9em;
+  margin-top: 2.6em;
+  margin-bottom: 0.4em;
+  font-weight: 800;
+}
+
+.dark .news-article.prose > h2,
+.dark .news-article.prose > h2:first-of-type {
+  border-top-color: var(--color-foreground-dark);
+}
+
+.news-article.prose > h3 {
+  margin-top: 2em;
+  margin-bottom: 0.2em;
+  font-weight: 800;
+}
+
+/* 세 줄 요약 — 그림자 패널 대신 신문의 요약 상자: 위에 굵은 잉크 괘선. 아래 선은
+   두지 않는다 — 바로 다음 소제목의 괘선이 상자를 닫아, 선이 두 겹으로 겹치지 않는다. */
+.news-summary {
+  border-top: 3px solid var(--color-foreground);
+}
+
+.dark .news-summary {
+  border-top-color: var(--color-foreground-dark);
+}
+
+.news-summary li::marker {
+  color: var(--color-action);
+  font-weight: 800;
+}
+
+.dark .news-summary li::marker {
+  color: var(--color-action-dark);
+}
+
+/* 기사 끝 표시 — 신문 기사 마지막의 작은 검은 네모. 글리프(■)는 서브셋 폰트에 없을 수
+   있어 글자 대신 칠한 상자로 그린다. */
+.news-endmark {
+  display: block;
+  width: 0.6rem;
+  height: 0.6rem;
+  margin-top: 2rem;
+  margin-left: auto;
+  background-color: var(--color-foreground);
+}
+
+.dark .news-endmark {
+  background-color: var(--color-foreground-dark);
+}
+
+@media (hover: hover) {
+  .news-kicker-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+}
+
+/* 요약 상자 바로 다음 첫 소제목은 상자 안 여백(py-5)이 이미 있으니 위 간격을 줄인다. */
+.news-article.prose > .news-summary + h2 {
+  margin-top: 1.2em;
+}
