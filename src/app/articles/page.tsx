@@ -4,6 +4,7 @@ import {
   formatKoreanDate,
   getSortedArticles,
   getUsedTags,
+  type Article,
 } from "@/content/article-helpers";
 import { isArticleTag } from "@/content/article-tags";
 
@@ -16,6 +17,10 @@ export const metadata: Metadata = {
 // 아티클 목록 — 태그 필터를 쿼리스트링(?tag=)으로 받으므로 요청마다 렌더링된다
 // (Next 16: searchParams를 읽으면 동적 렌더). DB 조회는 없고 velite 데이터만 거른다.
 // 필터는 링크 이동이라 클라이언트 JS가 필요 없다.
+//
+// 헤더와 필터는 다른 페이지와 같은 모양을 쓰고, 기사 목록만 신문 지면처럼 짠다:
+// 가장 최근 기사는 머리기사로 크게, 나머지는 세로 괘선으로 나뉜 단(段)에 흘려 넣는다.
+// 형태 규칙은 globals.css의 .news-* 클래스에 있다.
 export default async function ArticlesPage({
   searchParams,
 }: {
@@ -26,6 +31,7 @@ export default async function ArticlesPage({
   const activeTag = typeof tag === "string" && isArticleTag(tag) ? tag : null;
   const list = activeTag ? all.filter((a) => a.tags.includes(activeTag)) : all;
   const usedTags = getUsedTags(all);
+  const [lead, ...rest] = list;
 
   const chipClass = (active: boolean) =>
     `${active ? "chip-solid" : "chip"} tap-feedback inline-flex min-h-11 items-center text-label font-semibold`;
@@ -60,42 +66,97 @@ export default async function ArticlesPage({
         </nav>
       ) : null}
 
-      {list.length === 0 ? (
+      {lead === undefined ? (
         <p className="panel p-5 text-body break-keep text-badge-neutral-text dark:text-badge-neutral-text-dark">
           아직 모은 기사가 없어요.
         </p>
       ) : (
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {list.map((article) => (
-            <li key={article.slug}>
-              <Link
-                href={article.permalink}
-                className="card-interactive panel flex h-full min-h-11 flex-col gap-2 p-5 transition-colors duration-150"
-              >
-                <span className="text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark">
-                  {article.source}
-                  <span className="mx-2" aria-hidden="true">|</span>
-                  {formatKoreanDate(article.publishedAt)}
-                </span>
-                <span className="text-heading font-extrabold break-keep">{article.title}</span>
-                <span className="text-body font-normal leading-relaxed break-keep text-badge-neutral-text dark:text-badge-neutral-text-dark">
-                  {article.summary[0]}
-                </span>
-                <span className="mt-auto flex flex-wrap gap-1.5 pt-1">
-                  {article.tags.map((t) => (
-                    <span key={t} className="chip text-label font-semibold">
-                      {t}
-                    </span>
-                  ))}
-                  {article.origin === "auto" ? (
-                    <span className="text-label font-normal text-muted dark:text-muted-dark">자동 수집</span>
-                  ) : null}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="news-sheet flex flex-col gap-8 pt-6">
+          <LeadStory article={lead} />
+          {rest.length > 0 ? (
+            // 2단은 기사가 2편 이상일 때만 — 1편을 2단에 넣으면 오른쪽 단이 통째로 빈다.
+            <ul className={`news-columns columns-1 gap-x-8 ${rest.length > 1 ? "md:columns-2" : ""}`}>
+              {rest.map((article) => (
+                <li
+                  key={article.slug}
+                  className="mb-6 break-inside-avoid border-b border-line pb-6 dark:border-line-dark"
+                >
+                  <Story article={article} />
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
       )}
     </main>
+  );
+}
+
+/** 분야 꼬리표 — 신문 기사 제목 위의 작은 '키커'. 자동 수집 표시는 바이라인이 아니라
+ *  여기 오른쪽에 둔다(바이라인이 길어져 좁은 단에서 줄이 넘치지 않게). */
+function Kicker({ article }: { article: Article }) {
+  return (
+    <span className="flex flex-wrap items-baseline justify-between gap-x-3 text-label">
+      <span className="font-bold text-action dark:text-action-dark">{article.tags.join(", ")}</span>
+      {article.origin === "auto" ? (
+        <span className="font-normal text-muted dark:text-muted-dark">자동 수집</span>
+      ) : null}
+    </span>
+  );
+}
+
+/** 출처, 원문 날짜, 읽는 시간 — 기사 아래 바이라인 줄. 줄이 넘칠 때 한 항목 안에서
+ *  갈라지지 않도록, 항목마다 줄바꿈을 막고 항목 사이에서만 넘긴다. */
+function Byline({ article }: { article: Article }) {
+  const parts = [article.source, formatKoreanDate(article.publishedAt), `약 ${article.readingMinutes}분 읽기`];
+  return (
+    <span className="flex flex-wrap text-label font-semibold text-muted dark:text-muted-dark">
+      {parts.map((part, i) => (
+        <span key={part} className="whitespace-nowrap">
+          {i > 0 ? (
+            <span className="mx-2" aria-hidden="true">
+              |
+            </span>
+          ) : null}
+          {part}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** 머리기사 — 목록의 첫 기사. 큰 명조 제목에 요약 세 줄을 두 단으로 펼친다. */
+function LeadStory({ article }: { article: Article }) {
+  return (
+    <article>
+      <Link href={article.permalink} className="news-story tap-feedback flex flex-col gap-3 border-b border-foreground pb-8 dark:border-foreground-dark">
+        <Kicker article={article} />
+        <h2 className="news-serif news-headline text-display font-black break-keep">{article.title}</h2>
+        <Byline article={article} />
+        <div className="news-serif mt-2 columns-1 gap-x-8 text-body font-normal leading-relaxed break-keep md:columns-2">
+          {article.summary.map((line) => (
+            <p key={line} className="mb-3">
+              {line}
+            </p>
+          ))}
+        </div>
+      </Link>
+    </article>
+  );
+}
+
+/** 단 기사 — 머리기사 아래 단에 흘러 들어가는 나머지 기사. */
+function Story({ article }: { article: Article }) {
+  return (
+    <article>
+      <Link href={article.permalink} className="news-story tap-feedback flex min-h-11 flex-col gap-2">
+        <Kicker article={article} />
+        <h2 className="news-serif news-headline text-heading font-extrabold break-keep">{article.title}</h2>
+        <p className="news-serif text-body font-normal leading-relaxed break-keep text-badge-neutral-text dark:text-badge-neutral-text-dark">
+          {article.summary[0]}
+        </p>
+        <Byline article={article} />
+      </Link>
+    </article>
   );
 }
