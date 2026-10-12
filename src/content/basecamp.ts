@@ -247,6 +247,43 @@ export const basecampSteps: readonly BasecampStep[] = [
       },
     ],
   },
+  {
+    no: 6,
+    weekLabel: "5주차",
+    title: "엑셀 자동화 2탄 (Pandas)",
+    summary:
+      "STEP 4에서 리스트, 딕셔너리, 반복문으로 만든 엑셀 자동 정리 툴을 Pandas로 다시 만듭니다. 한 줄씩 하던 정리와 합계를 열 단위로 한 번에 하고, 여러 파일을 읽어 합친 뒤 시트 여러 개짜리 보고서로 저장하며, 두 방식을 비교합니다.",
+    released: true,
+    officialUrl: `${OFFICIAL_BASE}3f62dc3e-f514-8043-a862-eead279ca36a`,
+    items: [
+      {
+        id: "s5-pandas",
+        title: "Pandas 다시 만나기: 딕셔너리 리스트를 표로",
+        kind: "lesson",
+        officialUrl: `${OFFICIAL_BASE}3f62dc3e-f514-804a-b64f-d6b1a2ce7155`,
+        summary:
+          "딕셔너리 리스트를 DataFrame으로 바꾸고, 열 꺼내기와 새 열 계산, 조건 거르기, groupby 합계, .str로 공백과 쉼표 정리하기를 STEP 4 방식과 나란히 익힙니다.",
+        ourLessonHref: "/basecamp/python-pandas-basics",
+      },
+      {
+        id: "s5-files",
+        title: "STEP 4 코드를 Pandas로 바꿔 보기",
+        kind: "lesson",
+        officialUrl: `${OFFICIAL_BASE}3f62dc3e-f514-8057-bf91-d52df46a3b27`,
+        summary:
+          "STEP 4의 지점 파일을 read_excel과 read_csv로 읽고, clean_df 함수로 정리하고, concat으로 합치고, try/except로 깨진 파일을 건너뛴 뒤, ExcelWriter로 시트 여러 개짜리 보고서를 저장합니다.",
+        ourLessonHref: "/basecamp/python-pandas-excel-automation",
+      },
+      {
+        id: "s5-final",
+        title: "Pandas로 엑셀 자동 정리 툴 다시 만들기",
+        kind: "assignment",
+        officialUrl: `${OFFICIAL_BASE}3f62dc3e-f514-8002-957d-ecee7c9d61e3`,
+        summary:
+          "STEP 4 정답 코드를 덩어리별로 읽고 Pandas로 번역합니다. clean_df와 read_file을 만들어 폴더 전체를 합치고, 지점별 합계와 시트 3개짜리 결과 파일을 만든 뒤, 두 버전의 결과가 같은지 확인해 Colab 링크로 제출합니다.",
+      },
+    ],
+  },
 ];
 
 /** 공식 선행 과제 모음(전체 인덱스) 링크. */
@@ -376,6 +413,31 @@ export const step4AutomationLessons: readonly BasecampPrepLesson[] = [
   },
 ];
 
+/** STEP 4 최종 과제(엑셀 자동 정리 툴) 공식 페이지. STEP 5가 지금 집중이 된 뒤 지난
+ *  주차의 STEP 4 보강 묶음에 거는 링크. */
+export const STEP4_AUTOMATION_URL = `${OFFICIAL_BASE}3ea2dc3e-f514-8035-aee8-edff6adba970`;
+
+/** STEP 5(엑셀 자동화 2탄, Pandas) 최종 과제를 서점 예시로 함께 해 보는 보강 레슨 묶음.
+ *  공식 과제는 STEP 4 카페 정답 코드를 Pandas로 번역하는 과제라, 우리는 STEP 4 보강에서
+ *  만든 서점 코드를 같은 흐름으로 끝까지 번역해 보고 공식 과제는 스스로 옮기도록 넘긴다
+ *  (2026-10-12). 완료 체크박스는 이 섹션 자체 카운터로만 센다. */
+export const step5PandasLessons: readonly BasecampPrepLesson[] = [
+  {
+    id: "s5build-translate",
+    title: "엑셀 자동 정리 툴 Pandas로 다시 만들기 (1) 코드 덩어리 읽기부터 파일 합치기까지",
+    summary:
+      "STEP 4 서점 코드를 실행해 목표 결과를 확인하고, 덩어리별로 하는 일을 정리한 뒤, 정리 함수와 읽기 함수와 폴더 합치기를 Pandas로 옮깁니다.",
+    href: "/basecamp/python-pandas-automation-build",
+  },
+  {
+    id: "s5build-report",
+    title: "엑셀 자동 정리 툴 Pandas로 다시 만들기 (2) 합계, 결과 파일, 두 버전 비교하기",
+    summary:
+      "groupby 합계와 ExcelWriter로 시트 세 개짜리 결과 파일을 만들고, STEP 4 버전과 결과가 같은지 코드로 비교한 뒤, 새 파일을 넣어 다시 실행하고 소감을 정리합니다.",
+    href: "/basecamp/python-pandas-automation-report",
+  },
+];
+
 /** action 검증용 — 알려진 항목 id 집합(임의 id로 진도 행이 생기는 것을 막는다).
  *  STEP 항목 id와 보강 레슨 id를 모두 포함한다(둘 다 toggleBasecampItem을 쓴다). */
 export const basecampItemIds: ReadonlySet<string> = new Set([
@@ -383,6 +445,7 @@ export const basecampItemIds: ReadonlySet<string> = new Set([
   ...step2AdvancedPrepLessons.map((lesson) => lesson.id),
   ...step3ChatbotLessons.map((lesson) => lesson.id),
   ...step4AutomationLessons.map((lesson) => lesson.id),
+  ...step5PandasLessons.map((lesson) => lesson.id),
 ]);
 
 /** 진도 접두사를 붙인 저장 id. */

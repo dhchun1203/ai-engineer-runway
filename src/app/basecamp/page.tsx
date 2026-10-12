@@ -17,6 +17,8 @@ import {
   step3ChatbotLessons,
   STEP3_CHATBOT_URL,
   step4AutomationLessons,
+  STEP4_AUTOMATION_URL,
+  step5PandasLessons,
   type BasecampStep,
 } from "@/content/basecamp";
 
@@ -104,31 +106,31 @@ export default async function BasecampPage() {
         />
       </section>
 
-      {/* STEP 4 과제 보강 — 최종 과제(엑셀 자동 정리 툴)를 서점 예시로 두 편에 걸쳐
-          직접 만들며 필요한 개념을 중간중간 익히는 빌드-얼롱 레슨 묶음. 지금 집중(STEP 4)
-          바로 아래 둔다. 완료 체크박스는 이 섹션 자체 카운터로만 센다(STEP의 "N/M 완료"와 분리). */}
+      {/* STEP 5 과제 보강 — 최종 과제(STEP 4 툴을 Pandas로 번역)를 서점 예시로 두 편에
+          걸쳐 함께 해 보는 빌드-얼롱 레슨 묶음. 지금 집중(STEP 5) 바로 아래 둔다. 완료
+          체크박스는 이 섹션 자체 카운터로만 센다(STEP의 "N/M 완료"와 분리). */}
       <section className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
           <span className="w-fit text-label font-bold text-accent dark:text-accent-dark">
-            STEP 4 과제 보강
+            STEP 5 과제 보강
           </span>
-          <h2 className="text-heading font-extrabold break-keep">엑셀 자동 정리 툴 함께 만들기</h2>
+          <h2 className="text-heading font-extrabold break-keep">엑셀 자동 정리 툴 Pandas로 다시 만들기</h2>
           <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-            STEP 4 최종 과제인 엑셀 자동 정리 툴을 두 편에 걸쳐 직접 만들며, 필요한 개념을
-            그때그때 익히는 레슨입니다. 서점 지점 파일로 툴을 처음부터 끝까지 완성해 본 뒤,
-            공식 과제의 카페 데이터로 빈칸을 스스로 채워 제출하면 됩니다.
+            STEP 5 최종 과제인 STEP 4 코드의 Pandas 번역을 두 편에 걸쳐 함께 해 보는
+            레슨입니다. STEP 4 보강에서 만든 서점 툴을 덩어리별로 Pandas로 옮기고, 두 버전의
+            결과 파일이 같은지까지 확인한 뒤, 공식 과제의 카페 코드는 스스로 번역해 제출하면 됩니다.
           </p>
         </div>
         <BasecampPrepChecklist
-          lessons={step4AutomationLessons}
-          initialDoneIds={prepDoneIds(step4AutomationLessons)}
+          lessons={step5PandasLessons}
+          initialDoneIds={prepDoneIds(step5PandasLessons)}
           unlocked={unlocked}
         />
       </section>
 
       {/* 지난 주차 — 끝났거나 지난 STEP은 접힌 한 줄로. 누르면 그 자리에서 펼쳐 복습.
           지금 집중이 바뀔 때마다 직전 STEP의 과제 보강도 여기에 접힌 행으로 내려온다
-          (STEP 2 보강은 2026-09-21, STEP 3 보강은 2026-09-29). */}
+          (STEP 2 보강은 2026-09-21, STEP 3 보강은 2026-09-29, STEP 4 보강은 2026-10-12). */}
       {pastSteps.length > 0 ? (
         <section className="flex flex-col gap-3">
           <span className="text-label font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark">
@@ -143,7 +145,18 @@ export default async function BasecampPage() {
                 unlocked={unlocked}
               />
             ))}
-            {/* STEP 3 과제 보강 — 지난 주차로 내려온 접이식 보강 묶음(최근 것이 위). */}
+            {/* STEP 4 과제 보강 — 지난 주차로 내려온 접이식 보강 묶음(최근 것이 위). */}
+            <BasecampPastPrep
+              label="STEP 4 과제 보강"
+              title="엑셀 자동 정리 툴 함께 만들기"
+              description="STEP 4 최종 과제인 엑셀 자동 정리 툴을 두 편에 걸쳐 직접 만들며, 필요한 개념을 그때그때 익히는 레슨입니다. 서점 지점 파일로 툴을 처음부터 끝까지 완성해 봅니다. STEP 5 과제 보강이 이 서점 툴을 Pandas로 번역합니다."
+              officialUrl={STEP4_AUTOMATION_URL}
+              officialLabel="공식 엑셀 자동화 과제 열기"
+              lessons={step4AutomationLessons}
+              initialDoneIds={prepDoneIds(step4AutomationLessons)}
+              unlocked={unlocked}
+            />
+            {/* STEP 3 과제 보강 — 지난 주차로 내려온 접이식 보강 묶음. */}
             <BasecampPastPrep
               label="STEP 3 과제 보강"
               title="Q&A 챗봇 함께 만들기"

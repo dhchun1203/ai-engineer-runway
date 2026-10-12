@@ -1,0 +1,446 @@
+---
+title: "STEP 4 코드를 Pandas로 바꿔 보기: 읽고, 정리하고, 합치고, 저장하기"
+order: 35
+summary: "STEP 4의 카페 지점 파일을 Pandas로 읽어 자동화합니다. read_excel과 read_csv로 읽고 dtypes로 자료형을 확인한 뒤, clean_df 함수로 정리하고, concat으로 합치고, ExcelWriter로 시트 여러 개짜리 보고서를 저장합니다. 모든 예제를 STEP 4 코드와 나란히 비교해요."
+slug: "python-pandas-excel-automation"
+---
+
+앞 레슨에서는 데이터를 코드 안에 직접 적었어요. 이번에는 STEP 4에서 썼던 지점 파일을 그대로 Pandas로 읽고, 정리하고, 합치고, 저장해 봐요.
+
+STEP 4에서 수십 줄이던 코드가 몇 줄로 줄어드는 걸 직접 겪게 될 거예요. 그리고 결과 숫자는 STEP 4와 똑같이 나와요. 같은 일을 다른 도구로 했다는 증거죠.
+
+> 이 레슨은 공식 STEP 5의 "5-2 STEP 4 코드를 Pandas로 바꿔 보기"에 대응해요. STEP 4와 같은 실습 파일(STEP4_실습자료.zip, 카페 지점 판매 파일)로 진행하니, 결과값도 공식 자료와 같게 나와요.
+
+먼저 오늘 바꿀 것들을 한눈에 볼게요.
+
+| 하고 싶은 일 | STEP 4 (openpyxl, csv) | STEP 5 (Pandas) |
+| --- | --- | --- |
+| 엑셀 읽기 | `load_workbook` + `iter_rows` + `dict(zip())` | `pd.read_excel()` |
+| CSV 읽기 | `csv.DictReader` | `pd.read_csv()` |
+| 정리하기 | `to_number()`, `clean_text()`로 한 값씩 | `.str.replace()`, `.str.strip()`로 열 전체 |
+| 여러 파일 합치기 | for문 + `all_rows.append()` | `pd.concat()` |
+| 지점별 합계 | `total.get(branch, 0) + 매출` | `groupby("지점")["매출"].sum()` |
+| 엑셀 저장 | `Workbook` + `append` + `save` | `to_excel()`, `ExcelWriter` |
+| 깨진 파일 건너뛰기 | `try` / `except` | `try` / `except` (똑같아요!) |
+
+## 0. 시작 전 준비: 실습 파일을 Colab에 올리기
+
+### 실습 파일 준비하기
+
+STEP 4에서 받은 `STEP4_실습자료.zip`을 그대로 써요. 없다면 [공식 5-2 페이지](https://entrance-test.oopy.io/3f62dc3e-f514-8057-bf91-d52df46a3b27)의 "시작 전 준비"에 첨부된 파일을 다시 내려받으세요. 압축은 풀지 않아도 돼요.
+
+| 폴더 | 파일 | 어떤 파일인가요 |
+| --- | --- | --- |
+| data | 강남점.xlsx | 깔끔한 엑셀 파일 |
+| data | 홍대점.xlsx | 숫자가 "4,500" 같은 글자로, 품목 앞뒤에 공백이 있는 파일 |
+| data | 부산점.csv | 엑셀이 아닌 CSV 파일 |
+| data | 대전점.xlsx | 일부러 깨뜨린 파일 |
+| 추가파일 | 판교점.xlsx | 이번 레슨에서는 쓰지 않아요 |
+
+### 새 Colab 노트 만들고 준비 칸 실행하기
+
+1. colab.research.google.com에서 새 노트를 만들고, 이름을 `5-2_Pandas엑셀자동화`로 바꿔요.
+2. 첫 번째 코드 칸에 아래를 붙여 넣고 Shift + Enter로 실행해요. STEP 4의 준비 칸과 똑같아요.
+
+```python
+# 준비 칸: 노트를 열 때마다 맨 처음 한 번 실행하세요
+%cd /content
+from google.colab import files
+
+uploaded = files.upload()                  # ① [파일 선택] → STEP4_실습자료.zip
+zip_name = list(uploaded.keys())[0]
+
+!unzip -o -q "{zip_name}"                  # ② 압축 풀기
+%cd /content/step4                         # ③ 실습 폴더로 이동
+!ls data                                   # ④ 파일 목록 확인
+```
+
+마지막에 아래처럼 파일 4개가 보이면 준비 완료예요.
+
+```text
+강남점.xlsx  대전점.xlsx  부산점.csv  홍대점.xlsx
+```
+
+준비 칸이 한 줄씩 무슨 일을 하는지는 [STEP 4의 엑셀 파일 읽고 쓰기 레슨](/basecamp/python-excel-files-exceptions)에 풀어 뒀어요. 다음 칸에서 오늘 쓸 도구를 불러와요.
+
+```python
+import pandas as pd
+from pathlib import Path
+```
+
+> Colab 연결이 끊기면 올린 파일도 사라져요. FileNotFoundError가 나면 준비 칸부터 다시 실행하세요.
+
+## 1. 파일 읽기: 한 줄이면 끝
+
+### 엑셀 읽기: pd.read_excel()
+
+STEP 4에서는 엑셀 하나를 딕셔너리 리스트로 읽으려고 이만큼 썼어요.
+
+```python
+# STEP 4 방식 (참고용)
+from openpyxl import load_workbook
+
+sheet = load_workbook("data/강남점.xlsx").active
+rows = list(sheet.iter_rows(values_only=True))
+header = rows[0]
+gangnam_rows = [dict(zip(header, row)) for row in rows[1:]]
+```
+
+Pandas에서는 한 줄이에요.
+
+```python
+gangnam = pd.read_excel("data/강남점.xlsx")
+
+print(gangnam.shape)      # (15, 5)  ← 15줄, 5열
+print(gangnam.head(3))
+```
+
+```text
+           날짜   지점     품목  수량    단가
+0  2026-09-21  강남점  아메리카노  30  4500
+1  2026-09-21  강남점   카페라떼  19  5000
+2  2026-09-21  강남점  바닐라라떼  35  5500
+```
+
+`read_excel`은 첫 줄을 알아서 열 이름으로 써요. STEP 4에서 `header = rows[0]`, `rows[1:]`로 직접 나누던 일을 대신 해 주는 거예요.
+
+재미있는 건, 속에서는 STEP 4에서 쓴 openpyxl이 그대로 일하고 있다는 점이에요. Pandas가 openpyxl을 불러다 쓰고, 그 결과를 표로 예쁘게 정리해 주는 거죠.
+
+### CSV 읽기: pd.read_csv()
+
+```python
+busan = pd.read_csv("data/부산점.csv")
+print(busan.head(3))
+```
+
+```text
+           날짜   지점     품목  수량    단가
+0  2026-09-21  부산점  아메리카노  47  4500
+1  2026-09-21  부산점   카페라떼  35  5000
+2  2026-09-21  부산점  바닐라라떼  13  5500
+```
+
+여기서 STEP 4와 크게 다른 점이 있어요. STEP 4에서 `csv.DictReader`로 읽었을 때는 수량이 `'47'`(글자)이라서, 더하면 `4735`처럼 이어 붙여졌죠. `read_csv`는 숫자처럼 생긴 값을 알아서 숫자로 읽어 줘요.
+
+```python
+print(busan["수량"][0] + busan["수량"][1])     # 82   ← 47 + 35, 바로 계산돼요
+print(busan["수량"].sum())                      # 458
+```
+
+> 한글 CSV가 깨져 보이면 `pd.read_csv("파일.csv", encoding="utf-8-sig")`처럼 인코딩을 지정해 보세요. STEP 4에서 `open()`에 넣었던 그 인코딩이에요.
+
+### 지저분한 파일 읽기: 홍대점
+
+```python
+hongdae = pd.read_excel("data/홍대점.xlsx")
+print(hongdae.head(3))
+```
+
+```text
+           날짜   지점       품목  수량     단가
+0  2026-09-21  홍대점   아메리카노   36  4,500
+1  2026-09-21  홍대점    카페라떼   14  5,000
+2  2026-09-21  홍대점   바닐라라떼   25  5,500
+```
+
+표로 보면 그럭저럭 괜찮아 보여요. 정말 그런지 리스트로 바꿔서 따옴표 안까지 들여다볼게요.
+
+```python
+print(hongdae["품목"].unique().tolist())   # [' 아메리카노 ', ' 카페라떼 ', ' 바닐라라떼 ']  ← 앞뒤 공백!
+print(hongdae["단가"].tolist()[:3])         # ['4,500', '5,000', '5,500']              ← 따옴표 = 글자!
+```
+
+| 코드 | 하는 일 |
+| --- | --- |
+| `.unique()` | 열에 든 값을 중복 없이 보여 줘요 |
+| `.tolist()` | 리스트로 바꿔서 따옴표와 공백까지 눈에 보이게 해 줘요 |
+
+### 자료형 한 번에 확인하기: dtypes
+
+열마다 자료형을 한 번에 볼 수도 있어요.
+
+```python
+print(hongdae.dtypes)
+```
+
+```text
+날짜    object
+지점    object
+품목    object
+수량     int64
+단가    object
+dtype: object
+```
+
+| 표시 | 뜻 |
+| --- | --- |
+| `int64` | 정수. 계산할 수 있어요 |
+| `object` | 주로 글자. 계산할 수 없어요 |
+
+> Colab의 Pandas 버전에 따라 `object` 대신 `str`로 보일 수 있어요. 둘 다 "글자"라는 뜻이에요.
+
+단가가 `object`, 즉 글자예요. 이대로는 매출을 계산할 수 없어요.
+
+그런데 수량은 왜 괜찮을까요? 사실 홍대점 파일의 수량도 `'36'` 같은 글자로 저장돼 있어요. Pandas가 쉼표 없는 글자 숫자는 알아서 숫자로 바꿔 줬지만, 쉼표가 낀 `'4,500'`은 숫자로 알아보지 못해서 글자로 남겨 둔 거예요.
+
+## 2. 정리하기: .str로 열 전체를 한 번에
+
+[앞 레슨](/basecamp/python-pandas-basics)에서 배운 `.str.strip()`, `.str.replace()`, `.astype(int)`를 진짜 파일에 써 봐요.
+
+```python
+hongdae["품목"] = hongdae["품목"].str.strip()                          # 공백 지우기
+hongdae["단가"] = hongdae["단가"].str.replace(",", "").astype(int)     # 쉼표 지우고 숫자로
+hongdae["매출"] = hongdae["수량"] * hongdae["단가"]                     # 매출 열 추가
+
+print(hongdae.head(3))
+print(hongdae["매출"].sum())     # 2410000
+```
+
+```text
+           날짜   지점     품목  수량    단가      매출
+0  2026-09-21  홍대점  아메리카노  36  4500  162000
+1  2026-09-21  홍대점   카페라떼  14  5000   70000
+2  2026-09-21  홍대점  바닐라라떼  25  5500  137500
+```
+
+2410000은 STEP 4 최종 과제의 홍대점 합계와 똑같아요.
+
+### 정리 작업을 함수로 만들기: clean_df()
+
+지점 파일이 여러 개니까, STEP 4에서처럼 정리 작업을 함수로 만들어 두면 편해요. 차이는 하나예요. STEP 4의 함수는 값 하나를 받았고, 이번 함수는 표 하나를 통째로 받아요.
+
+```python
+def clean_df(df):
+    """ 지점 표 하나를 정리한다: 공백 지우기, 글자 숫자를 숫자로, 매출 열 추가 """
+    df["지점"] = df["지점"].str.strip()
+    df["품목"] = df["품목"].str.strip()
+    df["수량"] = df["수량"].astype(str).str.replace(",", "").astype(int)
+    df["단가"] = df["단가"].astype(str).str.replace(",", "").astype(int)
+    df["매출"] = df["수량"] * df["단가"]
+    return df
+```
+
+수량과 단가 줄 맨 앞의 `astype(str)`가 왜 필요할까요?
+
+강남점처럼 단가가 이미 숫자(4500)인 파일도 있어요. 숫자 열에는 `.str`을 쓸 수 없어서, 그대로 `.str.replace()`를 부르면 AttributeError가 나요. 그래서 일단 글자로 바꾼 다음 정리하는 거예요.
+
+STEP 4의 `to_number()`가 맨 앞에서 `str(value)`를 했던 것과 똑같은 이유예요.
+
+| STEP 4 `to_number()` | STEP 5 `clean_df()` |
+| --- | --- |
+| `int(str(value).replace(",", "").strip())` | `df["단가"].astype(str).str.replace(",", "").astype(int)` |
+| 값 하나를 정리 | 열 전체를 정리 |
+
+이렇게 해 두면 숫자로 된 파일이든 글자로 된 파일이든 똑같이 처리돼요.
+
+## 3. 여러 파일 합치기: pd.concat()
+
+### 표 여러 개를 위아래로 붙이기
+
+```python
+gangnam = clean_df(pd.read_excel("data/강남점.xlsx"))
+busan = clean_df(pd.read_csv("data/부산점.csv"))
+hongdae = clean_df(pd.read_excel("data/홍대점.xlsx"))
+
+all_df = pd.concat([gangnam, busan, hongdae], ignore_index=True)
+
+print(all_df.shape)      # (45, 6)  ← 15줄 × 3개 = 45줄
+print(all_df.tail(2))
+```
+
+```text
+            날짜   지점     품목  수량    단가      매출
+43  2026-09-25  홍대점   카페라떼  13  5000   65000
+44  2026-09-25  홍대점  바닐라라떼  46  5500  253000
+```
+
+`.tail(2)`는 `.head()`의 반대예요. 맨 아래 2줄을 보여 줘요.
+
+| 코드 | 뜻 |
+| --- | --- |
+| `pd.concat([표1, 표2, 표3])` | 리스트에 담긴 표들을 위아래로 이어 붙여요 |
+| `ignore_index=True` | 인덱스를 0, 1, 2 ... 44로 새로 매겨요 |
+
+엑셀로 치면 지점 시트 3개를 복사해서 한 시트 아래로 쭉 붙여 넣은 거예요. STEP 4에서 `all_rows.append()`로 한 줄씩 쌓던 일을 표 단위로 한 번에 한 거죠.
+
+`ignore_index=True`를 빼면 각 표의 인덱스(0~14)가 그대로 붙어서, 0~14가 세 번 반복돼요. 번호가 겹치면 나중에 특정 줄을 꺼낼 때 헷갈리니까, 합칠 때는 거의 항상 넣어 주세요.
+
+### 폴더 전체를 자동으로: for + try / except
+
+파일 이름을 하나하나 적으면 새 지점이 생길 때마다 코드를 고쳐야 해요. STEP 4처럼 폴더 안 파일을 알아서 도는 코드로 바꿔 볼게요.
+
+```python
+def read_file(path):
+    """ 엑셀이든 CSV든 DataFrame으로 읽어 온다 """
+    if path.suffix == ".csv":            # 확장자가 .csv 이면
+        return pd.read_csv(path)
+    return pd.read_excel(path)           # 아니면 엑셀로
+
+tables = []      # 정리된 지점 표들을 모을 리스트
+errors = []      # 열지 못한 파일 목록
+
+for path in sorted(Path("data").iterdir()):        # data 폴더의 파일을 하나씩
+    try:
+        tables.append(clean_df(read_file(path)))   # 읽고, 정리하고, 모으기
+        print("[읽기 성공]", path.name)
+    except Exception as e:
+        errors.append(path.name)
+        print("[건너뜀]", path.name, "/", type(e).__name__)
+
+all_df = pd.concat(tables, ignore_index=True)       # 모은 표를 하나로
+print("모은 줄 수:", len(all_df))
+print("열지 못한 파일:", errors)
+```
+
+```text
+[읽기 성공] 강남점.xlsx
+[건너뜀] 대전점.xlsx / ValueError
+[읽기 성공] 부산점.csv
+[읽기 성공] 홍대점.xlsx
+모은 줄 수: 45
+열지 못한 파일: ['대전점.xlsx']
+```
+
+> 공식 자료의 코드는 출력 앞에 체크 표시와 경고 표시 그림 문자를 붙여요. 이 레슨에서는 `[읽기 성공]`, `[건너뜀]` 글자로 바꿔 적었어요. 하는 일은 같아요.
+
+STEP 4 코드와 나란히 놓고 보면 이래요.
+
+| | STEP 4 | STEP 5 |
+| --- | --- | --- |
+| 모으는 것 | 한 줄(딕셔너리)씩 `all_rows.append({...})` | 한 표(DataFrame)씩 `tables.append(...)` |
+| 합치는 법 | 이미 한 리스트에 모여 있음 | 마지막에 `pd.concat(tables)` |
+| 반복문 | 두 겹 (파일, 그 안의 줄) | 한 겹 (파일만) |
+| 대전점 에러 | BadZipFile | ValueError |
+
+반복문이 한 겹으로 줄어든 게 보이나요? 줄 단위 일은 `clean_df()` 안의 열 계산이 한 번에 처리해 주니, 파일만 돌면 돼요.
+
+대전점 에러 이름이 달라진 것도 눈여겨보세요. STEP 4에서는 openpyxl이 파일을 열다가 BadZipFile이 났어요. Pandas는 파일을 열기 전에 "이건 엑셀 파일 모양이 아닌데?" 하고 먼저 알아채서 ValueError를 내요. 그래도 `except Exception`은 모든 종류의 에러를 잡으니까, 이름이 달라도 똑같이 건너뛰고 기록해요.
+
+## 4. 합계 내기: groupby
+
+앞 레슨에서 배운 그대로예요.
+
+```python
+branch_total = all_df.groupby("지점")["매출"].sum()
+print(branch_total)
+```
+
+```text
+지점
+강남점    2016000
+부산점    2291000
+홍대점    2410000
+Name: 매출, dtype: int64
+```
+
+STEP 4 최종 과제의 `{'강남점': 2016000, '부산점': 2291000, '홍대점': 2410000}`과 숫자가 완전히 같아요.
+
+## 5. 엑셀로 저장하기
+
+### 시트 하나 저장: to_excel()
+
+```python
+all_df.to_excel("연습_pandas.xlsx", index=False)
+```
+
+STEP 4에서는 `Workbook()`을 만들고, 제목 줄을 `append`하고, for문으로 한 줄씩 `append`하고, `save`까지 했죠. 그게 한 줄이 됐어요.
+
+`index=False`는 꼭 넣어 주세요. 빼먹으면 맨 앞의 인덱스(0, 1, 2 ...)가 열로 같이 저장돼요. 다시 읽어 보면 이름 없는 열이 하나 생겨 있어요.
+
+```python
+all_df.to_excel("인덱스포함.xlsx")                          # index=False 없이 저장하면
+print(pd.read_excel("인덱스포함.xlsx").columns.tolist())
+# ['Unnamed: 0', '날짜', '지점', '품목', '수량', '단가', '매출']   ← 쓸모없는 열이 생겼어요
+```
+
+`Unnamed: 0`은 "이름 없는 0번째 열"이라는 뜻이에요. 엑셀을 열어 보면 A열에 0, 1, 2...가 적혀 있을 거예요.
+
+### 시트 여러 개 저장: ExcelWriter
+
+STEP 4 결과 파일처럼 시트를 나눠 저장하려면 `ExcelWriter`를 써요.
+
+```python
+with pd.ExcelWriter("보고서.xlsx") as writer:
+    all_df.to_excel(writer, sheet_name="전체데이터", index=False)
+    branch_total.reset_index().to_excel(writer, sheet_name="지점별합계", index=False)
+```
+
+| 코드 | 뜻 | STEP 4에서는 |
+| --- | --- | --- |
+| `with pd.ExcelWriter("파일") as writer:` | 엑셀 파일 하나를 열어 두고, 들여 쓴 부분이 끝나면 자동 저장 | `wb = Workbook()` ... `wb.save()` |
+| `to_excel(writer, sheet_name="이름")` | 그 파일에 시트 하나 추가 | `wb.create_sheet("이름")` + `append` |
+| `.reset_index()` | 합계 결과의 지점 이름을 보통 열로 꺼내기 | 없음 |
+
+`with`는 "이 블록 안에서만 파일을 열어 두고, 블록이 끝나면 알아서 닫아 줘"라는 뜻이에요. STEP 4에서 CSV를 `with open(...) as f:`로 열었던 것과 같은 모양이에요. 그래서 `save()`를 따로 부르지 않아도 돼요.
+
+### reset_index()는 왜 필요할까요?
+
+groupby 결과는 지점 이름이 인덱스 자리(맨 왼쪽 이름표)에 있어요. 그대로 `index=False`로 저장하면 지점 이름까지 같이 사라져서, 매출 숫자만 덩그러니 남아요.
+
+그래서 먼저 `reset_index()`로 지점 이름을 보통 열로 꺼내는 거예요.
+
+```python
+print(branch_total.reset_index())
+```
+
+```text
+    지점       매출
+0  강남점  2016000
+1  부산점  2291000
+2  홍대점  2410000
+```
+
+이름표 자리에 있던 지점이 "지점" 열이 되고, 왼쪽에는 새 번호 0, 1, 2가 붙었어요. 이 번호는 `index=False`로 저장할 때 빠지니까 괜찮아요.
+
+### 잘 저장됐는지 확인하기
+
+```python
+sheets = pd.read_excel("보고서.xlsx", sheet_name=None)   # None → 모든 시트 읽기
+print(list(sheets.keys()))                               # ['전체데이터', '지점별합계']
+print(sheets["지점별합계"])
+```
+
+```text
+    지점       매출
+0  강남점  2016000
+1  부산점  2291000
+2  홍대점  2410000
+```
+
+`sheet_name=None`으로 읽으면 `{시트 이름: 표}` 모양의 딕셔너리가 돼요. STEP 4에서 배운 딕셔너리처럼 시트 이름(키)으로 표를 꺼낼 수 있어요.
+
+## 스스로 확인하기
+
+Q1. `clean_df()`에서 `df["단가"].astype(str)`를 빼고 `df["단가"].str.replace(",", "")`로 바로 쓰면, 강남점 파일에서 어떤 일이 생길까요?
+
+Q2. 폴더 전체 코드에서 대전점이 BadZipFile이 아닌 ValueError로 건너뛰어졌어요. 그런데도 코드를 고치지 않아도 되는 이유는 무엇일까요?
+
+Q3. `branch_total.to_excel(writer, sheet_name="지점별합계", index=False)`처럼 `reset_index()` 없이 저장하면 시트에 무엇이 남을까요?
+
+<details>
+<summary>정답 확인</summary>
+
+A1. 강남점의 단가 열은 이미 숫자(int64)라 `.str`을 쓸 수 없어서 AttributeError가 나요. 폴더 전체 코드에서는 `try`가 이 에러를 잡으니, 멀쩡한 강남점 파일이 "건너뜀"으로 빠져 버려요. 에러가 안 보인다고 안심하면 안 되는 이유예요.
+
+A2. `except Exception`이 모든 종류의 에러를 잡기 때문이에요. 에러 이름이 바뀌어도 똑같이 건너뛰고 `errors`에 기록해요. 만약 `except BadZipFile`처럼 특정 에러만 잡게 써 뒀다면, ValueError는 잡지 못해서 프로그램이 멈췄을 거예요.
+
+A3. 지점 이름이 인덱스 자리에 있다가 `index=False` 때문에 함께 버려져서, 매출 숫자 열 하나만 남아요. 어느 숫자가 어느 지점 것인지 알 수 없게 되죠.
+
+</details>
+
+## 한 장 요약
+
+| 하는 일 | Pandas 코드 | STEP 4에서는 |
+| --- | --- | --- |
+| 엑셀 읽기 | `pd.read_excel("파일.xlsx")` | `load_workbook` + `iter_rows` + `dict(zip())` |
+| CSV 읽기 | `pd.read_csv("파일.csv")` (숫자 자동 변환) | `csv.DictReader` (전부 글자) |
+| 자료형 확인 | `df.dtypes`, `df["열"].tolist()` | `type()`, `print(row)` |
+| 정리 | `.astype(str).str.replace(",", "").astype(int)`, `.str.strip()` | `to_number()`, `clean_text()` |
+| 합치기 | `pd.concat(tables, ignore_index=True)` | `all_rows.append({...})` |
+| 폴더 자동 처리 | `for path in sorted(Path("data").iterdir()):` + `try` / `except` | 똑같음 |
+| 합계 | `df.groupby("지점")["매출"].sum()` | `total.get(key, 0) + 값` |
+| 저장 (시트 1개) | `df.to_excel("파일.xlsx", index=False)` | `Workbook` + `append` + `save` |
+| 저장 (시트 여러 개) | `with pd.ExcelWriter(...) as writer:` + `to_excel(writer, sheet_name=...)` | `create_sheet` |
+| 다시 읽어 확인 | `pd.read_excel("파일.xlsx", sheet_name=None)` | `load_workbook(...).sheetnames` |
+
+이제 최종 과제를 할 준비가 됐어요. STEP 4 정답 코드를 덩어리째 Pandas로 번역하는 과제예요. 막히면 이 레슨의 한 장 요약을 펼쳐 놓고 하면 돼요. 과제 흐름을 서점 예시로 미리 끝까지 해 보고 싶다면 [과제 보강 레슨](/basecamp/python-pandas-automation-build)으로 가세요.

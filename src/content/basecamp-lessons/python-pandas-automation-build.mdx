@@ -1,0 +1,407 @@
+---
+title: "엑셀 자동 정리 툴 Pandas로 다시 만들기 (1) 코드 덩어리 읽기부터 파일 합치기까지"
+order: 36
+summary: "STEP 4 보강에서 만든 서점 정리 툴을 Pandas로 번역합니다. 1편은 STEP 4 코드를 덩어리별로 읽고, 정리 함수와 읽기 함수를 Pandas로 바꾼 뒤, 깨진 파일이 섞인 폴더 전체를 표 하나로 합치는 데까지."
+slug: "python-pandas-automation-build"
+---
+
+STEP 4 보강 레슨에서 서점 체인의 엑셀 자동 정리 툴을 만들었죠. 이번 두 편에서는 그 툴을 Pandas로 다시 만들어요.
+
+빈칸을 채우는 게 아니에요. 이미 돌아가는 STEP 4 코드를 읽고, "이 부분은 Pandas로 뭐였지?"를 떠올리며 한 덩어리씩 번역하는 거예요. 영어 문장을 한국어로 옮기듯이요.
+
+> 이 두 편은 공식 STEP 5 최종 과제(Pandas로 엑셀 자동 정리 툴 다시 만들기)를 직접 해 보며 익히는 보강 레슨이에요. 공식 과제는 STEP 4 카페 정답 코드를 번역하고, 우리는 STEP 4 보강에서 만든 서점 코드를 같은 흐름으로 번역해요. 서점으로 끝까지 해 보고 나면, 공식 과제의 카페 코드는 스스로 옮길 수 있을 거예요.
+
+앞의 두 레슨([Pandas 다시 만나기](/basecamp/python-pandas-basics), [STEP 4 코드를 Pandas로 바꿔 보기](/basecamp/python-pandas-excel-automation))에서 배운 조각이 전부 쓰여요. 막히면 그 레슨의 한 장 요약을 다시 보고 오세요.
+
+## 이번 상황
+
+여러분은 여전히 서점 체인 본사 운영팀이에요. 지난주에 만든 자동 정리 툴을 팀장님께 보여 드렸더니 이런 말씀을 하셨어요.
+
+"잘 만들었네요! 그런데 다음 분기부터 지점이 30곳으로 늘고, 파일도 몇 만 줄이 될 거예요. Pandas로 더 짧고 빠르게 바꿔 볼 수 있을까요?"
+
+할 일은 분명해요. 결과는 지난주와 똑같이 나오게 두고, 코드만 Pandas로 바꾸는 거예요. 결과가 같은지는 마지막에 코드로 직접 확인해요.
+
+## 전체 흐름
+
+두 편에 걸쳐 이 순서로 가요.
+
+1. (1편) 재료 파일을 만들고, STEP 4 코드를 실행해 목표 결과 확인하기
+2. (1편) STEP 4 코드를 덩어리 [A]~[E]로 나눠 읽기
+3. (1편) [A] 정리 함수, [B] 읽기 함수, [C] 폴더 합치기를 Pandas로 번역하기
+4. (2편) [D] 합계, [E] 결과 파일 저장을 Pandas로 번역하기
+5. (2편) 두 버전의 결과 파일이 같은지 코드로 비교하고, 새 파일 넣어 다시 실행하기
+
+> 코드 칸은 위에서부터 순서대로 실행해야 해요. 뒤 칸은 앞 칸에서 만든 함수와 변수를 이어서 써요. 중간에 Colab 연결이 끊겼다면 준비 칸부터 다시 차례로 실행하세요.
+
+## 준비하기
+
+### 재료 파일 만들기
+
+STEP 4 보강 레슨과 같은 서점 지점 파일을 코드로 만들어요. 새 Colab 노트를 만들고 첫 칸에 붙여 넣어 실행하세요.
+
+```python
+# 준비 칸: 노트를 열 때마다 맨 처음 한 번 실행하세요
+import csv
+from pathlib import Path
+from openpyxl import Workbook
+
+Path("data").mkdir(exist_ok=True)          # data 폴더 만들기
+Path("추가파일").mkdir(exist_ok=True)       # 추가파일 폴더 만들기
+header = ["날짜", "지점", "분야", "권수", "가격"]
+
+def make_xlsx(path, rows):
+    wb = Workbook()
+    sheet = wb.active
+    sheet.append(header)
+    for row in rows:
+        sheet.append(row)
+    wb.save(path)
+
+# 종로점: 깔끔한 엑셀 파일
+make_xlsx("data/종로점.xlsx", [
+    ["2026-10-05", "종로점", "소설", 12, 15000],
+    ["2026-10-05", "종로점", "에세이", 8, 13000],
+    ["2026-10-05", "종로점", "IT", 5, 32000],
+])
+# 신촌점: 숫자가 "15,000" 같은 글자로, 분야 앞뒤에 공백이 있는 파일
+make_xlsx("data/신촌점.xlsx", [
+    ["2026-10-05", "신촌점", " 소설 ", "20", "15,000"],
+    ["2026-10-05", "신촌점", " 에세이", "6", "13,000"],
+    ["2026-10-05", "신촌점", "IT ", "9", "32,000"],
+])
+# 해운대점: 엑셀이 아닌 CSV 파일
+with open("data/해운대점.csv", "w", encoding="utf-8-sig", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(header)
+    writer.writerow(["2026-10-05", "해운대점", "소설", 15, 15000])
+    writer.writerow(["2026-10-05", "해운대점", "에세이", 10, 13000])
+    writer.writerow(["2026-10-05", "해운대점", "IT", 3, 32000])
+# 광주점: 이름만 .xlsx 이고 속은 깨진 파일
+Path("data/광주점.xlsx").write_text("이 파일은 일부러 깨뜨린 파일이에요")
+# 대구점: 다음 주에 새로 도착할 파일 (2편에서 사용)
+make_xlsx("추가파일/대구점.xlsx", [
+    ["2026-10-05", "대구점", "소설", 7, 15000],
+    ["2026-10-05", "대구점", "에세이", 11, 13000],
+    ["2026-10-05", "대구점", "IT", 4, 32000],
+])
+print(sorted(p.name for p in Path("data").iterdir()))
+```
+
+마지막에 이 줄이 보이면 준비 완료예요.
+
+```text
+['광주점.xlsx', '신촌점.xlsx', '종로점.xlsx', '해운대점.csv']
+```
+
+| 서점 파일 | 어떤 파일인가요 | 공식 실습 파일에서는 |
+| --- | --- | --- |
+| 종로점.xlsx | 깔끔한 엑셀 파일 | 강남점.xlsx |
+| 신촌점.xlsx | 숫자가 "15,000" 같은 글자로, 분야 앞뒤에 공백 | 홍대점.xlsx |
+| 해운대점.csv | 엑셀이 아닌 CSV 파일 | 부산점.csv |
+| 광주점.xlsx | 일부러 깨뜨린 파일 | 대전점.xlsx |
+| 추가파일/대구점.xlsx | 다음 주에 새로 도착할 파일 | 추가파일/판교점.xlsx |
+
+> STEP 4 보강 때 쓰던 노트가 아니라 새 노트에서 시작하세요. 지난주에 대구점을 data 폴더로 옮겨 뒀다면 결과가 달라지거든요. 새 노트에서 준비 칸을 실행하면 처음 상태로 돌아가요.
+
+## 1단계. STEP 4 코드 실행하기: 이게 목표예요
+
+STEP 4 보강 레슨 두 편에 흩어져 있던 코드를 한 칸에 모았어요. AI에게 받아 붙였던 분야별 합계 시트만 빼고 그대로예요. 새 칸에 붙여 넣어 실행하세요.
+
+```python
+# STEP 4 버전: 서점 엑셀 자동 정리 툴
+import csv
+from pathlib import Path
+from openpyxl import Workbook, load_workbook
+
+DATA_FOLDER = Path("data")
+RESULT_FILE = Path("주간판매_정리.xlsx")
+
+# [A] 지저분한 값을 정리하는 함수
+def to_number(value):
+    return int(str(value).replace(",", "").strip())
+
+def clean_text(value):
+    return str(value).strip()
+
+# [B] 엑셀이든 CSV든 읽는 함수
+def read_file(path):
+    if path.suffix == ".csv":
+        with open(path, encoding="utf-8-sig") as f:
+            return list(csv.DictReader(f))
+    sheet = load_workbook(path).active
+    rows = list(sheet.iter_rows(values_only=True))
+    header = rows[0]
+    return [dict(zip(header, row)) for row in rows[1:]]
+
+# [C] 폴더 전체를 읽어서 한 줄씩 정리해 모으기
+all_rows = []
+errors = []
+for path in sorted(DATA_FOLDER.iterdir()):
+    try:
+        for row in read_file(path):
+            count = to_number(row["권수"])
+            price = to_number(row["가격"])
+            all_rows.append({
+                "날짜": row["날짜"],
+                "지점": clean_text(row["지점"]),
+                "분야": clean_text(row["분야"]),
+                "권수": count,
+                "가격": price,
+                "매출": count * price,
+            })
+        print("[읽기 성공]", path.name)
+    except Exception as e:
+        errors.append(path.name)
+        print("[건너뜀]", path.name, "/", type(e).__name__)
+
+# [D] 지점별 매출 합계
+branch_total = {}
+for row in all_rows:
+    branch = row["지점"]
+    branch_total[branch] = branch_total.get(branch, 0) + row["매출"]
+
+# [E] 시트 3개짜리 결과 파일 저장
+wb = Workbook()
+sheet1 = wb.active
+sheet1.title = "전체데이터"
+sheet1.append(["날짜", "지점", "분야", "권수", "가격", "매출"])
+for row in all_rows:
+    sheet1.append(list(row.values()))
+
+sheet2 = wb.create_sheet("지점별합계")
+sheet2.append(["지점", "총매출"])
+for branch, total in branch_total.items():
+    sheet2.append([branch, total])
+
+sheet3 = wb.create_sheet("확인필요")
+sheet3.append(["열지 못한 파일"])
+for name in errors:
+    sheet3.append([name])
+
+wb.save(RESULT_FILE)
+
+# [F] 결과 확인 출력
+print("모은 줄 수:", len(all_rows))
+print("지점별 합계:", branch_total)
+print(f"완료! 총 {len(all_rows)}줄 → {RESULT_FILE}")
+```
+
+```text
+[건너뜀] 광주점.xlsx / BadZipFile
+[읽기 성공] 신촌점.xlsx
+[읽기 성공] 종로점.xlsx
+[읽기 성공] 해운대점.csv
+모은 줄 수: 9
+지점별 합계: {'신촌점': 666000, '종로점': 444000, '해운대점': 451000}
+완료! 총 9줄 → 주간판매_정리.xlsx
+```
+
+이 결과가 우리의 목표예요. Pandas 버전도 9줄, 같은 지점별 합계, 같은 내용의 결과 파일이 나와야 해요.
+
+> 지난주 툴과 하나 다른 점이 있어요. 2편의 "AI에게 기능 더하기"에서 붙였던 분야별합계 시트는 뺐어요. 시트 세 개짜리 기본 툴을 번역하는 게 이번 목표라서요. 공식 과제의 STEP 4 정답 코드도 시트 세 개짜리예요.
+
+## 2단계. 덩어리별로 읽기
+
+번역을 시작하기 전에, STEP 4 코드의 [A]~[E]가 각각 무슨 일을 하는지 먼저 말로 정리해요. 무엇을 하는 코드인지 말할 수 있어야 다른 도구로 옮길 수 있거든요.
+
+공식 과제 1-2도 바로 이 정리를 주석(`#`)으로 적는 문제예요. 형식은 이래요.
+
+```python
+# 1-2. STEP 4 코드 덩어리별 정리
+# [A] 하는 일: ______________ / Pandas: ______________
+# [B] 하는 일: ______________ / Pandas: ______________
+# ...
+```
+
+서점 코드로 먼저 직접 채워 본 다음 펼쳐 보세요. 막히면 [STEP 4 코드를 Pandas로 바꿔 보기](/basecamp/python-pandas-excel-automation)의 맨 위 표와 한 장 요약이 힌트예요.
+
+<details>
+<summary>서점 코드 정리 예시 펼쳐 보기</summary>
+
+| 덩어리 | 하는 일 | Pandas로는 |
+| --- | --- | --- |
+| [A] | 값 하나씩 받아 쉼표, 공백을 지우고 숫자로 바꾸기 | `.str.strip()`, `.str.replace()`, `.astype()`로 열 전체를 한 번에 (`clean_df()`) |
+| [B] | 엑셀은 openpyxl로, CSV는 DictReader로 읽어 딕셔너리 리스트 만들기 | `pd.read_excel()`, `pd.read_csv()` |
+| [C] | 폴더의 파일을 돌며 한 줄씩 정리해 `all_rows`에 쌓고, 깨진 파일은 `errors`에 기록 | 표 단위로 정리해 `tables`에 모으고 `pd.concat()`. `try` / `except`는 그대로 |
+| [D] | 빈 딕셔너리에 지점마다 매출 더하기 (SUMIF) | `groupby("지점")["매출"].sum()` |
+| [E] | Workbook을 만들어 시트 3개에 한 줄씩 `append`하고 저장 | `pd.ExcelWriter` + `to_excel(writer, sheet_name=..., index=False)` |
+
+</details>
+
+## 3단계. Pandas 준비 칸
+
+지금부터 Pandas 버전을 만들어요. 새 칸에 붙여 넣어 실행하세요.
+
+```python
+# Pandas 준비 칸
+import pandas as pd
+
+RESULT_FILE = Path("주간판매_정리_pandas.xlsx")   # Pandas 버전 결과 파일 이름
+```
+
+`RESULT_FILE`을 꼭 새 이름으로 바꾸세요. 그대로 두면 1단계에서 만든 STEP 4 결과 파일(`주간판매_정리.xlsx`)을 덮어써서, 2편에서 두 파일을 비교할 수 없어요.
+
+`DATA_FOLDER`와 `Path`는 1단계 칸에서 만든 것을 그대로 이어서 써요. 같은 노트 안에서는 앞 칸에서 만든 변수가 계속 살아 있으니까요.
+
+## 4단계. [A] 정리 함수를 Pandas로: clean_df()
+
+STEP 4의 `to_number()`와 `clean_text()`는 값 하나를 받아서 정리했어요. Pandas 버전은 지점 표(DataFrame) 하나를 통째로 받아서 정리해요.
+
+```python
+def clean_df(df):
+    """ 서점 지점 표 하나를 정리한다: 공백 지우기, 글자 숫자를 숫자로, 매출 열 추가 """
+    df["지점"] = df["지점"].str.strip()
+    df["분야"] = df["분야"].str.strip()
+    df["권수"] = df["권수"].astype(str).str.replace(",", "").astype(int)
+    df["가격"] = df["가격"].astype(str).str.replace(",", "").astype(int)
+    df["매출"] = df["권수"] * df["가격"]
+    return df
+```
+
+[STEP 4 코드를 Pandas로 바꿔 보기](/basecamp/python-pandas-excel-automation)의 카페 `clean_df()`와 모양이 같아요. 다른 건 열 이름뿐이에요. 카페는 품목, 수량, 단가였고 서점은 분야, 권수, 가격이에요.
+
+권수와 가격 줄 맨 앞의 `astype(str)`, 기억나죠? 종로점처럼 이미 숫자인 열에는 `.str`을 쓸 수 없어요. 그래서 일단 글자로 바꾸고 정리해요. STEP 4의 `to_number()`가 `str(value)`로 시작했던 것과 같은 이유예요.
+
+### 함수 바로 시험해 보기
+
+함수는 만들자마자 작은 표로 시험해 봐요. 글자 숫자와 진짜 숫자를 일부러 섞어 넣었어요.
+
+```python
+test = pd.DataFrame({
+    "지점": ["신촌점 ", "종로점"],
+    "분야": [" 소설 ", "에세이"],
+    "권수": ["20", 8],             # 글자 숫자와 진짜 숫자가 섞여 있어요
+    "가격": ["15,000", 13000],
+})
+print(clean_df(test))
+print(clean_df(test)["분야"].tolist())
+```
+
+```text
+    지점   분야  권수     가격      매출
+0  신촌점   소설  20  15000  300000
+1  종로점  에세이   8  13000  104000
+['소설', '에세이']
+```
+
+신촌점처럼 글자로 된 값과 종로점처럼 숫자로 된 값이 섞여 있어도 둘 다 정리됐어요. 성공이에요.
+
+`clean_df(test)`를 두 번 불렀는데 두 번째에도 에러가 나지 않은 것도 눈여겨보세요. 이미 숫자가 된 열도 `astype(str)`가 다시 글자로 바꿔 주니까, 몇 번을 정리해도 같은 결과가 나와요.
+
+## 5단계. [B] 읽기 함수를 Pandas로: read_file()
+
+STEP 4의 `read_file()`은 CSV 부분과 엑셀 부분을 합쳐 8줄이었어요. Pandas에서는 이렇게 줄어요.
+
+```python
+def read_file(path):
+    """ 엑셀이든 CSV든 DataFrame으로 읽어 온다 """
+    if path.suffix == ".csv":
+        return pd.read_csv(path)
+    return pd.read_excel(path)
+```
+
+이름이 1단계의 `read_file()`과 같죠? 이 칸을 실행하는 순간 `read_file`은 새 Pandas 버전으로 바뀌어요. 같은 이름으로 다시 만들면 나중에 만든 쪽이 이기거든요. 1단계 칸을 다시 실행하면 거꾸로 STEP 4 버전으로 돌아가니, 칸 실행 순서를 지켜 주세요.
+
+### 확인하기
+
+```python
+haeundae = read_file(DATA_FOLDER / "해운대점.csv")
+sinchon = read_file(DATA_FOLDER / "신촌점.xlsx")
+print(len(haeundae), "줄 /", haeundae["권수"].sum())
+print(sinchon["가격"].tolist())
+```
+
+```text
+3 줄 / 28
+['15,000', '13,000', '32,000']
+```
+
+해운대점은 권수가 바로 더해졌어요(15 + 10 + 3 = 28). `read_csv`가 숫자를 알아서 숫자로 읽었기 때문이에요. STEP 4의 `csv.DictReader`였다면 전부 글자라서 더하기가 안 됐을 거예요.
+
+신촌점 가격은 아직 따옴표가 붙은 글자예요. 쉼표 때문에 숫자로 못 알아본 거죠. 이건 다음 단계에서 `clean_df()`가 정리해요. 읽기와 정리를 나눠 둔 덕분에, 각 함수가 자기 일 하나만 하면 돼요.
+
+## 6단계. [C] 폴더 전체 읽어서 합치기
+
+STEP 4에서는 파일 안의 줄을 하나씩 정리해서 `all_rows`에 쌓았어요. Pandas에서는 표를 통째로 정리해서 `tables`에 모은 뒤, 마지막에 한 번에 합쳐요.
+
+```python
+tables = []      # 정리된 지점 표들
+errors = []      # 열지 못한 파일 목록
+
+for path in sorted(DATA_FOLDER.iterdir()):
+    try:
+        tables.append(clean_df(read_file(path)))   # 읽고, 정리하고, 모으기
+        print("[읽기 성공]", path.name)
+    except Exception as e:
+        errors.append(path.name)
+        print("[건너뜀]", path.name, "/", type(e).__name__)
+
+all_df = pd.concat(tables, ignore_index=True)       # 모은 표를 하나로
+```
+
+```text
+[건너뜀] 광주점.xlsx / ValueError
+[읽기 성공] 신촌점.xlsx
+[읽기 성공] 종로점.xlsx
+[읽기 성공] 해운대점.csv
+```
+
+STEP 4 [C]와 나란히 놓고 보세요.
+
+| | STEP 4 [C] | Pandas [C] |
+| --- | --- | --- |
+| 반복문 | 두 겹 (파일, 그 안의 줄) | 한 겹 (파일만) |
+| 한 번에 모으는 단위 | 한 줄 (딕셔너리) | 한 표 (DataFrame) |
+| 정리하는 곳 | 반복문 안에서 값마다 `to_number()` | `clean_df()`가 열 전체를 한 번에 |
+| 합치기 | 쌓는 순간 이미 한 리스트 | 마지막에 `pd.concat()` |
+| 깨진 파일 | `try` / `except`로 건너뛰기 | 똑같아요 |
+| 코드 줄 수 | 19줄 | 10줄 |
+
+광주점 에러 이름이 BadZipFile에서 ValueError로 바뀐 것도 보이죠? Pandas는 파일을 열기 전에 "이건 엑셀 파일 모양이 아니다"를 먼저 알아채서 다른 에러를 내요. `except Exception`이 모든 에러를 잡으니 똑같이 건너뛰었어요.
+
+### 결과 확인하기
+
+```python
+print("모은 줄 수:", len(all_df))
+print("열지 못한 파일:", errors)
+print(all_df.iloc[3].to_dict())     # 4번째 줄 = 종로점 첫 줄
+```
+
+```text
+모은 줄 수: 9
+열지 못한 파일: ['광주점.xlsx']
+{'날짜': '2026-10-05', '지점': '종로점', '분야': '소설', '권수': 12, '가격': 15000, '매출': 180000}
+```
+
+STEP 4와 같은 9줄이에요.
+
+- `iloc[3]`은 위에서 3번 칸, 0부터 세니까 4번째 줄을 꺼내요. `iloc`의 i는 index(번호)의 i예요. 열 이름이 아니라 위치 번호로 꺼낸다는 뜻이에요.
+- 신촌점 3줄(0, 1, 2번)이 먼저 오고, 그다음 3번이 종로점 첫 줄이에요. 광주점은 이름순으로 맨 앞이지만 건너뛰었으니까요.
+- `.to_dict()`는 그 줄을 STEP 4에서 익숙한 딕셔너리 모양으로 보여 줘요. STEP 4의 `all_rows[3]`과 비교해 보세요. 똑같이 생겼을 거예요.
+
+> 공식 과제의 3-3은 같은 방법으로 `all_df.iloc[30]`을 꺼내 봐요. 카페 파일은 지점마다 15줄이라 줄 번호가 달라요. 몇 번째 줄에 어느 지점의 몇 번째 기록이 오는지, 파일 순서와 줄 수로 직접 따져 보세요.
+
+## 스스로 확인하기
+
+Q1. `clean_df()`에서 `df["지점"] = df["지점"].str.strip()` 대신 `df["지점"].str.strip()`만 적으면 어떻게 될까요?
+
+Q2. 합치기 코드에서 `pd.concat(tables, ignore_index=True)`를 반복문 안(`tables.append(...)` 바로 아래)으로 옮기면 무엇이 달라질까요?
+
+Q3. 4단계의 시험 표 `test`에서 `"권수": ["20", 8]`을 `"권수": ["20", "1,200"]`으로 바꾸면 결과의 권수는 어떻게 나올까요?
+
+<details>
+<summary>정답 확인</summary>
+
+A1. 정리한 결과가 어디에도 담기지 않아서 지점 열은 공백이 남은 채 그대로예요. 에러는 나지 않으니 더 조심해야 해요. `.str.strip()`은 정리된 새 열을 돌려줄 뿐 원래 열을 고치지 않아서, 꼭 `df["지점"] = ...`로 다시 담아야 해요.
+
+A2. 파일을 하나 읽을 때마다 그때까지 모은 표를 매번 새로 합치게 돼요. 마지막 결과는 같지만 같은 합치기를 여러 번 반복하니 낭비예요. 파일이 수백 개라면 눈에 띄게 느려져요. 모으기는 반복문 안에서, 합치기는 반복문이 끝난 뒤 한 번만 하는 게 정석이에요.
+
+A3. `[20, 1200]`이 나와요. `astype(str)`로 둘 다 글자가 된 뒤 쉼표가 지워지고 정수가 되니까요. 권수에 쉼표가 들어오는 경우까지 `clean_df()`가 막아 주는 셈이에요.
+
+</details>
+
+## 한 줄 정리
+
+STEP 4 코드를 덩어리로 나눠 하는 일을 말로 정리한 뒤, 값 하나씩 정리하던 [A]는 열 전체를 다루는 `clean_df()`로, [B]는 `read_excel()`과 `read_csv()`로, 두 겹 반복문의 [C]는 표를 모아 `concat()`하는 한 겹 반복문으로 옮기면, 같은 9줄이 훨씬 짧은 코드로 모여요.
+
+다음 2편에서는 [D] 합계와 [E] 결과 파일 저장을 Pandas로 옮기고, 두 버전의 결과 파일이 정말 같은지 코드로 확인해요.
