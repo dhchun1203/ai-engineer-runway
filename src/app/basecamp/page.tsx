@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readProgressRows } from "@/lib/progress-store";
@@ -21,6 +22,7 @@ import {
   step5PandasLessons,
   type BasecampStep,
 } from "@/content/basecamp";
+import { basecampQuizTotal } from "@/content/basecamp-review";
 
 export const metadata: Metadata = {
   title: "베이스캠프 선행 과제",
@@ -126,6 +128,27 @@ export default async function BasecampPage() {
           initialDoneIds={prepDoneIds(step5PandasLessons)}
           unlocked={unlocked}
         />
+      </section>
+
+      {/* 전체 복습 — 지금까지의 STEP을 한 장씩 훑는 복습 카드와 STEP별 퀴즈로 가는 입구
+          (2026-10-12). 둘 다 진도와 무관한 정적 페이지다. */}
+      <section className="panel flex flex-col gap-3 p-5">
+        <div className="flex flex-col gap-1.5">
+          <span className="w-fit text-label font-bold text-accent dark:text-accent-dark">전체 복습</span>
+          <h2 className="text-heading font-extrabold break-keep">지금까지 배운 것 복습하기</h2>
+          <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            STEP마다 할 수 있게 된 것, 핵심 문법, 자주 하는 실수, 최종 과제 흐름을 한 장으로 훑고,
+            코드의 출력과 에러를 예측하는 퀴즈로 직접 꺼내 봐요.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/basecamp/review" className="btn tap-feedback text-label">
+            복습 카드
+          </Link>
+          <Link href="/basecamp/quiz" className="btn tap-feedback text-label">
+            복습 퀴즈 ({basecampQuizTotal}문항)
+          </Link>
+        </div>
       </section>
 
       {/* 지난 주차 — 끝났거나 지난 STEP은 접힌 한 줄로. 누르면 그 자리에서 펼쳐 복습.
