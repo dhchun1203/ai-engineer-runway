@@ -4,10 +4,15 @@ import { useState } from "react";
 import { Check, RotateCcw, X } from "lucide-react";
 import type { BasecampQuizQuestion } from "@/content/basecamp-review";
 import { ReviewCode } from "@/components/basecamp/review-code";
+import { recordQuizAnswer } from "@/app/quiz-mistake-actions";
+import type { QuizAnswerOutcome } from "@/lib/quiz-mistake-store";
 
-// 베이스캠프 복습 퀴즈 한 STEP 묶음. 복습 객관식(review-quiz-block)과 같은 규칙을 따른다:
-// 고르는 즉시 채점하고 해설을 보여 주며, 서버에 저장하지 않는다(꺼내 보는 연습이 목적).
-// 다른 점은 문항에 코드 상자가 붙고, 묶음 위에 "맞힌 수 / 푼 수"와 전체 다시 풀기가 있다.
+// 객관식 퀴즈 한 묶음. 베이스캠프 복습 퀴즈와 오답 노트가 함께 쓴다. 고르는 즉시 채점하고
+// 해설을 보여 주며, 문항 위에 "맞힌 수 / 푼 수"와 전체 다시 풀기가 있다.
+//
+// 오답 노트(2026-10-14): keys를 넘기면 답을 고를 때마다 서버에 기록한다. 틀리면 오답 노트에
+// 담기고, 오답 노트에 있던 문제를 연속으로 맞히면 빠진다(규칙은 quiz-mistake-store.ts).
+// 채점 표시는 기록을 기다리지 않고 바로 보여 주고, 기록 결과는 해설 아래 한 줄로 알린다.
 
 /** 문항 글자로 정해지는 고정 순열. 데이터에는 정답이 두 번째 보기에 몰려 있어 "2번만
  *  찍기"가 통하므로, 보여 줄 때 보기 순서를 섞어 정답 위치를 퍼뜨린다. 무작위가 아니라
@@ -24,24 +29,64 @@ function shuffledOrder(q: BasecampQuizQuestion): number[] {
   return order;
 }
 
-export function BasecampQuizSet({ questions: source }: { questions: readonly BasecampQuizQuestion[] }) {
-  // 보기 순서를 섞은 문항(정답 인덱스도 따라 옮긴다).
+const OUTCOME_TEXT: Record<QuizAnswerOutcome, string | null> = {
+  added: "오답 노트에 담았어요",
+  "still-wrong": "오답 노트에 그대로 있어요",
+  streak: "한 번 더 맞히면 오답 노트에서 빠져요",
+  cleared: "오답 노트에서 뺐어요",
+  ignored: null,
+};
+
+type SaveState = { kind: "idle" } | { kind: "done"; outcome: QuizAnswerOutcome } | { kind: "failed" };
+
+export function BasecampQuizSet({
+  questions: source,
+  keys,
+  notes,
+}: {
+  questions: readonly BasecampQuizQuestion[];
+  /** 문항마다 오답 노트 키(원본 순서). 없으면 기록하지 않는다. */
+  keys?: readonly string[];
+  /** 문항 위에 붙일 작은 안내(오답 노트의 틀린 횟수 등) */
+  notes?: readonly (string | undefined)[];
+}) {
+  // 보기 순서를 섞은 문항(정답 인덱스도 따라 옮긴다). order는 화면 순서 → 원본 순서 표.
   const questions = source.map((q) => {
     const order = shuffledOrder(q);
-    return { ...q, options: order.map((i) => q.options[i]), answer: order.indexOf(q.answer) };
+    return { ...q, order, options: order.map((i) => q.options[i]), answer: order.indexOf(q.answer) };
   });
   const [selected, setSelected] = useState<(number | null)[]>(() => questions.map(() => null));
+  const [saves, setSaves] = useState<SaveState[]>(() => questions.map(() => ({ kind: "idle" })));
+
+  function setSave(qi: number, state: SaveState) {
+    setSaves((prev) => {
+      const next = [...prev];
+      next[qi] = state;
+      return next;
+    });
+  }
+
+  function record(qi: number, oi: number) {
+    const key = keys?.[qi];
+    if (!key) return;
+    setSave(qi, { kind: "idle" });
+    // 서버에는 원본 순서의 보기 번호를 보낸다(채점은 서버가 원본 데이터로 직접 한다).
+    recordQuizAnswer(key, questions[qi].order[oi])
+      .then((outcome) => setSave(qi, { kind: "done", outcome }))
+      .catch(() => setSave(qi, { kind: "failed" }));
+  }
 
   const solved = selected.filter((s) => s !== null).length;
   const correct = selected.filter((s, i) => s !== null && s === questions[i].answer).length;
 
   function choose(qi: number, oi: number) {
+    if (selected[qi] !== null) return;
     setSelected((prev) => {
-      if (prev[qi] !== null) return prev;
       const next = [...prev];
       next[qi] = oi;
       return next;
     });
+    record(qi, oi);
   }
   function reset(qi: number) {
     setSelected((prev) => {
@@ -78,11 +123,16 @@ export function BasecampQuizSet({ questions: source }: { questions: readonly Bas
         const sel = selected[qi];
         const answered = sel !== null;
         const isRight = answered && sel === q.answer;
+        const save = saves[qi];
+        const outcomeText = save.kind === "done" ? OUTCOME_TEXT[save.outcome] : null;
         return (
           <div key={qi} className="flex flex-col gap-2.5">
             <p className="text-body font-semibold break-keep">
               {qi + 1}. {q.q}
             </p>
+            {notes?.[qi] ? (
+              <p className="text-label font-semibold text-destructive dark:text-destructive-dark">{notes[qi]}</p>
+            ) : null}
             {q.code ? <ReviewCode code={q.code} /> : null}
             <div className="flex flex-col gap-1.5" role="group" aria-label={`${qi + 1}번 보기`}>
               {q.options.map((opt, oi) => {
@@ -125,6 +175,14 @@ export function BasecampQuizSet({ questions: source }: { questions: readonly Bas
                 <p className="text-label font-normal leading-relaxed break-keep text-badge-neutral-text dark:text-badge-neutral-text-dark">
                   {q.explain}
                 </p>
+                {save.kind === "failed" ? (
+                  <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                    오답 노트에 기록하지 못했어요. 연결을 확인한 뒤 다시 풀어 보세요.
+                  </p>
+                ) : null}
+                {outcomeText ? (
+                  <p className="text-label font-semibold text-accent dark:text-accent-dark">{outcomeText}</p>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => reset(qi)}

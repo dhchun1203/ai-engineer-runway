@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { basecampReviewSteps } from "@/content/basecamp-review";
 import { ReviewCode } from "@/components/basecamp/review-code";
+import { MistakeNoteLink } from "@/components/mistake-note-link";
 
 export const metadata: Metadata = {
   title: "베이스캠프 복습 카드",
@@ -17,7 +18,7 @@ const HOW_TO = [
   "새 Colab 노트에서 그 STEP의 최종 과제를 답을 보지 않고 다시 풀어요.",
   "막히면 바로 레슨을 열지 말고 5분은 버텨 봐요. 그래도 막힌 곳이 진짜 약점이에요.",
   "약점만 아래 카드의 '다시 볼 레슨'에서 찾아 그 부분만 읽어요.",
-  "복습 퀴즈로 그 STEP을 한 번 더 꺼내 봐요.",
+  "복습 퀴즈로 그 STEP을 한 번 더 꺼내 보고, 틀린 문제는 오답 노트에서 다시 풀어요.",
   "학습 기록에 '할 수 있게 된 것'과 '헷갈렸던 것'을 내 말로 적어요.",
 ];
 
@@ -42,6 +43,7 @@ export default function BasecampReviewPage() {
           복습 퀴즈 풀기
           <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
         </Link>
+        <MistakeNoteLink variant="link" label="오답 노트" />
       </header>
 
       <section className="panel flex flex-col gap-3 p-5">
@@ -81,6 +83,7 @@ export default function BasecampReviewPage() {
           <header className="flex flex-col gap-1.5">
             <span className="text-label font-bold text-accent dark:text-accent-dark">{step.label}</span>
             <h2 className="text-heading font-extrabold break-keep">{step.title}</h2>
+            <MistakeNoteLink variant="step" prefix={`bc:${step.id}:`} />
           </header>
 
           <section className="flex flex-col gap-2">

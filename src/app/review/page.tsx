@@ -8,6 +8,8 @@ import { todayInSeoul } from "@/lib/today";
 import { ReviewJudgmentButtons } from "@/components/review-judgment-buttons";
 import { ReviewQuizBlock } from "@/components/review-quiz-block";
 import { getReviewQuiz } from "@/content/review-quiz";
+import { reviewQuizKey } from "@/lib/quiz-mistake-key";
+import { MistakeNoteLink } from "@/components/mistake-note-link";
 
 // /review 복습 세션(quick 260901-w04, 설계는
 // .planning/research/edu-sites/round2-h-review-design.md V2절). 홈(page.tsx)과
@@ -38,7 +40,12 @@ function QuestionListItem({ card }: { card: QuestionCard }) {
   return (
     <li className="panel flex flex-col gap-3 p-4">
       <p className="text-body font-normal">{card.text}</p>
-      {quiz.length > 0 ? <ReviewQuizBlock questions={quiz} /> : null}
+      {quiz.length > 0 ? (
+        <ReviewQuizBlock
+          questions={quiz}
+          keys={quiz.map((_, i) => reviewQuizKey(card.lesson.slug, card.questionIndex, i))}
+        />
+      ) : null}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <ReviewJudgmentButtons lessonSlug={card.lesson.slug} questionIndex={card.questionIndex} />
         <Link
@@ -124,6 +131,7 @@ export default async function ReviewPage() {
           완료한 레슨의 스스로 점검 문항을 다시 풀어 보세요. 정답은 여기서 보여주지 않아요 —
           &ldquo;레슨에서 확인&rdquo; 링크로 확인합니다. 판정은 본인 몫이고, 후하게 매겨도 괜찮아요.
         </p>
+        <MistakeNoteLink variant="link" label="객관식 오답 노트" />
       </header>
 
       {sessionCards.length > 0 ? (

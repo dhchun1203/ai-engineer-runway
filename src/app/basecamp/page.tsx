@@ -23,6 +23,7 @@ import {
   type BasecampStep,
 } from "@/content/basecamp";
 import { basecampQuizTotal } from "@/content/basecamp-review";
+import { MistakeNoteLink } from "@/components/mistake-note-link";
 
 export const metadata: Metadata = {
   title: "베이스캠프 선행 과제",
@@ -149,6 +150,7 @@ export default async function BasecampPage() {
             복습 퀴즈 ({basecampQuizTotal}문항)
           </Link>
         </div>
+        <MistakeNoteLink variant="link" label="오답 노트" />
       </section>
 
       {/* 지난 주차 — 끝났거나 지난 STEP은 접힌 한 줄로. 누르면 그 자리에서 펼쳐 복습.
