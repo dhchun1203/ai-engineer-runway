@@ -19,3 +19,10 @@ export function getRoadmapLessonBySlug(slug: string): RoadmapLesson | undefined 
 export function getRoadmapLessonsByStage(stageId: string): RoadmapLesson[] {
   return getOrderedRoadmapLessons().filter((l) => l.stageId === stageId);
 }
+
+/** 세션 노트(kind: session)만, 최신(order 큰 것)부터. 로드맵 첫 화면의 "세션 노트" 칸이 쓴다. */
+export function getRoadmapSessionNotes(): RoadmapLesson[] {
+  return getOrderedRoadmapLessons()
+    .filter((l) => l.kind === "session")
+    .sort((a, b) => b.order - a.order);
+}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { isRoadmapViewer } from "@/lib/roadmap-access";
+import { getRoadmapSessionNotes } from "@/content/roadmap-lesson-helpers";
 import {
   talentTraits,
   roadmapStages,
@@ -53,6 +54,8 @@ export default async function RoadmapPage() {
     redirect("/");
   }
 
+  const sessionNotes = getRoadmapSessionNotes();
+
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-14 px-4 py-12 sm:px-6 lg:px-8">
       {/* 머리글 — 이 트랙이 학습 진도, 일정과 별개임을 분명히 밝힌다. */}
@@ -68,6 +71,34 @@ export default async function RoadmapPage() {
           앞으로 스스로 채워나가는 살아있는 문서입니다.
         </p>
       </header>
+
+      {/* 세션 노트 — 튜터링 같은 세션을 미리 숙지하고, 끝난 뒤 들은 것을 채워 두는 노트
+          (2026-10-15). roadmapLessons 중 kind가 session인 것만 최신순으로 모은다. */}
+      {sessionNotes.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <h2 className="text-heading font-extrabold break-keep">세션 노트</h2>
+            <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+              튜터링과 특강 같은 세션을 미리 숙지하고, 끝난 뒤 들은 내용을 채워 두는 노트예요.
+            </p>
+          </div>
+          <ul className="flex flex-col gap-3">
+            {sessionNotes.map((note) => (
+              <li key={note.slug}>
+                <Link
+                  href={note.permalink}
+                  className="card-interactive panel flex min-h-11 flex-col gap-1.5 p-5"
+                >
+                  <span className="text-body font-extrabold break-keep">{note.title}</span>
+                  <span className="text-label leading-relaxed break-keep text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                    {note.summary}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {/* 채널톡이 찾는 사람 — 인재상 분석 */}
       <section className="flex flex-col gap-5">

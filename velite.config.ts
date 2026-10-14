@@ -359,6 +359,9 @@ export default defineConfig({
         .object({
           title: s.string(),
           stageId: s.string(), // 로드맵 단계 id(예: "evals") — 단계와 잇는 열쇠
+          // 종류: lesson(별도 심화 레슨) / session(튜터링 같은 세션의 사전 노트, 2026-10-15).
+          // session은 단계에 매이지 않고 로드맵 첫 화면의 "세션 노트" 칸에 따로 모인다.
+          kind: s.enum(["lesson", "session"]).default("lesson"),
           order: s.number(), // 트랙 내 순서
           summary: s.string(), // 로드맵/헤더용 한 줄 훅
           slug: s.slug("roadmap-lessons"),
