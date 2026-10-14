@@ -2756,3 +2756,47 @@ code[data-theme*=" "] span {
 .news-article.prose > .news-summary + h2 {
   margin-top: 1.2em;
 }
+
+/* ── 복습 퀴즈 보기 호버 (2026-10-14) ────────────────────────────────────────
+   베이스캠프 복습 퀴즈와 /review 객관식이 함께 쓰는 보기 버튼. 아직 고르지 않은
+   보기(:enabled)에 마우스를 올리면 잉크 테두리와 흐림 없는 그림자로 떠오른다. 이미
+   채점된 보기는 disabled라 반응하지 않는다. 색이 아니라 잉크와 깊이로 말하는 이
+   사이트의 호버 문법(.nav-link, .card-interactive)을 따른다.
+
+   레이어 밖에 둔다: 보기의 테두리 색은 border-line 유틸리티가 주는데, 레이어 밖
+   선언이어야 유틸리티를 이겨 호버 테두리가 보인다. (hover: hover)로 감싸 터치
+   기기에서 탭한 뒤 호버 상태가 들러붙지 않게 한다. transition에는 .tap-feedback의
+   transform을 함께 적는다(같은 속성을 이 규칙이 덮어쓰므로). */
+.quiz-option {
+  transition:
+    transform 100ms ease-out,
+    border-color 120ms ease-out,
+    background-color 120ms ease-out,
+    box-shadow 120ms ease-out;
+}
+
+.quiz-option:enabled {
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  /* 흰 패널 위에서는 그림자 색(shadow-hard)이 바탕과 비슷해 잘 안 보여서, 한 단계
+     눌린 면(surface-2)을 함께 깔아 호버가 또렷하게 보이게 한다. */
+  .quiz-option:enabled:hover {
+    border-color: var(--color-foreground);
+    background-color: var(--color-surface-2);
+    box-shadow: 3px 3px 0 0 var(--color-shadow-hard);
+  }
+
+  .dark .quiz-option:enabled:hover {
+    border-color: var(--color-foreground-dark);
+    background-color: var(--color-surface-2-dark);
+    box-shadow: 3px 3px 0 0 var(--color-shadow-hard-dark);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quiz-option {
+    transition: none;
+  }
+}

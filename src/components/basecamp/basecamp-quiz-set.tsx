@@ -103,7 +103,7 @@ export function BasecampQuizSet({ questions: source }: { questions: readonly Bas
                     disabled={answered}
                     onClick={() => choose(qi, oi)}
                     aria-pressed={isChosen}
-                    className={`tap-feedback flex min-h-11 w-full items-center gap-2 border px-3 py-2 text-left text-body break-keep ${tone}`}
+                    className={`quiz-option tap-feedback flex min-h-11 w-full items-center gap-2 border px-3 py-2 text-left text-body break-keep ${tone}`}
                   >
                     <span className="flex-1">{opt}</span>
                     {answered && isCorrect ? <Check className="size-4 shrink-0" aria-hidden="true" /> : null}
