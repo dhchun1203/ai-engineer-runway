@@ -234,7 +234,7 @@ export default async function RoadmapPage() {
                         {skill.lessonSlug ? (
                           <Link
                             href={`/roadmap/${skill.lessonSlug}`}
-                            className="chip w-fit min-h-11 items-center gap-1.5 text-label font-bold text-accent dark:text-accent-dark"
+                            className="btn tap-feedback w-fit gap-1.5 text-label"
                           >
                             심화 레슨 열기
                             <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -248,7 +248,7 @@ export default async function RoadmapPage() {
                 {stage.internalLink ? (
                   <Link
                     href={stage.internalLink.href}
-                    className="chip w-fit min-h-11 items-center text-label font-bold"
+                    className="btn tap-feedback w-fit text-label"
                   >
                     {stage.internalLink.label}
                   </Link>

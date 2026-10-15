@@ -56,7 +56,7 @@ export default async function TilDetailPage({
           {unlocked ? (
             <Link
               href={`/til/${post.slug}/edit`}
-              className="chip tap-feedback inline-flex min-h-11 items-center text-label font-semibold text-accent dark:text-accent-dark"
+              className="btn tap-feedback text-label"
             >
               편집
             </Link>

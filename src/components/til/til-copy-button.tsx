@@ -24,7 +24,7 @@ export function TilCopyButton({ markdown }: { markdown: string }) {
       type="button"
       onClick={handleCopy}
       aria-label="글 전체를 마크다운으로 복사"
-      className="chip tap-feedback inline-flex min-h-11 items-center gap-1.5 text-label font-semibold"
+      className="btn tap-feedback gap-1.5 text-label"
     >
       {copied ? (
         <Check className="h-4 w-4 shrink-0" aria-hidden="true" />

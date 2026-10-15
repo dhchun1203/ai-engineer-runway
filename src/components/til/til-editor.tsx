@@ -473,7 +473,7 @@ export function TilEditor(props: Props) {
             </button>
           ) : null}
           <div className="ml-auto flex items-center gap-3">
-            <button type="button" disabled={pending} onClick={() => handleSave(false)} className="chip tap-feedback min-h-11 text-body">
+            <button type="button" disabled={pending} onClick={() => handleSave(false)} className="btn tap-feedback text-body">
               초고 저장
             </button>
             <button type="button" disabled={pending} onClick={() => handleSave(true)} className="btn-action tap-feedback min-h-11 text-body">

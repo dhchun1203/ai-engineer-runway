@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { RotateCcw } from "lucide-react";
+import { ArrowRight, RotateCcw } from "lucide-react";
 import type { getLessonBySlug } from "@/content/curriculum-helpers";
 import { SELF_CHECK_ANCHOR, GRADUATE_COUNT } from "@/lib/review";
 import { ReviewDoneButton } from "@/components/review-done-button";
@@ -58,8 +58,9 @@ export function TodayReviewCard({
         </div>
         {/* /review 세션 상시 진입점(quick 260901-w04) — 만기 복습이 있을 때 홈에서
             바로 세션으로 넘어간다. */}
-        <Link href="/review" className="chip tap-feedback min-h-11 w-fit items-center">
-          복습 세션 열기 →
+        <Link href="/review" className="btn tap-feedback w-fit text-label">
+          복습 세션 열기
+          <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
         </Link>
       </div>
       <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">

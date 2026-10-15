@@ -107,7 +107,7 @@ export default async function LoginPage() {
               <Link href="/" className="btn-action tap-feedback min-h-11 text-body">
                 홈으로
               </Link>
-              <SignOutForm action={signOutAction} className="chip tap-feedback min-h-11 text-body">
+              <SignOutForm action={signOutAction} className="btn tap-feedback text-body">
                 로그아웃
               </SignOutForm>
             </div>
@@ -120,7 +120,7 @@ export default async function LoginPage() {
                 </span>
                 <Link
                   href="/admin"
-                  className="chip tap-feedback inline-flex min-h-11 w-fit items-center text-body"
+                  className="btn tap-feedback w-fit text-body"
                 >
                   가입 승인
                 </Link>
