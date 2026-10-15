@@ -2801,3 +2801,31 @@ code[data-theme*=" "] span {
     transition: none;
   }
 }
+
+/* ── 객관식 정답지 상자 (2026-10-15) ────────────────────────────────────────
+   문제 영역과 정답지(정답 여부와 해설)를 확실히 가르기 위한 상자. 왼쪽 굵은 색 띠와
+   옅은 바탕으로 "여기부터는 답"임을 보여 준다. 맞힘은 ok(초록), 틀림은 destructive(빨강).
+   새 색을 만들지 않고 각 색을 흰 면(다크는 어두운 면)에 섞어 옅은 바탕을 만든다. */
+.quiz-answer {
+  border-left: 4px solid;
+}
+
+.quiz-answer-right {
+  border-left-color: var(--color-ok);
+  background-color: color-mix(in srgb, var(--color-ok) 7%, var(--color-surface));
+}
+
+.quiz-answer-wrong {
+  border-left-color: var(--color-destructive);
+  background-color: color-mix(in srgb, var(--color-destructive) 6%, var(--color-surface));
+}
+
+.dark .quiz-answer-right {
+  border-left-color: var(--color-ok-dark);
+  background-color: color-mix(in srgb, var(--color-ok-dark) 12%, var(--color-surface-dark));
+}
+
+.dark .quiz-answer-wrong {
+  border-left-color: var(--color-destructive-dark);
+  background-color: color-mix(in srgb, var(--color-destructive-dark) 12%, var(--color-surface-dark));
+}

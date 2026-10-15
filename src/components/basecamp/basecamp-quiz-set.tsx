@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Check, RotateCcw, X } from "lucide-react";
 import type { BasecampQuizQuestion } from "@/content/basecamp-review";
 import { ReviewCode } from "@/components/basecamp/review-code";
+import { QuizAnswerPanel } from "@/components/quiz-answer-panel";
 import { recordQuizAnswer } from "@/app/quiz-mistake-actions";
 import type { QuizAnswerOutcome } from "@/lib/quiz-mistake-store";
 import { attemptLabel, loadQuizAttempts, type QuizAttempt } from "@/lib/quiz-attempts-client";
@@ -179,6 +180,9 @@ export function BasecampQuizSet({
         </div>
       </div>
 
+      {/* 문제 목록 — 문항 사이에 구분선을 두고, 문항마다 "문제 N" 꼬리표를 단다. 답을 고르면
+          그 아래에 색 띠가 있는 정답지 상자(QuizAnswerPanel)가 따로 열린다. */}
+      <ol className="flex flex-col divide-y divide-line dark:divide-line-dark">
       {questions.map((q, qi) => {
         const sel = selected[qi];
         const answered = sel !== null;
@@ -189,10 +193,13 @@ export function BasecampQuizSet({
         if (onlyUnsolved && key && solvedAtOpen.has(key)) return null;
         const attempt = !answered && key ? past?.get(key) : undefined;
         return (
-          <div key={qi} className="flex flex-col gap-2.5">
-            <p className="text-body font-semibold break-keep">
-              {qi + 1}. {q.q}
-            </p>
+          <li key={qi} className="flex flex-col gap-2.5 py-6 first:pt-0 last:pb-0">
+            <div className="flex items-start gap-2.5">
+              <span className="mt-0.5 shrink-0 bg-foreground px-1.5 text-label font-bold text-surface dark:bg-foreground-dark dark:text-surface-dark">
+                문제 {qi + 1}
+              </span>
+              <p className="text-body font-semibold break-keep">{q.q}</p>
+            </div>
             {attempt ? (
               <p
                 className={`text-label font-semibold ${
@@ -235,38 +242,19 @@ export function BasecampQuizSet({
               })}
             </div>
             {answered ? (
-              <div className="flex flex-col gap-1.5">
-                <p
-                  role="status"
-                  className={`text-label font-semibold ${
-                    isRight ? "text-ok dark:text-ok-dark" : "text-destructive dark:text-destructive-dark"
-                  }`}
-                >
-                  {isRight ? "정답이에요" : "정답을 확인해 보세요"}
-                </p>
-                <p className="text-label font-normal leading-relaxed break-keep text-badge-neutral-text dark:text-badge-neutral-text-dark">
-                  {q.explain}
-                </p>
-                {save.kind === "failed" ? (
-                  <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
-                    오답 노트에 기록하지 못했어요. 연결을 확인한 뒤 다시 풀어 보세요.
-                  </p>
-                ) : null}
-                {outcomeText ? (
-                  <p className="text-label font-semibold text-accent dark:text-accent-dark">{outcomeText}</p>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => reset(qi)}
-                  className="tap-feedback inline-flex min-h-11 w-fit items-center text-label font-semibold text-accent dark:text-accent-dark"
-                >
-                  다시 풀기
-                </button>
-              </div>
+              <QuizAnswerPanel
+                isRight={isRight}
+                correctOption={q.options[q.answer]}
+                explain={q.explain}
+                saveFailed={save.kind === "failed"}
+                outcomeText={outcomeText}
+                onRetry={() => reset(qi)}
+              />
             ) : null}
-          </div>
+          </li>
         );
       })}
+      </ol>
     </div>
   );
 }
