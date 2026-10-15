@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, X } from "lucide-react";
 import type { ReviewQuizQuestion } from "@/content/review-quiz";
 import { recordQuizAnswer } from "@/app/quiz-mistake-actions";
 import type { QuizAnswerOutcome } from "@/lib/quiz-mistake-store";
+import { attemptLabel, loadQuizAttempts, type QuizAttempt } from "@/lib/quiz-attempts-client";
 
 // 복습 객관식 블록(review quiz, quick 260906) — "스스로 점검" 카드 안에서 자가진단
 // (O/△/X) 옆에 나란히 붙는 3지선다. 능동적 문제풀이와 자가 복습을 한 화면에서
@@ -33,6 +34,22 @@ export function ReviewQuizBlock({
   const [selected, setSelected] = useState<(number | null)[]>(() => questions.map(() => null));
   // 문항별 기록 결과 — null(아직/기록 안 함), 결과 문구, 또는 "failed".
   const [saved, setSaved] = useState<(QuizAnswerOutcome | "failed" | null)[]>(() => questions.map(() => null));
+  // 계정의 지난 풀이 기록(2026-10-15). 문항마다 "지난번 맞힘/틀림"만 붙이고 고른 보기는
+  // 되살리지 않는다. 한 화면의 여러 블록이 요청 하나를 나눠 쓴다(quiz-attempts-client).
+  const [past, setPast] = useState<Map<string, QuizAttempt> | null>(null);
+
+  useEffect(() => {
+    if (!keys || keys.length === 0) return;
+    let alive = true;
+    loadQuizAttempts().then((map) => {
+      if (alive && map) setPast(map);
+    });
+    return () => {
+      alive = false;
+    };
+    // keys는 서버가 그린 고정 배열이라 처음 한 번만 받으면 된다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (questions.length === 0) return null;
 
@@ -75,11 +92,22 @@ export function ReviewQuizBlock({
         const sel = selected[qi];
         const answered = sel !== null;
         const isRight = answered && sel === q.answer;
+        const key = keys?.[qi];
+        const attempt = !answered && key ? past?.get(key) : undefined;
         return (
           <div key={qi} className="flex flex-col gap-2">
             <p className="text-body font-normal">
               {qi + 1}. {q.q}
             </p>
+            {attempt ? (
+              <p
+                className={`text-label font-semibold ${
+                  attempt.lastCorrect ? "text-ok dark:text-ok-dark" : "text-destructive dark:text-destructive-dark"
+                }`}
+              >
+                {attemptLabel(attempt)}
+              </p>
+            ) : null}
             <div className="flex flex-col gap-1.5" role="group" aria-label={`객관식 ${qi + 1}`}>
               {q.options.map((opt, oi) => {
                 const isCorrect = oi === q.answer;

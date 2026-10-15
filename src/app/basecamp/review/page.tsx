@@ -4,6 +4,8 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { basecampReviewSteps } from "@/content/basecamp-review";
 import { ReviewCode } from "@/components/basecamp/review-code";
 import { MistakeNoteLink } from "@/components/mistake-note-link";
+import { QuizProgressLine } from "@/components/quiz-progress-line";
+import { basecampQuizKey } from "@/lib/quiz-mistake-key";
 
 export const metadata: Metadata = {
   title: "베이스캠프 복습 카드",
@@ -83,6 +85,7 @@ export default function BasecampReviewPage() {
           <header className="flex flex-col gap-1.5">
             <span className="text-label font-bold text-accent dark:text-accent-dark">{step.label}</span>
             <h2 className="text-heading font-extrabold break-keep">{step.title}</h2>
+            <QuizProgressLine keys={step.quiz.map((_, i) => basecampQuizKey(step.id, i))} />
             <MistakeNoteLink variant="step" prefix={`bc:${step.id}:`} />
           </header>
 

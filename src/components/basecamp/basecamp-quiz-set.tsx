@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, RotateCcw, X } from "lucide-react";
 import type { BasecampQuizQuestion } from "@/content/basecamp-review";
 import { ReviewCode } from "@/components/basecamp/review-code";
 import { recordQuizAnswer } from "@/app/quiz-mistake-actions";
 import type { QuizAnswerOutcome } from "@/lib/quiz-mistake-store";
+import { attemptLabel, loadQuizAttempts, type QuizAttempt } from "@/lib/quiz-attempts-client";
 
 // 객관식 퀴즈 한 묶음. 베이스캠프 복습 퀴즈와 오답 노트가 함께 쓴다. 고르는 즉시 채점하고
 // 해설을 보여 주며, 문항 위에 "맞힌 수 / 푼 수"와 전체 다시 풀기가 있다.
@@ -13,6 +14,10 @@ import type { QuizAnswerOutcome } from "@/lib/quiz-mistake-store";
 // 오답 노트(2026-10-14): keys를 넘기면 답을 고를 때마다 서버에 기록한다. 틀리면 오답 노트에
 // 담기고, 오답 노트에 있던 문제를 연속으로 맞히면 빠진다(규칙은 quiz-mistake-store.ts).
 // 채점 표시는 기록을 기다리지 않고 바로 보여 주고, 기록 결과는 해설 아래 한 줄로 알린다.
+//
+// 풀이 기록(2026-10-15): keys가 있으면 계정의 지난 풀이 결과를 받아, 문항마다 "지난번 맞힘/틀림"을
+// 붙이고 묶음 위에 "몇 문항 풀었고 몇 문항 맞혔는지"를 보여 준다. 고른 보기는 되살리지 않는다
+// (다시 열었을 때 답이 미리 보이면 꺼내 보는 연습이 안 된다). "안 푼 문제만 보기"로 이어 푼다.
 
 /** 문항 글자로 정해지는 고정 순열. 데이터에는 정답이 두 번째 보기에 몰려 있어 "2번만
  *  찍기"가 통하므로, 보여 줄 때 보기 순서를 섞어 정답 위치를 퍼뜨린다. 무작위가 아니라
@@ -57,6 +62,27 @@ export function BasecampQuizSet({
   });
   const [selected, setSelected] = useState<(number | null)[]>(() => questions.map(() => null));
   const [saves, setSaves] = useState<SaveState[]>(() => questions.map(() => ({ kind: "idle" })));
+  // 계정의 지난 풀이 기록(로그인 안 했거나 keys가 없으면 null).
+  const [past, setPast] = useState<Map<string, QuizAttempt> | null>(null);
+  // 화면을 연 순간 이미 풀어 본 문항 키 — "안 푼 문제만 보기"는 이 기준으로 거른다. 이번에
+  // 푼 문항이 눈앞에서 사라지지 않게, 열었을 때의 상태로 고정한다.
+  const [solvedAtOpen, setSolvedAtOpen] = useState<Set<string>>(() => new Set());
+  const [onlyUnsolved, setOnlyUnsolved] = useState(false);
+
+  useEffect(() => {
+    if (!keys || keys.length === 0) return;
+    let alive = true;
+    loadQuizAttempts().then((map) => {
+      if (!alive || !map) return;
+      setPast(map);
+      setSolvedAtOpen(new Set(keys.filter((key) => map.has(key))));
+    });
+    return () => {
+      alive = false;
+    };
+    // keys는 서버가 그린 고정 배열이라 처음 한 번만 받으면 된다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function setSave(qi: number, state: SaveState) {
     setSaves((prev) => {
@@ -78,6 +104,30 @@ export function BasecampQuizSet({
 
   const solved = selected.filter((s) => s !== null).length;
   const correct = selected.filter((s, i) => s !== null && s === questions[i].answer).length;
+
+  // 문항별 최신 결과: 이번에 풀었으면 그 결과, 아니면 계정의 지난 기록.
+  const latest = questions.map((q, qi) => {
+    if (selected[qi] !== null) return selected[qi] === q.answer;
+    const key = keys?.[qi];
+    const attempt = key ? past?.get(key) : undefined;
+    return attempt ? attempt.lastCorrect : null;
+  });
+  const everSolved = latest.filter((v) => v !== null).length;
+  const everCorrect = latest.filter((v) => v === true).length;
+  const unsolvedAtOpen = keys ? keys.filter((key) => !solvedAtOpen.has(key)).length : 0;
+
+  let summary: string;
+  if (past) {
+    summary =
+      everSolved === 0
+        ? `${questions.length}문항, 아직 안 풀었어요`
+        : `${questions.length}문항 중 ${everSolved}문항 풀었고 ${everCorrect}문항 맞혔어요`;
+  } else {
+    summary =
+      solved === 0
+        ? `${questions.length}문항`
+        : `${solved}문항 풀고 ${correct}문항 맞혔어요 (전체 ${questions.length}문항)`;
+  }
 
   function choose(qi: number, oi: number) {
     if (selected[qi] !== null) return;
@@ -103,10 +153,19 @@ export function BasecampQuizSet({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3 dark:border-line-dark">
         <p className="text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark" aria-live="polite">
-          {solved === 0
-            ? `${questions.length}문항`
-            : `${solved}문항 풀고 ${correct}문항 맞혔어요 (전체 ${questions.length}문항)`}
+          {summary}
         </p>
+        <div className="flex flex-wrap items-center gap-x-4">
+        {past && solvedAtOpen.size > 0 && unsolvedAtOpen > 0 ? (
+          <button
+            type="button"
+            onClick={() => setOnlyUnsolved((v) => !v)}
+            aria-pressed={onlyUnsolved}
+            className="tap-feedback inline-flex min-h-11 items-center text-label font-semibold text-accent dark:text-accent-dark"
+          >
+            {onlyUnsolved ? "모든 문제 보기" : `안 푼 문제만 보기 (${unsolvedAtOpen})`}
+          </button>
+        ) : null}
         {solved > 0 ? (
           <button
             type="button"
@@ -117,6 +176,7 @@ export function BasecampQuizSet({
             모두 다시 풀기
           </button>
         ) : null}
+        </div>
       </div>
 
       {questions.map((q, qi) => {
@@ -125,11 +185,23 @@ export function BasecampQuizSet({
         const isRight = answered && sel === q.answer;
         const save = saves[qi];
         const outcomeText = save.kind === "done" ? OUTCOME_TEXT[save.outcome] : null;
+        const key = keys?.[qi];
+        if (onlyUnsolved && key && solvedAtOpen.has(key)) return null;
+        const attempt = !answered && key ? past?.get(key) : undefined;
         return (
           <div key={qi} className="flex flex-col gap-2.5">
             <p className="text-body font-semibold break-keep">
               {qi + 1}. {q.q}
             </p>
+            {attempt ? (
+              <p
+                className={`text-label font-semibold ${
+                  attempt.lastCorrect ? "text-ok dark:text-ok-dark" : "text-destructive dark:text-destructive-dark"
+                }`}
+              >
+                {attemptLabel(attempt)}
+              </p>
+            ) : null}
             {notes?.[qi] ? (
               <p className="text-label font-semibold text-destructive dark:text-destructive-dark">{notes[qi]}</p>
             ) : null}

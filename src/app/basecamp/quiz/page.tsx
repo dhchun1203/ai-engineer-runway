@@ -31,8 +31,8 @@ export default function BasecampQuizPage() {
         <h1 className="text-display font-black break-keep">베이스캠프 복습 퀴즈</h1>
         <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
           STEP마다 {basecampReviewSteps[0].quiz.length}문항, 모두 {basecampQuizTotal}문항이에요. 코드 문항은 실행하기
-          전에 결과를 먼저 머릿속으로 예측해 보세요. 고르는 즉시 정답과 해설이 나오고, 틀린 문제는 내
-          계정의 오답 노트에 모여요. 몇 번이든 다시 풀어도 돼요.
+          전에 결과를 먼저 머릿속으로 예측해 보세요. 고르는 즉시 정답과 해설이 나오고, 풀이 결과는 내
+          계정에 남아 다음에 열면 &ldquo;지난번 맞힘/틀림&rdquo;으로 보여요. 틀린 문제는 오답 노트에도 모여요.
         </p>
         <Link
           href="/basecamp/review"
