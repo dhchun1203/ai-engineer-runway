@@ -38,6 +38,7 @@ export function TilEditor(props: Props) {
   const [tagsText, setTagsText] = useState((post?.tags ?? []).join(', '));
   const [seriesId, setSeriesId] = useState<string | null>(post?.seriesId ?? null);
   const [newSeriesTitle, setNewSeriesTitle] = useState('');
+  const [creatingSeries, setCreatingSeries] = useState(false);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(post?.coverImageUrl ?? null);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingBodyImage, setUploadingBodyImage] = useState(false);
@@ -220,8 +221,10 @@ export function TilEditor(props: Props) {
     else setError(res.error);
   }
 
+  // 메타 입력칸: 본문 에디터(굵은 테두리)와 위계를 나누려고 얇은 선, 포커스 때만 진하게.
   const inputClass =
-    'w-full border-2 border-foreground bg-background px-3 py-2 text-body dark:border-foreground-dark dark:bg-background-dark';
+    'min-h-11 w-full border border-line bg-background px-3 py-2 text-body outline-none placeholder:text-muted ' +
+    'focus:border-foreground dark:border-line-dark dark:bg-background-dark dark:placeholder:text-muted-dark dark:focus:border-foreground-dark';
 
   // 툴바 버튼: 최소 44px 터치 타깃(아이패드). 호버 시 배경 없이 아이콘/글자만 커진다.
   const toolBtn =
@@ -321,104 +324,191 @@ export function TilEditor(props: Props) {
         </div>
       </div>
 
-      {/* ── 메타데이터 ─────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-2">
-        <span className="text-label font-semibold">커버 이미지</span>
-        {coverImageUrl ? (
-          // eslint 규칙상 next/image 권장이나, 외부 스토리지 URL이라 img로 단순화(til-card.tsx와 동일 판단).
-          <img src={coverImageUrl} alt="" className="aspect-[16/9] w-full rounded object-cover" />
-        ) : null}
+      {/* ── 메타데이터: 되짚어보기 | 분류 두 묶음 ───────────────────────────── */}
+      <div className="mt-4 grid gap-x-10 gap-y-10 lg:grid-cols-2">
+        <section className="flex min-w-0 flex-col gap-5">
+          <h2 className={groupTitle}>되짚어보기</h2>
+
+          <Field label="셀프 체크 질문" note="발행 시 필수" htmlFor="til-self-check">
+            <input
+              id="til-self-check"
+              value={selfCheck}
+              onChange={(e) => setSelfCheck(e.target.value)}
+              placeholder={tpl.hints.selfCheck}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="막힌 곳" note="선택" htmlFor="til-blocked">
+            <textarea
+              id="til-blocked"
+              value={blocked}
+              onChange={(e) => setBlocked(e.target.value)}
+              rows={3}
+              placeholder={tpl.hints.blocked}
+              className={`${inputClass} resize-y`}
+            />
+          </Field>
+
+          <Field label="이해도" note="다시 누르면 해제">
+            <div className="flex w-fit border border-line dark:border-line-dark" role="group" aria-label="이해도">
+              {[1, 2, 3, 4, 5].map((n) => {
+                const on = understanding === n;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setUnderstanding(on ? null : n)}
+                    className={`h-11 w-12 border-l border-line text-label font-bold first:border-l-0 dark:border-line-dark ${
+                      on
+                        ? 'bg-foreground text-surface dark:bg-foreground-dark dark:text-surface-dark'
+                        : 'bg-background text-muted hover:text-foreground dark:bg-background-dark dark:text-muted-dark dark:hover:text-foreground-dark'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+        </section>
+
+        <section className="flex min-w-0 flex-col gap-5">
+          <h2 className={groupTitle}>분류</h2>
+
+          <Field label="태그" note="쉼표로 구분" htmlFor="til-tags">
+            <input
+              id="til-tags"
+              value={tagsText}
+              onChange={(e) => setTagsText(e.target.value)}
+              placeholder="python, 자료형"
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="시리즈" htmlFor="til-series">
+            <select
+              id="til-series"
+              value={creatingSeries ? NEW_SERIES : seriesId ?? ''}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === NEW_SERIES) {
+                  setCreatingSeries(true);
+                  setSeriesId(null);
+                } else {
+                  setCreatingSeries(false);
+                  setNewSeriesTitle('');
+                  setSeriesId(v || null);
+                }
+              }}
+              className={inputClass}
+            >
+              <option value="">없음</option>
+              {allSeries.map((s) => (
+                <option key={s.id} value={s.id}>{s.title}</option>
+              ))}
+              <option value={NEW_SERIES}>+ 새 시리즈 만들기</option>
+            </select>
+            {creatingSeries ? (
+              <input
+                value={newSeriesTitle}
+                onChange={(e) => setNewSeriesTitle(e.target.value)}
+                placeholder="새 시리즈 제목 (저장할 때 만들어져요)"
+                aria-label="새 시리즈 제목"
+                autoFocus
+                className={`${inputClass} mt-2`}
+              />
+            ) : null}
+          </Field>
+
+          <Field label="커버 이미지" note="선택">
+            {coverImageUrl ? (
+              <div className="flex items-center gap-4">
+                {/* next/image 권장 규칙이 있으나, 외부 스토리지 URL이라 img로 단순화(til-card.tsx와 동일 판단). */}
+                <img
+                  src={coverImageUrl}
+                  alt=""
+                  className="aspect-[16/9] w-36 shrink-0 border border-line object-cover dark:border-line-dark"
+                />
+                <div className="flex flex-col items-start">
+                  <label className="inline-flex min-h-11 cursor-pointer items-center text-label font-semibold text-accent dark:text-accent-dark">
+                    {uploadingCover ? '업로드 중...' : '바꾸기'}
+                    <input type="file" accept="image/*" onChange={handleCoverImageChange} disabled={uploadingCover} className="hidden" />
+                  </label>
+                  <button
+                    type="button"
+                    disabled={uploadingCover}
+                    onClick={() => setCoverImageUrl(null)}
+                    className="inline-flex min-h-11 items-center text-label font-semibold text-muted hover:text-destructive dark:text-muted-dark dark:hover:text-destructive-dark"
+                  >
+                    제거
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 border border-dashed border-line bg-background px-3 py-3 text-label font-semibold text-muted hover:border-foreground hover:text-foreground dark:border-line-dark dark:bg-background-dark dark:text-muted-dark dark:hover:border-foreground-dark dark:hover:text-foreground-dark">
+                <ImagePlus className="h-4 w-4" aria-hidden />
+                {uploadingCover ? '업로드 중...' : '이미지 올리기'}
+                <input type="file" accept="image/*" onChange={handleCoverImageChange} disabled={uploadingCover} className="hidden" />
+              </label>
+            )}
+          </Field>
+        </section>
+      </div>
+
+      {/* ── 저장 바: 삭제는 왼쪽 끝, 저장·발행은 오른쪽 끝 ───────────────── */}
+      {/* pb-16: 오른쪽 아래 떠 있는 '맨 위로' 버튼이 페이지 끝에서 발행 버튼을 덮지 않게 여백 확보 */}
+      <div className="flex flex-col gap-3 border-t border-line pb-16 pt-5 dark:border-line-dark">
+        {error ? <p className="text-label font-semibold text-destructive dark:text-destructive-dark">{error}</p> : null}
         <div className="flex flex-wrap items-center gap-3">
-          <label className="chip tap-feedback flex min-h-11 cursor-pointer items-center text-label font-semibold">
-            {uploadingCover ? '업로드 중...' : coverImageUrl ? '커버 이미지 바꾸기' : '커버 이미지 올리기'}
-            <input type="file" accept="image/*" onChange={handleCoverImageChange} disabled={uploadingCover} className="hidden" />
-          </label>
-          {coverImageUrl ? (
+          {post ? (
             <button
               type="button"
-              disabled={uploadingCover}
-              onClick={() => setCoverImageUrl(null)}
-              className="min-h-11 text-label font-semibold text-destructive dark:text-destructive-dark"
+              disabled={pending}
+              onClick={handleDelete}
+              className="min-h-11 text-label font-semibold text-muted hover:text-destructive dark:text-muted-dark dark:hover:text-destructive-dark"
             >
-              커버 이미지 제거
+              삭제
             </button>
           ) : null}
+          <div className="ml-auto flex items-center gap-3">
+            <button type="button" disabled={pending} onClick={() => handleSave(false)} className="chip tap-feedback min-h-11 text-body">
+              초고 저장
+            </button>
+            <button type="button" disabled={pending} onClick={() => handleSave(true)} className="btn-action tap-feedback min-h-11 text-body">
+              발행
+            </button>
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
 
-      <input
-        value={selfCheck}
-        onChange={(e) => setSelfCheck(e.target.value)}
-        placeholder={tpl.hints.selfCheck}
-        className={inputClass}
-      />
+const NEW_SERIES = '__new__';
 
-      <textarea
-        value={blocked}
-        onChange={(e) => setBlocked(e.target.value)}
-        rows={2}
-        placeholder={tpl.hints.blocked}
-        className={inputClass}
-      />
+const groupTitle =
+  'border-b border-line pb-2 text-label font-bold text-muted dark:border-line-dark dark:text-muted-dark';
 
-      <label className="flex min-h-11 items-center gap-2 text-label font-semibold">
-        이해도
-        <select
-          value={understanding ?? ''}
-          onChange={(e) => setUnderstanding(e.target.value ? Number(e.target.value) : null)}
-          className="border-2 border-foreground bg-background px-2 py-1 dark:border-foreground-dark dark:bg-background-dark"
-        >
-          <option value="">-</option>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <option key={n} value={n}>{n}/5</option>
-          ))}
-        </select>
-      </label>
-
-      <input
-        value={tagsText}
-        onChange={(e) => setTagsText(e.target.value)}
-        placeholder="태그 (쉼표로 구분: python, 자료형)"
-        className={inputClass}
-      />
-
-      <div className="flex flex-col gap-2">
-        <label className="flex items-center gap-2 text-label font-semibold">
-          시리즈
-          <select
-            value={seriesId ?? ''}
-            onChange={(e) => setSeriesId(e.target.value || null)}
-            className="min-h-11 border-2 border-foreground bg-background px-2 py-1 dark:border-foreground-dark dark:bg-background-dark"
-          >
-            <option value="">(없음)</option>
-            {allSeries.map((s) => (
-              <option key={s.id} value={s.id}>{s.title}</option>
-            ))}
-          </select>
-        </label>
-        <input
-          value={newSeriesTitle}
-          onChange={(e) => setNewSeriesTitle(e.target.value)}
-          placeholder="새 시리즈 만들기 (제목 입력 시 저장할 때 생성)"
-          className={inputClass}
-        />
+function Field({
+  label,
+  note,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  note?: string;
+  htmlFor?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-baseline gap-2">
+        <label htmlFor={htmlFor} className="text-label font-bold">{label}</label>
+        {note ? <span className="text-label text-muted dark:text-muted-dark">{note}</span> : null}
       </div>
-
-      {error ? <p className="text-label font-semibold text-destructive dark:text-destructive-dark">{error}</p> : null}
-
-      <div className="flex flex-wrap items-center gap-3">
-        <button type="button" disabled={pending} onClick={() => handleSave(false)} className="chip tap-feedback min-h-11 text-body">
-          초고 저장
-        </button>
-        <button type="button" disabled={pending} onClick={() => handleSave(true)} className="btn-action tap-feedback min-h-11 text-body">
-          발행
-        </button>
-        {post ? (
-          <button type="button" disabled={pending} onClick={handleDelete} className="min-h-11 text-label font-semibold text-destructive dark:text-destructive-dark">
-            삭제
-          </button>
-        ) : null}
-      </div>
+      {children}
     </div>
   );
 }
