@@ -197,9 +197,9 @@ export function classifyOfflinePath(pathname: string): OfflinePathKind {
 // 메모 키. 서버 저장 키와 같은 규칙이다(레슨은 slug 그대로, 베이스캠프와 아티클은 접두사).
 // 클라이언트는 Server Action에 접두사 없는 slug를 넘기고, 접두사는 서버 액션이 붙인다.
 
-export const NOTE_KEY_PREFIX = { lesson: "", basecamp: "basecamp:", article: "article:" } as const;
+export const NOTE_KEY_PREFIX = { lesson: "", basecamp: "basecamp:", article: "article:", roadmap: "roadmap:" } as const;
 
-export type NoteTarget = "lesson" | "basecamp" | "article";
+export type NoteTarget = "lesson" | "basecamp" | "article" | "roadmap";
 
 export function parseNoteKey(key: string): { target: NoteTarget; slug: string } {
   if (key.startsWith(NOTE_KEY_PREFIX.basecamp)) {
@@ -208,18 +208,22 @@ export function parseNoteKey(key: string): { target: NoteTarget; slug: string } 
   if (key.startsWith(NOTE_KEY_PREFIX.article)) {
     return { target: "article", slug: key.slice(NOTE_KEY_PREFIX.article.length) };
   }
+  if (key.startsWith(NOTE_KEY_PREFIX.roadmap)) {
+    return { target: "roadmap", slug: key.slice(NOTE_KEY_PREFIX.roadmap.length) };
+  }
   return { target: "lesson", slug: key };
 }
 
 // ---------------------------------------------------------------------------
 // "전체 받기"가 페이지와 함께 받아 두는 내 데이터 사본의 출처. 레슨은 진도 응답
-// (완료와 메모를 함께 담는다), 베이스캠프와 아티클은 메모 응답이다.
+// (완료와 메모를 함께 담는다), 베이스캠프, 아티클, 로드맵은 메모 응답이다.
 
 export type SnapshotSource = { kind: "progress" | "note"; api: string; key: string };
 
 const LESSON_PAGE = /^\/lesson\/([^/?#]+)$/;
 const BASECAMP_PAGE = /^\/basecamp\/([^/?#]+)$/;
 const ARTICLE_PAGE = /^\/articles\/([^/?#]+)$/;
+const ROADMAP_PAGE = /^\/roadmap\/([^/?#]+)$/;
 
 export function snapshotSourceFor(pageUrl: string): SnapshotSource | null {
   const lesson = LESSON_PAGE.exec(pageUrl);
@@ -240,6 +244,14 @@ export function snapshotSourceFor(pageUrl: string): SnapshotSource | null {
       kind: "note",
       api: `/api/article-note?slug=${article[1]}`,
       key: `${NOTE_KEY_PREFIX.article}${decodeURIComponent(article[1])}`,
+    };
+  }
+  const roadmap = ROADMAP_PAGE.exec(pageUrl);
+  if (roadmap) {
+    return {
+      kind: "note",
+      api: `/api/roadmap-note?slug=${roadmap[1]}`,
+      key: `${NOTE_KEY_PREFIX.roadmap}${decodeURIComponent(roadmap[1])}`,
     };
   }
   return null;

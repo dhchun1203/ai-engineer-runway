@@ -8,6 +8,7 @@ import { MDXContent } from "@/components/mdx-content";
 import { TermPanelProvider, Term } from "@/components/roadmap/term-panel";
 import { LessonToc } from "@/components/roadmap/lesson-toc";
 import { ReadingAssistant } from "@/components/reading-assistant/reading-assistant";
+import { RoadmapNote } from "@/components/roadmap-note";
 import { getRoadmapLessonBySlug } from "@/content/roadmap-lesson-helpers";
 import { roadmapStages } from "@/content/channeltalk-roadmap";
 
@@ -99,6 +100,9 @@ export default async function RoadmapLessonPage(
           </Link>
         </nav>
       </article>
+
+      {/* 하단 메모장 — 레슨마다 메모 1개. 세션 노트는 "세션 뒤에 채울 칸"을 팁으로 띄운다. */}
+      <RoadmapNote slug={lesson.slug} tips={lesson.noteTips} />
 
       {/* 우측 고정 독서 도우미 — 본문을 문장 단위로 확대하며 읽어 준다. */}
       <ReadingAssistant articleId="lesson-body" />

@@ -364,6 +364,8 @@ export default defineConfig({
           kind: s.enum(["lesson", "session"]).default("lesson"),
           order: s.number(), // 트랙 내 순서
           summary: s.string(), // 로드맵/헤더용 한 줄 훅
+          // 하단 메모장 안에 팁으로 보여 줄 "채울 칸"(세션 노트의 세션 뒤 정리 항목 등).
+          noteTips: s.array(s.string()).default([]),
           slug: s.slug("roadmap-lessons"),
           code: s.mdx(),
         })

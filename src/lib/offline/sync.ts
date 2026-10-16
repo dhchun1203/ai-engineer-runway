@@ -28,6 +28,7 @@ import { saveLessonNoteAction } from "@/app/lesson/[lessonId]/note-actions";
 import { toggleBasecampItem } from "@/app/basecamp/actions";
 import { saveBasecampNoteAction } from "@/app/basecamp/[slug]/note-actions";
 import { saveArticleNoteAction } from "@/app/articles/[slug]/note-actions";
+import { saveRoadmapNoteAction } from "@/app/roadmap/[slug]/note-actions";
 import { confirmedAccountId, fetchAuthState } from "./auth";
 import { BUILD_ID } from "./cache";
 import { isOnline, markOffline, probeOnline } from "./connectivity";
@@ -134,6 +135,7 @@ function sendQueued(item: QueueItem): Promise<void> {
   const { target, slug } = parseNoteKey(item.key);
   if (target === "basecamp") return saveBasecampNoteAction(slug, item.value);
   if (target === "article") return saveArticleNoteAction(slug, item.value);
+  if (target === "roadmap") return saveRoadmapNoteAction(slug, item.value);
   return saveLessonNoteAction(slug, item.value);
 }
 

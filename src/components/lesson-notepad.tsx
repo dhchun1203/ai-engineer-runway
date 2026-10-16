@@ -16,6 +16,7 @@ import { saveLessonNoteAction } from '@/app/lesson/[lessonId]/note-actions';
 import { NOTE_KEY_PREFIX } from '@/lib/offline/offline-logic';
 import { useQueueCount } from '@/lib/offline/queue';
 import { writeOrQueue } from '@/lib/offline/sync';
+import { Lightbulb } from 'lucide-react';
 
 // 근거: 800ms 아래는 한글 어절 사이 자연스러운 멈춤마다 저장이 걸려 요청이
 // 잘게 쪼개지고, 1500ms 위는 탭을 갑자기 닫았을 때 잃는 꼬리가 길어진다.
@@ -40,11 +41,15 @@ export function LessonNotepad({
   // 오프라인 대기열의 메모 키 접두사(서버 저장 키와 같은 규칙). 정규 레슨은 없음,
   // 베이스캠프는 "basecamp:", 아티클은 "article:"(NOTE_KEY_PREFIX).
   noteKeyPrefix = NOTE_KEY_PREFIX.lesson,
+  // 이 메모에 무엇을 적으면 좋은지 알려 주는 팁(로드맵 세션 노트의 "세션 뒤에 채울 칸").
+  // 없으면 팁 영역 자체를 그리지 않는다 — 기존 레슨, 베이스캠프, 아티클 메모는 그대로다.
+  tips,
 }: {
   lessonId: string;
   initialBody: string;
   saveAction?: (lessonId: string, body: string) => Promise<void>;
   noteKeyPrefix?: string;
+  tips?: readonly string[];
 }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(initialBody);
@@ -64,6 +69,8 @@ export function LessonNotepad({
   const valueRef = useRef(initialBody);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const tipsRef = useRef<HTMLDetailsElement>(null);
   const mountedRef = useRef(true);
   const panelId = useId();
 
@@ -195,6 +202,33 @@ export function LessonNotepad({
     };
   }, []);
 
+  // 팁 항목 중 아직 메모에 없는 것만 "항목:" 줄로 끝에 붙인다. 이미 적어 둔 항목은
+  // 다시 넣지 않아서 여러 번 눌러도 칸이 겹치지 않는다. 붙인 뒤 바로 저장을 예약한다.
+  const missingTips = (tips ?? []).filter((tip) => !value.includes(tip));
+  function insertTips() {
+    if (missingTips.length === 0) return;
+    const base = value.trimEnd();
+    const block = missingTips.map((tip) => `${tip}:\n`).join('\n');
+    const next = base === '' ? block : `${base}\n\n${block}`;
+    setValue(next);
+    // 칸을 넣었으면 팁 상자는 접어서 괘선(쓰는 자리)을 넓게 돌려준다.
+    if (tipsRef.current) tipsRef.current.open = false;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      void flush();
+    }, SAVE_DEBOUNCE_MS);
+    requestAnimationFrame(() => {
+      const ta = textareaRef.current;
+      if (!ta) return;
+      ta.focus();
+      // 첫 번째로 새로 넣은 항목 바로 다음 줄에 커서를 둔다.
+      const firstLine = `${missingTips[0]}:\n`;
+      const pos = next.indexOf(firstLine, base.length) + firstLine.length;
+      ta.selectionStart = pos;
+      ta.selectionEnd = pos;
+    });
+  }
+
   function handleToggle() {
     setOpen((prev) => !prev);
   }
@@ -237,7 +271,41 @@ export function LessonNotepad({
         style={{ height: open ? 'var(--note-sheet-open-height)' : '0px' }}
         inert={!open}
       >
+        {tips && tips.length > 0 ? (
+          // 팁 상자. 메모가 비어 있을 때는 펼쳐 두고, 이미 쓰기 시작했으면 접어 둬서
+          // 괘선 공간을 아낀다(펼침 여부는 마운트 때 한 번만 정한다).
+          <details
+            ref={tipsRef}
+            data-notepad-tips
+            open={initialBody.trim() === ''}
+            className="mt-3 shrink-0 border border-line bg-surface-2 px-3 dark:border-line-dark dark:bg-surface-2-dark"
+          >
+            <summary className="flex min-h-11 cursor-pointer items-center gap-2 text-label font-bold">
+              <Lightbulb className="h-4 w-4 shrink-0 text-accent dark:text-accent-dark" aria-hidden="true" />
+              팁: 이 메모에 채울 칸
+            </summary>
+            <ul className="flex flex-col gap-1 pb-2 text-label font-normal text-muted dark:text-muted-dark">
+              {tips.map((tip) => (
+                <li key={tip} className="flex items-start gap-2">
+                  <span aria-hidden="true" className="mt-2 h-1 w-1 shrink-0 bg-current" />
+                  <span className="break-keep">{tip}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="pb-3">
+              <button
+                type="button"
+                onClick={insertTips}
+                disabled={missingTips.length === 0}
+                className="btn tap-feedback text-label"
+              >
+                {missingTips.length === 0 ? '칸을 모두 넣었어요' : '메모에 칸 넣기'}
+              </button>
+            </div>
+          </details>
+        ) : null}
         <textarea
+          ref={textareaRef}
           data-notepad-input
           value={value}
           onChange={handleChange}
