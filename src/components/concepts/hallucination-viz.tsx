@@ -10,7 +10,7 @@
 // 애니메이션은 motion 하나만, prefers-reduced-motion이면 페이드/이동을 끈다.
 
 import { useState } from "react";
-import { RotateCcw, SearchCheck } from "lucide-react";
+import { Bot, Check, RotateCcw, SearchCheck, TriangleAlert, type LucideIcon } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ACCENT, ConceptFigure } from "@/components/concepts/viz-kit";
 
@@ -85,7 +85,9 @@ const CLAIM_BY_ID: Record<string, Claim> = Object.fromEntries(
 // 판정색: 사실=블루(ACCENT[1]), 지어냄=앰버(ACCENT[3]).
 const VERDICT_ACCENT: Record<Verdict, 1 | 3> = { fact: 1, fake: 3 };
 const VERDICT_LABEL: Record<Verdict, string> = { fact: "사실", fake: "지어냄" };
-const VERDICT_ICON: Record<Verdict, string> = { fact: "✓", fake: "⚠" };
+const VERDICT_ICON: Record<Verdict, LucideIcon> = { fact: Check, fake: TriangleAlert };
+const FactIcon = VERDICT_ICON.fact;
+const FakeIcon = VERDICT_ICON.fake;
 
 export function HallucinationViz() {
   // 각 조각이 '검증되어 정체가 드러났는지'. 비어 있으면 전부 가려진 상태(그럴듯한 답만 보임).
@@ -112,8 +114,9 @@ export function HallucinationViz() {
     <ConceptFigure label="AI의 자신 있는 답 · 무엇을 검증해야 하나">
       {/* 그럴듯한 답 문단 — 사실 주장 조각은 눌러 볼 수 있는 버튼이다. */}
       <div className="border-l-4 border-line bg-surface-2 p-4 dark:border-line-dark dark:bg-surface-2-dark">
-        <p className="text-label font-bold tracking-wide text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          🤖 AI의 답변
+        <p className="flex items-center gap-1.5 text-label font-bold tracking-wide text-badge-neutral-text dark:text-badge-neutral-text-dark">
+          <Bot className="h-4 w-4 shrink-0" aria-hidden="true" />
+          AI의 답변
         </p>
         <p className="mt-3 break-keep text-body font-normal leading-loose">
           {PARAGRAPH.map((part, idx) => {
@@ -123,6 +126,7 @@ export function HallucinationViz() {
             const claim = CLAIM_BY_ID[part.claimId];
             const isOpen = revealed[claim.id];
             const accent = ACCENT[VERDICT_ACCENT[claim.verdict]];
+            const VerdictIcon = VERDICT_ICON[claim.verdict];
             return (
               <button
                 key={idx}
@@ -136,7 +140,10 @@ export function HallucinationViz() {
                 }
               >
                 {isOpen && (
-                  <span aria-hidden="true">{VERDICT_ICON[claim.verdict]} </span>
+                  <VerdictIcon
+                    className="mr-1 inline h-4 w-4 shrink-0 align-text-bottom"
+                    aria-hidden="true"
+                  />
                 )}
                 {claim.text}
               </button>
@@ -184,9 +191,10 @@ export function HallucinationViz() {
             className={`flex flex-col gap-3 border-l-4 bg-surface-2 p-4 dark:bg-surface-2-dark ${ACCENT[3].border}`}
           >
             <span
-              className={`w-fit px-2 py-0.5 text-label font-bold ${ACCENT[3].badge}`}
+              className={`inline-flex w-fit items-center gap-1.5 px-2 py-0.5 text-label font-bold ${ACCENT[3].badge}`}
             >
-              ⚠ 지어냄 — 검증 대상 {revealedFakes.length}건
+              <FakeIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+              지어냄: 검증 대상 {revealedFakes.length}건
             </span>
             <ul className="flex flex-col gap-2">
               {revealedFakes.map((c) => (
@@ -208,12 +216,14 @@ export function HallucinationViz() {
           <span
             className={`inline-flex items-center gap-1 px-2 py-0.5 text-label font-bold ${ACCENT[1].badge}`}
           >
-            {VERDICT_ICON.fact} {VERDICT_LABEL.fact}
+            <FactIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {VERDICT_LABEL.fact}
           </span>
           <span
             className={`inline-flex items-center gap-1 px-2 py-0.5 text-label font-bold ${ACCENT[3].badge}`}
           >
-            {VERDICT_ICON.fake} {VERDICT_LABEL.fake}
+            <FakeIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {VERDICT_LABEL.fake}
           </span>
         </div>
         <p className="break-keep text-label font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">

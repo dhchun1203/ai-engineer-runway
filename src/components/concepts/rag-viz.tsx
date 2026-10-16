@@ -11,6 +11,14 @@
 // 애니메이션은 motion 하나만 쓰고 prefers-reduced-motion이면 이동/페이드를 끈다.
 
 import { useState } from "react";
+import {
+  CircleCheck,
+  Compass,
+  MessageCircleQuestion,
+  Paperclip,
+  Search,
+  type LucideIcon,
+} from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   ACCENT,
@@ -21,7 +29,7 @@ import {
 
 // RAG 파이프라인의 5개 무대. accent를 1→2→3→1→2로 굴려 스텝마다 색이 바뀌게 한다.
 type RagStep = {
-  icon: string;
+  icon: LucideIcon;
   stage: string; // 무대 라벨(짧게)
   role: string; // 상세 카드의 역할 배지
   text: string; // 그 단계에서 실제로 일어나는 내용
@@ -30,35 +38,35 @@ type RagStep = {
 
 const STEPS: readonly RagStep[] = [
   {
-    icon: "🙋",
+    icon: MessageCircleQuestion,
     stage: "질문 입력",
     role: "질문",
     text: '사용자가 묻는다 — "환불은 며칠 안에 돼?"',
     accent: 1,
   },
   {
-    icon: "🧭",
+    icon: Compass,
     stage: "뜻 좌표로",
     role: "임베딩(embedding)",
     text: "질문을 '뜻 좌표'로 바꾼다. 글자가 아니라 의미로 비교하려는 준비 단계 — 가까운 뜻끼리 좌표도 가깝다.",
     accent: 2,
   },
   {
-    icon: "🔎",
+    icon: Search,
     stage: "근거 검색",
     role: "검색(retrieval)",
     text: '문서 조각들 중 좌표가 가장 가까운 근거를 찾는다 → 찾은 문단: "환불은 상품 수령 후 7일 이내 신청 시 가능합니다."',
     accent: 3,
   },
   {
-    icon: "📎",
+    icon: Paperclip,
     stage: "근거 붙이기",
     role: "프롬프트 조립",
     text: "찾은 근거를 질문과 함께 프롬프트에 붙여 모델에 건넨다. 모델은 이제 외운 지식이 아니라 '지금 쥐여준 자료'를 근거로 삼는다.",
     accent: 1,
   },
   {
-    icon: "✅",
+    icon: CircleCheck,
     stage: "답변 + 출처",
     role: "답변 생성",
     text: '근거를 바탕으로 답한다 — "상품을 받은 날로부터 7일 이내에 신청하면 환불돼요. (출처: 환불 정책 문서)"',
@@ -88,9 +96,7 @@ export function RagFlowViz() {
                 }`}
                 aria-current={idx === i ? "step" : undefined}
               >
-                <span className="text-xl leading-none" aria-hidden="true">
-                  {s.icon}
-                </span>
+                <s.icon className="h-6 w-6 shrink-0" aria-hidden="true" />
                 <span className="break-keep text-label font-bold leading-tight">
                   {s.stage}
                 </span>
@@ -113,9 +119,10 @@ export function RagFlowViz() {
             className={`flex flex-col gap-2 border-l-4 bg-surface-2 p-4 dark:bg-surface-2-dark ${accent.border}`}
           >
             <span
-              className={`w-fit px-2 py-0.5 text-label font-bold ${accent.badge}`}
+              className={`inline-flex w-fit items-center gap-1.5 px-2 py-0.5 text-label font-bold ${accent.badge}`}
             >
-              {step.icon} {i + 1}. {step.role}
+              <step.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {i + 1}. {step.role}
             </span>
             <p className="break-keep text-body font-normal leading-relaxed">
               {step.text}

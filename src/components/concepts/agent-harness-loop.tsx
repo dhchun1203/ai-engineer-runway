@@ -9,18 +9,28 @@
 // 애니메이션은 motion 하나만 쓰고, prefers-reduced-motion이면 이동/페이드를 끈다.
 
 import { useState } from "react";
-import { ArrowRight, RotateCcw } from "lucide-react";
+import {
+  ArrowRight,
+  Brain,
+  CircleCheck,
+  Eye,
+  RotateCcw,
+  Undo2,
+  User,
+  Wrench,
+  type LucideIcon,
+} from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 // 루프의 4개 고정 무대 + 마지막 답변. id로 현재 스텝이 어느 무대를 밝히는지 잇는다.
 type StageId = "user" | "think" | "act" | "observe" | "answer";
 
-const STAGES: readonly { id: StageId; icon: string; label: string }[] = [
-  { id: "user", icon: "🧑", label: "사용자" },
-  { id: "think", icon: "🧠", label: "모델 생각" },
-  { id: "act", icon: "🔧", label: "도구 호출" },
-  { id: "observe", icon: "👁️", label: "관찰" },
-  { id: "answer", icon: "✅", label: "답변" },
+const STAGES: readonly { id: StageId; icon: LucideIcon; label: string }[] = [
+  { id: "user", icon: User, label: "사용자" },
+  { id: "think", icon: Brain, label: "모델 생각" },
+  { id: "act", icon: Wrench, label: "도구 호출" },
+  { id: "observe", icon: Eye, label: "관찰" },
+  { id: "answer", icon: CircleCheck, label: "답변" },
 ];
 
 // 무대별 강조는 사이트의 Step 팔레트(블루·러스트·앰버) 3색을 재사용한다. 5개 무대에
@@ -112,6 +122,7 @@ export function AgentHarnessLoop() {
   const reduce = useReducedMotion();
   const step = TRACE[i];
   const activeStage = step.stage;
+  const ActiveIcon = STAGES.find((s) => s.id === activeStage)?.icon;
   const accent = ACCENT_CLASSES[STAGE_ACCENT[activeStage]];
   const atEnd = i === TRACE.length - 1;
 
@@ -141,9 +152,7 @@ export function AgentHarnessLoop() {
                 }`}
                 aria-current={active ? "step" : undefined}
               >
-                <span className="text-xl leading-none" aria-hidden="true">
-                  {stage.icon}
-                </span>
+                <stage.icon className="h-6 w-6 shrink-0" aria-hidden="true" />
                 <span className="break-keep text-label font-bold leading-tight">
                   {stage.label}
                 </span>
@@ -158,7 +167,8 @@ export function AgentHarnessLoop() {
       <div className="min-h-6 text-center">
         {isLoopBack && (
           <span className="chip text-label font-bold">
-            ↩ 관찰한 걸 들고 다시 생각으로 — 이게 &lsquo;고리&rsquo;다
+            <Undo2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+            관찰한 걸 들고 다시 생각으로, 이게 &lsquo;고리&rsquo;다
           </span>
         )}
       </div>
@@ -174,8 +184,9 @@ export function AgentHarnessLoop() {
             transition={{ duration: 0.22 }}
             className={`flex flex-col gap-2 border-l-4 bg-surface-2 p-4 dark:bg-surface-2-dark ${accent.border}`}
           >
-            <span className={`w-fit px-2 py-0.5 text-label font-bold ${accent.badge}`}>
-              {STAGES.find((s) => s.id === activeStage)?.icon} {step.role}
+            <span className={`inline-flex w-fit items-center gap-1.5 px-2 py-0.5 text-label font-bold ${accent.badge}`}>
+              {ActiveIcon ? <ActiveIcon className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}
+              {step.role}
             </span>
             <p className="break-keep text-body font-normal leading-relaxed">{step.text}</p>
           </motion.div>

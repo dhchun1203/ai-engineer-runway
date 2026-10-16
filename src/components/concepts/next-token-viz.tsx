@@ -10,6 +10,7 @@
 // 외부 데이터 없이 로짓 상수만 두고 softmax는 이 파일 안에서 직접 계산한다(라이브러리 금지).
 
 import { useState } from "react";
+import { Crown } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { ACCENT, ConceptFigure, type Accent } from "@/components/concepts/viz-kit";
 
@@ -79,9 +80,7 @@ export function TemperatureViz() {
             >
               <span className="flex items-center gap-1 break-keep text-label font-bold sm:text-body">
                 {isTop && (
-                  <span aria-hidden="true" className="leading-none">
-                    👑
-                  </span>
+                  <Crown className="h-4 w-4 shrink-0" aria-hidden="true" />
                 )}
                 {c.word}
               </span>

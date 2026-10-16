@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CircleAlert } from 'lucide-react';
 import type { TilPost } from '@/lib/til/types';
 
 export function TilMeta({ post }: { post: TilPost }) {
@@ -12,7 +13,10 @@ export function TilMeta({ post }: { post: TilPost }) {
       ) : null}
       {post.blockedPoints ? (
         <div className="flex flex-col gap-1">
-          <span className="text-label font-bold">🔴 아직 막힌 곳</span>
+          <span className="inline-flex items-center gap-1.5 text-label font-bold">
+            <CircleAlert className="h-4 w-4 shrink-0 text-destructive dark:text-destructive-dark" aria-hidden="true" />
+            아직 막힌 곳
+          </span>
           <p className="text-body font-normal break-keep">{post.blockedPoints}</p>
         </div>
       ) : null}

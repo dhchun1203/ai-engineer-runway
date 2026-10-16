@@ -11,7 +11,7 @@
 // 애니메이션은 motion 하나만 쓰고, prefers-reduced-motion이면 이동/페이드를 끈다.
 
 import { useState } from "react";
-import { Plus, RotateCcw } from "lucide-react";
+import { Eye, EyeOff, Plus, RotateCcw } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   ACCENT,
@@ -83,12 +83,11 @@ export function ContextWindowViz() {
                       : "border-line bg-surface-2 opacity-45 dark:border-line-dark dark:bg-surface-2-dark"
                   }`}
                 >
-                  <span
-                    className="shrink-0 text-lg leading-tight"
-                    aria-hidden="true"
-                  >
-                    {inWindow ? "🪟" : "🫥"}
-                  </span>
+                  {inWindow ? (
+                    <Eye className="h-5 w-5 shrink-0" aria-hidden="true" />
+                  ) : (
+                    <EyeOff className="h-5 w-5 shrink-0" aria-hidden="true" />
+                  )}
                   <span className="break-keep text-body font-medium leading-snug">
                     {m.text}
                   </span>
