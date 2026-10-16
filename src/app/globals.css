@@ -434,6 +434,16 @@ textarea,
     position: relative;
   }
 
+  /* 안에서 스크롤은 되지만 스크롤바는 그리지 않는 상자(로드맵 레슨 왼쪽 목차).
+     목차는 지금 읽는 절을 스스로 따라가므로 스크롤바가 없어도 길을 잃지 않는다. */
+  .toc-scroll {
+    scrollbar-width: none;
+  }
+
+  .toc-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
   .hit-44::before {
     content: "";
     position: absolute;

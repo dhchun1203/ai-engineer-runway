@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // 심화 레슨의 스크롤 반응 목차. 데스크탑(xl+)의 왼쪽 여백에만 나타나고, 좁은
 // 화면에서는 숨는다(본문은 늘 가운데). 본문의 h2·h3(rehypeSlug가 붙인 id)를
@@ -12,6 +12,7 @@ type TocItem = { id: string; text: string; level: number };
 export function LessonToc({ contentId }: { contentId: string }) {
   const [items, setItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const container = document.getElementById(contentId);
@@ -54,6 +55,23 @@ export function LessonToc({ contentId }: { contentId: string }) {
     };
   }, [contentId]);
 
+  // 목차가 화면보다 길면 안에서 스크롤되지만 스크롤바는 숨긴다(.toc-scroll). 대신 지금
+  // 읽는 절이 목차 밖으로 나가면 목차를 그만큼 따라 내려 활성 항목이 늘 보이게 한다.
+  // scrollIntoView는 바깥 창까지 움직이므로 쓰지 않고 목차 상자의 scrollTop만 바꾼다.
+  useEffect(() => {
+    const box = scrollRef.current;
+    if (!box || !activeId) return;
+    const link = box.querySelector<HTMLElement>(`a[href="#${CSS.escape(activeId)}"]`);
+    if (!link) return;
+    const top = link.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
+    const margin = 48;
+    if (top < box.scrollTop + margin) {
+      box.scrollTop = Math.max(0, top - margin);
+    } else if (top + link.offsetHeight > box.scrollTop + box.clientHeight - margin) {
+      box.scrollTop = top + link.offsetHeight - box.clientHeight + margin;
+    }
+  }, [activeId]);
+
   if (items.length === 0) return null;
 
   // 클릭 시 sticky 헤더에 가리지 않게 88px 여유를 두고 부드럽게 이동한다
@@ -75,7 +93,7 @@ export function LessonToc({ contentId }: { contentId: string }) {
       aria-label="레슨 목차"
       className="hidden xl:absolute xl:right-full xl:top-0 xl:block xl:h-full xl:w-52 xl:pr-8"
     >
-      <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
+      <div ref={scrollRef} className="toc-scroll sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
         <p className="mb-3 text-label font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark">
           목차
         </p>
