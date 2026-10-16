@@ -37,7 +37,7 @@ export default async function TilListPage() {
             >
               초고함
             </Link>
-            <Link href="/til/new" className="btn-action tap-feedback min-h-11 text-body">
+            <Link href="/til/new" className="btn-action tap-feedback text-body">
               새 글 쓰기
             </Link>
           </div>

@@ -109,7 +109,7 @@ export function SignupForm() {
         <button
           type="submit"
           disabled={pending || mismatch}
-          className="btn-action tap-feedback min-h-11 text-body"
+          className="btn-action tap-feedback text-body"
         >
           {pending ? '요청 보내는 중…' : '가입 요청 보내기'}
         </button>

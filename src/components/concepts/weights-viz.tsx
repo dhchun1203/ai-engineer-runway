@@ -13,6 +13,7 @@
 // 애니메이션은 motion 하나만, prefers-reduced-motion이면 이동/전환을 끈다.
 
 import { useState } from "react";
+import { ArrowRight, RotateCcw } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import {
   ACCENT,
@@ -153,16 +154,18 @@ export function WeightsViz() {
           type="button"
           onClick={nudge}
           disabled={close}
-          className="btn-action tap-feedback min-h-11 px-4 text-label disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn-action tap-feedback text-label disabled:cursor-not-allowed"
         >
-          한 걸음 자동 조정 →
+          한 걸음 자동 조정
+          <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
         </button>
         <button
           type="button"
           onClick={() => setW(1)}
-          className="btn tap-feedback min-h-11 px-4 text-label"
+          className="btn tap-feedback text-label"
         >
-          ↺ 처음부터
+          <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" />
+          처음부터
         </button>
       </div>
 

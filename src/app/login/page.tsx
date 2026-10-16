@@ -104,7 +104,7 @@ export default async function LoginPage() {
               로그인되어 있어요.
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <Link href="/" className="btn-action tap-feedback min-h-11 text-body">
+              <Link href="/" className="btn-action tap-feedback text-body">
                 홈으로
               </Link>
               <SignOutForm action={signOutAction} className="btn tap-feedback text-body">

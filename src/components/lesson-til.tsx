@@ -72,7 +72,7 @@ export function LessonTil({
           onClick={() => void handleSave()}
           disabled={status === 'saving' || !online}
           aria-busy={status === 'saving'}
-          className="btn-action tap-feedback min-h-11 px-4 text-label font-bold"
+          className="btn-action tap-feedback text-label"
         >
           저장
         </button>

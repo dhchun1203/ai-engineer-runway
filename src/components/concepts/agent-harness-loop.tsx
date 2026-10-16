@@ -9,6 +9,7 @@
 // 애니메이션은 motion 하나만 쓰고, prefers-reduced-motion이면 이동/페이드를 끈다.
 
 import { useState } from "react";
+import { ArrowRight, RotateCcw } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 // 루프의 4개 고정 무대 + 마지막 답변. id로 현재 스텝이 어느 무대를 밝히는지 잇는다.
@@ -198,7 +199,7 @@ export function AgentHarnessLoop() {
             type="button"
             onClick={() => setI((v) => Math.max(0, v - 1))}
             disabled={i === 0}
-            className="btn tap-feedback min-h-11 px-4 text-label disabled:cursor-not-allowed disabled:opacity-40"
+            className="btn tap-feedback text-label disabled:cursor-not-allowed"
           >
             이전
           </button>
@@ -206,17 +207,19 @@ export function AgentHarnessLoop() {
             <button
               type="button"
               onClick={() => setI(0)}
-              className="btn tap-feedback min-h-11 px-4 text-label"
+              className="btn tap-feedback text-label"
             >
-              ↺ 처음부터
+              <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" />
+              처음부터
             </button>
           ) : (
             <button
               type="button"
               onClick={() => setI((v) => Math.min(TRACE.length - 1, v + 1))}
-              className="btn-action tap-feedback min-h-11 px-4 text-label"
+              className="btn-action tap-feedback text-label"
             >
-              다음 단계 →
+              다음 단계
+              <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
             </button>
           )}
         </div>

@@ -251,7 +251,7 @@ export function OfflineCenter() {
               onClick={startDownload}
               disabled={busy}
               aria-busy={status === "running"}
-              className="btn-action tap-feedback min-h-11 text-body"
+              className="btn-action tap-feedback text-body"
             >
               <Download className="h-4 w-4 shrink-0" aria-hidden="true" />
               {status === "running" ? "받는 중…" : "전체 받기"}
@@ -260,7 +260,7 @@ export function OfflineCenter() {
               type="button"
               onClick={() => void handleClear()}
               disabled={busy}
-              className="btn tap-feedback min-h-11 text-body"
+              className="btn tap-feedback text-body"
             >
               <Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />
               저장본 지우기

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { BookOpen } from "lucide-react";
 import { getStep, getModulesByStep, getLessonsByModule } from "@/content/curriculum-helpers";
 import { ModuleAccordion } from "@/components/module-accordion";
 import { ProgressProvider } from "@/components/progress-provider";
@@ -45,9 +46,10 @@ export default async function StepPage(props: PageProps<"/step/[stepId]">) {
           <div className="pt-1">
             <Link
               href={`/book/${step.id}`}
-              className="btn tap-feedback inline-flex min-h-11 items-center gap-2 px-4 text-label font-semibold"
+              className="btn tap-feedback text-label"
             >
-              📖 책으로 읽기
+              <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
+              책으로 읽기
             </Link>
           </div>
         </header>

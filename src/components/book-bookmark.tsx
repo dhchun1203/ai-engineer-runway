@@ -126,7 +126,7 @@ export function BookBookmark({ stepId }: { stepId: number }) {
   if (available !== true) return null;
 
   const btnClass =
-    "btn tap-feedback inline-flex min-h-11 items-center gap-2 px-4 text-label font-semibold";
+    "btn tap-feedback text-label";
 
   return (
     <div data-print-hide className="book-bookmark-fab">

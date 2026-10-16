@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ExternalLink } from "lucide-react";
 import { isRoadmapViewer } from "@/lib/roadmap-access";
 import { getRoadmapSessionNotes } from "@/content/roadmap-lesson-helpers";
 import {
@@ -234,7 +234,7 @@ export default async function RoadmapPage() {
                         {skill.lessonSlug ? (
                           <Link
                             href={`/roadmap/${skill.lessonSlug}`}
-                            className="btn tap-feedback w-fit gap-1.5 text-label"
+                            className="btn tap-feedback w-fit text-label"
                           >
                             심화 레슨 열기
                             <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -305,9 +305,7 @@ export default async function RoadmapPage() {
                 rel="noopener noreferrer"
                 className="card-interactive panel flex min-h-11 items-center gap-2 p-3 text-label font-semibold"
               >
-                <span className="text-accent dark:text-accent-dark" aria-hidden="true">
-                  ↗
-                </span>
+                <ExternalLink className="h-4 w-4 shrink-0 text-accent dark:text-accent-dark" aria-hidden="true" />
                 <span className="break-keep">{source.label}</span>
               </a>
             </li>

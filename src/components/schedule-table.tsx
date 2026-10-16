@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import type { StepId } from "@/content/modules";
 import { DepthBadge } from "@/components/depth-badge";
 import { EstimatedTime } from "@/components/estimated-time";
@@ -120,9 +120,10 @@ function ScheduleBufferRow({ row, isToday, isPast }: { row: ScheduleTableRow; is
             데이터 조회 없이 고정 href만 쓴다. */}
         <Link
           href="/review"
-          className="chip tap-feedback min-h-11 w-fit shrink-0 items-center self-start sm:self-auto"
+          className="btn tap-feedback w-fit shrink-0 self-start text-label sm:self-auto"
         >
-          복습하러 가기 →
+          복습하러 가기
+          <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
         </Link>
       </div>
     </li>

@@ -42,7 +42,7 @@ export function LoginForm() {
             {state.notice}
           </p>
         ) : null}
-        <button type="submit" disabled={pending} className="btn-action tap-feedback min-h-11 text-body">
+        <button type="submit" disabled={pending} className="btn-action tap-feedback text-body">
           {pending ? '로그인 중…' : '로그인'}
         </button>
       </form>

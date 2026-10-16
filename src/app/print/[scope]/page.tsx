@@ -75,7 +75,7 @@ export default async function PrintScopePage(props: PageProps<"/print/[scope]">)
           <PrintButton annotate label="필기 여백으로 저장" />
           <Link
             href="/print"
-            className="tap-feedback inline-flex min-h-11 items-center text-label font-semibold text-accent dark:text-accent-dark"
+            className="nav-link tap-feedback flex w-fit min-h-11 items-center text-label font-bold text-muted dark:text-muted-dark"
           >
             다른 범위 고르기
           </Link>

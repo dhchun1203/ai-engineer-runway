@@ -44,10 +44,10 @@ export default async function SignupPage() {
             이미 <strong className="font-bold">{loggedInEmail}</strong> 계정으로 로그인되어 있어요.
           </p>
           <div className="flex flex-wrap items-center gap-3">
-            <Link href="/" className="btn-action tap-feedback min-h-11 text-body">
+            <Link href="/" className="btn-action tap-feedback text-body">
               홈으로
             </Link>
-            <SignOutForm action={signOutAction} className="chip tap-feedback min-h-11 text-body">
+            <SignOutForm action={signOutAction} className="btn tap-feedback text-body">
               로그아웃
             </SignOutForm>
           </div>

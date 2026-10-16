@@ -103,7 +103,7 @@ export default async function ArticlePage({
                 href={article.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="card-interactive panel inline-flex min-h-11 items-center gap-1.5 px-4 text-label font-bold"
+                className="btn tap-feedback text-label"
               >
                 원문 열기
                 <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />

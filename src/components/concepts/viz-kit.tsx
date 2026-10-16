@@ -5,6 +5,7 @@
 // 못 박는다. 각 viz 컴포넌트는 이 키트를 얇게 감싸 자기 개념 로직만 담는다.
 
 import type { ReactNode } from "react";
+import { ArrowRight, RotateCcw } from "lucide-react";
 
 // 사이트 Step 팔레트(블루·러스트·앰버) 3색을 강조색으로 재사용한다. step-card와 같은
 // 이유로 문자열 조립이 아니라 리터럴 클래스 맵으로 고정한다 — Tailwind JIT이 동적 조합
@@ -96,7 +97,7 @@ export function StepControls({
             type="button"
             onClick={() => setI((v) => Math.max(0, v - 1))}
             disabled={i === 0}
-            className="btn tap-feedback min-h-11 px-4 text-label disabled:cursor-not-allowed disabled:opacity-40"
+            className="btn tap-feedback text-label disabled:cursor-not-allowed"
           >
             이전
           </button>
@@ -104,17 +105,19 @@ export function StepControls({
             <button
               type="button"
               onClick={() => setI(() => 0)}
-              className="btn tap-feedback min-h-11 px-4 text-label"
+              className="btn tap-feedback text-label"
             >
-              ↺ 처음부터
+              <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" />
+              처음부터
             </button>
           ) : (
             <button
               type="button"
               onClick={() => setI((v) => Math.min(count - 1, v + 1))}
-              className="btn-action tap-feedback min-h-11 px-4 text-label"
+              className="btn-action tap-feedback text-label"
             >
-              다음 →
+              다음
+              <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
             </button>
           )}
         </div>

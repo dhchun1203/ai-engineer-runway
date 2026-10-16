@@ -76,7 +76,7 @@ function AddQuestionForm() {
         <button
           type="submit"
           disabled={pending || value.trim().length === 0}
-          className="btn-action tap-feedback min-h-11 px-4 text-label font-bold"
+          className="btn-action tap-feedback text-label"
         >
           질문 추가
         </button>
@@ -125,7 +125,7 @@ function CopyQuestionButton({ body }: { body: string }) {
         type="button"
         onClick={() => void handleCopy()}
         aria-label="질문을 복사해 클로드에 붙여넣기"
-        className="btn tap-feedback min-h-11 text-label"
+        className="btn tap-feedback text-label"
       >
         {state === 'copied' ? (
           <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -175,9 +175,7 @@ function InboxItemCard({ item }: { item: InboxItem }) {
             disabled={pending}
             onClick={handleToggle}
             aria-pressed={item.done}
-            className={`btn tap-feedback flex min-h-11 items-center gap-2 px-3 text-label font-bold ${
-              item.done ? 'chip-solid' : ''
-            }`}
+            className="btn tap-feedback text-label"
           >
             <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
             {item.done ? '완료됨' : '완료로 표시'}

@@ -69,7 +69,7 @@ export default async function AdminPage() {
               <div className="flex items-center gap-2">
                 <form action={approveAction}>
                   <input type="hidden" name="userId" value={req.userId} />
-                  <button type="submit" className="btn-action tap-feedback min-h-11 px-4 text-body">
+                  <button type="submit" className="btn-action tap-feedback text-body">
                     승인
                   </button>
                 </form>
@@ -77,7 +77,7 @@ export default async function AdminPage() {
                   <input type="hidden" name="userId" value={req.userId} />
                   <button
                     type="submit"
-                    className="tap-feedback min-h-11 border-2 border-foreground px-4 text-body font-semibold text-foreground dark:border-foreground-dark dark:text-foreground-dark"
+                    className="btn tap-feedback text-body"
                   >
                     거절
                   </button>

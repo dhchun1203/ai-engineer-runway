@@ -17,7 +17,7 @@ export function SlackRefresh() {
       type="button"
       onClick={() => startTransition(() => router.refresh())}
       disabled={pending}
-      className="chip tap-feedback inline-flex min-h-11 items-center gap-1.5 text-label font-semibold"
+      className="btn tap-feedback text-label"
       aria-label="슬랙 피드 새로고침"
     >
       <RefreshCw className={`h-4 w-4 shrink-0 ${pending ? 'animate-spin' : ''}`} aria-hidden="true" />

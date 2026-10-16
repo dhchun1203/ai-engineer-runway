@@ -87,7 +87,7 @@ export function CompleteButton({
         {shownDone ? (
           <>
             <CheckCircle2 className="complete-check-icon h-4 w-4 shrink-0" aria-hidden="true" />
-            완료했어요 ✓
+            완료했어요
           </>
         ) : (
           '레슨 완료하기'

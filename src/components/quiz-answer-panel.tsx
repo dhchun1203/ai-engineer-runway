@@ -57,7 +57,7 @@ export function QuizAnswerPanel({
       <button
         type="button"
         onClick={onRetry}
-        className="tap-feedback inline-flex min-h-11 w-fit items-center gap-1.5 text-label font-semibold text-accent dark:text-accent-dark"
+        className="btn tap-feedback w-fit text-label"
       >
         <RotateCcw className="size-4 shrink-0" aria-hidden="true" />
         이 문제 다시 풀기

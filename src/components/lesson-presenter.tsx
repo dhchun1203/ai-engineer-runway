@@ -204,7 +204,7 @@ export function LessonPresenter() {
     return (
       <div
         data-print-hide
-        className="panel-hero my-6 p-4 text-center text-caption opacity-60"
+        className="panel-hero my-6 p-4 text-center text-label opacity-60"
       >
         레슨 요약 영상 준비 중…
       </div>

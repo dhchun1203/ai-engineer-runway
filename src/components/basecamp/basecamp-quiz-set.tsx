@@ -156,22 +156,22 @@ export function BasecampQuizSet({
         <p className="text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark" aria-live="polite">
           {summary}
         </p>
-        <div className="flex flex-wrap items-center gap-x-4">
+        <div className="flex flex-wrap items-center gap-2">
         {past && solvedAtOpen.size > 0 && unsolvedAtOpen > 0 ? (
           <button
             type="button"
             onClick={() => setOnlyUnsolved((v) => !v)}
             aria-pressed={onlyUnsolved}
-            className="tap-feedback inline-flex min-h-11 items-center text-label font-semibold text-accent dark:text-accent-dark"
+            className="btn tap-feedback text-label"
           >
-            {onlyUnsolved ? "모든 문제 보기" : `안 푼 문제만 보기 (${unsolvedAtOpen})`}
+            {`안 푼 문제만 보기 (${unsolvedAtOpen})`}
           </button>
         ) : null}
         {solved > 0 ? (
           <button
             type="button"
             onClick={resetAll}
-            className="tap-feedback inline-flex min-h-11 items-center gap-1.5 text-label font-semibold text-accent dark:text-accent-dark"
+            className="btn tap-feedback text-label"
           >
             <RotateCcw className="size-4 shrink-0" aria-hidden="true" />
             모두 다시 풀기

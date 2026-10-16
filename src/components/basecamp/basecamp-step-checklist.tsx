@@ -110,7 +110,7 @@ export function BasecampStepChecklist({
                   disabled={pendingIds.has(item.id)}
                   aria-pressed={itemDone}
                   aria-label={itemDone ? `${item.title} 완료 취소` : `${item.title} 완료로 표시`}
-                  className={`tap-feedback mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center border-2 transition-colors ${
+                  className={`tap-feedback hit-44 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center border-2 transition-colors ${
                     itemDone
                       ? 'border-ok bg-ok text-background dark:border-ok-dark dark:bg-ok-dark dark:text-background-dark'
                       : itemError

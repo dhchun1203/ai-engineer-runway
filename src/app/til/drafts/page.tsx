@@ -17,7 +17,7 @@ export default async function TilDraftsPage() {
         <ul className="flex flex-col gap-3">
           {drafts.map((d) => (
             <li key={d.id}>
-              <Link href={`/til/${d.slug}/edit`} className="panel flex min-h-11 flex-col gap-1 p-4">
+              <Link href={`/til/${d.slug}/edit`} className="card-interactive panel flex min-h-11 flex-col gap-1 p-4">
                 <span className="text-body font-extrabold break-keep">{d.title || '(제목 없음)'}</span>
                 <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
                   마지막 수정 {d.updatedAt.slice(0, 10)}

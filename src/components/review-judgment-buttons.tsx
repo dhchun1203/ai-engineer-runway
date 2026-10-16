@@ -11,13 +11,14 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Circle, Triangle, X, type LucideIcon } from "lucide-react";
 import type { ReviewJudgment } from "@/lib/review";
 import { recordReviewJudgment } from "@/app/review-actions";
 
-const JUDGMENTS: { value: ReviewJudgment; symbol: string; label: string }[] = [
-  { value: "correct", symbol: "O", label: "맞음" },
-  { value: "shaky", symbol: "△", label: "맞았지만 불안" },
-  { value: "wrong", symbol: "X", label: "틀림" },
+const JUDGMENTS: { value: ReviewJudgment; Icon: LucideIcon; label: string }[] = [
+  { value: "correct", Icon: Circle, label: "맞음" },
+  { value: "shaky", Icon: Triangle, label: "맞았지만 불안" },
+  { value: "wrong", Icon: X, label: "틀림" },
 ];
 
 export function ReviewJudgmentButtons({
@@ -50,7 +51,7 @@ export function ReviewJudgmentButtons({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label="판정">
-        {JUDGMENTS.map(({ value, symbol, label }) => (
+        {JUDGMENTS.map(({ value, Icon, label }) => (
           <button
             key={value}
             type="button"
@@ -58,11 +59,9 @@ export function ReviewJudgmentButtons({
             onClick={() => handleClick(value)}
             aria-pressed={recorded === value}
             aria-label={label}
-            className={`btn tap-feedback flex min-h-11 min-w-11 items-center justify-center px-3 text-body font-bold ${
-              recorded === value ? "chip-solid" : ""
-            }`}
+            className="btn tap-feedback w-11 px-0"
           >
-            {symbol}
+            <Icon className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
           </button>
         ))}
         {recorded ? (

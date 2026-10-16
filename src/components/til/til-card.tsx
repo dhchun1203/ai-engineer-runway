@@ -3,7 +3,7 @@ import type { TilPost } from '@/lib/til/types';
 
 export function TilCard({ post }: { post: TilPost }) {
   return (
-    <Link href={`/til/${post.slug}`} className="panel flex flex-col gap-2 p-4 sm:p-5">
+    <Link href={`/til/${post.slug}`} className="card-interactive panel flex flex-col gap-2 p-4 sm:p-5">
       {post.coverImageUrl ? (
         // eslint 규칙상 next/image 권장이나, 외부 스토리지 URL이라 img로 단순화.
         // 목록 성능이 문제되면 next/image로 교체.

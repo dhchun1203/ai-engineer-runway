@@ -15,6 +15,7 @@ import {
   Table,
   Link as LinkIcon,
   ImagePlus,
+  Trash2,
 } from 'lucide-react';
 import type { TilPost, TilPostInput, TilSeries, TilTemplate } from '@/lib/til/types';
 
@@ -289,18 +290,20 @@ export function TilEditor(props: Props) {
           />
 
           {/* 좁은 화면 전용 편집/미리보기 토글 — 넓은 화면(lg)에선 2단이라 숨김 */}
-          <div className="ml-auto flex items-center gap-0.5 lg:hidden">
+          <div className="ml-auto flex items-center gap-2 lg:hidden">
             <button
               type="button"
               onClick={() => setMobileView('write')}
-              className={`inline-flex h-11 items-center px-3 text-label font-bold ${mobileView === 'write' ? 'bg-foreground text-surface dark:bg-foreground-dark dark:text-surface-dark' : ''}`}
+              aria-pressed={mobileView === 'write'}
+              className="btn tap-feedback px-3 text-label"
             >
               편집
             </button>
             <button
               type="button"
               onClick={() => setMobileView('preview')}
-              className={`inline-flex h-11 items-center px-3 text-label font-bold ${mobileView === 'preview' ? 'bg-foreground text-surface dark:bg-foreground-dark dark:text-surface-dark' : ''}`}
+              aria-pressed={mobileView === 'preview'}
+              className="btn tap-feedback px-3 text-label"
             >
               미리보기
             </button>
@@ -351,7 +354,7 @@ export function TilEditor(props: Props) {
           </Field>
 
           <Field label="이해도" note="다시 누르면 해제">
-            <div className="flex w-fit border border-line dark:border-line-dark" role="group" aria-label="이해도">
+            <div className="flex flex-wrap gap-2" role="group" aria-label="이해도">
               {[1, 2, 3, 4, 5].map((n) => {
                 const on = understanding === n;
                 return (
@@ -360,11 +363,7 @@ export function TilEditor(props: Props) {
                     type="button"
                     aria-pressed={on}
                     onClick={() => setUnderstanding(on ? null : n)}
-                    className={`h-11 w-12 border-l border-line text-label font-bold first:border-l-0 dark:border-line-dark ${
-                      on
-                        ? 'bg-foreground text-surface dark:bg-foreground-dark dark:text-surface-dark'
-                        : 'bg-background text-muted hover:text-foreground dark:bg-background-dark dark:text-muted-dark dark:hover:text-foreground-dark'
-                    }`}
+                    className="btn tap-feedback w-11 px-0 text-label"
                   >
                     {n}
                   </button>
@@ -431,8 +430,8 @@ export function TilEditor(props: Props) {
                   alt=""
                   className="aspect-[16/9] w-36 shrink-0 border border-line object-cover dark:border-line-dark"
                 />
-                <div className="flex flex-col items-start">
-                  <label className="inline-flex min-h-11 cursor-pointer items-center text-label font-semibold text-accent dark:text-accent-dark">
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="btn tap-feedback cursor-pointer text-label">
                     {uploadingCover ? '업로드 중...' : '바꾸기'}
                     <input type="file" accept="image/*" onChange={handleCoverImageChange} disabled={uploadingCover} className="hidden" />
                   </label>
@@ -440,7 +439,7 @@ export function TilEditor(props: Props) {
                     type="button"
                     disabled={uploadingCover}
                     onClick={() => setCoverImageUrl(null)}
-                    className="inline-flex min-h-11 items-center text-label font-semibold text-muted hover:text-destructive dark:text-muted-dark dark:hover:text-destructive-dark"
+                    className="btn tap-feedback text-label text-destructive dark:text-destructive-dark"
                   >
                     제거
                   </button>
@@ -467,8 +466,9 @@ export function TilEditor(props: Props) {
               type="button"
               disabled={pending}
               onClick={handleDelete}
-              className="min-h-11 text-label font-semibold text-muted hover:text-destructive dark:text-muted-dark dark:hover:text-destructive-dark"
+              className="btn tap-feedback text-label text-destructive dark:text-destructive-dark"
             >
+              <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
               삭제
             </button>
           ) : null}
@@ -476,7 +476,7 @@ export function TilEditor(props: Props) {
             <button type="button" disabled={pending} onClick={() => handleSave(false)} className="btn tap-feedback text-body">
               초고 저장
             </button>
-            <button type="button" disabled={pending} onClick={() => handleSave(true)} className="btn-action tap-feedback min-h-11 text-body">
+            <button type="button" disabled={pending} onClick={() => handleSave(true)} className="btn-action tap-feedback text-body">
               발행
             </button>
           </div>

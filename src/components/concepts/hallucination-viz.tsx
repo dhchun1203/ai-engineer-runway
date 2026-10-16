@@ -10,6 +10,7 @@
 // 애니메이션은 motion 하나만, prefers-reduced-motion이면 페이드/이동을 끈다.
 
 import { useState } from "react";
+import { RotateCcw, SearchCheck } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ACCENT, ConceptFigure } from "@/components/concepts/viz-kit";
 
@@ -155,17 +156,19 @@ export function HallucinationViz() {
           type="button"
           onClick={verifyAll}
           disabled={allRevealed}
-          className="btn-action tap-feedback min-h-11 px-4 text-label disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn-action tap-feedback text-label disabled:cursor-not-allowed"
         >
-          🔎 모두 검증하기
+          <SearchCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+          모두 검증하기
         </button>
         <button
           type="button"
           onClick={hideAll}
           disabled={!anyRevealed}
-          className="btn tap-feedback min-h-11 px-4 text-label disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn tap-feedback text-label disabled:cursor-not-allowed"
         >
-          ↺ 다시 가리기
+          <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" />
+          다시 가리기
         </button>
       </div>
 

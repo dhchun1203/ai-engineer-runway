@@ -11,6 +11,7 @@
 // 애니메이션은 motion 하나만 쓰고, prefers-reduced-motion이면 이동/페이드를 끈다.
 
 import { useState } from "react";
+import { Plus, RotateCcw } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   ACCENT,
@@ -123,16 +124,18 @@ export function ContextWindowViz() {
             type="button"
             onClick={() => setCount((v) => Math.min(MESSAGES.length, v + 1))}
             disabled={full}
-            className="btn-action tap-feedback min-h-11 px-4 text-label disabled:cursor-not-allowed disabled:opacity-40"
+            className="btn-action tap-feedback text-label disabled:cursor-not-allowed"
           >
-            + 메시지 추가
+            <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
+            메시지 추가
           </button>
           <button
             type="button"
             onClick={() => setCount(WINDOW)}
-            className="btn tap-feedback min-h-11 px-4 text-label"
+            className="btn tap-feedback text-label"
           >
-            ↺ 처음부터
+            <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" />
+            처음부터
           </button>
           {full && (
             <span className="break-keep text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">

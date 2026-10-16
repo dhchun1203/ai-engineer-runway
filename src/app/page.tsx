@@ -205,10 +205,10 @@ export default async function Home() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Link href="/login" className="btn-action tap-feedback min-h-11 text-body">
+            <Link href="/login" className="btn-action tap-feedback text-body">
               로그인
             </Link>
-            <Link href="/signup" className="btn tap-feedback min-h-11 text-body">
+            <Link href="/signup" className="btn tap-feedback text-body">
               회원가입
             </Link>
           </div>

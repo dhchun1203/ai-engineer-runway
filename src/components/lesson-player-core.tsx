@@ -13,6 +13,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { ChevronLeft, ChevronRight, Maximize2, Minimize2, Pause, Play, RotateCcw } from 'lucide-react';
 
 export const DEFAULT_SPEEDS = [0.75, 1, 1.5, 2] as const;
 export const BASE_MS = 3800; // 1배속 장면 간격 — 자막을 읽을 시간
@@ -250,14 +251,19 @@ export function PlayerFrame({
       <div className="flex items-center justify-between gap-2">
         <p className="text-label font-bold">▶ 레슨 한눈에 보기</p>
         <div className="flex items-center gap-2">
-          {activeChapter && <span className="text-caption opacity-70">{activeChapter}</span>}
+          {activeChapter && <span className="text-label opacity-70">{activeChapter}</span>}
           <button
             type="button"
             onClick={player.toggleFull}
-            className="chip tap-feedback text-caption"
+            className="btn tap-feedback text-label"
             aria-label={isFull ? '전체화면 나가기' : '전체화면으로 보기'}
           >
-            {isFull ? '✕ 닫기' : '⛶ 전체화면'}
+            {isFull ? (
+              <Minimize2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+            ) : (
+              <Maximize2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+            )}
+            {isFull ? '닫기' : '전체화면'}
           </button>
         </div>
       </div>
@@ -272,11 +278,8 @@ export function PlayerFrame({
                 key={`${c.name}-${c.at}`}
                 type="button"
                 onClick={() => player.jump(c.at)}
-                className="chip tap-feedback text-caption"
+                className="btn tap-feedback px-3 text-label"
                 aria-pressed={on}
-                style={
-                  on ? { backgroundColor: 'var(--color-action)', color: 'var(--color-surface)' } : undefined
-                }
               >
                 {c.name}
               </button>
@@ -317,10 +320,10 @@ export function PlayerFrame({
           type="button"
           onClick={player.goPrev}
           disabled={step === 0}
-          className="btn tap-feedback text-label"
+          className="btn tap-feedback w-11 px-0"
           aria-label="이전 장면"
         >
-          ◀
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
         </button>
         <button
           type="button"
@@ -328,22 +331,29 @@ export function PlayerFrame({
           className="btn-action tap-feedback text-label"
           aria-label={playing ? '일시정지' : '재생'}
         >
-          {playing ? '❚❚ 일시정지' : step >= last ? '↻ 다시 재생' : '▶ 재생'}
+          {playing ? (
+            <Pause className="h-4 w-4 shrink-0" aria-hidden="true" />
+          ) : step >= last ? (
+            <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" />
+          ) : (
+            <Play className="h-4 w-4 shrink-0" aria-hidden="true" />
+          )}
+          {playing ? '일시정지' : step >= last ? '다시 재생' : '재생'}
         </button>
         <button
           type="button"
           onClick={player.goNext}
           disabled={step >= last}
-          className="btn tap-feedback text-label"
+          className="btn tap-feedback w-11 px-0"
           aria-label="다음 장면"
         >
-          ▶
+          <ChevronRight className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
 
       {/* 속도 */}
       <div className="flex items-center justify-center gap-2">
-        <span className="text-caption opacity-70">속도</span>
+        <span className="text-label opacity-70">속도</span>
         {speeds.map((sp) => {
           const on = sp === speed;
           return (
@@ -351,11 +361,8 @@ export function PlayerFrame({
               key={sp}
               type="button"
               onClick={() => player.setSpeed(sp)}
-              className="chip tap-feedback text-caption"
+              className="btn tap-feedback min-w-11 px-3 text-label"
               aria-pressed={on}
-              style={
-                on ? { backgroundColor: 'var(--color-action)', color: 'var(--color-surface)' } : undefined
-              }
             >
               {sp}×
             </button>
@@ -364,21 +371,25 @@ export function PlayerFrame({
       </div>
 
       {/* 진행 표시 */}
-      <p className="text-center text-caption opacity-70">
-        {step + 1} / {count}
+      <div className="flex items-center justify-center gap-3 text-label">
+        <span className="opacity-70">
+          {step + 1} / {count}
+        </span>
         {step > 0 && (
-          <>
-            {' · '}
-            <button type="button" onClick={() => player.jump(0)} className="underline">
-              처음부터
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={() => player.jump(0)}
+            className="tap-feedback inline-flex min-h-11 items-center gap-1.5 font-semibold underline underline-offset-4"
+          >
+            <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" />
+            처음부터
+          </button>
         )}
-      </p>
+      </div>
 
       {/* 전체화면 단축키 안내 */}
       {isFull && (
-        <p className="text-center text-caption opacity-60">
+        <p className="text-center text-label opacity-60">
           스페이스 재생/정지 · ←/→ 이전·다음 · ↑/↓ 속도 · Esc 나가기
         </p>
       )}

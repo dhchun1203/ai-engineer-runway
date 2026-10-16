@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { MDXContent } from "@/components/mdx-content";
 import { ReadingProgress } from "@/components/reading-progress";
 import { BookBookmark } from "@/components/book-bookmark";
@@ -74,9 +75,10 @@ export default async function BookStepPage(props: PageProps<"/book/[step]">) {
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <Link
               href={`/step/${step.id}`}
-              className="tap-feedback inline-flex min-h-11 items-center text-label font-semibold text-accent dark:text-accent-dark"
+              className="nav-link tap-feedback flex w-fit min-h-11 items-center gap-1.5 text-label font-bold text-muted dark:text-muted-dark"
             >
-              ← 스텝 목차로
+              <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+              스텝 목차로
             </Link>
           </div>
         </section>
@@ -123,13 +125,14 @@ export default async function BookStepPage(props: PageProps<"/book/[step]">) {
           <div className="flex flex-wrap items-center gap-4 pt-1">
             <Link
               href={`/step/${step.id}`}
-              className="tap-feedback inline-flex min-h-11 items-center text-label font-semibold text-accent dark:text-accent-dark"
+              className="btn-action tap-feedback text-label"
             >
-              Step {step.id} 레슨으로 →
+              Step {step.id} 레슨으로
+              <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
             </Link>
             <Link
               href="/curriculum"
-              className="tap-feedback inline-flex min-h-11 items-center text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark"
+              className="btn tap-feedback text-label"
             >
               커리큘럼 전체 보기
             </Link>
