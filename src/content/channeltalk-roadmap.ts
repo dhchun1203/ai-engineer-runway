@@ -282,6 +282,11 @@ export const roadmapStages: readonly RoadmapStage[] = [
         coverage: "reinforce",
         where: "Step 3 오케스트레이션 (LangGraph, MCP)",
       },
+      {
+        title: "내가 설계한 에이전트 워크플로 하나를 결과물로 남기고, 왜 그렇게 나눴는지 설명하기",
+        coverage: "reinforce",
+        where: "Step 3 Project 3 RAG Agent에서 내가 설계한 부분을 분명히 해 둔다 (10/16 튜터링: 신입 면접에서 워크플로 설계 경험을 본다)",
+      },
     ],
   },
   {
@@ -315,6 +320,11 @@ export const roadmapStages: readonly RoadmapStage[] = [
         title: "평가를 자동화해 개선 사이클을 빠르게 돌리기",
         coverage: "reinforce",
         where: "Step 3 LLMOps (프롬프트 버전관리, 평가 자동화)",
+      },
+      {
+        title: "내 서비스에 평가를 붙여 실제로 고쳐 본 사례 하나 만들기",
+        coverage: "separate",
+        where: "공부로 끝내지 않고 DailyAiThread 같은 내 서비스에서 재고, 고치고, 다시 잰 기록을 남긴다 (10/16 튜터링: 평가하고 고친 경험을 본다)",
       },
     ],
   },
@@ -385,6 +395,16 @@ export const roadmapStages: readonly RoadmapStage[] = [
         title: "개발자와 비개발자를 오가며 문제를 함께 정의하는 연습",
         coverage: "reinforce",
         where: "Step 2, 3 팀 프로젝트와 Step 4 기업 발표",
+      },
+      {
+        title: "운영 이야기를 숫자로 말하기 (무엇을, 왜, 얼마나 개선했나)",
+        coverage: "separate",
+        where: "\"운영 중\"에서 멈추지 않게 DailyAiThread의 개선 기록을 꾸준히 모은다 (10/16 튜터링: 신입 면접에서 운영을 어디까지 해 봤는지 본다)",
+      },
+      {
+        title: "포트폴리오 원칙: 내 담당 파트 명시, 필수 요건 중심, 이전 경험은 도메인으로",
+        coverage: "separate",
+        where: "영업과 구축 4년은 고객 문제를 아는 무기로 말한다. 자격증보다 무엇을 왜 만들어 무엇을 해결했는지를 본다 (10/16 튜터링)",
       },
     ],
   },
