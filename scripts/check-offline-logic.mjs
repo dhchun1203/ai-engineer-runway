@@ -290,12 +290,13 @@ async function main() {
   });
 
   runCase('NOTE_KEY_PREFIX', () => {
-    assert.deepEqual({ ...NOTE_KEY_PREFIX }, { lesson: '', basecamp: 'basecamp:', article: 'article:' });
+    assert.deepEqual({ ...NOTE_KEY_PREFIX }, { lesson: '', basecamp: 'basecamp:', article: 'article:', roadmap: 'roadmap:' });
   });
 
   runCase('parseNoteKey', () => {
     assert.deepEqual(parseNoteKey('basecamp:x'), { target: 'basecamp', slug: 'x' });
     assert.deepEqual(parseNoteKey('article:y'), { target: 'article', slug: 'y' });
+    assert.deepEqual(parseNoteKey('roadmap:session-a'), { target: 'roadmap', slug: 'session-a' });
     assert.deepEqual(parseNoteKey('python-variables'), { target: 'lesson', slug: 'python-variables' });
   });
 
@@ -314,6 +315,11 @@ async function main() {
       kind: 'note',
       api: '/api/article-note?slug=linear-ci-bottleneck',
       key: 'article:linear-ci-bottleneck',
+    });
+    assert.deepEqual(snapshotSourceFor('/roadmap/session-2026-10-16-ai-agent-roles'), {
+      kind: 'note',
+      api: '/api/roadmap-note?slug=session-2026-10-16-ai-agent-roles',
+      key: 'roadmap:session-2026-10-16-ai-agent-roles',
     });
     assert.equal(snapshotSourceFor('/concepts/attention'), null);
     assert.equal(snapshotSourceFor('/articles'), null);
