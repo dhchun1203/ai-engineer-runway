@@ -20,6 +20,7 @@ import {
   step4AutomationLessons,
   STEP4_AUTOMATION_URL,
   step5PandasLessons,
+  STEP5_PANDAS_URL,
   type BasecampStep,
 } from "@/content/basecamp";
 import { basecampQuizTotal } from "@/content/basecamp-review";
@@ -109,28 +110,6 @@ export default async function BasecampPage() {
         />
       </section>
 
-      {/* STEP 5 과제 보강 — 최종 과제(STEP 4 툴을 Pandas로 번역)를 서점 예시로 두 편에
-          걸쳐 함께 해 보는 빌드-얼롱 레슨 묶음. 지금 집중(STEP 5) 바로 아래 둔다. 완료
-          체크박스는 이 섹션 자체 카운터로만 센다(STEP의 "N/M 완료"와 분리). */}
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1.5">
-          <span className="w-fit text-label font-bold text-accent dark:text-accent-dark">
-            STEP 5 과제 보강
-          </span>
-          <h2 className="text-heading font-extrabold break-keep">엑셀 자동 정리 툴 Pandas로 다시 만들기</h2>
-          <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-            STEP 5 최종 과제인 STEP 4 코드의 Pandas 번역을 두 편에 걸쳐 함께 해 보는
-            레슨입니다. STEP 4 보강에서 만든 서점 툴을 덩어리별로 Pandas로 옮기고, 두 버전의
-            결과 파일이 같은지까지 확인한 뒤, 공식 과제의 카페 코드는 스스로 번역해 제출하면 됩니다.
-          </p>
-        </div>
-        <BasecampPrepChecklist
-          lessons={step5PandasLessons}
-          initialDoneIds={prepDoneIds(step5PandasLessons)}
-          unlocked={unlocked}
-        />
-      </section>
-
       {/* 전체 복습 — 지금까지의 STEP을 한 장씩 훑는 복습 카드와 STEP별 퀴즈로 가는 입구
           (2026-10-12). 둘 다 진도와 무관한 정적 페이지다. */}
       <section className="panel flex flex-col gap-3 p-5">
@@ -155,7 +134,8 @@ export default async function BasecampPage() {
 
       {/* 지난 주차 — 끝났거나 지난 STEP은 접힌 한 줄로. 누르면 그 자리에서 펼쳐 복습.
           지금 집중이 바뀔 때마다 직전 STEP의 과제 보강도 여기에 접힌 행으로 내려온다
-          (STEP 2 보강은 2026-09-21, STEP 3 보강은 2026-09-29, STEP 4 보강은 2026-10-12). */}
+          (STEP 2 보강은 2026-09-21, STEP 3 보강은 2026-09-29, STEP 4 보강은 2026-10-12,
+          STEP 5 보강은 2026-10-20 STEP 6 복습 주간 공개와 함께). */}
       {pastSteps.length > 0 ? (
         <section className="flex flex-col gap-3">
           <span className="text-label font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark">
@@ -170,11 +150,22 @@ export default async function BasecampPage() {
                 unlocked={unlocked}
               />
             ))}
-            {/* STEP 4 과제 보강 — 지난 주차로 내려온 접이식 보강 묶음(최근 것이 위). */}
+            {/* STEP 5 과제 보강 — 지난 주차로 내려온 접이식 보강 묶음(최근 것이 위). */}
+            <BasecampPastPrep
+              label="STEP 5 과제 보강"
+              title="엑셀 자동 정리 툴 Pandas로 다시 만들기"
+              description="STEP 5 최종 과제인 STEP 4 코드의 Pandas 번역을 두 편에 걸쳐 함께 해 보는 레슨입니다. STEP 4 보강에서 만든 서점 툴을 덩어리별로 Pandas로 옮기고, 두 버전의 결과 파일이 같은지까지 확인합니다."
+              officialUrl={STEP5_PANDAS_URL}
+              officialLabel="공식 Pandas 과제 열기"
+              lessons={step5PandasLessons}
+              initialDoneIds={prepDoneIds(step5PandasLessons)}
+              unlocked={unlocked}
+            />
+            {/* STEP 4 과제 보강 — 지난 주차로 내려온 접이식 보강 묶음. */}
             <BasecampPastPrep
               label="STEP 4 과제 보강"
               title="엑셀 자동 정리 툴 함께 만들기"
-              description="STEP 4 최종 과제인 엑셀 자동 정리 툴을 두 편에 걸쳐 직접 만들며, 필요한 개념을 그때그때 익히는 레슨입니다. 서점 지점 파일로 툴을 처음부터 끝까지 완성해 봅니다. STEP 5 과제 보강이 이 서점 툴을 Pandas로 번역합니다."
+              description="STEP 4 최종 과제인 엑셀 자동 정리 툴을 두 편에 걸쳐 직접 만들며, 필요한 개념을 그때그때 익히는 레슨입니다. 서점 지점 파일로 툴을 처음부터 끝까지 완성해 봅니다. 위의 STEP 5 과제 보강이 이 서점 툴을 Pandas로 번역합니다."
               officialUrl={STEP4_AUTOMATION_URL}
               officialLabel="공식 엑셀 자동화 과제 열기"
               lessons={step4AutomationLessons}

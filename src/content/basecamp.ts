@@ -284,6 +284,64 @@ export const basecampSteps: readonly BasecampStep[] = [
       },
     ],
   },
+  {
+    // STEP 6은 새 과제가 없는 복습 STEP이다(2026-10-20 공개). STEP 1~5의 기본 개념을
+    // 한 판으로 다시 정리한 공식 문서 4편에 우리 레슨 4편을 하나씩 짝지었다.
+    no: 7,
+    weekLabel: "6주차",
+    title: "AX 핵심 개념 한판 정리",
+    summary:
+      "STEP 1~5에서 배운 기본 개념을 한 번에 다시 정리하는 복습 주간입니다. 각 개념이 문법인지, 함수인지, 메서드인지 구분하고 언제 쓰는지 설명할 수 있게 다지고, STEP별 확인 퀴즈로 헷갈리는 곳을 점검합니다. 엑셀 자동화의 큰 흐름(읽기, 정리, 가공, 저장)도 다시 잡습니다.",
+    released: true,
+    officialUrl: `${OFFICIAL_BASE}3ff2dc3e-f514-8016-9950-c1c8d34bff1a`,
+    items: [
+      {
+        id: "s6-step1",
+        title: "STEP 1 핵심 개념 다시 보기: 값을 담는 법",
+        kind: "lesson",
+        officialUrl: `${OFFICIAL_BASE}3ff2dc3e-f514-802a-83e0-fd6b7082cfc9`,
+        summary:
+          "문법, 함수, 메서드, 라이브러리를 구분하는 법부터 잡고, print와 주석, 변수, 데이터 타입, 형변환, 연산자, 문자열, 리스트, 튜플을 다시 정리합니다.",
+        ourLessonHref: "/basecamp/core-concepts-step1",
+      },
+      {
+        id: "s6-step2",
+        title: "STEP 2 핵심 개념 다시 보기: 판단하고 반복하는 법",
+        kind: "lesson",
+        officialUrl: `${OFFICIAL_BASE}3fb2dc3e-f514-80f6-b6e7-cb78838713db`,
+        summary:
+          "딕셔너리, 비교와 논리 연산자, 조건문, for와 while 반복문, 함수, 그리고 딕셔너리 리스트로 표를 표현하는 법을 다시 정리합니다.",
+        ourLessonHref: "/basecamp/core-concepts-step2",
+      },
+      {
+        id: "s6-step3",
+        title: "STEP 3 핵심 개념 다시 보기: 데이터를 분석하는 법",
+        kind: "lesson",
+        officialUrl: `${OFFICIAL_BASE}3ff2dc3e-f514-8030-804e-d6dcca8c3800`,
+        summary:
+          "import와 라이브러리, NumPy 배열, Pandas DataFrame, 열 고르기와 필터, 정렬과 개수 세기, groupby, 빈 값 처리, 미니 챗봇의 원리를 다시 정리합니다.",
+        ourLessonHref: "/basecamp/core-concepts-step3",
+      },
+      {
+        id: "s6-step45",
+        title: "STEP 4, 5 핵심 개념 다시 보기: 엑셀 자동화의 흐름",
+        kind: "lesson",
+        officialUrl: `${OFFICIAL_BASE}3ff2dc3e-f514-8021-a93b-c76c7d22b755`,
+        summary:
+          "읽기, 정리, 가공, 저장의 네 단계로 read_excel, 열 정리, to_numeric과 dropna, 새 열과 apply, groupby, ExcelWriter 저장, try/except까지 엑셀 자동화 흐름을 다시 정리합니다.",
+        ourLessonHref: "/basecamp/core-concepts-step45",
+      },
+      {
+        id: "s6-quiz",
+        title: "STEP별 확인 퀴즈로 헷갈리는 곳 점검하기",
+        kind: "lesson",
+        officialUrl: `${OFFICIAL_BASE}3ff2dc3e-f514-8016-9950-c1c8d34bff1a`,
+        summary:
+          "각 레슨 끝의 확인 퀴즈와 전체 복습 퀴즈를 풀고, 틀린 문제는 오답 노트로 모아 다시 풉니다.",
+        ourLessonHref: "/basecamp/quiz",
+      },
+    ],
+  },
 ];
 
 /** 공식 선행 과제 모음(전체 인덱스) 링크. */
@@ -437,6 +495,10 @@ export const step5PandasLessons: readonly BasecampPrepLesson[] = [
     href: "/basecamp/python-pandas-automation-report",
   },
 ];
+
+/** STEP 5(5주차) 최종 과제(STEP 4 툴의 Pandas 번역) 공식 페이지. 지난 주차로 내려간
+ *  STEP 5 과제 보강 묶음의 "공식 과제 열기" 링크에 쓴다(2026-10-20). */
+export const STEP5_PANDAS_URL = `${OFFICIAL_BASE}3f62dc3e-f514-8002-957d-ecee7c9d61e3`;
 
 /** action 검증용 — 알려진 항목 id 집합(임의 id로 진도 행이 생기는 것을 막는다).
  *  STEP 항목 id와 보강 레슨 id를 모두 포함한다(둘 다 toggleBasecampItem을 쓴다). */
