@@ -81,7 +81,7 @@ function GlossarySectionBlock({ prefix, section }: { prefix: "ko" | "en"; sectio
       <h2 className="text-heading font-extrabold">{section.bucket}</h2>
       <ul className="flex flex-col gap-3">
         {section.groups.map((group) => (
-          <li key={group.word} className="panel flex flex-col gap-2 px-4 py-3">
+          <li key={group.word} className="panel card-hover-grow flex flex-col gap-2 px-4 py-3">
             <span className="text-body font-bold">{group.word}</span>
             <ol className="flex flex-col gap-3">
               {group.definitions.map((def, index) => (

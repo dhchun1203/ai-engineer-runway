@@ -77,7 +77,7 @@ export default async function LoginPage() {
 
         <ul className="flex flex-col gap-3">
           {FEATURES.map(({ icon: Icon, title, body }) => (
-            <li key={title} className="panel flex items-start gap-3 p-4">
+            <li key={title} className="panel card-hover-grow flex items-start gap-3 p-4">
               <Icon
                 className="mt-0.5 h-5 w-5 shrink-0 text-accent dark:text-accent-dark"
                 aria-hidden="true"

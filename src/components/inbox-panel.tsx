@@ -166,7 +166,7 @@ function InboxItemCard({ item }: { item: InboxItem }) {
   }
 
   return (
-    <li className={`panel flex flex-col gap-3 p-4 ${item.done ? 'opacity-60' : ''}`}>
+    <li className={`panel card-hover-grow flex flex-col gap-3 p-4 ${item.done ? 'opacity-60' : ''}`}>
       <p className="text-body font-normal whitespace-pre-wrap">{item.body}</p>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">

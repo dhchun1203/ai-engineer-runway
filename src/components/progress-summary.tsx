@@ -44,7 +44,7 @@ export function ProgressSummary({
     <section
       data-progress-ui="summary"
       data-progress-percent={percent}
-      className="panel flex flex-col gap-4 p-6"
+      className="panel card-hover-grow flex flex-col gap-4 p-6"
     >
       <div className="flex flex-col gap-2">
         <h2 className="text-heading font-extrabold">{heading}</h2>

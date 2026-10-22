@@ -374,9 +374,10 @@ textarea,
       color: var(--color-foreground-dark);
     }
 
-    /* 누를 수 있는 패널(Step 카드·모듈·PDF 범위 카드)도 같은 문법으로 뜬다. */
+    /* 누를 수 있는 패널(Step 카드, 모듈, PDF 범위 카드)은 살짝 커지며 그림자가 깊어진다.
+       버튼은 한 뼘 떠오르고 카드는 커진다 — 아래 .card-hover-grow와 같은 감각(2026-10-23). */
     .card-interactive.panel:hover {
-      transform: translate(-1px, -1px);
+      transform: scale(1.015);
       box-shadow: 6px 6px 0 0 var(--color-shadow-hard);
     }
 
@@ -424,6 +425,18 @@ textarea,
       box-shadow 120ms ease-out,
       border-color 120ms ease-out,
       color 120ms ease-out;
+  }
+
+  /* 누를 수 있는 패널은 호버 때 배경 톤도 바뀌므로(.card-interactive:hover) 그 전환도
+     같은 목록에 둔다. 예전엔 카드마다 transition-colors 유틸리티를 붙였는데, 유틸리티가
+     이 목록을 통째로 덮어 커지는 움직임이 툭 끊겼다. */
+  .card-interactive.panel {
+    transition:
+      transform 160ms ease-out,
+      box-shadow 160ms ease-out,
+      border-color 120ms ease-out,
+      color 120ms ease-out,
+      background-color 150ms ease-out;
   }
 
   @media (prefers-reduced-motion: reduce) {

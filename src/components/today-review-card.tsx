@@ -45,7 +45,7 @@ export function TodayReviewCard({
   }
 
   return (
-    <section className="panel flex flex-col gap-4 p-6" aria-labelledby="today-review-heading">
+    <section className="panel card-hover-grow flex flex-col gap-4 p-6" aria-labelledby="today-review-heading">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <RotateCcw className="h-5 w-5 shrink-0" aria-hidden="true" />

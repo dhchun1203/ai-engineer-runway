@@ -62,7 +62,7 @@ export function StepCard({
   return (
     <Link
       href={`/step/${step.id}`}
-      className={`card-interactive panel flex min-h-11 flex-col gap-3 border-l-4 p-4 transition-colors duration-150 ${STEP_BORDER_CLASSES[step.id]} ${revealIndex !== undefined ? "step-card-reveal" : ""}`}
+      className={`card-interactive panel flex min-h-11 flex-col gap-3 border-l-4 p-4 ${STEP_BORDER_CLASSES[step.id]} ${revealIndex !== undefined ? "step-card-reveal" : ""}`}
       style={revealIndex !== undefined ? ({ "--reveal-index": revealIndex } as CSSProperties) : undefined}
     >
       <div className="flex items-baseline gap-2">

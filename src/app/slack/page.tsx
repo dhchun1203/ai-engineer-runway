@@ -62,7 +62,7 @@ export default async function SlackPage() {
         <ul className="flex flex-col gap-3">
           {feed?.ok
             ? feed.messages.map((m) => (
-                <li key={m.ts} className="panel flex flex-col gap-1.5 p-4 sm:p-5">
+                <li key={m.ts} className="panel card-hover-grow flex flex-col gap-1.5 p-4 sm:p-5">
                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                     <span className="text-body font-extrabold break-keep">{m.author}</span>
                     <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">

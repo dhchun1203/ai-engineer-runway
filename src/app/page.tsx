@@ -194,7 +194,7 @@ export default async function Home() {
           ) : null}
         </>
       ) : (
-        <section className="panel flex flex-col items-start gap-4 p-6">
+        <section className="panel card-hover-grow flex flex-col items-start gap-4 p-6">
           <div className="flex flex-col gap-2">
             <h2 className="text-heading font-extrabold break-keep">
               로그인하고 오늘의 학습 이어가기

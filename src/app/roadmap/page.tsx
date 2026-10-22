@@ -113,7 +113,7 @@ export default async function RoadmapPage() {
         </div>
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {talentTraits.map((trait) => (
-            <li key={trait.title} className="panel flex h-full flex-col gap-2 p-5">
+            <li key={trait.title} className="panel card-hover-grow flex h-full flex-col gap-2 p-5">
               <h3 className="break-keep text-body font-extrabold">{trait.title}</h3>
               <p className="break-keep text-label font-normal leading-relaxed">
                 {trait.body}
@@ -165,7 +165,7 @@ export default async function RoadmapPage() {
             const separateCount = stage.skills.length - reinforceCount;
             return (
             <li key={stage.id} id={stage.id}>
-              <article className="panel flex flex-col gap-4 p-5 sm:p-6">
+              <article className="panel card-hover-grow flex flex-col gap-4 p-5 sm:p-6">
                 {/* 단계 머리 — 번호, 아이콘, 제목, 부제, 커버리지 요약 */}
                 <div className="flex items-start gap-3">
                   <span

@@ -34,7 +34,7 @@ export default function ConceptsIndexPage() {
           <li key={concept.slug}>
             <Link
               href={concept.permalink}
-              className="card-interactive panel flex h-full min-h-11 flex-col gap-2 p-5 transition-colors duration-150"
+              className="card-interactive panel flex h-full min-h-11 flex-col gap-2 p-5"
             >
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl leading-none" aria-hidden="true">

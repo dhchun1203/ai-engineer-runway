@@ -58,7 +58,7 @@ export default async function AdminPage() {
           {pending.map((req) => (
             <li
               key={req.userId}
-              className="panel flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between"
+              className="panel card-hover-grow flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="flex flex-col gap-1">
                 <span className="text-body font-extrabold break-all">{req.email}</span>
@@ -98,7 +98,7 @@ export default async function AdminPage() {
             {decided.map((req) => (
               <li
                 key={req.userId}
-                className="panel flex flex-col gap-1 p-4 sm:flex-row sm:items-center sm:justify-between"
+                className="panel card-hover-grow flex flex-col gap-1 p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <span className="text-body font-semibold break-all">{req.email}</span>
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
