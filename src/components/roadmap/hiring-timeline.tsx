@@ -1,0 +1,65 @@
+import { Flag } from "lucide-react";
+import { hiringProcess, roadmapStages } from "@/content/channeltalk-roadmap";
+
+// 채널톡 채용 절차 세로 타임라인. 단계마다 번호 상자, 무엇을 하는 자리인지 한 줄, 이
+// 로드맵의 어느 단계로 준비하는지 바로가기(같은 페이지 앵커)를 단다. 마지막 단계(최종
+// 합격)는 행동색 상자와 깃발로 도착점을 표시한다.
+export function HiringTimeline() {
+  return (
+    <ol className="panel flex flex-col p-5 sm:p-6">
+      {hiringProcess.map((step, index) => {
+        const isLast = index === hiringProcess.length - 1;
+        return (
+          <li key={step.title} className="relative flex gap-4 pb-6 last:pb-0">
+            {/* 다음 단계로 이어지는 세로 선 — 번호 상자 가운데에서 아래로 */}
+            {!isLast ? (
+              <span
+                aria-hidden="true"
+                className="absolute bottom-0 left-5 top-10 w-px bg-line dark:bg-line-dark"
+              />
+            ) : null}
+            <span
+              aria-hidden="true"
+              className={`relative flex h-10 w-10 shrink-0 items-center justify-center border text-body font-black tabular-nums ${
+                isLast
+                  ? "border-action bg-action text-surface dark:border-action-dark dark:bg-action-dark dark:text-background-dark"
+                  : "border-foreground bg-surface dark:border-foreground-dark dark:bg-surface-dark"
+              }`}
+            >
+              {isLast ? <Flag className="h-5 w-5" /> : index + 1}
+            </span>
+            <div className="flex min-w-0 flex-col gap-1.5 pt-1.5">
+              <h3 className="break-keep text-body font-extrabold">
+                <span className="sr-only">{index + 1}단계 </span>
+                {step.title}
+              </h3>
+              <p className="break-keep text-label font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                {step.focus}
+              </p>
+              {step.prep.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-label font-bold">준비하는 곳</span>
+                  {step.prep.map((id) => {
+                    const stage = roadmapStages.find((s) => s.id === id);
+                    const label = stage
+                      ? `${String(stage.order).padStart(2, "0")} ${stage.title}`
+                      : "채널톡이 찾는 사람";
+                    return (
+                      <a
+                        key={id}
+                        href={`#${id}`}
+                        className="chip tap-feedback min-h-11 text-label font-semibold"
+                      >
+                        {label}
+                      </a>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}

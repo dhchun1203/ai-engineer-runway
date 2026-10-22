@@ -410,16 +410,50 @@ export const roadmapStages: readonly RoadmapStage[] = [
   },
 ] as const;
 
+export type HiringStep = {
+  /** 공고에 적힌 단계 이름 */
+  title: string;
+  /** 이 단계가 무엇을 하는 자리인지 우리 말로 한 줄(단계 이름에서 읽히는 만큼만, 지어내지 않는다) */
+  focus: string;
+  /** 이 로드맵에서 준비하는 곳: roadmapStages의 id, 또는 "talent"(채널톡이 찾는 사람) */
+  prep: readonly string[];
+};
+
 /**
  * 채용 절차 개요 — Software Engineer 기준. 직군에 따라 단계는 달라질 수 있다.
+ * prep은 채널톡이 밝힌 내용이 아니라 "우리 로드맵의 어느 단계로 준비하나"라는 우리 매핑이다.
  */
-export const hiringProcess: readonly string[] = [
-  "서류 지원",
-  "온라인 사전 기술 인터뷰",
-  "인터뷰 1 (코딩)",
-  "인터뷰 2 (기술 심화)",
-  "인터뷰 3 (컬처 핏)",
-  "최종 합격",
+export const hiringProcess: readonly HiringStep[] = [
+  {
+    title: "서류 지원",
+    focus: "이력서와 포트폴리오로 무엇을, 왜 만들었고, 무엇을 해결했는지 보여 주는 단계예요.",
+    prep: ["mindset"],
+  },
+  {
+    title: "온라인 사전 기술 인터뷰",
+    focus: "본 인터뷰에 앞서 온라인으로 기술 기본기를 먼저 확인해요.",
+    prep: ["foundations", "python-eng"],
+  },
+  {
+    title: "인터뷰 1 (코딩)",
+    focus: "직접 코드를 짜며 문제를 풀고, 풀이를 설명하는 단계예요.",
+    prep: ["foundations", "python-eng"],
+  },
+  {
+    title: "인터뷰 2 (기술 심화)",
+    focus: "해 본 일을 깊게 파고들어요. 왜 그렇게 설계했는지 말할 수 있어야 해요.",
+    prep: ["llm-core", "rag", "agents", "evals", "production"],
+  },
+  {
+    title: "인터뷰 3 (컬처 핏)",
+    focus: "일하는 방식과 태도가 팀과 맞는지 함께 이야기해요.",
+    prep: ["talent", "mindset"],
+  },
+  {
+    title: "최종 합격",
+    focus: "모든 인터뷰를 마치면 합격 소식을 받아요.",
+    prep: [],
+  },
 ] as const;
 
 /**

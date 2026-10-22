@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, ExternalLink } from "lucide-react";
+import { HiringTimeline } from "@/components/roadmap/hiring-timeline";
 import { isRoadmapViewer } from "@/lib/roadmap-access";
 import { getRoadmapSessionNotes } from "@/content/roadmap-lesson-helpers";
 import {
   talentTraits,
   roadmapStages,
-  hiringProcess,
   roadmapSources,
   type SkillCoverage,
 } from "@/content/channeltalk-roadmap";
@@ -101,7 +101,7 @@ export default async function RoadmapPage() {
       ) : null}
 
       {/* 채널톡이 찾는 사람 — 인재상 분석 */}
-      <section className="flex flex-col gap-5">
+      <section id="talent" className="flex scroll-mt-24 flex-col gap-5">
         <div className="flex flex-col gap-1.5">
           <h2 className="text-heading font-extrabold break-keep">
             채널톡이 찾는 사람
@@ -164,7 +164,7 @@ export default async function RoadmapPage() {
             ).length;
             const separateCount = stage.skills.length - reinforceCount;
             return (
-            <li key={stage.id} id={stage.id}>
+            <li key={stage.id} id={stage.id} className="scroll-mt-24">
               <article className="panel card-hover-grow flex flex-col gap-4 p-5 sm:p-6">
                 {/* 단계 머리 — 번호, 아이콘, 제목, 부제, 커버리지 요약 */}
                 <div className="flex items-start gap-3">
@@ -260,35 +260,18 @@ export default async function RoadmapPage() {
         </ol>
       </section>
 
-      {/* 채용 절차 */}
-      <section className="flex flex-col gap-4">
-        <h2 className="text-heading font-extrabold break-keep">채용 절차</h2>
-        <ol className="flex flex-wrap items-center gap-2">
-          {hiringProcess.map((step, index) => (
-            <li key={step} className="flex items-center gap-2">
-              <span className="chip text-label font-semibold">
-                <span
-                  className="text-accent dark:text-accent-dark"
-                  aria-hidden="true"
-                >
-                  {index + 1}
-                </span>
-                {step}
-              </span>
-              {index < hiringProcess.length - 1 ? (
-                <span
-                  className="text-badge-neutral-text dark:text-badge-neutral-text-dark"
-                  aria-hidden="true"
-                >
-                  →
-                </span>
-              ) : null}
-            </li>
-          ))}
-        </ol>
-        <p className="break-keep text-label font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          Software Engineer 채용 기준이며, 직군에 따라 단계는 달라질 수 있습니다.
-        </p>
+      {/* 채용 절차 — 세로 타임라인. 단계마다 무엇을 하는 자리인지 한 줄과, 이 로드맵의
+          어느 단계로 준비하는지 바로가기를 붙인다(prep은 우리 매핑). */}
+      <section className="flex flex-col gap-5">
+        <div className="flex flex-col gap-1.5">
+          <h2 className="text-heading font-extrabold break-keep">채용 절차</h2>
+          <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            서류부터 최종 합격까지 여섯 단계입니다. 단계마다 이 로드맵의 어디서
+            준비하는지 이어 두었어요. Software Engineer 채용 기준이라 직군에 따라
+            단계는 달라질 수 있습니다.
+          </p>
+        </div>
+        <HiringTimeline />
       </section>
 
       {/* 참고 자료 */}
