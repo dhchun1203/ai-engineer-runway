@@ -43,7 +43,9 @@ export function HiringTimeline() {
                     const stage = roadmapStages.find((s) => s.id === id);
                     const label = stage
                       ? `${String(stage.order).padStart(2, "0")} ${stage.title}`
-                      : "채널톡이 찾는 사람";
+                      : id === "doc-strategy"
+                        ? "비전공자 서류 대비 전략"
+                        : "채널톡이 찾는 사람";
                     return (
                       <a
                         key={id}

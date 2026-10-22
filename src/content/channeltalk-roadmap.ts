@@ -430,7 +430,7 @@ export type HiringStep = {
   title: string;
   /** 이 단계에서 무엇을 하는지(공고의 설명을 우리 말로 옮김) */
   focus: string;
-  /** 이 로드맵에서 준비하는 곳: roadmapStages의 id, 또는 "talent"(채널톡이 찾는 사람) */
+  /** 이 로드맵에서 준비하는 곳: roadmapStages의 id, "talent"(채널톡이 찾는 사람), "doc-strategy"(비전공자 서류 대비 전략) */
   prep: readonly string[];
 };
 
@@ -443,7 +443,7 @@ export const hiringProcess: readonly HiringStep[] = [
   {
     title: "서류 제출",
     focus: "팀에 필요한 기본적인 문제 해결 역량을 봐요. 지금까지 한 프로젝트와 도전 과제, 그리고 그걸 어떻게 풀었는지 구체적으로 쓰면 도움이 된다고 해요.",
-    prep: ["mindset"],
+    prep: ["doc-strategy", "mindset"],
   },
   {
     title: "사전 기술 인터뷰 (온라인)",
@@ -471,6 +471,102 @@ export const hiringProcess: readonly HiringStep[] = [
     prep: [],
   },
 ] as const;
+
+export type RequirementEvidence = {
+  /** 공고의 필수 자격 한 줄(원문을 줄여 옮김) */
+  requirement: string;
+  /** 지금 이미 가진 증거 */
+  have: readonly string[];
+  /** 지원 전까지 만들 증거 */
+  make: readonly string[];
+  /** 이 로드맵에서 준비하는 곳(roadmapStages의 id) */
+  prep: readonly string[];
+};
+
+export type DocPrinciple = { title: string; body: string };
+
+/**
+ * 비전공자 서류 대비 전략(2026-10-23). Applied AI Engineer 필수 자격에 "관련 전공 학사 이상"이
+ * 있어, 학위 줄 하나를 나머지 증거로 덮는 전략을 필수 자격 단위로 정리했다. 근거는 공고의 서류
+ * 설명(프로젝트와 도전 과제를 어떻게 풀었는지 구체적으로)과 10/16 튜터링 조언이다. have에는
+ * 사용자에 대해 확인된 사실만 쓰고, 숫자는 지어내지 않는다(모으라고만 적는다).
+ */
+export const docStrategyIntro =
+  "필수 자격에 관련 전공 학사가 있어서, 비전공이면 이 줄 하나로 서류에서 걸러질 수 있어요. 그래서 나머지 필수 자격을 하나도 빈칸 없이 증거로 채우고, 전공 줄은 대체 증거로 받쳐야 해요. 공고도 서류에서 \"지금까지 한 프로젝트와 도전 과제를 어떻게 풀었는지\"를 구체적으로 보겠다고 했어요.";
+
+export const requirementEvidence: readonly RequirementEvidence[] = [
+  {
+    requirement: "모호한 비즈니스 문제를 AI/ML 문제로 바꾸고, 빠른 가설 검증을 반복하며 풀어 본 경험",
+    have: [
+      "직접 기획해 배포하고 운영 중인 서비스(DailyAiThread)",
+      "B2B 솔루션 영업과 구축 4년: 고객사 문제를 듣고 구현으로 옮긴 경험",
+    ],
+    make: [
+      "서비스에서 가설 하나를 세우고, 바꾸고, 숫자로 확인한 기록 2~3건",
+      "교육과정 AX 프로젝트에서 문제 정의를 내가 맡은 기록",
+    ],
+    prep: ["mindset", "foundations"],
+  },
+  {
+    requirement: "대규모 언어 모델의 동작 원리에 대한 높은 이해와 활용 능력",
+    have: [
+      "LLM API를 쓰는 서비스를 직접 운영한 경험",
+      "토큰, 임베딩, 어텐션을 내 말로 정리한 학습 기록",
+    ],
+    make: ["모델 여러 개를 같은 일에 돌려 비교하고, 왜 이 모델인지 설명한 글 하나"],
+    prep: ["llm-core"],
+  },
+  {
+    requirement: "RAG, 벡터 검색 같은 정보 검색 시스템을 설계하거나 고도화한 경험",
+    have: ["베이스캠프 STEP 3 Q&A 챗봇(검색해서 근거로 답하는 작은 RAG)"],
+    make: ["원천 데이터 정리부터 검색 품질 평가까지 한 RAG 프로젝트, 고도화 전후 숫자 포함"],
+    prep: ["rag", "evals"],
+  },
+  {
+    requirement: "Python 프로그래밍 능력",
+    have: ["베이스캠프 STEP 1~5 과제(엑셀 자동화, Pandas 번역까지)"],
+    make: ["테스트까지 갖춘 Python 프로젝트 저장소 하나"],
+    prep: ["python-eng"],
+  },
+  {
+    requirement: "ML 개발 라이브러리 활용 능력 (PyTorch, Hugging Face, wandb)",
+    have: [],
+    make: ["Hugging Face 오픈 모델로 작은 분류나 요약 실험을 돌리고, 실험 기록을 wandb에 남기기"],
+    prep: ["llm-core"],
+  },
+  {
+    requirement: "컴퓨터공학, 전자공학, 수학, 통계학 등 관련 전공 학사 이상",
+    have: ["AI Engineer 교육과정(프로젝트와 기업 연계 프로젝트 포함) 진행 중"],
+    make: [
+      "CS 기초(자료구조, 네트워크, DB)를 내 말로 설명한 학습 기록 묶음",
+      "장기 옵션으로 방송통신대 컴퓨터과학과나 학점은행제 같은 학위 보완 경로를 알아 두기",
+    ],
+    prep: ["foundations"],
+  },
+];
+
+export const docPrinciples: readonly DocPrinciple[] = [
+  {
+    title: "프로젝트마다 문제, 내 역할, 선택의 이유, 결과 숫자",
+    body: "공고는 서류에서 프로젝트와 도전 과제를 어떻게 풀었는지 구체적으로 보겠다고 했고, 2차 인터뷰도 배경, 기술 선택의 이유, 문제를 풀어 간 과정을 물어요. 서류가 곧 2차 인터뷰의 대본이에요.",
+  },
+  {
+    title: "필수 요건을 먼저 다 채우고, 우대는 그다음",
+    body: "필수 요건 중 빈칸이 하나라도 있으면 그게 먼저예요. 우대 사항은 에이전트 운영, 평가 체계(LLM-as-a-judge), 비용 최적화처럼 지금 서비스로 손이 닿는 두세 개만 골라 깊게 보여 줘요(10/16 튜터링).",
+  },
+  {
+    title: "영업과 구축 4년은 약점이 아니라 도메인",
+    body: "채널톡은 2,000개가 넘는 고객사를 둔 B2B 회사예요. 고객사 문제를 직접 듣고 구축까지 해 본 경험은 \"개발 경력이 빈 기간\"이 아니라 \"고객 문제를 아는 엔지니어\"의 근거로 써요.",
+  },
+  {
+    title: "데모가 아니라 운영 기록과 글로 증명",
+    body: "만들어 본 것보다 운영해 본 것이 강해요. 사용자 수, 실패를 잡은 사례, 비용처럼 운영하며 모은 숫자와, 그 과정을 정리한 기술 글을 함께 내요. 채널톡이 말하는 Share Out과도 맞닿아요.",
+  },
+  {
+    title: "학위 칸 대신 대체 증거가 먼저 보이게",
+    body: "학위 줄은 지울 수 없으니 이력서 앞쪽에 대체 증거를 먼저 놓아요. 교육과정 수료, 대표 프로젝트, 운영 숫자, CS 기초 학습 기록이 첫 화면에서 보이게 해요.",
+  },
+];
 
 /**
  * 로드맵의 근거가 된 채용 공고와 기술블로그 자료.

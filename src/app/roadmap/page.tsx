@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, ExternalLink } from "lucide-react";
 import { HiringTimeline } from "@/components/roadmap/hiring-timeline";
+import { DocStrategy } from "@/components/roadmap/doc-strategy";
 import { isRoadmapViewer } from "@/lib/roadmap-access";
 import { getRoadmapSessionNotes } from "@/content/roadmap-lesson-helpers";
 import {
@@ -273,13 +274,12 @@ export default async function RoadmapPage() {
           </p>
         </div>
         <HiringTimeline />
-        {/* 지원 자격 중 비전공자가 미리 알아야 할 줄 — 숨기지 않고 대비책과 함께 적는다. */}
-        <p className="border-l-2 border-action pl-4 break-keep text-label font-normal leading-relaxed dark:border-action-dark">
-          <span className="font-bold">지원 자격 체크:</span> 필수 자격에 &ldquo;컴퓨터공학,
-          전자공학, 수학, 통계학 등 관련 전공 학사 이상&rdquo;이 들어 있어요. 비전공이라면
-          서류에서 프로젝트와 운영 기록으로 문제 해결 역량을 증명해야 하는 지점이에요(10/16
-          튜터링: 전공 조건은 포트폴리오로 넘을 수 있다).
-        </p>
+      </section>
+
+      {/* 비전공자 서류 대비 전략 — 필수 자격의 관련 전공 학사 줄을 나머지 증거로 덮는다. */}
+      <section id="doc-strategy" className="flex scroll-mt-24 flex-col gap-5">
+        <h2 className="text-heading font-extrabold break-keep">비전공자 서류 대비 전략</h2>
+        <DocStrategy />
       </section>
 
       {/* 참고 자료 */}
