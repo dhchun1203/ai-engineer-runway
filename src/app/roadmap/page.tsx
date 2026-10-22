@@ -107,7 +107,7 @@ export default async function RoadmapPage() {
             채널톡이 찾는 사람
           </h2>
           <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-            채용 공고, CTO 인터뷰, 기술블로그를 가로질러 반복되는 인재상을 여섯
+            채용 공고, CTO 인터뷰, 기술블로그를 가로질러 반복되는 인재상을 일곱
             갈래로 정리했습니다. 로드맵의 모든 단계는 여기서 출발합니다.
           </p>
         </div>
@@ -266,12 +266,20 @@ export default async function RoadmapPage() {
         <div className="flex flex-col gap-1.5">
           <h2 className="text-heading font-extrabold break-keep">채용 절차</h2>
           <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-            서류부터 최종 합격까지 여섯 단계입니다. 단계마다 이 로드맵의 어디서
-            준비하는지 이어 두었어요. Software Engineer 채용 기준이라 직군에 따라
-            단계는 달라질 수 있습니다.
+            우리 목표인 Applied AI Engineer 공고의 절차입니다(2026년 10월 확인).
+            단계마다 공고가 밝힌 진행 방식과, 이 로드맵의 어디서 준비하는지를 이어
+            두었어요. 직군마다 다릅니다. Software Engineer는 1차가 라이브 코딩이고,
+            Forward Deployed Engineer는 3일짜리 과제 전형이 더 있어요.
           </p>
         </div>
         <HiringTimeline />
+        {/* 지원 자격 중 비전공자가 미리 알아야 할 줄 — 숨기지 않고 대비책과 함께 적는다. */}
+        <p className="border-l-2 border-action pl-4 break-keep text-label font-normal leading-relaxed dark:border-action-dark">
+          <span className="font-bold">지원 자격 체크:</span> 필수 자격에 &ldquo;컴퓨터공학,
+          전자공학, 수학, 통계학 등 관련 전공 학사 이상&rdquo;이 들어 있어요. 비전공이라면
+          서류에서 프로젝트와 운영 기록으로 문제 해결 역량을 증명해야 하는 지점이에요(10/16
+          튜터링: 전공 조건은 포트폴리오로 넘을 수 있다).
+        </p>
       </section>
 
       {/* 참고 자료 */}

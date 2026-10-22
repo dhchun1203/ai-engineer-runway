@@ -103,8 +103,13 @@ export const talentTraits: readonly TalentTrait[] = [
   },
   {
     title: "AI로 일하는 사람",
-    body: "AI 도구 사용을 즐기고, 자기 업무와 프로세스를 직접 AI로 재설계해 본 사람을 우대합니다. 채널톡은 이미 Cursor를 전사 도입하고 사내 에이전트로 일하는 조직입니다.",
-    source: "FDE 공고, 기술블로그",
+    body: "채널톡에서 AI는 실험 도구가 아니라 매일 쓰는 개발 환경입니다. Codex, Claude Code 같은 코딩 에이전트로 구현, 테스트, 디버깅, 리뷰를 하고, 테스트와 리뷰와 관측으로 결과가 맞는지 검증하는 구조까지 직접 설계합니다. 반복 구현은 AI에 맡기고 사람은 문제 정의와 설계에 집중합니다.",
+    source: "Software Engineer 공고 (2026-10 확인)",
+  },
+  {
+    title: "깊게 파고, 빠르게 실행하고, 배움을 나눈다",
+    body: "엔지니어링팀의 일하는 방식은 Move Fast, Deep Dive, Share Out 세 가지이고, 방향은 Customer Driven입니다. 완벽한 계획보다 먼저 시도하되 끝까지 완주하고, 문제의 근본 원인과 기술의 원리까지 파고들며, 그 과정의 배움을 글과 발표로 팀의 자산으로 남깁니다.",
+    source: "기술블로그, 엔지니어링 코어 밸류 (2026-10-14)",
   },
 ] as const;
 
@@ -179,6 +184,11 @@ export const roadmapStages: readonly RoadmapStage[] = [
         coverage: "reinforce",
         where: "Step 2 백엔드 아키텍처 및 API 설계",
       },
+      {
+        title: "Go 맛보기 (우대 사항, Python 다음 순서)",
+        coverage: "separate",
+        where: "Applied AI Engineer 우대 사항이고, 채널톡은 새 백엔드 서비스를 Go로 만든다(Software Engineer 공고). 교육과정에 없으니 Python이 단단해진 뒤 여유 있을 때",
+      },
     ],
   },
   {
@@ -212,6 +222,11 @@ export const roadmapStages: readonly RoadmapStage[] = [
         title: "LLM API를 직접 호출하며 감 잡기",
         coverage: "reinforce",
         where: "Step 2 Project 1, 2에서 GPT와 Anthropic API 연동",
+      },
+      {
+        title: "ML 개발 라이브러리 다뤄 보기 (PyTorch, Hugging Face, wandb)",
+        coverage: "separate",
+        where: "Applied AI Engineer 필수 자격에 명시(2026-10 공고). API 호출을 넘어 오픈 모델을 직접 불러 돌려 보고, 실험 기록을 wandb로 남겨 본다. 채널톡은 상담 분석을 직접 학습한 자체 모델로 바꿨다(기술블로그 2026-10-19)",
       },
     ],
     internalLink: { label: "사이트의 AI 뜯어보기로 개념 다지기", href: "/concepts" },
@@ -313,7 +328,7 @@ export const roadmapStages: readonly RoadmapStage[] = [
       {
         title: "할루시네이션과 품질 저하를 잡는 평가 루프",
         coverage: "separate",
-        where: "교육과정은 평가 자동화까지, 할루시네이션 특화 평가는 따로 심화",
+        where: "교육과정은 평가 자동화까지, 할루시네이션 특화 평가는 따로 심화. LLM-as-a-judge 같은 평가 체계 설계는 Applied AI Engineer 우대 사항이고, 채널톡은 모든 상담을 AI가 읽고 평가한다(CX Score)",
         lessonSlug: "evals-hallucination",
       },
       {
@@ -371,8 +386,8 @@ export const roadmapStages: readonly RoadmapStage[] = [
     rationale:
       "결국 채널톡이 보는 것은 태도입니다. 작더라도 내 손으로 끝까지 만들어 본 경험이 가장 강한 이력입니다.",
     evidence:
-      "업무와 프로세스를 AI로 재설계해 본 경험을 우대합니다.",
-    evidenceSource: "Forward Deployed Engineer 우대 사항",
+      "AI를 활용해 비즈니스 문제를 해결해본 경험을 서술해주세요.",
+    evidenceSource: "Forward Deployed Engineer 지원서 필수 항목 (2026-10 확인)",
     skills: [
       {
         title: "모호한 문제를 AI 문제로 바꾸고 빠르게 가설 검증하기",
@@ -413,45 +428,46 @@ export const roadmapStages: readonly RoadmapStage[] = [
 export type HiringStep = {
   /** 공고에 적힌 단계 이름 */
   title: string;
-  /** 이 단계가 무엇을 하는 자리인지 우리 말로 한 줄(단계 이름에서 읽히는 만큼만, 지어내지 않는다) */
+  /** 이 단계에서 무엇을 하는지(공고의 설명을 우리 말로 옮김) */
   focus: string;
   /** 이 로드맵에서 준비하는 곳: roadmapStages의 id, 또는 "talent"(채널톡이 찾는 사람) */
   prep: readonly string[];
 };
 
 /**
- * 채용 절차 개요 — Software Engineer 기준. 직군에 따라 단계는 달라질 수 있다.
- * prep은 채널톡이 밝힌 내용이 아니라 "우리 로드맵의 어느 단계로 준비하나"라는 우리 매핑이다.
+ * 채용 절차 — Applied AI Engineer 공고 기준(2026-10-23 채널톡 채용 페이지에서 확인).
+ * focus는 공고의 단계 설명을 옮긴 것이고, prep은 "우리 로드맵의 어느 단계로 준비하나"라는
+ * 우리 매핑이다. 직군마다 절차가 다르다(Software Engineer는 1차가 라이브 코딩, FDE는 과제 전형 추가).
  */
 export const hiringProcess: readonly HiringStep[] = [
   {
-    title: "서류 지원",
-    focus: "이력서와 포트폴리오로 무엇을, 왜 만들었고, 무엇을 해결했는지 보여 주는 단계예요.",
+    title: "서류 제출",
+    focus: "팀에 필요한 기본적인 문제 해결 역량을 봐요. 지금까지 한 프로젝트와 도전 과제, 그리고 그걸 어떻게 풀었는지 구체적으로 쓰면 도움이 된다고 해요.",
     prep: ["mindset"],
   },
   {
-    title: "온라인 사전 기술 인터뷰",
-    focus: "본 인터뷰에 앞서 온라인으로 기술 기본기를 먼저 확인해요.",
-    prep: ["foundations", "python-eng"],
+    title: "사전 기술 인터뷰 (온라인)",
+    focus: "ML과 AI 기술 중심의 질문과 답변으로 30분 동안 진행해요.",
+    prep: ["llm-core", "rag", "evals"],
   },
   {
-    title: "인터뷰 1 (코딩)",
-    focus: "직접 코드를 짜며 문제를 풀고, 풀이를 설명하는 단계예요.",
-    prep: ["foundations", "python-eng"],
+    title: "1차 인터뷰",
+    focus: "1시간. 라이브로 주어진 상황에서 AI를 활용한 해결 방안을 찾는 문제를 풀어요. 결과보다 접근 방식과 사고 과정, 창의적인 아이디어를 봐요.",
+    prep: ["foundations", "agents", "mindset"],
   },
   {
-    title: "인터뷰 2 (기술 심화)",
-    focus: "해 본 일을 깊게 파고들어요. 왜 그렇게 설계했는지 말할 수 있어야 해요.",
-    prep: ["llm-core", "rag", "agents", "evals", "production"],
+    title: "2차 인터뷰",
+    focus: "1시간 30분. 내가 한 프로젝트를 설명하고 질문에 답해요. 배경, 기술적 선택의 이유, 문제를 풀어 간 과정을 봐요.",
+    prep: ["mindset", "evals", "production"],
   },
   {
-    title: "인터뷰 3 (컬처 핏)",
-    focus: "일하는 방식과 태도가 팀과 맞는지 함께 이야기해요.",
-    prep: ["talent", "mindset"],
+    title: "3차 인터뷰 (컬처핏)",
+    focus: "채널과 잘 맞는지 알기 위해 편하게 서로 질문을 주고받아요.",
+    prep: ["talent"],
   },
   {
     title: "최종 합격",
-    focus: "모든 인터뷰를 마치면 합격 소식을 받아요.",
+    focus: "모든 인터뷰를 마치면 합격 소식을 받아요. 이번 공고의 채용 규모는 신입부터 경력까지 총 2명이에요.",
     prep: [],
   },
 ] as const;
@@ -470,7 +486,7 @@ export const roadmapSources: readonly RoadmapSource[] = [
   },
   {
     label: "Forward Deployed Engineer 공고",
-    href: "https://demoday.co.kr/recruits/6021",
+    href: "https://channel.io/kr/careers/905bc3bd-d788-4d17-b463-ae23b6a910b2",
   },
   {
     label: "CTO가 말하는 함께 하고 싶은 개발자",
@@ -483,5 +499,17 @@ export const roadmapSources: readonly RoadmapSource[] = [
   {
     label: "ALF v2 해결률 80% 사례",
     href: "https://channel.io/ko/blog/articles/alfv2-cx-case-02942123",
+  },
+  {
+    label: "Software Engineer 공고 (AI와 함께 일하는 방식)",
+    href: "https://channel.io/kr/careers/fbe11a2f-63e3-4cae-b2e5-68f94886cb06",
+  },
+  {
+    label: "엔지니어링 코어 밸류: Move Fast, Deep Dive, Share Out",
+    href: "https://tech.channel.io/kr/articles/channel-eng-core-value-v2-e190d6d0",
+  },
+  {
+    label: "상담 분석을 자체 모델로 바꾼 이야기 (비용 99.4% 절감)",
+    href: "https://tech.channel.io/kr/articles/small-model-beats-llm-f70a8f22",
   },
 ] as const;

@@ -1,7 +1,7 @@
 import { Flag } from "lucide-react";
 import { hiringProcess, roadmapStages } from "@/content/channeltalk-roadmap";
 
-// 채널톡 채용 절차 세로 타임라인. 단계마다 번호 상자, 무엇을 하는 자리인지 한 줄, 이
+// 채널톡 채용 절차 세로 타임라인(Applied AI Engineer 기준). 단계마다 번호 상자, 공고의 진행 방식 한 줄, 이
 // 로드맵의 어느 단계로 준비하는지 바로가기(같은 페이지 앵커)를 단다. 마지막 단계(최종
 // 합격)는 행동색 상자와 깃발로 도착점을 표시한다.
 export function HiringTimeline() {
