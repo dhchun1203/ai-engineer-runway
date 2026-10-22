@@ -87,7 +87,7 @@ export function BasecampPrepChecklist({
           const lessonDone = doneIds.has(lesson.id);
           const lessonError = errorIds.has(lesson.id);
           return (
-            <li key={lesson.href} className="panel flex items-start gap-3 p-4 sm:p-5">
+            <li key={lesson.href} className="panel card-hover-grow flex items-start gap-3 p-4 sm:p-5">
               {unlocked ? (
                 <button
                   type="button"

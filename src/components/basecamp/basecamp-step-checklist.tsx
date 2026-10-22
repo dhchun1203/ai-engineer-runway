@@ -102,7 +102,7 @@ export function BasecampStepChecklist({
           const itemDone = doneIds.has(item.id);
           const itemError = errorIds.has(item.id);
           return (
-            <li key={item.id} className="panel flex items-start gap-3 p-4 sm:p-5">
+            <li key={item.id} className="panel card-hover-grow flex items-start gap-3 p-4 sm:p-5">
               {unlocked ? (
                 <button
                   type="button"

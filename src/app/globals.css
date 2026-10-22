@@ -383,6 +383,33 @@ textarea,
     .dark .card-interactive.panel:hover {
       box-shadow: 6px 6px 0 0 var(--color-shadow-hard-dark);
     }
+
+    /* 카드 자체는 링크가 아니지만 안에 누를 것이 모인 패널(베이스캠프 체크리스트 항목).
+       마우스를 올리면 살짝 커지며 그림자가 한 뼘 깊어져 "지금 이 카드"를 짚어 준다. */
+    .card-hover-grow:hover {
+      transform: scale(1.015);
+      box-shadow: 6px 6px 0 0 var(--color-shadow-hard);
+    }
+
+    .dark .card-hover-grow:hover {
+      box-shadow: 6px 6px 0 0 var(--color-shadow-hard-dark);
+    }
+  }
+
+  .card-hover-grow {
+    transition:
+      transform 160ms ease-out,
+      box-shadow 160ms ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-hover-grow {
+      transition: none;
+    }
+
+    .card-hover-grow:hover {
+      transform: none;
+    }
   }
 
   /* 트랜지션은 transform과 box-shadow만 — 6.A 원칙(그 둘 외에는 애니메이트하지
