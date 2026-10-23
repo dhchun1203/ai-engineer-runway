@@ -58,7 +58,7 @@ export default async function RoadmapPage() {
           <div className="flex flex-col gap-1.5">
             <h2 className="text-heading font-extrabold break-keep">특강 노트</h2>
             <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-              특강과 튜터링을 미리 숙지하고, 끝난 뒤 들은 내용을 채워 두는 노트예요.
+              특강을 미리 숙지하고, 끝난 뒤 들은 내용을 채워 두는 노트예요.
             </p>
           </div>
           <ul className="flex flex-col gap-3">
