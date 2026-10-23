@@ -2933,12 +2933,13 @@ code[data-theme*=" "] span {
 }
 
 @media (hover: hover) {
+  /* 검은색까지는 아니고, 기본 베이지 그림자에 잉크를 30%만 섞은 중간 회색 톤. */
   .stage-accordion:hover {
-    box-shadow: 4px 4px 0 0 var(--color-foreground);
+    box-shadow: 4px 4px 0 0 color-mix(in srgb, var(--color-foreground) 30%, var(--color-shadow-hard));
   }
 
   .dark .stage-accordion:hover {
-    box-shadow: 4px 4px 0 0 var(--color-muted-dark);
+    box-shadow: 4px 4px 0 0 color-mix(in srgb, var(--color-muted-dark) 45%, var(--color-shadow-hard-dark));
   }
 }
 
