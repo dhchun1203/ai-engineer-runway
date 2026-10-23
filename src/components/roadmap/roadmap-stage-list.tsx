@@ -36,10 +36,10 @@ export function RoadmapStageList() {
         const separateCount = stage.skills.length - reinforceCount;
         return (
         <li key={stage.id} id={stage.id} className="scroll-mt-24">
-          <details data-roadmap-stage className="panel group overflow-hidden">
+          <details data-roadmap-stage className="stage-accordion panel group overflow-hidden">
             {/* 단계 머리 — 번호, 제목, 부제, 커버리지 요약. 접힌 상태에서도 이것만으로
                 단계의 무게(강화/별도 개수)가 보인다. 누르면 아래 본문이 펼쳐진다. */}
-            <summary className="card-interactive flex min-h-11 cursor-pointer list-none items-start gap-3 p-5 sm:p-6">
+            <summary className="stage-accordion-summary flex min-h-11 cursor-pointer list-none items-start gap-3 p-5 sm:p-6">
               <span
                 className="shrink-0 text-label font-black tabular-nums text-accent dark:text-accent-dark"
                 aria-hidden="true"
@@ -72,7 +72,7 @@ export function RoadmapStageList() {
               />
             </summary>
 
-            <div className="flex flex-col gap-4 px-5 pb-5 sm:px-6 sm:pb-6">
+            <div className="stage-accordion-body flex flex-col gap-4 px-5 pb-5 sm:px-6 sm:pb-6">
             {/* 채널톡의 말 — 잉크 왼쪽 선 인용 블록 */}
             <blockquote className="border-l-2 border-foreground pl-4 dark:border-foreground-dark">
               <p className="break-keep text-label font-medium italic leading-relaxed">
