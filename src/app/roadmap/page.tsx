@@ -51,14 +51,14 @@ export default async function RoadmapPage() {
         </p>
       </header>
 
-      {/* 세션 노트 — 튜터링 같은 세션을 미리 숙지하고, 끝난 뒤 들은 것을 채워 두는 노트
+      {/* 특강 노트(옛 이름 세션 노트, 2026-10-23 변경) — 튜터링 같은 특강을 미리 숙지하고, 끝난 뒤 들은 것을 채워 두는 노트
           (2026-10-15). roadmapLessons 중 kind가 session인 것만 최신순으로 모은다. */}
       {sessionNotes.length > 0 ? (
         <section className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
-            <h2 className="text-heading font-extrabold break-keep">세션 노트</h2>
+            <h2 className="text-heading font-extrabold break-keep">특강 노트</h2>
             <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-              튜터링과 특강 같은 세션을 미리 숙지하고, 끝난 뒤 들은 내용을 채워 두는 노트예요.
+              특강과 튜터링을 미리 숙지하고, 끝난 뒤 들은 내용을 채워 두는 노트예요.
             </p>
           </div>
           <ul className="flex flex-col gap-3">

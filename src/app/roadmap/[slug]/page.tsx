@@ -66,7 +66,7 @@ export default async function RoadmapLessonPage(
           <h1 className="text-display font-black break-keep">{lesson.title}</h1>
           <div className="flex flex-wrap items-center gap-2">
             <span className="chip text-label font-bold">
-              {lesson.kind === "session" ? "세션 노트" : "별도 심화"}
+              {lesson.kind === "session" ? "특강 노트" : "별도 심화"}
             </span>
             {stage ? (
               <span className="text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark">
