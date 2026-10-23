@@ -103,10 +103,16 @@ export function SectionTape({
       const containerTop = container.getBoundingClientRect().top;
       const starts = headings.map((h) => h.getBoundingClientRect().top - containerTop);
 
+      // 비율의 분모는 첫 h2부터 끝까지다. totalHeight로 나누면 첫 h2 위 도입부(요약 패널
+      // 등)만큼 합이 1에 못 미치고, flex-grow 합이 1 미만이면 남는 폭을 그만큼 비워 둬
+      // 테이프가 오른쪽 끝까지 닿지 않는다.
+      const span = totalHeight - starts[0];
+      if (span <= 0) return;
+
       const next: Section[] = headings.map((heading, index) => {
         const start = starts[index];
         const end = index + 1 < starts.length ? starts[index + 1] : totalHeight;
-        const ratio = Math.max(0, (end - start) / totalHeight);
+        const ratio = Math.max(0, (end - start) / span);
         return { title: heading.textContent?.trim() ?? "", ratio };
       });
 
