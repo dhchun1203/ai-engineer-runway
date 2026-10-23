@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { BookOpenText, Flag, ListChecks, PenLine } from 'lucide-react';
+import { CustomIcon, type CustomIconName } from '@/components/illustrations/custom-icon';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { isOwnerSession } from '@/lib/owner';
 import { LoginForm } from './login-form';
@@ -31,24 +31,24 @@ async function currentUserEmail(): Promise<string | null> {
   }
 }
 
-const FEATURES = [
+const FEATURES: { icon: CustomIconName; title: string; body: string }[] = [
   {
-    icon: BookOpenText,
+    icon: 'curriculum',
     title: '커리큘럼 레슨',
     body: '쉬운 개념 설명과 실무 적용 예제로 커리큘럼 전체를 콘텐츠화했습니다.',
   },
   {
-    icon: Flag,
+    icon: 'basecamp',
     title: '베이스캠프 선행 과제',
     body: '개강 전 매주 공개되는 공식 선행 과제를 준비하는 최우선 트랙.',
   },
   {
-    icon: ListChecks,
+    icon: 'progress',
     title: '진도와 복습',
     body: '레슨 완료 체크, 섹션별 진행률, 간격 복습과 자가진단까지.',
   },
   {
-    icon: PenLine,
+    icon: 'til',
     title: '학습 기록',
     body: '배운 것을 내 글로 남기는 TIL 기록으로 오래 남깁니다.',
   },
@@ -76,12 +76,9 @@ export default async function LoginPage() {
         </div>
 
         <ul className="flex flex-col gap-3">
-          {FEATURES.map(({ icon: Icon, title, body }) => (
-            <li key={title} className="panel card-hover-grow flex items-start gap-3 p-4">
-              <Icon
-                className="mt-0.5 h-5 w-5 shrink-0 text-accent dark:text-accent-dark"
-                aria-hidden="true"
-              />
+          {FEATURES.map(({ icon, title, body }) => (
+            <li key={title} className="panel card-hover-grow flex items-start gap-4 p-4">
+              <CustomIcon name={icon} bold className="mt-0.5 h-7 w-7" />
               <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="text-body font-extrabold break-keep">{title}</span>
                 <span className="break-keep text-label font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">

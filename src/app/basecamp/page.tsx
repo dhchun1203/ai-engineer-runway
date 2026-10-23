@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readProgressRows } from "@/lib/progress-store";
 import { todayInSeoul, daysUntil } from "@/lib/today";
@@ -72,13 +73,18 @@ export default async function BasecampPage() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-12 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-3">
-        <span className="chip-solid w-fit text-label font-bold">최우선</span>
-        <h1 className="text-display font-black break-keep">베이스캠프 선행 과제</h1>
-        <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          개강 전 매주 한 STEP씩 공개되는 공식 선행 과제입니다. 이 트랙이 우리
-          커리큘럼보다 우선입니다. 여기서 각 주차를 준비하고 완료를 체크하며, 같은
-          주제를 더 깊게 다루는 우리 레슨으로 이어 봅니다.
-        </p>
+        <div className="flex items-end justify-between gap-6">
+          <div className="flex flex-col gap-3">
+            <span className="chip-solid w-fit text-label font-bold">최우선</span>
+            <h1 className="text-display font-black break-keep">베이스캠프 선행 과제</h1>
+            <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+              개강 전 매주 한 STEP씩 공개되는 공식 선행 과제입니다. 이 트랙이 우리
+              커리큘럼보다 우선입니다. 여기서 각 주차를 준비하고 완료를 체크하며, 같은
+              주제를 더 깊게 다루는 우리 레슨으로 이어 봅니다.
+            </p>
+          </div>
+          <SpotIllustration name="basecamp" className="hidden w-28 shrink-0 sm:block lg:w-36" />
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="chip text-label font-semibold">
             {daysLeft > 0 ? `마감까지 D-${daysLeft}` : "진행 기간 종료"}

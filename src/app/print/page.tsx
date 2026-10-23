@@ -4,6 +4,7 @@ import { FileText } from "lucide-react";
 import { formatEstimatedTime } from "@/components/estimated-time";
 import { getPrintScopes } from "@/content/print-scopes";
 import { steps, type StepId } from "@/content/modules";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 
 // PDF 내보내기 허브 (quick 260828-k4t) — 뽑을 범위를 고르는 화면.
 // 진도·쿠키를 읽지 않으므로 완전 정적 프리렌더된다.
@@ -30,12 +31,15 @@ export default function PrintHubPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-12 sm:px-6 lg:px-8">
-      <header className="flex flex-col gap-3">
-        <h1 className="text-display font-black">PDF 내보내기</h1>
-        <p className="text-body font-normal">
-          레슨을 원하는 범위로 묶어 PDF로 저장합니다. 아이패드에서 저장한 PDF를
-          Notability로 넘기면 애플펜슬로 바로 필기할 수 있습니다.
-        </p>
+      <header className="flex items-end justify-between gap-6">
+        <div className="flex flex-col gap-3">
+          <h1 className="text-display font-black">PDF 내보내기</h1>
+          <p className="text-body font-normal">
+            레슨을 원하는 범위로 묶어 PDF로 저장합니다. 아이패드에서 저장한 PDF를
+            Notability로 넘기면 애플펜슬로 바로 필기할 수 있습니다.
+          </p>
+        </div>
+        <SpotIllustration name="print" className="hidden w-28 lg:w-36 shrink-0 sm:block" />
       </header>
 
       {/* 실제로 손이 어디로 가야 하는지 단계로 적는다 — "인쇄하세요" 한 줄로는

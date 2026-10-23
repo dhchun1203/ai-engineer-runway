@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getAllTerms } from "@/content/curriculum-helpers";
 import type { GlossarySection } from "@/content/curriculum-helpers";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 
 // 완전 정적 단일 페이지(round2-j 권장 경로 3) — ProgressProvider·쿠키·진도
 // 읽기 없음. 용어 표는 빌드타임에 velite.config.ts의 parseTermTable이
@@ -19,12 +20,15 @@ export default function GlossaryPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      <header className="panel-hero flex flex-col gap-2 px-4 py-4 sm:px-6 sm:py-6">
-        <h1 className="text-display font-black">용어집</h1>
-        <p className="text-body font-normal">
-          전 레슨에 나온 용어 {glossary.totalGroups}개, 총 {glossary.totalTerms}개 정의를 모았습니다. 같은 단어가
-          레슨마다 다르게 쓰이면(다의어) 정의를 나눠 보여줍니다.
-        </p>
+      <header className="panel-hero flex items-center justify-between gap-6 px-4 py-4 sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-display font-black">용어집</h1>
+          <p className="text-body font-normal">
+            전 레슨에 나온 용어 {glossary.totalGroups}개, 총 {glossary.totalTerms}개 정의를 모았습니다. 같은 단어가
+            레슨마다 다르게 쓰이면(다의어) 정의를 나눠 보여줍니다.
+          </p>
+        </div>
+        <SpotIllustration name="glossary" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
       </header>
 
       {hasSections ? <JumpIndex korean={glossary.korean} latin={glossary.latin} /> : null}

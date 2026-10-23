@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FileText } from "lucide-react";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 import { steps } from "@/content/modules";
 import { getModulesByStep, getLessonCounts, getOrderedLessons } from "@/content/curriculum-helpers";
 import { StepCard } from "@/components/step-card";
@@ -26,17 +27,20 @@ export default function CurriculumPage() {
   return (
     <ProgressProvider>
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-        <header className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-display font-black">커리큘럼</h1>
-          {/* PDF 내보내기 입구. 레슨 한 편은 레슨 화면의 버튼이, 여러 편 묶음은
-              /print 허브가 맡는다(quick 260828-k4t). */}
-          <Link
-            href="/print"
-            className="btn tap-feedback text-label"
-          >
-            <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
-            PDF 내보내기
-          </Link>
+        <header className="flex items-center justify-between gap-6">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+            <h1 className="text-display font-black">커리큘럼</h1>
+            {/* PDF 내보내기 입구. 레슨 한 편은 레슨 화면의 버튼이, 여러 편 묶음은
+                /print 허브가 맡는다(quick 260828-k4t). */}
+            <Link
+              href="/print"
+              className="btn tap-feedback text-label"
+            >
+              <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
+              PDF 내보내기
+            </Link>
+          </div>
+          <SpotIllustration name="curriculum" className="hidden w-28 shrink-0 sm:block lg:w-36" />
         </header>
         <ProgressSummarySlot />
         <section className="grid grid-cols-1 gap-8 lg:grid-cols-3">

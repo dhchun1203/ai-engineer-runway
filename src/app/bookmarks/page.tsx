@@ -5,6 +5,7 @@ import { readAllBookmarks, type Bookmark } from "@/lib/bookmark-store";
 import { getModulesByStep, getLessonsByModule } from "@/content/curriculum-helpers";
 import { steps, type StepId } from "@/content/modules";
 import { BookmarkRemoveButton } from "@/components/bookmark-remove-button";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 
 // /bookmarks — "전체 커리큘럼 목차 + 내 북마크 표시"(quick 260902-bkm). Step→모듈→레슨
 // 전체 목차를 펼치되, 모듈을 <details>로 감싸 북마크가 있는 모듈만 펼치고 나머지는
@@ -28,9 +29,12 @@ const STEP_HEADER_CLASSES: Record<StepId, string> = {
 function EmptyState({ message }: { message: string }) {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      <header className="panel-hero flex flex-col gap-2 px-4 py-4 sm:px-6 sm:py-6">
-        <h1 className="text-display font-black">북마크</h1>
-        <p className="text-body font-normal">{message}</p>
+      <header className="panel-hero flex items-center justify-between gap-6 px-4 py-4 sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-display font-black">북마크</h1>
+          <p className="text-body font-normal">{message}</p>
+        </div>
+        <SpotIllustration name="bookmarks" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
       </header>
     </main>
   );
@@ -63,13 +67,16 @@ export default async function BookmarksPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      <header className="panel-hero flex flex-col gap-2 px-4 py-4 sm:px-6 sm:py-6">
-        <h1 className="text-display font-black">북마크</h1>
-        <p className="text-body font-normal">
-          {totalBookmarks > 0
-            ? "전체 커리큘럼 목차예요. 북마크한 곳이 있는 모듈은 펼쳐 두고 나머지는 접었어요 — 접힌 모듈도 눌러서 펼칠 수 있어요. 저장한 위치를 누르면 그 소제목으로 바로 이동합니다."
-            : "전체 커리큘럼 목차예요. 아직 북마크가 없어요 — 레슨을 읽다가 왼쪽 아래 리본 버튼을 누르면 그 위치가 여기 표시됩니다. 모듈을 눌러 목차를 펼쳐 볼 수 있어요."}
-        </p>
+      <header className="panel-hero flex items-center justify-between gap-6 px-4 py-4 sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-display font-black">북마크</h1>
+          <p className="text-body font-normal">
+            {totalBookmarks > 0
+              ? "전체 커리큘럼 목차예요. 북마크한 곳이 있는 모듈은 펼쳐 두고 나머지는 접었어요 — 접힌 모듈도 눌러서 펼칠 수 있어요. 저장한 위치를 누르면 그 소제목으로 바로 이동합니다."
+              : "전체 커리큘럼 목차예요. 아직 북마크가 없어요 — 레슨을 읽다가 왼쪽 아래 리본 버튼을 누르면 그 위치가 여기 표시됩니다. 모듈을 눌러 목차를 펼쳐 볼 수 있어요."}
+          </p>
+        </div>
+        <SpotIllustration name="bookmarks" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
       </header>
 
       <div className="flex flex-col gap-10">

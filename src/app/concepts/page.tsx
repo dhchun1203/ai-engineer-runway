@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 import { getOrderedConcepts } from "@/content/concept-helpers";
 import { getSortedTerms } from "@/content/term-helpers";
 
@@ -19,14 +20,17 @@ export default function ConceptsIndexPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      <header className="flex flex-col gap-3">
-        <span className="chip w-fit text-label font-bold">번외 커리큘럼</span>
-        <h1 className="text-display font-black break-keep">AI 뜯어보기</h1>
-        <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          토큰부터 에이전트·하네스까지, AI가 실제로 어떻게 돌아가는지 그림으로
-          만져보며 이해하는 번외 편입니다. 정규 학습 일정·진행률과는 별개라, 순서에
-          매이지 않고 궁금한 개념부터 골라 읽어도 됩니다.
-        </p>
+      <header className="flex items-end justify-between gap-6">
+        <div className="flex flex-col gap-3">
+          <span className="chip w-fit text-label font-bold">번외 커리큘럼</span>
+          <h1 className="text-display font-black break-keep">AI 뜯어보기</h1>
+          <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            토큰부터 에이전트·하네스까지, AI가 실제로 어떻게 돌아가는지 그림으로
+            만져보며 이해하는 번외 편입니다. 정규 학습 일정·진행률과는 별개라, 순서에
+            매이지 않고 궁금한 개념부터 골라 읽어도 됩니다.
+          </p>
+        </div>
+        <SpotIllustration name="concepts" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
 
       <ol className="grid grid-cols-1 gap-4 sm:grid-cols-2">

@@ -14,6 +14,7 @@ import { SCHEDULE_START, COURSE_START_DATE, rowsForDate, firstRowAfter } from "@
 import { getScheduleRows } from "@/lib/schedule-data";
 import { getLessonBySlug } from "@/content/curriculum-helpers";
 import { BasecampPriorityCard } from "@/components/basecamp/basecamp-priority-card";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 import { currentBasecampStep, countStepDone, BASECAMP_END_DATE } from "@/content/basecamp";
 
 // 홈도 쿠키를 읽으므로 동적 렌더링이 필요하다 — 조건부 쿠키 접근이 캐시된
@@ -157,11 +158,14 @@ export default async function Home() {
         showProgress={Boolean(progressRead?.ok)}
         daysLeft={bcDaysLeft}
       />
-      <header className="flex flex-col gap-2">
-        <h1 className="text-display font-black">오늘의 학습</h1>
-        <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          AI Engineer 교육과정 사전학습
-        </p>
+      <header className="flex items-end justify-between gap-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-display font-black">오늘의 학습</h1>
+          <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            AI Engineer 교육과정 사전학습
+          </p>
+        </div>
+        <SpotIllustration name="today" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
       {/* 다중 사용자 전환(2026-09-12): "오늘의 학습"은 개인 대시보드(진도·이어서
           읽기·복습)라 로그인해야 뜬다. 로그아웃 상태에서는 대신 로그인 유도 카드를

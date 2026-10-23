@@ -4,6 +4,7 @@ import { listPublishedPosts, listPublishedDates } from '@/lib/til/store';
 import { hasUnlockCookie } from '@/lib/auth';
 import { TilCard } from '@/components/til/til-card';
 import { TilStreak } from '@/components/til/til-streak';
+import { SpotIllustration } from '@/components/illustrations/spot-illustration';
 
 export const metadata: Metadata = {
   title: 'TIL 학습기록',
@@ -22,26 +23,29 @@ export default async function TilListPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-display font-black">TIL 학습기록</h1>
-          <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
-            배운 것을 내 말로 다시 정리한다.
-          </p>
-        </div>
-        {unlocked ? (
-          <div className="flex items-center gap-2">
-            <Link
-              href="/til/drafts"
-              className="btn tap-feedback text-body"
-            >
-              초고함
-            </Link>
-            <Link href="/til/new" className="btn-action tap-feedback text-body">
-              새 글 쓰기
-            </Link>
+      <header className="flex items-end justify-between gap-6">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-display font-black">TIL 학습기록</h1>
+            <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+              배운 것을 내 말로 다시 정리한다.
+            </p>
           </div>
-        ) : null}
+          {unlocked ? (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/til/drafts"
+                className="btn tap-feedback text-body"
+              >
+                초고함
+              </Link>
+              <Link href="/til/new" className="btn-action tap-feedback text-body">
+                새 글 쓰기
+              </Link>
+            </div>
+          ) : null}
+        </div>
+        <SpotIllustration name="til" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
 
       <TilStreak dates={publishedDates} />

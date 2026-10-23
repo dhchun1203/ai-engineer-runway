@@ -7,6 +7,7 @@ import {
   type Article,
 } from "@/content/article-helpers";
 import { isArticleTag } from "@/content/article-tags";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 
 export const metadata: Metadata = {
   title: "아티클",
@@ -38,14 +39,17 @@ export default async function ArticlesPage({
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      <header className="flex flex-col gap-3">
-        <span className="chip w-fit text-label font-bold">현업 읽기</span>
-        <h1 className="text-display font-black break-keep">아티클</h1>
-        <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          현업 엔지니어링 기사를 우리 말로 풀어 모았습니다. 기사마다 먼저 알아 둘 개념 풀이,
-          핵심 정리, 면접에서 쓸 포인트를 담았고, 이어지는 레슨이 있으면 연결해 뒀어요.
-          원문은 언제든 링크로 열 수 있고, 글은 계속 더해집니다.
-        </p>
+      <header className="flex items-end justify-between gap-6">
+        <div className="flex flex-col gap-3">
+          <span className="chip w-fit text-label font-bold">현업 읽기</span>
+          <h1 className="text-display font-black break-keep">아티클</h1>
+          <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            현업 엔지니어링 기사를 우리 말로 풀어 모았습니다. 기사마다 먼저 알아 둘 개념 풀이,
+            핵심 정리, 면접에서 쓸 포인트를 담았고, 이어지는 레슨이 있으면 연결해 뒀어요.
+            원문은 언제든 링크로 열 수 있고, 글은 계속 더해집니다.
+          </p>
+        </div>
+        <SpotIllustration name="articles" className="hidden w-28 lg:w-36 shrink-0 sm:block" />
       </header>
 
       {usedTags.length > 0 ? (

@@ -10,6 +10,7 @@ import { ReviewQuizBlock } from "@/components/review-quiz-block";
 import { getReviewQuiz } from "@/content/review-quiz";
 import { reviewQuizKey } from "@/lib/quiz-mistake-key";
 import { MistakeNoteLink } from "@/components/mistake-note-link";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 
 // /review 복습 세션(quick 260901-w04, 설계는
 // .planning/research/edu-sites/round2-h-review-design.md V2절). 홈(page.tsx)과
@@ -25,9 +26,12 @@ type QuestionCard = { lesson: Lesson; questionIndex: number; text: string };
 function EmptyState({ message }: { message: string }) {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      <header className="panel-hero flex flex-col gap-2 px-4 py-4 sm:px-6 sm:py-6">
-        <h1 className="text-display font-black">복습</h1>
-        <p className="text-body font-normal">{message}</p>
+      <header className="panel-hero flex items-center justify-between gap-6 px-4 py-4 sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-display font-black">복습</h1>
+          <p className="text-body font-normal">{message}</p>
+        </div>
+        <SpotIllustration name="review" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
       </header>
     </main>
   );
@@ -125,13 +129,16 @@ export default async function ReviewPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      <header className="panel-hero flex flex-col gap-2 px-4 py-4 sm:px-6 sm:py-6">
-        <h1 className="text-display font-black">복습</h1>
-        <p className="text-body font-normal">
-          완료한 레슨의 스스로 점검 문항을 다시 풀어 보세요. 정답은 여기서 보여주지 않아요 —
-          &ldquo;레슨에서 확인&rdquo; 링크로 확인합니다. 판정은 본인 몫이고, 후하게 매겨도 괜찮아요.
-        </p>
-        <MistakeNoteLink variant="link" label="객관식 오답 노트" />
+      <header className="panel-hero flex items-center justify-between gap-6 px-4 py-4 sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-display font-black">복습</h1>
+          <p className="text-body font-normal">
+            완료한 레슨의 스스로 점검 문항을 다시 풀어 보세요. 정답은 여기서 보여주지 않아요 —
+            &ldquo;레슨에서 확인&rdquo; 링크로 확인합니다. 판정은 본인 몫이고, 후하게 매겨도 괜찮아요.
+          </p>
+          <MistakeNoteLink variant="link" label="객관식 오답 노트" />
+        </div>
+        <SpotIllustration name="review" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
       </header>
 
       {sessionCards.length > 0 ? (

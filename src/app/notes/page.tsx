@@ -3,6 +3,7 @@ import { hasUnlockCookie } from "@/lib/auth";
 import { readAllLessonNotes } from "@/lib/note-store";
 import { getOrderedLessons } from "@/content/curriculum-helpers";
 import { modules } from "@/content/modules";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 
 // /notes 노트 단권화(quick 260901-x62) — 전 레슨 메모를 커리큘럼 순서로 한
 // 페이지에 모아 보는 읽기 전용 집계. /review·/inbox와 같은 조립 순서를
@@ -17,9 +18,12 @@ const moduleTitleById = new Map(modules.map((m) => [m.id, m.title]));
 function EmptyState({ message }: { message: string }) {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      <header className="panel-hero flex flex-col gap-2 px-4 py-4 sm:px-6 sm:py-6">
-        <h1 className="text-display font-black">노트</h1>
-        <p className="text-body font-normal">{message}</p>
+      <header className="panel-hero flex items-center justify-between gap-6 px-4 py-4 sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-display font-black">노트</h1>
+          <p className="text-body font-normal">{message}</p>
+        </div>
+        <SpotIllustration name="notes" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
       </header>
     </main>
   );
@@ -50,12 +54,15 @@ export default async function NotesPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      <header className="panel-hero flex flex-col gap-2 px-4 py-4 sm:px-6 sm:py-6">
-        <h1 className="text-display font-black">노트</h1>
-        <p className="text-body font-normal">
-          모듈 순으로 모은 내 메모 단권화입니다. 여기서는 읽기만 해요 — 고치려면 해당 레슨 하단 메모장을
-          열어주세요.
-        </p>
+      <header className="panel-hero flex items-center justify-between gap-6 px-4 py-4 sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-display font-black">노트</h1>
+          <p className="text-body font-normal">
+            모듈 순으로 모은 내 메모 단권화입니다. 여기서는 읽기만 해요 — 고치려면 해당 레슨 하단 메모장을
+            열어주세요.
+          </p>
+        </div>
+        <SpotIllustration name="notes" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
       </header>
 
       <section className="flex flex-col gap-8">

@@ -7,6 +7,7 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { OnAirLamp } from "@/components/offline/on-air-lamp";
 import { fetchAuthJson } from "@/lib/offline/auth";
+import { CustomIcon, type CustomIconName } from "@/components/illustrations/custom-icon";
 
 // 내비 구조는 D-09가 고정한 4항목 골격을 계승·확장한 것이다. Phase 3가 "오늘의
 // 학습"("/")과 "커리큘럼"("/curriculum")을 켰고, 리서치 2단에서 도구 라우트가
@@ -31,18 +32,21 @@ type NavItem = {
   // 드롭다운 children 안의 구역 소제목(비링크). true면 렌더러가 링크 대신 muted
   // 소제목으로 그린다 — "더보기"처럼 항목이 많은 메뉴를 그룹으로 나눠 잡동사니 느낌을 없앤다.
   heading?: boolean;
+  // 사이트 전용 아이콘(src/components/illustrations/custom-icon.tsx). 드롭다운 소메뉴와
+  // 1024px 미만 햄버거 패널의 링크 앞에만 그린다. 데스크톱 최상위 행은 글자만 둔다(2026-10-23).
+  icon?: CustomIconName;
 };
 
 const NAV_ITEMS: readonly NavItem[] = [
   // "오늘의 학습(/)"은 네비에서 뺀다(2026-09-12) — 로고(brand-link)가 이미 홈("/")=
   // 오늘의 학습으로 가므로 중복이다. 최상위는 베이스캠프·커리큘럼·채널톡 로드맵·TIL·더보기▾.
   // 베이스캠프 선행 과제 — 커리큘럼보다 우선(사용자 결정 2026-09-09). 앞쪽에 둔다.
-  { label: "베이스캠프", href: "/basecamp" },
-  { label: "커리큘럼", href: "/curriculum" },
+  { label: "베이스캠프", href: "/basecamp", icon: "basecamp" },
+  { label: "커리큘럼", href: "/curriculum", icon: "curriculum" },
   // 취업 목표 트랙 "채널톡 AI Engineer 로드맵"(/roadmap) — 정규 커리큘럼과 별개의
   // 별도 커리큘럼. 단독 링크로 두어 한 번에 닿게 한다.
-  { label: "채널톡 로드맵", href: "/roadmap" },
-  { label: "TIL", href: "/til" },
+  { label: "채널톡 로드맵", href: "/roadmap", icon: "roadmap" },
+  { label: "TIL", href: "/til", icon: "til" },
   // 네비 정리(2026-09-12): 최상위가 많아 두 줄로 접히던 것을, "학습 도구"와 "일정·정보"
   // 두 드롭다운을 "더보기" 하나로 합쳐 최상위 개수를 줄인다(오늘의 학습·베이스캠프·
   // 커리큘럼·채널톡 로드맵·TIL·더보기▾). 채널톡 로드맵·TIL은 사용자 우선순위라 최상위 유지.
@@ -52,21 +56,21 @@ const NAV_ITEMS: readonly NavItem[] = [
     children: [
       // 구역 소제목(heading)으로 두 그룹으로 나눠 잡동사니 느낌을 없앤다.
       { label: "학습 도구", href: null, heading: true },
-      { label: "복습", href: "/review" },
-      { label: "용어집", href: "/glossary" },
-      { label: "노트", href: "/notes" },
-      { label: "북마크", href: "/bookmarks" },
-      { label: "질문함", href: "/inbox" },
+      { label: "복습", href: "/review", icon: "review" },
+      { label: "용어집", href: "/glossary", icon: "glossary" },
+      { label: "노트", href: "/notes", icon: "notes" },
+      { label: "북마크", href: "/bookmarks", icon: "bookmarks" },
+      { label: "질문함", href: "/inbox", icon: "inbox" },
       // 번외 "AI 뜯어보기"(/concepts) — 정규 커리큘럼과 별개의 개념 이해 편.
       // isActiveHref가 startsWith라 /concepts/[slug] 리더에서도 활성으로 표시된다.
-      { label: "AI 뜯어보기", href: "/concepts" },
+      { label: "AI 뜯어보기", href: "/concepts", icon: "concepts" },
       // 아티클(/articles) — 현업 기사를 우리 말로 푼 요약 모음(격리 컬렉션).
-      { label: "아티클", href: "/articles" },
+      { label: "아티클", href: "/articles", icon: "articles" },
       { label: "문서·정보", href: null, heading: true },
-      { label: "PDF 내보내기", href: "/print" },
+      { label: "PDF 내보내기", href: "/print", icon: "print" },
       // 오프라인 저장(/offline): 전체 받기와 저장본 관리, 오프라인이면 목차 화면.
-      { label: "오프라인 저장", href: "/offline" },
-      { label: "소개", href: "/about" },
+      { label: "오프라인 저장", href: "/offline", icon: "offline" },
+      { label: "소개", href: "/about", icon: "about" },
     ],
   },
 ];
@@ -250,18 +254,18 @@ export function SiteNav() {
     ...NAV_ITEMS
       // 채널톡 로드맵은 허용 계정(소유자 + 테스터)에게만 보인다 — 그 외에는 항목 자체를 뺀다.
       .filter((item) => item.href !== "/roadmap" || roadmapViewer)
-      .map((item) =>
+      .map((item): NavItem =>
       item.label === "더보기" && isOwner
         ? {
             ...item,
             children: [
               ...(item.children ?? []),
-              { label: "슬랙", href: "/slack" },
+              { label: "슬랙", href: "/slack", icon: "slack" },
             ],
           }
         : item,
     ),
-    { label: loggedIn ? "프로필" : "로그인", href: ACCOUNT_HREF },
+    { label: loggedIn ? "프로필" : "로그인", href: ACCOUNT_HREF, icon: "account" },
   ];
 
   // 로그인/회원가입 화면에서는 상단 내비를 숨긴다(전체 로그인 게이트의 유일한 공개
@@ -386,12 +390,13 @@ export function SiteNav() {
                                   key={child.label}
                                   href={child.href}
                                   onClick={() => setOpenMenu(null)}
-                                  className={`nav-link tap-feedback flex min-h-11 items-center pl-6 pr-3 text-label font-bold ${
+                                  className={`nav-link nav-sublink tap-feedback flex min-h-11 items-center gap-2.5 pl-4 pr-3 text-label font-bold ${
                                     childActive
                                       ? "chip-solid"
                                       : "text-muted dark:text-muted-dark"
                                   }`}
                                 >
+                                  {child.icon ? <CustomIcon name={child.icon} className="h-4.5 w-4.5" /> : null}
                                   {child.label}
                                 </Link>
                               );
@@ -516,12 +521,13 @@ export function SiteNav() {
                             key={child.label}
                             href={child.href}
                             onClick={() => setOpen(false)}
-                            className={`nav-link tap-feedback flex min-h-11 items-center px-3 text-label font-bold ${
+                            className={`nav-link tap-feedback flex min-h-11 items-center gap-2.5 px-3 text-label font-bold ${
                               childActive
                                 ? "chip-solid"
                                 : "text-muted dark:text-muted-dark"
                             }`}
                           >
+                            {child.icon ? <CustomIcon name={child.icon} className="h-4.5 w-4.5" /> : null}
                             {child.label}
                           </Link>
                         );
@@ -550,12 +556,13 @@ export function SiteNav() {
                   key={item.label}
                   href={item.href}
                   onClick={() => setOpen(false)}
-                  className={`nav-link tap-feedback flex min-h-11 items-center px-3 text-label font-bold ${
+                  className={`nav-link tap-feedback flex min-h-11 items-center gap-2.5 px-3 text-label font-bold ${
                     isActive
                       ? "chip-solid"
                       : "text-muted dark:text-muted-dark"
                   }`}
                 >
+                  {item.icon ? <CustomIcon name={item.icon} className="h-4.5 w-4.5" /> : null}
                   {item.label}
                 </Link>
               );

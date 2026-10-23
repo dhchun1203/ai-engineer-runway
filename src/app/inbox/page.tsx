@@ -1,6 +1,7 @@
 import { hasUnlockCookie } from "@/lib/auth";
 import { readInboxItems } from "@/lib/inbox-store";
 import { InboxPanel } from "@/components/inbox-panel";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 
 // /inbox 질문함(quick 260901-x62). /review·/notes와 같은 조립 순서를 재사용한다
 // — hasUnlockCookie() 최우선 → readInboxItems(). 쿠키가 있어야만 질문 데이터에
@@ -11,9 +12,12 @@ export const dynamic = "force-dynamic";
 function EmptyState({ message }: { message: string }) {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      <header className="panel-hero flex flex-col gap-2 px-4 py-4 sm:px-6 sm:py-6">
-        <h1 className="text-display font-black">질문함</h1>
-        <p className="text-body font-normal">{message}</p>
+      <header className="panel-hero flex items-center justify-between gap-6 px-4 py-4 sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-display font-black">질문함</h1>
+          <p className="text-body font-normal">{message}</p>
+        </div>
+        <SpotIllustration name="inbox" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
       </header>
     </main>
   );
@@ -34,12 +38,15 @@ export default async function InboxPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      <header className="panel-hero flex flex-col gap-2 px-4 py-4 sm:px-6 sm:py-6">
-        <h1 className="text-display font-black">질문함</h1>
-        <p className="text-body font-normal">
-          공부하다가 곁가지로 떠오른 질문을 여기 담아두세요. 나중에 &ldquo;클로드에 물어보기&rdquo;로
-          꺼내 쓸 수 있어요.
-        </p>
+      <header className="panel-hero flex items-center justify-between gap-6 px-4 py-4 sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-display font-black">질문함</h1>
+          <p className="text-body font-normal">
+            공부하다가 곁가지로 떠오른 질문을 여기 담아두세요. 나중에 &ldquo;클로드에 물어보기&rdquo;로
+            꺼내 쓸 수 있어요.
+          </p>
+        </div>
+        <SpotIllustration name="inbox" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
       </header>
 
       <InboxPanel items={itemsRead.items} />
