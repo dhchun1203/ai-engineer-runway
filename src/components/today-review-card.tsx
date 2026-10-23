@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowRight, RotateCcw } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { getLessonBySlug } from "@/content/curriculum-helpers";
 import { SELF_CHECK_ANCHOR, GRADUATE_COUNT } from "@/lib/review";
 import { ReviewDoneButton } from "@/components/review-done-button";
+import { TodayReviewCollapsible } from "@/components/today-review-collapsible";
 
 // 홈의 "오늘의 복습" 카드 — today-lesson-card.tsx와 같은 규약의 순수 표현
 // 컴포넌트(데이터 조회 없음, 홈이 계산한 props만 받는다).
@@ -44,25 +45,20 @@ export function TodayReviewCard({
     );
   }
 
+  // 접고 펼치기는 TodayReviewCollapsible이 맡는다(평소엔 접힘). 펼침 목록이라
+  // card-hover-grow를 걸지 않는다(카드 호버 규칙: 펼침 목록은 제외).
   return (
-    <section className="panel card-hover-grow flex flex-col gap-4 p-6" aria-labelledby="today-review-heading">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <RotateCcw className="h-5 w-5 shrink-0" aria-hidden="true" />
-          <h2 id="today-review-heading" className="text-heading font-extrabold">
-            오늘의 복습
-          </h2>
-          <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
-            {dueRows.length}편
-          </span>
-        </div>
-        {/* /review 세션 상시 진입점(quick 260901-w04) — 만기 복습이 있을 때 홈에서
-            바로 세션으로 넘어간다. */}
+    <TodayReviewCollapsible
+      count={dueRows.length}
+      action={
+        // /review 세션 상시 진입점(quick 260901-w04) — 만기 복습이 있을 때 홈에서
+        // 바로 세션으로 넘어간다. 접힌 상태에서도 보인다.
         <Link href="/review" className="btn tap-feedback w-fit text-label">
           복습 세션 열기
           <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
         </Link>
-      </div>
+      }
+    >
       <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
         점검 문제만 다시 풀어 보세요 — 약 3분이면 됩니다. 판정은 본인 몫이고, 후하게
         매겨도 괜찮아요.
@@ -83,6 +79,6 @@ export function TodayReviewCard({
           </li>
         ))}
       </ul>
-    </section>
+    </TodayReviewCollapsible>
   );
 }
