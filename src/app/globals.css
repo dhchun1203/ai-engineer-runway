@@ -1660,6 +1660,17 @@ code[data-theme*=" "] span {
   --complete-glow-color: var(--color-accent-dark);
 }
 
+/* 완료 버튼은 aria-pressed를 달지만 "켜진 토글" 잉크 채움(.btn[aria-pressed="true"])을
+   받지 않는다. 완료는 흰 버튼 + 초록 글자 + 체크로 보여 준다. 잉크로 채우면 초록
+   글자가 검정 위에 얹혀 시커멓게 보인다. */
+.btn.complete-ring-glow[aria-pressed="true"] {
+  background-color: var(--color-surface);
+}
+
+.dark .btn.complete-ring-glow[aria-pressed="true"] {
+  background-color: var(--color-surface-dark);
+}
+
 .complete-ring-glow::after {
   content: "";
   position: absolute;
