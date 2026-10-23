@@ -3,8 +3,8 @@ import {
   docPrinciples,
   docStrategyIntro,
   requirementEvidence,
-  roadmapStages,
 } from "@/content/channeltalk-roadmap";
+import { PrepLinks } from "@/components/roadmap/prep-links";
 
 // 비전공자 서류 대비 전략. 필수 자격 한 줄마다 "지금 있는 증거"와 "만들 증거"를 나란히
 // 놓고, 이 로드맵의 어느 단계로 준비하는지 바로가기를 단다. 아래에는 서류를 쓰는 원칙.
@@ -71,22 +71,7 @@ export function DocStrategy() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-label font-bold">준비하는 곳</span>
-                {row.prep.map((id) => {
-                  const stage = roadmapStages.find((s) => s.id === id);
-                  if (!stage) return null;
-                  return (
-                    <a
-                      key={id}
-                      href={`#${id}`}
-                      className="chip tap-feedback min-h-11 text-label font-semibold"
-                    >
-                      {`${String(stage.order).padStart(2, "0")} ${stage.title}`}
-                    </a>
-                  );
-                })}
-              </div>
+              <PrepLinks ids={row.prep} />
             </li>
           );
         })}

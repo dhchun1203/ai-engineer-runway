@@ -1,5 +1,6 @@
 import { Flag } from "lucide-react";
-import { hiringProcess, roadmapStages } from "@/content/channeltalk-roadmap";
+import { hiringProcess } from "@/content/channeltalk-roadmap";
+import { PrepLinks } from "@/components/roadmap/prep-links";
 
 // 채널톡 채용 절차 세로 타임라인(Applied AI Engineer 기준). 단계마다 번호 상자, 공고의 진행 방식 한 줄, 이
 // 로드맵의 어느 단계로 준비하는지 바로가기(같은 페이지 앵커)를 단다. 마지막 단계(최종
@@ -37,25 +38,8 @@ export function HiringTimeline() {
                 {step.focus}
               </p>
               {step.prep.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="text-label font-bold">준비하는 곳</span>
-                  {step.prep.map((id) => {
-                    const stage = roadmapStages.find((s) => s.id === id);
-                    const label = stage
-                      ? `${String(stage.order).padStart(2, "0")} ${stage.title}`
-                      : id === "doc-strategy"
-                        ? "비전공자 서류 대비 전략"
-                        : "채널톡이 찾는 사람";
-                    return (
-                      <a
-                        key={id}
-                        href={`#${id}`}
-                        className="chip tap-feedback min-h-11 text-label font-semibold"
-                      >
-                        {label}
-                      </a>
-                    );
-                  })}
+                <div className="pt-1">
+                  <PrepLinks ids={step.prep} />
                 </div>
               ) : null}
             </div>
