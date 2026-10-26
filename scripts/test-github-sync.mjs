@@ -121,3 +121,12 @@ test('putFile 쓰기 실패는 GithubError', async () => {
   const { f } = fakeFetch([{ status: 404, body: {} }, { status: 403, body: { message: 'Resource not accessible' } }]);
   await assert.rejects(putFile(f, 't', 'me/TIL', 'a.md', 'x', 'm'), (e) => e instanceof GithubError && e.status === 403);
 });
+
+import { normalizeAppSlug } from '../src/lib/github/client.ts';
+
+test('normalizeAppSlug는 이름만 넣어도, 주소 전체를 넣어도 이름만 남긴다', () => {
+  assert.equal(normalizeAppSlug('ai-engineer-til-sync'), 'ai-engineer-til-sync');
+  assert.equal(normalizeAppSlug('https://github.com/apps/ai-engineer-til-sync'), 'ai-engineer-til-sync');
+  assert.equal(normalizeAppSlug(' https://github.com/apps/ai-engineer-til-sync/ '), 'ai-engineer-til-sync');
+  assert.equal(normalizeAppSlug('github.com/apps/my-app/installations/new'), 'my-app');
+});

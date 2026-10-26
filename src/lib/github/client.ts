@@ -38,6 +38,14 @@ async function fail(res: Response, what: string): Promise<never> {
   throw new GithubError(res.status, `${what} 실패 (${res.status}${detail ? `: ${detail}` : ''})`);
 }
 
+// GITHUB_APP_SLUG에 앱 이름 대신 공개 주소(https://github.com/apps/<이름>)를 통째로 넣어도
+// 이름만 골라낸다. 주소를 그대로 쓰면 설치 링크가 github.com/apps/https://... 가 되어 404.
+export function normalizeAppSlug(value: string): string {
+  const trimmed = value.trim();
+  const match = trimmed.match(/github\.com\/apps\/([^/?#\s]+)/);
+  return match ? match[1] : trimmed.replace(/\/+$/, '');
+}
+
 function b64url(input: string): string {
   return Buffer.from(input).toString('base64url');
 }
