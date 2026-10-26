@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { getOrderedLessons, getStep } from "@/content/curriculum-helpers";
 import { getOrderedBasecampLessons } from "@/content/basecamp-lesson-helpers";
+import { getOrderedClassLessons } from "@/content/class-lesson-helpers";
 import { getOrderedConcepts } from "@/content/concept-helpers";
 import { getSortedTerms } from "@/content/term-helpers";
 import { getOrderedRoadmapLessons } from "@/content/roadmap-lesson-helpers";
@@ -49,6 +50,10 @@ export async function GET() {
           ...STEP_IDS.map((id) => item(`/step/${id}`, `STEP ${id}. ${getStep(id)?.title ?? ""}`)),
           ...getOrderedLessons().map((lesson) => item(`/lesson/${seg(lesson.slug)}`, lesson.title)),
         ],
+      },
+      {
+        label: "수업 복습",
+        items: getOrderedClassLessons().map((lesson) => item(`/class/${seg(lesson.slug)}`, lesson.title)),
       },
       {
         label: "베이스캠프",

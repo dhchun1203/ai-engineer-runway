@@ -11,6 +11,7 @@
 const ICONS = {
   today: { body: "M3 5h18v16H3z", ink: "M3 10h18M8 2v5M16 2v5M9 15.5l2 2 4-4" },
   basecamp: { body: "M2 21L11 7l9 14z", ink: "M11 7V2h6l-1.5 1.5L17 5h-6M8.5 21l2.5-5 2.5 5" },
+  class: { body: "M2 4h20v13H2z", ink: "M6 9h7M6 12.5h4M8 21l2-4M16 21l-2-4" },
   curriculum: { body: "M3 5h7l2 2 2-2h7v14h-7l-2 2-2-2H3z", ink: "M12 7v14" },
   roadmap: { body: "M4 4h13l3 3.5-3 3.5H4z", ink: "M10 11v10M10 2v2M6 21h8" },
   til: { body: "M15 3l6 6-12 12H3v-6z", ink: "M12 6l6 6" },

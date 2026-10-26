@@ -89,8 +89,14 @@ export default async function QuizMistakesPage() {
     items.filter((item) => item.resolved.source === "review"),
     () => 0,
   );
+  // 수업 복습 묶음은 최근 수업이 위로(slug가 회차 번호로 시작해 내림차순이 곧 최근순).
+  const classGroups = groupItems(
+    items.filter((item) => item.resolved.source === "class"),
+    (a, b) => b.id.localeCompare(a.id),
+  );
   const basecampCount = basecampGroups.reduce((n, g) => n + g.items.length, 0);
   const reviewCount = reviewGroups.reduce((n, g) => n + g.items.length, 0);
+  const classCount = classGroups.reduce((n, g) => n + g.items.length, 0);
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-12 sm:px-6 lg:px-8">
@@ -120,6 +126,12 @@ export default async function QuizMistakesPage() {
         {items.length > 0 ? (
           <p className="text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark">
             모두 {items.length}문제
+            {classCount > 0 ? (
+              <>
+                <span className="mx-2" aria-hidden="true">|</span>
+                수업 복습 {classCount}문제
+              </>
+            ) : null}
             <span className="mx-2" aria-hidden="true">|</span>
             베이스캠프 {basecampCount}문제
             <span className="mx-2" aria-hidden="true">|</span>
@@ -144,6 +156,14 @@ export default async function QuizMistakesPage() {
         </section>
       ) : (
         <>
+          {classGroups.length > 0 ? (
+            <section className="flex flex-col gap-4">
+              <h2 className="text-subhead font-extrabold break-keep">수업 복습 퀴즈</h2>
+              {classGroups.map((group) => (
+                <GroupPanel key={group.id} group={group} />
+              ))}
+            </section>
+          ) : null}
           {basecampGroups.length > 0 ? (
             <section className="flex flex-col gap-4">
               <h2 className="text-subhead font-extrabold break-keep">베이스캠프 복습 퀴즈</h2>

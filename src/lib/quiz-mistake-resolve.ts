@@ -7,11 +7,13 @@ import 'server-only';
 import { basecampReviewSteps } from '@/content/basecamp-review';
 import { getReviewQuiz } from '@/content/review-quiz';
 import { getLessonBySlug } from '@/content/curriculum-helpers';
+import { getClassLessonBySlug } from '@/content/class-lesson-helpers';
+import { getClassSession } from '@/content/class-sessions';
 import { parseQuizKey } from './quiz-mistake-key';
 
 export type ResolvedQuizQuestion = {
   key: string;
-  source: 'basecamp' | 'review';
+  source: 'basecamp' | 'review' | 'class';
   /** 묶음 id(STEP id 또는 레슨 slug) — 오답 노트가 같은 묶음끼리 모은다 */
   groupId: string;
   /** 묶음 이름(STEP 이름 또는 레슨 제목) */
@@ -37,6 +39,21 @@ export function resolveQuizKey(key: string): ResolvedQuizQuestion | null {
       groupLabel: `${step.label} ${step.title}`,
       studyHref: `/basecamp/review#${step.id}`,
       studyLabel: `${step.label} 복습 카드`,
+      question: { q: q.q, code: q.code, options: [...q.options], answer: q.answer, explain: q.explain },
+    };
+  }
+
+  if (parsed.source === 'class') {
+    const lesson = getClassLessonBySlug(parsed.lessonSlug);
+    const q = getClassSession(parsed.lessonSlug)?.quiz[parsed.index];
+    if (!lesson || !q) return null;
+    return {
+      key,
+      source: 'class',
+      groupId: lesson.slug,
+      groupLabel: `${lesson.session}회차 ${lesson.title}`,
+      studyHref: lesson.permalink,
+      studyLabel: '수업 복습 다시 보기',
       question: { q: q.q, code: q.code, options: [...q.options], answer: q.answer, explain: q.explain },
     };
   }

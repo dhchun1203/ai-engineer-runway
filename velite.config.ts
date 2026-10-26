@@ -397,6 +397,27 @@ export default defineConfig({
           readingMinutes: estimateBookMinutes(meta.content ?? ""),
         })),
     },
+    // 수업 복습(개강 후 실제 수업 회차를 우리 말로 다시 풀어 쓴 레슨, 2026-10-26 신설).
+    // basecampLessons와 같은 자유 형식 MDX 격리 컬렉션이다. 회차별 체크리스트와 퀴즈는
+    // src/content/class-sessions.ts에 slug로 짝지어 둔다.
+    classLessons: {
+      name: "ClassLesson",
+      pattern: "src/content/class-lessons/**/*.mdx",
+      schema: s
+        .object({
+          title: s.string(),
+          session: s.number(), // 수업 회차(1부터)
+          date: s.string().regex(ISO_DAY), // 수업 날짜
+          summary: s.string(), // 목록·헤더용 한 줄 훅
+          slug: s.slug("classLessons"),
+          code: s.mdx(),
+        })
+        .transform((data, { meta }) => ({
+          ...data,
+          permalink: `/class/${data.slug}`,
+          readingMinutes: estimateBookMinutes(meta.content ?? ""),
+        })),
+    },
     // 아티클(현업 엔지니어링 기사를 우리 말로 푼 요약) — 격리 컬렉션. 진도·일정·
     // 복습은 lessons만 소비하므로 어디에도 집계되지 않는다. 설계:
     // docs/superpowers/specs/2026-09-23-articles-section-design.md

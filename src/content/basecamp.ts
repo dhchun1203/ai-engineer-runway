@@ -11,6 +11,8 @@
 // 진도 저장: 완료 상태는 curriculum과 같은 Supabase progress 테이블에 저장하되,
 // 커리큘럼 slug와 섞이지 않도록 "bc:" 접두사를 붙인 id로 넣는다(basecamp/actions.ts).
 
+import { classItemIds } from "@/content/class-sessions";
+
 /** 베이스캠프 종료일(이날까지 매주 STEP 공개). */
 export const BASECAMP_END_DATE = "2026-10-26";
 
@@ -508,6 +510,8 @@ export const basecampItemIds: ReadonlySet<string> = new Set([
   ...step3ChatbotLessons.map((lesson) => lesson.id),
   ...step4AutomationLessons.map((lesson) => lesson.id),
   ...step5PandasLessons.map((lesson) => lesson.id),
+  // 수업 복습 체크리스트도 같은 bc: 진도와 토글 액션을 쓴다(class-sessions.ts 주석 참고).
+  ...classItemIds,
 ]);
 
 /** 진도 접두사를 붙인 저장 id. */

@@ -4,6 +4,7 @@
 //
 //   bc:<STEP id>:<문항 번호>                  베이스캠프 복습 퀴즈 (basecamp-review.ts)
 //   rv:<레슨 slug>:<자가진단 번호>:<문항 번호>  /review 레슨 객관식 (review-quiz-data.json)
+//   cl:<수업 레슨 slug>:<문항 번호>            수업 복습 확인 퀴즈 (class-sessions.ts)
 //
 // 문항 번호는 데이터 원본 배열의 순서다(화면에서 보기를 섞어도 문항 번호는 그대로).
 
@@ -17,9 +18,14 @@ export function reviewQuizKey(lessonSlug: string, questionIndex: number, index: 
   return `rv:${lessonSlug}:${questionIndex}:${index}`;
 }
 
+export function classQuizKey(lessonSlug: string, index: number): string {
+  return `cl:${lessonSlug}:${index}`;
+}
+
 export type ParsedQuizKey =
   | { source: "basecamp"; stepId: string; index: number }
-  | { source: "review"; lessonSlug: string; questionIndex: number; index: number };
+  | { source: "review"; lessonSlug: string; questionIndex: number; index: number }
+  | { source: "class"; lessonSlug: string; index: number };
 
 const INDEX = /^\d{1,3}$/;
 
@@ -31,6 +37,9 @@ export function parseQuizKey(key: string): ParsedQuizKey | null {
   }
   if (parts[0] === "rv" && parts.length === 4 && parts[1] && INDEX.test(parts[2]) && INDEX.test(parts[3])) {
     return { source: "review", lessonSlug: parts[1], questionIndex: Number(parts[2]), index: Number(parts[3]) };
+  }
+  if (parts[0] === "cl" && parts.length === 3 && parts[1] && INDEX.test(parts[2])) {
+    return { source: "class", lessonSlug: parts[1], index: Number(parts[2]) };
   }
   return null;
 }

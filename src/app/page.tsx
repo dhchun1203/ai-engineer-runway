@@ -15,7 +15,10 @@ import { getScheduleRows } from "@/lib/schedule-data";
 import { getLessonBySlug } from "@/content/curriculum-helpers";
 import { BasecampPriorityCard } from "@/components/basecamp/basecamp-priority-card";
 import { SpotIllustration } from "@/components/illustrations/spot-illustration";
-import { currentBasecampStep, countStepDone, BASECAMP_END_DATE } from "@/content/basecamp";
+import { currentBasecampStep, countStepDone, basecampProgressId, BASECAMP_END_DATE } from "@/content/basecamp";
+import { latestClassLesson } from "@/content/class-lesson-helpers";
+import { getClassSession } from "@/content/class-sessions";
+import { ClassPriorityCard } from "@/components/class/class-priority-card";
 
 // 홈도 쿠키를 읽으므로 동적 렌더링이 필요하다 — 조건부 쿠키 접근이 캐시된
 // 응답을 내보내는 문제(RESEARCH Pitfall 4)를 원천 차단한다. `/unlock` 직후
@@ -147,17 +150,33 @@ export default async function Home() {
   const bcCount = countStepDone(bcStep, bcDoneRawIds);
   const bcDaysLeft = daysUntil(BASECAMP_END_DATE, today);
 
+  // 개강(2026-10-26) 후에는 가장 최근 수업 복습이 최우선 카드가 된다. 체크 진도는 베이스캠프와
+  // 같은 bc: 행에서 센다(class-sessions.ts). 정리된 수업이 없으면 베이스캠프 카드를 그대로 둔다.
+  const latestClass = latestClassLesson();
+  const classChecklist = latestClass ? (getClassSession(latestClass.slug)?.checklist ?? []) : [];
+  const classDone = classChecklist.filter((item) => bcDoneRawIds.has(basecampProgressId(item.id))).length;
+
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      {/* 베이스캠프 최우선 카드 — 오늘의 학습보다 위에 둔다. */}
-      <BasecampPriorityCard
-        weekLabel={bcStep.weekLabel}
-        stepTitle={bcStep.title}
-        done={bcCount.done}
-        total={bcCount.total}
-        showProgress={Boolean(progressRead?.ok)}
-        daysLeft={bcDaysLeft}
-      />
+      {/* 최우선 카드 — 오늘의 학습보다 위에 둔다. */}
+      {latestClass ? (
+        <ClassPriorityCard
+          session={latestClass.session}
+          title={latestClass.title}
+          done={classDone}
+          total={classChecklist.length}
+          showProgress={Boolean(progressRead?.ok)}
+        />
+      ) : (
+        <BasecampPriorityCard
+          weekLabel={bcStep.weekLabel}
+          stepTitle={bcStep.title}
+          done={bcCount.done}
+          total={bcCount.total}
+          showProgress={Boolean(progressRead?.ok)}
+          daysLeft={bcDaysLeft}
+        />
+      )}
       <header className="flex items-end justify-between gap-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-display font-black">오늘의 학습</h1>

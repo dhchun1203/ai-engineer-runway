@@ -182,7 +182,7 @@ export function extractStaticAssetPaths(text: string): string[] {
 export type OfflinePathKind = "content" | "personal" | "bypass";
 
 const CONTENT_EXACT = ["/curriculum", "/concepts", "/concepts/terms", "/articles", "/glossary", "/about", "/offline"];
-const CONTENT_PREFIXES = ["/lesson/", "/step/", "/basecamp/", "/concepts/", "/roadmap/", "/articles/"];
+const CONTENT_PREFIXES = ["/lesson/", "/step/", "/basecamp/", "/class/", "/concepts/", "/roadmap/", "/articles/"];
 const BYPASS_ROOTS = ["/login", "/signup", "/unlock", "/api", "/_next"];
 
 export function classifyOfflinePath(pathname: string): OfflinePathKind {
