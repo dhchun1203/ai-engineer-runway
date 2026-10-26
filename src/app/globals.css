@@ -1838,6 +1838,27 @@ code[data-theme*=" "] span {
   content: "";
 }
 
+/* <aside> 콜아웃 — 노션에서 내보낸 글에 쓰이는 태그. 인용 상자와 같은 모양. */
+.prose aside {
+  border-left: 4px solid var(--color-action);
+  background-color: var(--color-surface-2);
+  padding: 0.875rem 1.125rem;
+  margin: 1.25rem 0;
+}
+
+.prose aside > :first-child {
+  margin-top: 0;
+}
+
+.prose aside > :last-child {
+  margin-bottom: 0;
+}
+
+.dark .prose aside {
+  border-left-color: var(--color-action-dark);
+  background-color: var(--color-surface-2-dark);
+}
+
 .dark .prose blockquote {
   border-left-color: var(--color-action-dark);
   background-color: var(--color-surface-2-dark);
@@ -1969,6 +1990,7 @@ code[data-theme*=" "] span {
   .prose table,
   .prose figure,
   .prose blockquote,
+  .prose aside,
   .prose details {
     break-inside: avoid;
   }

@@ -2,6 +2,7 @@
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
 /**
  * 에디터 실시간 미리보기용 클라이언트 마크다운 렌더러.
@@ -23,6 +24,7 @@ export function TilMarkdownPreview({ markdown }: { markdown: string }) {
     <div className="prose prose-slate max-w-none dark:prose-invert">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
         components={{
           // 외부 스토리지 URL이라 next/image 대신 img로 단순화(til-card·상세와 동일 판단).
           // eslint-disable-next-line @next/next/no-img-element
