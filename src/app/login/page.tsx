@@ -6,6 +6,7 @@ import { isOwnerSession } from '@/lib/owner';
 import { LoginForm } from './login-form';
 import { signOutAction } from './actions';
 import { SignOutForm } from '@/components/offline/sign-out-form';
+import { GithubConnectCard } from './github-connect-card';
 
 // 세션을 읽어 로그인 상태에 따라 폼/로그아웃을 가르므로 동적 렌더가 필요하다.
 export const dynamic = 'force-dynamic';
@@ -54,8 +55,14 @@ const FEATURES: { icon: CustomIconName; title: string; body: string }[] = [
   },
 ];
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ github?: string }>;
+}) {
   const loggedInEmail = await currentUserEmail();
+  // GitHub 연결 콜백이 붙여 보내는 결과(?github=connected 등). 연결 카드가 한 줄로 알린다.
+  const { github } = await searchParams;
   // 가입 승인(/admin)은 소유자 전용 관리 기능이라 프로필(로그인됨) 화면 안에서만, 그리고
   // 소유자에게만 노출한다(더보기 메뉴에서 이리로 옮김, 2026-09-14). 로그인 상태일 때만 확인.
   const isOwner = loggedInEmail ? await isOwnerSession() : false;
@@ -108,6 +115,9 @@ export default async function LoginPage() {
                 로그아웃
               </SignOutForm>
             </div>
+
+            {/* TIL GitHub 연동 — 사용자마다 자기 저장소를 연결한다. env가 없으면 카드가 없다. */}
+            <GithubConnectCard status={github} />
 
             {/* 소유자 전용 관리 — 가입 승인. 소유자가 아니면 이 구역 자체가 없다. */}
             {isOwner ? (
