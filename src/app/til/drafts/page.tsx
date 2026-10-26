@@ -2,16 +2,23 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { hasUnlockCookie } from '@/lib/auth';
 import { listDraftPosts } from '@/lib/til/store';
+import { GithubSyncNotice } from '@/components/til/github-sync-notice';
 
 export const dynamic = 'force-dynamic';
 
-export default async function TilDraftsPage() {
+export default async function TilDraftsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ github?: string }>;
+}) {
   if (!(await hasUnlockCookie())) redirect('/login');
   const read = await listDraftPosts();
   const drafts = read.ok ? read.data : [];
+  const { github } = await searchParams;
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-12 sm:px-6 lg:px-8">
+      <GithubSyncNotice failed={github === 'failed'} />
       <h1 className="text-display font-black">초고함</h1>
       {drafts.length > 0 ? (
         <ul className="flex flex-col gap-3">

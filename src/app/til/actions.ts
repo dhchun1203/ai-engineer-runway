@@ -10,11 +10,15 @@ import {
   deletePost,
   slugExists,
   createSeries,
+  getSyncRowById,
   type TilPostRow,
 } from '@/lib/til/store';
+import { syncTilPost, syncTilPostBySlug } from '@/lib/til/github-sync';
 import type { TilPostInput } from '@/lib/til/types';
 
-type ActionResult = { ok: true; slug: string } | { ok: false; error: string };
+type ActionResult = { ok: true; slug: string; githubWarning?: string } | { ok: false; error: string };
+
+const GITHUB_WARNING = '사이트에는 저장됐지만 GitHub에는 올리지 못했어요.';
 
 function sanitizeUnderstanding(v: number | null): number | null {
   if (v === null) return null;
@@ -78,15 +82,24 @@ export async function savePostAction(input: TilPostInput, publish: boolean): Pro
 
   const res = await upsertPost(row);
   if (!res.ok) return { ok: false, error: res.error };
-  return { ok: true, slug: res.data.slug };
+  // GitHub 반영은 DB 저장 뒤에. 실패해도 저장은 그대로 성공이고 경고만 붙인다.
+  const gh = await syncTilPostBySlug(res.data.slug);
+  return gh.ok
+    ? { ok: true, slug: res.data.slug }
+    : { ok: true, slug: res.data.slug, githubWarning: GITHUB_WARNING };
 }
 
 export async function deletePostAction(
   id: string,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{ ok: true; githubWarning?: string } | { ok: false; error: string }> {
   if (!(await hasUnlockCookie())) return { ok: false, error: 'unauthorized' };
+  // 지우기 전에 경로와 제목을 읽어 둔다(지운 뒤엔 행이 없다).
+  const syncRow = await getSyncRowById(id);
   const res = await deletePost(id);
-  return res.ok ? { ok: true } : { ok: false, error: res.error };
+  if (!res.ok) return { ok: false, error: res.error };
+  if (!syncRow) return { ok: true };
+  const gh = await syncTilPost(syncRow, 'deleted');
+  return gh.ok ? { ok: true } : { ok: true, githubWarning: GITHUB_WARNING };
 }
 
 export async function uploadTilImageAction(
