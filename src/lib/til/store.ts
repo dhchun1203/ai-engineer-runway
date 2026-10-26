@@ -2,6 +2,7 @@ import 'server-only';
 import { getUserDb } from '@/lib/supabase/db';
 import { getCurrentUserId, requireCurrentUserId } from '@/lib/current-user';
 import type { TilPost, TilTemplate, TilStatus, TilSeries } from './types';
+import type { TilFileInput } from './github-file';
 
 // TIL은 계정별 저장이다 — 모든 조회/쓰기를 현재 로그인 사용자의 user_id로 좁힌다.
 // 비로그인 조회는 빈 결과로 성공을 반환한다(로그인해야 자기 글이 보인다).
@@ -273,4 +274,74 @@ export async function createSeries(title: string, slug: string): Promise<TilWrit
     .single();
   if (error) return { ok: false, error: error.message };
   return { ok: true, data: { id: data.id as string } };
+}
+
+// ── GitHub 동기화용(2026-10-26) ─────────────────────────────────────────────
+// 동기화에 필요한 열만 읽는다. 본인 글만(getUserDb + .eq('user_id')).
+
+export type TilSyncRow = TilFileInput & {
+  id: string;
+  status: TilStatus;
+  githubPath: string | null;
+};
+
+const SYNC_COLUMNS = 'id, slug, title, summary, tags, body_md, self_check, status, github_path';
+
+function rowToSync(row: Record<string, unknown>): TilSyncRow {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    title: row.title as string,
+    summary: (row.summary as string) ?? null,
+    tags: (row.tags as string[]) ?? [],
+    bodyMd: (row.body_md as string) ?? '',
+    selfCheck: (row.self_check as string) ?? null,
+    status: row.status as TilStatus,
+    githubPath: (row.github_path as string) ?? null,
+  };
+}
+
+async function getSyncRow(column: 'slug' | 'id', value: string): Promise<TilSyncRow | null> {
+  const userId = await getCurrentUserId();
+  if (!userId) return null;
+  const db = await getUserDb();
+  const { data, error } = await db
+    .from('til_post')
+    .select(SYNC_COLUMNS)
+    .eq('user_id', userId)
+    .eq(column, value)
+    .maybeSingle();
+  if (error || !data) return null;
+  return rowToSync(data);
+}
+
+export async function getSyncRowBySlug(slug: string): Promise<TilSyncRow | null> {
+  return getSyncRow('slug', slug);
+}
+
+export async function getSyncRowById(id: string): Promise<TilSyncRow | null> {
+  return getSyncRow('id', id);
+}
+
+export async function setGithubPath(id: string, path: string | null): Promise<void> {
+  const userId = await requireCurrentUserId();
+  const db = await getUserDb();
+  const { error } = await db.from('til_post').update({ github_path: path }).eq('id', id).eq('user_id', userId);
+  if (error) throw new Error(error.message);
+}
+
+// 발행했지만 아직 저장소에 안 올라간 글(기존 글 한 번에 올리기용).
+export async function listUnsyncedPublishedSlugs(): Promise<string[]> {
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
+  const db = await getUserDb();
+  const { data, error } = await db
+    .from('til_post')
+    .select('slug')
+    .eq('user_id', userId)
+    .eq('status', 'published')
+    .is('github_path', null)
+    .order('published_at', { ascending: true });
+  if (error || !data) return [];
+  return data.map((r) => r.slug as string);
 }
