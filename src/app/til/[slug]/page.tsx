@@ -7,7 +7,6 @@ import { MDXContent } from '@/components/mdx-content';
 import { TilMeta } from '@/components/til/til-meta';
 import { TilCopyButton } from '@/components/til/til-copy-button';
 import { postToMarkdown } from '@/lib/til/markdown';
-import { GithubSyncNotice } from '@/components/til/github-sync-notice';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,10 +26,8 @@ export async function generateMetadata({
 
 export default async function TilDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ github?: string }>;
 }) {
   // Next 16은 param을 URL 인코딩된 채로 넘기므로 한글 slug를 디코드한다(태그 페이지와 동일).
   const { slug } = await params;
@@ -49,11 +46,9 @@ export default async function TilDetailPage({
     }
   }
   if (!post) notFound();
-  const { github } = await searchParams;
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-12 sm:px-6 lg:px-8">
-      <GithubSyncNotice failed={github === 'failed'} />
       <header className="flex flex-col gap-2">
         {/* 상단 액션(우측 정렬) — 글 전체(제목 포함) 마크다운 복사, 그리고 소유자면 편집. */}
         <div className="flex flex-wrap items-center justify-end gap-2">

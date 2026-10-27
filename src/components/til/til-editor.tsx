@@ -207,8 +207,7 @@ export function TilEditor(props: Props) {
     const res = await savePostAction(buildInput(), publish);
     setPending(false);
     if (res.ok) {
-      // GitHub 반영만 실패했으면 글 화면에 한 줄 안내를 띄운다(?github=failed).
-      router.push(`/til/${res.slug}${res.githubWarning ? '?github=failed' : ''}`);
+      router.push(`/til/${res.slug}`);
     } else {
       setError(res.error);
     }
@@ -219,7 +218,7 @@ export function TilEditor(props: Props) {
     setPending(true);
     const res = await deletePostAction(post.id);
     setPending(false);
-    if (res.ok) router.push(`/til/drafts${res.githubWarning ? '?github=failed' : ''}`);
+    if (res.ok) router.push('/til/drafts');
     else setError(res.error);
   }
 
