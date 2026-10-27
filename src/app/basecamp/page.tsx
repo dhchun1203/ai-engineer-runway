@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ArrowRight, ExternalLink, Flag } from "lucide-react";
 import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readProgressRows } from "@/lib/progress-store";
@@ -30,7 +30,7 @@ import { MistakeNoteLink } from "@/components/mistake-note-link";
 export const metadata: Metadata = {
   title: "베이스캠프 선행 과제",
   description:
-    "개강 전 매주 공개되는 공식 선행 과제를 준비하고 진도를 추적하는 최우선 트랙. STEP별 학습과 최종 과제, 우리 레슨 연결까지.",
+    "개강 전 매주 공개되던 공식 선행 과제와 진도, STEP별 학습과 최종 과제, 우리 레슨 연결까지 복습용으로 모아 둔 곳.",
 };
 
 // 베이스캠프 허브 — 홈과 같은 이유로 동적 렌더(쿠키·진도 조회). 진도는 curriculum과
@@ -46,6 +46,11 @@ export default async function BasecampPage() {
 
   const today = todayInSeoul();
   const daysLeft = daysUntil(BASECAMP_END_DATE, today);
+  // 마감일 다음 날부터 종료. 종료 후에는 "최우선" 표시를 내리고, 상단에 종료 안내와
+  // 수업 복습으로 가는 길을 크게 둔다(2026-10-27). 페이지 자체는 복습용으로 남긴다.
+  const ended = daysLeft < 0;
+  const [, endMonth, endDay] = BASECAMP_END_DATE.split("-").map(Number);
+  const endLabel = `${endMonth}월 ${endDay}일`;
 
   // 레이아웃 C — 공개된 STEP을 "지금 집중할 한 주차"와 "지난 주차"로 가른다.
   // 지금 집중 = 가장 최근 공개된 STEP(맨 아래 것), 지난 주차 = 그 앞의 공개 STEP들.
@@ -75,23 +80,47 @@ export default async function BasecampPage() {
       <header className="flex flex-col gap-3">
         <div className="flex items-end justify-between gap-6">
           <div className="flex flex-col gap-3">
-            <span className="chip-solid w-fit text-label font-bold">최우선</span>
+            {ended ? (
+              <span className="chip w-fit text-label font-bold">종료됨</span>
+            ) : (
+              <span className="chip-solid w-fit text-label font-bold">최우선</span>
+            )}
             <h1 className="text-display font-black break-keep">베이스캠프 선행 과제</h1>
             <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-              개강 전 매주 한 STEP씩 공개되는 공식 선행 과제입니다. 이 트랙이 우리
-              커리큘럼보다 우선입니다. 여기서 각 주차를 준비하고 완료를 체크하며, 같은
-              주제를 더 깊게 다루는 우리 레슨으로 이어 봅니다.
+              {ended
+                ? "개강 전 매주 한 STEP씩 공개되던 공식 선행 과제입니다. 지난 주차와 보강 레슨, 복습 카드와 퀴즈는 모두 그대로 남아 있어 언제든 다시 볼 수 있습니다."
+                : "개강 전 매주 한 STEP씩 공개되는 공식 선행 과제입니다. 이 트랙이 우리 커리큘럼보다 우선입니다. 여기서 각 주차를 준비하고 완료를 체크하며, 같은 주제를 더 깊게 다루는 우리 레슨으로 이어 봅니다."}
             </p>
           </div>
           <SpotIllustration name="basecamp" className="hidden w-28 shrink-0 sm:block lg:w-36" />
         </div>
+        {ended ? (
+          <div className="panel flex flex-col gap-3 border-l-4 border-l-accent p-5 dark:border-l-accent-dark">
+            <p className="flex items-center gap-2 text-heading font-extrabold break-keep">
+              <Flag className="h-5 w-5 shrink-0 text-accent dark:text-accent-dark" aria-hidden="true" />
+              베이스캠프는 {endLabel}에 끝났어요
+            </p>
+            <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+              새 STEP은 더 공개되지 않아요. 이제는 정규 수업이 우선이라, 그날 배운 내용은
+              수업 복습에서 이어 가요. 이 페이지는 복습용으로 남겨 둡니다.
+            </p>
+            <Link href="/class" className="btn-action tap-feedback inline-flex min-h-11 w-fit items-center gap-1.5 px-4 text-label">
+              수업 복습으로 가기
+              <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+            </Link>
+          </div>
+        ) : null}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="chip text-label font-semibold">
-            {daysLeft > 0 ? `마감까지 D-${daysLeft}` : "진행 기간 종료"}
-          </span>
-          <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
-            {BASECAMP_END_DATE}까지 매주 STEP 공개
-          </span>
+          {ended ? null : (
+            <>
+              <span className="chip text-label font-semibold">
+                {daysLeft > 0 ? `마감까지 D-${daysLeft}` : "오늘 마감"}
+              </span>
+              <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                {BASECAMP_END_DATE}까지 매주 STEP 공개
+              </span>
+            </>
+          )}
           <a
             href={BASECAMP_INDEX_URL}
             target="_blank"
@@ -107,7 +136,7 @@ export default async function BasecampPage() {
       {/* 지금 집중 — 이번 주 STEP 하나를 항상 펼쳐 둔다. */}
       <section className="flex flex-col gap-3">
         <span className="w-fit text-label font-bold text-accent dark:text-accent-dark">
-          지금 집중
+          {ended ? "마지막 주차" : "지금 집중"}
         </span>
         <BasecampStepChecklist
           step={currentStep}
@@ -215,7 +244,8 @@ export default async function BasecampPage() {
         </p>
       </section>
 
-      {/* 다음 주차 예고 */}
+      {/* 다음 주차 예고 — 종료 후에는 더 공개될 STEP이 없으니 숨긴다. */}
+      {ended ? null : (
       <section className="hairline flex flex-col gap-1.5 pt-6">
         <h2 className="text-body font-extrabold break-keep">다음 STEP</h2>
         <p className="break-keep text-label font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
@@ -223,6 +253,7 @@ export default async function BasecampPage() {
           여기에 같은 방식으로 준비 과정과 체크리스트, 우리 레슨 연결을 더합니다.
         </p>
       </section>
+      )}
     </main>
   );
 }
