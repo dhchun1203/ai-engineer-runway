@@ -10,7 +10,8 @@ import { ClassSearchField } from "@/components/class/class-search-field";
 // 접고 펼치기와 검색만 한다. 회차가 쌓이면 목록이 길어지므로 평소에는 묶음을 모두 접어 두고,
 // 검색어가 있으면 찾은 명령이 있는 묶음만 펼친 뒤 첫 결과로 화면을 옮긴다(입력 초점은 검색창에
 // 그대로 둔다). 검색창은 사이트 머리 아래에 붙어 따라와 화면이 내려가도 계속 칠 수 있다.
-// 줄 하나는 링크가 아니라 정보라 호버 효과를 걸지 않는다.
+// 줄 하나는 링크가 아니라 정보라 호버 효과를 걸지 않는다. 펼침과 접힘은 목록을 늘 그려 두고
+// globals.css의 .collapsible(높이 0fr↔1fr 트랜지션)로 부드럽게 움직인다(베이스캠프 지난 주차와 같은 방식).
 
 export type CommandEntry = {
   cmd: string;
@@ -114,43 +115,45 @@ export function CommandList({ groups }: { groups: CommandGroup[] }) {
                     </span>
                     {!searching ? (
                       <ChevronDown
-                        className={`size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+                        className={`size-4 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
                         aria-hidden="true"
                       />
                     ) : null}
                   </button>
                 </h2>
-                {open ? (
-                  <ul id={panelId} className="flex flex-col border-t border-line dark:border-line-dark">
-                    {group.entries.map((entry, ei) => (
-                      <li
-                        key={entry.cmd}
-                        ref={gi === 0 && ei === 0 ? firstHitRef : undefined}
-                        style={{ scrollMarginTop: "calc(var(--site-header-height) + 9rem)" }}
-                        className="flex flex-col gap-2 border-b border-line px-4 py-3 last:border-b-0 dark:border-line-dark sm:flex-row sm:items-start sm:justify-between sm:gap-4"
-                      >
-                        <div className="flex min-w-0 flex-col gap-1">
-                          <code className="font-mono text-body font-bold break-all">{entry.cmd}</code>
-                          <span className="break-keep text-label font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-                            {entry.desc}
+                <div className="collapsible" data-open={open ? "true" : "false"}>
+                  <div className="collapsible-inner" inert={!open}>
+                    <ul id={panelId} className="flex flex-col border-t border-line dark:border-line-dark">
+                      {group.entries.map((entry, ei) => (
+                        <li
+                          key={entry.cmd}
+                          ref={gi === 0 && ei === 0 ? firstHitRef : undefined}
+                          style={{ scrollMarginTop: "calc(var(--site-header-height) + 9rem)" }}
+                          className="flex flex-col gap-2 border-b border-line px-4 py-3 last:border-b-0 dark:border-line-dark sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+                        >
+                          <div className="flex min-w-0 flex-col gap-1">
+                            <code className="font-mono text-body font-bold break-all">{entry.cmd}</code>
+                            <span className="break-keep text-label font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                              {entry.desc}
+                            </span>
+                          </div>
+                          <span className="flex shrink-0 flex-wrap gap-1.5 sm:justify-end">
+                            {entry.sessions.map((s) => (
+                              <Link
+                                key={s.href}
+                                href={s.href}
+                                title={s.title}
+                                className="chip tap-feedback min-h-11 items-center text-label"
+                              >
+                                {s.session}회차
+                              </Link>
+                            ))}
                           </span>
-                        </div>
-                        <span className="flex shrink-0 flex-wrap gap-1.5 sm:justify-end">
-                          {entry.sessions.map((s) => (
-                            <Link
-                              key={s.href}
-                              href={s.href}
-                              title={s.title}
-                              className="chip tap-feedback min-h-11 items-center text-label"
-                            >
-                              {s.session}회차
-                            </Link>
-                          ))}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               </section>
             );
           })}
