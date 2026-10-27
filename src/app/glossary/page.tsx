@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getAllTerms } from "@/content/curriculum-helpers";
+import { buildClassGlossaryTerms } from "@/content/class-derived";
 import type { GlossarySection } from "@/content/curriculum-helpers";
 import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 
@@ -15,7 +16,8 @@ import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 // 어둡게 뜨는 결함을 물려받았을 것이다.
 
 export default function GlossaryPage() {
-  const glossary = getAllTerms();
+  // 수업 복습 회차의 용어도 같은 표에 섞는다(2026-10-27). 출처 칩이 "N회차 제목"이다.
+  const glossary = getAllTerms(buildClassGlossaryTerms());
   const hasSections = glossary.korean.length > 0 || glossary.latin.length > 0;
 
   return (
@@ -24,7 +26,7 @@ export default function GlossaryPage() {
         <div className="flex flex-col gap-2">
           <h1 className="text-display font-black">용어집</h1>
           <p className="text-body font-normal">
-            전 레슨에 나온 용어 {glossary.totalGroups}개, 총 {glossary.totalTerms}개 정의를 모았습니다. 같은 단어가
+            전 레슨과 수업 복습에 나온 용어 {glossary.totalGroups}개, 총 {glossary.totalTerms}개 정의를 모았습니다. 같은 단어가
             레슨마다 다르게 쓰이면(다의어) 정의를 나눠 보여줍니다.
           </p>
         </div>

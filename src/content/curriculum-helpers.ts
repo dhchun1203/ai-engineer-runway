@@ -122,7 +122,10 @@ function initialConsonant(word: string): string | null {
   return KOREAN_INITIALS[index];
 }
 
-export function getAllTerms(): Glossary {
+/** 정규 레슨 밖에서 온 용어(수업 복습 회차의 review.yml terms 등). 정규 레슨 뒤에 같은 규칙으로 묶인다. */
+export type ExtraTerm = { word: string; definition: string; source: TermSource };
+
+export function getAllTerms(extraTerms: readonly ExtraTerm[] = []): Glossary {
   const orderedLessons = getOrderedLessons();
 
   // 1) word 완전일치 그룹핑 — 커리큘럼 순회 순서를 그대로 유지한다.
@@ -144,6 +147,14 @@ export function getAllTerms(): Glossary {
         },
       });
     }
+  }
+  for (const term of extraTerms) {
+    let group = groupsByWord.get(term.word);
+    if (!group) {
+      group = { word: term.word, definitions: [] };
+      groupsByWord.set(term.word, group);
+    }
+    group.definitions.push({ definition: term.definition, source: term.source });
   }
   const allGroups = [...groupsByWord.values()];
 

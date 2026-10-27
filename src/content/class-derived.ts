@@ -1,6 +1,7 @@
 import { getOrderedClassLessons } from "@/content/class-lesson-helpers";
 import { getClassSession } from "@/content/class-sessions";
 import type { CommandGroup } from "@/components/class/command-list";
+import type { ExtraTerm } from "@/content/curriculum-helpers";
 
 // 회차 데이터를 모아 만든 파생 목록(2026-10-27): 명령어 모음, 회차 검색 색인.
 // 설계: docs/superpowers/specs/2026-10-27-class-data-structure-design.md 3.4, 3.8
@@ -29,6 +30,22 @@ export function buildCommandGroups(): CommandGroup[] {
     }
   }
   return [...groups.values()];
+}
+
+/** 용어집(/glossary)에 더할 수업 용어. 출처는 "N회차 제목"으로 그 회차 레슨을 가리킨다. */
+export function buildClassGlossaryTerms(): ExtraTerm[] {
+  return getOrderedClassLessons().flatMap((lesson) =>
+    (getClassSession(lesson.slug)?.terms ?? []).map((term) => ({
+      word: term.word,
+      definition: term.definition,
+      source: {
+        lessonSlug: lesson.slug,
+        lessonTitle: `${lesson.session}회차 ${lesson.title}`,
+        moduleId: lesson.module,
+        permalink: lesson.permalink,
+      },
+    })),
+  );
 }
 
 export type ClassSearchDoc = {
