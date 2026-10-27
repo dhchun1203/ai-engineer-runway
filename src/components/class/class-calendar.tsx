@@ -96,26 +96,26 @@ export function ClassCalendar({
           </div>
           {/* 옮길 달이 하나도 없으면(수업한 달이 이번 달뿐) 화살표를 아예 그리지 않는다. */}
           {hasPrev || hasNext ? (
-          <nav aria-label="달 옮기기" className="flex gap-1.5">
-            {hasPrev ? (
-              <Link href={`/class?cal=${prev}`} scroll={false} className={`${arrow} hover:border-foreground dark:hover:border-foreground-dark`} aria-label="지난달">
-                <ChevronLeft className="size-4" aria-hidden="true" />
-              </Link>
-            ) : (
-              <span className={`${arrow} opacity-40`} aria-hidden="true">
-                <ChevronLeft className="size-4" />
-              </span>
-            )}
-            {hasNext ? (
-              <Link href={`/class?cal=${next}`} scroll={false} className={`${arrow} hover:border-foreground dark:hover:border-foreground-dark`} aria-label="다음 달">
-                <ChevronRight className="size-4" aria-hidden="true" />
-              </Link>
-            ) : (
-              <span className={`${arrow} opacity-40`} aria-hidden="true">
-                <ChevronRight className="size-4" />
-              </span>
-            )}
-          </nav>
+            <nav aria-label="달 옮기기" className="flex gap-1.5">
+              {hasPrev ? (
+                <Link href={`/class?cal=${prev}`} scroll={false} className={`${arrow} hover:border-foreground dark:hover:border-foreground-dark`} aria-label="지난달">
+                  <ChevronLeft className="size-4" aria-hidden="true" />
+                </Link>
+              ) : (
+                <span className={`${arrow} opacity-40`} aria-hidden="true">
+                  <ChevronLeft className="size-4" />
+                </span>
+              )}
+              {hasNext ? (
+                <Link href={`/class?cal=${next}`} scroll={false} className={`${arrow} hover:border-foreground dark:hover:border-foreground-dark`} aria-label="다음 달">
+                  <ChevronRight className="size-4" aria-hidden="true" />
+                </Link>
+              ) : (
+                <span className={`${arrow} opacity-40`} aria-hidden="true">
+                  <ChevronRight className="size-4" />
+                </span>
+              )}
+            </nav>
           ) : null}
         </div>
         <div className="flex flex-col">
