@@ -161,6 +161,170 @@ export const classSessions: readonly ClassSession[] = [
       },
     ],
   },
+  {
+    slug: "02-git-setup-remote",
+    checklist: [
+      { id: "class-02-config", label: "git config --global --list 로 이름과 이메일 확인 (꼬였으면 --unset-all 후 다시)" },
+      { id: "class-02-hooks", label: ".git/hooks 열어 보고, 훅 하나를 .sample 지우고 chmod +x 해 보기" },
+      { id: "class-02-status-marks", label: "VS Code의 U, A, M, D 표시를 git status --short 와 맞춰 보기" },
+      { id: "class-02-log-graph", label: "브랜치를 하나 만들고 git log --oneline --all --graph 로 갈래 보기" },
+      { id: "class-02-remote", label: "빈 GitHub 저장소에 remote add → branch -M main → push -u 해 보기" },
+      { id: "class-02-vim", label: "vim 열어서 i, Esc, :wq, :q! 로 들어가고 나와 보기" },
+      { id: "class-02-routine", label: "수정부터 push까지 루틴을 소리 내어 설명해 보기" },
+    ],
+    quiz: [
+      {
+        q: "rm -rf old-project/ 에서 -r 과 -f 의 뜻으로 맞는 것은?",
+        options: [
+          "-r 은 휴지통으로 보내기, -f 는 파일만 지우기",
+          "-r 은 폴더 안쪽까지 전부, -f 는 확인 없이 강제로",
+          "-r 은 읽기 전용 파일 건너뛰기, -f 는 빠르게",
+          "-r 은 되살릴 수 있게 지우기, -f 는 폴더만 지우기",
+        ],
+        answer: 1,
+        explain:
+          "-r(recursive)은 폴더 안의 폴더와 파일까지 전부, -f(force)는 묻지 않고 지워요. rm에는 휴지통이 없어서, 실행 전에 pwd와 ls로 위치와 대상을 꼭 확인해요.",
+      },
+      {
+        q: "git config --global user.name \"New Name\" 을 쳤더니 \"cannot overwrite multiple values with a single value\" 오류가 났어요. 알맞은 해결은?",
+        options: [
+          "git config --global --list 를 한 번 더 친다",
+          "같은 명령을 -f 를 붙여 다시 친다",
+          "git config --global --unset-all user.name 으로 모두 지운 뒤 다시 설정한다",
+          ".git 폴더를 지우고 git init 을 다시 한다",
+        ],
+        answer: 2,
+        explain:
+          "user.name 에 값이 두 개 이상 들어가 있어서 하나로 덮어쓸 수 없다는 뜻이에요. --unset-all 로 그 항목의 값을 전부 지우고 다시 넣으면 돼요. 실제로 실행해서 확인한 순서예요.",
+      },
+      {
+        q: ".git/hooks 폴더의 pre-commit.sample 을 실제로 동작하게 하려면?",
+        options: [
+          "파일을 그대로 두고 git commit 을 하면 자동으로 동작한다",
+          "파일 이름에서 .sample 을 지우고 실행 권한(chmod +x)을 준다",
+          "파일을 저장소 맨 위 폴더로 옮긴다",
+          "git push 를 한 번 해야 동작한다",
+        ],
+        answer: 1,
+        explain:
+          ".sample 로 끝나는 동안은 예시일 뿐 아무 일도 안 해요. 이름에서 .sample 을 지우고 chmod +x 로 실행 권한을 주면, 그때부터 커밋 직전에 자동으로 돌아가요.",
+      },
+      {
+        q: "내 컴퓨터에서 만든 commit-msg 훅이 팀원 컴퓨터에서는 동작하지 않아요. 이유는?",
+        options: [
+          ".git 폴더 안의 내용은 push해도 저장소에 올라가지 않기 때문에",
+          "commit-msg 훅은 원래 혼자 쓸 때만 동작하기 때문에",
+          "GitHub가 보안 때문에 훅을 지우기 때문에",
+          "팀원이 git pull 을 두 번 해야 받아지기 때문에",
+        ],
+        answer: 0,
+        explain:
+          "훅은 .git/hooks 안에 있어서 저장소와 함께 공유되지 않아요. 팀 전체가 같은 훅을 쓰려면 husky 같은 도구로 훅을 저장소 안의 일반 폴더에 두고 연결해요.",
+      },
+      {
+        q: "커밋 직전에 자동으로 실행되는 훅은?",
+        options: ["pre-push", "commit-msg", "pre-commit", "post-update"],
+        answer: 2,
+        explain:
+          "pre-commit 은 커밋 직전, commit-msg 는 커밋 메시지를 쓴 직후(메시지 검사), pre-push 는 push 직전에 돌아가요.",
+      },
+      {
+        q: "VS Code 파일 목록에서 새로 만든 파일 옆에 U 가 보여요. 무슨 뜻인가요?",
+        options: [
+          "Updated, 방금 수정된 파일",
+          "Uploaded, GitHub에 올라간 파일",
+          "Unmerged, 합치다 충돌난 파일",
+          "Untracked, Git이 아직 추적하지 않는 새 파일",
+        ],
+        answer: 3,
+        explain:
+          "U 는 Untracked 예요. git add 로 Staging에 올리면 A(Added)로 바뀌어요. 터미널의 git status --short 에서는 같은 상태가 ?? 로 보여요.",
+      },
+      {
+        q: "git status --short 결과가 다음과 같아요. 맞는 설명은?",
+        code: " M a.txt\nA  new.txt",
+        options: [
+          "a.txt 는 수정 후 아직 add 전이고, new.txt 는 Staging에 추가된 새 파일이다",
+          "두 파일 모두 이미 커밋되었다",
+          "a.txt 는 Staging에 있고, new.txt 는 아직 추적하지 않는다",
+          "a.txt 는 삭제되었고, new.txt 는 수정되었다",
+        ],
+        answer: 0,
+        explain:
+          "글자가 오른쪽 칸에 있으면 작업 폴더에만 있는 변경(add 전), 왼쪽 칸에 있으면 Staging에 올라간 변경이에요. A 는 Added, 즉 Staging에 추가된 새 파일이에요.",
+      },
+      {
+        q: "main 에 있으면서 feature 브랜치에만 있는 커밋까지 보고 싶어요. 알맞은 명령은?",
+        options: ["git log --oneline", "git log --oneline --all", "git status", "git branch -M main"],
+        answer: 1,
+        explain:
+          "git log 는 기본으로 지금 브랜치(HEAD)에서 거슬러 올라갈 수 있는 커밋만 보여 줘요. --all 을 붙이면 모든 브랜치의 커밋이 나오고, --graph 까지 붙이면 갈라진 모양도 그려 줘요.",
+      },
+      {
+        q: "git log --oneline --all --graph 결과에서 (HEAD -> main) 표시가 뜻하는 것은?",
+        code: "* 0d6d2eb (feature) feature work\n| * 95bb6a2 (HEAD -> main) main fix\n|/\n* 36259ec first",
+        options: [
+          "main 브랜치가 원격 저장소에 올라갔다",
+          "feature 브랜치가 main 에 합쳐졌다",
+          "지금 main 브랜치에 서 있고, main 은 95bb6a2 커밋을 가리킨다",
+          "95bb6a2 커밋이 가장 처음 만든 커밋이다",
+        ],
+        answer: 2,
+        explain:
+          "HEAD 는 지금 내가 서 있는 곳이에요. HEAD -> main 은 \"main 브랜치에 있다\"는 뜻이고, 그 줄의 커밋이 main 이 가리키는 커밋이에요. 가장 처음 커밋은 맨 아래 first 예요.",
+      },
+      {
+        q: "내 컴퓨터에 커밋이 이미 있는데, GitHub에서 README를 체크해서 저장소를 만들었어요. git push -u origin main 을 하면?",
+        options: [
+          "README와 내 커밋이 자동으로 합쳐져 올라간다",
+          "원격에 내가 모르는 커밋이 있어서 push가 거절된다 (fetch first)",
+          "내 README로 원격 README를 덮어쓴다",
+          "GitHub의 README가 내 컴퓨터로 자동으로 내려온다",
+        ],
+        answer: 1,
+        explain:
+          "GitHub가 README 커밋을 먼저 만들어서, 원격에 내 컴퓨터에는 없는 작업이 생겨요. 그래서 rejected (fetch first)로 거절돼요. 이미 코드가 있으면 빈 저장소로 만드는 게 가장 간단해요.",
+      },
+      {
+        q: "git push -u origin main 의 -u 가 해 주는 일은?",
+        options: [
+          "push 하기 전에 자동으로 커밋을 만든다",
+          "원격 저장소의 이름을 origin 으로 바꾼다",
+          "내 main 과 origin 의 main 을 짝(upstream)으로 기억시켜, 다음부터 git push 만으로 되게 한다",
+          "브랜치 이름을 main 으로 바꾼다",
+        ],
+        answer: 2,
+        explain:
+          "-u(--set-upstream)는 짝을 기억시켜요. 실행하면 \"branch 'main' set up to track 'origin/main'\"이라고 알려 주고, 그다음부터는 git push, git pull 만 쳐도 돼요.",
+      },
+      {
+        q: "git remote add origin 에 주소를 잘못 넣었어요. 연결을 끊는 명령은?",
+        options: ["git remote -v", "git remote remove origin", "git branch -M main", "rm -rf .git"],
+        answer: 1,
+        explain:
+          "git remote remove origin 은 연결만 끊어요. 커밋이나 GitHub에 올라간 내용은 그대로예요. rm -rf .git 은 커밋 이력 전체를 날리니 절대 쓰면 안 돼요.",
+      },
+      {
+        q: "vim 에서 글자를 쓰고 있다가 저장하고 나가려면?",
+        options: ["바로 :wq 를 친다", "Ctrl + c 를 누른다", "Esc 를 누른 뒤 :wq 를 치고 Enter", ":q! 를 친다"],
+        answer: 2,
+        explain:
+          "글자를 쓰는 중이면 입력 모드라서 :wq 도 글자로 써져요. Esc 로 명령 모드로 돌아온 뒤 :wq 를 쳐야 저장하고 나가요. :q! 는 저장하지 않고 나가는 명령이에요.",
+      },
+      {
+        q: "파일을 수정한 뒤 GitHub에 올리기까지의 순서로 맞는 것은? (upstream은 이미 설정됨)",
+        options: [
+          "git push → git add → git commit",
+          "git commit → git add → git push",
+          "git add → git push → git commit",
+          "git status → git add → git commit → git push",
+        ],
+        answer: 3,
+        explain:
+          "status 로 바뀐 것을 확인하고, add 로 Staging에 담고, commit 으로 로컬 저장소에 남긴 뒤, push 로 원격에 올려요. 택배로 치면 고르고, 상자에 담고, 송장 붙이고, 보내는 순서예요.",
+      },
+    ],
+  },
 ];
 
 export const classItemIds: ReadonlySet<string> = new Set(
