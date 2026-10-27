@@ -436,6 +436,8 @@ export default defineConfig({
           slug: s.slug("classLessons"),
           module: s.string(), // 커리큘럼 모듈 id("1-2"), prepare가 modules.ts와 대조
           topic: s.string().min(1), // 짧은 주제 이름("Git"), 목록 칩과 명령어 묶음 기본값
+          // 개강 전에 읽은 관련 정규 레슨 slug. 내용이 실제로 같을 때만 넣는다(억지 연결 금지).
+          preStudy: s.array(s.string()).default([]),
           code: s.mdx(),
         })
         .transform((data, { meta }) => ({
@@ -539,7 +541,7 @@ export default defineConfig({
   // 용어 사전 누락·개념 편 참조 검사: <Term id="...">가 src/content/terms.ts에
   // 없거나, terms의 concept가 존재하지 않는 AI 뜯어보기 편 slug를 가리키면
   // 빌드를 실패시킨다(articles-section Task 3).
-  prepare: ({ articles, roadmapLessons, concepts, classLessons, classReviews }) => {
+  prepare: ({ articles, roadmapLessons, concepts, classLessons, classReviews, lessons }) => {
     const problems: string[] = [];
 
     // 수업 회차: 폴더마다 index.mdx와 review.yml이 하나씩 있고, 둘 다 스키마를 통과해
@@ -556,7 +558,11 @@ export default defineConfig({
     }
     const moduleIds = new Set(modules.map((m) => m.id));
     const sessionNumbers = new Map<number, string>();
+    const regularLessonSlugs = new Set(lessons.map((l) => l.slug));
     for (const lesson of classLessons) {
+      for (const slug of lesson.preStudy) {
+        if (!regularLessonSlugs.has(slug)) problems.push(`class: ${lesson.slug}의 preStudy "${slug}"는 없는 레슨입니다`);
+      }
       if (!moduleIds.has(lesson.module)) problems.push(`class: ${lesson.slug}의 module "${lesson.module}"는 modules.ts에 없는 모듈입니다`);
       const prev = sessionNumbers.get(lesson.session);
       if (prev) problems.push(`class: ${prev}와 ${lesson.slug}의 session ${lesson.session}이 겹칩니다`);

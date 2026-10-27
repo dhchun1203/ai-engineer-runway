@@ -63,7 +63,7 @@ function Month({
             return (
               <span
                 key={cell.date}
-                className={`flex aspect-square min-h-11 items-start justify-start p-1 text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark ${
+                className={`flex h-12 items-start justify-start p-1 text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark ${
                   isToday ? "outline outline-2 -outline-offset-2 outline-foreground dark:outline-foreground-dark" : ""
                 }`}
               >
@@ -83,7 +83,7 @@ function Month({
               href={day.href}
               title={`${day.session}회차 ${day.title}`}
               aria-label={`${month}월 ${dayNumber}일 ${day.session}회차 ${day.title}${status}${day.graduated ? ", 간격 복습 마침" : ""}`}
-              className={`tap-feedback relative flex aspect-square min-h-11 flex-col items-start justify-between p-1 ${toneClass(day.checkRatio)}`}
+              className={`tap-feedback relative flex h-12 flex-col items-start justify-between p-1 ${toneClass(day.checkRatio)}`}
             >
               <span className="text-label font-normal leading-none">{dayNumber}</span>
               <span className="self-end text-label font-black leading-none">{day.session}회</span>

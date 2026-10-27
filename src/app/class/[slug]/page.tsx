@@ -4,8 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { MDXContent } from "@/components/mdx-content";
 import { getAdjacentClassLessons, getClassLessonBySlug, getOrderedClassLessons } from "@/content/class-lesson-helpers";
-import { getLessonsByModule } from "@/content/curriculum-helpers";
-import { modules } from "@/content/modules";
+import { getLessonBySlug } from "@/content/curriculum-helpers";
 import { getClassSession } from "@/content/class-sessions";
 import { BasecampQuizSet } from "@/components/basecamp/basecamp-quiz-set";
 import { BasecampCopyPrompt } from "@/components/lesson-copy-prompt";
@@ -48,9 +47,12 @@ export default async function ClassLessonPage({
   const quiz = getClassSession(slug)?.quiz ?? [];
   const [, month, day] = lesson.date.split("-").map(Number);
   const { prev, next } = getAdjacentClassLessons(slug);
-  // 같은 커리큘럼 모듈의 사전학습 레슨(회차의 module은 작성할 때 정한 실제 모듈이다).
-  const moduleInfo = modules.find((m) => m.id === lesson.module);
-  const preStudy = getLessonsByModule(lesson.module).filter((l) => l.hasContent);
+  // 개강 전에 읽은 관련 레슨. 같은 모듈이라도 내용이 다른 레슨은 잇지 않도록 회차마다
+  // frontmatter preStudy에 직접 고른 것만 보여 준다(velite prepare가 slug를 검사).
+  const preStudy = lesson.preStudy.flatMap((s) => {
+    const found = getLessonBySlug(s);
+    return found ? [found] : [];
+  });
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
@@ -94,7 +96,7 @@ export default async function ClassLessonPage({
               </p>
             </header>
             <BasecampQuizSet questions={quiz} keys={quiz.map((q) => classQuizKey(lesson.slug, q.id))} />
-            <MistakeNoteLink prefix={`cl:${lesson.slug}:`} variant="step" label="이 수업 오답 노트" />
+            <MistakeNoteLink prefix={`cl:${lesson.slug}:`} variant="step" scope="이 수업" />
           </section>
         ) : null}
 
@@ -123,11 +125,9 @@ export default async function ClassLessonPage({
               ) : null}
             </div>
           ) : null}
-          {moduleInfo && preStudy.length > 0 ? (
+          {preStudy.length > 0 ? (
             <div className="panel flex flex-col gap-3 p-4">
-              <span className="text-label font-bold break-keep">
-                개강 전에 읽은 같은 모듈 레슨 ({moduleInfo.id} {moduleInfo.title})
-              </span>
+              <span className="text-label font-bold break-keep">개강 전에 읽은 관련 레슨</span>
               <span className="flex flex-wrap gap-2">
                 {preStudy.map((l) => (
                   <Link key={l.slug} href={l.permalink} className="chip tap-feedback min-h-11 items-center break-keep">

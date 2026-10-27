@@ -33,12 +33,15 @@ export function MistakeNoteLink({
   prefix = "",
   variant,
   label,
+  scope = "이 STEP",
 }: {
   /** 이 접두사로 시작하는 키만 센다(예: "bc:step1:"). 비우면 전체. */
   prefix?: string;
   /** step: 0개면 아무것도 안 그림 / link: 늘 링크를 그리고 개수가 있으면 붙임 */
   variant: "step" | "link";
   label?: string;
+  /** step 변형 문구의 범위 이름("이 STEP에서 틀린 문제"). 수업 레슨은 "이 수업" */
+  scope?: string;
 }) {
   const [count, setCount] = useState<number | null>(null);
 
@@ -59,7 +62,7 @@ export function MistakeNoteLink({
         href="/review/mistakes"
         className="nav-link tap-feedback flex w-fit min-h-11 items-center gap-1.5 text-label font-bold text-destructive dark:text-destructive-dark"
       >
-        이 STEP에서 틀린 문제 {count}개, 오답 노트에서 다시 풀기
+        {scope}에서 틀린 문제 {count}개, 오답 노트에서 다시 풀기
         <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
       </Link>
     );

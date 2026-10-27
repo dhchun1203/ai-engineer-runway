@@ -199,8 +199,9 @@ export default async function ReviewPage() {
         <div className="flex flex-col gap-2">
           <h1 className="text-display font-black">복습</h1>
           <p className="text-body font-normal">
-            완료한 레슨의 스스로 점검 문항을 다시 풀어 보세요. 정답은 여기서 보여주지 않아요 —
-            &ldquo;레슨에서 확인&rdquo; 링크로 확인합니다. 판정은 본인 몫이고, 후하게 매겨도 괜찮아요.
+            지난 수업과 완료한 레슨을 다시 꺼내 보는 곳이에요. 수업 문제는 고르면 바로 채점되고,
+            레슨 점검 문항은 &ldquo;레슨에서 확인&rdquo; 링크로 정답을 봐요. 판정은 본인 몫이고, 후하게
+            매겨도 괜찮아요.
           </p>
           <MistakeNoteLink variant="link" label="객관식 오답 노트" />
         </div>

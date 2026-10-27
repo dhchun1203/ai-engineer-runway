@@ -13,10 +13,11 @@ export const dynamic = 'force-dynamic';
 // 전체 로그인 게이트(2026-09-12) 이후 이 페이지가 사이트의 유일한 공개 진입점이자
 // 소개 랜딩이다 — 색인을 막지 않고 사이트를 설명하는 메타데이터를 둔다. 교육기관명은
 // 쓰지 않는다(브랜딩 HARD RULE) — 항상 "AI Engineer 교육과정".
+// 2026-10-27: 개강(10/26) 후라 소개 문구와 기능 목록을 수업 복습 중심으로 바꿨다(베이스캠프는 종료).
 export const metadata: Metadata = {
   title: 'AI Engineer 교육과정 사전학습',
   description:
-    '개강 전 커리큘럼의 기초를 다지는 사전학습 사이트. 쉬운 개념 설명과 실무 예제 레슨, 베이스캠프 선행 과제, 진도와 복습, 학습 기록까지 한곳에서.',
+    '매일 수업을 쉬운 말로 다시 풀어 쓴 수업 복습과 커리큘럼 전체 레슨, 종합 퀴즈와 간격 복습, 학습 기록까지 한곳에서.',
 };
 
 // 현재 로그인한 사용자 이메일(있으면). 다중 사용자 전환 이후 화이트리스트는 보지 않고
@@ -33,19 +34,19 @@ async function currentUserEmail(): Promise<string | null> {
 
 const FEATURES: { icon: CustomIconName; title: string; body: string }[] = [
   {
+    icon: 'class',
+    title: '수업 복습',
+    body: '매일 수업을 쉬운 말로 다시 풀어 쓴 레슨에 복습 체크리스트, 확인 퀴즈, 명령어 모음까지.',
+  },
+  {
     icon: 'curriculum',
     title: '커리큘럼 레슨',
     body: '쉬운 개념 설명과 실무 적용 예제로 커리큘럼 전체를 콘텐츠화했습니다.',
   },
   {
-    icon: 'basecamp',
-    title: '베이스캠프 선행 과제',
-    body: '개강 전 매주 공개되는 공식 선행 과제를 준비하는 최우선 트랙.',
-  },
-  {
     icon: 'progress',
     title: '진도와 복습',
-    body: '레슨 완료 체크, 섹션별 진행률, 간격 복습과 자가진단까지.',
+    body: '완료 체크와 진행률, 수업 다음 날부터 다시 꺼내 보는 간격 복습, 종합 퀴즈와 오답 노트.',
   },
   {
     icon: 'til',
@@ -65,13 +66,13 @@ export default async function LoginPage() {
       {/* 소개 — 사이트가 무엇이고 무엇을 할 수 있는지. */}
       <section className="flex flex-col gap-6">
         <div className="flex flex-col gap-3">
-          <span className="chip-solid w-fit text-label font-bold">사전학습</span>
+          <span className="chip-solid w-fit text-label font-bold">수업 진행 중</span>
           <h1 className="text-display font-black break-keep">
             AI Engineer 교육과정 사전학습
           </h1>
           <p className="max-w-xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-            개강 전까지 커리큘럼의 기초를 확실히 다지는 곳입니다. 레슨을 읽고, 완료를
-            체크하고, 진행률과 선행 과제를 한눈에 확인하며 준비합니다.
+            매일 배운 수업을 다시 풀어 읽고, 체크하고, 퀴즈로 꺼내 보며 내 것으로 만드는
+            곳입니다. 개강 전에 다진 커리큘럼 레슨도 그대로 이어서 볼 수 있어요.
           </p>
         </div>
 

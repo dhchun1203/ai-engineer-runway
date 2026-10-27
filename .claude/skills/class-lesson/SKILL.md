@@ -33,6 +33,7 @@ src/content/class-lessons/NN-<주제 영문 kebab>/
    - session: 지금 가장 큰 회차 + 1 (`ls src/content/class-lessons`).
    - module: `src/content/modules.ts`의 모듈 id 중 그날 수업이 실제로 속한 것(예: Git은 `1-2`, Python 기초는 `1-3`). 애매하면 그날 가장 큰 주제를 따른다.
    - topic: 짧은 주제 이름(`Git`, `Python`, `SQL`). 같은 주제는 앞 회차와 같은 글자로 쓴다(`grep -h "^topic:" src/content/class-lessons/*/index.mdx`).
+   - preStudy: 개강 전에 읽은 정규 레슨 중 **내용이 실제로 같은 것만** slug로(`src/content/lessons/`를 grep해서 확인). 같은 모듈이라도 주제가 다르면 넣지 않는다(예: Git 수업에 생성형 AI 레슨). 없으면 `[]`.
 3. **본문 `index.mdx`** (eli5 톤, 앞 회차 본문과 같은 구성)
    ```mdx
    ---
@@ -43,6 +44,7 @@ src/content/class-lessons/NN-<주제 영문 kebab>/
    slug: "03-..."
    module: "1-2"
    topic: "Git"
+   preStudy: ["1-2-git-branch-and-pr"]
    ---
    ```
    - 도입 두 문단 → 순서 표(순서, 내용, 한 줄로) → `## 1. ...`부터 번호 붙은 절 → `## 오늘 꼭 기억할 주의점`.
