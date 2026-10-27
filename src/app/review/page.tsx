@@ -11,6 +11,13 @@ import { getReviewQuiz } from "@/content/review-quiz";
 import { reviewQuizKey } from "@/lib/quiz-mistake-key";
 import { MistakeNoteLink } from "@/components/mistake-note-link";
 import { SpotIllustration } from "@/components/illustrations/spot-illustration";
+import { BasecampQuizSet } from "@/components/basecamp/basecamp-quiz-set";
+import { ClassReviewDoneButton } from "@/components/class/class-review-done-button";
+import { readQuizAttempts } from "@/lib/quiz-attempt-store";
+import { classAttemptStates, computeDueClassSessions, pickSessionQuestions, type DueClassSession } from "@/lib/class-review";
+import { classQuizKey } from "@/lib/quiz-mistake-key";
+import { GRADUATE_COUNT } from "@/lib/review";
+import type { ClassQuizQuestion } from "@/content/class-sessions";
 
 // /review 복습 세션(quick 260901-w04, 설계는
 // .planning/research/edu-sites/round2-h-review-design.md V2절). 홈(page.tsx)과
@@ -22,6 +29,56 @@ export const dynamic = "force-dynamic";
 type Lesson = NonNullable<ReturnType<typeof getLessonBySlug>>;
 
 type QuestionCard = { lesson: Lesson; questionIndex: number; text: string };
+
+/** 회차 하나의 간격 복습에서 낼 문항 수. */
+const CLASS_REVIEW_QUESTIONS = 5;
+
+type ClassDueCard = { due: DueClassSession; questions: ClassQuizQuestion[] };
+
+// 수업 회차 간격 복습(2026-10-27, src/lib/class-review.ts). 회차마다 문항 몇 개를 다시 풀고
+// "복습 완료"로 사다리를 한 칸 올린다. 풀이는 오답 노트와 풀이 기록에 그대로 쌓인다.
+function ClassDueSection({ cards }: { cards: ClassDueCard[] }) {
+  return (
+    <section className="flex flex-col gap-4" aria-labelledby="class-review-heading">
+      <div className="flex flex-col gap-1.5">
+        <h2 id="class-review-heading" className="text-heading font-extrabold break-keep">
+          수업 다시 꺼내 보기{" "}
+          <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            {cards.length}개
+          </span>
+        </h2>
+        <p className="break-keep text-label font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+          수업 다음 날, 3일 뒤, 7일 뒤에 그 회차 문제를 다시 꺼내요. 다 풀었으면 복습 완료를 눌러 주세요.
+        </p>
+      </div>
+      <ul className="flex flex-col gap-3">
+        {cards.map(({ due, questions }) => (
+          <li key={due.lesson.slug} className="panel flex flex-col gap-4 p-4 sm:p-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="chip text-label font-bold">{due.lesson.session}회차</span>
+              <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                {due.rung}/{GRADUATE_COUNT}번째 복습
+              </span>
+            </div>
+            <span className="text-subhead font-extrabold break-keep">{due.lesson.title}</span>
+            {questions.length > 0 ? (
+              <BasecampQuizSet
+                questions={questions}
+                keys={questions.map((q) => classQuizKey(due.lesson.slug, q.id))}
+              />
+            ) : null}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <ClassReviewDoneButton slug={due.lesson.slug} />
+              <Link href={due.lesson.permalink} className="chip tap-feedback min-h-11 w-fit items-center">
+                레슨 다시 보기
+              </Link>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 function EmptyState({ message }: { message: string }) {
   return (
@@ -121,7 +178,16 @@ export default async function ReviewPage() {
       .map((i) => ({ lesson, questionIndex: i, text: lesson.selfCheck[i] }));
   });
 
-  if (sessionCards.length === 0 && missedCards.length === 0) {
+  // 수업 회차 간격 복습. 풀이 기록을 못 읽으면 안 푼 문항 기준으로만 고른다.
+  const classDue = computeDueClassSessions(reviewRead.states, today);
+  const attemptsRead = classDue.length > 0 ? await readQuizAttempts() : null;
+  const attempts = classAttemptStates(attemptsRead?.ok ? attemptsRead.rows : []);
+  const classCards: ClassDueCard[] = classDue.map((due) => ({
+    due,
+    questions: pickSessionQuestions(due.lesson.slug, attempts, today, CLASS_REVIEW_QUESTIONS),
+  }));
+
+  if (sessionCards.length === 0 && missedCards.length === 0 && classCards.length === 0) {
     return (
       <EmptyState message="아직 복습할 문항이 없어요. 레슨을 완료하면 여기서 스스로 점검 문제를 다시 풀 수 있어요." />
     );
@@ -140,6 +206,8 @@ export default async function ReviewPage() {
         </div>
         <SpotIllustration name="review" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
       </header>
+
+      {classCards.length > 0 ? <ClassDueSection cards={classCards} /> : null}
 
       {sessionCards.length > 0 ? (
         <section className="flex flex-col gap-4" aria-labelledby="review-session-heading">

@@ -19,6 +19,7 @@ import { currentBasecampStep, countStepDone, basecampProgressId, BASECAMP_END_DA
 import { latestClassLesson } from "@/content/class-lesson-helpers";
 import { getClassSession } from "@/content/class-sessions";
 import { ClassPriorityCard } from "@/components/class/class-priority-card";
+import { computeDueClassSessions } from "@/lib/class-review";
 
 // 홈도 쿠키를 읽으므로 동적 렌더링이 필요하다 — 조건부 쿠키 접근이 캐시된
 // 응답을 내보내는 문제(RESEARCH Pitfall 4)를 원천 차단한다. `/unlock` 직후
@@ -155,6 +156,8 @@ export default async function Home() {
   const latestClass = latestClassLesson();
   const classChecklist = latestClass ? (getClassSession(latestClass.slug)?.checklist ?? []) : [];
   const classDone = classChecklist.filter((item) => bcDoneRawIds.has(basecampProgressId(item.id))).length;
+  // 수업 회차 간격 복습 차례(src/lib/class-review.ts). 복습 상태를 못 읽으면 0으로 둔다.
+  const classReviewDue = reviewRead?.ok ? computeDueClassSessions(reviewRead.states, today).length : 0;
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
@@ -166,6 +169,7 @@ export default async function Home() {
           done={classDone}
           total={classChecklist.length}
           showProgress={Boolean(progressRead?.ok)}
+          reviewDue={classReviewDue}
         />
       ) : (
         <BasecampPriorityCard

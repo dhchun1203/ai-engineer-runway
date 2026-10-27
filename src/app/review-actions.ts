@@ -11,6 +11,23 @@ import { hasUnlockCookie } from '@/lib/auth';
 import { getLessonBySlug } from '@/content/curriculum-helpers';
 import { markLessonReviewed, recordReviewJudgment as storeRecordReviewJudgment } from '@/lib/review-store';
 import { REVIEW_JUDGMENTS, type ReviewJudgment } from '@/lib/review';
+import { getClassLessonBySlug } from '@/content/class-lesson-helpers';
+import { classReviewId } from '@/lib/class-logic';
+
+/** 수업 회차의 간격 복습 "복습 완료"(2026-10-27). completeReview와 같은 순서로 스스로
+ * 재검증한다: 로그인 확인 → 회차 존재 확인 → 저장. 상태는 lesson_review의
+ * "class:<slug>" 행에 쌓인다(src/lib/class-review.ts). */
+export async function completeClassReview(slug: string): Promise<void> {
+  if (!(await hasUnlockCookie())) {
+    throw new Error('unauthorized');
+  }
+
+  if (!getClassLessonBySlug(slug)) {
+    throw new Error('invalid class lesson');
+  }
+
+  await markLessonReviewed(classReviewId(slug));
+}
 
 export async function completeReview(lessonId: string): Promise<void> {
   if (!(await hasUnlockCookie())) {
