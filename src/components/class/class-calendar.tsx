@@ -94,6 +94,8 @@ export function ClassCalendar({
               </span>
             </p>
           </div>
+          {/* 옮길 달이 하나도 없으면(수업한 달이 이번 달뿐) 화살표를 아예 그리지 않는다. */}
+          {hasPrev || hasNext ? (
           <nav aria-label="달 옮기기" className="flex gap-1.5">
             {hasPrev ? (
               <Link href={`/class?cal=${prev}`} scroll={false} className={`${arrow} hover:border-foreground dark:hover:border-foreground-dark`} aria-label="지난달">
@@ -114,6 +116,7 @@ export function ClassCalendar({
               </span>
             )}
           </nav>
+          ) : null}
         </div>
         <div className="flex flex-col">
           <Stat value={inMonth.length} label="수업" />
@@ -123,7 +126,7 @@ export function ClassCalendar({
       </div>
 
       <div className="flex flex-col gap-3 md:col-span-3">
-        <div className="grid grid-cols-7 gap-1.5">
+        <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
           {WEEKDAYS.map((w, i) => (
             <span
               key={w}
