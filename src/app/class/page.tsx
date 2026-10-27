@@ -1,13 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BookOpen, ChevronDown, ClipboardCheck, Terminal } from "lucide-react";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readProgressRows } from "@/lib/progress-store";
+import { readReviewStates } from "@/lib/review-store";
+import { GRADUATE_COUNT } from "@/lib/review";
+import { classReviewId } from "@/lib/class-logic";
+import { todayInSeoul } from "@/lib/today";
 import { basecampProgressId } from "@/content/basecamp";
-import { getOrderedClassLessons, type ClassLesson } from "@/content/class-lesson-helpers";
+import { getOrderedClassLessons, groupClassLessonsByModule, type ClassLesson } from "@/content/class-lesson-helpers";
 import { getClassSession } from "@/content/class-sessions";
+import { buildClassSearchDocs } from "@/content/class-derived";
 import { ClassChecklist } from "@/components/class/class-checklist";
+import { ClassCalendar, type CalendarDay } from "@/components/class/class-calendar";
+import { ClassSearch } from "@/components/class/class-search";
 import { MistakeNoteLink } from "@/components/mistake-note-link";
+import type { StepId } from "@/content/modules";
 
 export const metadata: Metadata = {
   title: "수업 복습",
@@ -15,8 +23,17 @@ export const metadata: Metadata = {
 };
 
 // 수업 복습 허브 — 베이스캠프 허브와 같은 이유로 동적 렌더(쿠키, 진도 조회). 체크 진도는
-// progress 테이블의 bc: 접두사 행에서 읽는다(class-sessions.ts 주석 참고).
+// progress 테이블의 bc: 접두사 행에서, 간격 복습 상태는 lesson_review의 class: 행에서 읽는다.
+// 2026-10-27: 회차가 매일 쌓이므로 지난 수업을 커리큘럼 모듈별로 접고, 달력, 회차 검색,
+// 종합 퀴즈와 명령어 모음 바로가기를 더했다(docs/superpowers/specs/2026-10-27-class-data-structure-design.md).
 export const dynamic = "force-dynamic";
+
+// 모듈 머리에 그 모듈이 속한 Step 색을 왼쪽 굵은 선으로 얹는다(bookmarks 페이지와 같은 리터럴).
+const STEP_HEADER_CLASSES: Record<StepId, string> = {
+  1: "bg-surface-2 border-l-4 border-l-step-1 dark:bg-surface-2-dark dark:border-l-step-1-dark",
+  2: "bg-surface-2 border-l-4 border-l-step-2 dark:bg-surface-2-dark dark:border-l-step-2-dark",
+  3: "bg-surface-2 border-l-4 border-l-step-3 dark:bg-surface-2-dark dark:border-l-step-3-dark",
+};
 
 function formatDate(iso: string): string {
   const [, m, d] = iso.split("-").map(Number);
@@ -29,7 +46,7 @@ function LessonCard({ lesson, quizCount }: { lesson: ClassLesson; quizCount: num
       <span className="flex flex-wrap items-center gap-2">
         <span className="chip text-label font-bold">{lesson.session}회차</span>
         <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          {formatDate(lesson.date)} 수업
+          {formatDate(lesson.date)} 수업, {lesson.topic}
         </span>
       </span>
       <span className="text-heading font-extrabold break-keep">{lesson.title}</span>
@@ -44,15 +61,47 @@ function LessonCard({ lesson, quizCount }: { lesson: ClassLesson; quizCount: num
   );
 }
 
+const TOOLS = [
+  { href: "/class/quiz", label: "종합 퀴즈", desc: "여러 회차를 섞어 풀기", Icon: ClipboardCheck },
+  { href: "/class/commands", label: "명령어 모음", desc: "배운 명령어 찾기", Icon: Terminal },
+  { href: "/glossary", label: "용어집", desc: "수업 용어도 함께", Icon: BookOpen },
+] as const;
+
 export default async function ClassHubPage() {
   const unlocked = await hasUnlockCookie();
-  const progressRead = unlocked ? await readProgressRows() : null;
+  const [progressRead, reviewRead] = unlocked
+    ? await Promise.all([readProgressRows(), readReviewStates()])
+    : [null, null];
   const doneRawIds = new Set(progressRead?.ok ? progressRead.rows.map((row) => row.lessonSlug) : []);
+  const today = todayInSeoul();
 
-  // 최근 수업이 맨 위. 지난 수업은 그 아래 카드 목록으로 쌓인다.
+  // 최근 수업이 맨 위. 지난 수업은 그 아래 모듈별 묶음으로 쌓인다.
   const lessons = getOrderedClassLessons().reverse();
   const [latest, ...past] = lessons;
   const latestSession = latest ? getClassSession(latest.slug) : undefined;
+  const pastGroups = groupClassLessonsByModule(past);
+
+  function checkCount(slug: string): { done: number; total: number } {
+    const checklist = getClassSession(slug)?.checklist ?? [];
+    return {
+      done: checklist.filter((item) => doneRawIds.has(basecampProgressId(item.id))).length,
+      total: checklist.length,
+    };
+  }
+
+  // 달력 칸 데이터. 진도를 못 읽었으면 체크 비율은 null(농도 없이 테두리만).
+  const calendarDays = new Map<string, CalendarDay>();
+  for (const lesson of lessons) {
+    const { done, total } = checkCount(lesson.slug);
+    const reviewCount = reviewRead?.ok ? (reviewRead.states.get(classReviewId(lesson.slug))?.reviewCount ?? 0) : 0;
+    calendarDays.set(lesson.date, {
+      session: lesson.session,
+      href: lesson.permalink,
+      title: lesson.title,
+      checkRatio: progressRead?.ok && total > 0 ? done / total : null,
+      graduated: reviewCount >= GRADUATE_COUNT,
+    });
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-12 sm:px-6 lg:px-8">
@@ -65,42 +114,104 @@ export default async function ClassHubPage() {
         </p>
       </header>
 
-      {latest ? (
-        <section className="flex flex-col gap-3">
-          <span className="w-fit text-label font-bold text-accent dark:text-accent-dark">최근 수업</span>
-          <LessonCard lesson={latest} quizCount={latestSession?.quiz.length ?? 0} />
-          {latestSession && latestSession.checklist.length > 0 ? (
-            <div className="flex flex-col gap-3 pt-2">
-              <h2 className="text-subhead font-extrabold break-keep">오늘의 복습 체크리스트</h2>
-              <ClassChecklist
-                items={latestSession.checklist}
-                initialDoneIds={latestSession.checklist
-                  .filter((item) => doneRawIds.has(basecampProgressId(item.id)))
-                  .map((item) => item.id)}
-                unlocked={unlocked}
-              />
-            </div>
-          ) : null}
-          <MistakeNoteLink prefix="cl:" variant="link" label="수업 복습 오답 노트" />
-        </section>
-      ) : (
-        <p className="panel p-5 text-body break-keep">아직 정리된 수업이 없어요.</p>
-      )}
+      <nav aria-label="수업 복습 도구" className="grid gap-3 sm:grid-cols-3">
+        {TOOLS.map(({ href, label, desc, Icon }) => (
+          <Link key={href} href={href} className="card-interactive panel flex min-h-11 items-center gap-3 p-4">
+            <Icon className="h-5 w-5 shrink-0 text-accent dark:text-accent-dark" aria-hidden="true" />
+            <span className="flex min-w-0 flex-col">
+              <span className="text-body font-bold break-keep">{label}</span>
+              <span className="text-label font-normal break-keep text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                {desc}
+              </span>
+            </span>
+          </Link>
+        ))}
+      </nav>
 
-      {past.length > 0 ? (
-        <section className="flex flex-col gap-3">
-          <span className="text-label font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark">
-            지난 수업
-          </span>
-          {past.map((lesson) => (
-            <LessonCard
-              key={lesson.slug}
-              lesson={lesson}
-              quizCount={getClassSession(lesson.slug)?.quiz.length ?? 0}
-            />
-          ))}
-        </section>
-      ) : null}
+      {lessons.length > 0 ? <ClassCalendar days={calendarDays} today={today} /> : null}
+
+      <ClassSearch docs={buildClassSearchDocs()}>
+        {latest ? (
+          <section className="flex flex-col gap-3">
+            <span className="w-fit text-label font-bold text-accent dark:text-accent-dark">최근 수업</span>
+            <LessonCard lesson={latest} quizCount={latestSession?.quiz.length ?? 0} />
+            {latestSession && latestSession.checklist.length > 0 ? (
+              <div className="flex flex-col gap-3 pt-2">
+                <h2 className="text-subhead font-extrabold break-keep">오늘의 복습 체크리스트</h2>
+                <ClassChecklist
+                  items={latestSession.checklist}
+                  initialDoneIds={latestSession.checklist
+                    .filter((item) => doneRawIds.has(basecampProgressId(item.id)))
+                    .map((item) => item.id)}
+                  unlocked={unlocked}
+                />
+              </div>
+            ) : null}
+            <MistakeNoteLink prefix="cl:" variant="link" label="수업 복습 오답 노트" />
+          </section>
+        ) : (
+          <p className="panel p-5 text-body break-keep">아직 정리된 수업이 없어요.</p>
+        )}
+
+        {pastGroups.length > 0 ? (
+          <section className="flex flex-col gap-3" aria-labelledby="class-past-heading">
+            <h2
+              id="class-past-heading"
+              className="text-label font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark"
+            >
+              지난 수업
+            </h2>
+            {pastGroups.map(({ module: mod, step, lessons: groupLessons }) => {
+              const counts = groupLessons.map((l) => checkCount(l.slug));
+              const done = counts.reduce((sum, c) => sum + c.done, 0);
+              const total = counts.reduce((sum, c) => sum + c.total, 0);
+              return (
+                <details key={mod.id} open={latest?.module === mod.id} className="panel group overflow-hidden">
+                  <summary
+                    className={`flex min-h-11 cursor-pointer list-none flex-col items-start gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden sm:flex-row sm:items-center sm:justify-between sm:gap-3 ${STEP_HEADER_CLASSES[step.id]}`}
+                  >
+                    <span className="min-w-0 text-subhead font-bold break-keep">
+                      {mod.id} {mod.title}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2 text-label font-normal">
+                      <span>{groupLessons.length}개 회차</span>
+                      {progressRead?.ok && total > 0 ? (
+                        <span className="text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                          체크 {done}/{total}
+                        </span>
+                      ) : null}
+                      <ChevronDown className="size-4 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
+                    </span>
+                  </summary>
+                  <ul className="flex flex-col px-4 py-1">
+                    {groupLessons
+                      .slice()
+                      .reverse()
+                      .map((lesson, i) => {
+                        const c = counts[groupLessons.length - 1 - i];
+                        return (
+                          <li key={lesson.slug} className="border-b border-line last:border-b-0 dark:border-line-dark">
+                            <Link
+                              href={lesson.permalink}
+                              className="tap-feedback flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 py-3"
+                            >
+                              <span className="chip text-label font-bold">{lesson.session}회차</span>
+                              <span className="min-w-0 flex-1 text-body font-bold break-keep">{lesson.title}</span>
+                              <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                                {formatDate(lesson.date)}
+                                {progressRead?.ok && c.total > 0 ? `, 체크 ${c.done}/${c.total}` : ""}
+                              </span>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                  </ul>
+                </details>
+              );
+            })}
+          </section>
+        ) : null}
+      </ClassSearch>
     </main>
   );
 }
