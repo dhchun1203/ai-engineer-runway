@@ -136,6 +136,8 @@ function listTopLevelFiles(absDir, extFilter) {
 const contentFiles = [
   ...walkFiles(path.join(ROOT, 'src', 'content', 'lessons'), /\.mdx$/),
   ...walkFiles(path.join(ROOT, 'src', 'content', 'articles'), /\.mdx$/),
+  // 수업 복습 회차(본문과 복습 데이터). 2026-10-27부터 매일 쌓인다.
+  ...walkFiles(path.join(ROOT, 'src', 'content', 'class-lessons'), /\.(mdx|yml)$/),
   path.join(ROOT, 'src', 'content', 'modules.ts'),
   path.join(ROOT, 'src', 'content', 'terms.ts'),
   ...walkFiles(path.join(ROOT, 'src'), /\.tsx$/),
