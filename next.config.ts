@@ -2,9 +2,10 @@ import type { NextConfig } from "next";
 
 const isDev = process.argv.indexOf("dev") !== -1;
 const isBuild = process.argv.indexOf("build") !== -1;
+let veliteBuild: Promise<unknown> | undefined;
 if (!process.env.VELITE_STARTED && (isDev || isBuild)) {
   process.env.VELITE_STARTED = "1";
-  import("velite").then((m) => m.build({ watch: isDev, clean: !isDev }));
+  veliteBuild = import("velite").then((m) => m.build({ watch: isDev, clean: !isDev }));
 }
 
 const nextConfig: NextConfig = {
@@ -39,4 +40,10 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// 빌드는 velite가 .velite를 비우고 다시 다 쓸 때까지 기다린 뒤 시작한다. 기다리지 않으면
+// velite가 느린 날(Vercel에서 49초 걸린 2026-10-27 배포) Turbopack이 먼저 .velite/index.js를
+// 읽다가 아직 없는 *.json을 못 찾고 실패한다. dev는 감시 모드라 기다리지 않는다.
+export default async function config(): Promise<NextConfig> {
+  if (isBuild) await veliteBuild;
+  return nextConfig;
+}
