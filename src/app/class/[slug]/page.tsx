@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { MDXContent } from "@/components/mdx-content";
-import { getClassLessonBySlug, getOrderedClassLessons } from "@/content/class-lesson-helpers";
+import { getAdjacentClassLessons, getClassLessonBySlug, getOrderedClassLessons } from "@/content/class-lesson-helpers";
+import { getLessonsByModule } from "@/content/curriculum-helpers";
+import { modules } from "@/content/modules";
 import { getClassSession } from "@/content/class-sessions";
 import { BasecampQuizSet } from "@/components/basecamp/basecamp-quiz-set";
 import { BasecampCopyPrompt } from "@/components/lesson-copy-prompt";
@@ -45,6 +47,10 @@ export default async function ClassLessonPage({
   }
   const quiz = getClassSession(slug)?.quiz ?? [];
   const [, month, day] = lesson.date.split("-").map(Number);
+  const { prev, next } = getAdjacentClassLessons(slug);
+  // 같은 커리큘럼 모듈의 사전학습 레슨(회차의 module은 작성할 때 정한 실제 모듈이다).
+  const moduleInfo = modules.find((m) => m.id === lesson.module);
+  const preStudy = getLessonsByModule(lesson.module).filter((l) => l.hasContent);
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
@@ -92,7 +98,45 @@ export default async function ClassLessonPage({
           </section>
         ) : null}
 
-        <nav aria-label="수업 복습으로 돌아가기" data-print-hide className="hairline flex flex-col gap-3 pt-6">
+        <nav aria-label="이어지는 수업" data-print-hide className="hairline flex flex-col gap-3 pt-6">
+          {prev || next ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {prev ? (
+                <Link href={prev.permalink} className="card-interactive panel flex min-h-11 flex-col gap-1 p-4">
+                  <span className="inline-flex items-center gap-1.5 text-label font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                    <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    이전 수업, {prev.session}회차
+                  </span>
+                  <span className="text-body font-bold break-keep">{prev.title}</span>
+                </Link>
+              ) : (
+                <span className="hidden sm:block" />
+              )}
+              {next ? (
+                <Link href={next.permalink} className="card-interactive panel flex min-h-11 flex-col gap-1 p-4 sm:items-end sm:text-right">
+                  <span className="inline-flex items-center gap-1.5 text-label font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                    다음 수업, {next.session}회차
+                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  </span>
+                  <span className="text-body font-bold break-keep">{next.title}</span>
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
+          {moduleInfo && preStudy.length > 0 ? (
+            <div className="panel flex flex-col gap-3 p-4">
+              <span className="text-label font-bold break-keep">
+                개강 전에 읽은 같은 모듈 레슨 ({moduleInfo.id} {moduleInfo.title})
+              </span>
+              <span className="flex flex-wrap gap-2">
+                {preStudy.map((l) => (
+                  <Link key={l.slug} href={l.permalink} className="chip tap-feedback min-h-11 items-center break-keep">
+                    {l.title}
+                  </Link>
+                ))}
+              </span>
+            </div>
+          ) : null}
           <Link
             href="/class"
             className="card-interactive panel flex min-h-11 items-center justify-between gap-2 p-4 text-body font-bold"
