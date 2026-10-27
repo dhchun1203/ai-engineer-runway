@@ -8,7 +8,7 @@ import { basecampReviewSteps } from '@/content/basecamp-review';
 import { getReviewQuiz } from '@/content/review-quiz';
 import { getLessonBySlug } from '@/content/curriculum-helpers';
 import { getClassLessonBySlug } from '@/content/class-lesson-helpers';
-import { getClassSession } from '@/content/class-sessions';
+import { getClassQuizQuestion } from '@/content/class-sessions';
 import { parseQuizKey } from './quiz-mistake-key';
 
 export type ResolvedQuizQuestion = {
@@ -45,7 +45,7 @@ export function resolveQuizKey(key: string): ResolvedQuizQuestion | null {
 
   if (parsed.source === 'class') {
     const lesson = getClassLessonBySlug(parsed.lessonSlug);
-    const q = getClassSession(parsed.lessonSlug)?.quiz[parsed.index];
+    const q = getClassQuizQuestion(parsed.lessonSlug, parsed.questionId);
     if (!lesson || !q) return null;
     return {
       key,

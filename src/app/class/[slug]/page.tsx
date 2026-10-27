@@ -87,7 +87,7 @@ export default async function ClassLessonPage({
                 {quiz.length}문항이에요. 고르는 즉시 정답과 해설이 나오고, 틀린 문제는 오답 노트에 모여요.
               </p>
             </header>
-            <BasecampQuizSet questions={quiz} keys={quiz.map((_, i) => classQuizKey(lesson.slug, i))} />
+            <BasecampQuizSet questions={quiz} keys={quiz.map((q) => classQuizKey(lesson.slug, q.id))} />
             <MistakeNoteLink prefix={`cl:${lesson.slug}:`} variant="step" label="이 수업 오답 노트" />
           </section>
         ) : null}

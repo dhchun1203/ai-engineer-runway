@@ -20,6 +20,7 @@ import rehypeSlug from "rehype-slug";
 // compileBookMdx에서 동적 import한다(velite 자신도 같은 방식으로 부른다).
 import remarkGfm from "remark-gfm";
 import { terms } from "./src/content/terms";
+import { modules } from "./src/content/modules";
 
 // 복사 버튼은 여기서 만들지 않는다. @rehype-pretty/transformers의
 // transformerCopyButton은 인라인 onclick을 *문자열*로 내보내는데, 컴파일된 MDX가
@@ -256,6 +257,29 @@ function extractTermIds(content: string): string[] {
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
+// 본문의 ## 소제목 글자만 뽑는다(코드 블록 안의 ## 줄은 건너뛴다). 수업 회차 검색용.
+function extractH2(content: string): string[] {
+  const out: string[] = [];
+  let inFence = false;
+  for (const line of content.replace(/\r\n/g, "\n").split("\n")) {
+    if (/^\s*(```|~~~)/.test(line)) inFence = !inFence;
+    else if (!inFence && line.startsWith("## ")) out.push(line.slice(3).trim());
+  }
+  return out;
+}
+
+// 수업 퀴즈 문항 id 규칙. src/lib/quiz-mistake-key.ts의 CLASS_QUESTION_ID와 같은 식이다
+// (한쪽을 고치면 다른 쪽도). 숫자만으로 된 id는 옛 순서 키(cl:<slug>:0)와 헷갈려 막는다.
+const CLASS_QUESTION_ID = /^(?=.*[a-z])[a-z0-9-]{1,48}$/;
+const CLASS_LESSONS_DIR = "src/content/class-lessons";
+
+function listClassSessionDirs(): string[] {
+  if (!existsSync(CLASS_LESSONS_DIR)) return [];
+  return readdirSync(CLASS_LESSONS_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+}
+
 // articles 파일 목록을 디스크에서 직접 훑는다(velite의 pattern glob과 별개 구현).
 // 이유: velite는 non-strict 모드에서 필드 하나가 "타입 자체"를 못 맞추면(예: enum에
 // 없는 값) 이슈만 콘솔에 찍고 그 문서를 조용히 컬렉션에서 통째로 제외한다 —
@@ -398,11 +422,11 @@ export default defineConfig({
         })),
     },
     // 수업 복습(개강 후 실제 수업 회차를 우리 말로 다시 풀어 쓴 레슨, 2026-10-26 신설).
-    // basecampLessons와 같은 자유 형식 MDX 격리 컬렉션이다. 회차별 체크리스트와 퀴즈는
-    // src/content/class-sessions.ts에 slug로 짝지어 둔다.
+    // 회차마다 폴더 하나: index.mdx(본문, 이 컬렉션)와 review.yml(복습 데이터, classReviews).
+    // 설계: docs/superpowers/specs/2026-10-27-class-data-structure-design.md
     classLessons: {
       name: "ClassLesson",
-      pattern: "src/content/class-lessons/**/*.mdx",
+      pattern: "src/content/class-lessons/*/index.mdx",
       schema: s
         .object({
           title: s.string(),
@@ -410,13 +434,40 @@ export default defineConfig({
           date: s.string().regex(ISO_DAY), // 수업 날짜
           summary: s.string(), // 목록·헤더용 한 줄 훅
           slug: s.slug("classLessons"),
+          module: s.string(), // 커리큘럼 모듈 id("1-2"), prepare가 modules.ts와 대조
+          topic: s.string().min(1), // 짧은 주제 이름("Git"), 목록 칩과 명령어 묶음 기본값
           code: s.mdx(),
         })
         .transform((data, { meta }) => ({
           ...data,
           permalink: `/class/${data.slug}`,
           readingMinutes: estimateBookMinutes(meta.content ?? ""),
+          // 회차 검색이 쓰는 소제목(## 줄). 본문 전체를 검색 색인에 넣지 않으려고 뽑아 둔다.
+          headings: extractH2(meta.content ?? ""),
         })),
+    },
+    // 수업 회차의 복습 데이터(review.yml). 퀴즈 문항 id가 오답 기록 키(cl:<slug>:<id>)다.
+    classReviews: {
+      name: "ClassReview",
+      pattern: "src/content/class-lessons/*/review.yml",
+      schema: s.object({
+        slug: s.string(),
+        checklist: s.array(s.object({ id: s.string(), label: s.string().min(1) })),
+        quiz: s.array(
+          s.object({
+            id: s.string(),
+            q: s.string().min(1),
+            code: s.string().optional(),
+            options: s.array(s.string()),
+            answer: s.number(),
+            explain: s.string().min(1),
+          }),
+        ),
+        commands: s
+          .array(s.object({ cmd: s.string().min(1), desc: s.string().min(1), group: s.string().optional() }))
+          .default([]),
+        terms: s.array(s.object({ word: s.string().min(1), definition: s.string().min(1) })).default([]),
+      }),
     },
     // 아티클(현업 엔지니어링 기사를 우리 말로 푼 요약) — 격리 컬렉션. 진도·일정·
     // 복습은 lessons만 소비하므로 어디에도 집계되지 않는다. 설계:
@@ -488,8 +539,49 @@ export default defineConfig({
   // 용어 사전 누락·개념 편 참조 검사: <Term id="...">가 src/content/terms.ts에
   // 없거나, terms의 concept가 존재하지 않는 AI 뜯어보기 편 slug를 가리키면
   // 빌드를 실패시킨다(articles-section Task 3).
-  prepare: ({ articles, roadmapLessons, concepts }) => {
+  prepare: ({ articles, roadmapLessons, concepts, classLessons, classReviews }) => {
     const problems: string[] = [];
+
+    // 수업 회차: 폴더마다 index.mdx와 review.yml이 하나씩 있고, 둘 다 스키마를 통과해
+    // 컬렉션에 들어왔는지(조용히 빠진 문서가 없는지) 폴더 수로 대조한다.
+    const sessionDirs = listClassSessionDirs();
+    const lessonSlugs = new Set(classLessons.map((l) => l.slug));
+    const reviewSlugs = new Set(classReviews.map((r) => r.slug));
+    for (const dir of sessionDirs) {
+      if (!lessonSlugs.has(dir)) problems.push(`class: ${CLASS_LESSONS_DIR}/${dir}/index.mdx가 없거나 스키마 검증에 실패했습니다(slug는 폴더 이름과 같아야 합니다)`);
+      if (!reviewSlugs.has(dir)) problems.push(`class: ${CLASS_LESSONS_DIR}/${dir}/review.yml이 없거나 스키마 검증에 실패했습니다(slug는 폴더 이름과 같아야 합니다)`);
+    }
+    if (classLessons.length !== sessionDirs.length || classReviews.length !== sessionDirs.length) {
+      problems.push(`class: 회차 폴더 ${sessionDirs.length}개, 본문 ${classLessons.length}개, 복습 데이터 ${classReviews.length}개로 수가 맞지 않습니다`);
+    }
+    const moduleIds = new Set(modules.map((m) => m.id));
+    const sessionNumbers = new Map<number, string>();
+    for (const lesson of classLessons) {
+      if (!moduleIds.has(lesson.module)) problems.push(`class: ${lesson.slug}의 module "${lesson.module}"는 modules.ts에 없는 모듈입니다`);
+      const prev = sessionNumbers.get(lesson.session);
+      if (prev) problems.push(`class: ${prev}와 ${lesson.slug}의 session ${lesson.session}이 겹칩니다`);
+      sessionNumbers.set(lesson.session, lesson.slug);
+    }
+    const checklistIds = new Map<string, string>();
+    for (const review of classReviews) {
+      const where = `class: ${review.slug}/review.yml`;
+      for (const item of review.checklist) {
+        if (!item.id.startsWith("class-")) problems.push(`${where}: 체크리스트 id "${item.id}"는 class- 로 시작해야 합니다`);
+        const prev = checklistIds.get(item.id);
+        if (prev) problems.push(`${where}: 체크리스트 id "${item.id}"가 ${prev}에도 있습니다`);
+        checklistIds.set(item.id, review.slug);
+      }
+      const quizIds = new Set<string>();
+      for (const q of review.quiz) {
+        if (!CLASS_QUESTION_ID.test(q.id)) problems.push(`${where}: 퀴즈 id "${q.id}"는 영문 소문자, 숫자, - 로 1~48자(숫자만은 안 됨)여야 합니다`);
+        if (quizIds.has(q.id)) problems.push(`${where}: 퀴즈 id "${q.id}"가 겹칩니다`);
+        quizIds.add(q.id);
+        if (q.options.length < 2) problems.push(`${where}: 퀴즈 "${q.id}"의 보기가 2개보다 적습니다`);
+        if (!Number.isInteger(q.answer) || q.answer < 0 || q.answer >= q.options.length) {
+          problems.push(`${where}: 퀴즈 "${q.id}"의 answer ${q.answer}가 보기 범위(0~${q.options.length - 1}) 밖입니다`);
+        }
+      }
+    }
 
     for (const article of articles) {
       const where = `${article.slug} (${article.url})`;
