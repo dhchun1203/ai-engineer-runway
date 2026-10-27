@@ -67,7 +67,12 @@ const TOOLS = [
   { href: "/glossary", label: "용어집", desc: "수업 용어도 함께", Icon: BookOpen },
 ] as const;
 
-export default async function ClassHubPage() {
+export default async function ClassHubPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
   const unlocked = await hasUnlockCookie();
   const [progressRead, reviewRead] = unlocked
     ? await Promise.all([readProgressRows(), readReviewStates()])
@@ -103,6 +108,14 @@ export default async function ClassHubPage() {
     });
   }
 
+  // 달력의 달(?cal=YYYY-MM). 첫 수업이 있던 달부터 이번 달(또는 마지막 수업 달)까지만 옮긴다.
+  const thisMonth = today.slice(0, 7);
+  const classMonths = lessons.map((l) => l.date.slice(0, 7)).sort();
+  const minMonth = classMonths[0] ?? thisMonth;
+  const maxMonth = classMonths.length > 0 && classMonths[classMonths.length - 1] > thisMonth ? classMonths[classMonths.length - 1] : thisMonth;
+  const requested = typeof params.cal === "string" && /^\d{4}-\d{2}$/.test(params.cal) ? params.cal : thisMonth;
+  const calendarMonth = requested < minMonth ? minMonth : requested > maxMonth ? maxMonth : requested;
+
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-12 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-3">
@@ -128,7 +141,7 @@ export default async function ClassHubPage() {
         ))}
       </nav>
 
-      {lessons.length > 0 ? <ClassCalendar days={calendarDays} today={today} /> : null}
+      {lessons.length > 0 ? <ClassCalendar days={calendarDays} today={today} month={calendarMonth} minMonth={minMonth} maxMonth={maxMonth} /> : null}
 
       <ClassSearch docs={buildClassSearchDocs()}>
         {latest ? (

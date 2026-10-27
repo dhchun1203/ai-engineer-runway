@@ -3179,3 +3179,59 @@ code[data-theme*=" "] span {
     display: none;
   }
 }
+
+/* 수업 달력 칸(2026-10-27, class-calendar.tsx). 수업이 있던 날 칸은 레슨 링크라 버튼과
+   같은 문법으로 한 뼘 떠오르고 단단한 그림자가 붙는다. 칸 위의 회차 이름표(.cal-tip)는
+   마우스를 올리거나 키보드로 초점을 줄 때만 보인다. 아이패드에서 :hover가 손을 뗀 뒤에도
+   남지 않도록 @media (hover: hover)로 감싼다(nav-link와 같은 가드). */
+.cal-day {
+  transition:
+    transform 140ms ease-out,
+    box-shadow 140ms ease-out;
+}
+
+.cal-tip {
+  box-shadow: 3px 3px 0 0 var(--color-shadow-hard);
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 140ms ease-out,
+    transform 140ms ease-out;
+}
+
+.dark .cal-tip {
+  box-shadow: 3px 3px 0 0 var(--color-shadow-hard-dark);
+}
+
+.cal-day:focus-visible .cal-tip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (hover: hover) {
+  .cal-day:hover {
+    z-index: 10;
+    transform: translate(-2px, -2px);
+    box-shadow: 3px 3px 0 0 var(--color-foreground);
+  }
+
+  .dark .cal-day:hover {
+    box-shadow: 3px 3px 0 0 var(--color-foreground-dark);
+  }
+
+  .cal-day:hover .cal-tip {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cal-day,
+  .cal-tip {
+    transition: none;
+  }
+
+  .cal-day:hover {
+    transform: none;
+  }
+}
