@@ -323,6 +323,30 @@ export const classSessions: readonly ClassSession[] = [
         explain:
           "status 로 바뀐 것을 확인하고, add 로 Staging에 담고, commit 으로 로컬 저장소에 남긴 뒤, push 로 원격에 올려요. 택배로 치면 고르고, 상자에 담고, 송장 붙이고, 보내는 순서예요.",
       },
+      {
+        q: "git checkout 46d0572 로 예전 커밋으로 이동했어요. git log --oneline --all --graph 에서 HEAD는 어떻게 보이나요?",
+        options: [
+          "(HEAD -> main) 처럼 브랜치 이름과 함께",
+          "브랜치 이름 없이 (HEAD) 만",
+          "HEAD 표시가 사라진다",
+          "(origin/main) 으로 바뀐다",
+        ],
+        answer: 1,
+        explain:
+          "커밋 해시로 이동하면 HEAD가 브랜치에서 떨어져 커밋에 직접 붙어요(detached HEAD). 그래서 화살표와 브랜치 이름 없이 (HEAD) 만 보이고, git status 는 \"HEAD detached at 46d0572\"라고 알려 줘요.",
+      },
+      {
+        q: "detached HEAD 상태에서 커밋을 하나 만든 뒤 git switch main 으로 돌아왔어요. 그 커밋은 어떻게 되나요?",
+        options: [
+          "main 브랜치에 자동으로 합쳐진다",
+          "커밋이 아예 만들어지지 않았다",
+          "어떤 브랜치도 가리키지 않아 목록에서 안 보이게 된다. 살리려면 그 해시로 브랜치를 만든다",
+          "원격 저장소로 자동으로 올라간다",
+        ],
+        answer: 2,
+        explain:
+          "커밋은 생겼지만 책갈피(브랜치)가 없어서 git log --all 에도 안 나와요. 돌아올 때 Git이 \"leaving 1 commit behind\"라고 해시를 알려 주니, git branch <이름> <해시> 로 브랜치를 붙이면 다시 보여요. 처음부터 git switch -c 로 브랜치를 만들고 커밋하는 게 가장 안전해요.",
+      },
     ],
   },
 ];
