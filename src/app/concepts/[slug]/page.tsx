@@ -48,12 +48,7 @@ export default async function ConceptPage(props: PageProps<"/concepts/[slug]">) 
             <List className="h-4 w-4 shrink-0" aria-hidden="true" />
             AI 뜯어보기
           </Link>
-          <h1 className="flex items-baseline gap-3 text-display font-black break-keep">
-            <span className="text-3xl leading-none sm:text-4xl" aria-hidden="true">
-              {concept.icon}
-            </span>
-            <span className="min-w-0">{concept.title}</span>
-          </h1>
+          <h1 className="text-display font-black break-keep">{concept.title}</h1>
           <div className="flex flex-wrap items-center gap-2">
             <span className="chip text-label font-bold">번외</span>
             <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
@@ -81,7 +76,7 @@ export default async function ConceptPage(props: PageProps<"/concepts/[slug]">) 
                 이전
               </span>
               <span className="break-keep text-body font-bold">
-                {prev.icon} {prev.title}
+                {prev.title}
               </span>
             </Link>
           ) : (
@@ -97,7 +92,7 @@ export default async function ConceptPage(props: PageProps<"/concepts/[slug]">) 
                 <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
               </span>
               <span className="break-keep text-body font-bold">
-                {next.icon} {next.title}
+                {next.title}
               </span>
             </Link>
           ) : (

@@ -360,7 +360,6 @@ export default defineConfig({
         .object({
           title: s.string(),
           order: s.number(), // 번외 내 순서(1..N) — 인접 이동·인덱스 정렬 기준
-          icon: s.string(), // 카드·헤더용 이모지
           summary: s.string(), // 인덱스 카드 한 줄 훅
           slug: s.slug("concepts"),
           code: s.mdx(),

@@ -41,9 +41,6 @@ export default function ConceptsIndexPage() {
               className="card-interactive panel flex h-full min-h-11 flex-col gap-2 p-5"
             >
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl leading-none" aria-hidden="true">
-                  {concept.icon}
-                </span>
                 <span className="shrink-0 text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark">
                   {String(index + 1).padStart(2, "0")}
                 </span>
