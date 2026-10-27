@@ -29,10 +29,10 @@ export type ClassModuleGroup = { module: Module; step: Step; lessons: ClassLesso
  *  module id는 velite prepare가 modules.ts와 대조해 두었다. */
 export function groupClassLessonsByModule(lessons: readonly ClassLesson[] = getOrderedClassLessons()): ClassModuleGroup[] {
   const groups: ClassModuleGroup[] = [];
-  for (const module of [...modules].sort((a, b) => a.stepId - b.stepId || a.order - b.order)) {
-    const inModule = lessons.filter((l) => l.module === module.id).sort((a, b) => a.session - b.session);
-    const step = steps.find((s) => s.id === module.stepId);
-    if (inModule.length > 0 && step) groups.push({ module, step, lessons: inModule });
+  for (const mod of [...modules].sort((a, b) => a.stepId - b.stepId || a.order - b.order)) {
+    const inModule = lessons.filter((l) => l.module === mod.id).sort((a, b) => a.session - b.session);
+    const step = steps.find((s) => s.id === mod.stepId);
+    if (inModule.length > 0 && step) groups.push({ module: mod, step, lessons: inModule });
   }
   return groups;
 }

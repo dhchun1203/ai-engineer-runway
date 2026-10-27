@@ -53,7 +53,10 @@ export async function GET() {
       },
       {
         label: "수업 복습",
-        items: getOrderedClassLessons().map((lesson) => item(`/class/${seg(lesson.slug)}`, lesson.title)),
+        items: [
+          ...getOrderedClassLessons().map((lesson) => item(`/class/${seg(lesson.slug)}`, lesson.title)),
+          item("/class/commands", "명령어 모음"),
+        ],
       },
       {
         label: "베이스캠프",

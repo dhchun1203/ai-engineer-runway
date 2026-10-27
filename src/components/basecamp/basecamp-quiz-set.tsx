@@ -23,7 +23,7 @@ import { attemptLabel, loadQuizAttempts, type QuizAttempt } from "@/lib/quiz-att
 /** 문항 글자로 정해지는 고정 순열. 데이터에는 정답이 두 번째 보기에 몰려 있어 "2번만
  *  찍기"가 통하므로, 보여 줄 때 보기 순서를 섞어 정답 위치를 퍼뜨린다. 무작위가 아니라
  *  문항 글자에서 나온 값이라 서버와 브라우저가 같은 순서를 그린다(하이드레이션 일치). */
-function shuffledOrder(q: BasecampQuizQuestion): number[] {
+export function shuffledOrder(q: BasecampQuizQuestion): number[] {
   let seed = 0;
   for (const ch of q.q + (q.code ?? "")) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
   const order = q.options.map((_, i) => i);
@@ -49,12 +49,15 @@ export function BasecampQuizSet({
   questions: source,
   keys,
   notes,
+  labels,
 }: {
   questions: readonly BasecampQuizQuestion[];
   /** 문항마다 오답 노트 키(원본 순서). 없으면 기록하지 않는다. */
   keys?: readonly string[];
   /** 문항 위에 붙일 작은 안내(오답 노트의 틀린 횟수 등) */
   notes?: readonly (string | undefined)[];
+  /** 문항 위에 붙일 출처 꼬리표(여러 회차를 섞은 수업 종합 퀴즈의 "N회차 제목" 등) */
+  labels?: readonly (string | undefined)[];
 }) {
   // 보기 순서를 섞은 문항(정답 인덱스도 따라 옮긴다). order는 화면 순서 → 원본 순서 표.
   const questions = source.map((q) => {
@@ -194,6 +197,11 @@ export function BasecampQuizSet({
         const attempt = !answered && key ? past?.get(key) : undefined;
         return (
           <li key={qi} className="flex flex-col gap-2.5 py-6 first:pt-0 last:pb-0">
+            {labels?.[qi] ? (
+              <p className="text-label font-semibold break-keep text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                {labels[qi]}
+              </p>
+            ) : null}
             <div className="flex items-start gap-2.5">
               <span className="mt-0.5 shrink-0 bg-foreground px-1.5 text-label font-bold text-surface dark:bg-foreground-dark dark:text-surface-dark">
                 문제 {qi + 1}

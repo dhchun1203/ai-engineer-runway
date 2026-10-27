@@ -21,7 +21,8 @@ export function QuizAnswerPanel({
   explain: string;
   saveFailed?: boolean;
   outcomeText?: string | null;
-  onRetry: () => void;
+  /** 없으면 "이 문제 다시 풀기" 버튼을 숨긴다(시험 모드 결과 화면) */
+  onRetry?: () => void;
 }) {
   return (
     <div
@@ -54,14 +55,16 @@ export function QuizAnswerPanel({
       {outcomeText ? (
         <p className="text-label font-semibold text-accent dark:text-accent-dark">{outcomeText}</p>
       ) : null}
-      <button
-        type="button"
-        onClick={onRetry}
-        className="btn tap-feedback w-fit text-label"
-      >
-        <RotateCcw className="size-4 shrink-0" aria-hidden="true" />
-        이 문제 다시 풀기
-      </button>
+      {onRetry ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="btn tap-feedback w-fit text-label"
+        >
+          <RotateCcw className="size-4 shrink-0" aria-hidden="true" />
+          이 문제 다시 풀기
+        </button>
+      ) : null}
     </div>
   );
 }
