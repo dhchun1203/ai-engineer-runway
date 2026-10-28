@@ -175,6 +175,21 @@
   --note-sheet-open-height: clamp(11rem, calc(var(--note-visible-height) * 0.4), 26rem);
 }
 
+/* 큰 모니터 배율. 브라우저 배율 100%로 QHD(2560px), 4K(3840px)를 보면 16px 기준
+   화면이 너무 작다. 사이트의 글자, 간격, 폭이 전부 rem이라 뿌리 글자 크기만 올리면
+   화면 전체가 같은 비율로 커진다. 미디어 쿼리의 rem은 브라우저 기본값(16px)을
+   따르므로 반응형 구간(xl 등)은 그대로다. FHD(1920px) 이하는 손대지 않는다. */
+@media (min-width: 2200px) {
+  html {
+    font-size: 125%;
+  }
+}
+@media (min-width: 3200px) {
+  html {
+    font-size: 150%;
+  }
+}
+
 .dark {
   --note-paper: var(--color-note-paper-dark);
   --note-rule: var(--color-note-rule-dark);
