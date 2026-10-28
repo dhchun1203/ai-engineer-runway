@@ -14,6 +14,7 @@ import { buildClassSearchDocs } from "@/content/class-derived";
 import { ClassChecklist } from "@/components/class/class-checklist";
 import { ClassCalendar, type CalendarDay } from "@/components/class/class-calendar";
 import { ClassSearch } from "@/components/class/class-search";
+import { ClassPastLessonRow } from "@/components/class/class-past-lesson-row";
 import { MistakeNoteLink } from "@/components/mistake-note-link";
 import type { StepId } from "@/content/modules";
 
@@ -200,22 +201,21 @@ export default async function ClassHubPage({
                     {groupLessons
                       .slice()
                       .reverse()
-                      .map((lesson, i) => {
-                        const c = counts[groupLessons.length - 1 - i];
+                      .map((lesson) => {
+                        const checklist = getClassSession(lesson.slug)?.checklist ?? [];
                         return (
-                          <li key={lesson.slug} className="border-b border-line last:border-b-0 dark:border-line-dark">
-                            <Link
-                              href={lesson.permalink}
-                              className="tap-feedback flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 py-3"
-                            >
-                              <span className="chip text-label font-bold">{lesson.session}회차</span>
-                              <span className="min-w-0 flex-1 text-body font-bold break-keep">{lesson.title}</span>
-                              <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
-                                {formatDate(lesson.date)}
-                                {progressRead?.ok && c.total > 0 ? `, 체크 ${c.done}/${c.total}` : ""}
-                              </span>
-                            </Link>
-                          </li>
+                          <ClassPastLessonRow
+                            key={lesson.slug}
+                            href={lesson.permalink}
+                            session={lesson.session}
+                            title={lesson.title}
+                            dateLabel={formatDate(lesson.date)}
+                            checklist={checklist}
+                            initialDoneIds={checklist
+                              .filter((item) => doneRawIds.has(basecampProgressId(item.id)))
+                              .map((item) => item.id)}
+                            unlocked={unlocked && Boolean(progressRead?.ok)}
+                          />
                         );
                       })}
                   </ul>
