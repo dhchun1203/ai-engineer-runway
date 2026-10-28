@@ -11,6 +11,7 @@ import { BasecampCopyPrompt } from "@/components/lesson-copy-prompt";
 import { MistakeNoteLink } from "@/components/mistake-note-link";
 import { PrintButton } from "@/components/print-button";
 import { ReadingAssistant } from "@/components/reading-assistant/reading-assistant";
+import { LessonToc } from "@/components/roadmap/lesson-toc";
 import { classQuizKey } from "@/lib/quiz-mistake-key";
 
 // 수업 복습 레슨 리더 — 완전 정적(베이스캠프 레슨 리더와 같은 셸). 본문 아래 확인 퀴즈는
@@ -55,7 +56,9 @@ export default async function ClassLessonPage({
   });
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
+    <main className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
+      {/* 스크롤을 따라다니는 목차(로드맵 레슨과 같은 것). 넓은 화면의 왼쪽 여백에만 뜬다. */}
+      <LessonToc contentId={CLASS_ARTICLE_ID} />
       <article className="flex flex-col gap-8">
         <header className="flex flex-col gap-3">
           <Link
