@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 
 // 심화 레슨의 스크롤 반응 목차. 데스크탑(xl+)의 왼쪽 여백에만 나타나고, 좁은
-// 화면에서는 숨는다(본문은 늘 가운데). 본문의 h2·h3(rehypeSlug가 붙인 id)를
+// 화면에서는 숨는다(본문은 늘 가운데). 본문의 큰 절 h2(rehypeSlug가 붙인 id)만
 // 읽어 목록을 만들고, 스크롤에 따라 지금 읽는 절을 실시간으로 강조한다.
 // 진도·저장과 무관한 순수 클라이언트 UI다.
 
-type TocItem = { id: string; text: string; level: number };
+type TocItem = { id: string; text: string };
 
 export function LessonToc({ contentId }: { contentId: string }) {
   const [items, setItems] = useState<TocItem[]>([]);
@@ -19,13 +19,12 @@ export function LessonToc({ contentId }: { contentId: string }) {
     if (!container) return;
 
     const headings = Array.from(
-      container.querySelectorAll<HTMLElement>("h2[id], h3[id]"),
+      container.querySelectorAll<HTMLElement>("h2[id]"),
     );
     setItems(
       headings.map((h) => ({
         id: h.id,
         text: h.textContent ?? "",
-        level: h.tagName === "H3" ? 3 : 2,
       })),
     );
 
@@ -106,9 +105,7 @@ export function LessonToc({ contentId }: { contentId: string }) {
                   href={`#${item.id}`}
                   onClick={(event) => handleClick(event, item.id)}
                   aria-current={active ? "true" : undefined}
-                  className={`toc-text -ml-0.5 block break-keep border-l-2 py-0.5 ${
-                    item.level === 3 ? "pl-5" : "pl-3"
-                  } ${
+                  className={`toc-text -ml-0.5 block break-keep border-l-2 py-1 pl-3 ${
                     active
                       ? "border-accent font-bold text-accent dark:border-accent-dark dark:text-accent-dark"
                       : "border-transparent font-normal text-muted hover:text-foreground dark:text-muted-dark dark:hover:text-foreground-dark"
