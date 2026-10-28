@@ -1245,8 +1245,8 @@ body:has(.note-sheet) .bookmark-fab {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: 0.875rem;
+  font-weight: 400;
   color: var(--color-muted);
 }
 .dark .bookmark-fab-item-sub {
