@@ -50,7 +50,7 @@ export default async function RoadmapLessonPage(
   const stage = roadmapStages.find((s) => s.id === lesson.stageId);
 
   return (
-    <main className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
+    <main className="relative mx-auto flex w-full max-w-3xl min-[1800px]:max-w-4xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
       {/* 데스크탑(xl+) 왼쪽 여백의 스크롤 반응 목차. 본문(lesson-body)의 절을 읽어
           현재 위치를 실시간 강조한다. 좁은 화면에서는 숨는다. */}
       <LessonToc contentId="lesson-body" />

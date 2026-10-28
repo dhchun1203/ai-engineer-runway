@@ -56,7 +56,7 @@ export default async function ClassLessonPage({
   });
 
   return (
-    <main className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
+    <main className="relative mx-auto flex w-full max-w-3xl min-[1800px]:max-w-4xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
       {/* 스크롤을 따라다니는 목차(로드맵 레슨과 같은 것). 넓은 화면의 왼쪽 여백에만 뜬다. */}
       <LessonToc contentId={CLASS_ARTICLE_ID} />
       <article className="flex flex-col gap-8">
