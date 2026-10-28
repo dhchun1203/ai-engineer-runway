@@ -506,6 +506,19 @@ textarea,
     font-size: 0.8125em;
     line-height: 1.45;
     letter-spacing: -0.011em;
+    transition: color 200ms ease, font-size 220ms ease;
+  }
+
+  /* 지금 읽는 절은 글자가 커지며 눈에 띈다. 목차를 쓰는 모든 레슨(로드맵, 수업 복습)이
+     lesson-toc.tsx 하나를 공유하므로 여기 한 곳만 바꾸면 전부 같다. */
+  .toc-text[aria-current="true"] {
+    font-size: 0.9375em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .toc-text {
+      transition: none;
+    }
   }
 
   .hit-44::before {
