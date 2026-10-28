@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bookmark } from "lucide-react";
+import { BookmarkFab } from "@/components/bookmark-fab";
 import type { BookBookmarkApiResponse } from "@/app/api/book-bookmark/route";
 import { setBookBookmarkAction } from "@/app/book/[step]/book-bookmark-actions";
 
@@ -125,28 +125,14 @@ export function BookBookmark({ stepId }: { stepId: number }) {
   // 책갈피 UI가 등장할 경로 자체를 없앤다).
   if (available !== true) return null;
 
-  const btnClass =
-    "btn tap-feedback text-label";
-
   return (
-    <div data-print-hide className="book-bookmark-fab">
-      {flash ? <span className="bookmark-fab-flash text-label font-semibold">{flash}</span> : null}
-      {mark ? (
-        <>
-          <button type="button" onClick={goTo} className={btnClass}>
-            <Bookmark className="size-4 shrink-0 fill-current" aria-hidden="true" />
-            책갈피로 이동
-          </button>
-          <button type="button" onClick={place} disabled={pending} className={btnClass}>
-            여기로 옮기기
-          </button>
-        </>
-      ) : (
-        <button type="button" onClick={place} disabled={pending} className={btnClass}>
-          <Bookmark className="size-4 shrink-0" aria-hidden="true" />
-          책갈피 꽂기
-        </button>
-      )}
-    </div>
+    <BookmarkFab
+      placed={mark !== null}
+      pending={pending}
+      canPlace
+      flash={flash}
+      onPlace={place}
+      onGoTo={goTo}
+    />
   );
 }

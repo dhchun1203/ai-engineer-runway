@@ -14,7 +14,7 @@
 // (section-scroll-restore.tsx와 같은 취지).
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bookmark } from "lucide-react";
+import { BookmarkFab } from "@/components/bookmark-fab";
 import type { BookmarksApiResponse } from "@/app/api/bookmarks/route";
 import { setPageBookmarkAction } from "@/app/lesson/[lessonId]/bookmark-actions";
 import { useOnline } from "@/lib/offline/connectivity";
@@ -134,45 +134,15 @@ export function PageBookmark({
   const offlineHint = "인터넷 연결 후 책갈피를 꽂을 수 있어요";
 
   return (
-    <div data-print-hide className="bookmark-fab">
-      {mark ? (
-        <>
-          <button
-            type="button"
-            onClick={goTo}
-            title={`책갈피 자리: ${mark.title}`}
-            className="btn tap-feedback text-label"
-          >
-            <Bookmark className="size-4 shrink-0 fill-current" aria-hidden="true" />
-            책갈피로 이동
-          </button>
-          <button
-            type="button"
-            onClick={place}
-            disabled={pending || !online}
-            title={online ? "지금 읽는 소제목으로 책갈피 옮기기" : offlineHint}
-            className="btn tap-feedback text-label"
-          >
-            여기로 옮기기
-          </button>
-        </>
-      ) : (
-        <button
-          type="button"
-          onClick={place}
-          disabled={pending || !online}
-          title={online ? "지금 읽는 소제목에 책갈피 꽂기" : offlineHint}
-          className="btn tap-feedback text-label"
-        >
-          <Bookmark className="size-4 shrink-0" aria-hidden="true" />
-          책갈피 꽂기
-        </button>
-      )}
-      {flash ? (
-        <span role="status" aria-live="polite" className="bookmark-fab-flash text-label font-semibold">
-          {flash}
-        </span>
-      ) : null}
-    </div>
+    <BookmarkFab
+      placed={mark !== null}
+      placedTitle={mark?.title}
+      pending={pending}
+      canPlace={online}
+      disabledHint={offlineHint}
+      flash={flash}
+      onPlace={place}
+      onGoTo={goTo}
+    />
   );
 }
