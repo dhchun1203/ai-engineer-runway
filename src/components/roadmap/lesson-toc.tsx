@@ -9,6 +9,13 @@ import { useEffect, useRef, useState } from "react";
 
 type TocItem = { id: string; text: string };
 
+// 제목이 착지할 화면 위 여백. `.prose h2`의 scroll-margin-top(헤더 + 구간 테이프 +
+// 8px, globals.css 단일 소스)을 그대로 읽어, 테이프가 있는 정규 레슨이든 없는
+// 로드맵·수업 레슨이든, 큰 모니터 배율이든 같은 값을 따른다.
+function headingOffset(el: HTMLElement): number {
+  return parseFloat(getComputedStyle(el).scrollMarginTop) || 88;
+}
+
 export function LessonToc({ contentId }: { contentId: string }) {
   const [items, setItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");
@@ -28,14 +35,15 @@ export function LessonToc({ contentId }: { contentId: string }) {
       })),
     );
 
-    // 스크롤 추적 — 상단(sticky 헤더 아래, 96px) 선을 마지막으로 지난 절을 활성으로
-    // 본다. rAF로 스크롤 이벤트를 한 프레임에 한 번만 처리한다.
+    // 스크롤 추적 — 제목의 착지선(headingOffset, sticky 헤더와 구간 테이프 아래)을
+    // 마지막으로 지난 절을 활성으로 본다. rAF로 스크롤 이벤트를 한 프레임에 한 번만
+    // 처리한다.
     let raf = 0;
     const compute = () => {
       raf = 0;
       let current = headings[0]?.id ?? "";
       for (const h of headings) {
-        if (h.getBoundingClientRect().top <= 96) current = h.id;
+        if (h.getBoundingClientRect().top <= headingOffset(h) + 8) current = h.id;
         else break;
       }
       setActiveId(current);
@@ -73,8 +81,8 @@ export function LessonToc({ contentId }: { contentId: string }) {
 
   if (items.length === 0) return null;
 
-  // 클릭 시 sticky 헤더에 가리지 않게 88px 여유를 두고 부드럽게 이동한다
-  // (reduced-motion에서는 즉시).
+  // 클릭 시 제목이 sticky 헤더(정규 레슨은 구간 테이프까지)에 가리지 않게 착지선
+  // 아래로 부드럽게 이동한다(reduced-motion에서는 즉시).
   const handleClick = (
     event: React.MouseEvent<HTMLAnchorElement>,
     id: string,
@@ -83,7 +91,7 @@ export function LessonToc({ contentId }: { contentId: string }) {
     const el = document.getElementById(id);
     if (!el) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const y = el.getBoundingClientRect().top + window.scrollY - 88;
+    const y = el.getBoundingClientRect().top + window.scrollY - headingOffset(el);
     window.scrollTo({ top: y, behavior: reduce ? "auto" : "smooth" });
   };
 

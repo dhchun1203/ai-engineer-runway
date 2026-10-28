@@ -5,6 +5,7 @@ import { DepthBadge } from "@/components/depth-badge";
 import { EstimatedTime } from "@/components/estimated-time";
 import { LessonBreadcrumb, LessonPager } from "@/components/lesson-nav";
 import { SectionTape } from "@/components/section-tape";
+import { LessonToc } from "@/components/roadmap/lesson-toc";
 import { BookmarkButton } from "@/components/bookmark-button";
 import { SectionScrollRestore } from "@/components/section-scroll-restore";
 import { ProgressProvider } from "@/components/progress-provider";
@@ -71,8 +72,11 @@ export default async function LessonPage(
       // (잠금 여부는 마운트 후 클라이언트 fetch가 확정한다). 잠금 상태에서
       // 하단 여백이 조금 남는 것이 레이아웃 시프트보다 낫고, 이 클래스는 하단
       // 패딩만 준다(globals.css의 .note-page-spacer).
-      className="note-page-spacer mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8"
+      className="note-page-spacer relative mx-auto flex w-full max-w-3xl min-[1800px]:max-w-4xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8"
     >
+      {/* 스크롤을 따라다니는 목차(로드맵, 수업 레슨과 같은 것). 넓은 화면의 왼쪽 여백에만
+          뜬다. 위쪽 구간 테이프와 같은 h2를 읽으므로 둘이 가리키는 절이 같다. */}
+      <LessonToc contentId={LESSON_ARTICLE_ID} />
       <ProgressProvider lessonId={lesson.slug}>
         {/* "이어서 읽기"(quick 260901-v4u) 기록기 — 화면에 아무것도 그리지
             않고 useEffect에서만 동작하므로 이 페이지의 정적 셸 계약(레슨 =
