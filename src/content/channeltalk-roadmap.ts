@@ -151,6 +151,12 @@ export const roadmapStages: readonly RoadmapStage[] = [
         coverage: "reinforce",
         where: "Step 1 개발 협업 및 Git PR 흐름",
       },
+      {
+        title: "CS 질문 세 가지를 내 말로 설명하기 (프로그램 실행, 주소 입력 후 웹페이지, 프롬프트 입력 후 답변)",
+        coverage: "separate",
+        where: "교육과정은 도구 중심이라 따로 판다. 외우지 말고 구성 요소와 데이터 흐름을 내 그림으로 그려 꼬리질문까지 답한다 (10/28 특강: 200명에서 300명 중 한 명만 제대로 답한다)",
+        lessonSlug: "session-2026-10-28-career-roadmap",
+      },
     ],
   },
   {
@@ -341,6 +347,11 @@ export const roadmapStages: readonly RoadmapStage[] = [
         coverage: "separate",
         where: "공부로 끝내지 않고 DailyAiThread 같은 내 서비스에서 재고, 고치고, 다시 잰 기록을 남긴다 (10/16 특강: 평가하고 고친 경험을 본다)",
       },
+      {
+        title: "RAG를 검색과 답변 두 단계로 나눠 평가하기 (찾아온 근거가 맞나, 근거대로 답했나)",
+        coverage: "reinforce",
+        where: "Step 3 Project 3 평가셋에서 두 단계를 따로 잰다. 답이 틀렸을 때 어디부터 고칠지가 여기서 갈린다 (10/28 특강)",
+      },
     ],
   },
   {
@@ -375,6 +386,16 @@ export const roadmapStages: readonly RoadmapStage[] = [
         title: "모니터링과 장애 알림",
         coverage: "reinforce",
         where: "Step 3 LLMOps (모니터링, 알림, 보안 거버넌스)",
+      },
+      {
+        title: "Langfuse나 LangSmith 같은 LLMOps 도구로 트레이스, 비용, 평가를 내 프로젝트에 실제로 붙이기",
+        coverage: "reinforce",
+        where: "Step 3 LLMOps에서 배운 것을 DailyAiThread에도 붙여 전후 숫자를 남긴다 (10/28 특강: LangChain 같은 감싼 라이브러리보다 서빙과 LLMOps 경험이 중요하다)",
+      },
+      {
+        title: "성공 기준(SLO)과 실패 대응(폴백, 롤백, 장애 가이드)을 먼저 정해 두기",
+        coverage: "separate",
+        where: "교육과정 프로젝트는 만드는 데 집중하니, 내 프로젝트에서 기준과 실패 시나리오를 따로 적어 둔다 (10/28 특강)",
       },
     ],
   },
@@ -421,6 +442,21 @@ export const roadmapStages: readonly RoadmapStage[] = [
         coverage: "separate",
         where: "영업과 구축 4년은 고객 문제를 아는 무기로 말한다. 자격증보다 무엇을 왜 만들어 무엇을 해결했는지를 본다 (10/16 특강)",
       },
+      {
+        title: "AI가 쓴 코드도 모든 로직을 설명할 수 있게 하기 (AI를 내가 주무르기)",
+        coverage: "separate",
+        where: "면접관은 포트폴리오 링크를 열어 로직을 묻는다. 처음 하나는 손으로 짜고 그다음 AI에게 맡기며, 이해 못 한 코드는 넣지 않는다 (10/28 특강, 채널톡 2차 인터뷰가 프로젝트 질의)",
+      },
+      {
+        title: "결정마다 트레이드오프 표를 남기고, 결과는 전후 숫자로 (예: 정답률 62%에서 84%)",
+        coverage: "separate",
+        where: "선택지와 따져 본 항목을 표로 남기면 면접 대본이 된다. 잘 된 것보다 실패하고 바꾼 과정이 핵심이다 (10/28 특강)",
+      },
+      {
+        title: "오픈소스에 PR을 올려 머지까지 가 보기",
+        coverage: "separate",
+        where: "메인테이너의 규칙에 맞춰 문서, 테스트, PR을 거쳐 머지되는 흐름이 회사 개발 흐름과 같다 (10/28 특강: 신입 중 오픈소스 해 본 사람이 살아남는다)",
+      },
     ],
   },
 ] as const;
@@ -448,7 +484,7 @@ export const hiringProcess: readonly HiringStep[] = [
   {
     title: "사전 기술 인터뷰 (온라인)",
     focus: "ML과 AI 기술 중심의 질문과 답변으로 30분 동안 진행해요.",
-    prep: ["llm-core", "rag", "evals"],
+    prep: ["llm-core", "rag", "evals", "foundations"],
   },
   {
     title: "1차 인터뷰",
@@ -565,6 +601,10 @@ export const docPrinciples: readonly DocPrinciple[] = [
   {
     title: "학위 칸 대신 대체 증거가 먼저 보이게",
     body: "학위 줄은 지울 수 없으니 이력서 앞쪽에 대체 증거를 먼저 놓아요. 교육과정 수료, 대표 프로젝트, 운영 숫자, CS 기초 학습 기록이 첫 화면에서 보이게 해요.",
+  },
+  {
+    title: "주장과 증거를 일치시키기",
+    body: "자기소개서에 \"테스트를 중요하게 생각한다\"고 쓰고 저장소에 테스트가 없으면 신뢰가 떨어져요. 서류에 쓴 주장마다 포트폴리오와 저장소에서 바로 확인되는 증거가 있어야 해요(10/28 특강).",
   },
 ];
 
