@@ -90,7 +90,7 @@ export function LessonToc({ contentId }: { contentId: string }) {
   return (
     <nav
       aria-label="레슨 목차"
-      className="hidden xl:absolute xl:right-full xl:top-0 xl:block xl:h-full xl:w-60 xl:pr-12 2xl:w-80 2xl:pr-20"
+      className="hidden xl:absolute xl:right-full xl:top-0 xl:block xl:h-full xl:w-60 xl:pr-12 2xl:w-96 2xl:pr-20"
     >
       <div ref={scrollRef} className="toc-scroll sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
         <p className="toc-text mb-2 font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark">
@@ -105,7 +105,7 @@ export function LessonToc({ contentId }: { contentId: string }) {
                   href={`#${item.id}`}
                   onClick={(event) => handleClick(event, item.id)}
                   aria-current={active ? "true" : undefined}
-                  className={`toc-text -ml-0.5 block break-keep border-l-2 py-1 pl-3 ${
+                  className={`toc-text -ml-0.5 block break-keep border-l-2 py-1.5 pl-4 ${
                     active
                       ? "border-accent font-bold text-accent dark:border-accent-dark dark:text-accent-dark"
                       : "border-transparent font-normal text-muted hover:text-foreground dark:text-muted-dark dark:hover:text-foreground-dark"

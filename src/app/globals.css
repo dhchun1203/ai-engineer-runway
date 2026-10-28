@@ -499,11 +499,10 @@ textarea,
     display: none;
   }
 
-  /* 목차 글자(2026-10-28). 본문 옆 여백에서 눈에 덜 띄도록 타입 스케일의 가장 작은
-     단계(label 14px)보다 한 단계 작게, 부모(본문 16px)에 대한 비율로 둔다. 목차는
-     넓은 화면(xl+)에만 나오는 보조 탐색이라 이 자리에서만 예외로 쓴다. */
+  /* 목차 글자(2026-10-28). 목차는 큰 절만 보여 항목이 적으므로 큼직하게 둔다.
+     부모(본문 16px)에 대한 비율이라 큰 모니터 배율도 그대로 따라간다. */
   .toc-text {
-    font-size: 0.8125em;
+    font-size: 0.9375em;
     line-height: 1.45;
     letter-spacing: -0.011em;
     /* 링크에 transition-colors 유틸리티를 붙이면 이 줄을 덮어 글자 크기 애니메이션이
@@ -514,7 +513,7 @@ textarea,
   /* 지금 읽는 절은 글자가 커지며 눈에 띈다. 목차를 쓰는 모든 레슨(로드맵, 수업 복습)이
      lesson-toc.tsx 하나를 공유하므로 여기 한 곳만 바꾸면 전부 같다. */
   .toc-text[aria-current="true"] {
-    font-size: 0.9375em;
+    font-size: 1.0625em;
   }
 
   @media (prefers-reduced-motion: reduce) {
