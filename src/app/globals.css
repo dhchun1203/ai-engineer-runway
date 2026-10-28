@@ -506,7 +506,9 @@ textarea,
     font-size: 0.8125em;
     line-height: 1.45;
     letter-spacing: -0.011em;
-    transition: color 200ms ease, font-size 220ms ease;
+    /* 링크에 transition-colors 유틸리티를 붙이면 이 줄을 덮어 글자 크기 애니메이션이
+       사라진다. 색 전환도 여기서 함께 한다. */
+    transition: color 200ms ease, border-color 200ms ease, font-size 220ms ease;
   }
 
   /* 지금 읽는 절은 글자가 커지며 눈에 띈다. 목차를 쓰는 모든 레슨(로드맵, 수업 복습)이

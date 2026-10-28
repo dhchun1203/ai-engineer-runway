@@ -106,7 +106,7 @@ export function LessonToc({ contentId }: { contentId: string }) {
                   href={`#${item.id}`}
                   onClick={(event) => handleClick(event, item.id)}
                   aria-current={active ? "true" : undefined}
-                  className={`toc-text -ml-0.5 block break-keep border-l-2 py-0.5 transition-colors ${
+                  className={`toc-text -ml-0.5 block break-keep border-l-2 py-0.5 ${
                     item.level === 3 ? "pl-5" : "pl-3"
                   } ${
                     active
