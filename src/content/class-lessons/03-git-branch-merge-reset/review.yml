@@ -1,0 +1,266 @@
+# 03-git-branch-merge-reset 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
+# 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
+slug: 03-git-branch-merge-reset
+checklist:
+  - id: class-03-and-chain
+    label: "git add . && git commit 으로 한 줄에 이어 치고, 앞이 실패하면 멈추는지 보기"
+  - id: class-03-gitignore
+    label: ".gitignore 에 *.log 와 !예외 줄을 넣어 보고, 이미 추적 중인 파일은 git rm --cached 로 끊어 보기"
+  - id: class-03-commit-type
+    label: "커밋 메시지를 feat, fix, docs 같은 타입: 제목 꼴로 써 보기"
+  - id: class-03-log-origin
+    label: "clone 한 저장소에서 커밋 후 git log 의 HEAD -> main 과 origin/main 위치 읽기"
+  - id: class-03-reset-reflog
+    label: "reset 세 옵션 뒤 git status --short 비교하고, reset --hard 로 날린 커밋을 reflog 로 되살리기"
+  - id: class-03-stash
+    label: "git stash, stash list, pop 과 apply 로 하던 작업 맡겼다 꺼내기 (-u 도)"
+  - id: class-03-merge
+    label: "Fast-forward 와 3-way merge 를 각각 만들어 git log --graph 로 비교하기"
+  - id: class-03-conflict
+    label: "일부러 충돌을 내서 표시를 지워 고치고 add, commit 으로 마무리하기 (merge --abort 도)"
+  - id: class-03-branch-delete
+    label: "병합 끝난 브랜치는 -d, 안 합친 브랜치는 -D 로 지워 보며 차이 보기"
+quiz:
+  - id: and-vs-semicolon
+    q: "커밋할 게 없는 상태에서 git commit -m \"x\" && echo \"뒤\" 를 실행하면?"
+    options:
+      - "commit 이 실패해서 echo 는 실행되지 않는다"
+      - "commit 이 실패해도 echo 는 실행된다"
+      - "두 명령이 동시에 백그라운드로 실행된다"
+      - "빈 커밋이 만들어진 뒤 echo 가 실행된다"
+    answer: 0
+    explain: "&& 는 앞 명령이 성공했을 때만 뒤 명령을 실행해요. 성공 여부와 상관없이 이어서 실행하려면 ; 를 써요. & 하나는 앞 명령을 백그라운드로 돌리는 전혀 다른 뜻이에요."
+  - id: gitignore-tracked
+    q: "이미 커밋해 둔 config.json 을 .gitignore 에 추가했는데도 수정할 때마다 git status 에 잡혀요. 추적을 끊는 명령은?"
+    options:
+      - "git rm config.json"
+      - "git rm --cached config.json"
+      - "git restore config.json"
+      - "git reset --hard"
+    answer: 1
+    explain: ".gitignore 는 아직 추적하지 않는 파일에만 통해요. git rm --cached 는 Staging(index)에서만 빼고 내 폴더의 파일은 남겨 둬요. --cached 없이 git rm 을 하면 폴더의 파일까지 지워져요."
+  - id: gitignore-inline-comment
+    q: ".gitignore 가 다음과 같을 때 important.log 는 어떻게 되나요?"
+    code: |-
+      *.log
+      !important.log   # 예외 처리
+    options:
+      - "예외가 먹혀서 important.log 는 추적된다"
+      - "예외가 먹히지 않아 important.log 도 무시된다"
+      - "# 뒤가 주석이라 *.log 규칙까지 꺼진다"
+      - "Git 이 .gitignore 문법 오류를 띄운다"
+    answer: 1
+    explain: ".gitignore 의 주석은 줄 맨 앞의 # 만이에요. 줄 중간의 # 은 글자라서, 두 번째 줄을 \"important.log   # 예외 처리\"라는 이름으로 읽어요. 그런 파일은 없으니 예외가 없는 셈이고, 직접 돌려 봐도 important.log 가 안 보였어요. 주석은 따로 한 줄에 써요."
+  - id: commit-type-refactor
+    q: "동작은 그대로 두고 함수를 나누어 코드 구조만 깔끔하게 바꿨어요. 알맞은 커밋 타입은?"
+    options:
+      - "style"
+      - "fix"
+      - "refactor"
+      - "chore"
+    answer: 2
+    explain: "refactor 는 동작은 같고 코드 구조만 좋게 바꿀 때예요. style 은 띄어쓰기나 세미콜론 같은 겉모양만 다듬을 때, fix 는 버그 수정, chore 는 빌드나 설정 같은 기타 작업이에요."
+  - id: log-ahead
+    q: "git log --oneline 결과가 다음과 같아요. 맞는 설명은?"
+    code: |-
+      fe2a9e6 (HEAD -> main) docs: Logs 폴더 제외
+      f99921f (origin/main) feat: .gitignore 파일 생성
+      4bb7219 docs: README.md 추가
+    options:
+      - "원격이 내 컴퓨터보다 커밋 하나 앞서 있어서 git pull 이 필요하다"
+      - "내 main 이 원격보다 커밋 하나 앞서 있어서 git push 가 필요하다"
+      - "두 브랜치가 갈라져서 충돌이 났다"
+      - "fe2a9e6 은 원격에만 있는 커밋이다"
+    answer: 1
+    explain: "HEAD -> main 은 내 컴퓨터의 main, origin/main 은 원격 main 이 가리키는 커밋이에요. 내 main 이 한 줄 위에 있으니 원격에 없는 커밋이 하나 있다는 뜻이고, git status 도 \"ahead of 'origin/main' by 1 commit\"이라고 알려 줘요."
+  - id: reset-status-mark
+    q: "마지막 커밋을 reset 으로 취소한 뒤 git status --short 를 봤더니 \" M README.md\"(M 이 오른쪽 칸)가 나왔어요. 어떤 옵션이었을까요?"
+    options:
+      - "--soft"
+      - "--mixed (옵션 없음)"
+      - "--hard"
+      - "reset 이 아니라 revert"
+    answer: 1
+    explain: "--mixed 는 커밋을 취소하고 Staging 도 비워서, 변경이 작업 폴더에만 남아요. 그래서 M 이 오른쪽 칸이에요. --soft 였다면 Staging 에 남아 \"M  README.md\"(왼쪽 칸), --hard 였다면 변경이 사라져 아무것도 안 나와요."
+  - id: reflog-recover
+    q: "git reset --hard HEAD~1 로 커밋을 날려 버렸어요. 되살리는 방법으로 알맞은 것은?"
+    options:
+      - "git stash pop 으로 꺼낸다"
+      - "git reflog 로 그 커밋 해시를 찾아 git reset --hard <해시> 를 한다"
+      - "git revert HEAD 를 한다"
+      - "날린 커밋은 되살릴 수 없다"
+    answer: 1
+    explain: "reflog 는 HEAD 가 움직인 모든 기록이에요. reset 직전 커밋이 HEAD@{1} 로 남아 있으니 git reset --hard HEAD@{1} 이나 그 해시로 돌아가면 돼요. reflog 는 내 컴퓨터에만 있어요."
+  - id: reflog-uncommitted
+    q: "reflog 로도 되살릴 수 없는 것은?"
+    options:
+      - "reset --hard 로 날린 커밋"
+      - "detached HEAD 에서 만들고 떠나 버린 커밋"
+      - "커밋하지 않은 채 reset --hard 로 지워진 변경"
+      - "브랜치를 지우기 전에 그 브랜치에 있던 커밋"
+    answer: 2
+    explain: "reflog 는 커밋의 기록이라, 한 번도 커밋하지 않은 변경은 남아 있지 않아요. 그래서 reset --hard 전에는 git status 로 아직 커밋 안 한 변경이 없는지 보고, 아까우면 커밋하거나 stash 해 둬요."
+  - id: branch-vs-checkout-b
+    q: "main 에서 git branch feature/login 을 실행한 직후, 나는 어느 브랜치에 있나요?"
+    options:
+      - "feature/login"
+      - "main"
+      - "detached HEAD"
+      - "브랜치가 없는 상태"
+    answer: 1
+    explain: "git branch 이름 은 브랜치를 만들기만 하고 이동은 안 해요. git branch 목록에서도 별표는 여전히 main 에 있어요. 만들고 바로 옮겨 가려면 git checkout -b 나 git switch -c 를 써요."
+  - id: stash-untracked
+    q: "README.md 를 수정하고 new.txt 를 새로 만든 뒤 git stash 만 쳤어요. 결과는?"
+    options:
+      - "두 파일 모두 서랍에 들어가 작업 폴더가 깨끗해진다"
+      - "README.md 의 변경만 들어가고, 새 파일 new.txt 는 그대로 남는다"
+      - "new.txt 만 들어가고 README.md 는 남는다"
+      - "새 파일이 있어서 stash 가 거절된다"
+    answer: 1
+    explain: "git stash 는 기본으로 Git 이 이미 추적하는 파일의 변경만 넣어요. 새로 만든(untracked) 파일까지 넣으려면 git stash -u 를 써요."
+  - id: stash-pop-apply
+    q: "git stash pop 과 git stash apply 의 차이는?"
+    options:
+      - "pop 은 꺼내서 적용하고 목록에서 지우고, apply 는 적용하되 목록에 남긴다"
+      - "pop 은 마지막 것을, apply 는 처음 것을 꺼낸다"
+      - "pop 은 새 파일만, apply 는 수정한 파일만 꺼낸다"
+      - "차이가 없다"
+    answer: 0
+    explain: "둘 다 꺼내서 작업 폴더에 적용해요. pop 은 \"Dropped refs/stash@{0}\"처럼 목록에서 지우고, apply 는 git stash list 에 그대로 남아요. 같은 변경을 여러 브랜치에 적용할 때는 apply 가 편해요."
+  - id: fast-forward
+    q: "feature 를 만든 뒤 main 에는 새 커밋이 없고, feature 에만 커밋이 있어요. main 에서 git merge feature 를 하면?"
+    options:
+      - "공통 조상과 비교해 merge 커밋을 새로 만든다"
+      - "main 책갈피가 feature 끝으로 옮겨 갈 뿐, merge 커밋은 생기지 않는다 (Fast-forward)"
+      - "충돌이 난다"
+      - "feature 의 커밋이 main 에서 지워진다"
+    answer: 1
+    explain: "main 에 새 커밋이 없으면 합칠 것이 없어서 포인터만 앞으로 옮겨요. Git 이 Fast-forward 라고 알려 주고, 그래프도 한 줄이에요. 그래도 merge 커밋을 남기고 싶으면 --no-ff 를 붙여요."
+  - id: three-way-merge
+    q: "3-way merge 에서 Git 이 비교하는 세 곳은?"
+    options:
+      - "main, develop, feature 세 브랜치"
+      - "작업 폴더, Staging, 저장소"
+      - "두 브랜치가 갈라진 공통 조상, main 의 끝, feature 의 끝"
+      - "첫 커밋, 중간 커밋, 마지막 커밋"
+    answer: 2
+    explain: "양쪽 브랜치에 각각 새 커밋이 있으면, 공통 조상과 두 끝 커밋을 비교해 둘을 묶는 merge 커밋을 새로 만들어요. 그래서 세 방향(3-way)이에요."
+  - id: conflict-steps
+    q: "merge 하다 README.md 에 충돌이 났어요(both modified). 해결하는 순서로 맞는 것은?"
+    options:
+      - "git commit → 파일 수정 → git add"
+      - "파일을 최종 내용으로 고치고 충돌 표시를 지움 → git add README.md → git commit"
+      - "git merge --abort → git add README.md → git commit"
+      - "git stash → git merge → git push"
+    answer: 1
+    explain: "<<<<<<<, =======, >>>>>>> 표시 사이의 두 내용 중 무엇을 남길지 직접 정해 고치고 표시 줄을 지워요. git add 로 해결했다고 알리고, git commit 으로 merge 커밋을 마무리해요. 그만두고 싶을 때만 git merge --abort 예요."
+  - id: branch-delete-unmerged
+    q: "아직 합치지 않은 feature/try 를 git branch -d feature/try 로 지우려 하면?"
+    options:
+      - "바로 지워진다"
+      - "\"not fully merged\" 라며 거절하고 -D 를 쓰라고 알려 준다"
+      - "main 에 자동으로 합친 뒤 지운다"
+      - "원격 브랜치까지 함께 지운다"
+    answer: 1
+    explain: "-d(--delete)는 병합이 끝난 브랜치만 지워요. 거기에만 있는 커밋이 사라질 수 있어서 거절하는 거예요. 정말 버려도 될 때만 -D 로 강제로 지워요. 지금 서 있는 브랜치는 둘 다 못 지워요."
+  - id: gitflow-feature-base
+    q: "GitFlow 에서 feature 브랜치는 어디서 갈라져 나오고, 다 만들면 어디로 합치나요?"
+    options:
+      - "main 에서 갈라져 main 으로 바로 합친다"
+      - "develop 에서 갈라져 PR 을 거쳐 develop 으로 합친다"
+      - "release 에서 갈라져 hotfix 로 합친다"
+      - "hotfix 에서 갈라져 develop 으로 합친다"
+    answer: 1
+    explain: "feature 는 develop 에서 갈라져 나오고, 끝나면 PR 로 develop 에 합쳐요. 충돌은 주로 이때 나서, feature 가 오래 살지 않게 develop 의 변경을 자주 가져와 맞추고, PR 전에 feature 쪽에서 충돌을 풀어요."
+commands:
+  - cmd: "<명령1> && <명령2>"
+    desc: 앞 명령이 성공했을 때만 뒤 명령 실행
+    group: 터미널
+  - cmd: "<명령1> ; <명령2>"
+    desc: 성공 여부와 상관없이 이어서 실행
+    group: 터미널
+  - cmd: git rm --cached <파일>
+    desc: 파일은 폴더에 두고 Git 추적만 끊기(.gitignore 와 함께)
+    group: Git
+  - cmd: git clone <URL>
+    desc: 원격 저장소를 이력까지 통째로 복제(origin 자동 연결)
+    group: Git
+  - cmd: git clone <URL> <폴더>
+    desc: 폴더 이름을 정해서 복제
+    group: Git
+  - cmd: git reset --soft HEAD~1
+    desc: 커밋만 취소, 변경은 Staging에 남김
+    group: Git
+  - cmd: git reset HEAD~1
+    desc: 커밋 취소, 변경은 작업 폴더에만 남김(--mixed)
+    group: Git
+  - cmd: git reset --hard HEAD~1
+    desc: 커밋 취소, 변경까지 삭제(주의)
+    group: Git
+  - cmd: git reflog
+    desc: HEAD가 움직인 모든 기록 보기(로컬에만 있음)
+    group: Git
+  - cmd: git reset --hard HEAD@{1}
+    desc: reflog에서 한 단계 전 상태로 복구
+    group: Git
+  - cmd: git revert <해시>
+    desc: 그 커밋을 반대로 고치는 새 커밋 만들기
+    group: Git
+  - cmd: git branch <이름>
+    desc: 브랜치를 만들기만 하기(이동 안 함)
+    group: Git
+  - cmd: git checkout -b <이름>
+    desc: 브랜치를 만들고 바로 이동
+    group: Git
+  - cmd: git branch
+    desc: 브랜치 목록 보기
+    group: Git
+  - cmd: git stash
+    desc: 커밋 안 한 변경을 임시로 맡기고 작업 폴더 비우기
+    group: Git
+  - cmd: git stash list
+    desc: 맡겨 둔 목록 보기
+    group: Git
+  - cmd: git stash pop
+    desc: 꺼내서 적용하고 목록에서 지우기
+    group: Git
+  - cmd: git stash apply
+    desc: 꺼내서 적용하되 목록에 남기기
+    group: Git
+  - cmd: git stash -u
+    desc: 새로 만든(untracked) 파일까지 맡기기
+    group: Git
+  - cmd: git merge <이름>
+    desc: 그 브랜치를 지금 브랜치에 합치기
+    group: Git
+  - cmd: git merge --no-ff <이름>
+    desc: Fast-forward가 가능해도 merge 커밋 남기기
+    group: Git
+  - cmd: git merge --abort
+    desc: 충돌 난 merge를 그만두고 이전 상태로
+    group: Git
+  - cmd: git branch -d <이름>
+    desc: 병합이 끝난 브랜치 삭제(--delete 와 같음)
+    group: Git
+  - cmd: git branch -D <이름>
+    desc: 병합 여부와 상관없이 강제 삭제
+    group: Git
+terms:
+  - word: 커밋 메시지 컨벤션 (commit convention)
+    definition: "커밋 메시지를 feat, fix, docs 같은 타입을 앞에 붙인 \"타입: 제목\" 꼴로 쓰자는 약속. 팀마다 타입 구성이 조금씩 다르다."
+  - word: origin/main
+    definition: 원격 저장소의 main 브랜치가 가리키는 커밋. 내 main 이 이보다 앞서 있으면 push 할 커밋이 있다는 뜻이다.
+  - word: reflog
+    definition: HEAD가 움직인 모든 기록(커밋, reset, checkout 등). 내 컴퓨터에만 있고, reset --hard 로 날린 커밋도 여기서 찾아 되살릴 수 있다.
+  - word: stash
+    definition: 아직 커밋하지 않은 변경을 임시로 맡겨 두고 작업 폴더를 깨끗하게 만드는 기능. pop 이나 apply 로 다시 꺼낸다.
+  - word: Fast-forward
+    definition: 받는 쪽 브랜치에 새 커밋이 없을 때, merge 커밋 없이 브랜치 포인터만 앞으로 옮겨 합치는 방식.
+  - word: 3-way merge
+    definition: 양쪽 브랜치에 새 커밋이 있을 때 공통 조상과 두 브랜치 끝을 비교해 merge 커밋을 새로 만드는 합치기 방식.
+  - word: merge 커밋
+    definition: 갈라진 두 줄기를 하나로 묶으며 생기는 커밋. 부모 커밋이 둘이다.
+  - word: 충돌 (conflict)
+    definition: 두 브랜치가 같은 파일의 같은 부분을 다르게 고쳐서 Git이 자동으로 합치지 못하는 상태. 직접 고친 뒤 add, commit 으로 마무리한다.
+  - word: develop 브랜치
+    definition: GitFlow에서 개발한 기능을 모아 합치는 브랜치. feature 브랜치가 여기서 갈라져 나오고 PR로 다시 합쳐진다.
