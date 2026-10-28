@@ -63,7 +63,9 @@ export default async function BookmarksPage() {
     list.sort((a, b) => a.index - b.index);
   }
 
-  const totalBookmarks = read.rows.length;
+  // 이 목록은 정규 커리큘럼만 보인다. 베이스캠프·로드맵·수업 레슨의 책갈피는
+  // "basecamp:<slug>"처럼 접두어 키라 세지 않는다(bookmark-pages.ts).
+  const totalBookmarks = read.rows.filter((row) => !row.lessonId.includes(":")).length;
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
@@ -73,7 +75,7 @@ export default async function BookmarksPage() {
           <p className="text-body font-normal">
             {totalBookmarks > 0
               ? "전체 커리큘럼 목차예요. 북마크한 곳이 있는 모듈은 펼쳐 두고 나머지는 접었어요 — 접힌 모듈도 눌러서 펼칠 수 있어요. 저장한 위치를 누르면 그 소제목으로 바로 이동합니다."
-              : "전체 커리큘럼 목차예요. 아직 북마크가 없어요 — 레슨을 읽다가 왼쪽 아래 리본 버튼을 누르면 그 위치가 여기 표시됩니다. 모듈을 눌러 목차를 펼쳐 볼 수 있어요."}
+              : "전체 커리큘럼 목차예요. 아직 북마크가 없어요 — 레슨을 읽다가 왼쪽 아래 '책갈피 꽂기'를 누르면 그 위치가 여기 표시됩니다. 모듈을 눌러 목차를 펼쳐 볼 수 있어요."}
           </p>
         </div>
         <SpotIllustration name="bookmarks" className="hidden w-24 lg:w-28 shrink-0 sm:block" />

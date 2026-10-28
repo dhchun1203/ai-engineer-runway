@@ -1,4 +1,4 @@
-// GET /api/bookmarks?lesson=<slug> — 레슨 페이지 플로팅 북마크 버튼의 상태 소스.
+// GET /api/bookmarks?lesson=<페이지 키> — 레슨 페이지 책갈피(page-bookmark.tsx)의 상태 소스.
 // /api/progress/route.ts의 규율을 그대로 따른다: hasUnlockCookie()를 무조건, 그리고
 // 어떤 조회보다도 먼저 호출한다. 잠금 해제 전이면 bookmarks를 null로 고정한다 —
 // 북마크 유무를 추론할 수 있는 어떤 값도 새어나가지 않는다.
@@ -13,7 +13,7 @@
 
 import { NextResponse } from 'next/server';
 import { hasUnlockCookie } from '@/lib/auth';
-import { getLessonBySlug } from '@/content/curriculum-helpers';
+import { isBookmarkablePage } from '@/lib/bookmark-pages';
 import { readLessonBookmarks, type Bookmark } from '@/lib/bookmark-store';
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'private, no-store' } as const;
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
   // ?lesson=<slug> — 존재 여부를 먼저 검증한다. 미존재 슬러그는 오류가 아니라 빈
   // 목록으로 처리한다(존재 여부를 되묻는 탐침이 되지 않게 한다).
   const lessonSlug = new URL(request.url).searchParams.get('lesson');
-  if (!lessonSlug || !getLessonBySlug(lessonSlug)) {
+  if (!lessonSlug || !(await isBookmarkablePage(lessonSlug))) {
     return NextResponse.json({ unlocked: true, ok: true, bookmarks: [] }, { status: 200, headers: NO_STORE_HEADERS });
   }
 

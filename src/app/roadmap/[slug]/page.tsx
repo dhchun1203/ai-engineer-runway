@@ -7,6 +7,7 @@ import { isRoadmapViewer } from "@/lib/roadmap-access";
 import { MDXContent } from "@/components/mdx-content";
 import { TermPanelProvider, Term } from "@/components/roadmap/term-panel";
 import { LessonToc } from "@/components/roadmap/lesson-toc";
+import { PageBookmark } from "@/components/page-bookmark";
 import { ReadingAssistant } from "@/components/reading-assistant/reading-assistant";
 import { RoadmapNote } from "@/components/roadmap-note";
 import { getRoadmapLessonBySlug } from "@/content/roadmap-lesson-helpers";
@@ -54,6 +55,7 @@ export default async function RoadmapLessonPage(
       {/* 데스크탑(xl+) 왼쪽 여백의 스크롤 반응 목차. 본문(lesson-body)의 절을 읽어
           현재 위치를 실시간 강조한다. 좁은 화면에서는 숨는다. */}
       <LessonToc contentId="lesson-body" />
+      <PageBookmark pageKey={`roadmap:${lesson.slug}`} pageTitle={lesson.title} articleId="lesson-body" />
       <article className="flex flex-col gap-8">
         <header className="flex flex-col gap-3">
           <Link

@@ -3,8 +3,10 @@ import 'server-only';
 // lesson_bookmark 테이블에 대한 유일한 데이터 접근 계층 — note-store.ts / progress-store.ts의
 // 형태를 그대로 미러링한다. 조회 실패와 "북마크 없음"을 타입 수준에서 구분해 반환한다.
 //
-// 레슨 안 소제목(h2) 단위 북마크다. lesson_note와 달리 한 레슨에 여러 개가 있을 수 있어
-// (lesson_id, section_index) 복합 키를 쓴다. section_title을 함께 저장·반환하는 이유는
+// 레슨 안 소제목(h2) 단위로 꽂는 페이지 책갈피다. 2026-10-29부터 페이지당 하나라
+// (setPageBookmark가 보장), 정규 레슨 외에 basecamp:/roadmap:/class: 접두어 키도 담는다
+// (bookmark-pages.ts). 키 자체는 처음의 다중 북마크 시절 (lesson_id, section_index) 복합
+// 키를 그대로 쓴다. section_title을 함께 저장·반환하는 이유는
 // 마이그레이션 주석 참고 — 본문 개정으로 h2 순서가 바뀌어도 제목으로 되찾기 위한 폴백이다.
 
 import { getUserDb } from './supabase/db';
@@ -25,9 +27,9 @@ function isValidIndex(sectionIndex: number): boolean {
   return Number.isInteger(sectionIndex) && sectionIndex >= 0 && sectionIndex <= MAX_SECTION_INDEX;
 }
 
-/** 한 레슨의 북마크를 section_index 오름차순으로 반환한다 — 레슨 페이지의 플로팅
- * 버튼이 "현재 섹션이 북마크됐는지" 판정에 쓴다. 행이 없으면 빈 배열로 성공을
- * 반환한다(조회 실패와 타입 수준에서 구분). */
+/** 한 페이지의 북마크를 최근 것부터 반환한다 — 레슨 페이지의 책갈피(page-bookmark.tsx)는
+ * 맨 앞 하나만 쓴다(페이지당 책갈피 하나). 행이 없으면 빈 배열로 성공을 반환한다(조회
+ * 실패와 타입 수준에서 구분). */
 export async function readLessonBookmarks(lessonSlug: string): Promise<BookmarksRead> {
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, bookmarks: [] };
@@ -38,7 +40,7 @@ export async function readLessonBookmarks(lessonSlug: string): Promise<Bookmarks
     .select('section_index, section_title')
     .eq('user_id', userId)
     .eq('lesson_id', lessonSlug)
-    .order('section_index', { ascending: true });
+    .order('created_at', { ascending: false });
 
   if (error) {
     return { ok: false, error: error.message };
@@ -52,7 +54,9 @@ export async function readLessonBookmarks(lessonSlug: string): Promise<Bookmarks
   return { ok: true, bookmarks };
 }
 
-export async function addBookmark(
+/** 페이지 책갈피를 꽂거나 옮긴다 — 페이지당 하나라서 그 페이지의 기존 행을 모두 지우고
+ * 새 행 하나를 넣는다. */
+export async function setPageBookmark(
   lessonSlug: string,
   sectionIndex: number,
   sectionTitle: string,
@@ -67,12 +71,18 @@ export async function addBookmark(
 
   const userId = await requireCurrentUserId();
   const db = await getUserDb();
+  const cleared = await db
+    .from('lesson_bookmark')
+    .delete()
+    .eq('user_id', userId)
+    .eq('lesson_id', lessonSlug);
+  if (cleared.error) {
+    throw new Error(`bookmark-store: 이전 책갈피 정리 실패 (lesson_id=${lessonSlug}): ${cleared.error.message}`);
+  }
+
   const { error } = await db
     .from('lesson_bookmark')
-    .upsert(
-      { user_id: userId, lesson_id: lessonSlug, section_index: sectionIndex, section_title: title },
-      { onConflict: 'user_id,lesson_id,section_index' },
-    );
+    .insert({ user_id: userId, lesson_id: lessonSlug, section_index: sectionIndex, section_title: title });
 
   if (error) {
     throw new Error(`bookmark-store: 북마크 저장 실패 (lesson_id=${lessonSlug}, index=${sectionIndex}): ${error.message}`);

@@ -100,8 +100,9 @@ export function LessonToc({ contentId }: { contentId: string }) {
       aria-label="레슨 목차"
       className="hidden xl:absolute xl:right-full xl:top-0 xl:block xl:h-full xl:w-60 xl:pr-12 2xl:w-96 2xl:pr-20"
     >
-      {/* 화면 세로 가운데에 고정: sticky top 50%(스크롤 화면 높이 기준) + 자기 높이 절반만큼 위로. */}
-      <div ref={scrollRef} className="toc-scroll sticky top-1/2 max-h-[calc(100vh-10rem)] -translate-y-1/2 overflow-y-auto">
+      {/* 화면 세로 가운데에 고정: sticky top 50%(스크롤 화면 높이 기준) + 자기 높이 절반만큼 위로.
+          위아래 7rem씩 비워 위로는 헤더, 아래로는 좌하단 책갈피와 메모장 손잡이에 닿지 않는다. */}
+      <div ref={scrollRef} className="toc-scroll sticky top-1/2 max-h-[calc(100vh-14rem)] -translate-y-1/2 overflow-y-auto">
         <p className="toc-text mb-2 font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark">
           목차
         </p>

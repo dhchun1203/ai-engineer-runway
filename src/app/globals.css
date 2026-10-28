@@ -1162,10 +1162,11 @@ body:has(.note-sheet) .scroll-top {
   }
 }
 
-/* ── 북마크 플로팅 버튼 (quick 260902-bkm) ───────────────────────────────
+/* ── 레슨 책갈피 (quick 260902-bkm, 2026-10-29 페이지당 하나로) ─────────────
    "맨 위로"(.scroll-top)의 좌우 대칭. 우하단은 .scroll-top, 하단 전체는 메모장
    시트가 차지하므로 좌하단에 세운다. 모양은 .btn을 그대로 쓰고(44px 터치 타깃·잉크
-   테두리·그림자) 여기서는 자리와 정사각 폭만 정한다. z-index 30의 근거는 .scroll-top과
+   테두리·그림자) 여기서는 자리만 정한다. "책갈피로 이동/여기로 옮기기" 알약을 가로로
+   늘어놓아 왼쪽 여백의 목차와 세로로 겹치지 않게 낮게 둔다. z-index 30의 근거는 .scroll-top과
    같다: 헤더(20)·구간 테이프(10) 위에서 스크롤 중에도 눌리고, 메모장 시트(40)
    아래라 메모를 펼치면 시트가 덮는다. 라벨(bookmark-fab-flash)은 버튼 오른쪽에
    잠깐 떴다 사라진다. */
@@ -1183,13 +1184,6 @@ body:has(.note-sheet) .scroll-top {
    :has() 규칙의 좌측 짝. */
 body:has(.note-sheet) .bookmark-fab {
   bottom: calc(var(--note-handle-height) + 1rem + env(safe-area-inset-bottom, 0px));
-}
-
-.bookmark-fab-btn {
-  /* .btn의 padding-inline(1.125rem)을 덮어 정사각으로 만든다 — 아이콘 하나뿐이라
-     좌우 여백이 남으면 알약 모양이 된다(.scroll-top과 같은 처리). */
-  width: 2.75rem;
-  padding-inline: 0;
 }
 
 /* ── 책으로 읽기 책갈피 FAB (quick 260904-a1o) ────────────────────────────
