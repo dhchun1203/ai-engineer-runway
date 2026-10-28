@@ -484,6 +484,15 @@ textarea,
     display: none;
   }
 
+  /* 목차 글자(2026-10-28). 본문 옆 여백에서 눈에 덜 띄도록 타입 스케일의 가장 작은
+     단계(label 14px)보다 한 단계 작게, 부모(본문 16px)에 대한 비율로 둔다. 목차는
+     넓은 화면(xl+)에만 나오는 보조 탐색이라 이 자리에서만 예외로 쓴다. */
+  .toc-text {
+    font-size: 0.8125em;
+    line-height: 1.45;
+    letter-spacing: -0.011em;
+  }
+
   .hit-44::before {
     content: "";
     position: absolute;

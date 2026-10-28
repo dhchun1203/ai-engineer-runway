@@ -94,7 +94,7 @@ export function LessonToc({ contentId }: { contentId: string }) {
       className="hidden xl:absolute xl:right-full xl:top-0 xl:block xl:h-full xl:w-60 xl:pr-14"
     >
       <div ref={scrollRef} className="toc-scroll sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
-        <p className="mb-3 text-label font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark">
+        <p className="toc-text mb-2 font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark">
           목차
         </p>
         <ul className="flex flex-col border-l-2 border-line dark:border-line-dark">
@@ -106,8 +106,8 @@ export function LessonToc({ contentId }: { contentId: string }) {
                   href={`#${item.id}`}
                   onClick={(event) => handleClick(event, item.id)}
                   aria-current={active ? "true" : undefined}
-                  className={`-ml-0.5 block break-keep border-l-2 py-1 text-label leading-snug transition-colors ${
-                    item.level === 3 ? "pl-6" : "pl-3"
+                  className={`toc-text -ml-0.5 block break-keep border-l-2 py-0.5 transition-colors ${
+                    item.level === 3 ? "pl-5" : "pl-3"
                   } ${
                     active
                       ? "border-accent font-bold text-accent dark:border-accent-dark dark:text-accent-dark"
