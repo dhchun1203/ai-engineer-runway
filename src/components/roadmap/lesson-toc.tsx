@@ -91,7 +91,7 @@ export function LessonToc({ contentId }: { contentId: string }) {
   return (
     <nav
       aria-label="레슨 목차"
-      className="hidden xl:absolute xl:right-full xl:top-0 xl:block xl:h-full xl:w-52 xl:pr-8"
+      className="hidden xl:absolute xl:right-full xl:top-0 xl:block xl:h-full xl:w-60 xl:pr-14"
     >
       <div ref={scrollRef} className="toc-scroll sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
         <p className="mb-3 text-label font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark">
