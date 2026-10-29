@@ -352,6 +352,12 @@ export const roadmapStages: readonly RoadmapStage[] = [
         coverage: "reinforce",
         where: "Step 3 Project 3 평가셋에서 두 단계를 따로 잰다. 답이 틀렸을 때 어디부터 고칠지가 여기서 갈린다 (10/28 특강)",
       },
+      {
+        title: "고치기 전에 평가셋 100문항부터 (질문, 기대하는 답, 채점 기준을 저장소에)",
+        coverage: "separate",
+        where: "평가셋이 없으면 무엇을 바꿔도 나아졌는지 알 수 없다. 100개면 하루로 충분하고, 검색 지표(recall@k)와 생성 지표(정답률, 근거 정확도, 환각률)를 나눠 잰다 (10/28 특강 자료)",
+        lessonSlug: "session-2026-10-28-career-roadmap",
+      },
     ],
   },
   {
@@ -456,6 +462,12 @@ export const roadmapStages: readonly RoadmapStage[] = [
         title: "오픈소스에 PR을 올려 머지까지 가 보기",
         coverage: "separate",
         where: "메인테이너의 규칙에 맞춰 문서, 테스트, PR을 거쳐 머지되는 흐름이 회사 개발 흐름과 같다 (10/28 특강: 신입 중 오픈소스 해 본 사람이 살아남는다)",
+      },
+      {
+        title: "대표 저장소 하나를 README 다섯 칸(요약, 실행, 구조, 평가, 한계)으로 정리해 GitHub 프로필 첫 화면에 고정",
+        coverage: "separate",
+        where: "많아 보이는 것보다 완성돼 보이는 게 낫다. 지원 전에 배포 URL, 평가셋 100문항, 개선 전후 표, README 다섯 칸, 실패 기록 다섯 가지를 점검한다 (10/28 특강 자료)",
+        lessonSlug: "session-2026-10-28-career-roadmap",
       },
     ],
   },
@@ -605,6 +617,10 @@ export const docPrinciples: readonly DocPrinciple[] = [
   {
     title: "주장과 증거를 일치시키기",
     body: "자기소개서에 \"테스트를 중요하게 생각한다\"고 쓰고 저장소에 테스트가 없으면 신뢰가 떨어져요. 서류에 쓴 주장마다 포트폴리오와 저장소에서 바로 확인되는 증거가 있어야 해요(10/28 특강).",
+  },
+  {
+    title: "공고 문장을 포트폴리오 증거로 번역하기",
+    body: "\"RAG 파이프라인 구축\"이면 청킹 크기와 임베딩 모델을 고른 비교 실험 표, \"답변 품질 평가 체계\"면 평가 질문 100개와 개선 전후 수치, \"프로덕션 배포 경험\"이면 배포 URL과 장애 대응 기록처럼, 공고 문장마다 보여 줄 증거를 정해 두고 만들어요(10/28 특강 자료, 번역표는 특강 노트 08번).",
   },
 ];
 

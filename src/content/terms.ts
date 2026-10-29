@@ -395,6 +395,10 @@ export const terms: Record<string, TermEntry> = {
     title: "SLO (Service Level Objective)",
     body: "서비스가 지켜야 할 품질 목표를 숫자로 정한 것입니다. 예를 들어 \"요청의 99%는 300ms 안에 응답한다\" 같은 기준입니다.\n\n이 목표를 고객과의 약속으로 계약서에 적으면 SLA(Service Level Agreement)가 됩니다. 기준이 있어야 성능 개선과 부하 테스트를 언제 멈출지 정할 수 있습니다.",
   },
+  "recall-at-k": {
+    title: "recall@k, precision@k",
+    body: "검색이 필요한 문서를 제대로 찾아왔는지 재는 지표입니다. k는 검색해서 가져온 조각의 개수입니다.\n\nrecall@k는 정답 근거 중 몇 개가 가져온 k개 안에 들어 있는지(빠뜨리지 않았나), precision@k는 가져온 k개 중 몇 개가 정말 필요한 것인지(쓸데없는 걸 섞지 않았나)를 봅니다. k를 늘리면 보통 recall은 오르고 precision은 내려갑니다.",
+  },
   fallback: {
     title: "폴백 (fallback)",
     body: "원래 하려던 방식이 실패했을 때 대신 쓰는 다음 방법입니다. 예를 들어 주력 LLM API가 응답하지 않으면 다른 모델로 넘기거나, 미리 정해 둔 안내 문구로 답합니다.\n\n폴백이 없으면 외부 서비스 하나가 멈출 때 내 서비스 전체가 같이 멈춥니다.",
