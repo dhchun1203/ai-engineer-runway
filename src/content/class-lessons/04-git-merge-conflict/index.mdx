@@ -2,7 +2,7 @@
 title: "Git 충돌(Merge Conflict) 예방하고 해결하기"
 session: 4
 date: "2026-10-29"
-summary: "3-way merge가 base, current, incoming을 비교하는 규칙, 충돌이 나는 경우와 안 나는 경우, 일부러 충돌을 만들어 status, 표시 읽기, --ours/--theirs, diff --check, add, commit으로 푸는 한 바퀴, merge --abort, 그리고 충돌을 줄이는 습관까지."
+summary: "3-way merge가 base, current, incoming을 비교하는 규칙, 충돌이 나는 경우와 안 나는 경우, 일부러 충돌을 만들어 status, 표시 읽기, --ours/--theirs, diff --check, add, commit으로 푸는 한 바퀴, merge --abort, 그리고 충돌을 줄이는 습관까지. TIL에 남긴 revert와 rebase 질문도 함께 풀어요."
 slug: "04-git-merge-conflict"
 module: "1-2"
 topic: "Git"
@@ -23,6 +23,7 @@ Git이 언제 알아서 합치고 언제 멈추는지, 그 규칙부터 봐요. 
 | 6 | base까지 보며 풀기 | diff3 표시 방식 |
 | 7 | pull과 PR에서 만나는 충돌 | 로컬에서 먼저 풀기 |
 | 8 | 충돌 예방 | 작게, 자주, 나눠서 |
+| 9 | 더 알아보기: revert와 rebase | TIL에 남긴 두 질문 풀기 |
 
 레슨 끝에 확인 퀴즈가 있고, 복습 체크리스트는 [수업 복습](/class) 목록에 있어요.
 
@@ -431,6 +432,141 @@ git push origin feature/login
 - 전체 들여쓰기나 포맷 변경 같은 **대규모 수정은 따로**, 미리 공유하고 진행해요. 모든 줄이 바뀌어서 그 사이 다른 사람 작업과 전부 부딪혀요.
 - **PR에서도 충돌이 표시돼요.** 가능하면 PR 전에 로컬에서 먼저 해결해요.
 
+## 9. 더 알아보기: revert와 rebase
+
+TIL "아직 막힌 곳"에 남긴 두 질문이에요. 오늘 수업 범위는 아니지만, 둘 다 충돌과 바로 이어져서 여기서 풀어 둘게요. 출력은 임시 폴더에서 직접 돌린 결과예요.
+
+### revert는 어떻게 쓰나요
+
+어제 "이미 push해서 팀원이 가져간 커밋은 reset 말고 revert"라고 했어요. 왜 그런지 두 사람(나, 팀원)과 원격 저장소 하나로 해 봤어요.
+
+버그 있는 커밋을 push했고, 팀원이 이미 pull로 받아 갔어요. 이때 reset으로 커밋을 지우고 push하면 거절돼요.
+
+```bash
+git reset --hard HEAD~1
+git push origin main
+#  ! [rejected]        main -> main (non-fast-forward)
+```
+
+원격에는 그 커밋이 있는데 내 쪽에서는 사라졌으니, 이력이 서로 어긋났다는 뜻이에요. 억지로 덮어쓰면(`git push --force`) 이미 받아 간 팀원의 이력과 엇갈려 다음 pull에서 혼란이 생겨요.
+
+revert는 커밋을 **지우지 않고**, 그 커밋을 거꾸로 되돌리는 **새 커밋**을 하나 더 만들어요.
+
+```bash
+git revert HEAD                 # 되돌릴 커밋 해시를 써도 돼요 (git revert 65e7d79)
+# [main adde82d] Revert "feat: 버그 있는 기능"
+git push origin main
+#    65e7d79..adde82d  main -> main
+```
+
+이력이 앞으로만 늘었으니 push가 그냥 돼요. 팀원도 pull하면 Fast-forward로 깔끔하게 받아요.
+
+```bash
+# 팀원 쪽
+git pull origin main
+# Fast-forward
+git log --oneline
+# adde82d Revert "feat: 버그 있는 기능"
+# 65e7d79 feat: 버그 있는 기능
+# ec0b2de docs: README 추가
+```
+
+버그 커밋도, 그걸 되돌린 커밋도 기록에 남아요. "언제 무엇을 왜 되돌렸는지"가 보이는 게 장점이에요.
+
+| | reset | revert |
+| --- | --- | --- |
+| 하는 일 | 커밋을 이력에서 지움 | 반대로 고치는 새 커밋을 추가 |
+| 이력 | 뒤로 감김 | 앞으로 늘어남 |
+| 쓸 때 | 아직 push 안 한 내 커밋 | 이미 push해서 남이 받아 간 커밋 |
+
+`git revert`를 그냥 치면 `Revert "..."` 메시지가 채워진 편집기가 열려요. 저장(`:wq`)하면 돼요. 맨 마지막 커밋이 아니라 중간 커밋도 해시를 주면 그것만 골라 되돌려요. 되돌린 결과가 뒤 커밋과 부딪히면 merge처럼 충돌이 나고, 푸는 법도 같아요.
+
+### rebase는 뭐고 언제 쓰나요
+
+merge는 갈라진 두 줄기를 **merge 커밋으로 묶어요.** rebase는 내 브랜치의 커밋들을 **떼어서 상대 브랜치 끝에 다시 붙여요.** "출발점(base)을 다시 정한다"는 뜻이에요.
+
+feature에서 C, D를 만드는 동안 main에 E가 생겼어요.
+
+```bash
+git log --oneline --graph --all
+# * d78f18d (feature) D
+# * 36c2781 C
+# | * 6b39cbe (HEAD -> main) E
+# |/
+# * c37adde B
+# * 850ec7f A
+```
+
+feature에 서서 main 위로 rebase해요.
+
+```bash
+git checkout feature
+git rebase main
+# Successfully rebased and updated refs/heads/feature.
+
+git log --oneline --graph --all
+# * fc105ef (HEAD -> feature) D
+# * c3e6a88 C
+# * 6b39cbe (main) E
+# * c37adde B
+# * 850ec7f A
+```
+
+갈래가 사라지고 한 줄이 됐어요. C, D가 E 뒤로 옮겨 붙었어요. C의 해시가 `36c2781`에서 `c3e6a88`로 바뀐 걸 보세요. 내용은 같아도 **새 커밋으로 다시 만들어진 것**이에요.
+
+이제 main에서 feature를 merge하면 Fast-forward로 끝나서 merge 커밋 없이 이력이 한 줄로 남아요.
+
+**언제 쓰나요.** 아직 나만 쓰는 feature 브랜치를 PR 올리기 전에 최신 develop(또는 main) 위로 옮겨, 깔끔한 한 줄 이력으로 만들 때 써요. 8번의 "기준 브랜치 변경을 자주 가져오기"를 merge 대신 rebase로 하는 방법이에요. 팀마다 merge를 쓸지 rebase를 쓸지 정해 두는 경우가 많아요.
+
+**꼭 지킬 규칙: 이미 push해서 남과 공유한 커밋은 rebase하지 않아요.** 해시가 바뀌니 원격과 이력이 어긋나서, 위의 reset 때처럼 push가 거절돼요. 공유한 커밋은 revert, 혼자 쓰는 커밋은 rebase나 reset이라고 기억해요.
+
+### rebase에서도 충돌이 나요
+
+오늘 실습과 같은 a.txt 충돌을 rebase로 내 봤어요.
+
+```bash
+git checkout feature
+git rebase main
+# CONFLICT (content): Merge conflict in a.txt
+# error: could not apply e10839f... feat: feature에서 수정
+# hint: Resolve all conflicts manually, mark them as resolved with
+# hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+# hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+```
+
+푸는 법은 거의 같고 마지막 명령만 달라요.
+
+| merge 충돌 | rebase 충돌 |
+| --- | --- |
+| 고치고 `git add` | 고치고 `git add` |
+| `git commit` | `git rebase --continue` |
+| 포기는 `git merge --abort` | 포기는 `git rebase --abort` |
+
+```bash
+# a.txt 를 고친 뒤
+git add a.txt
+git rebase --continue
+# Successfully rebased and updated refs/heads/feature.
+```
+
+<TwistBox title="rebase에서는 ours와 theirs가 뒤집혀요">
+
+feature에 서서 rebase했는데, 충돌 표시를 열면 `<<<<<<< HEAD` 아래가 **main의 내용**이에요.
+
+```text
+<<<<<<< HEAD
+main 수정
+=======
+feature 수정
+>>>>>>> e10839f (feat: feature에서 수정)
+```
+
+`git checkout --ours a.txt`를 쳐도 `main 수정`이 나와요. rebase는 main 끝으로 먼저 가서, 거기에 내 커밋을 하나씩 다시 얹는 방식이라서예요. 얹히는 순간의 HEAD는 main 쪽이고, 내 커밋이 "들어오는 쪽"이 돼요.
+
+그래서 rebase 중에는 `--ours`가 상대 브랜치, `--theirs`가 내 커밋이에요. 헷갈리면 옵션보다 파일을 열어 내용을 보고 고르는 게 안전해요.
+
+</TwistBox>
+
 ## 오늘 꼭 기억할 주의점
 
 - merge는 base, current, incoming 세 곳을 비교해 **base와 달라진 쪽**을 채택해요. 양쪽이 서로 다르게 바꿨을 때만 충돌이에요.
@@ -442,3 +578,5 @@ git push origin feature/login
 - 수정과 삭제가 부딪히면 남길 때 `git add`, 지울 때 `git rm`이에요.
 - 막히면 commit 전에는 언제든 `git merge --abort`로 처음으로 돌아가요.
 - pull에서도 충돌이 나요. PR 충돌은 PR 전에 로컬에서 먼저 풀어요.
+- 이미 push해서 공유한 커밋은 reset이나 rebase 말고 `revert`로 되돌려요.
+- rebase 충돌은 `add` 다음 `git rebase --continue`, 포기는 `git rebase --abort`예요. rebase 중에는 `--ours`와 `--theirs`가 뒤집혀요.

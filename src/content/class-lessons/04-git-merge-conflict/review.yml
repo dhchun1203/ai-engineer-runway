@@ -18,6 +18,8 @@ checklist:
     label: "충돌 난 상태에서 git merge --abort 로 merge 이전으로 되돌리기"
   - id: class-04-prevent
     label: "충돌 예방 습관 일곱 가지(pull 먼저, 짧은 브랜치, 기준 브랜치 자주 가져오기, 작은 커밋과 PR, 작업 범위 나누기, 대규모 수정 따로, PR 전에 로컬에서 해결) 말해 보기"
+  - id: class-04-revert-rebase
+    label: "push 한 커밋을 git revert 로 되돌려 보고, 혼자 쓰는 feature 를 git rebase main 으로 옮겨 git log --graph 로 비교하기"
 quiz:
   - id: base-current-incoming
     q: "main 에 서서 git merge feature 를 실행했어요. current, incoming, base 는 각각 무엇인가요?"
@@ -169,6 +171,24 @@ quiz:
       - "충돌이 사라질 때까지 기다린다"
     answer: 1
     explain: "가능하면 PR 전에, 늦었어도 로컬에서 기준 브랜치(develop 등)를 feature 로 합쳐 충돌을 풀고 push 해요. 그러면 PR 이 깨끗한 상태로 리뷰를 받아요."
+  - id: revert-after-push
+    q: "버그 있는 커밋을 push 했고 팀원이 이미 pull 로 받아 갔어요. 되돌리는 방법으로 알맞은 것은?"
+    options:
+      - "git reset --hard HEAD~1 뒤 git push --force"
+      - "git revert <그 커밋> 으로 되돌리는 새 커밋을 만들고 push"
+      - "git rebase main"
+      - "원격 저장소를 지우고 새로 만든다"
+    answer: 1
+    explain: "reset 으로 지우고 push 하면 non-fast-forward 로 거절되고, 억지로 덮으면 팀원 이력과 엇갈려요. revert 는 반대로 고치는 새 커밋을 더해 이력이 앞으로만 늘어서, push 도 되고 팀원도 Fast-forward 로 받아요."
+  - id: rebase-ours-flipped
+    q: "feature 에 서서 git rebase main 을 하다 충돌이 났어요. git checkout --ours a.txt 를 하면 어느 쪽 내용이 되나요?"
+    options:
+      - "feature(내 커밋) 의 내용"
+      - "main 의 내용"
+      - "base 의 내용"
+      - "rebase 중에는 --ours 를 쓸 수 없다"
+    answer: 1
+    explain: "rebase 는 main 끝으로 먼저 가서 내 커밋을 하나씩 다시 얹어요. 그래서 rebase 중의 HEAD(ours)는 main 쪽이고 내 커밋이 theirs 예요. merge 때와 뒤집혀서, 헷갈리면 파일을 열어 내용을 보고 골라요."
 commands:
   - cmd: git merge <브랜치>
     desc: 그 브랜치를 지금 브랜치에 합치기(충돌 나면 merge 진행 중으로 멈춤)
@@ -206,6 +226,18 @@ commands:
   - cmd: git pull
     desc: 원격을 가져와 합치기(작업 전 최신화, 충돌이 날 수 있음)
     group: Git
+  - cmd: git revert <해시>
+    desc: 그 커밋을 반대로 고치는 새 커밋 만들기(push 한 커밋 되돌리기)
+    group: Git
+  - cmd: git rebase <브랜치>
+    desc: 지금 브랜치의 커밋을 그 브랜치 끝으로 옮겨 다시 붙이기
+    group: Git
+  - cmd: git rebase --continue
+    desc: rebase 충돌을 고치고 add 한 뒤 이어 가기
+    group: Git
+  - cmd: git rebase --abort
+    desc: rebase 를 그만두고 이전 상태로
+    group: Git
   - cmd: Accept Current Change
     desc: VS Code 충돌 버튼, current만 남기기
     group: VS Code
@@ -235,3 +267,7 @@ terms:
     definition: 진행 중인 merge 를 그만두고 merge 하기 전 상태로 되돌리는 명령. commit 전이면 언제든 쓸 수 있다.
   - word: diff3
     definition: 충돌 표시에 current 와 incoming 사이에 base 내용(||||||| 아래)까지 보여 주는 표시 방식. merge.conflictStyle 설정으로 켠다.
+  - word: revert
+    definition: 커밋을 지우지 않고 그 변경을 반대로 고치는 새 커밋을 만드는 되돌리기. 이미 push 해서 공유한 커밋에 쓴다.
+  - word: rebase
+    definition: 내 브랜치의 커밋을 떼어 다른 브랜치 끝에 다시 붙이는 방법. 이력이 한 줄이 되지만 커밋 해시가 바뀌어, 공유한 커밋에는 쓰지 않는다.
