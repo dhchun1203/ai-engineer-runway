@@ -1,0 +1,237 @@
+# 04-git-merge-conflict 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
+# 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
+slug: 04-git-merge-conflict
+checklist:
+  - id: class-04-three-way-rule
+    label: "base, current, incoming 이 무엇인지 말하고, 3-way merge 표의 네 경우 중 언제 충돌인지 설명하기"
+  - id: class-04-conflict-cases
+    label: "같은 부분 수정, 수정과 삭제는 충돌이고 다른 줄 수정은 자동으로 합쳐지는 것을 직접 확인하기"
+  - id: class-04-make-conflict
+    label: "conflict-test 폴더에서 main 과 feature 가 같은 줄을 고치게 해 일부러 충돌 만들기"
+  - id: class-04-read-markers
+    label: "git status 의 both modified 를 찾고, <<<<<<< HEAD 와 ======= 와 >>>>>>> 사이가 각각 어느 쪽인지 읽기"
+  - id: class-04-ours-theirs
+    label: "git checkout --ours, --theirs 로 파일 전체를 한쪽으로 골라 보기 (VS Code 버튼도)"
+  - id: class-04-diff-check
+    label: "git diff --check 로 남은 충돌 표시를 확인하고, add, status, commit 으로 마무리한 뒤 git log --oneline --graph 로 merge 커밋 보기"
+  - id: class-04-abort
+    label: "충돌 난 상태에서 git merge --abort 로 merge 이전으로 되돌리기"
+  - id: class-04-prevent
+    label: "충돌 예방 습관 일곱 가지(pull 먼저, 짧은 브랜치, 기준 브랜치 자주 가져오기, 작은 커밋과 PR, 작업 범위 나누기, 대규모 수정 따로, PR 전에 로컬에서 해결) 말해 보기"
+quiz:
+  - id: base-current-incoming
+    q: "main 에 서서 git merge feature 를 실행했어요. current, incoming, base 는 각각 무엇인가요?"
+    options:
+      - "current 는 main, incoming 은 feature, base 는 두 브랜치가 갈라진 공통 조상 커밋"
+      - "current 는 feature, incoming 은 main, base 는 첫 커밋"
+      - "current 는 main, incoming 은 feature, base 는 원격 저장소(origin)"
+      - "current 는 작업 폴더, incoming 은 Staging, base 는 저장소"
+    answer: 0
+    explain: "current 는 지금 서 있는 브랜치(HEAD), incoming 은 합쳐 들어오는 브랜치예요. base 는 두 브랜치가 갈라진 지점의 커밋이에요. 첫 커밋이나 원격과는 상관없어요."
+  - id: three-way-rule-conflict
+    q: "같은 줄이 base 에서 X 였어요. 다음 중 충돌이 나는 경우는?"
+    options:
+      - "current 는 X 그대로, incoming 은 Y 로 바꿈"
+      - "current 는 Y 로 바꾸고, incoming 은 X 그대로"
+      - "current 와 incoming 이 둘 다 Y 로 바꿈"
+      - "current 는 Y 로, incoming 은 Z 로 바꿈"
+    answer: 3
+    explain: "Git 은 base 와 달라진 쪽을 채택해요. 한쪽만 바꿨거나 양쪽이 똑같이 바꿨으면 자동으로 정해져요. 양쪽이 서로 다르게 바꿨을 때만 어느 쪽이 맞는지 몰라 충돌이에요."
+  - id: why-base-needed
+    q: "Git 이 두 브랜치 끝만이 아니라 base 까지 보는 이유는?"
+    options:
+      - "커밋 메시지를 자동으로 만들기 위해"
+      - "누가 바꿨는지 알려면 원래 모습이 있어야 해서"
+      - "원격 저장소와 비교하기 위해"
+      - "충돌 표시를 예쁘게 보여 주기 위해"
+    answer: 1
+    explain: "두 끝만 보면 \"다르다\"는 것만 알아요. base 와 비교해야 어느 쪽이 바꾼 것인지 알 수 있고, 바꾼 쪽을 채택할 수 있어요."
+  - id: different-lines-auto
+    q: "다섯 줄짜리 b.txt 에서 main 은 1줄을, feature 는 5줄을 고친 뒤 main 에서 git merge feature 를 하면?"
+    options:
+      - "같은 파일이라 충돌이 난다"
+      - "자동으로 합쳐져 1줄과 5줄 수정이 모두 들어간다"
+      - "feature 의 수정만 들어간다"
+      - "main 의 수정만 남는다"
+    answer: 1
+    explain: "같은 파일이라도 다른 줄을 고쳤다면 줄마다 base 와 비교해 자동으로 합쳐요. 단, 고친 줄이 바로 붙어 있으면 한 덩어리로 보고 충돌이 날 수 있어요."
+  - id: adjacent-lines-conflict
+    q: "세 줄짜리 파일에서 main 은 1줄을, feature 는 바로 아래 2줄을 고쳤어요. merge 하면?"
+    options:
+      - "다른 줄이라 항상 자동으로 합쳐진다"
+      - "바로 붙은 줄이라 한 덩어리로 보고 충돌이 난다"
+      - "Git 이 2줄을 지운다"
+      - "Fast-forward 로 합쳐진다"
+    answer: 1
+    explain: "직접 돌려 보니 1줄과 2줄을 함께 묶어 충돌 표시를 띄웠어요. 바로 붙은 줄의 변경은 한 덩어리로 처리돼요. 답은 두 변경을 다 살리는 거라 풀기는 쉬워요."
+  - id: modify-delete-conflict
+    q: "main 은 c.txt 를 고쳤고 feature 는 c.txt 를 지웠어요. merge 결과로 맞는 것은?"
+    options:
+      - "삭제가 우선이라 c.txt 가 자동으로 사라진다"
+      - "수정이 우선이라 c.txt 가 자동으로 남는다"
+      - "CONFLICT (modify/delete) 가 나고, 남길지 지울지 내가 정해야 한다"
+      - "c.txt 안에 <<<<<<< 표시가 생긴다"
+    answer: 2
+    explain: "한쪽은 수정, 다른 쪽은 삭제면 충돌이에요. 줄끼리 다툰 게 아니라서 <<<<<<< 표시는 없고, git status 에 deleted by them 처럼 나와요. 남기려면 git add, 지우려면 git rm 이에요."
+  - id: marker-top-is-current
+    q: "충돌 난 파일이 다음과 같아요. main 에 서서 feature 를 merge 하던 중이라면 \"A\" 는 어느 쪽 내용인가요?"
+    code: |-
+      <<<<<<< HEAD
+      A
+      =======
+      B
+      >>>>>>> feature
+    options:
+      - "feature(incoming) 의 내용"
+      - "main(current) 의 내용"
+      - "base 의 내용"
+      - "Git 이 새로 만든 내용"
+    answer: 1
+    explain: "<<<<<<< HEAD 부터 ======= 까지가 지금 서 있는 브랜치(current)의 내용이에요. ======= 아래부터 >>>>>>> feature 까지가 들어오는 쪽(incoming)이에요."
+  - id: remove-all-markers
+    q: "충돌을 직접 고칠 때 꼭 해야 하는 것은?"
+    options:
+      - "<<<<<<< 줄만 지우고 나머지 표시는 둔다"
+      - "최종 내용만 남기고 <<<<<<<, =======, >>>>>>> 표시 줄을 모두 지운다"
+      - "표시는 Git 이 commit 할 때 알아서 지운다"
+      - "두 내용을 모두 지우고 빈 파일로 만든다"
+    answer: 1
+    explain: "표시 줄은 Git 이 안내용으로 넣은 글자라서 남기면 그대로 코드가 돼요. current, incoming, 둘 다, 새로 쓰기 중 무엇을 고르든 표시는 모두 지워요."
+  - id: ours-means-current
+    q: "main 에 서서 feature 를 merge 하다 충돌이 났어요. git checkout --theirs a.txt 를 하면?"
+    options:
+      - "a.txt 가 main(current) 버전이 된다"
+      - "a.txt 가 feature(incoming) 버전이 된다"
+      - "a.txt 가 base 버전으로 돌아간다"
+      - "merge 가 취소된다"
+    answer: 1
+    explain: "--ours 는 지금 서 있는 쪽(current), --theirs 는 들어오는 쪽(incoming)이에요. 고른 뒤에도 git status 는 여전히 UU 라서 git add 를 해야 해결로 쳐요."
+  - id: diff-check-markers
+    q: "git diff --check 가 \"a.txt:1: leftover conflict marker\" 를 출력했어요. 뜻은?"
+    options:
+      - "a.txt 의 충돌이 모두 해결됐다"
+      - "a.txt 1번 줄에 충돌 표시가 아직 남아 있다"
+      - "a.txt 를 add 해야 한다"
+      - "a.txt 가 삭제됐다"
+    answer: 1
+    explain: "diff --check 는 남은 충돌 표시를 파일 이름과 줄 번호로 짚어 줘요. 다 지우면 아무것도 출력하지 않아요. add 전에 한 번 쳐 보는 습관이 좋아요."
+  - id: add-marks-resolved
+    q: "충돌 표시를 지우고 파일을 다 고친 뒤 git add 없이 바로 git commit -m \"merge\" 를 하면?"
+    options:
+      - "merge 커밋이 정상적으로 만들어진다"
+      - "Committing is not possible because you have unmerged files 라며 막힌다"
+      - "merge 가 자동으로 취소된다"
+      - "빈 커밋이 만들어진다"
+    answer: 1
+    explain: "Git 은 파일 내용이 아니라 add 로 해결 완료 표시를 했는지를 봐요. merge 중의 git add 는 \"이 파일 충돌 다 풀었다\"는 뜻이에요. 그래서 수정, add, commit 순서예요."
+  - id: merge-abort-when
+    q: "충돌을 풀다가 --ours 로 고르고 add 까지 했는데, 처음부터 다시 하고 싶어요. 아직 commit 은 안 했어요."
+    options:
+      - "이미 add 했으니 되돌릴 수 없다"
+      - "git merge --abort 로 merge 이전 상태로 돌아간다"
+      - "git commit 을 먼저 해야 abort 할 수 있다"
+      - "git stash 로만 되돌릴 수 있다"
+    answer: 1
+    explain: "commit 전이라면 add 를 했더라도 merge 진행 중이라서 git merge --abort 로 merge 하기 전 상태로 돌아가요. 직접 해 보니 a.txt 가 merge 전 main 내용으로 돌아왔어요."
+  - id: merge-commit-message
+    q: "충돌을 풀고 add 한 뒤 -m 없이 git commit 을 치면?"
+    options:
+      - "메시지가 없어서 오류가 난다"
+      - "편집기가 열리고 Merge branch 'feature' 메시지가 미리 채워져 있다"
+      - "커밋 없이 merge 가 끝난다"
+      - "feature 의 마지막 커밋 메시지가 그대로 쓰인다"
+    answer: 1
+    explain: "merge 커밋 메시지는 자동으로 만들어져요. 그대로 저장하면 돼요. vim 이 열리면 Esc 다음 :wq 예요."
+  - id: pull-can-conflict
+    q: "팀원이 먼저 push 한 줄을 나도 다르게 고쳐 커밋했어요. git push 가 거절되어 git pull 을 하면?"
+    options:
+      - "pull 은 merge 를 하지 않아서 충돌이 나지 않는다"
+      - "pull 안에서 merge 를 하므로 충돌이 날 수 있고, 푸는 법은 merge 충돌과 같다"
+      - "내 커밋이 자동으로 지워진다"
+      - "팀원의 커밋이 자동으로 지워진다"
+    answer: 1
+    explain: "pull 은 원격 내용을 가져와(fetch) 내 브랜치에 합쳐요(merge). 그래서 같은 CONFLICT 가 나고, 고치고 add, commit 한 뒤 다시 push 해요."
+  - id: prevent-long-branch
+    q: "충돌 예방 습관으로 알맞지 않은 것은?"
+    options:
+      - "작업을 시작하기 전에 git pull 로 최신 상태를 맞춘다"
+      - "기준 브랜치(develop)의 변경을 feature 로 자주 가져온다"
+      - "feature 브랜치를 한 달 넘게 따로 키운 뒤 한 번에 합친다"
+      - "전체 포맷 변경 같은 대규모 수정은 따로, 미리 공유하고 진행한다"
+    answer: 2
+    explain: "브랜치가 오래 갈라져 있을수록 양쪽 차이가 쌓여 충돌이 커져요. 브랜치는 짧게, 커밋과 PR 은 작게, 기준 브랜치는 자주 가져와 맞춰요."
+  - id: pr-conflict-local
+    q: "PR 에 충돌이 있다고 표시돼요. 권장하는 해결 방법은?"
+    options:
+      - "PR 을 닫고 코드를 처음부터 다시 쓴다"
+      - "feature 에 서서 기준 브랜치를 가져와 로컬에서 충돌을 풀고 다시 push 한다"
+      - "main 에 직접 push 한다"
+      - "충돌이 사라질 때까지 기다린다"
+    answer: 1
+    explain: "가능하면 PR 전에, 늦었어도 로컬에서 기준 브랜치(develop 등)를 feature 로 합쳐 충돌을 풀고 push 해요. 그러면 PR 이 깨끗한 상태로 리뷰를 받아요."
+commands:
+  - cmd: git merge <브랜치>
+    desc: 그 브랜치를 지금 브랜치에 합치기(충돌 나면 merge 진행 중으로 멈춤)
+    group: Git
+  - cmd: git status
+    desc: 충돌 파일 확인(Unmerged paths 아래 both modified)
+    group: Git
+  - cmd: git checkout --ours <파일>
+    desc: 충돌 파일 전체를 current(지금 브랜치) 버전으로
+    group: Git
+  - cmd: git checkout --theirs <파일>
+    desc: 충돌 파일 전체를 incoming(들어오는 브랜치) 버전으로
+    group: Git
+  - cmd: git diff --check
+    desc: 남아 있는 충돌 표시 확인(없으면 아무것도 안 나옴)
+    group: Git
+  - cmd: git add <파일>
+    desc: merge 중에는 그 파일 충돌 해결 완료 표시
+    group: Git
+  - cmd: git rm <파일>
+    desc: 수정과 삭제 충돌에서 파일을 지우는 쪽으로 해결
+    group: Git
+  - cmd: git commit
+    desc: merge 커밋 만들기(메시지 자동 생성)
+    group: Git
+  - cmd: git merge --abort
+    desc: 충돌 난 merge를 그만두고 이전 상태로
+    group: Git
+  - cmd: git log --oneline --graph
+    desc: 갈라졌다 합쳐진 줄기와 merge 커밋을 그래프로 보기
+    group: Git
+  - cmd: git config --global merge.conflictStyle diff3
+    desc: 충돌 표시에 base 내용까지 함께 보여 주기
+    group: Git
+  - cmd: git pull
+    desc: 원격을 가져와 합치기(작업 전 최신화, 충돌이 날 수 있음)
+    group: Git
+  - cmd: Accept Current Change
+    desc: VS Code 충돌 버튼, current만 남기기
+    group: VS Code
+  - cmd: Accept Incoming Change
+    desc: VS Code 충돌 버튼, incoming만 남기기
+    group: VS Code
+  - cmd: Accept Both Changes
+    desc: VS Code 충돌 버튼, 둘 다 남기기
+    group: VS Code
+  - cmd: Compare Changes
+    desc: VS Code 충돌 버튼, 두 내용을 나란히 비교
+    group: VS Code
+terms:
+  - word: base (베이스)
+    definition: 두 브랜치가 갈라진 공통 조상 커밋. 3-way merge 는 여기와 비교해 어느 쪽이 바꿨는지 판단한다.
+  - word: current
+    definition: merge 할 때 지금 서 있는 브랜치(HEAD), 합쳐 받는 쪽. 명령어 옵션으로는 --ours 다.
+  - word: incoming
+    definition: merge 할 때 합쳐 들어오는 브랜치. 명령어 옵션으로는 --theirs 다.
+  - word: 충돌 표시 (conflict marker)
+    definition: "Git 이 충돌 자리에 넣는 <<<<<<<, =======, >>>>>>> 줄. 위가 current, 아래가 incoming 이고, 해결할 때 모두 지운다."
+  - word: Unmerged paths
+    definition: git status 에서 아직 해결되지 않은 충돌 파일 목록. both modified, deleted by them 처럼 충돌 종류가 붙는다.
+  - word: modify/delete 충돌
+    definition: 한쪽은 파일을 수정하고 다른 쪽은 삭제해서 생기는 충돌. 남기려면 git add, 지우려면 git rm 으로 정한다.
+  - word: merge --abort
+    definition: 진행 중인 merge 를 그만두고 merge 하기 전 상태로 되돌리는 명령. commit 전이면 언제든 쓸 수 있다.
+  - word: diff3
+    definition: 충돌 표시에 current 와 incoming 사이에 base 내용(||||||| 아래)까지 보여 주는 표시 방식. merge.conflictStyle 설정으로 켠다.

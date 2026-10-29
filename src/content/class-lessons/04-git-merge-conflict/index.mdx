@@ -1,0 +1,444 @@
+---
+title: "Git 충돌(Merge Conflict) 예방하고 해결하기"
+session: 4
+date: "2026-10-29"
+summary: "3-way merge가 base, current, incoming을 비교하는 규칙, 충돌이 나는 경우와 안 나는 경우, 일부러 충돌을 만들어 status, 표시 읽기, --ours/--theirs, diff --check, add, commit으로 푸는 한 바퀴, merge --abort, 그리고 충돌을 줄이는 습관까지."
+slug: "04-git-merge-conflict"
+module: "1-2"
+topic: "Git"
+preStudy: ["1-2-git-branch-and-pr"]
+---
+
+어제 merge와 충돌을 처음 맛봤어요. 오늘은 **충돌 하나만 붙잡고** 끝까지 파고들었어요.
+
+Git이 언제 알아서 합치고 언제 멈추는지, 그 규칙부터 봐요. 그다음 일부러 충돌을 만들어 푸는 순서를 한 단계씩 직접 돌려 보고, 마지막으로 애초에 충돌을 줄이는 습관을 정리해요.
+
+| 순서 | 내용 | 한 줄로 |
+| --- | --- | --- |
+| 1 | 3-way merge 규칙 | base와 달라진 쪽을 채택해요 |
+| 2 | 충돌이 나는 경우 | 같은 부분 수정, 수정과 삭제 |
+| 3 | 직접 충돌 만들기 | 임시 폴더에서 실습 |
+| 4 | 충돌 해결 과정 | status, 표시 읽기, 수정, add, commit |
+| 5 | 수정과 삭제가 부딪힐 때 | 남길지 지울지 add나 rm으로 |
+| 6 | base까지 보며 풀기 | diff3 표시 방식 |
+| 7 | pull과 PR에서 만나는 충돌 | 로컬에서 먼저 풀기 |
+| 8 | 충돌 예방 | 작게, 자주, 나눠서 |
+
+레슨 끝에 확인 퀴즈가 있고, 복습 체크리스트는 [수업 복습](/class) 목록에 있어요.
+
+## 1. 3-way merge 다시 보기
+
+### 세 곳의 이름: base, current, incoming
+
+어제 배운 3-way merge가 오늘의 출발점이에요. merge는 두 브랜치의 끝과 **둘이 갈라진 지점** 세 곳을 비교해서 합쳐요. 오늘은 셋에 이름을 붙여요.
+
+| 이름 | 뜻 |
+| --- | --- |
+| `current` | 지금 서 있는 브랜치(HEAD). 합쳐 받는 쪽 |
+| `incoming` | 합쳐 들어오는 브랜치 |
+| `base` | 두 브랜치가 갈라진 공통 조상 커밋 |
+
+```text
+      C - D (feature = incoming)
+     /       \
+A - B - E ---- M (main = current)
+    ↑
+    base
+```
+
+main에 서서 `git merge feature`를 치면 main이 current, feature가 incoming이에요. B가 base예요.
+
+### 비교 규칙: base와 달라진 쪽을 고른다
+
+Git은 같은 자리를 세 곳에서 꺼내 놓고 비교해요. 규칙은 하나예요. **base에서 바뀐 쪽이 새 내용**이라고 보고 그쪽을 채택해요.
+
+| base | current | incoming | 결과 |
+| --- | --- | --- | --- |
+| X | X | Y | Y 채택 (자동) |
+| X | Y | X | Y 채택 (자동) |
+| X | Y | Y | Y 채택 (양쪽이 같은 변경, 자동) |
+| X | Y | Z | **충돌** (어느 쪽이 맞는지 판단 불가) |
+
+첫 줄은 incoming만 바꿨으니 incoming을 따라가요. 둘째 줄은 current만 바꿨으니 current를 지켜요. 셋째 줄은 양쪽이 똑같이 바꿨으니 고민할 게 없어요.
+
+넷째 줄만 문제예요. 양쪽이 **서로 다르게** 바꿨어요. Git은 둘 중 무엇이 맞는지 알 방법이 없어서 멈추고 사람에게 물어봐요. 이게 충돌이에요.
+
+base가 없으면 이 판단을 못 해요. "둘이 다르다"는 건 알아도 "누가 바꿨는지"는 원래 모습이 있어야 알 수 있으니까요. 그래서 세 곳(3-way)을 봐요.
+
+## 2. 충돌이 나는 경우
+
+충돌은 이럴 때 나요.
+
+- 같은 파일의 **같은 부분**을 서로 다르게 수정했을 때
+- 한쪽은 파일을 **수정**하고, 다른 쪽은 그 파일을 **삭제**했을 때
+
+같은 파일이라도 **다른 줄**을 고쳤다면 충돌 없이 자동으로 합쳐져요. 다섯 줄짜리 파일에서 main은 1줄을, feature는 5줄을 고친 뒤 합쳐 봤어요.
+
+```bash
+git merge feature
+# Auto-merging b.txt
+
+cat b.txt
+# 1줄 main        <- main이 고친 줄
+# 2줄
+# 3줄
+# 4줄
+# 5줄 feature     <- feature가 고친 줄
+```
+
+양쪽 고친 것이 모두 들어왔어요. 줄마다 1번의 표를 적용한 결과예요.
+
+<TwistBox title="바로 붙은 줄은 충돌이 나요">
+
+"다른 줄이면 괜찮다"에는 함정이 하나 있어요. 고친 줄이 **바로 붙어 있으면** Git은 한 덩어리로 보고 충돌로 처리해요.
+
+세 줄짜리 파일에서 main은 1줄을, feature는 바로 아래 2줄을 고쳐 봤어요.
+
+```bash
+git merge feature
+# Auto-merging b.txt
+# CONFLICT (content): Merge conflict in b.txt
+```
+
+```text
+<<<<<<< HEAD
+1줄 main
+2줄
+=======
+1줄
+2줄 feature
+>>>>>>> feature
+3줄
+```
+
+1줄과 2줄을 같이 보여 주며 물어요. 답은 "1줄 main"과 "2줄 feature"를 둘 다 살리는 거예요. 이런 충돌은 보기만 무섭고 풀기는 쉬워요.
+
+</TwistBox>
+
+## 3. 직접 충돌 만들어 보기
+
+임시 폴더에서 일부러 충돌을 만들어요. 실제 프로젝트가 아니라서 마음껏 망가뜨려도 돼요.
+
+```bash
+mkdir conflict-test && cd conflict-test
+git init
+echo "hello" > a.txt
+git add .
+git commit -m "feat: a.txt 생성"
+
+git checkout -b feature
+echo "feature 수정" > a.txt
+git add .
+git commit -m "feat: feature에서 수정"
+
+git checkout main             # 원래 브랜치로 돌아가기
+echo "main 수정" > a.txt
+git add .
+git commit -m "feat: main에서 수정"
+
+git merge feature             # 충돌 발생
+```
+
+base(`hello`)에서 main은 `main 수정`으로, feature는 `feature 수정`으로 바꿨어요. 1번 표의 넷째 줄(X, Y, Z) 그대로라 충돌이 나요.
+
+1회차에 `init.defaultBranch main`을 설정해 뒀다면 첫 브랜치가 main이에요. 설정을 안 했다면 master로 만들어질 수 있으니, 그때는 `git checkout master`로 돌아가요.
+
+Windows에서는 커밋할 때 `LF will be replaced by CRLF` 경고가 섞여 나올 수 있어요. 줄 끝 문자를 Windows 방식으로 바꾼다는 안내일 뿐이라 실습에는 영향이 없어요.
+
+## 4. 충돌 해결 과정
+
+### 4-1. 충돌 발생
+
+```bash
+git merge feature
+# Auto-merging a.txt
+# CONFLICT (content): Merge conflict in a.txt
+# Automatic merge failed; fix conflicts and then commit the result.
+```
+
+merge가 **중간에 멈춘 상태**(merge 진행 중)가 돼요. 실패해서 끝난 게 아니라 "여기서 사람 손이 필요하다"며 기다리는 중이에요.
+
+### 4-2. 상태 확인
+
+```bash
+git status
+# On branch main
+# You have unmerged paths.
+#   (fix conflicts and run "git commit")
+#   (use "git merge --abort" to abort the merge)
+#
+# Unmerged paths:
+#   (use "git add <file>..." to mark resolution)
+# 	both modified:   a.txt
+```
+
+`Unmerged paths` 아래 `both modified`가 양쪽 다 고쳐서 충돌 난 파일이에요. 파일이 여러 개면 여기 다 나와요. 다음에 할 일(`git commit`, `git merge --abort`)까지 Git이 알려 주니 막히면 status부터 봐요.
+
+`git status --short`로 보면 충돌 파일 앞에 `UU`가 붙어요(Unmerged, 양쪽 다 바뀜).
+
+### 4-3. 충돌 표시 읽기
+
+a.txt를 열면 Git이 두 내용을 나란히 적어 뒀어요.
+
+```text
+<<<<<<< HEAD
+main 수정
+=======
+feature 수정
+>>>>>>> feature
+```
+
+- `<<<<<<< HEAD`부터 `=======`까지: 현재 브랜치(current)의 내용
+- `=======`부터 `>>>>>>> feature`까지: 합쳐 들어오는 브랜치(incoming)의 내용
+
+HEAD는 "지금 내가 서 있는 곳"이었죠. 그래서 위가 current, 아래가 incoming이에요.
+
+### 4-4. 직접 수정
+
+선택지는 네 가지예요.
+
+| 선택 | 결과 |
+| --- | --- |
+| current만 | `main 수정`만 남기기 |
+| incoming만 | `feature 수정`만 남기기 |
+| 둘 다 | 두 줄 다 남기기 |
+| 새로 작성 | 둘을 참고해 새 내용으로 쓰기 |
+
+무엇을 고르든 **최종 내용만 남기고** `<<<<<<<`, `=======`, `>>>>>>>` 표시 줄은 **모두 지워요.** 표시를 남긴 채 커밋하면 그 이상한 줄이 그대로 코드가 돼요.
+
+여기서는 둘 다 남겼어요.
+
+```text
+main 수정
+feature 수정
+```
+
+**VS Code에서는** 충돌 영역 위에 버튼이 떠요.
+
+| 버튼 | 하는 일 |
+| --- | --- |
+| Accept Current Change | current만 남기기 |
+| Accept Incoming Change | incoming만 남기기 |
+| Accept Both Changes | 둘 다 남기기(current가 위, incoming이 아래) |
+| Compare Changes | 두 내용을 좌우로 나란히 비교해 보기 |
+
+버튼을 누르면 표시 줄까지 알아서 지워 줘요. 그래도 그다음 add와 commit은 직접 해야 해요.
+
+**파일 전체를 한쪽으로 정할 때는** 명령 하나로 끝낼 수 있어요. 옵션 이름이 current, incoming이 아니라 `--ours`, `--theirs`예요.
+
+```bash
+git checkout --ours a.txt     # current 버전으로
+# Updated 1 path from the index
+cat a.txt
+# main 수정
+
+git checkout --theirs a.txt   # incoming 버전으로
+# Updated 1 path from the index
+cat a.txt
+# feature 수정
+```
+
+`--ours`는 "우리 것", 즉 지금 서 있는 쪽(current)이고, `--theirs`는 "저쪽 것", 들어오는 쪽(incoming)이에요.
+
+이렇게 골라도 아직 해결로 치지 않아요. `git status --short`는 여전히 `UU a.txt`예요. 다음 단계의 add까지 해야 끝나요.
+
+### 4-5. 남은 표시 확인
+
+고쳤다고 생각해도 표시 한 줄을 빠뜨리기 쉬워요. add 전에 한 번 검사해요.
+
+```bash
+git diff --check
+# a.txt:1: leftover conflict marker
+# a.txt:3: leftover conflict marker
+# a.txt:5: leftover conflict marker
+```
+
+표시가 남아 있으면 이렇게 파일 이름과 줄 번호를 짚어 줘요. 다 지운 뒤 다시 치면 **아무것도 출력하지 않아요.** 조용하면 통과예요.
+
+### 4-6. add 후 commit
+
+```bash
+git add a.txt        # 해결 완료 표시
+git status           # 모든 충돌이 해결되었는지 확인
+# All conflicts fixed but you are still merging.
+#   (use "git commit" to conclude merge)
+
+git commit           # merge 커밋 생성 (메시지는 자동 생성)
+# [main e89a0fd] Merge branch 'feature'
+```
+
+여기서 `git add`는 "이 파일 충돌 다 풀었어요"라는 **해결 완료 표시**예요. 평소 add와 같은 명령이지만 merge 중에는 이런 뜻이 돼요.
+
+`git commit`에 `-m`을 안 붙이면 편집기가 열리고 `Merge branch 'feature'` 메시지가 미리 채워져 있어요. 그대로 저장하면 돼요. vim이 열리면 `Esc` 다음 `:wq`예요.
+
+add를 건너뛰고 바로 commit하면 Git이 막아요.
+
+```bash
+git commit -m "merge"
+# error: Committing is not possible because you have unmerged files.
+# hint: Fix them up in the work tree, and then use 'git add/rm <file>'
+# hint: as appropriate to mark resolution and make a commit.
+# fatal: Exiting because of an unresolved conflict.
+# U	a.txt
+```
+
+해결이 끝나면 그래프로 merge 커밋을 확인해요.
+
+```bash
+git log --oneline --graph
+# *   e89a0fd (HEAD -> main) Merge branch 'feature'
+# |\
+# | * 17951b2 (feature) feat: feature에서 수정
+# * | d34dbfa feat: main에서 수정
+# |/
+# * 538c692 feat: a.txt 생성
+```
+
+두 줄기가 갈라졌다가 맨 위 merge 커밋에서 다시 만나요.
+
+### 4-7. 중단하고 싶을 때
+
+충돌이 너무 복잡하거나 잘못 merge했다 싶으면 그만둘 수 있어요.
+
+```bash
+git merge --abort    # merge 이전 상태로 되돌림
+git status --short
+#                    <- 아무 변경도 없어요
+cat a.txt
+# main 수정          <- merge 하기 전 main 그대로
+```
+
+`--ours`로 골라 add까지 해 둔 상태에서도, **commit 전이라면** abort로 처음으로 돌아가요. 겁먹지 말고 여러 번 연습해 봐요.
+
+### 전체 흐름
+
+```text
+merge 실행 → 충돌 발생 → status로 파일 확인 → 파일 수정(표시 제거) → add → commit
+
+중간에 포기하고 싶으면 (commit 전 언제든) → merge --abort
+```
+
+<PredictPrompt />
+
+충돌 표시를 지우고 파일을 다 고쳤어요. 이 상태에서 `git add` 없이 바로 `git commit -m "merge"`를 치면 어떻게 될지 예측해 보세요.
+
+정답은 "커밋이 안 된다"예요. Git은 파일 내용을 보고 판단하지 않고, add로 해결 완료 표시를 했는지를 봐요. 그래서 `Committing is not possible because you have unmerged files`라며 멈춰요.
+
+## 5. 수정과 삭제가 부딪힐 때
+
+2번에서 본 두 번째 경우예요. main은 c.txt를 고쳤는데, feature는 c.txt를 지웠어요.
+
+```bash
+git merge feature
+# Auto-merging b.txt
+# CONFLICT (modify/delete): c.txt deleted in feature and modified in HEAD.  Version HEAD of c.txt left in tree.
+# Automatic merge failed; fix conflicts and then commit the result.
+
+git status
+# Unmerged paths:
+#   (use "git add/rm <file>..." as appropriate to mark resolution)
+# 	deleted by them: c.txt
+```
+
+이번엔 `<<<<<<<` 표시가 없어요. 줄끼리 다툰 게 아니라 "파일을 남길까, 지울까"를 정해야 하거든요. 메시지대로 내가 고친 버전(HEAD)이 일단 폴더에 남아 있어요.
+
+| 결정 | 명령 |
+| --- | --- |
+| 파일을 남긴다 | `git add c.txt` |
+| 파일을 지운다 | `git rm c.txt` |
+
+```bash
+git rm c.txt
+# rm 'c.txt'
+git commit
+# merge 커밋이 만들어지고 c.txt는 사라져요
+```
+
+`deleted by them`은 "저쪽(incoming)이 지웠다"는 뜻이에요. 내가 지우고 저쪽이 고쳤다면 `deleted by us`라고 나와요.
+
+## 6. base까지 보며 풀기: diff3
+
+기본 충돌 표시는 current와 incoming만 보여 줘요. 그런데 1번에서 봤듯 판단의 열쇠는 base예요. "원래 뭐였는데 양쪽이 어떻게 바꿨지?"가 보이면 풀기가 훨씬 쉬워요.
+
+설정 하나로 base까지 보여 달라고 할 수 있어요.
+
+```bash
+git config --global merge.conflictStyle diff3
+```
+
+2번의 바로 붙은 줄 충돌을 이 설정으로 다시 내 봤어요.
+
+```text
+<<<<<<< HEAD
+1줄 main
+2줄
+||||||| 3f76cc3
+1줄
+2줄
+=======
+1줄
+2줄 feature
+>>>>>>> feature
+3줄
+```
+
+`|||||||`부터 `=======`까지가 base예요. 이제 한눈에 보여요. main은 1줄만, feature는 2줄만 바꿨으니 답은 `1줄 main`, `2줄 feature`예요.
+
+표시 줄이 하나 늘어난 만큼, 풀 때 `|||||||` 줄과 base 내용까지 함께 지워야 해요. 수업 내용은 아니지만 충돌을 자주 만나면 켜 둘 만해요.
+
+## 7. pull과 PR에서 만나는 충돌
+
+### pull도 안에서 merge를 해요
+
+충돌은 내가 `git merge`를 칠 때만 나지 않아요. 팀원이 먼저 push한 같은 줄을 나도 고쳐 두었다면, push가 거절되고 pull에서 충돌이 나요.
+
+```bash
+git push origin main
+#  ! [rejected]        main -> main (fetch first)
+# hint: Updates were rejected because the remote contains work that you do not
+# hint: have locally. ...
+
+git pull origin main
+# Auto-merging R.md
+# CONFLICT (content): Merge conflict in R.md
+# Automatic merge failed; fix conflicts and then commit the result.
+```
+
+pull은 "원격 내용을 가져와(fetch) 내 브랜치에 합치기(merge)"라서 푸는 법이 똑같아요. 고치고, add, commit 한 다음 다시 push해요.
+
+### PR에서도 충돌이 보여요
+
+GitHub에 PR을 올렸는데 대상 브랜치(develop 등)와 충돌하면, PR 화면에 충돌이 있다고 표시되고 바로 합칠 수 없어요.
+
+가능하면 **PR 전에 로컬에서 먼저** 풀어요. 어제 본 것처럼 feature에 서서 기준 브랜치를 가져와 합치고, 충돌을 풀어 다시 push하면 PR이 깨끗해져요.
+
+```bash
+git checkout feature/login
+git pull origin develop      # 최신 develop을 내 feature로 가져와 합치기
+# 충돌이 나면 4번 순서로 풀고
+git push origin feature/login
+```
+
+## 8. 충돌 예방
+
+충돌은 잘못이 아니라 함께 일하면 생기는 자연스러운 일이에요. 그래도 작고 드물게 만드는 습관이 있어요.
+
+- **작업을 시작하기 전에 최신 상태로 맞춰요**(`git pull`). 낡은 지점에서 출발할수록 부딪힐 일이 많아요.
+- **브랜치를 오래 끌지 않아요.** 오래 갈라져 있을수록 양쪽 차이가 쌓여 충돌이 커져요.
+- **기준 브랜치(develop 등)의 변경을 자주 feature로 가져와** 맞춰요. 작은 충돌을 그때그때 풀면 마지막에 큰 충돌이 안 생겨요.
+- **커밋과 PR을 작게 나눠요.** 작으면 충돌이 나도 어디서 났는지 금방 보여요.
+- **같은 파일을 동시에 고치지 않게** 팀원과 작업 범위를 나눠요.
+- 전체 들여쓰기나 포맷 변경 같은 **대규모 수정은 따로**, 미리 공유하고 진행해요. 모든 줄이 바뀌어서 그 사이 다른 사람 작업과 전부 부딪혀요.
+- **PR에서도 충돌이 표시돼요.** 가능하면 PR 전에 로컬에서 먼저 해결해요.
+
+## 오늘 꼭 기억할 주의점
+
+- merge는 base, current, incoming 세 곳을 비교해 **base와 달라진 쪽**을 채택해요. 양쪽이 서로 다르게 바꿨을 때만 충돌이에요.
+- 다른 줄이면 자동으로 합쳐지지만, **바로 붙은 줄**은 충돌이 날 수 있어요.
+- 충돌 표시에서 `<<<<<<< HEAD` 아래가 current(지금 브랜치), `=======` 아래가 incoming이에요.
+- 표시 줄 `<<<<<<<`, `=======`, `>>>>>>>`는 **모두 지워요.** add 전에 `git diff --check`로 남은 표시를 확인해요.
+- `--ours`는 current, `--theirs`는 incoming이에요. 골라도 **add를 해야** 해결로 쳐요.
+- 마무리는 `add`, `commit` 순서예요. add 없이 commit하면 Git이 막아요.
+- 수정과 삭제가 부딪히면 남길 때 `git add`, 지울 때 `git rm`이에요.
+- 막히면 commit 전에는 언제든 `git merge --abort`로 처음으로 돌아가요.
+- pull에서도 충돌이 나요. PR 충돌은 PR 전에 로컬에서 먼저 풀어요.
