@@ -16,6 +16,7 @@ import {
   Link as LinkIcon,
   ImagePlus,
   Trash2,
+  ChevronDown,
 } from 'lucide-react';
 import type { TilPost, TilPostInput, TilSeries, TilTemplate } from '@/lib/til/types';
 
@@ -229,10 +230,12 @@ export function TilEditor(props: Props) {
     else setError(res.error);
   }
 
-  // 메타 입력칸: 본문 에디터(굵은 테두리)와 위계를 나누려고 얇은 선, 포커스 때만 진하게.
+  // 메타 입력칸: 흰 패널 위에 한 단계 들어간 면(종이색)으로 놓아 "칸"으로 읽히게 한다.
+  // 얇은 선, 포커스 때만 진한 선과 흰 바탕으로 떠오른다.
   const inputClass =
-    'min-h-11 w-full border border-line bg-background px-3 py-2 text-body outline-none placeholder:text-muted ' +
-    'focus:border-foreground dark:border-line-dark dark:bg-background-dark dark:placeholder:text-muted-dark dark:focus:border-foreground-dark';
+    'min-h-11 w-full border border-line bg-background px-3 py-2 text-label outline-none transition-colors placeholder:text-muted ' +
+    'hover:border-muted focus:border-foreground focus:bg-surface ' +
+    'dark:border-line-dark dark:bg-background-dark dark:placeholder:text-muted-dark dark:hover:border-muted-dark dark:focus:border-foreground-dark dark:focus:bg-surface-dark';
 
   // 툴바 버튼: 최소 44px 터치 타깃(아이패드). 호버 시 배경 없이 아이콘/글자만 커진다.
   const toolBtn =
@@ -335,8 +338,8 @@ export function TilEditor(props: Props) {
       </div>
 
       {/* ── 메타데이터: 되짚어보기 | 분류 두 묶음 ───────────────────────────── */}
-      <div className="mt-4 grid gap-x-10 gap-y-10 lg:grid-cols-2">
-        <section className="flex min-w-0 flex-col gap-5">
+      <div className="mt-4 grid gap-6 lg:grid-cols-2">
+        <section className="panel flex min-w-0 flex-col gap-5 p-5 sm:p-6">
           <h2 className={groupTitle}>되짚어보기</h2>
 
           <Field label="셀프 체크 질문" note="발행 시 필수" htmlFor="til-self-check">
@@ -361,16 +364,27 @@ export function TilEditor(props: Props) {
           </Field>
 
           <Field label="이해도" note="다시 누르면 해제">
-            <div className="flex flex-wrap gap-2" role="group" aria-label="이해도">
+            {/* 다섯 칸이 붙은 한 줄(세그먼트). 고른 칸까지 채워서 "몇 점"이 한눈에 보이게. */}
+            <div
+              className="grid w-full max-w-xs grid-cols-5 border border-line dark:border-line-dark"
+              role="group"
+              aria-label="이해도"
+            >
               {[1, 2, 3, 4, 5].map((n) => {
                 const on = understanding === n;
+                const filled = understanding !== null && n <= understanding;
                 return (
                   <button
                     key={n}
                     type="button"
                     aria-pressed={on}
                     onClick={() => setUnderstanding(on ? null : n)}
-                    className="btn tap-feedback w-11 px-0 text-label"
+                    className={
+                      'tap-feedback flex h-11 items-center justify-center border-l border-line text-label font-bold transition-colors first:border-l-0 dark:border-line-dark ' +
+                      (filled
+                        ? 'bg-foreground text-surface dark:bg-foreground-dark dark:text-surface-dark'
+                        : 'bg-background text-muted hover:text-foreground dark:bg-background-dark dark:text-muted-dark dark:hover:text-foreground-dark')
+                    }
                   >
                     {n}
                   </button>
@@ -380,16 +394,16 @@ export function TilEditor(props: Props) {
           </Field>
         </section>
 
-        <section className="flex min-w-0 flex-col gap-5">
+        <section className="panel flex min-w-0 flex-col gap-5 p-5 sm:p-6">
           <h2 className={groupTitle}>분류</h2>
 
-          <Field label="학습 날짜" note="목록과 기록 달력에 이 날로 보여요" htmlFor="til-learned-on">
+          <Field label="학습 날짜" note="목록에 이 날로 보여요" htmlFor="til-learned-on">
             <input
               id="til-learned-on"
               type="date"
               value={learnedOn}
               onChange={(e) => setLearnedOn(e.target.value)}
-              className={inputClass}
+              className={`${inputClass} cursor-pointer`}
             />
           </Field>
 
@@ -404,28 +418,34 @@ export function TilEditor(props: Props) {
           </Field>
 
           <Field label="시리즈" htmlFor="til-series">
-            <select
-              id="til-series"
-              value={creatingSeries ? NEW_SERIES : seriesId ?? ''}
-              onChange={(e) => {
-                const v = e.target.value;
-                if (v === NEW_SERIES) {
-                  setCreatingSeries(true);
-                  setSeriesId(null);
-                } else {
-                  setCreatingSeries(false);
-                  setNewSeriesTitle('');
-                  setSeriesId(v || null);
-                }
-              }}
-              className={inputClass}
-            >
-              <option value="">없음</option>
-              {allSeries.map((s) => (
-                <option key={s.id} value={s.id}>{s.title}</option>
-              ))}
-              <option value={NEW_SERIES}>+ 새 시리즈 만들기</option>
-            </select>
+            <div className="relative">
+              <select
+                id="til-series"
+                value={creatingSeries ? NEW_SERIES : seriesId ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === NEW_SERIES) {
+                    setCreatingSeries(true);
+                    setSeriesId(null);
+                  } else {
+                    setCreatingSeries(false);
+                    setNewSeriesTitle('');
+                    setSeriesId(v || null);
+                  }
+                }}
+                className={`${inputClass} cursor-pointer appearance-none pr-10`}
+              >
+                <option value="">없음</option>
+                {allSeries.map((s) => (
+                  <option key={s.id} value={s.id}>{s.title}</option>
+                ))}
+                <option value={NEW_SERIES}>+ 새 시리즈 만들기</option>
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted dark:text-muted-dark"
+                aria-hidden
+              />
+            </div>
             {creatingSeries ? (
               <input
                 value={newSeriesTitle}
@@ -506,7 +526,7 @@ export function TilEditor(props: Props) {
 const NEW_SERIES = '__new__';
 
 const groupTitle =
-  'border-b border-line pb-2 text-label font-bold text-muted dark:border-line-dark dark:text-muted-dark';
+  '-mx-5 -mt-1 border-b border-line px-5 pb-3 text-body font-extrabold sm:-mx-6 sm:px-6 dark:border-line-dark';
 
 function Field({
   label,
@@ -521,9 +541,9 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-baseline gap-2">
+      <div className="flex items-baseline justify-between gap-2">
         <label htmlFor={htmlFor} className="text-label font-bold">{label}</label>
-        {note ? <span className="text-label text-muted dark:text-muted-dark">{note}</span> : null}
+        {note ? <span className="text-label font-normal text-muted dark:text-muted-dark">{note}</span> : null}
       </div>
       {children}
     </div>
