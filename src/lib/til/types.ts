@@ -37,6 +37,8 @@ export type TilPostInput = {
   seriesId: string | null;
   newSeriesTitle?: string;
   coverImageUrl: string | null;
+  /** 학습한 날(YYYY-MM-DD, 서울). 발행 시 published_at이 이 날로 정해진다. 비면 지금. */
+  learnedOn?: string;
 };
 
 export type TilSeries = {

@@ -22,6 +22,14 @@ function sanitizeUnderstanding(v: number | null): number | null {
   return v;
 }
 
+// 에디터에서 고른 학습 날짜(YYYY-MM-DD)를 서울 정오 시각으로 바꾼다. 정오로 두면 어느 시간대로
+// 읽어도 날짜가 하루 밀리지 않는다. 형식이 틀리면 null(호출부가 지금 시각을 쓴다).
+function learnedOnToIso(v: string | undefined): string | null {
+  if (!v || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+  const d = new Date(`${v}T12:00:00+09:00`);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 export async function savePostAction(input: TilPostInput, publish: boolean): Promise<ActionResult> {
   if (!(await hasUnlockCookie())) return { ok: false, error: 'unauthorized' };
 
@@ -73,7 +81,9 @@ export async function savePostAction(input: TilPostInput, publish: boolean): Pro
     series_id: seriesId,
     cover_image_url: input.coverImageUrl,
     status: publish ? 'published' : 'draft',
-    published_at: publish ? new Date().toISOString() : null,
+    // 발행 날짜는 업로드한 순간이 아니라 학습한 날. 에디터가 기존 글의 날짜를 기본값으로
+    // 넘기므로, 고쳐서 다시 발행해도 날짜가 오늘로 바뀌지 않는다.
+    published_at: publish ? (learnedOnToIso(input.learnedOn) ?? new Date().toISOString()) : null,
   };
 
   const res = await upsertPost(row);

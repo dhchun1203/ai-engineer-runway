@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { getPublishedPostBySlug, getPostBySlugAnyStatus } from '@/lib/til/store';
 import { hasUnlockCookie } from '@/lib/auth';
@@ -50,18 +51,33 @@ export default async function TilDetailPage({
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-12 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-2">
-        {/* 상단 액션(우측 정렬) — 글 전체(제목 포함) 마크다운 복사, 그리고 소유자면 편집. */}
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <TilCopyButton markdown={postToMarkdown(post)} />
-          {unlocked ? (
-            <Link
-              href={`/til/${post.slug}/edit`}
-              className="btn tap-feedback text-label"
-            >
-              편집
-            </Link>
-          ) : null}
+        {/* 상단 줄: 왼쪽은 목록으로 돌아가기, 오른쪽은 마크다운 복사와 (소유자면) 편집. */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Link
+            href="/til"
+            data-print-hide
+            className="nav-link tap-feedback flex w-fit min-h-11 items-center gap-1.5 text-label font-bold text-muted dark:text-muted-dark"
+          >
+            <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+            TIL 목록
+          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <TilCopyButton markdown={postToMarkdown(post)} />
+            {unlocked ? (
+              <Link
+                href={`/til/${post.slug}/edit`}
+                className="btn tap-feedback text-label"
+              >
+                편집
+              </Link>
+            ) : null}
+          </div>
         </div>
+        {post.publishedAt ? (
+          <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            {new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date(post.publishedAt))}
+          </span>
+        ) : null}
         {isDraftPreview ? (
           <span className="chip-solid w-fit text-label font-bold">초고 미리보기</span>
         ) : null}
@@ -84,6 +100,16 @@ export default async function TilDetailPage({
       </article>
 
       <TilMeta post={post} />
+
+      <nav aria-label="TIL 목록으로" data-print-hide className="hairline pt-6">
+        <Link
+          href="/til"
+          className="card-interactive panel flex min-h-11 items-center gap-2 p-4 text-body font-bold"
+        >
+          <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+          TIL 전체 보기
+        </Link>
+      </nav>
     </main>
   );
 }

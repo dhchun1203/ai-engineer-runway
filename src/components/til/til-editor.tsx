@@ -40,6 +40,12 @@ export function TilEditor(props: Props) {
   const [seriesId, setSeriesId] = useState<string | null>(post?.seriesId ?? null);
   const [newSeriesTitle, setNewSeriesTitle] = useState('');
   const [creatingSeries, setCreatingSeries] = useState(false);
+  // 학습 날짜(서울 기준 YYYY-MM-DD). 기존 글은 원래 발행일, 새 글이나 초고는 오늘이 기본값.
+  const [learnedOn, setLearnedOn] = useState(() =>
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(
+      post?.publishedAt ? new Date(post.publishedAt) : new Date(),
+    ),
+  );
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(post?.coverImageUrl ?? null);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingBodyImage, setUploadingBodyImage] = useState(false);
@@ -65,6 +71,7 @@ export function TilEditor(props: Props) {
       seriesId,
       newSeriesTitle: newSeriesTitle.trim() || undefined,
       coverImageUrl,
+      learnedOn,
     };
   }
 
@@ -375,6 +382,16 @@ export function TilEditor(props: Props) {
 
         <section className="flex min-w-0 flex-col gap-5">
           <h2 className={groupTitle}>분류</h2>
+
+          <Field label="학습 날짜" note="목록과 기록 달력에 이 날로 보여요" htmlFor="til-learned-on">
+            <input
+              id="til-learned-on"
+              type="date"
+              value={learnedOn}
+              onChange={(e) => setLearnedOn(e.target.value)}
+              className={inputClass}
+            />
+          </Field>
 
           <Field label="태그" note="쉼표로 구분" htmlFor="til-tags">
             <input
