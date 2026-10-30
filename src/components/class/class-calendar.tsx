@@ -186,7 +186,7 @@ export function ClassCalendar({
                 ) : null}
                 <span
                   aria-hidden="true"
-                  className={`cal-tip pointer-events-none absolute bottom-full z-20 mb-2 flex flex-col whitespace-nowrap border border-foreground bg-surface px-2.5 py-1.5 text-left text-foreground dark:border-foreground-dark dark:bg-surface-dark dark:text-foreground-dark ${tipAlign(weekdayIndex(cell.date))}`}
+                  className={`cal-tip pointer-events-none absolute bottom-full z-20 mb-2 flex w-max max-w-48 flex-col break-keep border border-foreground bg-surface px-2.5 py-1.5 text-left text-foreground dark:border-foreground-dark dark:bg-surface-dark dark:text-foreground-dark ${tipAlign(weekdayIndex(cell.date))}`}
                 >
                   <span className="text-label font-bold text-accent dark:text-accent-dark">{day.session}회차</span>
                   <span className="text-label font-semibold">{day.title}</span>
