@@ -1,0 +1,274 @@
+# 05-python-setup-uv 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
+# 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
+slug: 05-python-setup-uv
+checklist:
+  - id: class-05-python-intro
+    label: "파이썬을 만든 사람, 이름의 유래, 특징 다섯 가지와 보일러플레이트가 무엇인지 말해 보기"
+  - id: class-05-interpreter-repl
+    label: "컴파일 방식과 인터프리터 방식의 차이를 설명하고, 터미널에서 python 으로 REPL 을 열어 한 줄 실행한 뒤 exit() 로 나가기"
+  - id: class-05-env-terms
+    label: "패키지, 의존성(dependency), 가상환경을 내 말로 설명하고 가상환경이 왜 필요한지 말하기"
+  - id: class-05-install-uv
+    label: "winget install --id=astral-sh.uv -e 로 uv 를 설치하고 uv --version 확인하기"
+  - id: class-05-uv-init
+    label: "빈 폴더에서 uv init --no-package, uv python pin 3.12, uv add fastapi 를 실행하고 생긴 파일 확인하기"
+  - id: class-05-uv-sync
+    label: "pyproject.toml 과 uv.lock 의 차이를 말하고, uv sync, --locked, --frozen 을 언제 쓰는지 설명하기"
+  - id: class-05-run-activate
+    label: "uv run main.py 로 실행하고, source .venv/Scripts/activate 로 활성화해 which python 과 echo $VIRTUAL_ENV 를 비교한 뒤 deactivate"
+  - id: class-05-jupyter
+    label: "uv add ipykernel 후 VS Code 에서 .ipynb 를 만들어 커널을 .venv 로 고르고, 단축키 A, B, M, Y, DD, Shift + Enter 써 보기"
+quiz:
+  - id: boilerplate-meaning
+    q: "보일러플레이트(boilerplate)를 가장 잘 설명한 것은?"
+    options:
+      - "프로그램의 핵심 로직"
+      - "하려는 일과 상관없이 형식상 매번 써야 하는 코드"
+      - "외부에서 가져온 라이브러리"
+      - "실행 속도를 높이는 코드"
+    answer: 1
+    explain: "Java 는 Hello 한 줄을 찍으려 해도 클래스와 main 함수 틀이 필요해요. 파이썬은 파일 자체가 프로그램이라 print(\"Hello\") 한 줄이면 돼요."
+  - id: interpreter-vs-compiler
+    q: "인터프리터 방식에 대한 설명으로 맞는 것은?"
+    options:
+      - "전체를 미리 번역한 뒤 실행한다"
+      - "실행하면서 차례대로 번역하고, 바로 실행해 볼 수 있다"
+      - "C 언어가 대표적인 예다"
+      - "실행 전에 반드시 빌드 단계가 필요하다"
+    answer: 1
+    explain: "인터프리터는 동시통역처럼 실행하면서 번역해요. 전체를 미리 번역하는 건 컴파일 방식이고 C 가 예예요. 파이썬(CPython)은 속에서 바이트코드라는 중간 단계를 거치지만, 보통 인터프리터 방식으로 분류해요."
+  - id: pycache-meaning
+    q: "파이썬 파일을 import 해 실행했더니 __pycache__/calc.cpython-312.pyc 가 생겼어요. 이 파일은?"
+    options:
+      - "내가 꼭 커밋해야 하는 소스 코드"
+      - "다음 실행을 빠르게 하려고 저장한 바이트코드 캐시라 커밋하지 않는다"
+      - "가상환경 설정 파일"
+      - "에러 기록 파일"
+    answer: 1
+    explain: "CPython 은 코드를 바이트코드로 바꿔 실행하고, import 한 파일은 바이트코드를 __pycache__ 에 저장해 둬요. 자동으로 생기는 캐시라 uv 가 만든 .gitignore 에도 __pycache__/ 가 들어 있어요."
+  - id: why-virtualenv
+    q: "가상환경을 쓰는 가장 큰 이유는?"
+    options:
+      - "파이썬 실행 속도를 높이려고"
+      - "프로젝트마다 설치 공간을 나눠 패키지 버전이 서로 부딪히지 않게 하려고"
+      - "코드를 GitHub 에 올리려고"
+      - "인터넷 없이 패키지를 쓰려고"
+    answer: 1
+    explain: "프로젝트마다 필요한 패키지와 버전이 달라요. 한 곳에 섞어 설치하면 한쪽 버전을 바꿀 때 다른 프로젝트가 깨질 수 있어서, 프로젝트마다 .venv 를 따로 둬요."
+  - id: uv-init-files
+    q: "빈 폴더에서 uv init --no-package 를 실행한 직후에는 아직 없는 것은?"
+    options:
+      - "pyproject.toml"
+      - "main.py"
+      - ".python-version"
+      - ".venv 와 uv.lock"
+    answer: 3
+    explain: "uv init 은 .git, .gitignore, .python-version, README.md, main.py, pyproject.toml 을 만들어요. .venv 와 uv.lock 은 uv add 나 uv run 을 실행할 때 생겨요."
+  - id: python-pin
+    q: "uv python pin 3.12 가 하는 일은?"
+    options:
+      - "파이썬 3.12 를 컴퓨터 전체 기본값으로 바꾼다"
+      - ".python-version 파일에 3.12 를 적어 이 프로젝트가 쓸 버전을 정한다"
+      - "pyproject.toml 의 dependencies 에 python 을 추가한다"
+      - "파이썬 3.12 를 지운다"
+    answer: 1
+    explain: "pin 은 이 프로젝트의 .python-version 만 바꿔요. 실행해 보면 Pinned `.python-version` to `3.12` 라고 나와요. 그 버전이 없으면 uv 가 필요할 때 받아 와요."
+  - id: uv-add-three-things
+    q: "uv add fastapi 가 한 번에 하는 일이 아닌 것은?"
+    options:
+      - ".venv 에 fastapi 와 필요한 패키지를 설치"
+      - "pyproject.toml 의 dependencies 에 기록"
+      - "uv.lock 에 정확한 버전을 기록"
+      - "변경을 Git 에 자동으로 커밋"
+    answer: 3
+    explain: "uv add 는 설치, pyproject.toml 기록, uv.lock 갱신을 해요. 커밋은 직접 해요. 두 파일 모두 커밋하고 .venv 는 커밋하지 않아요."
+  - id: pyproject-vs-lock
+    q: "pyproject.toml 에는 \"fastapi>=0.162.0\", uv.lock 에는 version = \"0.162.0\" 이 있어요. 맞는 설명은?"
+    options:
+      - "pyproject.toml 은 허용 범위(원하는 것), uv.lock 은 실제로 고른 정확한 버전이다"
+      - "두 파일은 같은 내용이라 하나만 있으면 된다"
+      - "uv.lock 은 사람이 직접 고치는 파일이다"
+      - "pyproject.toml 이 정확한 버전, uv.lock 이 범위다"
+    answer: 0
+    explain: "pyproject.toml 은 장보기 목록, uv.lock 은 영수증이에요. lock 이 있어서 팀원, 다른 컴퓨터, 서버가 같은 버전을 설치해요."
+  - id: sync-after-clone
+    q: "팀원의 저장소를 git clone 했어요. .venv 가 없는데 같은 환경을 만들려면?"
+    options:
+      - "uv init"
+      - "uv sync"
+      - "uv python pin"
+      - "pip freeze"
+    answer: 1
+    explain: ".venv 는 .gitignore 에 있어 저장소에 없어요. uv sync 가 pyproject.toml 과 uv.lock 대로 .venv 를 만들어요. pyproject.toml 을 손으로 고친 뒤에도 uv sync 예요."
+  - id: sync-locked-error
+    q: "pyproject.toml 에 패키지를 손으로 추가하고 lock 은 그대로 둔 채 uv sync --locked 를 실행하면?"
+    options:
+      - "lock 을 새로 만들고 설치한다"
+      - "lock 이 업데이트가 필요하다며 에러로 멈춘다"
+      - "lock 만 보고 설치해서 새 패키지는 빠진다"
+      - "pyproject.toml 을 원래대로 되돌린다"
+    answer: 1
+    explain: "--locked 는 두 파일이 어긋나면 에러예요(The lockfile at `uv.lock` needs to be updated). 옵션 없는 uv sync 는 lock 을 다시 만들고, --frozen 은 lock 만 믿어 새 패키지를 설치하지 않아요."
+  - id: source-why
+    q: "Git Bash 에서 가상환경을 활성화할 때 source .venv/Scripts/activate 처럼 source 를 쓰는 이유는?"
+    options:
+      - "파일을 관리자 권한으로 실행하려고"
+      - "지금 쓰는 터미널에서 그대로 실행해야 PATH 같은 설정이 이 터미널에 남아서"
+      - "파일을 다운로드하려고"
+      - "source 가 없으면 파일을 지워서"
+    answer: 1
+    explain: "source 없이 실행하면 새 프로세스에서 돌고 끝나면 바뀐 설정도 사라져요. 실제로 bash 로 실행하면 You must source this script 라며 막아요."
+  - id: which-vs-virtualenv
+    q: "가상환경을 활성화한 터미널에서 which python 과 echo $VIRTUAL_ENV 가 보여 주는 것은?"
+    options:
+      - "둘 다 시스템 파이썬 경로"
+      - "which python 은 실행될 python 파일 경로(.venv/Scripts/python), $VIRTUAL_ENV 는 가상환경 폴더 경로(.venv)"
+      - "which python 은 파이썬 버전, $VIRTUAL_ENV 는 패키지 목록"
+      - "둘 다 빈 줄"
+    answer: 1
+    explain: "which python 은 python 을 쳤을 때 실행될 파일의 경로예요. 가상환경 폴더 자체는 $VIRTUAL_ENV 로 봐요. deactivate 하면 which python 은 시스템 경로로 돌아가고 $VIRTUAL_ENV 는 빈 줄이 돼요."
+  - id: uv-run-no-activate
+    q: "활성화하지 않은 터미널에서 uv add fastapi 후 python main.py(안에 import fastapi)를 실행하면?"
+    options:
+      - "항상 잘 실행된다"
+      - "시스템 파이썬으로 돌아 ModuleNotFoundError 가 날 수 있다. uv run main.py 로 실행하면 된다"
+      - "uv 가 자동으로 활성화해 준다"
+      - "main.py 가 지워진다"
+    answer: 1
+    explain: "fastapi 는 .venv 에만 설치됐어요. 활성화 안 한 python 은 시스템 파이썬이라 직접 해 보니 No module named 'fastapi' 가 났어요. uv run 은 활성화 없이 .venv 에서 실행해 줘요."
+  - id: jupyter-kernel
+    q: "VS Code 노트북에서 uv add 로 설치한 패키지를 import 하려면 무엇을 해야 하나요?"
+    options:
+      - "노트북을 .py 로 바꾼다"
+      - "ipykernel 을 설치하고 Select Kernel 에서 내 프로젝트의 .venv 를 고른다"
+      - "노트북 안에서 pip install 을 한다"
+      - "아무것도 안 해도 된다"
+    answer: 1
+    explain: "ipykernel 은 노트북이 코드를 실행하는 엔진(커널)이에요. 커널을 .venv 로 골라야 그 환경에 설치한 패키지를 쓸 수 있어요. 개발할 때만 쓰니 uv add --dev ipykernel 로 나눠 둘 수도 있어요."
+  - id: jupyter-shortcuts
+    q: "노트북에서 셀을 마크다운 셀로 바꾸려고 M 을 눌렀는데 글자 m 이 입력됐어요. 먼저 할 일은?"
+    options:
+      - "Ctrl + Enter 를 누른다"
+      - "Esc 로 명령 모드에 들어간 뒤 M 을 누른다"
+      - "D 를 두 번 누른다"
+      - "노트북을 다시 연다"
+    answer: 1
+    explain: "M, Y, A, B, DD 같은 단축키는 명령 모드에서 동작해요. 셀 안(편집 모드)이면 그냥 글자가 입력돼요. 한영이 영문인지도 확인해요."
+commands:
+  - cmd: python
+    desc: 파이썬 REPL(>>>) 열기
+    group: Python
+  - cmd: exit()
+    desc: REPL 나가기
+    group: Python
+  - cmd: python -c "import dis; dis.dis('...')"
+    desc: 코드가 바뀐 바이트코드 들여다보기
+    group: Python
+  - cmd: winget search uv
+    desc: uv 패키지 찾기
+    group: winget
+  - cmd: winget install --id=astral-sh.uv -e
+    desc: ID 정확히 일치로 uv 설치
+    group: winget
+  - cmd: uv --version
+    desc: uv 설치 확인(안 나오면 터미널 새로 열기)
+    group: uv
+  - cmd: uv init --no-package
+    desc: 빌드 시스템 없는 단순한 프로젝트 만들기(main.py, pyproject.toml 등)
+    group: uv
+  - cmd: uv python pin 3.12
+    desc: .python-version 에 프로젝트 파이썬 버전 기록
+    group: uv
+  - cmd: uv python install
+    desc: 필요한 파이썬 버전 설치
+    group: uv
+  - cmd: uv add <패키지>
+    desc: .venv 에 설치하고 pyproject.toml 과 uv.lock 에 기록
+    group: uv
+  - cmd: uv add --dev <패키지>
+    desc: 개발할 때만 쓰는 패키지를 dev 묶음으로 추가
+    group: uv
+  - cmd: uv sync
+    desc: 목록대로 .venv 맞추기(clone 직후, pyproject 직접 수정 후)
+    group: uv
+  - cmd: uv sync --locked
+    desc: pyproject.toml 과 uv.lock 이 어긋나면 에러
+    group: uv
+  - cmd: uv sync --frozen
+    desc: lock 파일만 믿고 설치
+    group: uv
+  - cmd: uv lock
+    desc: uv.lock 다시 만들기
+    group: uv
+  - cmd: uv run main.py
+    desc: 활성화 없이 .venv 환경에서 실행
+    group: uv
+  - cmd: uv run python
+    desc: .venv 의 파이썬으로 REPL 열기
+    group: uv
+  - cmd: uv pip install <패키지>
+    desc: pip 와 비슷한 방식으로 설치
+    group: uv
+  - cmd: source .venv/Scripts/activate
+    desc: Git Bash 에서 가상환경 활성화(프롬프트 앞에 프로젝트 이름)
+    group: 터미널
+  - cmd: deactivate
+    desc: 가상환경 비활성화
+    group: 터미널
+  - cmd: which python
+    desc: python 을 쳤을 때 실행될 파일 경로
+    group: 터미널
+  - cmd: echo $VIRTUAL_ENV
+    desc: 활성화된 가상환경 폴더 경로(비활성화면 빈 줄)
+    group: 터미널
+  - cmd: Esc / Enter
+    desc: 노트북 명령 모드 / 편집 모드
+    group: 주피터
+  - cmd: A / B
+    desc: 셀 위 / 아래에 추가(명령 모드)
+    group: 주피터
+  - cmd: M / Y
+    desc: 마크다운 셀 / 코드 셀로 바꾸기(명령 모드)
+    group: 주피터
+  - cmd: D D
+    desc: 셀 삭제(명령 모드)
+    group: 주피터
+  - cmd: Z
+    desc: 되돌리기(명령 모드)
+    group: 주피터
+  - cmd: L
+    desc: 줄 번호 켜기/끄기(명령 모드)
+    group: 주피터
+  - cmd: Alt + ↑ / Alt + ↓
+    desc: 셀 위아래로 옮기기(명령 모드)
+    group: 주피터
+  - cmd: Ctrl + Enter
+    desc: 셀 실행
+    group: 주피터
+  - cmd: Shift + Enter
+    desc: 셀 실행 후 다음 셀로 이동
+    group: 주피터
+  - cmd: Alt + Enter
+    desc: 셀 실행 후 아래에 새 셀 추가
+    group: 주피터
+terms:
+  - word: 보일러플레이트 (boilerplate)
+    definition: 하려는 일과 상관없이 형식상 매번 써야 하는 코드. 파이썬은 이게 적어서 첫 줄부터 본론을 쓴다.
+  - word: 인터프리터 (interpreter)
+    definition: 코드를 실행하면서 차례대로 번역하는 방식. 파이썬이 대표적이고, 전체를 미리 번역하는 컴파일 방식과 대비된다.
+  - word: 바이트코드 (bytecode)
+    definition: CPython 이 코드를 실행하기 전에 바꾸는 중간 명령. import 한 파일은 __pycache__ 에 .pyc 로 저장된다.
+  - word: REPL
+    definition: Read, Eval, Print, Loop. 한 줄 입력하면 바로 실행해 결과를 보여 주는 대화형 환경. 터미널에서 python 으로 연다.
+  - word: 의존성 (dependency)
+    definition: 내 프로젝트가 동작하려면 필요한 패키지. 그 패키지가 또 필요로 하는 패키지까지 함께 설치된다.
+  - word: 가상환경 (virtual environment)
+    definition: 프로젝트마다 따로 쓰는 독립된 설치 공간(.venv). 프로젝트끼리 패키지 버전이 부딪히지 않게 한다.
+  - word: uv
+    definition: Astral 이 Rust 로 만든 파이썬 패키지와 프로젝트 관리 도구. 설치, 버전 고정, 가상환경, 파이썬 버전 관리를 하나로 한다.
+  - word: pyproject.toml
+    definition: 프로젝트 이름, 파이썬 버전, 필요한 패키지와 허용 버전 범위를 선언하는 파일. Git 에 커밋한다.
+  - word: uv.lock
+    definition: 실제로 고른 정확한 패키지 버전을 딸려 온 것까지 모두 적은 락 파일. 팀원과 서버가 같은 버전을 설치하게 한다.
+  - word: 커널 (kernel)
+    definition: 주피터 노트북이 코드를 실행할 때 쓰는 실행 엔진. ipykernel 을 설치하고 프로젝트의 .venv 를 커널로 고른다.
