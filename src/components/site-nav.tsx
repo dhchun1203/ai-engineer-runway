@@ -40,9 +40,10 @@ type NavItem = {
 const NAV_ITEMS: readonly NavItem[] = [
   // "오늘의 학습(/)"은 네비에서 뺀다(2026-09-12) — 로고(brand-link)가 이미 홈("/")=
   // 오늘의 학습으로 가므로 중복이다. 최상위는 베이스캠프·커리큘럼·채널톡 로드맵·TIL·더보기▾.
-  // 베이스캠프 선행 과제 — 커리큘럼보다 우선(사용자 결정 2026-09-09). 앞쪽에 둔다.
+  // 2026-10-31: 베이스캠프(개강 전 선행 과제)는 더보기로 내리고, 번외 실습 "파이썬 손풀기"
+  // (/practice, 가계부 CLI를 직접 키우는 실습, 진도와 격리)를 최상위에 둔다(사용자 결정).
   { label: "수업 복습", href: "/class", icon: "class" },
-  { label: "베이스캠프", href: "/basecamp", icon: "basecamp" },
+  { label: "파이썬 손풀기", href: "/practice", icon: "practice" },
   { label: "커리큘럼", href: "/curriculum", icon: "curriculum" },
   // 취업 목표 트랙 "채널톡 AI Engineer 로드맵"(/roadmap) — 정규 커리큘럼과 별개의
   // 별도 커리큘럼. 단독 링크로 두어 한 번에 닿게 한다.
@@ -62,8 +63,8 @@ const NAV_ITEMS: readonly NavItem[] = [
       { label: "노트", href: "/notes", icon: "notes" },
       { label: "북마크", href: "/bookmarks", icon: "bookmarks" },
       { label: "질문함", href: "/inbox", icon: "inbox" },
-      // 번외 실습 "파이썬 손풀기"(/practice). 가계부 CLI를 직접 키우는 실습. 진도와 격리.
-      { label: "파이썬 손풀기", href: "/practice", icon: "practice" },
+      // 베이스캠프(개강 전 선행 과제). 개강 뒤라 최상위에서 내렸다(2026-10-31).
+      { label: "베이스캠프", href: "/basecamp", icon: "basecamp" },
       // 번외 "AI 뜯어보기"(/concepts) — 정규 커리큘럼과 별개의 개념 이해 편.
       // isActiveHref가 startsWith라 /concepts/[slug] 리더에서도 활성으로 표시된다.
       { label: "AI 뜯어보기", href: "/concepts", icon: "concepts" },
