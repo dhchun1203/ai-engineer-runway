@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 // 이동, 지금 읽는 단계를 채운 칩으로 보여 준다. h2 제목의 "3. " 같은 번호는 칩에서 뺀다.
 // 스크롤 판정은 LessonToc(roadmap/lesson-toc.tsx)와 같다(제목 착지선을 마지막으로 지난 절).
 // 칩 줄은 sticky로 두지 않는다. 칩이 7개라 아이패드 세로에서 두 줄이 되어 본문을 가린다.
+// 왼쪽 목차(LessonToc)가 보이는 넓은 화면(xl 이상)에서는 숨긴다.
 
 type Stage = { id: string; label: string };
 
@@ -53,7 +54,8 @@ export function StageChips({ contentId }: { contentId: string }) {
 
   if (stages.length === 0) return null;
   return (
-    <nav aria-label="단원 단계" data-print-hide className="flex flex-wrap gap-2">
+    // xl(1280px) 이상에서는 왼쪽 여백의 LessonToc가 같은 일을 하므로 숨긴다(둘이 겹쳐 보이지 않게).
+    <nav aria-label="단원 단계" data-print-hide className="flex flex-wrap gap-2 xl:hidden">
       {stages.map((s, i) => (
         <a
           key={s.id}
