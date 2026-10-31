@@ -5,6 +5,7 @@
 // - 선 색은 currentColor라 놓인 자리의 글자색(muted, 활성 chip-solid의 반전색)을 따른다.
 // - 색 면은 기본이 옅은 파랑(내비처럼 작은 자리), bold면 꽉 찬 파랑(로그인 소개처럼 큰 자리).
 //   색은 globals.css의 .cicon 규칙이 토큰으로 칠한다. 리터럴 색은 없다.
+// - account(사람 모양)만 색 면 없이 선으로만 그린다. 머리 뒤에 색이 깔리면 지저분해 보인다.
 // - 동작 아이콘(화살표, 닫기 등)은 계속 lucide를 쓴다. 이 세트는 "어느 구역인가"를 알리는
 //   자리(내비 항목, 소개 카드)에만 쓴다.
 
@@ -51,7 +52,9 @@ export function CustomIcon({
       aria-hidden="true"
       focusable="false"
     >
-      <path className="cicon-fill" transform={`translate(${offset} ${offset})`} d={icon.body} />
+      {name === "account" ? null : (
+        <path className="cicon-fill" transform={`translate(${offset} ${offset})`} d={icon.body} />
+      )}
       <path d={icon.body} />
       {icon.ink ? <path d={icon.ink} /> : null}
     </svg>
