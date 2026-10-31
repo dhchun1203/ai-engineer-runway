@@ -254,6 +254,7 @@ export function SiteNav() {
   // 슬랙 피드는 소유자 전용이라 소유자일 때만, 그리고 최상위가 아니라 "더보기" 하위 메뉴에
   // 넣는다(사용자 요청 2026-09-12). 가입 승인(/admin)은 더보기에서 빼 프로필 페이지 안으로
   // 옮겼다(2026-09-14, 소유자 전용). "더보기" 항목의 children 끝에 슬랙만 덧붙인다.
+  const accountItem = { label: loggedIn ? "프로필" : "로그인", href: ACCOUNT_HREF, icon: "account" } as const;
   const navItems: readonly NavItem[] = [
     ...NAV_ITEMS
       // 채널톡 로드맵은 허용 계정(소유자 + 테스터)에게만 보인다 — 그 외에는 항목 자체를 뺀다.
@@ -269,7 +270,7 @@ export function SiteNav() {
           }
         : item,
     ),
-    { label: loggedIn ? "프로필" : "로그인", href: ACCOUNT_HREF, icon: "account" },
+    accountItem,
   ];
 
   // 로그인/회원가입 화면에서는 상단 내비를 숨긴다(전체 로그인 게이트의 유일한 공개
@@ -294,13 +295,13 @@ export function SiteNav() {
           <span className="brand-mark" aria-hidden="true" />
           AI Engineer Hub
         </Link>
-        {/* 한 줄을 지킨다. 두 줄이 되면 sticky 헤더가 두 배로 커져 본문을 가린다. 항목 일곱 개의 폭 합이
-            약 513px, 가장 좁은 1024px에서 쓸 수 있는 폭이 599px라 간격 8px이 들어간다. */}
+        {/* 한 줄을 지킨다. 두 줄이 되면 sticky 헤더가 두 배로 커져 본문을 가린다. 항목 여섯 개의 폭 합이
+            약 480px, 가장 좁은 1024px에서 쓸 수 있는 폭이 약 540px라 간격 8px이 들어간다. */}
         <div
           ref={desktopNavRef}
           className="hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-x-2 whitespace-nowrap lg:flex"
         >
-          {navItems.map((item, index) => {
+          {navItems.filter((item) => item.href !== ACCOUNT_HREF).map((item, index) => {
             // 드롭다운 부모 — 클릭 토글(hover 아님, 아이패드 터치 대응).
             if (item.children && item.children.length > 0) {
               const isOpen = openMenu === item.label;
@@ -430,24 +431,17 @@ export function SiteNav() {
             }
             // 단독 링크.
             const isActive = isActiveHref(pathname, item.href);
-            // 계정 항목은 폭을 아끼려고 아이콘만 보인다(사용자 결정 2026-10-31). 글자는 스크린리더와
-            // 툴팁으로 남기고, 넓게 쓰는 모바일 패널에서는 그대로 글자로 보인다.
-            const iconOnly = item.href === ACCOUNT_HREF;
             return (
               <Link
                 key={item.label}
                 href={item.href}
-                aria-label={iconOnly ? item.label : undefined}
-                title={iconOnly ? item.label : undefined}
-                className={`nav-link tap-feedback flex min-h-11 items-center text-label font-bold ${
-                  iconOnly ? "nav-icon-only min-w-11 justify-center" : "px-3"
-                } ${
+                className={`nav-link tap-feedback flex min-h-11 items-center px-3 text-label font-bold ${
                   isActive
                     ? "chip-solid"
                     : "text-muted dark:text-muted-dark"
                 }`}
               >
-                {iconOnly && item.icon ? <CustomIcon name={item.icon} className="h-5.5 w-5.5" /> : item.label}
+                {item.label}
               </Link>
             );
           })}
@@ -473,6 +467,16 @@ export function SiteNav() {
             {open ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
           </button>
           <ThemeToggle />
+          {/* 계정은 폭을 아끼려고 아이콘만 보인다(사용자 결정 2026-10-31). 테마 버튼 오른쪽에 같은
+              모양과 호버, 눌림으로 선다. 좁은 화면에서는 햄버거 패널에 글자로 있으니 숨긴다. */}
+          <Link
+            href={accountItem.href}
+            aria-label={accountItem.label}
+            title={accountItem.label}
+            className="tap-feedback hidden min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-badge-neutral-text hover:bg-badge-neutral-bg dark:text-badge-neutral-text-dark dark:hover:bg-badge-neutral-bg-dark lg:flex"
+          >
+            <CustomIcon name={accountItem.icon} className="h-5 w-5" />
+          </Link>
         </div>
       </nav>
       {panelMounted && (

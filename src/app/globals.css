@@ -753,11 +753,6 @@ textarea,
   left: 2.75rem;
 }
 
-/* 아이콘만 있는 링크(상단 메뉴의 프로필)는 뒤따르는 글자가 없으니 밑줄이 아이콘 폭을 덮는다. */
-.nav-link.nav-icon-only:not(.chip-solid):has(> .cicon)::after {
-  left: 0.75rem;
-}
-
 /* 색 트랜지션은 링크 자신에 건다. transform도 함께 적는 이유: 이 선언이
    `.tap-feedback`의 transition을 덮으므로, 빼면 누를 때의 내려앉기가
    트랜지션 없이 튄다. */
