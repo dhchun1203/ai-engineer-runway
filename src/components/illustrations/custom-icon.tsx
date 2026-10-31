@@ -27,7 +27,7 @@ const ICONS = {
   offline: { body: "M5 3h14v18H5z", ink: "M12 7v7M8.5 10.5L12 14l3.5-3.5M9 18h6" },
   about: { body: "M3 3h18v18H3z", ink: "M12 11v6M12 7v.5" },
   slack: { body: "M4 4h16v16H4z", ink: "M10 7l-1.5 10M15.5 7L14 17M7 10h11M6.5 14h11" },
-  account: { body: "M8.5 3h7v7h-7z", ink: "M4 21v-3a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v3" },
+  account: { body: "M12 3a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9z", ink: "M4 21c0-4 3.5-6 8-6s8 2 8 6" },
   progress: { body: "M4 3h16v18H4z", ink: "M8 9l1.5 1.5L12.5 7.5M8 15.5l1.5 1.5 3-3M15 9h2M15 16h2" },
 } as const;
 

@@ -440,14 +440,14 @@ export function SiteNav() {
                 aria-label={iconOnly ? item.label : undefined}
                 title={iconOnly ? item.label : undefined}
                 className={`nav-link tap-feedback flex min-h-11 items-center text-label font-bold ${
-                  iconOnly ? "min-w-11 justify-center" : "px-3"
+                  iconOnly ? "nav-icon-only min-w-11 justify-center" : "px-3"
                 } ${
                   isActive
                     ? "chip-solid"
                     : "text-muted dark:text-muted-dark"
                 }`}
               >
-                {iconOnly && item.icon ? <CustomIcon name={item.icon} className="h-5 w-5" /> : item.label}
+                {iconOnly && item.icon ? <CustomIcon name={item.icon} className="h-5.5 w-5.5" /> : item.label}
               </Link>
             );
           })}
