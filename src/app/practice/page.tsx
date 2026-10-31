@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readProgressRows } from "@/lib/progress-store";
+import { readLessonNote } from "@/lib/note-store";
+import { normalizeRepoUrl, PRACTICE_REPO_NOTE_ID } from "@/lib/practice-repo";
+import { PracticeRepoLink } from "@/components/practice/practice-repo-link";
 import { PracticeUnitList } from "@/components/practice/practice-unit-list";
 import { getOrderedPracticeUnits, PRACTICE_PROGRESS_PREFIX } from "@/content/practice-helpers";
 
@@ -22,7 +25,9 @@ const PREP_ITEMS = [
 
 export default async function PracticeIndexPage() {
   const unlocked = await hasUnlockCookie();
-  const progress = unlocked ? await readProgressRows() : null;
+  const [progress, repoNote] = unlocked
+    ? await Promise.all([readProgressRows(), readLessonNote(PRACTICE_REPO_NOTE_ID)])
+    : [null, null];
   const initialDone = progress?.ok
     ? progress.rows
         .filter((row) => row.lessonSlug.startsWith(PRACTICE_PROGRESS_PREFIX))
@@ -61,6 +66,9 @@ export default async function PracticeIndexPage() {
           ))}
         </ul>
       </section>
+
+      {/* 주소를 못 읽었을 때는 칸을 감춘다. 빈 입력칸을 보이면 저장한 주소가 사라진 것처럼 보인다. */}
+      {repoNote?.ok ? <PracticeRepoLink initialUrl={normalizeRepoUrl(repoNote.body)} /> : null}
 
       <PracticeUnitList units={units} initialDone={initialDone} unlocked={unlocked} />
     </main>

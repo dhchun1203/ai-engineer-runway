@@ -8,6 +8,8 @@
 
 import { hasUnlockCookie } from '@/lib/auth';
 import { setLessonCompletion } from '@/lib/progress-store';
+import { saveLessonNote } from '@/lib/note-store';
+import { normalizeRepoUrl, PRACTICE_REPO_NOTE_ID } from '@/lib/practice-repo';
 import { getPracticeUnitBySlug, practiceProgressId } from '@/content/practice-helpers';
 
 export async function togglePracticeUnit(slug: string, currentlyDone: boolean): Promise<void> {
@@ -21,4 +23,19 @@ export async function togglePracticeUnit(slug: string, currentlyDone: boolean): 
   }
 
   await setLessonCompletion(practiceProgressId(slug), !currentlyDone);
+}
+
+/** 내 GitHub 저장소 주소 저장. 비워서 저장하면 지운다(url: null). GitHub 주소가 아니면 ok: false. */
+export async function savePracticeRepo(
+  input: string,
+): Promise<{ ok: true; url: string | null } | { ok: false }> {
+  if (!(await hasUnlockCookie())) {
+    throw new Error('unauthorized');
+  }
+
+  const url = input.trim() === '' ? null : normalizeRepoUrl(input);
+  if (url === null && input.trim() !== '') return { ok: false };
+
+  await saveLessonNote(PRACTICE_REPO_NOTE_ID, url ?? '');
+  return { ok: true, url };
 }
