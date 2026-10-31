@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { MDXContent } from "@/components/mdx-content";
 import { ReadingAssistant } from "@/components/reading-assistant/reading-assistant";
-import { LessonToc } from "@/components/roadmap/lesson-toc";
 import { PageBookmark } from "@/components/page-bookmark";
 import { StageChips } from "@/components/practice/stage-chips";
 import { TypeAlong } from "@/components/practice/type-along";
@@ -57,8 +56,6 @@ export default async function PracticeUnitPage({
 
   return (
     <main className="relative mx-auto flex w-full max-w-3xl min-[1800px]:max-w-4xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      {/* 스크롤을 따라다니는 목차(수업 복습과 같은 것). 넓은 화면의 왼쪽 여백에만 뜬다. */}
-      <LessonToc contentId={PRACTICE_ARTICLE_ID} />
       <PageBookmark pageKey={`practice:${unit.slug}`} pageTitle={unit.title} articleId={PRACTICE_ARTICLE_ID} />
       <article className="flex flex-col gap-8">
         <header className="flex flex-col gap-3">
@@ -77,8 +74,10 @@ export default async function PracticeUnitPage({
               약 {hours}시간, 오늘 붙는 기능: {unit.feature}
             </span>
           </div>
-          <StageChips contentId={PRACTICE_ARTICLE_ID} />
         </header>
+
+        {/* 단계 막대는 모든 폭에서 위에 붙어 따라온다. 그래서 왼쪽 목차(LessonToc)는 두지 않는다. */}
+        <StageChips contentId={PRACTICE_ARTICLE_ID} />
 
         <div id={PRACTICE_ARTICLE_ID} className="prose dark:prose-invert max-w-none">
           <MDXContent code={unit.code} components={practiceComponents} />

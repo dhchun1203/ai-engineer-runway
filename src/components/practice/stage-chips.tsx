@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 
-// 단원 페이지 위쪽 단계 칩. 본문의 h2(rehypeSlug id)를 읽어 칩으로 늘어놓고, 누르면 그 단계로
-// 이동, 지금 읽는 단계를 채운 칩으로 보여 준다. h2 제목의 "3. " 같은 번호는 칩에서 뺀다.
-// 스크롤 판정은 LessonToc(roadmap/lesson-toc.tsx)와 같다(제목 착지선을 마지막으로 지난 절).
-// 칩 줄은 sticky로 두지 않는다. 칩이 7개라 아이패드 세로에서 두 줄이 되어 본문을 가린다.
-// 왼쪽 목차(LessonToc)가 보이는 넓은 화면(xl 이상)에서는 숨긴다.
+// 단원 페이지의 단계 막대. 사이트 헤더 바로 아래에 붙어 스크롤을 따라오며, 본문 h2(rehypeSlug id)를
+// 읽어 칸으로 늘어놓고 지금 읽는 단계를 채워 보여 준다. 누르면 그 단계로 이동한다.
+// 높이와 서는 자리는 구간 테이프와 같은 .section-tape를 쓴다. 그래야 h2 착지 위치
+// (--section-tape-scroll-offset)가 막대 바로 아래로 맞는다.
+// 좁은 화면(md 미만)에서는 지금 단계만 이름을 보이고, 나머지는 번호만 보인다. 한 줄을 지키기
+// 위해서다. 두 줄이 되면 따라오는 막대가 본문을 가린다.
 
 type Stage = { id: string; label: string };
 
@@ -52,20 +53,41 @@ export function StageChips({ contentId }: { contentId: string }) {
     };
   }, [contentId]);
 
-  if (stages.length === 0) return null;
+  const goTo = (id: string) => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.getElementById(id)?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+  };
+
+  // 칸이 채워지기 전에도 자리는 잡아 둔다(불러온 뒤 본문이 밀려 내려가지 않게).
   return (
-    // xl(1280px) 이상에서는 왼쪽 여백의 LessonToc가 같은 일을 하므로 숨긴다(둘이 겹쳐 보이지 않게).
-    <nav aria-label="단원 단계" data-print-hide className="flex flex-wrap gap-2 xl:hidden">
-      {stages.map((s, i) => (
-        <a
-          key={s.id}
-          href={`#${s.id}`}
-          aria-current={s.id === activeId ? "step" : undefined}
-          className={`${s.id === activeId ? "chip-solid" : "chip"} tap-feedback min-h-11 break-keep text-label font-bold`}
-        >
-          {i + 1}. {s.label}
-        </a>
-      ))}
+    <nav
+      aria-label="단원 단계"
+      data-section-tape
+      className="section-tape sticky z-10 flex w-full items-stretch bg-background dark:bg-background-dark"
+    >
+      {stages.map((stage, i) => {
+        const active = stage.id === activeId;
+        return (
+          <a
+            key={stage.id}
+            href={`#${stage.id}`}
+            onClick={(e) => {
+              e.preventDefault();
+              goTo(stage.id);
+            }}
+            aria-label={`${i + 1}. ${stage.label}`}
+            aria-current={active ? "step" : undefined}
+            className={`tap-feedback flex min-w-8 items-center justify-center whitespace-nowrap text-label font-bold md:min-w-0 md:flex-auto md:px-2 ${
+              active
+                ? "shrink-0 bg-foreground px-3 text-background dark:bg-foreground-dark dark:text-background-dark"
+                : "flex-1 text-muted dark:text-muted-dark"
+            }`}
+          >
+            <span className="md:hidden">{i + 1}</span>
+            <span className={active ? "ml-1.5 md:ml-0" : "hidden md:inline"}>{stage.label}</span>
+          </a>
+        );
+      })}
     </nav>
   );
 }
