@@ -682,6 +682,7 @@ const THROTTLED_SCROLL_ALLOWLIST = [
   path.join(ROOT, 'src', 'components', 'reading-progress.tsx'),
   path.join(ROOT, 'src', 'components', 'bookmark-button.tsx'),
   path.join(ROOT, 'src', 'components', 'roadmap', 'lesson-toc.tsx'),
+  path.join(ROOT, 'src', 'components', 'practice', 'stage-chips.tsx'),
 ];
 for (const allowedPath of THROTTLED_SCROLL_ALLOWLIST) {
   const source = readFileIfExists(allowedPath);

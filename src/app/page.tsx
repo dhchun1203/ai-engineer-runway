@@ -1,234 +1,165 @@
 import Link from "next/link";
-import { ProgressSummary } from "@/components/progress-summary";
+import { ArrowRight, RotateCcw } from "lucide-react";
 import { ProgressReadError } from "@/components/progress-error";
-import { TodayLessonCard, type TodayCardState, type TomorrowInfo } from "@/components/today-lesson-card";
-import { TodayReviewCard, type DueReviewRow } from "@/components/today-review-card";
-import { ContinueReadingCard } from "@/components/continue-reading-card";
+import { HomeCard, HomeCellBar } from "@/components/home-card";
+import { TilStreak } from "@/components/til/til-streak";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 import { hasUnlockCookie } from "@/lib/auth";
+import { isRoadmapViewer } from "@/lib/roadmap-access";
 import { readProgressRows } from "@/lib/progress-store";
 import { readReviewStates } from "@/lib/review-store";
-import { computeDueLessons, nextDueDate } from "@/lib/review";
-import { overallProgress, nextIncompleteLesson } from "@/lib/progress";
-import { todayInSeoul, daysUntil } from "@/lib/today";
-import { SCHEDULE_START, COURSE_START_DATE, rowsForDate, firstRowAfter } from "@/lib/schedule";
-import { getScheduleRows } from "@/lib/schedule-data";
-import { getLessonBySlug } from "@/content/curriculum-helpers";
-import { BasecampPriorityCard } from "@/components/basecamp/basecamp-priority-card";
-import { SpotIllustration } from "@/components/illustrations/spot-illustration";
-import { currentBasecampStep, countStepDone, basecampProgressId, BASECAMP_END_DATE } from "@/content/basecamp";
+import { listPublishedDates } from "@/lib/til/store";
+import { todayInSeoul } from "@/lib/today";
+import { basecampProgressId } from "@/content/basecamp";
 import { latestClassLesson } from "@/content/class-lesson-helpers";
 import { getClassSession } from "@/content/class-sessions";
-import { ClassPriorityCard } from "@/components/class/class-priority-card";
 import { computeDueClassSessions } from "@/lib/class-review";
+import { getOrderedPracticeUnits, practiceProgressId } from "@/content/practice-helpers";
+import { getRoadmapSessionNotes } from "@/content/roadmap-lesson-helpers";
+import { roadmapStages } from "@/content/channeltalk-roadmap";
 
-// 홈도 쿠키를 읽으므로 동적 렌더링이 필요하다 — 조건부 쿠키 접근이 캐시된
-// 응답을 내보내는 문제(RESEARCH Pitfall 4)를 원천 차단한다. `/unlock` 직후
-// 리다이렉트로 도착했을 때 방금 켠 진도가 안 보이는 것을 막는 바로 그 화면이다.
+// 홈은 수업 복습, TIL 현황, 파이썬 손풀기, 로드맵 네 칸이다(2026-10-31 사용자 결정).
 //
-// D8-P(08-06): Phase 8이 레슨·Step·커리큘럼 세 라우트를 정적으로 전환했지만
-// 이 라우트는 동적으로 남긴다 — 오늘 날짜가 곧 페이지 본문 전체다(오늘 배정
-// 레슨, 상태 머신, 내일). 정적으로 만들려면 화면 대부분이
-// 클라이언트 렌더가 되어 정적 셸의 이득이 사라진다. ISR(revalidate)도 쓰지
-// 않는다 — 설치된 Next 16.3.2 문서(node_modules/next/dist/docs/01-app/
-// 02-guides/incremental-static-regeneration.md 100~102행·238행)가 직접
-// 말하듯 재검증 창 만료 후 첫 요청은 캐시된(낡은) 페이지를 그대로 받는다.
-// 하루 한 번 여는 1인 학습 사이트에서는 그 "낡은 첫 요청"이 사실상 매일 어제의
-// "오늘의 학습"을 보는 것과 같다. icn1 리전 이동으로 이미 TTFB 59~68ms라
-// 동적 유지의 비용도 낮다(08-01 기준선). check-progress-gates.mjs G9의
-// DYNAMIC_GATED_PAGES가 이 선언을 상시 검사한다.
+// 개인 진도와 오늘 날짜를 읽으므로 동적 렌더링이 필요하다. ISR(revalidate)도 쓰지 않는다.
+// 설치된 Next 16.3.2 문서(node_modules/next/dist/docs/01-app/02-guides/
+// incremental-static-regeneration.md)가 말하듯 재검증 창 만료 후 첫 요청은 낡은 페이지를
+// 받는다. check-progress-gates.mjs G9의 DYNAMIC_GATED_PAGES가 이 선언을 상시 검사한다.
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  // 무조건, 그리고 어떤 조회보다도 먼저 호출한다 — 레슨/Step 페이지와 동일한
-  // 게이트 순서를 지켜 조건부 호출이 만드는 캐시 문제를 피한다.
+  // 무조건, 그리고 어떤 조회보다도 먼저 호출한다. 레슨/Step 페이지와 동일한 게이트 순서를
+  // 지켜 조건부 호출이 만드는 캐시 문제를 피한다.
   const unlocked = await hasUnlockCookie();
 
-  // 완료 시각까지 함께 읽는다(readProgressRows) — 복습 만기 계산의 입력.
-  // completedIds는 rows에서 파생하므로 조회는 한 번이다.
-  //
-  // 진도·복습을 한 번에 병렬로 띄운다(Promise.all) — 복습은 진도 조회가 성공한
-  // 때만 쓰지만(아래 게이트), 두 조회는 서로의 결과에 의존하지 않으므로 동시에
-  // 요청해 Supabase 왕복을 둘에서 하나로 줄인다. 진도가 실패하면 복습 결과는
-  // 버릴 뿐이고(읽기 전용이라 부작용 없음), 표시 로직은 종전과 동일하다.
-  const [progressRead, reviewReadRaw] = unlocked
-    ? await Promise.all([readProgressRows(), readReviewStates()])
-    : [null, null];
-  const completedIds = progressRead?.ok
-    ? new Set(progressRead.rows.map((row) => row.lessonSlug))
-    : null;
-
-  // 복습 상태 — 진도가 정상 조회된 때만 쓴다. 복습 조회가 실패해도 홈의 다른
-  // 부분은 살아야 하므로 실패는 "복습 카드 생략"으로 강등한다(진도 조회 실패의
-  // ProgressReadError 배너와 달리, 복습은 부가 기능이라 조용한 강등이 맞다).
-  const reviewRead = progressRead?.ok ? reviewReadRaw : null;
-
-  // 일정·오늘 배정 레슨·D-day는 정적 공개 정보라 쿠키 여부와 무관하게 항상
-  // 계산한다(D-37) — 완료 체크·페이스 상태만 completedIds 유무로 갈린다.
+  // 세 조회는 서로의 결과에 의존하지 않으므로 동시에 띄운다. 복습과 TIL 조회는 실패해도
+  // 그 칸의 수치만 비우고, 진도 조회 실패만 배너로 알린다.
+  const [progressRead, reviewRead, tilDatesRead, roadmapViewer] = await Promise.all([
+    unlocked ? readProgressRows() : null,
+    unlocked ? readReviewStates() : null,
+    unlocked ? listPublishedDates() : null,
+    isRoadmapViewer(),
+  ]);
+  const progressOk = Boolean(progressRead?.ok);
+  const doneIds = new Set(progressRead?.ok ? progressRead.rows.map((row) => row.lessonSlug) : []);
   const today = todayInSeoul();
-  const rows = getScheduleRows();
-  // 오늘 행 조회는 rowsForDate로 한다(단수 find 제거) — 2레슨 날은 오늘 행이
-  // 2개일 수 있다. 빈 배열이면 종전처럼 today < SCHEDULE_START로 시작 전/범위
-  // 밖을 가르고, 비어 있지 않으면 첫 행의 isBuffer로 버퍼/배정을 가른다(버퍼
-  // 날짜는 2레슨 날과 겹치지 않으므로 첫 행이 대표성을 갖는다).
-  const todayRows = rowsForDate(rows, today);
 
-  let state: TodayCardState;
-  if (todayRows.length > 0) {
-    state = todayRows[0].isBuffer ? "buffer" : "assigned";
-  } else if (today < SCHEDULE_START) {
-    state = "before-start";
-  } else if (today < COURSE_START_DATE) {
-    // 사전학습 일정은 끝났지만 아직 개강 전 — 일정이 옛 개강 계획(9/30)에 맞춰
-    // 짜여 있어서 이 구간이 생긴다.
-    state = "before-course";
-  } else {
-    state = "after-range";
-  }
-  // 오늘 배정 레슨 목록 — 오늘 행들의 slug를 getLessonBySlug로 조회하고 실패한
-  // 것은 조용히 제외한다(이 파일의 기존 방어적 필터링 원칙 그대로).
-  const todayLessons = todayRows
-    .map((row) => (row.lessonSlug ? getLessonBySlug(row.lessonSlug) : null))
-    .filter((lesson): lesson is NonNullable<typeof lesson> => Boolean(lesson));
-
-  // 오늘 배정 레슨을 전부 완료했을 때만 true — completedIds가 null이면 조회
-  // 실패/쿠키 없음을 미완료로 오인시키지 않도록 null을 유지한다.
-  const completedToday = completedIds
-    ? todayLessons.length > 0
-      ? todayLessons.every((lesson) => completedIds.has(lesson.slug))
-      : null
-    : null;
-
-  // 오늘 배정을 완료했으면(D-38) 축하 상태로 전환한다. 자동 이동은 걸지
-  // 않는다 — 카드 내부 CTA를 사용자가 직접 눌러야 이동한다.
-  if (state === "assigned" && completedToday === true) {
-    state = "celebration";
-  }
-
-  // 내일 행은 firstRowAfter(rows, today)로 구한다 — rows.indexOf + 1 산술을
-  // 쓰지 않는다. 같은 날짜에 행이 2개면 +1이 같은 날의 두 번째 레슨을 가리켜
-  // "내일"이 오늘이 되어 버리기 때문이다.
-  let tomorrow: TomorrowInfo = { kind: "none" };
-  const tomorrowRow = firstRowAfter(rows, today);
-  if (tomorrowRow) {
-    if (tomorrowRow.isBuffer) {
-      tomorrow = { kind: "buffer" };
-    } else if (tomorrowRow.lessonSlug) {
-      const tomorrowLesson = getLessonBySlug(tomorrowRow.lessonSlug);
-      tomorrow = tomorrowLesson
-        ? { kind: "lesson", slug: tomorrowLesson.slug, title: tomorrowLesson.title }
-        : { kind: "none" };
-    }
-  }
-
-  // 오늘 만기인 복습(간격 사다리 — src/lib/review.ts). 완료 시각(timestamptz)을
-  // 서울 날짜로 바꿔 계산한다. 조회 실패 시 빈 카드로 강등.
-  let dueRows: DueReviewRow[] = [];
-  let nextDue: string | null = null;
-  if (progressRead?.ok && reviewRead?.ok) {
-    const seoulDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" });
-    const completedDateBySlug = new Map(
-      progressRead.rows.map((row) => [row.lessonSlug, seoulDate.format(new Date(row.completedAt))]),
-    );
-    const due = computeDueLessons(completedDateBySlug, reviewRead.states, today);
-    dueRows = due
-      .map(({ lessonSlug, rung }) => {
-        const lesson = getLessonBySlug(lessonSlug);
-        return lesson ? { lesson, rung } : null;
-      })
-      .filter((row): row is DueReviewRow => row !== null);
-    if (dueRows.length === 0) {
-      nextDue = nextDueDate(completedDateBySlug, reviewRead.states);
-    }
-  }
-
-  // 베이스캠프 최우선 카드 데이터(사용자 결정: 베이스캠프 진도가 커리큘럼보다
-  // 우선). 완료 상태는 진도 행에서 bc: 접두사 id로 판별한다 — progressRead가
-  // 없거나 실패하면 진행률은 감추고 안내만 보인다.
-  const bcDoneRawIds = new Set(
-    progressRead?.ok ? progressRead.rows.map((row) => row.lessonSlug) : [],
-  );
-  const bcStep = currentBasecampStep();
-  const bcCount = countStepDone(bcStep, bcDoneRawIds);
-  const bcDaysLeft = daysUntil(BASECAMP_END_DATE, today);
-
-  // 개강(2026-10-26) 후에는 가장 최근 수업 복습이 최우선 카드가 된다. 체크 진도는 베이스캠프와
-  // 같은 bc: 행에서 센다(class-sessions.ts). 정리된 수업이 없으면 베이스캠프 카드를 그대로 둔다.
+  // 수업 복습: 가장 최근 회차의 복습 체크(bc: 행, class-sessions.ts)와 간격 복습 차례.
   const latestClass = latestClassLesson();
   const classChecklist = latestClass ? (getClassSession(latestClass.slug)?.checklist ?? []) : [];
-  const classDone = classChecklist.filter((item) => bcDoneRawIds.has(basecampProgressId(item.id))).length;
-  // 수업 회차 간격 복습 차례(src/lib/class-review.ts). 복습 상태를 못 읽으면 0으로 둔다.
+  const classDone = classChecklist.filter((item) => doneIds.has(basecampProgressId(item.id))).length;
   const classReviewDue = reviewRead?.ok ? computeDueClassSessions(reviewRead.states, today).length : 0;
+
+  // TIL 현황: 발행일(서울 날짜)만으로 센다. 본문까지 읽는 목록 조회를 피한다.
+  const tilDates = tilDatesRead?.ok ? tilDatesRead.data : null;
+  const tilThisMonth = tilDates?.filter((date) => date.startsWith(today.slice(0, 7))).length ?? 0;
+
+  // 파이썬 손풀기: 처음으로 안 끝낸 단원으로 바로 보낸다.
+  const practiceUnits = getOrderedPracticeUnits();
+  const practiceDone = practiceUnits.filter((u) => doneIds.has(practiceProgressId(u.slug))).length;
+  const practiceNext = practiceUnits.find((u) => !doneIds.has(practiceProgressId(u.slug)));
+
+  const roadmapNotes = getRoadmapSessionNotes();
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      {/* 최우선 카드 — 오늘의 학습보다 위에 둔다. */}
-      {latestClass ? (
-        <ClassPriorityCard
-          session={latestClass.session}
-          title={latestClass.title}
-          done={classDone}
-          total={classChecklist.length}
-          showProgress={Boolean(progressRead?.ok)}
-          reviewDue={classReviewDue}
-        />
-      ) : (
-        <BasecampPriorityCard
-          weekLabel={bcStep.weekLabel}
-          stepTitle={bcStep.title}
-          done={bcCount.done}
-          total={bcCount.total}
-          showProgress={Boolean(progressRead?.ok)}
-          daysLeft={bcDaysLeft}
-        />
-      )}
       <header className="flex items-end justify-between gap-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-display font-black">오늘의 학습</h1>
           <p className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
-            AI Engineer 교육과정 사전학습
+            AI Engineer 교육과정
           </p>
         </div>
         <SpotIllustration name="today" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
-      {/* 다중 사용자 전환(2026-09-12): "오늘의 학습"은 개인 대시보드(진도·이어서
-          읽기·복습)라 로그인해야 뜬다. 로그아웃 상태에서는 대신 로그인 유도 카드를
-          보여준다 — 레슨 콘텐츠 자체는 커리큘럼 나브로 여전히 공개(D-18). 이렇게
-          하면 브라우저 localStorage에만 기대던 "이어서 읽기"도 로그아웃 상태에서
-          함께 사라져 계정 모델과 어긋나지 않는다. */}
-      {unlocked ? (
-        <>
-          <TodayLessonCard
-            todayLessons={todayLessons}
-            state={state}
-            completed={completedToday}
-            completedIds={completedIds}
-            tomorrow={tomorrow}
-          />
-          {/* 이어서 읽기(quick 260901-v4u) — 마지막으로 연 레슨이 오늘 배정과
-              다를 때만 뜬다. todayLessons가 이미 계산한 slug 목록이 중복 제거의
-              유일한 입력이다(별도 재계산 금지). 클라이언트 컴포넌트라 홈의 동적
-              렌더 계약(/ force-dynamic)에 영향 없음. */}
-          <ContinueReadingCard todaySlugs={todayLessons.map((lesson) => lesson.slug)} />
-          {/* 오늘의 복습 — 새 레슨 카드 아래, 페이스 판정 위. 복습은 권유까지만
-              하고 진행을 잠그지 않는다(round2-h·round6 설계 원칙). */}
-          {progressRead?.ok ? <TodayReviewCard dueRows={dueRows} nextDue={nextDue} /> : null}
-          {!completedIds && progressRead && !progressRead.ok ? <ProgressReadError /> : null}
-          {completedIds ? (
-            <ProgressSummary
-              counts={overallProgress(completedIds)}
-              nextLessonSlug={nextIncompleteLesson(completedIds)?.slug ?? null}
-            />
+
+      {progressRead && !progressRead.ok ? <ProgressReadError /> : null}
+
+      {/* 로드맵은 허용 계정만 볼 수 있어서 칸이 셋일 때가 있다. 그때는 수업 복습을 한 줄로 넓혀 빈칸을 없앤다. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className={`flex flex-col gap-3 ${roadmapViewer ? "" : "sm:col-span-2"}`}>
+          <div className="flex-1">
+            <HomeCard
+              href="/class"
+              icon="class"
+              label="수업 복습"
+              title={latestClass ? `${latestClass.session}회차 ${latestClass.title}` : "아직 정리된 수업이 없어요"}
+              detail={
+                !progressOk || classChecklist.length === 0
+                  ? "최근 수업을 복습하세요"
+                  : classDone === classChecklist.length
+                    ? "복습 체크 완료"
+                    : `복습 체크 ${classDone}/${classChecklist.length}`
+              }
+              cta="수업 복습으로 가기"
+            >
+              {progressOk ? <HomeCellBar done={classDone} total={classChecklist.length} /> : null}
+            </HomeCard>
+          </div>
+          {classReviewDue > 0 ? (
+            <Link
+              href="/review"
+              className="card-interactive panel flex min-h-11 items-center justify-between gap-3 px-5 py-3"
+            >
+              <span className="flex items-center gap-2 text-body font-bold break-keep">
+                <RotateCcw className="h-4 w-4 shrink-0 text-accent dark:text-accent-dark" aria-hidden="true" />
+                지난 수업 {classReviewDue}개, 다시 꺼내 볼 차례예요
+              </span>
+              <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+            </Link>
           ) : null}
-        </>
-      ) : (
+        </div>
+
+        <HomeCard
+          href="/til"
+          icon="til"
+          label="TIL 현황"
+          title={
+            !tilDates
+              ? "내 학습기록"
+              : tilDates.includes(today)
+                ? "오늘 기록을 남겼어요"
+                : "오늘 기록은 아직이에요"
+          }
+          detail={
+            tilDates ? `이번 달 ${tilThisMonth}편, 모두 ${tilDates.length}편` : "로그인하면 내 기록 현황이 보여요"
+          }
+          cta="TIL로 가기"
+        >
+          {tilDates ? <TilStreak dates={tilDates} /> : null}
+        </HomeCard>
+
+        <HomeCard
+          href={practiceNext?.permalink ?? "/practice"}
+          icon="practice"
+          label="파이썬 손풀기"
+          title={practiceNext ? `${practiceNext.unit}단원 ${practiceNext.title}` : "모든 단원을 끝냈어요"}
+          detail={
+            progressOk ? `${practiceDone}/${practiceUnits.length} 단원 완료` : "가계부 프로그램을 직접 치며 키워요"
+          }
+          cta={practiceNext ? (practiceDone > 0 ? "이어서 치기" : "시작하기") : "단원 목록 보기"}
+        >
+          {progressOk ? <HomeCellBar done={practiceDone} total={practiceUnits.length} /> : null}
+        </HomeCard>
+
+        {roadmapViewer ? (
+          <HomeCard
+            href="/roadmap"
+            icon="roadmap"
+            label="로드맵"
+            title="채널톡 AI Engineer 진입 로드맵"
+            detail={`${roadmapStages.length}단계, 특강 노트 ${roadmapNotes.length}개`}
+            cta="로드맵으로 가기"
+          />
+        ) : null}
+      </div>
+
+      {/* 로그아웃 상태에서도 레슨은 볼 수 있다. 진도와 기록만 로그인한 계정에 저장된다. */}
+      {!unlocked ? (
         <section className="panel card-hover-grow flex flex-col items-start gap-4 p-6">
           <div className="flex flex-col gap-2">
-            <h2 className="text-heading font-extrabold break-keep">
-              로그인하고 오늘의 학습 이어가기
-            </h2>
+            <h2 className="text-heading font-extrabold break-keep">로그인하고 이어가기</h2>
             <p className="max-w-xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-              진도, 이어서 읽기, 복습은 로그인한 계정에 저장됩니다. 로그인하면 어느
-              기기에서든 그대로 이어집니다.
+              진도, 복습, 학습기록은 로그인한 계정에 저장됩니다. 로그인하면 어느 기기에서든 그대로 이어집니다.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -240,7 +171,7 @@ export default async function Home() {
             </Link>
           </div>
         </section>
-      )}
+      ) : null}
     </main>
   );
 }
