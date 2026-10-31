@@ -295,7 +295,7 @@ export function SiteNav() {
           AI Engineer Hub
         </Link>
         {/* 한 줄을 지킨다. 두 줄이 되면 sticky 헤더가 두 배로 커져 본문을 가린다. 항목 일곱 개의 폭 합이
-            529px, 가장 좁은 1024px에서 쓸 수 있는 폭이 599px라 간격은 8px까지 들어간다. */}
+            약 513px, 가장 좁은 1024px에서 쓸 수 있는 폭이 599px라 간격 8px이 들어간다. */}
         <div
           ref={desktopNavRef}
           className="hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-x-2 whitespace-nowrap lg:flex"
@@ -430,17 +430,24 @@ export function SiteNav() {
             }
             // 단독 링크.
             const isActive = isActiveHref(pathname, item.href);
+            // 계정 항목은 폭을 아끼려고 아이콘만 보인다(사용자 결정 2026-10-31). 글자는 스크린리더와
+            // 툴팁으로 남기고, 넓게 쓰는 모바일 패널에서는 그대로 글자로 보인다.
+            const iconOnly = item.href === ACCOUNT_HREF;
             return (
               <Link
                 key={item.label}
                 href={item.href}
-                className={`nav-link tap-feedback flex min-h-11 items-center px-3 text-label font-bold ${
+                aria-label={iconOnly ? item.label : undefined}
+                title={iconOnly ? item.label : undefined}
+                className={`nav-link tap-feedback flex min-h-11 items-center text-label font-bold ${
+                  iconOnly ? "min-w-11 justify-center" : "px-3"
+                } ${
                   isActive
                     ? "chip-solid"
                     : "text-muted dark:text-muted-dark"
                 }`}
               >
-                {item.label}
+                {iconOnly && item.icon ? <CustomIcon name={item.icon} className="h-5 w-5" /> : item.label}
               </Link>
             );
           })}
