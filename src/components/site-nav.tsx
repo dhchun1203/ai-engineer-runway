@@ -62,6 +62,8 @@ const NAV_ITEMS: readonly NavItem[] = [
       { label: "노트", href: "/notes", icon: "notes" },
       { label: "북마크", href: "/bookmarks", icon: "bookmarks" },
       { label: "질문함", href: "/inbox", icon: "inbox" },
+      // 번외 실습 "파이썬 손풀기"(/practice). 가계부 CLI를 직접 키우는 실습. 진도와 격리.
+      { label: "파이썬 손풀기", href: "/practice", icon: "practice" },
       // 번외 "AI 뜯어보기"(/concepts) — 정규 커리큘럼과 별개의 개념 이해 편.
       // isActiveHref가 startsWith라 /concepts/[slug] 리더에서도 활성으로 표시된다.
       { label: "AI 뜯어보기", href: "/concepts", icon: "concepts" },

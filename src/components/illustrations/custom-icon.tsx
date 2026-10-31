@@ -21,6 +21,7 @@ const ICONS = {
   bookmarks: { body: "M6 3h12v18l-6-5-6 5z", ink: "" },
   inbox: { body: "M3 13L6 4h12l3 9v7H3z", ink: "M3 13h5l1.5 3h5L16 13h5" },
   concepts: { body: "M6 6h12v12H6z", ink: "M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4M10 10h4v4h-4z" },
+  practice: { body: "M2 6h20v12H2z", ink: "M6 10h1M10 10h1M14 10h1M18 10h1M7 14h10" },
   articles: { body: "M3 4h15v16H3z", ink: "M18 8h3v12h-3M6 8h9M6 12h9M6 16h6" },
   print: { body: "M3 9h18v9H3z", ink: "M7 9V3h10v6M7 14h10v7H7z" },
   offline: { body: "M5 3h14v18H5z", ink: "M12 7v7M8.5 10.5L12 14l3.5-3.5M9 18h6" },
