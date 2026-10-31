@@ -420,6 +420,29 @@ export default defineConfig({
           readingMinutes: estimateBookMinutes(meta.content ?? ""),
         })),
     },
+    // 번외 실습 "파이썬 손풀기"(practiceLessons, 2026-10-31). 가계부 CLI를 단원마다 키우는
+    // 실습 묶음이다. concepts와 같은 격리 컬렉션이라 진행률, 일정, 복습 어디에도 집계되지
+    // 않는다. 완료 체크는 progress 테이블의 pr:<slug> 행이다(practice-helpers.ts).
+    // 설계: docs/superpowers/specs/2026-10-31-python-practice-design.md
+    practiceLessons: {
+      name: "PracticeLesson",
+      pattern: "src/content/practice/*.mdx",
+      schema: s
+        .object({
+          title: s.string(),
+          unit: s.number().int().min(1), // 단원 번호(1부터 빠짐없이), prepare가 검사
+          slug: s.slug("practiceLessons"),
+          summary: s.string(), // 목록 카드와 머리에 보일 두 줄 요약
+          feature: s.string(), // 이 단원에서 가계부에 붙는 기능
+          concepts: s.array(s.string()).default([]), // 필요한 개념 이름(칩)
+          minutes: s.number().min(1), // 예상 시간(분)
+          code: s.mdx(),
+        })
+        .transform((data) => ({
+          ...data,
+          permalink: `/practice/${data.slug}`,
+        })),
+    },
     // 수업 복습(개강 후 실제 수업 회차를 우리 말로 다시 풀어 쓴 레슨, 2026-10-26 신설).
     // 회차마다 폴더 하나: index.mdx(본문, 이 컬렉션)와 review.yml(복습 데이터, classReviews).
     // 설계: docs/superpowers/specs/2026-10-27-class-data-structure-design.md
@@ -540,7 +563,7 @@ export default defineConfig({
   // 용어 사전 누락·개념 편 참조 검사: <Term id="...">가 src/content/terms.ts에
   // 없거나, terms의 concept가 존재하지 않는 AI 뜯어보기 편 slug를 가리키면
   // 빌드를 실패시킨다(articles-section Task 3).
-  prepare: ({ articles, roadmapLessons, concepts, classLessons, classReviews, lessons }) => {
+  prepare: ({ articles, roadmapLessons, concepts, classLessons, classReviews, lessons, practiceLessons }) => {
     const problems: string[] = [];
 
     // 수업 회차: 폴더마다 index.mdx와 review.yml이 하나씩 있고, 둘 다 스키마를 통과해
@@ -651,6 +674,14 @@ export default defineConfig({
         problems.push(`terms.${id}.concept "${entry.concept}"는 없는 AI 뜯어보기 편입니다`);
       }
     }
+
+    // 파이썬 손풀기: 단원 번호는 1부터 빠짐없이 이어지고, slug 앞 두 자리와 같아야 한다.
+    const units = [...practiceLessons].sort((a, b) => a.unit - b.unit);
+    units.forEach((u, i) => {
+      const prefix = `${String(u.unit).padStart(2, "0")}-`;
+      if (u.unit !== i + 1) problems.push(`practice: ${u.slug}의 unit ${u.unit}이 순서(${i + 1})와 맞지 않습니다(빠지거나 겹친 단원)`);
+      if (!u.slug.startsWith(prefix)) problems.push(`practice: ${u.slug}는 "${prefix}"로 시작해야 합니다`);
+    });
 
     if (problems.length > 0) {
       throw new Error(problems.join("\n"));
