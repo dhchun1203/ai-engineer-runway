@@ -1,0 +1,598 @@
+---
+title: "기록을 한 덩어리로 묶고 집계하기"
+unit: 4
+slug: "04-dicts-sorting"
+summary: "기록 하나를 딕셔너리로 묶어서 어긋날 걱정을 없애고, 분류별 지출을 큰 순서와 비율로 뽑아요."
+feature: "분류별 지출 집계와 정렬"
+concepts: ["딕셔너리", "get", "items", "튜플", "sorted", "lambda", "None"]
+minutes: 165
+---
+
+어제 `lines`와 `amounts` 두 리스트의 순서를 맞추느라 불안했죠. 오늘은 기록 하나를 **한 덩어리**로 묶어서 그 걱정을 없애요.
+
+묶고 나면 "식비에 얼마 썼지?" 같은 집계가 쉬워져요. 가계부를 쓰는 진짜 이유가 오늘 생겨요.
+
+| 단계 | 하는 일 | 시간 |
+| --- | --- | --- |
+| 1 | 오늘 만들 것 | 5분 |
+| 2 | 필요한 개념만 | 30분 |
+| 3 | 따라 치기 | 40분 |
+| 4 | 고쳐 치기 | 30분 |
+| 5 | 혼자 치기 | 40분 |
+| 6 | 자주 나는 에러 | 10분 |
+| 7 | 커밋하고 올리기 | 10분 |
+
+## 1. 오늘 만들 것
+
+분류별 지출을 큰 순서로, 비율까지 붙여서 보여 줘요. 아래는 네 건을 넣고 4번을 고른 끝부분이에요.
+
+```text
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 4
+식비: 24,000원 (94.1%)
+교통: 1,500원 (5.9%)
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 5
+다음에 또 만나요.
+```
+
+## 2. 필요한 개념만
+
+`uv run python`으로 REPL을 열어요.
+
+### 딕셔너리: 이름으로 꺼내는 상자
+
+```python
+>>> entry = {"kind": "지출", "item": "점심", "amount": 9000}
+>>> entry["item"]
+'점심'
+>>> entry["amount"]
+9000
+>>> entry["memo"] = "회사 앞"
+>>> entry
+{'kind': '지출', 'item': '점심', 'amount': 9000, 'memo': '회사 앞'}
+```
+
+리스트가 자리 번호로 꺼낸다면, 딕셔너리는 **이름**(key)으로 꺼내요. 중괄호 안에 `이름: 값`을 쉼표로 이어요.
+
+없는 이름에 값을 넣으면 새로 생기고, 있는 이름이면 덮어써요.
+
+### get: 없으면 이 값으로
+
+```python
+>>> totals = {"식비": 9000}
+>>> totals.get("식비", 0)
+9000
+>>> totals.get("교통", 0)
+0
+>>> totals["식비"] = totals.get("식비", 0) + 15000
+>>> totals
+{'식비': 24000}
+```
+
+`totals["교통"]`은 없으면 에러지만, `.get("교통", 0)`은 없으면 0을 줘요. 그래서 "지금까지 합에 더하기"를 한 줄로 쓸 수 있어요. 처음 나온 분류든 아니든 똑같이 돌아가요.
+
+### items, values: 전부 꺼내기
+
+```python
+>>> totals = {"식비": 24000, "교통": 1500}
+>>> list(totals.items())
+[('식비', 24000), ('교통', 1500)]
+>>> totals.values()
+dict_values([24000, 1500])
+>>> sum(totals.values())
+25500
+>>> for category, total in totals.items():
+...     print(category, total)
+... 
+식비 24000
+교통 1500
+```
+
+`.items()`는 이름과 값을 쌍으로 줘요. `for category, total in ...`처럼 변수 두 개로 받으면 쌍이 알아서 나뉘어 담겨요.
+
+`.values()`는 값만 줘서 `sum`에 바로 넣을 수 있어요.
+
+### sorted와 lambda: 무엇을 기준으로 줄 세울까
+
+```python
+>>> pairs = [("교통", 1500), ("식비", 24000)]
+>>> sorted(pairs, key=lambda pair: pair[1])
+[('교통', 1500), ('식비', 24000)]
+>>> sorted(pairs, key=lambda pair: pair[1], reverse=True)
+[('식비', 24000), ('교통', 1500)]
+>>> pair = ("식비", 24000)
+>>> pair[0]
+'식비'
+>>> pair[1]
+24000
+>>> 24000 / 25500 * 100
+94.11764705882352
+>>> f"{24000 / 25500 * 100:.1f}%"
+'94.1%'
+```
+
+`("식비", 24000)`처럼 소괄호로 묶은 건 **튜플**이에요. 리스트처럼 번호로 꺼내지만 내용을 바꿀 수는 없어요.
+
+`sorted`는 줄 세운 새 리스트를 돌려줘요. `key`에는 "각 값에서 무엇을 기준으로 삼을지"를 주는데, `lambda`는 그 자리에 쓰는 이름 없는 한 줄 함수예요.
+
+`lambda pair: pair[1]`은 "쌍을 받아서 두 번째 값을 돌려줘"라는 뜻이에요. `reverse=True`를 붙이면 큰 순서가 돼요.
+
+끝의 `{값:.1f}`는 소수 첫째 자리까지 보이라는 f-string 표시예요.
+
+### None: 아직 아무것도 없음
+
+```python
+biggest = None
+```
+
+`None`은 "값이 없다"를 나타내는 값이에요. 찾기 전 상태를 표시할 때 써요. 맞는지 물을 때는 `==` 대신 `is None`으로 써요.
+
+## 3. 따라 치기
+
+어제 코드를 고쳐요. `lines`와 `amounts`를 없애고 `entries` 하나로 합쳐요. 기능은 어제와 똑같고 **속만** 바뀌어요. 이런 변경을 리팩터링이라고 해요.
+
+<details>
+<summary>어제 끝난 코드(시작 코드) 보기</summary>
+
+```python
+print("=== 나의 가계부 ===")
+
+lines = []
+amounts = []
+
+while True:
+    print()
+    print("1. 기록 추가")
+    print("2. 목록 보기")
+    print("3. 가장 큰 지출")
+    print("4. 끝내기")
+    choice = input("선택: ")
+
+    if choice == "1":
+        kind = input("종류(수입/지출): ")
+        while kind != "수입" and kind != "지출":
+            print("수입 또는 지출로 입력해 주세요.")
+            kind = input("종류(수입/지출): ")
+
+        category = input("분류: ")
+        item = input("항목: ")
+
+        amount_text = input("금액: ")
+        while not amount_text.isdigit():
+            print("숫자만 입력해 주세요.")
+            amount_text = input("금액: ")
+        amount = int(amount_text)
+
+        if kind == "수입":
+            lines.append(f"[{category}] {item} +{amount:,}원")
+            amounts.append(amount)
+        else:
+            lines.append(f"[{category}] {item} -{amount:,}원")
+            amounts.append(-amount)
+        print("기록했어요.")
+    elif choice == "2":
+        print(f"모두 {len(lines)}건")
+        for line in lines:
+            print(line)
+        print(f"잔액: {sum(amounts):,}원")
+    elif choice == "3":
+        if len(amounts) == 0 or min(amounts) >= 0:
+            print("지출 기록이 없어요.")
+        else:
+            smallest = min(amounts)
+            position = amounts.index(smallest)
+            print(f"가장 큰 지출: {lines[position]}")
+    elif choice == "4":
+        print("다음에 또 만나요.")
+        break
+    else:
+        print("메뉴 번호로 골라 주세요.")
+```
+
+</details>
+
+<TypeAlong>
+
+```python
+print("=== 나의 가계부 ===")
+
+entries = []
+
+while True:
+    print()
+    print("1. 기록 추가")
+    print("2. 목록 보기")
+    print("3. 가장 큰 지출")
+    print("4. 끝내기")
+    choice = input("선택: ")
+
+    if choice == "1":
+        kind = input("종류(수입/지출): ")
+        while kind != "수입" and kind != "지출":
+            print("수입 또는 지출로 입력해 주세요.")
+            kind = input("종류(수입/지출): ")
+
+        category = input("분류: ")
+        item = input("항목: ")
+
+        amount_text = input("금액: ")
+        while not amount_text.isdigit():
+            print("숫자만 입력해 주세요.")
+            amount_text = input("금액: ")
+        amount = int(amount_text)
+
+        entry = {"kind": kind, "category": category, "item": item, "amount": amount}
+        entries.append(entry)
+        print("기록했어요.")
+    elif choice == "2":
+        balance = 0
+        print(f"모두 {len(entries)}건")
+        for entry in entries:
+            if entry["kind"] == "수입":
+                sign = "+"
+                balance += entry["amount"]
+            else:
+                sign = "-"
+                balance -= entry["amount"]
+            print(f"[{entry['category']}] {entry['item']} {sign}{entry['amount']:,}원")
+        print(f"잔액: {balance:,}원")
+    elif choice == "3":
+        biggest = None
+        for entry in entries:
+            if entry["kind"] == "지출":
+                if biggest is None or entry["amount"] > biggest["amount"]:
+                    biggest = entry
+        if biggest is None:
+            print("지출 기록이 없어요.")
+        else:
+            print(f"가장 큰 지출: [{biggest['category']}] {biggest['item']} -{biggest['amount']:,}원")
+    elif choice == "4":
+        print("다음에 또 만나요.")
+        break
+    else:
+        print("메뉴 번호로 골라 주세요.")
+```
+
+</TypeAlong>
+
+f-string 안쪽 따옴표를 봐요. 바깥이 큰따옴표라서 안쪽의 `entry['category']`는 작은따옴표로 썼어요. 파이썬 3.12부터는 같은 따옴표도 되지만, 예전 버전에서는 에러라서 다른 사람 코드에서는 거의 이렇게 보여요.
+
+저장하고 실행해서 네 건(지출 점심 9000, 지출 버스 1500, 수입 월급 3000000, 지출 저녁 15000)을 넣은 다음 2번, 3번을 골라요.
+
+```bash
+uv run main.py
+```
+
+```text
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 끝내기
+선택: 2
+모두 4건
+[식비] 점심 -9,000원
+[교통] 버스 -1,500원
+[월급] 10월 월급 +3,000,000원
+[식비] 저녁 -15,000원
+잔액: 2,974,500원
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 끝내기
+선택: 3
+가장 큰 지출: [식비] 저녁 -15,000원
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 끝내기
+선택: 4
+다음에 또 만나요.
+```
+
+어제와 결과가 같으면 커밋해요. `refactor`는 기능 변화 없이 속만 고쳤다는 표시예요.
+
+```bash
+git add .
+git commit -m "refactor: 기록을 딕셔너리로 바꾸기"
+```
+
+## 4. 고쳐 치기
+
+메뉴에 `4. 분류별 지출`을 넣고, 끝내기를 5번으로 밀어요. 수입은 빼고 지출만 분류별로 더해서 찍어요.
+
+```text
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 4
+식비: 24,000원
+교통: 1,500원
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 5
+다음에 또 만나요.
+```
+
+<Hints>
+<Hint>
+
+4번 칸의 시작은 빈 딕셔너리 `totals = {}`예요. `entries`를 for로 돌면서 지출일 때만 더해요.
+
+</Hint>
+<Hint>
+
+더하는 줄은 개념에서 본 모양이에요. `totals[category] = totals.get(category, 0) + entry["amount"]`예요.
+
+</Hint>
+<Hint>
+
+찍을 때는 `for category, total in totals.items():`로 꺼내요.
+
+</Hint>
+</Hints>
+
+<details>
+<summary>정답 코드 보기</summary>
+
+```python
+print("=== 나의 가계부 ===")
+
+entries = []
+
+while True:
+    print()
+    print("1. 기록 추가")
+    print("2. 목록 보기")
+    print("3. 가장 큰 지출")
+    print("4. 분류별 지출")
+    print("5. 끝내기")
+    choice = input("선택: ")
+
+    if choice == "1":
+        kind = input("종류(수입/지출): ")
+        while kind != "수입" and kind != "지출":
+            print("수입 또는 지출로 입력해 주세요.")
+            kind = input("종류(수입/지출): ")
+
+        category = input("분류: ")
+        item = input("항목: ")
+
+        amount_text = input("금액: ")
+        while not amount_text.isdigit():
+            print("숫자만 입력해 주세요.")
+            amount_text = input("금액: ")
+        amount = int(amount_text)
+
+        entry = {"kind": kind, "category": category, "item": item, "amount": amount}
+        entries.append(entry)
+        print("기록했어요.")
+    elif choice == "2":
+        balance = 0
+        print(f"모두 {len(entries)}건")
+        for entry in entries:
+            if entry["kind"] == "수입":
+                sign = "+"
+                balance += entry["amount"]
+            else:
+                sign = "-"
+                balance -= entry["amount"]
+            print(f"[{entry['category']}] {entry['item']} {sign}{entry['amount']:,}원")
+        print(f"잔액: {balance:,}원")
+    elif choice == "3":
+        biggest = None
+        for entry in entries:
+            if entry["kind"] == "지출":
+                if biggest is None or entry["amount"] > biggest["amount"]:
+                    biggest = entry
+        if biggest is None:
+            print("지출 기록이 없어요.")
+        else:
+            print(f"가장 큰 지출: [{biggest['category']}] {biggest['item']} -{biggest['amount']:,}원")
+    elif choice == "4":
+        totals = {}
+        for entry in entries:
+            if entry["kind"] == "지출":
+                category = entry["category"]
+                totals[category] = totals.get(category, 0) + entry["amount"]
+        for category, total in totals.items():
+            print(f"{category}: {total:,}원")
+    elif choice == "5":
+        print("다음에 또 만나요.")
+        break
+    else:
+        print("메뉴 번호로 골라 주세요.")
+```
+
+</details>
+
+```bash
+git add .
+git commit -m "feat: 분류별 지출 합계"
+```
+
+## 5. 혼자 치기
+
+4번 메뉴를 다듬어요.
+
+- 금액이 큰 분류부터 찍어요.
+- 금액 뒤에 전체 지출에서 차지하는 비율을 소수 첫째 자리까지 붙여요. `식비: 24,000원 (94.1%)` 모양이에요.
+- 지출이 없으면 `지출 기록이 없어요.`를 찍어요.
+
+| 넣은 기록 | 4번을 고르면 |
+| --- | --- |
+| 아무것도 안 넣음 | `지출 기록이 없어요.` |
+| 지출 식비 점심 9000, 지출 교통 버스 1500, 수입 월급 3000000, 지출 식비 저녁 15000 | `식비: 24,000원 (94.1%)`<br />`교통: 1,500원 (5.9%)` |
+
+<details>
+<summary>정답 코드 보기</summary>
+
+```python
+print("=== 나의 가계부 ===")
+
+entries = []
+
+while True:
+    print()
+    print("1. 기록 추가")
+    print("2. 목록 보기")
+    print("3. 가장 큰 지출")
+    print("4. 분류별 지출")
+    print("5. 끝내기")
+    choice = input("선택: ")
+
+    if choice == "1":
+        kind = input("종류(수입/지출): ")
+        while kind != "수입" and kind != "지출":
+            print("수입 또는 지출로 입력해 주세요.")
+            kind = input("종류(수입/지출): ")
+
+        category = input("분류: ")
+        item = input("항목: ")
+
+        amount_text = input("금액: ")
+        while not amount_text.isdigit():
+            print("숫자만 입력해 주세요.")
+            amount_text = input("금액: ")
+        amount = int(amount_text)
+
+        entry = {"kind": kind, "category": category, "item": item, "amount": amount}
+        entries.append(entry)
+        print("기록했어요.")
+    elif choice == "2":
+        balance = 0
+        print(f"모두 {len(entries)}건")
+        for entry in entries:
+            if entry["kind"] == "수입":
+                sign = "+"
+                balance += entry["amount"]
+            else:
+                sign = "-"
+                balance -= entry["amount"]
+            print(f"[{entry['category']}] {entry['item']} {sign}{entry['amount']:,}원")
+        print(f"잔액: {balance:,}원")
+    elif choice == "3":
+        biggest = None
+        for entry in entries:
+            if entry["kind"] == "지출":
+                if biggest is None or entry["amount"] > biggest["amount"]:
+                    biggest = entry
+        if biggest is None:
+            print("지출 기록이 없어요.")
+        else:
+            print(f"가장 큰 지출: [{biggest['category']}] {biggest['item']} -{biggest['amount']:,}원")
+    elif choice == "4":
+        totals = {}
+        for entry in entries:
+            if entry["kind"] == "지출":
+                category = entry["category"]
+                totals[category] = totals.get(category, 0) + entry["amount"]
+        if len(totals) == 0:
+            print("지출 기록이 없어요.")
+        else:
+            whole = sum(totals.values())
+            ranked = sorted(totals.items(), key=lambda pair: pair[1], reverse=True)
+            for category, total in ranked:
+                print(f"{category}: {total:,}원 ({total / whole * 100:.1f}%)")
+    elif choice == "5":
+        print("다음에 또 만나요.")
+        break
+    else:
+        print("메뉴 번호로 골라 주세요.")
+```
+
+</details>
+
+```bash
+git add .
+git commit -m "feat: 분류별 지출을 큰 순서와 비율로"
+```
+
+이 코드가 5단원의 시작 코드예요. 슬슬 파일이 길어졌다고 느꼈다면 내일을 위한 좋은 신호예요.
+
+## 6. 자주 나는 에러
+
+### 없는 이름을 꺼냈어요: KeyError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 2, in <module>
+    print(entry["amout"])
+          ~~~~~^^^^^^^^^
+KeyError: 'amout'
+```
+
+맨 아래 `KeyError: 'amout'`이 틀린 이름을 그대로 보여 줘요. 오타를 고치거나, 없을 수도 있는 이름이면 `.get()`을 써요.
+
+### 점으로 꺼냈어요: AttributeError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 2, in <module>
+    print(entry.amount)
+          ^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'amount'
+```
+
+딕셔너리 값은 `entry["amount"]`처럼 대괄호로 꺼내요. 점으로 꺼내는 건 7단원에서 배우는 클래스 쪽이에요.
+
+### 리스트에 이름을 썼어요: TypeError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 2, in <module>
+    print(entries["amount"])
+          ~~~~~~~^^^^^^^^^^
+TypeError: list indices must be integers or slices, not str
+```
+
+`entries`는 리스트라서 번호만 받아요. 기록 하나를 먼저 꺼낸 다음(`entries[0]["amount"]`, 또는 for로) 이름을 써요.
+
+리스트 안에 딕셔너리가 있으니, 지금 손에 든 게 어느 쪽인지 늘 생각해요.
+
+### items로 sum을 했어요: TypeError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 2, in <module>
+    print(sum(totals.items()))
+          ^^^^^^^^^^^^^^^^^^^
+TypeError: unsupported operand type(s) for +: 'int' and 'tuple'
+```
+
+`.items()`는 쌍을 주니까 숫자와 더할 수 없어요. 합을 구할 때는 `.values()`예요.
+
+## 7. 커밋하고 올리기
+
+```bash
+git log --oneline -3
+```
+
+```text
+0a2fabb feat: 분류별 지출을 큰 순서와 비율로
+cf8fd9c feat: 분류별 지출 합계
+e8b1642 refactor: 기록을 딕셔너리로 바꾸기
+```
+
+```bash
+git push
+```
+
+GitHub에 커밋이 12개면 끝이에요. [목록](/practice)에서 4단원 완료를 체크해요.

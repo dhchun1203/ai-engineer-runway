@@ -1,0 +1,1126 @@
+---
+title: "클래스로 다듬고 완성하기"
+unit: 7
+slug: "07-classes-readme"
+summary: "기록을 클래스로 바꾸고 가계부를 Ledger로 묶어요. 월별 리포트와 README를 붙이고 v1.0을 찍어 완성해요."
+feature: "클래스 구조, 월별 리포트, README, v1.0"
+concepts: ["class", "dataclass", "__init__", "self", "메서드", "리스트 컴프리헨션", "git tag"]
+minutes: 180
+---
+
+마지막 날이에요. 오늘은 `entry["amount"]`를 `entry.amount`로 바꾸고, 흩어진 계산 함수를 `Ledger` 하나로 묶어요. 그리고 월별 리포트를 붙여 완성해요.
+
+어제까지의 코드도 잘 돌아가요. 그런데 다른 사람 코드나 라이브러리를 읽다 보면 클래스를 계속 만나게 돼요. 내 코드로 한 번 쳐 보면 그때부터 읽혀요.
+
+| 단계 | 하는 일 | 시간 |
+| --- | --- | --- |
+| 1 | 오늘 만들 것 | 5분 |
+| 2 | 필요한 개념만 | 30분 |
+| 3 | 따라 치기 | 45분 |
+| 4 | 고쳐 치기 | 30분 |
+| 5 | 혼자 치기 | 50분 |
+| 6 | 자주 나는 에러 | 10분 |
+| 7 | 커밋하고 올리기 | 10분 |
+
+## 1. 오늘 만들 것
+
+메뉴에 월별 리포트가 생겨요. 일곱 단원을 달려온 가계부의 완성 모습이에요.
+
+```text
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 월별 리포트
+6. 끝내기
+선택: 5
+월(YYYY-MM): 2026-08
+2026-08에는 기록이 없어요.
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 월별 리포트
+6. 끝내기
+선택: 6
+다음에 또 만나요.
+```
+
+파일은 다섯 개가 돼요.
+
+| 파일 | 하는 일 |
+| --- | --- |
+| `main.py` | 메뉴 |
+| `ui.py` | 입력받고 화면에 보여 주기 |
+| `ledger.py` | `Ledger` 클래스, 합계와 리포트 계산 |
+| `models.py` | 기록 하나의 모양(`Entry`) |
+| `storage.py` | 파일에 저장하고 불러오기 |
+
+## 2. 필요한 개념만
+
+`uv run python`으로 REPL을 열어요.
+
+### dataclass: 칸이 정해진 기록 만들기
+
+```python
+>>> from dataclasses import dataclass, asdict
+>>> @dataclass
+... class Point:
+...     x: int
+...     y: int
+... 
+>>> p = Point(1, 2)
+>>> p
+Point(x=1, y=2)
+>>> p.x
+1
+>>> asdict(p)
+{'x': 1, 'y': 2}
+>>> Point(**{"x": 3, "y": 4})
+Point(x=3, y=4)
+```
+
+`@dataclass`를 붙이고 칸 이름과 자료형을 적으면, 값을 담는 틀이 생겨요. 이 틀이 **클래스**이고, `Point(1, 2)`로 찍어 낸 것이 **객체**예요.
+
+값은 `p.x`처럼 점으로 꺼내요. 딕셔너리와 달리 **오타를 내면 바로 에러**가 나고, VS Code가 칸 이름을 자동 완성해 줘요.
+
+`asdict(p)`는 딕셔너리로, `Point(**딕셔너리)`는 그 반대로 바꿔요. JSON 저장과 불러오기에 이 둘을 써요. `**`는 딕셔너리를 이름 붙은 값들로 풀어 넣는 표시예요.
+
+### class: 자료와 기능을 함께 묶기
+
+```python
+>>> class Counter:
+...     def __init__(self, start):
+...         self.value = start
+...     def up(self):
+...         self.value += 1
+... 
+>>> c = Counter(10)
+>>> c.up()
+>>> c.up()
+>>> c.value
+12
+```
+
+클래스 안에 쓴 함수를 **메서드**라고 해요. `c.up()`처럼 점으로 불러요.
+
+`__init__`은 객체를 찍어 낼 때 자동으로 불리는 준비 함수예요. `self`는 "지금 이 객체 자신"이에요. 메서드의 첫 번째 칸에 항상 쓰고, 부를 때는 파이썬이 알아서 넣어 줘요.
+
+`self.value`처럼 `self`에 달아 둔 값은 객체가 살아 있는 동안 남아요.
+
+### 리스트 컴프리헨션: 한 줄로 걸러 만들기
+
+```python
+>>> rows = ["2026-09-28", "2026-10-02", "2026-10-03"]
+>>> [row for row in rows if row.startswith("2026-10")]
+['2026-10-02', '2026-10-03']
+>>> sum(n for n in [1, 2, 3] if n > 1)
+5
+```
+
+`[꺼낸값 for 꺼낸값 in 리스트 if 조건]`은 빈 리스트에 for로 append하는 코드의 한 줄 버전이에요. 대괄호 없이 `sum()` 안에 바로 쓸 수도 있어요.
+
+`.startswith("2026-10")`은 그 글자로 시작하는지 물어요. 어제 날짜를 문자열로 저장해 둔 덕분에 이걸로 월을 고를 수 있어요.
+
+## 3. 따라 치기
+
+기록을 딕셔너리에서 `Entry` 클래스로 바꿔요. `models.py`를 새로 만들고, 세 파일을 고쳐요. `main.py`는 그대로예요. 저장 파일 모양은 같아서 `ledger.json`도 그대로 읽혀요.
+
+<details>
+<summary>어제 끝난 코드(시작 코드) 보기</summary>
+
+`models.py`는 아직 없어요. 나머지는 어제 혼자 치기 정답과 같아요.
+
+`storage.py`
+
+```python
+import json
+import os
+
+FILE_NAME = "ledger.json"
+BACKUP_NAME = "ledger.json.bak"
+
+
+def load_entries():
+    try:
+        with open(FILE_NAME, encoding="utf-8") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError:
+        os.replace(FILE_NAME, BACKUP_NAME)
+        print(f"저장 파일이 망가져서 {BACKUP_NAME}로 옮겨 뒀어요. 새로 시작해요.")
+        return []
+
+
+def save_entries(entries):
+    with open(FILE_NAME, "w", encoding="utf-8") as file:
+        json.dump(entries, file, ensure_ascii=False, indent=2)
+```
+
+`ledger.py`
+
+```python
+def signed_amount(entry):
+    if entry["kind"] == "수입":
+        return entry["amount"]
+    return -entry["amount"]
+
+
+def balance(entries):
+    total = 0
+    for entry in entries:
+        total += signed_amount(entry)
+    return total
+
+
+def biggest_expense(entries):
+    biggest = None
+    for entry in entries:
+        if entry["kind"] == "지출":
+            if biggest is None or entry["amount"] > biggest["amount"]:
+                biggest = entry
+    return biggest
+
+
+def category_totals(entries):
+    totals = {}
+    for entry in entries:
+        if entry["kind"] == "지출":
+            category = entry["category"]
+            totals[category] = totals.get(category, 0) + entry["amount"]
+    return totals
+```
+
+`ui.py`
+
+```python
+from datetime import date
+
+import ledger
+
+
+def ask_date():
+    while True:
+        text = input("날짜(YYYY-MM-DD, 비우면 오늘): ")
+        if text == "":
+            return date.today().isoformat()
+        try:
+            date.fromisoformat(text)
+            return text
+        except ValueError:
+            print("2026-10-31 같은 모양으로 입력해 주세요.")
+
+
+def ask_kind():
+    kind = input("종류(수입/지출): ")
+    while kind != "수입" and kind != "지출":
+        print("수입 또는 지출로 입력해 주세요.")
+        kind = input("종류(수입/지출): ")
+    return kind
+
+
+def ask_amount():
+    amount_text = input("금액: ")
+    while not amount_text.isdigit():
+        print("숫자만 입력해 주세요.")
+        amount_text = input("금액: ")
+    return int(amount_text)
+
+
+def add_entry(entries):
+    day = ask_date()
+    kind = ask_kind()
+    category = input("분류: ")
+    item = input("항목: ")
+    amount = ask_amount()
+    entries.append({"date": day, "kind": kind, "category": category, "item": item, "amount": amount})
+    print("기록했어요.")
+
+
+def show_list(entries):
+    print(f"모두 {len(entries)}건")
+    for entry in sorted(entries, key=lambda e: e["date"]):
+        print(f"{entry['date']} {ledger.signed_amount(entry):>+12,}원  [{entry['category']}] {entry['item']}")
+    print(f"잔액: {ledger.balance(entries):,}원")
+
+
+def show_biggest(entries):
+    biggest = ledger.biggest_expense(entries)
+    if biggest is None:
+        print("지출 기록이 없어요.")
+    else:
+        print(f"가장 큰 지출: [{biggest['category']}] {biggest['item']} -{biggest['amount']:,}원")
+
+
+def show_totals(entries):
+    totals = ledger.category_totals(entries)
+    if len(totals) == 0:
+        print("지출 기록이 없어요.")
+    else:
+        whole = sum(totals.values())
+        ranked = sorted(totals.items(), key=lambda pair: pair[1], reverse=True)
+        for category, total in ranked:
+            print(f"{category}: {total:,}원 ({total / whole * 100:.1f}%)")
+```
+
+`main.py`
+
+```python
+import storage
+import ui
+
+
+def main():
+    print("=== 나의 가계부 ===")
+    entries = storage.load_entries()
+    print(f"저장된 기록 {len(entries)}건을 불러왔어요.")
+
+    while True:
+        print()
+        print("1. 기록 추가")
+        print("2. 목록 보기")
+        print("3. 가장 큰 지출")
+        print("4. 분류별 지출")
+        print("5. 끝내기")
+        choice = input("선택: ")
+
+        if choice == "1":
+            ui.add_entry(entries)
+            storage.save_entries(entries)
+        elif choice == "2":
+            ui.show_list(entries)
+        elif choice == "3":
+            ui.show_biggest(entries)
+        elif choice == "4":
+            ui.show_totals(entries)
+        elif choice == "5":
+            print("다음에 또 만나요.")
+            break
+        else:
+            print("메뉴 번호로 골라 주세요.")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+</details>
+
+`models.py` (새 파일)
+
+<TypeAlong>
+
+```python
+from dataclasses import dataclass
+
+
+@dataclass
+class Entry:
+    date: str
+    kind: str
+    category: str
+    item: str
+    amount: int
+
+    def signed_amount(self):
+        if self.kind == "수입":
+            return self.amount
+        return -self.amount
+```
+
+</TypeAlong>
+
+`signed_amount`가 이제 기록 자신의 메서드가 됐어요. "부호 붙은 금액"은 기록이 스스로 알 일이니까요.
+
+`storage.py`
+
+<TypeAlong>
+
+```python
+import json
+import os
+from dataclasses import asdict
+
+from models import Entry
+
+FILE_NAME = "ledger.json"
+BACKUP_NAME = "ledger.json.bak"
+
+
+def load_entries():
+    try:
+        with open(FILE_NAME, encoding="utf-8") as file:
+            rows = json.load(file)
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError:
+        os.replace(FILE_NAME, BACKUP_NAME)
+        print(f"저장 파일이 망가져서 {BACKUP_NAME}로 옮겨 뒀어요. 새로 시작해요.")
+        return []
+    return [Entry(**row) for row in rows]
+
+
+def save_entries(entries):
+    rows = [asdict(entry) for entry in entries]
+    with open(FILE_NAME, "w", encoding="utf-8") as file:
+        json.dump(rows, file, ensure_ascii=False, indent=2)
+```
+
+</TypeAlong>
+
+`ledger.py`
+
+<TypeAlong>
+
+```python
+def balance(entries):
+    total = 0
+    for entry in entries:
+        total += entry.signed_amount()
+    return total
+
+
+def biggest_expense(entries):
+    biggest = None
+    for entry in entries:
+        if entry.kind == "지출":
+            if biggest is None or entry.amount > biggest.amount:
+                biggest = entry
+    return biggest
+
+
+def category_totals(entries):
+    totals = {}
+    for entry in entries:
+        if entry.kind == "지출":
+            totals[entry.category] = totals.get(entry.category, 0) + entry.amount
+    return totals
+```
+
+</TypeAlong>
+
+`ui.py`
+
+<TypeAlong>
+
+```python
+from datetime import date
+
+import ledger
+from models import Entry
+
+
+def ask_date():
+    while True:
+        text = input("날짜(YYYY-MM-DD, 비우면 오늘): ")
+        if text == "":
+            return date.today().isoformat()
+        try:
+            date.fromisoformat(text)
+            return text
+        except ValueError:
+            print("2026-10-31 같은 모양으로 입력해 주세요.")
+
+
+def ask_kind():
+    kind = input("종류(수입/지출): ")
+    while kind != "수입" and kind != "지출":
+        print("수입 또는 지출로 입력해 주세요.")
+        kind = input("종류(수입/지출): ")
+    return kind
+
+
+def ask_amount():
+    amount_text = input("금액: ")
+    while not amount_text.isdigit():
+        print("숫자만 입력해 주세요.")
+        amount_text = input("금액: ")
+    return int(amount_text)
+
+
+def add_entry(entries):
+    day = ask_date()
+    kind = ask_kind()
+    category = input("분류: ")
+    item = input("항목: ")
+    amount = ask_amount()
+    entries.append(Entry(day, kind, category, item, amount))
+    print("기록했어요.")
+
+
+def show_list(entries):
+    print(f"모두 {len(entries)}건")
+    for entry in sorted(entries, key=lambda e: e.date):
+        print(f"{entry.date} {entry.signed_amount():>+12,}원  [{entry.category}] {entry.item}")
+    print(f"잔액: {ledger.balance(entries):,}원")
+
+
+def show_biggest(entries):
+    biggest = ledger.biggest_expense(entries)
+    if biggest is None:
+        print("지출 기록이 없어요.")
+    else:
+        print(f"가장 큰 지출: [{biggest.category}] {biggest.item} -{biggest.amount:,}원")
+
+
+def show_totals(entries):
+    totals = ledger.category_totals(entries)
+    if len(totals) == 0:
+        print("지출 기록이 없어요.")
+    else:
+        whole = sum(totals.values())
+        ranked = sorted(totals.items(), key=lambda pair: pair[1], reverse=True)
+        for category, total in ranked:
+            print(f"{category}: {total:,}원 ({total / whole * 100:.1f}%)")
+```
+
+</TypeAlong>
+
+대괄호와 따옴표가 사라져서 f-string이 훨씬 읽기 좋아졌어요. 저장하고 실행해서 어제처럼 동작하는지 봐요.
+
+```bash
+uv run main.py
+```
+
+```text
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 2
+모두 2건
+2026-10-25   +3,000,000원  [월급] 10월 월급
+2026-10-30       -9,000원  [식비] 점심
+잔액: 2,991,000원
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 5
+다음에 또 만나요.
+```
+
+```bash
+git add .
+git commit -m "refactor: 기록을 dataclass로"
+```
+
+## 4. 고쳐 치기
+
+`ledger.py`의 함수들을 `Ledger` 클래스로 묶어요. 지금은 모든 함수에 `entries`를 넘기고 있는데, 가계부가 자기 기록을 들고 있게 하는 거예요.
+
+```python
+book = Ledger(storage.load_entries())
+book.balance()
+```
+
+- `__init__`에서 `entries`를 받아 `self.entries`에 둬요.
+- `add`, `balance`, `biggest_expense`, `category_totals` 메서드를 만들어요.
+- `ui.py`의 함수들은 `entries` 대신 이 객체를 받아요.
+- `main.py`는 `book`을 만들어 넘겨요. 동작은 그대로예요.
+
+<Hints>
+<Hint>
+
+클래스 안에 있는 함수는 첫 번째 칸이 `self`예요. `def balance(self):`처럼 쓰고, 안에서는 `entries` 대신 `self.entries`를 써요.
+
+</Hint>
+<Hint>
+
+`ui.py`에서 `import ledger`는 이제 필요 없어요. 함수의 매개변수 이름을 `ledger`로 받아서 `ledger.balance()`로 부르면 돼요.
+
+</Hint>
+<Hint>
+
+`main.py` 맨 위는 `from ledger import Ledger`예요. 저장할 때는 `storage.save_entries(book.entries)`처럼 안의 리스트를 넘겨요.
+
+</Hint>
+</Hints>
+
+<details>
+<summary>정답 코드 보기: ledger.py</summary>
+
+```python
+class Ledger:
+    def __init__(self, entries):
+        self.entries = entries
+
+    def add(self, entry):
+        self.entries.append(entry)
+
+    def balance(self):
+        total = 0
+        for entry in self.entries:
+            total += entry.signed_amount()
+        return total
+
+    def biggest_expense(self):
+        biggest = None
+        for entry in self.entries:
+            if entry.kind == "지출":
+                if biggest is None or entry.amount > biggest.amount:
+                    biggest = entry
+        return biggest
+
+    def category_totals(self):
+        totals = {}
+        for entry in self.entries:
+            if entry.kind == "지출":
+                totals[entry.category] = totals.get(entry.category, 0) + entry.amount
+        return totals
+```
+
+</details>
+
+<details>
+<summary>정답 코드 보기: ui.py</summary>
+
+```python
+from datetime import date
+
+from models import Entry
+
+
+def ask_date():
+    while True:
+        text = input("날짜(YYYY-MM-DD, 비우면 오늘): ")
+        if text == "":
+            return date.today().isoformat()
+        try:
+            date.fromisoformat(text)
+            return text
+        except ValueError:
+            print("2026-10-31 같은 모양으로 입력해 주세요.")
+
+
+def ask_kind():
+    kind = input("종류(수입/지출): ")
+    while kind != "수입" and kind != "지출":
+        print("수입 또는 지출로 입력해 주세요.")
+        kind = input("종류(수입/지출): ")
+    return kind
+
+
+def ask_amount():
+    amount_text = input("금액: ")
+    while not amount_text.isdigit():
+        print("숫자만 입력해 주세요.")
+        amount_text = input("금액: ")
+    return int(amount_text)
+
+
+def add_entry(ledger):
+    day = ask_date()
+    kind = ask_kind()
+    category = input("분류: ")
+    item = input("항목: ")
+    amount = ask_amount()
+    ledger.add(Entry(day, kind, category, item, amount))
+    print("기록했어요.")
+
+
+def show_list(ledger):
+    print(f"모두 {len(ledger.entries)}건")
+    for entry in sorted(ledger.entries, key=lambda e: e.date):
+        print(f"{entry.date} {entry.signed_amount():>+12,}원  [{entry.category}] {entry.item}")
+    print(f"잔액: {ledger.balance():,}원")
+
+
+def show_biggest(ledger):
+    biggest = ledger.biggest_expense()
+    if biggest is None:
+        print("지출 기록이 없어요.")
+    else:
+        print(f"가장 큰 지출: [{biggest.category}] {biggest.item} -{biggest.amount:,}원")
+
+
+def show_totals(ledger):
+    totals = ledger.category_totals()
+    if len(totals) == 0:
+        print("지출 기록이 없어요.")
+    else:
+        whole = sum(totals.values())
+        ranked = sorted(totals.items(), key=lambda pair: pair[1], reverse=True)
+        for category, total in ranked:
+            print(f"{category}: {total:,}원 ({total / whole * 100:.1f}%)")
+```
+
+</details>
+
+<details>
+<summary>정답 코드 보기: main.py</summary>
+
+```python
+import storage
+import ui
+from ledger import Ledger
+
+
+def main():
+    print("=== 나의 가계부 ===")
+    book = Ledger(storage.load_entries())
+    print(f"저장된 기록 {len(book.entries)}건을 불러왔어요.")
+
+    while True:
+        print()
+        print("1. 기록 추가")
+        print("2. 목록 보기")
+        print("3. 가장 큰 지출")
+        print("4. 분류별 지출")
+        print("5. 끝내기")
+        choice = input("선택: ")
+
+        if choice == "1":
+            ui.add_entry(book)
+            storage.save_entries(book.entries)
+        elif choice == "2":
+            ui.show_list(book)
+        elif choice == "3":
+            ui.show_biggest(book)
+        elif choice == "4":
+            ui.show_totals(book)
+        elif choice == "5":
+            print("다음에 또 만나요.")
+            break
+        else:
+            print("메뉴 번호로 골라 주세요.")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+</details>
+
+어제 저장한 기록으로 2, 3, 4번이 전처럼 나오면 커밋해요.
+
+```text
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 3
+가장 큰 지출: [식비] 점심 -9,000원
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 4
+식비: 9,000원 (100.0%)
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 5
+다음에 또 만나요.
+```
+
+```bash
+git add .
+git commit -m "refactor: Ledger 클래스로 묶기"
+```
+
+## 5. 혼자 치기
+
+마지막 기능이에요. 메뉴에 `5. 월별 리포트`를 넣고, 끝내기를 6번으로 밀어요.
+
+- `월(YYYY-MM): `로 물어요.
+- 그 달의 수입, 지출, 잔액을 찍고, 이어서 분류별 지출(큰 순서, 비율)을 찍어요.
+- 그 달 기록이 없으면 `2026-08에는 기록이 없어요.`처럼 찍어요.
+
+`Ledger`에 `in_month(month)`, `income()`, `expense()` 메서드를 더해 봐요. `in_month`가 **그 달 기록만 담은 새 Ledger**를 돌려주면, 이미 만든 `balance()`와 `show_totals()`를 그대로 다시 쓸 수 있어요.
+
+시험 자료는 이렇게 넣어요. `ledger.json`을 지우고 시작하면 숫자가 아래 표와 같아져요.
+
+| 날짜 | 종류 | 분류 | 항목 | 금액 |
+| --- | --- | --- | --- | --- |
+| 2026-09-28 | 지출 | 식비 | 점심 | 9000 |
+| 2026-09-25 | 수입 | 월급 | 9월 월급 | 3000000 |
+| 2026-10-02 | 지출 | 식비 | 저녁 | 15000 |
+| 2026-10-03 | 지출 | 교통 | 버스 | 1500 |
+| 2026-10-10 | 지출 | 쇼핑 | 신발 | 120000 |
+| 2026-10-25 | 수입 | 월급 | 10월 월급 | 3000000 |
+
+| 월 | 나와야 하는 것 |
+| --- | --- |
+| 2026-10 | 수입 `3,000,000원`, 지출 `136,500원`, 잔액 `2,863,500원`<br />`쇼핑: 120,000원 (87.9%)`<br />`식비: 15,000원 (11.0%)`<br />`교통: 1,500원 (1.1%)` |
+| 2026-09 | 수입 `3,000,000원`, 지출 `9,000원`, 잔액 `2,991,000원`<br />`식비: 9,000원 (100.0%)` |
+| 2026-08 | `2026-08에는 기록이 없어요.` |
+
+<details>
+<summary>정답 코드 보기: ledger.py</summary>
+
+```python
+class Ledger:
+    def __init__(self, entries):
+        self.entries = entries
+
+    def add(self, entry):
+        self.entries.append(entry)
+
+    def balance(self):
+        total = 0
+        for entry in self.entries:
+            total += entry.signed_amount()
+        return total
+
+    def biggest_expense(self):
+        biggest = None
+        for entry in self.entries:
+            if entry.kind == "지출":
+                if biggest is None or entry.amount > biggest.amount:
+                    biggest = entry
+        return biggest
+
+    def category_totals(self):
+        totals = {}
+        for entry in self.entries:
+            if entry.kind == "지출":
+                totals[entry.category] = totals.get(entry.category, 0) + entry.amount
+        return totals
+
+    def in_month(self, month):
+        picked = [entry for entry in self.entries if entry.date.startswith(month)]
+        return Ledger(picked)
+
+    def income(self):
+        return sum(entry.amount for entry in self.entries if entry.kind == "수입")
+
+    def expense(self):
+        return sum(entry.amount for entry in self.entries if entry.kind == "지출")
+```
+
+</details>
+
+<details>
+<summary>정답 코드 보기: ui.py</summary>
+
+```python
+from datetime import date
+
+from models import Entry
+
+
+def ask_date():
+    while True:
+        text = input("날짜(YYYY-MM-DD, 비우면 오늘): ")
+        if text == "":
+            return date.today().isoformat()
+        try:
+            date.fromisoformat(text)
+            return text
+        except ValueError:
+            print("2026-10-31 같은 모양으로 입력해 주세요.")
+
+
+def ask_kind():
+    kind = input("종류(수입/지출): ")
+    while kind != "수입" and kind != "지출":
+        print("수입 또는 지출로 입력해 주세요.")
+        kind = input("종류(수입/지출): ")
+    return kind
+
+
+def ask_amount():
+    amount_text = input("금액: ")
+    while not amount_text.isdigit():
+        print("숫자만 입력해 주세요.")
+        amount_text = input("금액: ")
+    return int(amount_text)
+
+
+def add_entry(ledger):
+    day = ask_date()
+    kind = ask_kind()
+    category = input("분류: ")
+    item = input("항목: ")
+    amount = ask_amount()
+    ledger.add(Entry(day, kind, category, item, amount))
+    print("기록했어요.")
+
+
+def show_list(ledger):
+    print(f"모두 {len(ledger.entries)}건")
+    for entry in sorted(ledger.entries, key=lambda e: e.date):
+        print(f"{entry.date} {entry.signed_amount():>+12,}원  [{entry.category}] {entry.item}")
+    print(f"잔액: {ledger.balance():,}원")
+
+
+def show_biggest(ledger):
+    biggest = ledger.biggest_expense()
+    if biggest is None:
+        print("지출 기록이 없어요.")
+    else:
+        print(f"가장 큰 지출: [{biggest.category}] {biggest.item} -{biggest.amount:,}원")
+
+
+def show_totals(ledger):
+    totals = ledger.category_totals()
+    if len(totals) == 0:
+        print("지출 기록이 없어요.")
+    else:
+        whole = sum(totals.values())
+        ranked = sorted(totals.items(), key=lambda pair: pair[1], reverse=True)
+        for category, total in ranked:
+            print(f"{category}: {total:,}원 ({total / whole * 100:.1f}%)")
+
+
+def show_month_report(ledger):
+    month = input("월(YYYY-MM): ")
+    report = ledger.in_month(month)
+    if len(report.entries) == 0:
+        print(f"{month}에는 기록이 없어요.")
+        return
+    print(f"--- {month} 리포트 ---")
+    print(f"수입: {report.income():,}원")
+    print(f"지출: {report.expense():,}원")
+    print(f"잔액: {report.balance():,}원")
+    show_totals(report)
+```
+
+</details>
+
+<details>
+<summary>정답 코드 보기: main.py</summary>
+
+```python
+import storage
+import ui
+from ledger import Ledger
+
+
+def main():
+    print("=== 나의 가계부 ===")
+    book = Ledger(storage.load_entries())
+    print(f"저장된 기록 {len(book.entries)}건을 불러왔어요.")
+
+    while True:
+        print()
+        print("1. 기록 추가")
+        print("2. 목록 보기")
+        print("3. 가장 큰 지출")
+        print("4. 분류별 지출")
+        print("5. 월별 리포트")
+        print("6. 끝내기")
+        choice = input("선택: ")
+
+        if choice == "1":
+            ui.add_entry(book)
+            storage.save_entries(book.entries)
+        elif choice == "2":
+            ui.show_list(book)
+        elif choice == "3":
+            ui.show_biggest(book)
+        elif choice == "4":
+            ui.show_totals(book)
+        elif choice == "5":
+            ui.show_month_report(book)
+        elif choice == "6":
+            print("다음에 또 만나요.")
+            break
+        else:
+            print("메뉴 번호로 골라 주세요.")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+</details>
+
+### README 채우기
+
+1단원에서 비워 둔 `README.md`를 채워요. GitHub 저장소 첫 화면에 그대로 보이는 파일이에요. 아래를 그대로 쳐도 되고, 내 말로 바꾸면 더 좋아요.
+
+````markdown
+# python-ledger
+
+터미널에서 쓰는 가계부 프로그램이에요. 파이썬 손풀기 실습으로 일주일 동안 직접 만들었어요.
+
+## 할 수 있는 일
+
+- 수입과 지출 기록하기 (껐다 켜도 남아요)
+- 목록과 잔액 보기
+- 가장 큰 지출 찾기
+- 분류별 지출을 큰 순서로 보기
+- 월별 리포트 보기
+
+## 실행
+
+```bash
+uv run main.py
+```
+
+## 파일 구성
+
+| 파일 | 하는 일 |
+| --- | --- |
+| `main.py` | 메뉴 |
+| `ui.py` | 입력받고 화면에 보여 주기 |
+| `ledger.py` | 합계와 리포트 계산 |
+| `models.py` | 기록 하나의 모양 |
+| `storage.py` | 파일에 저장하고 불러오기 |
+````
+
+```bash
+git add .
+git commit -m "feat: 월별 리포트와 README"
+```
+
+## 6. 자주 나는 에러
+
+### 대괄호로 꺼냈어요: TypeError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 4, in <module>
+    print(entry["amount"])
+          ~~~~~^^^^^^^^^^
+TypeError: 'Entry' object is not subscriptable
+```
+
+클래스로 바꾸고 나서 `entry["amount"]`가 남아 있으면 나요. 4단원과 반대 상황이에요. 이제는 `entry.amount`예요. `subscriptable`은 "대괄호를 쓸 수 있다"는 뜻이에요.
+
+### 객체를 그대로 저장했어요: TypeError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 5, in <module>
+    print(json.dumps([entry]))
+          ^^^^^^^^^^^^^^^^^^^
+  File "C:\...\Python312\Lib\json\__init__.py", line 231, in dumps
+    return _default_encoder.encode(obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\...\Python312\Lib\json\encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\...\Python312\Lib\json\encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "C:\...\Python312\Lib\json\encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type Entry is not JSON serializable
+```
+
+JSON은 객체를 몰라요. 그래서 저장 전에 `asdict()`로 딕셔너리로 바꿔요. 맨 아래 줄 `Entry is not JSON serializable`이 "Entry는 JSON으로 못 적어"라는 뜻이에요.
+
+### 찍어 낼 값이 모자라요: TypeError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 3, in <module>
+    entry = Entry("2026-10-30", "지출", "식비", "점심")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: Entry.__init__() missing 1 required positional argument: 'amount'
+```
+
+칸이 다섯 개인데 네 개만 줬어요. 빠진 칸 이름을 알려 줘요.
+
+### self를 빼먹었어요: TypeError
+
+```python
+class Ledger:
+    def __init__(self, entries):
+        self.entries = entries
+
+    def balance():
+        return 0
+
+
+book = Ledger([])
+print(book.balance())
+```
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 10, in <module>
+    print(book.balance())
+          ^^^^^^^^^^^^^^
+TypeError: Ledger.balance() takes 0 positional arguments but 1 was given
+```
+
+"0개 받는데 1개가 왔다"가 처음엔 이상해 보여요. 나는 아무것도 안 넘겼는데요. 파이썬이 `book`을 첫 번째 값으로 자동으로 넣어 줘서 그래요. 메서드 첫 칸에 `self`를 쓰면 풀려요.
+
+### self.을 빼먹었어요: NameError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 10, in <module>
+    print(book.count())
+          ^^^^^^^^^^^^
+  File "C:\...\python-ledger\main.py", line 6, in count
+    return len(entries)
+               ^^^^^^^
+NameError: name 'entries' is not defined. Did you mean: 'self.entries'?
+```
+
+메서드 안에서는 `entries`가 아니라 `self.entries`예요. 이번에도 파이썬이 답을 알려 줘요.
+
+## 7. 커밋하고 올리기
+
+일주일치 커밋을 다 봐요.
+
+```bash
+git log --oneline
+```
+
+```text
+bd4e64c feat: 월별 리포트와 README
+e62ab0c refactor: Ledger 클래스로 묶기
+b35911c refactor: 기록을 dataclass로
+20578de feat: 망가진 파일과 잘못된 날짜 대응
+712520d feat: 날짜 기록
+61dc2fe feat: 기록을 파일에 저장하기
+6363a7f refactor: 파일 세 개로 나누기
+1b835c0 feat: 금액 정렬과 잔액 함수
+045fedb refactor: 기능을 함수로 쪼개기
+0a2fabb feat: 분류별 지출을 큰 순서와 비율로
+cf8fd9c feat: 분류별 지출 합계
+e8b1642 refactor: 기록을 딕셔너리로 바꾸기
+d7c0094 feat: 가장 큰 지출 찾기
+7e4d12d feat: 목록에 잔액 표시
+ede9249 feat: 메뉴 반복과 여러 건 기록
+f0173e9 feat: 종류 입력 검사, 지출 크기별 안내
+56b4a9c feat: 금액이 숫자가 아니면 다시 묻기
+92bc987 feat: 수입과 지출 구분
+da2a2be feat: 두 건 입력받아 합계 내기
+e379929 feat: 분류 추가, 금액에 천 단위 쉼표
+141155a feat: 항목과 금액을 받아 한 줄로 출력
+```
+
+21개 커밋이 그대로 일주일의 기록이에요.
+
+### v1.0 찍기
+
+완성된 지점에 이름표를 붙여요. 이걸 **태그**라고 해요. 나중에 코드를 아무리 고쳐도 이 지점으로 언제든 돌아올 수 있어요.
+
+```bash
+git tag v1.0
+git push
+git push --tags
+```
+
+`git push`만으로는 태그가 안 올라가요. 그래서 `--tags`를 한 번 더 쳐요. GitHub 저장소 오른쪽 **Tags**에 `v1.0`이 보이면 돼요.
+
+### 끝나고 나서
+
+여기까지 왔으면 변수부터 클래스까지, 파이썬 기초 문법을 전부 내 손으로 한 번씩 쳐 본 거예요. 무엇보다 **혼자 빈 파일에서 시작해 돌아가는 프로그램을 끝까지 만들어 본** 경험이 생겼어요.
+
+더 치고 싶으면 힌트 없이 하나씩 붙여 봐요.
+
+- 기록 삭제하기(번호를 골라서)
+- 분류를 번호로 고르기
+- 한 달 예산을 정하고 넘으면 경고하기
+- CSV 파일로 내보내기
+
+[목록](/practice)에서 7단원 완료를 체크해요. 수고했어요.

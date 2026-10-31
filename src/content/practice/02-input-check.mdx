@@ -1,0 +1,419 @@
+---
+title: "잘못 쳐도 다시 묻기"
+unit: 2
+slug: "02-input-check"
+summary: "수입과 지출을 나누고, 금액에 글자를 쳐도 프로그램이 죽지 않고 다시 묻게 만들어요. 조건문과 비교를 손에 익혀요."
+feature: "수입, 지출 구분과 입력 검사"
+concepts: ["if / elif / else", "비교 연산자", "and / or / not", "isdigit", "while"]
+minutes: 150
+---
+
+어제 만든 가계부는 금액에 `9천`을 치면 그대로 죽어요. 오늘은 그걸 고쳐요. 수입과 지출도 나눠서, 가계부다운 모양을 갖춰요.
+
+오늘 치는 코드는 대부분 **두 갈래로 나누기**예요. 프로그램이 스스로 판단하기 시작하는 단원이에요.
+
+| 단계 | 하는 일 | 시간 |
+| --- | --- | --- |
+| 1 | 오늘 만들 것 | 5분 |
+| 2 | 필요한 개념만 | 25분 |
+| 3 | 따라 치기 | 30분 |
+| 4 | 고쳐 치기 | 30분 |
+| 5 | 혼자 치기 | 40분 |
+| 6 | 자주 나는 에러 | 10분 |
+| 7 | 커밋하고 올리기 | 10분 |
+
+## 1. 오늘 만들 것
+
+오늘이 끝나면 이렇게 돼요. 종류를 잘못 쳐도, 금액에 글자를 쳐도 다시 물어요.
+
+```text
+=== 나의 가계부 ===
+종류(수입/지출): 쓰기
+수입 또는 지출로 입력해 주세요.
+종류(수입/지출): 지출
+분류: 식비
+항목: 점심
+금액: 9000
+[식비] 점심 -9,000원
+소소한 지출이에요.
+```
+
+한 가지 미리 말해 둘게요. 어제는 두 건을 받았는데, 오늘은 **한 건만** 받아요. 검사 코드를 두 번씩 쓰면 금방 지저분해지거든요. 여러 건은 내일 반복문으로 한 번에 풀어요.
+
+## 2. 필요한 개념만
+
+터미널에서 `uv run python`으로 REPL을 열고 하나씩 쳐 봐요. 끝낼 때는 `exit()`예요.
+
+### 비교: 답은 True 아니면 False
+
+```python
+>>> kind = "수입"
+>>> kind == "수입"
+True
+>>> kind != "수입"
+False
+>>> amount = 9000
+>>> amount >= 10000
+False
+>>> amount < 10000
+True
+```
+
+`==`는 같은지, `!=`는 다른지 물어요. `>=`, `<`는 크기를 물어요. 답은 언제나 `True`(참) 아니면 `False`(거짓)예요.
+
+어제 배운 `=`와 헷갈리면 안 돼요. `=` 하나는 이름표 붙이기, `==` 둘은 질문이에요.
+
+### if / elif / else: 답에 따라 갈라지기
+
+```python
+if amount >= 100000:
+    print("큰 지출이에요.")
+elif amount < 10000:
+    print("소소한 지출이에요.")
+else:
+    print("보통이에요.")
+```
+
+위에서부터 차례로 물어서 **처음 맞는 칸 하나만** 실행해요. `elif`는 "아니면 이건?", `else`는 "전부 아니면"이에요. `elif`와 `else`는 없어도 돼요.
+
+줄 끝의 콜론(`:`)과 다음 줄의 들여쓰기(공백 4칸)가 한 쌍이에요. 들여 쓴 줄들이 "이 조건일 때 할 일"이에요. VS Code는 콜론 뒤에서 Enter를 치면 알아서 들여 써 줘요.
+
+### and, or, not: 질문 묶기
+
+```python
+>>> kind = "지출"
+>>> amount = 120000
+>>> kind == "지출" and amount >= 100000
+True
+>>> kind == "수입" or amount >= 100000
+True
+>>> not amount >= 100000
+False
+```
+
+`and`는 둘 다 맞아야, `or`는 하나만 맞아도 `True`예요. `not`은 답을 뒤집어요.
+
+### isdigit(): 숫자로만 되어 있나
+
+```python
+>>> "9000".isdigit()
+True
+>>> "9천".isdigit()
+False
+>>> "".isdigit()
+False
+>>> "-500".isdigit()
+False
+```
+
+문자열에 쓰는 기능이에요. 글자가 섞였거나 비어 있으면 `False`를 줘요. 그래서 `int()`로 바꾸기 **전에** 물어보면 프로그램이 죽지 않아요.
+
+마지막 줄도 봐 두세요. 마이너스 기호도 숫자가 아니라서 `False`예요. 금액은 양수만 받을 거라 오늘은 이게 오히려 좋아요.
+
+### while: 맞을 때까지 되풀이
+
+```python
+amount_text = input("금액: ")
+while not amount_text.isdigit():
+    print("숫자만 입력해 주세요.")
+    amount_text = input("금액: ")
+```
+
+`if`는 한 번만 묻지만 `while`은 조건이 맞는 동안 **계속** 되풀이해요. 읽는 법은 "숫자가 아닌 동안, 안내하고 다시 받아라"예요.
+
+안쪽에서 다시 받는 줄을 빼먹으면 값이 영원히 그대로라서 끝나지 않아요. 멈추지 않으면 터미널에서 `Ctrl+C`를 눌러요.
+
+## 3. 따라 치기
+
+어제 코드를 지우고 아래를 쳐요. 입력 항목이 하나 늘었고, 출력이 두 갈래로 나뉘었어요.
+
+<details>
+<summary>어제 끝난 코드(시작 코드) 보기</summary>
+
+```python
+print("=== 나의 가계부 ===")
+
+category1 = input("분류: ")
+item1 = input("항목: ")
+amount1 = int(input("금액: "))
+
+category2 = input("분류: ")
+item2 = input("항목: ")
+amount2 = int(input("금액: "))
+
+total = amount1 + amount2
+
+print(f"[{category1}] {item1} {amount1:,}원")
+print(f"[{category2}] {item2} {amount2:,}원")
+print(f"오늘 합계: {total:,}원")
+```
+
+</details>
+
+<TypeAlong>
+
+```python
+print("=== 나의 가계부 ===")
+
+kind = input("종류(수입/지출): ")
+category = input("분류: ")
+item = input("항목: ")
+amount = int(input("금액: "))
+
+if kind == "수입":
+    print(f"[{category}] {item} +{amount:,}원")
+else:
+    print(f"[{category}] {item} -{amount:,}원")
+```
+
+</TypeAlong>
+
+`Ctrl+S`로 저장하고 두 번 실행해요. 한 번은 지출, 한 번은 수입으로 입력해요.
+
+```bash
+uv run main.py
+```
+
+```text
+=== 나의 가계부 ===
+종류(수입/지출): 지출
+분류: 식비
+항목: 점심
+금액: 9000
+[식비] 점심 -9,000원
+```
+
+```text
+=== 나의 가계부 ===
+종류(수입/지출): 수입
+분류: 월급
+항목: 10월 월급
+금액: 3000000
+[월급] 10월 월급 +3,000,000원
+```
+
+부호가 입력에 따라 바뀌면 커밋해요.
+
+```bash
+git add .
+git commit -m "feat: 수입과 지출 구분"
+```
+
+## 4. 고쳐 치기
+
+금액에 글자를 쳐도 죽지 않게 고쳐요. `int()`로 바꾸기 전에 검사하고, 숫자가 아니면 안내한 뒤 다시 물어요.
+
+```text
+=== 나의 가계부 ===
+종류(수입/지출): 지출
+분류: 식비
+항목: 점심
+금액: 9천
+숫자만 입력해 주세요.
+금액: 9000
+[식비] 점심 -9,000원
+```
+
+<Hints>
+<Hint>
+
+입력을 두 단계로 나눠요. 먼저 `amount_text = input("금액: ")`로 문자열인 채 받아요. `int()`는 검사가 끝난 다음에 해요.
+
+</Hint>
+<Hint>
+
+"숫자가 아닌 동안"은 `while not amount_text.isdigit():`이에요. 안쪽 두 줄은 안내 출력과 다시 받기예요.
+
+</Hint>
+<Hint>
+
+`while`이 끝났다면 숫자라는 게 보장돼요. 그 아래에 `amount = int(amount_text)`를 써요.
+
+</Hint>
+</Hints>
+
+<details>
+<summary>정답 코드 보기</summary>
+
+```python
+print("=== 나의 가계부 ===")
+
+kind = input("종류(수입/지출): ")
+category = input("분류: ")
+item = input("항목: ")
+
+amount_text = input("금액: ")
+while not amount_text.isdigit():
+    print("숫자만 입력해 주세요.")
+    amount_text = input("금액: ")
+amount = int(amount_text)
+
+if kind == "수입":
+    print(f"[{category}] {item} +{amount:,}원")
+else:
+    print(f"[{category}] {item} -{amount:,}원")
+```
+
+</details>
+
+`9천`을 쳐 보고 다시 묻는지 확인한 다음 커밋해요.
+
+```bash
+git add .
+git commit -m "feat: 금액이 숫자가 아니면 다시 묻기"
+```
+
+## 5. 혼자 치기
+
+힌트 없이 두 가지를 더 붙여요.
+
+- 종류가 `수입`도 `지출`도 아니면 `수입 또는 지출로 입력해 주세요.`를 찍고 다시 물어요.
+- 지출일 때만, 금액을 찍은 다음 한 줄을 더 찍어요. 10만 원 이상이면 `큰 지출이에요. 한 번 더 생각해 봐요.`, 1만 원 미만이면 `소소한 지출이에요.`예요. 그 사이면 아무것도 찍지 않아요.
+
+아래 표대로 입력해 보세요. 출력이 같으면 통과예요.
+
+| 입력(종류, 분류, 항목, 금액) | 맨 끝 출력 |
+| --- | --- |
+| 쓰기 다음에 지출, 식비, 점심, 9000 | 다시 묻기 한 번<br />`[식비] 점심 -9,000원`<br />`소소한 지출이에요.` |
+| 지출, 쇼핑, 신발, 120000 | `[쇼핑] 신발 -120,000원`<br />`큰 지출이에요. 한 번 더 생각해 봐요.` |
+| 지출, 교통, 택시, 30000 | `[교통] 택시 -30,000원` |
+| 수입, 월급, 10월 월급, 3000000 | `[월급] 10월 월급 +3,000,000원` |
+
+<details>
+<summary>정답 코드 보기</summary>
+
+```python
+print("=== 나의 가계부 ===")
+
+kind = input("종류(수입/지출): ")
+while kind != "수입" and kind != "지출":
+    print("수입 또는 지출로 입력해 주세요.")
+    kind = input("종류(수입/지출): ")
+
+category = input("분류: ")
+item = input("항목: ")
+
+amount_text = input("금액: ")
+while not amount_text.isdigit():
+    print("숫자만 입력해 주세요.")
+    amount_text = input("금액: ")
+amount = int(amount_text)
+
+if kind == "수입":
+    print(f"[{category}] {item} +{amount:,}원")
+else:
+    print(f"[{category}] {item} -{amount:,}원")
+    if amount >= 100000:
+        print("큰 지출이에요. 한 번 더 생각해 봐요.")
+    elif amount < 10000:
+        print("소소한 지출이에요.")
+```
+
+</details>
+
+`else` 안에 `if`가 또 들어갔어요. 들여쓰기가 한 칸 더 깊어지면 "지출일 때, 그중에서도"라는 뜻이에요.
+
+통과했으면 커밋해요. 이 코드가 3단원의 시작 코드예요.
+
+```bash
+git add .
+git commit -m "feat: 종류 입력 검사, 지출 크기별 안내"
+```
+
+## 6. 자주 나는 에러
+
+오늘 에러는 거의 **실행 전에** 나요. 파이썬이 코드를 읽다가 문법이 틀린 걸 발견하는 경우예요. 그래서 입력을 받기도 전에 멈춰요.
+
+### 콜론을 빼먹었어요: SyntaxError
+
+```text
+  File "C:\...\python-ledger\main.py", line 3
+    if kind == "수입"
+                   ^
+SyntaxError: expected ':'
+```
+
+`expected ':'`는 콜론이 와야 한다는 뜻이에요. `if`, `elif`, `else`, `while` 줄 끝에는 항상 콜론이에요.
+
+### == 대신 = 를 썼어요: SyntaxError
+
+```text
+  File "C:\...\python-ledger\main.py", line 3
+    if kind = "수입":
+       ^^^^^^^^^^^
+SyntaxError: invalid syntax. Maybe you meant '==' or ':=' instead of '='?
+```
+
+`Maybe you meant '=='`로 답까지 알려 줘요. 질문할 때는 `==`예요.
+
+### 들여쓰기를 안 했어요: IndentationError
+
+```text
+  File "C:\...\python-ledger\main.py", line 4
+    print("들어온 돈이에요.")
+    ^^^^^
+IndentationError: expected an indented block after 'if' statement on line 3
+```
+
+어제는 쓸데없이 들여 써서 났는데, 오늘은 들여 써야 할 곳에 안 해서 나요. `after 'if' statement on line 3`처럼 어느 줄 때문인지도 알려 줘요.
+
+### 글자와 숫자를 비교했어요: TypeError
+
+`int()`로 바꾸기 전의 값을 숫자와 비교하면 나요.
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 3, in <module>
+    if amount >= 100000:
+       ^^^^^^^^^^^^^^^^
+TypeError: '>=' not supported between instances of 'str' and 'int'
+```
+
+`'str' and 'int'` 사이에는 `>=`를 쓸 수 없다는 뜻이에요. `input()`은 언제나 문자열이었죠.
+
+<TwistBox title="에러가 안 나는데 검사가 안 될 때">
+
+"수입이나 지출이면"을 말 그대로 옮기면 이렇게 쓰고 싶어져요.
+
+```python
+kind = input("종류(수입/지출): ")
+
+if kind == "수입" or "지출":
+    print("맞는 입력이에요.")
+else:
+    print("다시 입력해 주세요.")
+```
+
+`쓰기`를 쳐도 통과해요.
+
+```text
+종류(수입/지출): 맞는 입력이에요.
+```
+
+`or` 오른쪽의 `"지출"`은 비교가 아니라 그냥 문자열이에요. 빈 문자열이 아니면 파이썬은 참으로 쳐서, 조건이 언제나 맞게 돼요.
+
+그래서 `kind == "수입" or kind == "지출"`처럼 양쪽 다 온전한 비교로 써야 해요.
+
+</TwistBox>
+
+## 7. 커밋하고 올리기
+
+오늘 커밋 세 개를 봐요. `-3`은 최근 세 개만 보라는 뜻이에요.
+
+```bash
+git log --oneline -3
+```
+
+```text
+f0173e9 feat: 종류 입력 검사, 지출 크기별 안내
+56b4a9c feat: 금액이 숫자가 아니면 다시 묻기
+92bc987 feat: 수입과 지출 구분
+```
+
+어제 `-u`를 붙여 뒀으니 오늘부터는 한 단어면 돼요.
+
+```bash
+git push
+```
+
+GitHub 저장소를 새로고침해서 커밋이 6개로 늘었으면 끝이에요. [목록](/practice)에서 2단원 완료를 체크해요.

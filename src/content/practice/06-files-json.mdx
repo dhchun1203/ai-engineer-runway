@@ -1,0 +1,770 @@
+---
+title: "껐다 켜도 남게 저장하기"
+unit: 6
+slug: "06-files-json"
+summary: "기록을 JSON 파일에 저장해서 껐다 켜도 남게 하고, 날짜를 붙여요. 파일이 망가져도 죽지 않게 예외 처리까지 해요."
+feature: "JSON 파일 저장, 날짜, 예외 처리"
+concepts: ["open / with", "json", "try / except", "encoding", "datetime", ".gitignore"]
+minutes: 165
+---
+
+지금까지 가계부는 끄면 전부 사라졌어요. 오늘 드디어 파일에 남겨요. 여기까지 오면 정말 매일 쓸 수 있는 프로그램이 돼요.
+
+어제 파일을 나눠 둔 덕을 오늘 봐요. 저장 기능은 새 파일 하나에 넣고, 메뉴에서는 몇 줄만 고치면 돼요.
+
+| 단계 | 하는 일 | 시간 |
+| --- | --- | --- |
+| 1 | 오늘 만들 것 | 5분 |
+| 2 | 필요한 개념만 | 30분 |
+| 3 | 따라 치기 | 30분 |
+| 4 | 고쳐 치기 | 30분 |
+| 5 | 혼자 치기 | 50분 |
+| 6 | 자주 나는 에러 | 10분 |
+| 7 | 커밋하고 올리기 | 10분 |
+
+## 1. 오늘 만들 것
+
+두 건을 넣고 끈 뒤 다시 켜면 이렇게 나와요. 둘째 줄의 `2건`이 오늘의 주인공이에요.
+
+```text
+=== 나의 가계부 ===
+저장된 기록 2건을 불러왔어요.
+```
+
+날짜도 붙고, 날짜를 잘못 치면 다시 물어요. 목록은 날짜순으로 나와요.
+
+```text
+=== 나의 가계부 ===
+저장된 기록 0건을 불러왔어요.
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 1
+날짜(YYYY-MM-DD, 비우면 오늘): 2026-13-01
+2026-10-31 같은 모양으로 입력해 주세요.
+```
+
+## 2. 필요한 개념만
+
+`uv run python`으로 REPL을 열어요.
+
+### JSON: 파이썬 자료를 글자로 적는 약속
+
+```python
+>>> import json
+>>> rows = [{"item": "점심", "amount": 9000}]
+>>> json.dumps(rows)
+'[{"item": "\\uc810\\uc2ec", "amount": 9000}]'
+>>> json.dumps(rows, ensure_ascii=False)
+'[{"item": "점심", "amount": 9000}]'
+>>> json.loads('[{"item": "점심"}]')
+[{'item': '점심'}]
+```
+
+JSON은 프로그램끼리 자료를 주고받을 때 가장 많이 쓰는 글자 형식이에요. 리스트와 딕셔너리 모양이 거의 그대로라서 읽기도 쉬워요.
+
+`ensure_ascii=False`를 빼면 한글이 `점`처럼 저장돼요. 한글을 쓸 때는 꼭 붙여요.
+
+### with open: 파일 열고 알아서 닫기
+
+```python
+with open("ledger.json", "w", encoding="utf-8") as file:
+    json.dump(entries, file, ensure_ascii=False, indent=2)
+```
+
+`open`은 파일을 열어요. `"w"`는 쓰기(있으면 덮어쓰기)이고, 안 쓰면 읽기예요. `with`를 쓰면 안쪽이 끝날 때 파일을 알아서 닫아 줘요.
+
+`encoding="utf-8"`도 항상 붙여요. 윈도우는 기본값이 달라서, 빼면 한글에서 에러가 날 수 있어요. `indent=2`는 사람이 읽기 좋게 줄을 나눠 주는 옵션이에요.
+
+| 함수 | 하는 일 |
+| --- | --- |
+| `json.dump(자료, 파일)` | 자료를 파일에 써요 |
+| `json.load(파일)` | 파일을 읽어 자료로 돌려줘요 |
+| `json.dumps(자료)` | 자료를 문자열로 돌려줘요 |
+| `json.loads(문자열)` | 문자열을 자료로 돌려줘요 |
+
+끝에 `s`가 붙은 쪽이 문자열(string)용이에요.
+
+### try / except: 터질 곳을 미리 받기
+
+```python
+try:
+    with open("ledger.json", encoding="utf-8") as file:
+        return json.load(file)
+except FileNotFoundError:
+    return []
+```
+
+`try` 안에서 에러가 나면 프로그램이 죽는 대신 `except`로 넘어와요. `except` 뒤에는 받을 에러 이름을 써요. 맨 아래 줄에서 봐 온 그 이름이에요.
+
+처음 실행할 때는 파일이 없는 게 당연하니까, 그때는 빈 리스트로 시작해요.
+
+### date: 날짜 다루기
+
+```python
+>>> from datetime import date
+>>> date.today().isoformat()
+'2026-10-31'
+>>> date.fromisoformat("2026-10-30")
+datetime.date(2026, 10, 30)
+>>> "2026-09-28" < "2026-10-02"
+True
+>>> "2026-10-30".startswith("2026-10")
+True
+```
+
+`YYYY-MM-DD` 모양 문자열은 **글자 순서가 곧 날짜 순서**예요. 그래서 문자열 그대로 비교하고 정렬해도 돼요. `date.today()`의 값은 실행한 날짜로 나와요.
+
+`date.fromisoformat()`은 문자열을 날짜로 바꾸는데, 날짜가 아니면 ValueError를 내요. 오늘 검사에 이걸 써요.
+
+## 3. 따라 치기
+
+`storage.py`를 새로 만들어요. `ledger.py`와 `ui.py`는 그대로 두고, `main.py`는 네 군데만 달라져요.
+
+<details>
+<summary>어제 끝난 코드(시작 코드) 보기</summary>
+
+`ledger.py`
+
+```python
+def signed_amount(entry):
+    if entry["kind"] == "수입":
+        return entry["amount"]
+    return -entry["amount"]
+
+
+def balance(entries):
+    total = 0
+    for entry in entries:
+        total += signed_amount(entry)
+    return total
+
+
+def biggest_expense(entries):
+    biggest = None
+    for entry in entries:
+        if entry["kind"] == "지출":
+            if biggest is None or entry["amount"] > biggest["amount"]:
+                biggest = entry
+    return biggest
+
+
+def category_totals(entries):
+    totals = {}
+    for entry in entries:
+        if entry["kind"] == "지출":
+            category = entry["category"]
+            totals[category] = totals.get(category, 0) + entry["amount"]
+    return totals
+```
+
+`ui.py`
+
+```python
+import ledger
+
+
+def ask_kind():
+    kind = input("종류(수입/지출): ")
+    while kind != "수입" and kind != "지출":
+        print("수입 또는 지출로 입력해 주세요.")
+        kind = input("종류(수입/지출): ")
+    return kind
+
+
+def ask_amount():
+    amount_text = input("금액: ")
+    while not amount_text.isdigit():
+        print("숫자만 입력해 주세요.")
+        amount_text = input("금액: ")
+    return int(amount_text)
+
+
+def add_entry(entries):
+    kind = ask_kind()
+    category = input("분류: ")
+    item = input("항목: ")
+    amount = ask_amount()
+    entries.append({"kind": kind, "category": category, "item": item, "amount": amount})
+    print("기록했어요.")
+
+
+def show_list(entries):
+    print(f"모두 {len(entries)}건")
+    for entry in entries:
+        print(f"{ledger.signed_amount(entry):>+12,}원  [{entry['category']}] {entry['item']}")
+    print(f"잔액: {ledger.balance(entries):,}원")
+
+
+def show_biggest(entries):
+    biggest = ledger.biggest_expense(entries)
+    if biggest is None:
+        print("지출 기록이 없어요.")
+    else:
+        print(f"가장 큰 지출: [{biggest['category']}] {biggest['item']} -{biggest['amount']:,}원")
+
+
+def show_totals(entries):
+    totals = ledger.category_totals(entries)
+    if len(totals) == 0:
+        print("지출 기록이 없어요.")
+    else:
+        whole = sum(totals.values())
+        ranked = sorted(totals.items(), key=lambda pair: pair[1], reverse=True)
+        for category, total in ranked:
+            print(f"{category}: {total:,}원 ({total / whole * 100:.1f}%)")
+```
+
+`main.py`
+
+```python
+import ui
+
+
+def main():
+    print("=== 나의 가계부 ===")
+    entries = []
+
+    while True:
+        print()
+        print("1. 기록 추가")
+        print("2. 목록 보기")
+        print("3. 가장 큰 지출")
+        print("4. 분류별 지출")
+        print("5. 끝내기")
+        choice = input("선택: ")
+
+        if choice == "1":
+            ui.add_entry(entries)
+        elif choice == "2":
+            ui.show_list(entries)
+        elif choice == "3":
+            ui.show_biggest(entries)
+        elif choice == "4":
+            ui.show_totals(entries)
+        elif choice == "5":
+            print("다음에 또 만나요.")
+            break
+        else:
+            print("메뉴 번호로 골라 주세요.")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+</details>
+
+`storage.py`
+
+<TypeAlong>
+
+```python
+import json
+
+FILE_NAME = "ledger.json"
+
+
+def load_entries():
+    try:
+        with open(FILE_NAME, encoding="utf-8") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return []
+
+
+def save_entries(entries):
+    with open(FILE_NAME, "w", encoding="utf-8") as file:
+        json.dump(entries, file, ensure_ascii=False, indent=2)
+```
+
+</TypeAlong>
+
+`main.py`
+
+<TypeAlong>
+
+```python
+import storage
+import ui
+
+
+def main():
+    print("=== 나의 가계부 ===")
+    entries = storage.load_entries()
+    print(f"저장된 기록 {len(entries)}건을 불러왔어요.")
+
+    while True:
+        print()
+        print("1. 기록 추가")
+        print("2. 목록 보기")
+        print("3. 가장 큰 지출")
+        print("4. 분류별 지출")
+        print("5. 끝내기")
+        choice = input("선택: ")
+
+        if choice == "1":
+            ui.add_entry(entries)
+            storage.save_entries(entries)
+        elif choice == "2":
+            ui.show_list(entries)
+        elif choice == "3":
+            ui.show_biggest(entries)
+        elif choice == "4":
+            ui.show_totals(entries)
+        elif choice == "5":
+            print("다음에 또 만나요.")
+            break
+        else:
+            print("메뉴 번호로 골라 주세요.")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+</TypeAlong>
+
+기록을 추가할 때마다 저장해요. 끝내기 전에 창을 닫아도 안 날아가요.
+
+### 내 가계부는 커밋하지 않기
+
+`ledger.json`은 코드가 아니라 내 돈 기록이에요. GitHub에 올라가면 안 되니까, `.gitignore` 맨 아래에 한 줄을 넣어요.
+
+```text
+ledger.json
+```
+
+이제 실행해서 두 건을 넣고 끝내요. 다시 실행해서 목록을 봐요.
+
+```bash
+uv run main.py
+```
+
+```text
+=== 나의 가계부 ===
+저장된 기록 2건을 불러왔어요.
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 2
+모두 2건
+      -9,000원  [식비] 점심
+  +3,000,000원  [월급] 10월 월급
+잔액: 2,991,000원
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 5
+다음에 또 만나요.
+```
+
+탐색기에 생긴 `ledger.json`을 열어 봐요. 내가 넣은 기록이 글자로 들어 있어요.
+
+```json
+[
+  {
+    "kind": "지출",
+    "category": "식비",
+    "item": "점심",
+    "amount": 9000
+  },
+  {
+    "kind": "수입",
+    "category": "월급",
+    "item": "10월 월급",
+    "amount": 3000000
+  }
+]
+```
+
+`git status`로 `ledger.json`이 안 보이는지 확인하고 커밋해요.
+
+```bash
+git add .
+git commit -m "feat: 기록을 파일에 저장하기"
+```
+
+## 4. 고쳐 치기
+
+기록마다 날짜를 붙여요.
+
+- `날짜(YYYY-MM-DD, 비우면 오늘): `로 물어요. 그냥 Enter를 치면 오늘 날짜를 써요.
+- 기록의 `date`에 넣고, 목록 맨 앞에 날짜를 찍어요.
+
+**시작 전에 `ledger.json`을 지워요.** 옛 기록에는 `date`가 없어서 그대로 두면 KeyError가 나요. 바꿀 파일은 `ui.py`뿐이에요.
+
+```text
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 2
+모두 2건
+2026-10-30       -9,000원  [식비] 점심
+2026-10-31       -1,500원  [교통] 버스
+잔액: -10,500원
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 5
+다음에 또 만나요.
+```
+
+<Hints>
+<Hint>
+
+맨 위에 `from datetime import date`를 써요. `ask_date()` 함수를 새로 만들어요.
+
+</Hint>
+<Hint>
+
+그냥 Enter를 치면 `input`은 빈 문자열 `""`을 돌려줘요. 그때 `date.today().isoformat()`을 돌려줘요.
+
+</Hint>
+<Hint>
+
+변수 이름을 `date`로 지으면 위에서 불러온 `date`를 덮어써서 고장 나요. 그래서 `day`처럼 다른 이름으로 받아요.
+
+</Hint>
+</Hints>
+
+<details>
+<summary>정답 코드 보기: ui.py</summary>
+
+```python
+from datetime import date
+
+import ledger
+
+
+def ask_date():
+    text = input("날짜(YYYY-MM-DD, 비우면 오늘): ")
+    if text == "":
+        return date.today().isoformat()
+    return text
+
+
+def ask_kind():
+    kind = input("종류(수입/지출): ")
+    while kind != "수입" and kind != "지출":
+        print("수입 또는 지출로 입력해 주세요.")
+        kind = input("종류(수입/지출): ")
+    return kind
+
+
+def ask_amount():
+    amount_text = input("금액: ")
+    while not amount_text.isdigit():
+        print("숫자만 입력해 주세요.")
+        amount_text = input("금액: ")
+    return int(amount_text)
+
+
+def add_entry(entries):
+    day = ask_date()
+    kind = ask_kind()
+    category = input("분류: ")
+    item = input("항목: ")
+    amount = ask_amount()
+    entries.append({"date": day, "kind": kind, "category": category, "item": item, "amount": amount})
+    print("기록했어요.")
+
+
+def show_list(entries):
+    print(f"모두 {len(entries)}건")
+    for entry in entries:
+        print(f"{entry['date']} {ledger.signed_amount(entry):>+12,}원  [{entry['category']}] {entry['item']}")
+    print(f"잔액: {ledger.balance(entries):,}원")
+
+
+def show_biggest(entries):
+    biggest = ledger.biggest_expense(entries)
+    if biggest is None:
+        print("지출 기록이 없어요.")
+    else:
+        print(f"가장 큰 지출: [{biggest['category']}] {biggest['item']} -{biggest['amount']:,}원")
+
+
+def show_totals(entries):
+    totals = ledger.category_totals(entries)
+    if len(totals) == 0:
+        print("지출 기록이 없어요.")
+    else:
+        whole = sum(totals.values())
+        ranked = sorted(totals.items(), key=lambda pair: pair[1], reverse=True)
+        for category, total in ranked:
+            print(f"{category}: {total:,}원 ({total / whole * 100:.1f}%)")
+```
+
+</details>
+
+```bash
+git add .
+git commit -m "feat: 날짜 기록"
+```
+
+## 5. 혼자 치기
+
+프로그램을 튼튼하게 만들어요. 고칠 파일은 `ui.py`와 `storage.py`예요.
+
+- 날짜가 잘못되면 `2026-10-31 같은 모양으로 입력해 주세요.`를 찍고 다시 물어요. `date.fromisoformat()`과 `try / except`를 써요.
+- 목록은 날짜순으로 찍어요. 원본 순서는 건드리지 말고 `sorted`로요.
+- `ledger.json`이 망가져 있으면 죽지 말고, 파일을 `ledger.json.bak`로 옮긴 뒤 안내를 찍고 빈 가계부로 시작해요.
+
+파일 옮기기는 `import os` 후 `os.replace("원래이름", "새이름")`이에요. 받을 에러 이름은 `json.JSONDecodeError`예요. 옮겨 둔 파일도 내 기록이니, `.gitignore`에 `ledger.json.bak` 한 줄을 더 넣어요.
+
+망가진 파일은 직접 만들어요. `ledger.json`을 열어 내용 중간부터 지우고 저장한 다음 실행해요.
+
+| 해 볼 것 | 나와야 하는 것 |
+| --- | --- |
+| 날짜에 `2026-13-01`, `10월 30일` | 둘 다 다시 묻기 |
+| 25일 기록을 30일 기록 다음에 넣고 2번 | 25일이 위로 |
+| `ledger.json` 망가뜨리고 실행 | `저장 파일이 망가져서 ledger.json.bak로 옮겨 뒀어요. 새로 시작해요.`<br />`저장된 기록 0건을 불러왔어요.` |
+
+<details>
+<summary>정답 코드 보기: storage.py</summary>
+
+```python
+import json
+import os
+
+FILE_NAME = "ledger.json"
+BACKUP_NAME = "ledger.json.bak"
+
+
+def load_entries():
+    try:
+        with open(FILE_NAME, encoding="utf-8") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError:
+        os.replace(FILE_NAME, BACKUP_NAME)
+        print(f"저장 파일이 망가져서 {BACKUP_NAME}로 옮겨 뒀어요. 새로 시작해요.")
+        return []
+
+
+def save_entries(entries):
+    with open(FILE_NAME, "w", encoding="utf-8") as file:
+        json.dump(entries, file, ensure_ascii=False, indent=2)
+```
+
+</details>
+
+<details>
+<summary>정답 코드 보기: ui.py</summary>
+
+```python
+from datetime import date
+
+import ledger
+
+
+def ask_date():
+    while True:
+        text = input("날짜(YYYY-MM-DD, 비우면 오늘): ")
+        if text == "":
+            return date.today().isoformat()
+        try:
+            date.fromisoformat(text)
+            return text
+        except ValueError:
+            print("2026-10-31 같은 모양으로 입력해 주세요.")
+
+
+def ask_kind():
+    kind = input("종류(수입/지출): ")
+    while kind != "수입" and kind != "지출":
+        print("수입 또는 지출로 입력해 주세요.")
+        kind = input("종류(수입/지출): ")
+    return kind
+
+
+def ask_amount():
+    amount_text = input("금액: ")
+    while not amount_text.isdigit():
+        print("숫자만 입력해 주세요.")
+        amount_text = input("금액: ")
+    return int(amount_text)
+
+
+def add_entry(entries):
+    day = ask_date()
+    kind = ask_kind()
+    category = input("분류: ")
+    item = input("항목: ")
+    amount = ask_amount()
+    entries.append({"date": day, "kind": kind, "category": category, "item": item, "amount": amount})
+    print("기록했어요.")
+
+
+def show_list(entries):
+    print(f"모두 {len(entries)}건")
+    for entry in sorted(entries, key=lambda e: e["date"]):
+        print(f"{entry['date']} {ledger.signed_amount(entry):>+12,}원  [{entry['category']}] {entry['item']}")
+    print(f"잔액: {ledger.balance(entries):,}원")
+
+
+def show_biggest(entries):
+    biggest = ledger.biggest_expense(entries)
+    if biggest is None:
+        print("지출 기록이 없어요.")
+    else:
+        print(f"가장 큰 지출: [{biggest['category']}] {biggest['item']} -{biggest['amount']:,}원")
+
+
+def show_totals(entries):
+    totals = ledger.category_totals(entries)
+    if len(totals) == 0:
+        print("지출 기록이 없어요.")
+    else:
+        whole = sum(totals.values())
+        ranked = sorted(totals.items(), key=lambda pair: pair[1], reverse=True)
+        for category, total in ranked:
+            print(f"{category}: {total:,}원 ({total / whole * 100:.1f}%)")
+```
+
+</details>
+
+날짜를 받는 쪽은 `while True`로 돌면서, 맞으면 `return`으로 빠져나와요. `return`은 반복 안에서도 함수를 바로 끝내요.
+
+```bash
+git add .
+git commit -m "feat: 망가진 파일과 잘못된 날짜 대응"
+```
+
+이 코드가 7단원의 시작 코드예요.
+
+## 6. 자주 나는 에러
+
+### 파일이 없어요: FileNotFoundError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 3, in <module>
+    with open("ledger.json", encoding="utf-8") as file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'ledger.json'
+```
+
+읽기로 열었는데 파일이 없을 때 나요. 처음 실행이면 당연한 일이라 `except`로 받았어요. 터미널의 현재 폴더가 프로젝트 폴더가 아니어도 나요. 상대 경로는 현재 폴더 기준이거든요.
+
+### 파일 내용이 깨졌어요: JSONDecodeError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 4, in <module>
+    entries = json.load(file)
+              ^^^^^^^^^^^^^^^
+  File "C:\...\Python312\Lib\json\__init__.py", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File "C:\...\Python312\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\...\Python312\Lib\json\decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\...\Python312\Lib\json\decoder.py", line 354, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Expecting property name enclosed in double quotes: line 1 column 24 (char 23)
+```
+
+오늘 처음으로 Traceback이 길어졌어요. 파이썬 안쪽 코드까지 보여 줘서 그래요. 그래도 읽는 법은 같아요. **맨 아래 줄**이 이유이고, 위쪽에서 내 파일(`python-ledger\main.py`) 줄을 찾으면 내가 고칠 곳이에요.
+
+### 인코딩을 빼먹었어요: UnicodeDecodeError
+
+`open("ledger.json")`처럼 `encoding`을 빼고 한글 파일을 읽으면 윈도우에서 나요.
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 4, in <module>
+    entries = json.load(file)
+              ^^^^^^^^^^^^^^^
+  File "C:\...\Python312\Lib\json\__init__.py", line 293, in load
+    return loads(fp.read(),
+                 ^^^^^^^^^
+UnicodeDecodeError: 'cp949' codec can't decode byte 0x80 in position 21: illegal multibyte sequence
+```
+
+한국어 윈도우의 기본 인코딩(`cp949`)으로 읽다가 실패한 거예요. 내용에 따라 에러 없이 한글이 깨져 보이기만 할 때도 있어요. 그래서 `encoding="utf-8"`을 습관처럼 붙여요.
+
+### 읽기로 열고 썼어요: UnsupportedOperation
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 4, in <module>
+    json.dump([], file)
+  File "C:\...\Python312\Lib\json\__init__.py", line 180, in dump
+    fp.write(chunk)
+io.UnsupportedOperation: not writable
+```
+
+`open`에 `"w"`를 빼먹으면 읽기 모드라서 쓸 수 없어요.
+
+### 옛 파일에 새 칸이 없어요: KeyError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 36, in <module>
+    main()
+  File "C:\...\python-ledger\main.py", line 23, in main
+    ui.show_list(entries)
+  File "C:\...\python-ledger\ui.py", line 42, in show_list
+    print(f"{entry['date']} {ledger.signed_amount(entry):>+12,}원  [{entry['category']}] {entry['item']}")
+             ~~~~~^^^^^^^^
+KeyError: 'date'
+```
+
+고쳐 치기에서 말한 그 에러예요. 저장해 둔 자료는 코드가 바뀐다고 같이 바뀌지 않아요. 자료 모양을 바꿀 때 항상 생각해야 하는 문제예요. 실무에서는 이걸 마이그레이션이라고 불러요.
+
+### 날짜가 아니에요: ValueError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 3, in <module>
+    date.fromisoformat("10월 30일")
+ValueError: Invalid isoformat string: '10월 30일'
+```
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 3, in <module>
+    date.fromisoformat("2026-13-01")
+ValueError: month must be in 1..12
+```
+
+모양이 틀려도, 모양은 맞는데 13월처럼 없는 날짜여도 ValueError예요. 그래서 `except ValueError` 하나로 둘 다 받아요.
+
+## 7. 커밋하고 올리기
+
+```bash
+git log --oneline -3
+```
+
+```text
+20578de feat: 망가진 파일과 잘못된 날짜 대응
+712520d feat: 날짜 기록
+61dc2fe feat: 기록을 파일에 저장하기
+```
+
+```bash
+git push
+```
+
+GitHub 저장소에 `storage.py`는 보이고 `ledger.json`은 **안 보이면** 끝이에요. [목록](/practice)에서 6단원 완료를 체크해요.

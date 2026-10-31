@@ -1,0 +1,513 @@
+---
+title: "메뉴를 돌며 여러 건 쌓기"
+unit: 3
+slug: "03-loops-lists"
+summary: "끝내기를 고를 때까지 메뉴가 계속 돌고, 기록이 몇 건이든 쌓여요. 잔액과 가장 큰 지출까지 뽑아요."
+feature: "메뉴 반복, 여러 건 기록, 잔액"
+concepts: ["리스트", "append", "for", "while True", "break", "len / sum / min"]
+minutes: 165
+---
+
+1단원에서 `category2`, `item2`를 쓰며 답답했던 걸 오늘 풀어요. 몇 건이든 담는 **리스트**와, 그걸 하나씩 꺼내는 **반복문**이에요.
+
+오늘부터 가계부가 프로그램처럼 보여요. 한 번 입력하고 끝나는 대신, 메뉴가 계속 돌아요.
+
+| 단계 | 하는 일 | 시간 |
+| --- | --- | --- |
+| 1 | 오늘 만들 것 | 5분 |
+| 2 | 필요한 개념만 | 25분 |
+| 3 | 따라 치기 | 40분 |
+| 4 | 고쳐 치기 | 30분 |
+| 5 | 혼자 치기 | 45분 |
+| 6 | 자주 나는 에러 | 10분 |
+| 7 | 커밋하고 올리기 | 10분 |
+
+## 1. 오늘 만들 것
+
+오늘이 끝나면 메뉴에서 기록을 몇 건이든 넣고, 가장 큰 지출을 찾을 수 있어요. 아래는 네 건을 넣은 다음 3번과 4번을 고른 끝부분이에요.
+
+```text
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 끝내기
+선택: 3
+가장 큰 지출: [식비] 저녁 -15,000원
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 끝내기
+선택: 4
+다음에 또 만나요.
+```
+
+## 2. 필요한 개념만
+
+`uv run python`으로 REPL을 열어요.
+
+### 리스트: 여러 값을 순서대로 담는 상자
+
+```python
+>>> lines = []
+>>> lines.append("점심")
+>>> lines.append("버스")
+>>> lines
+['점심', '버스']
+>>> len(lines)
+2
+>>> lines[0]
+'점심'
+>>> lines[1]
+'버스'
+```
+
+`[]`는 빈 리스트예요. `.append()`로 맨 뒤에 하나씩 넣고, `len()`으로 개수를 세요.
+
+꺼낼 때는 대괄호에 **자리 번호**를 써요. 번호는 0부터 시작해요. 첫 번째가 `lines[0]`이에요.
+
+### 숫자 리스트에 바로 쓰는 것들
+
+```python
+>>> amounts = [-9000, -1500, 3000000]
+>>> sum(amounts)
+2989500
+>>> min(amounts)
+-9000
+>>> max(amounts)
+3000000
+>>> amounts.index(-1500)
+1
+```
+
+`sum`은 합, `min`은 가장 작은 값, `max`는 가장 큰 값이에요. `.index()`는 그 값이 몇 번 자리에 있는지 알려 줘요.
+
+### for: 리스트에서 하나씩 꺼내기
+
+```python
+>>> for line in ["점심", "버스"]:
+...     print(line)
+... 
+점심
+버스
+```
+
+`line`에 리스트 값이 차례로 담기면서 안쪽이 그만큼 되풀이돼요. 몇 건이든 상관없어요. 이게 `category2`를 없애 주는 힘이에요.
+
+REPL에서는 for 안쪽을 다 쓴 다음 빈 줄에서 Enter를 한 번 더 쳐야 실행돼요.
+
+### while True와 break: 끝낼 때까지 돌기
+
+```python
+while True:
+    choice = input("선택: ")
+    if choice == "3":
+        break
+```
+
+`while True`는 조건이 언제나 맞으니 끝없이 돌아요. 안에서 `break`를 만나면 그 자리에서 빠져나와요. 메뉴처럼 "끝내기를 고를 때까지" 도는 프로그램의 기본 모양이에요.
+
+<PredictPrompt />
+
+안쪽의 `print("다음에 또 만나요.")`를 `break` **아래**에 쓰면 어떻게 될까요? `break`를 만나는 순간 빠져나가니까, 그 아래 줄은 영영 실행되지 않아요. 따라 치기 코드에서 인사가 `break` 위에 있는 이유예요.
+
+## 3. 따라 치기
+
+어제 코드에서 검사 부분은 그대로 살리고, 바깥에 메뉴를 씌워요. **들여쓰기가 한 칸씩 깊어져요.** 옮길 줄을 선택하고 `Tab`을 누르면 한꺼번에 들여 쓸 수 있어요.
+
+<details>
+<summary>어제 끝난 코드(시작 코드) 보기</summary>
+
+```python
+print("=== 나의 가계부 ===")
+
+kind = input("종류(수입/지출): ")
+while kind != "수입" and kind != "지출":
+    print("수입 또는 지출로 입력해 주세요.")
+    kind = input("종류(수입/지출): ")
+
+category = input("분류: ")
+item = input("항목: ")
+
+amount_text = input("금액: ")
+while not amount_text.isdigit():
+    print("숫자만 입력해 주세요.")
+    amount_text = input("금액: ")
+amount = int(amount_text)
+
+if kind == "수입":
+    print(f"[{category}] {item} +{amount:,}원")
+else:
+    print(f"[{category}] {item} -{amount:,}원")
+    if amount >= 100000:
+        print("큰 지출이에요. 한 번 더 생각해 봐요.")
+    elif amount < 10000:
+        print("소소한 지출이에요.")
+```
+
+</details>
+
+<TypeAlong>
+
+```python
+print("=== 나의 가계부 ===")
+
+lines = []
+
+while True:
+    print()
+    print("1. 기록 추가")
+    print("2. 목록 보기")
+    print("3. 끝내기")
+    choice = input("선택: ")
+
+    if choice == "1":
+        kind = input("종류(수입/지출): ")
+        while kind != "수입" and kind != "지출":
+            print("수입 또는 지출로 입력해 주세요.")
+            kind = input("종류(수입/지출): ")
+
+        category = input("분류: ")
+        item = input("항목: ")
+
+        amount_text = input("금액: ")
+        while not amount_text.isdigit():
+            print("숫자만 입력해 주세요.")
+            amount_text = input("금액: ")
+        amount = int(amount_text)
+
+        if kind == "수입":
+            lines.append(f"[{category}] {item} +{amount:,}원")
+        else:
+            lines.append(f"[{category}] {item} -{amount:,}원")
+        print("기록했어요.")
+    elif choice == "2":
+        print(f"모두 {len(lines)}건")
+        for line in lines:
+            print(line)
+    elif choice == "3":
+        print("다음에 또 만나요.")
+        break
+    else:
+        print("메뉴 번호로 골라 주세요.")
+```
+
+</TypeAlong>
+
+어제는 바로 찍던 줄을 오늘은 `lines.append()`로 모아 뒀다가, 2번 메뉴에서 꺼내 찍어요. 저장하고 실행해서 아래처럼 입력해요(1번으로 두 건, 2번, 없는 번호 9, 3번).
+
+```bash
+uv run main.py
+```
+
+```text
+=== 나의 가계부 ===
+
+1. 기록 추가
+2. 목록 보기
+3. 끝내기
+선택: 1
+종류(수입/지출): 지출
+분류: 식비
+항목: 점심
+금액: 9000
+기록했어요.
+
+1. 기록 추가
+2. 목록 보기
+3. 끝내기
+선택: 1
+종류(수입/지출): 수입
+분류: 월급
+항목: 10월 월급
+금액: 3000000
+기록했어요.
+
+1. 기록 추가
+2. 목록 보기
+3. 끝내기
+선택: 2
+모두 2건
+[식비] 점심 -9,000원
+[월급] 10월 월급 +3,000,000원
+
+1. 기록 추가
+2. 목록 보기
+3. 끝내기
+선택: 9
+메뉴 번호로 골라 주세요.
+
+1. 기록 추가
+2. 목록 보기
+3. 끝내기
+선택: 3
+다음에 또 만나요.
+```
+
+프로그램을 끄면 기록이 사라지는 건 정상이에요. 리스트는 실행 중에만 살아 있어요. 파일에 남기는 건 6단원에서 해요.
+
+```bash
+git add .
+git commit -m "feat: 메뉴 반복과 여러 건 기록"
+```
+
+## 4. 고쳐 치기
+
+목록 맨 아래에 잔액을 보여 줘요. 수입은 더하고 지출은 빼서, 끝의 숫자가 아래처럼 나와야 해요.
+
+```text
+1. 기록 추가
+2. 목록 보기
+3. 끝내기
+선택: 2
+모두 2건
+[식비] 점심 -9,000원
+[월급] 10월 월급 +3,000,000원
+잔액: 2,991,000원
+
+1. 기록 추가
+2. 목록 보기
+3. 끝내기
+선택: 3
+다음에 또 만나요.
+```
+
+<Hints>
+<Hint>
+
+`lines`에는 문자열이 들어 있어서 계산할 수 없어요. 숫자만 담는 리스트 `amounts = []`를 `lines` 옆에 하나 더 만들어요.
+
+</Hint>
+<Hint>
+
+기록할 때 두 리스트에 같이 넣어요. 수입이면 `amounts.append(amount)`, 지출이면 `amounts.append(-amount)`처럼 부호를 붙여서 넣어요.
+
+</Hint>
+<Hint>
+
+그러면 잔액은 그냥 `sum(amounts)`예요. for 반복이 끝난 뒤에 찍어야 하니, `print`를 for와 같은 깊이로 써요.
+
+</Hint>
+</Hints>
+
+<details>
+<summary>정답 코드 보기</summary>
+
+```python
+print("=== 나의 가계부 ===")
+
+lines = []
+amounts = []
+
+while True:
+    print()
+    print("1. 기록 추가")
+    print("2. 목록 보기")
+    print("3. 끝내기")
+    choice = input("선택: ")
+
+    if choice == "1":
+        kind = input("종류(수입/지출): ")
+        while kind != "수입" and kind != "지출":
+            print("수입 또는 지출로 입력해 주세요.")
+            kind = input("종류(수입/지출): ")
+
+        category = input("분류: ")
+        item = input("항목: ")
+
+        amount_text = input("금액: ")
+        while not amount_text.isdigit():
+            print("숫자만 입력해 주세요.")
+            amount_text = input("금액: ")
+        amount = int(amount_text)
+
+        if kind == "수입":
+            lines.append(f"[{category}] {item} +{amount:,}원")
+            amounts.append(amount)
+        else:
+            lines.append(f"[{category}] {item} -{amount:,}원")
+            amounts.append(-amount)
+        print("기록했어요.")
+    elif choice == "2":
+        print(f"모두 {len(lines)}건")
+        for line in lines:
+            print(line)
+        print(f"잔액: {sum(amounts):,}원")
+    elif choice == "3":
+        print("다음에 또 만나요.")
+        break
+    else:
+        print("메뉴 번호로 골라 주세요.")
+```
+
+</details>
+
+```bash
+git add .
+git commit -m "feat: 목록에 잔액 표시"
+```
+
+## 5. 혼자 치기
+
+메뉴에 `3. 가장 큰 지출`을 넣고, 끝내기를 4번으로 밀어요.
+
+- 지출 중 금액이 가장 큰 기록을 `가장 큰 지출: [식비] 저녁 -15,000원` 모양으로 찍어요.
+- 기록이 없거나 수입뿐이면 `지출 기록이 없어요.`를 찍어요. 에러로 죽으면 안 돼요.
+
+`amounts`에 지출이 음수로 들어 있다는 점을 떠올려 보세요. 아래 표대로 해 봐요.
+
+| 넣은 기록 | 3번을 고르면 |
+| --- | --- |
+| 아무것도 안 넣음 | `지출 기록이 없어요.` |
+| 수입, 월급, 10월 월급, 3000000 | `지출 기록이 없어요.` |
+| 지출 점심 9000, 지출 버스 1500, 수입 월급 3000000, 지출 저녁 15000 | `가장 큰 지출: [식비] 저녁 -15,000원` |
+
+<details>
+<summary>정답 코드 보기</summary>
+
+```python
+print("=== 나의 가계부 ===")
+
+lines = []
+amounts = []
+
+while True:
+    print()
+    print("1. 기록 추가")
+    print("2. 목록 보기")
+    print("3. 가장 큰 지출")
+    print("4. 끝내기")
+    choice = input("선택: ")
+
+    if choice == "1":
+        kind = input("종류(수입/지출): ")
+        while kind != "수입" and kind != "지출":
+            print("수입 또는 지출로 입력해 주세요.")
+            kind = input("종류(수입/지출): ")
+
+        category = input("분류: ")
+        item = input("항목: ")
+
+        amount_text = input("금액: ")
+        while not amount_text.isdigit():
+            print("숫자만 입력해 주세요.")
+            amount_text = input("금액: ")
+        amount = int(amount_text)
+
+        if kind == "수입":
+            lines.append(f"[{category}] {item} +{amount:,}원")
+            amounts.append(amount)
+        else:
+            lines.append(f"[{category}] {item} -{amount:,}원")
+            amounts.append(-amount)
+        print("기록했어요.")
+    elif choice == "2":
+        print(f"모두 {len(lines)}건")
+        for line in lines:
+            print(line)
+        print(f"잔액: {sum(amounts):,}원")
+    elif choice == "3":
+        if len(amounts) == 0 or min(amounts) >= 0:
+            print("지출 기록이 없어요.")
+        else:
+            smallest = min(amounts)
+            position = amounts.index(smallest)
+            print(f"가장 큰 지출: {lines[position]}")
+    elif choice == "4":
+        print("다음에 또 만나요.")
+        break
+    else:
+        print("메뉴 번호로 골라 주세요.")
+```
+
+</details>
+
+지출이 음수라서 "가장 큰 지출"이 곧 `min`이에요. `.index()`로 자리 번호를 찾아 `lines`에서 같은 자리를 꺼내요. 두 리스트의 순서가 같아서 되는 거예요.
+
+```bash
+git add .
+git commit -m "feat: 가장 큰 지출 찾기"
+```
+
+이 코드가 4단원의 시작 코드예요.
+
+<TwistBox title="두 리스트를 나란히 두는 게 불안하다면">
+
+정상적인 감각이에요. `lines`에는 넣고 `amounts`에는 깜빡하면 자리가 어긋나서, 엉뚱한 기록을 "가장 큰 지출"로 찍게 돼요. 에러도 안 나요.
+
+기록 하나를 한 덩어리로 묶으면 이 걱정이 사라져요. 그게 내일 배우는 딕셔너리예요.
+
+</TwistBox>
+
+## 6. 자주 나는 에러
+
+### 없는 자리를 꺼냈어요: IndexError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 2, in <module>
+    print(lines[2])
+          ~~~~~^^^
+IndexError: list index out of range
+```
+
+두 개짜리 리스트의 자리 번호는 0과 1뿐이에요. 번호가 0부터라서 2는 세 번째 자리예요.
+
+### 빈 리스트에 min을 썼어요: ValueError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 2, in <module>
+    print(min(amounts))
+          ^^^^^^^^^^^^
+ValueError: min() iterable argument is empty
+```
+
+혼자 치기에서 `len(amounts) == 0`을 먼저 물어본 이유예요. `sum`은 빈 리스트에 0을 주지만 `min`과 `max`는 에러를 내요.
+
+### 없는 기능을 불렀어요: AttributeError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 2, in <module>
+    lines.add("[식비] 점심 -9,000원")
+    ^^^^^^^^^
+AttributeError: 'list' object has no attribute 'add'
+```
+
+리스트에 넣는 건 `.append()`예요. `'list' object has no attribute 'add'`는 "리스트에는 add라는 게 없다"는 뜻이에요.
+
+### 한 번에 두 개를 넣었어요: TypeError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 2, in <module>
+    lines.append("[식비] 점심 -9,000원", "[교통] 버스 -1,500원")
+TypeError: list.append() takes exactly one argument (2 given)
+```
+
+`append`는 한 번에 하나만 받아요. 두 개면 두 번 불러요.
+
+### 끝나지 않아요
+
+에러는 아닌데 화면이 멈추지 않거나 같은 줄이 계속 올라오면 무한 반복이에요. 터미널에서 `Ctrl+C`를 누르면 멈춰요. 끝에 `KeyboardInterrupt`가 찍히는데, 내가 멈췄다는 표시일 뿐이에요.
+
+`while` 안에서 조건에 쓰인 값을 다시 받는 줄이 빠지지 않았는지 먼저 봐요.
+
+## 7. 커밋하고 올리기
+
+```bash
+git log --oneline -3
+```
+
+```text
+d7c0094 feat: 가장 큰 지출 찾기
+7e4d12d feat: 목록에 잔액 표시
+ede9249 feat: 메뉴 반복과 여러 건 기록
+```
+
+```bash
+git push
+```
+
+GitHub에 커밋이 9개면 끝이에요. [목록](/practice)에서 3단원 완료를 체크해요.

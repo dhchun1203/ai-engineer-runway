@@ -1,0 +1,792 @@
+---
+title: "함수로 쪼개고 파일로 나누기"
+unit: 5
+slug: "05-functions-modules"
+summary: "길어진 코드를 이름 붙은 함수로 쪼개고, 계산과 화면과 메뉴를 파일 세 개로 나눠요."
+feature: "함수 분리, 파일 3개 구성, 금액 정렬"
+concepts: ["def", "매개변수", "return", "import", "모듈", "__name__"]
+minutes: 165
+---
+
+어제 코드는 70줄이 넘고 들여쓰기가 다섯 겹까지 내려가요. 메뉴 칸 하나를 고치려면 한참 내려가서 찾아야 하죠.
+
+오늘은 기능을 하나도 안 늘리고 **정리**부터 해요. 정리가 끝나면 새 기능을 붙이기가 훨씬 쉬워져요.
+
+| 단계 | 하는 일 | 시간 |
+| --- | --- | --- |
+| 1 | 오늘 만들 것 | 5분 |
+| 2 | 필요한 개념만 | 25분 |
+| 3 | 따라 치기 | 45분 |
+| 4 | 고쳐 치기 | 30분 |
+| 5 | 혼자 치기 | 40분 |
+| 6 | 자주 나는 에러 | 10분 |
+| 7 | 커밋하고 올리기 | 10분 |
+
+## 1. 오늘 만들 것
+
+끝나면 프로젝트에 파일이 세 개가 돼요.
+
+| 파일 | 하는 일 |
+| --- | --- |
+| `main.py` | 메뉴만 |
+| `ui.py` | 입력받고 화면에 보여 주기 |
+| `ledger.py` | 합계와 집계 계산 |
+
+목록 화면도 금액이 오른쪽으로 줄을 맞춰서 읽기 쉬워져요.
+
+```text
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 2
+모두 4건
+      -9,000원  [식비] 점심
+      -1,500원  [교통] 버스
+  +3,000,000원  [월급] 10월 월급
+     -15,000원  [식비] 저녁
+잔액: 2,974,500원
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 5
+다음에 또 만나요.
+```
+
+## 2. 필요한 개념만
+
+`uv run python`으로 REPL을 열어요.
+
+### def와 return: 코드에 이름 붙이기
+
+```python
+>>> def add(a, b):
+...     return a + b
+... 
+>>> add(9000, 1500)
+10500
+>>> result = add(1, 2)
+>>> result
+3
+```
+
+`def 이름(받을 것):`로 함수를 만들어요. 만들 때는 실행되지 않고, `add(9000, 1500)`처럼 **부를 때** 실행돼요.
+
+괄호 안 `a`, `b`가 매개변수예요. 부를 때 넣은 값이 여기에 담겨요. `return`은 결과를 부른 곳으로 돌려주고 함수를 끝내요.
+
+### print와 return은 달라요
+
+`print`는 화면에 보여 줄 뿐이고, `return`은 값을 돌려줘서 변수에 담거나 계산을 이어 가게 해 줘요. 계산 함수는 `return`, 화면 함수는 `print`로 나누면 코드가 깔끔해져요.
+
+오늘 파일을 나누는 기준도 이거예요. `ledger.py`에는 `print`가 하나도 없어요.
+
+### 함수 안에서 리스트를 바꾸면
+
+```python
+>>> def add_one(entries):
+...     entries.append("새 기록")
+... 
+>>> box = []
+>>> add_one(box)
+>>> box
+['새 기록']
+```
+
+함수에 리스트를 넘기면 복사본이 아니라 **같은 리스트**가 가요. 그래서 안에서 `.append()`하면 바깥 리스트에도 들어가 있어요. `add_entry(entries)`가 `return` 없이도 되는 이유예요.
+
+### import: 다른 파일의 함수 쓰기
+
+```python
+import ledger
+
+ledger.balance(entries)
+```
+
+같은 폴더의 `ledger.py`를 `import ledger`로 불러와요. 확장자 `.py`는 쓰지 않아요. 안의 함수는 `파일이름.함수이름`으로 불러요. 이렇게 불러 쓰는 파이썬 파일을 **모듈**이라고 해요.
+
+### if __name__ == "__main__"
+
+```python
+if __name__ == "__main__":
+    main()
+```
+
+"이 파일을 직접 실행했을 때만 `main()`을 불러라"는 뜻이에요. `import`로 불려 왔을 때는 실행하지 않아요. 파이썬 파일 끝에서 정말 자주 보는 관용구라, 외운다고 생각하고 쳐요.
+
+### 금액 줄 맞추기
+
+```python
+>>> f"{-9000:>+12,}원"
+'      -9,000원'
+>>> f"{3000000:>+12,}원"
+'  +3,000,000원'
+>>> f"{9000:>12,}원"
+'       9,000원'
+```
+
+콜론 뒤 `>`는 오른쪽 정렬, `+`는 양수에도 부호 붙이기, `12`는 전체 12칸, `,`는 천 단위 쉼표예요.
+
+## 3. 따라 치기
+
+어제 코드에서 `if choice == ...` 칸마다 있던 내용을 함수로 빼내요. 메뉴 반복도 `main()` 함수에 넣어요. **동작은 어제와 똑같아요.**
+
+<details>
+<summary>어제 끝난 코드(시작 코드) 보기</summary>
+
+```python
+print("=== 나의 가계부 ===")
+
+entries = []
+
+while True:
+    print()
+    print("1. 기록 추가")
+    print("2. 목록 보기")
+    print("3. 가장 큰 지출")
+    print("4. 분류별 지출")
+    print("5. 끝내기")
+    choice = input("선택: ")
+
+    if choice == "1":
+        kind = input("종류(수입/지출): ")
+        while kind != "수입" and kind != "지출":
+            print("수입 또는 지출로 입력해 주세요.")
+            kind = input("종류(수입/지출): ")
+
+        category = input("분류: ")
+        item = input("항목: ")
+
+        amount_text = input("금액: ")
+        while not amount_text.isdigit():
+            print("숫자만 입력해 주세요.")
+            amount_text = input("금액: ")
+        amount = int(amount_text)
+
+        entry = {"kind": kind, "category": category, "item": item, "amount": amount}
+        entries.append(entry)
+        print("기록했어요.")
+    elif choice == "2":
+        balance = 0
+        print(f"모두 {len(entries)}건")
+        for entry in entries:
+            if entry["kind"] == "수입":
+                sign = "+"
+                balance += entry["amount"]
+            else:
+                sign = "-"
+                balance -= entry["amount"]
+            print(f"[{entry['category']}] {entry['item']} {sign}{entry['amount']:,}원")
+        print(f"잔액: {balance:,}원")
+    elif choice == "3":
+        biggest = None
+        for entry in entries:
+            if entry["kind"] == "지출":
+                if biggest is None or entry["amount"] > biggest["amount"]:
+                    biggest = entry
+        if biggest is None:
+            print("지출 기록이 없어요.")
+        else:
+            print(f"가장 큰 지출: [{biggest['category']}] {biggest['item']} -{biggest['amount']:,}원")
+    elif choice == "4":
+        totals = {}
+        for entry in entries:
+            if entry["kind"] == "지출":
+                category = entry["category"]
+                totals[category] = totals.get(category, 0) + entry["amount"]
+        if len(totals) == 0:
+            print("지출 기록이 없어요.")
+        else:
+            whole = sum(totals.values())
+            ranked = sorted(totals.items(), key=lambda pair: pair[1], reverse=True)
+            for category, total in ranked:
+                print(f"{category}: {total:,}원 ({total / whole * 100:.1f}%)")
+    elif choice == "5":
+        print("다음에 또 만나요.")
+        break
+    else:
+        print("메뉴 번호로 골라 주세요.")
+```
+
+</details>
+
+<TypeAlong>
+
+```python
+def ask_kind():
+    kind = input("종류(수입/지출): ")
+    while kind != "수입" and kind != "지출":
+        print("수입 또는 지출로 입력해 주세요.")
+        kind = input("종류(수입/지출): ")
+    return kind
+
+
+def ask_amount():
+    amount_text = input("금액: ")
+    while not amount_text.isdigit():
+        print("숫자만 입력해 주세요.")
+        amount_text = input("금액: ")
+    return int(amount_text)
+
+
+def add_entry(entries):
+    kind = ask_kind()
+    category = input("분류: ")
+    item = input("항목: ")
+    amount = ask_amount()
+    entries.append({"kind": kind, "category": category, "item": item, "amount": amount})
+    print("기록했어요.")
+
+
+def show_list(entries):
+    balance = 0
+    print(f"모두 {len(entries)}건")
+    for entry in entries:
+        if entry["kind"] == "수입":
+            sign = "+"
+            balance += entry["amount"]
+        else:
+            sign = "-"
+            balance -= entry["amount"]
+        print(f"[{entry['category']}] {entry['item']} {sign}{entry['amount']:,}원")
+    print(f"잔액: {balance:,}원")
+
+
+def show_biggest(entries):
+    biggest = None
+    for entry in entries:
+        if entry["kind"] == "지출":
+            if biggest is None or entry["amount"] > biggest["amount"]:
+                biggest = entry
+    if biggest is None:
+        print("지출 기록이 없어요.")
+    else:
+        print(f"가장 큰 지출: [{biggest['category']}] {biggest['item']} -{biggest['amount']:,}원")
+
+
+def show_totals(entries):
+    totals = {}
+    for entry in entries:
+        if entry["kind"] == "지출":
+            category = entry["category"]
+            totals[category] = totals.get(category, 0) + entry["amount"]
+    if len(totals) == 0:
+        print("지출 기록이 없어요.")
+    else:
+        whole = sum(totals.values())
+        ranked = sorted(totals.items(), key=lambda pair: pair[1], reverse=True)
+        for category, total in ranked:
+            print(f"{category}: {total:,}원 ({total / whole * 100:.1f}%)")
+
+
+def main():
+    print("=== 나의 가계부 ===")
+    entries = []
+
+    while True:
+        print()
+        print("1. 기록 추가")
+        print("2. 목록 보기")
+        print("3. 가장 큰 지출")
+        print("4. 분류별 지출")
+        print("5. 끝내기")
+        choice = input("선택: ")
+
+        if choice == "1":
+            add_entry(entries)
+        elif choice == "2":
+            show_list(entries)
+        elif choice == "3":
+            show_biggest(entries)
+        elif choice == "4":
+            show_totals(entries)
+        elif choice == "5":
+            print("다음에 또 만나요.")
+            break
+        else:
+            print("메뉴 번호로 골라 주세요.")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+</TypeAlong>
+
+함수는 쓰는 순서가 중요하지 않아요. `main()`을 맨 아래에서 부르는 시점에 모두 만들어져 있으면 돼요.
+
+아래쪽 `main()`을 봐요. 메뉴가 이제 한눈에 보여요. 저장하고 실행해서 어제와 같은지 확인해요.
+
+```bash
+uv run main.py
+```
+
+```text
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 2
+모두 4건
+[식비] 점심 -9,000원
+[교통] 버스 -1,500원
+[월급] 10월 월급 +3,000,000원
+[식비] 저녁 -15,000원
+잔액: 2,974,500원
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 3
+가장 큰 지출: [식비] 저녁 -15,000원
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 4
+식비: 24,000원 (94.1%)
+교통: 1,500원 (5.9%)
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 5
+다음에 또 만나요.
+```
+
+```bash
+git add .
+git commit -m "refactor: 기능을 함수로 쪼개기"
+```
+
+## 4. 고쳐 치기
+
+두 가지를 고쳐요.
+
+- 기록 하나의 부호 붙은 금액을 돌려주는 `signed_amount(entry)`, 잔액을 돌려주는 `balance(entries)` 함수를 만들어요. 둘 다 `print` 없이 `return`만 해요.
+- `show_list`를 이 함수들로 다시 써서, 금액이 먼저 나오게 해요.
+
+```text
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 2
+모두 4건
+      -9,000원  [식비] 점심
+      -1,500원  [교통] 버스
+  +3,000,000원  [월급] 10월 월급
+     -15,000원  [식비] 저녁
+잔액: 2,974,500원
+
+1. 기록 추가
+2. 목록 보기
+3. 가장 큰 지출
+4. 분류별 지출
+5. 끝내기
+선택: 5
+다음에 또 만나요.
+```
+
+<Hints>
+<Hint>
+
+`signed_amount`는 수입이면 `entry["amount"]`, 아니면 `-entry["amount"]`를 돌려줘요. `return`을 만나면 끝나니 `else`는 없어도 돼요.
+
+</Hint>
+<Hint>
+
+`balance`는 `total = 0`에서 시작해서 for로 `total += signed_amount(entry)`를 해요. 함수가 함수를 불러도 돼요.
+
+</Hint>
+<Hint>
+
+한 줄 모양은 `f"{signed_amount(entry):>+12,}원  [{entry['category']}] {entry['item']}"`이에요.
+
+</Hint>
+</Hints>
+
+<details>
+<summary>정답 코드 보기</summary>
+
+```python
+def ask_kind():
+    kind = input("종류(수입/지출): ")
+    while kind != "수입" and kind != "지출":
+        print("수입 또는 지출로 입력해 주세요.")
+        kind = input("종류(수입/지출): ")
+    return kind
+
+
+def ask_amount():
+    amount_text = input("금액: ")
+    while not amount_text.isdigit():
+        print("숫자만 입력해 주세요.")
+        amount_text = input("금액: ")
+    return int(amount_text)
+
+
+def signed_amount(entry):
+    if entry["kind"] == "수입":
+        return entry["amount"]
+    return -entry["amount"]
+
+
+def balance(entries):
+    total = 0
+    for entry in entries:
+        total += signed_amount(entry)
+    return total
+
+
+def add_entry(entries):
+    kind = ask_kind()
+    category = input("분류: ")
+    item = input("항목: ")
+    amount = ask_amount()
+    entries.append({"kind": kind, "category": category, "item": item, "amount": amount})
+    print("기록했어요.")
+
+
+def show_list(entries):
+    print(f"모두 {len(entries)}건")
+    for entry in entries:
+        print(f"{signed_amount(entry):>+12,}원  [{entry['category']}] {entry['item']}")
+    print(f"잔액: {balance(entries):,}원")
+
+
+def show_biggest(entries):
+    biggest = None
+    for entry in entries:
+        if entry["kind"] == "지출":
+            if biggest is None or entry["amount"] > biggest["amount"]:
+                biggest = entry
+    if biggest is None:
+        print("지출 기록이 없어요.")
+    else:
+        print(f"가장 큰 지출: [{biggest['category']}] {biggest['item']} -{biggest['amount']:,}원")
+
+
+def show_totals(entries):
+    totals = {}
+    for entry in entries:
+        if entry["kind"] == "지출":
+            category = entry["category"]
+            totals[category] = totals.get(category, 0) + entry["amount"]
+    if len(totals) == 0:
+        print("지출 기록이 없어요.")
+    else:
+        whole = sum(totals.values())
+        ranked = sorted(totals.items(), key=lambda pair: pair[1], reverse=True)
+        for category, total in ranked:
+            print(f"{category}: {total:,}원 ({total / whole * 100:.1f}%)")
+
+
+def main():
+    print("=== 나의 가계부 ===")
+    entries = []
+
+    while True:
+        print()
+        print("1. 기록 추가")
+        print("2. 목록 보기")
+        print("3. 가장 큰 지출")
+        print("4. 분류별 지출")
+        print("5. 끝내기")
+        choice = input("선택: ")
+
+        if choice == "1":
+            add_entry(entries)
+        elif choice == "2":
+            show_list(entries)
+        elif choice == "3":
+            show_biggest(entries)
+        elif choice == "4":
+            show_totals(entries)
+        elif choice == "5":
+            print("다음에 또 만나요.")
+            break
+        else:
+            print("메뉴 번호로 골라 주세요.")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+</details>
+
+<TwistBox title="왜 금액을 맨 앞으로 옮겼을까">
+
+분류나 항목을 앞에 두고 줄을 맞추려 하면 잘 안 돼요. 터미널에서 한글은 영문보다 두 칸을 차지하는데, 파이썬은 글자 수로만 세거든요.
+
+그래서 폭이 일정한 숫자를 앞에 두고, 길이가 들쭉날쭉한 한글을 뒤로 보냈어요.
+
+</TwistBox>
+
+```bash
+git add .
+git commit -m "feat: 금액 정렬과 잔액 함수"
+```
+
+## 5. 혼자 치기
+
+`main.py` 하나를 파일 세 개로 나눠요. **기능은 그대로**여야 해요.
+
+- `ledger.py`: 계산만 해요. `signed_amount`, `balance`, 그리고 새로 만드는 `biggest_expense(entries)`, `category_totals(entries)`예요. 뒤의 둘은 결과를 **돌려줘요**. 없으면 `biggest_expense`는 `None`을 돌려줘요.
+- `ui.py`: 입력과 출력을 해요. `ask_kind`, `ask_amount`, `add_entry`, `show_list`, `show_biggest`, `show_totals`예요. 맨 위에 `import ledger`가 있어요.
+- `main.py`: 메뉴만 남아요. 맨 위에 `import ui`가 있어요.
+
+새 파일은 VS Code 탐색기에서 **새 파일** 아이콘으로 만들어요. 다 나눴으면 네 건을 넣고 2, 3, 4번이 전처럼 나오는지 봐요.
+
+| 메뉴 | 나와야 하는 것(지출 점심 9000, 지출 버스 1500, 수입 월급 3000000, 지출 저녁 15000) |
+| --- | --- |
+| 2번 | 네 줄, 그리고 `잔액: 2,974,500원` |
+| 3번 | `가장 큰 지출: [식비] 저녁 -15,000원` |
+| 4번 | `식비: 24,000원 (94.1%)`<br />`교통: 1,500원 (5.9%)` |
+
+<details>
+<summary>정답 코드 보기: ledger.py</summary>
+
+```python
+def signed_amount(entry):
+    if entry["kind"] == "수입":
+        return entry["amount"]
+    return -entry["amount"]
+
+
+def balance(entries):
+    total = 0
+    for entry in entries:
+        total += signed_amount(entry)
+    return total
+
+
+def biggest_expense(entries):
+    biggest = None
+    for entry in entries:
+        if entry["kind"] == "지출":
+            if biggest is None or entry["amount"] > biggest["amount"]:
+                biggest = entry
+    return biggest
+
+
+def category_totals(entries):
+    totals = {}
+    for entry in entries:
+        if entry["kind"] == "지출":
+            category = entry["category"]
+            totals[category] = totals.get(category, 0) + entry["amount"]
+    return totals
+```
+
+</details>
+
+<details>
+<summary>정답 코드 보기: ui.py</summary>
+
+```python
+import ledger
+
+
+def ask_kind():
+    kind = input("종류(수입/지출): ")
+    while kind != "수입" and kind != "지출":
+        print("수입 또는 지출로 입력해 주세요.")
+        kind = input("종류(수입/지출): ")
+    return kind
+
+
+def ask_amount():
+    amount_text = input("금액: ")
+    while not amount_text.isdigit():
+        print("숫자만 입력해 주세요.")
+        amount_text = input("금액: ")
+    return int(amount_text)
+
+
+def add_entry(entries):
+    kind = ask_kind()
+    category = input("분류: ")
+    item = input("항목: ")
+    amount = ask_amount()
+    entries.append({"kind": kind, "category": category, "item": item, "amount": amount})
+    print("기록했어요.")
+
+
+def show_list(entries):
+    print(f"모두 {len(entries)}건")
+    for entry in entries:
+        print(f"{ledger.signed_amount(entry):>+12,}원  [{entry['category']}] {entry['item']}")
+    print(f"잔액: {ledger.balance(entries):,}원")
+
+
+def show_biggest(entries):
+    biggest = ledger.biggest_expense(entries)
+    if biggest is None:
+        print("지출 기록이 없어요.")
+    else:
+        print(f"가장 큰 지출: [{biggest['category']}] {biggest['item']} -{biggest['amount']:,}원")
+
+
+def show_totals(entries):
+    totals = ledger.category_totals(entries)
+    if len(totals) == 0:
+        print("지출 기록이 없어요.")
+    else:
+        whole = sum(totals.values())
+        ranked = sorted(totals.items(), key=lambda pair: pair[1], reverse=True)
+        for category, total in ranked:
+            print(f"{category}: {total:,}원 ({total / whole * 100:.1f}%)")
+```
+
+</details>
+
+<details>
+<summary>정답 코드 보기: main.py</summary>
+
+```python
+import ui
+
+
+def main():
+    print("=== 나의 가계부 ===")
+    entries = []
+
+    while True:
+        print()
+        print("1. 기록 추가")
+        print("2. 목록 보기")
+        print("3. 가장 큰 지출")
+        print("4. 분류별 지출")
+        print("5. 끝내기")
+        choice = input("선택: ")
+
+        if choice == "1":
+            ui.add_entry(entries)
+        elif choice == "2":
+            ui.show_list(entries)
+        elif choice == "3":
+            ui.show_biggest(entries)
+        elif choice == "4":
+            ui.show_totals(entries)
+        elif choice == "5":
+            print("다음에 또 만나요.")
+            break
+        else:
+            print("메뉴 번호로 골라 주세요.")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+</details>
+
+실행하면 탐색기에 `__pycache__` 폴더가 생겨요. 파이썬이 불러온 파일을 빠르게 읽으려고 만드는 거고, `.gitignore`에 이미 있어서 커밋에 안 들어가요.
+
+```bash
+git add .
+git commit -m "refactor: 파일 세 개로 나누기"
+```
+
+이 세 파일이 6단원의 시작 코드예요.
+
+## 6. 자주 나는 에러
+
+### 모듈 이름이 틀렸어요: ModuleNotFoundError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 1, in <module>
+    import ledgr
+ModuleNotFoundError: No module named 'ledgr'
+```
+
+`ledgr`이라는 파일이 없다는 뜻이에요. 오타이거나, 파일이 다른 폴더에 있거나, 터미널이 다른 폴더에서 실행하고 있는 경우예요. 프로젝트 폴더에서 실행하는지 먼저 봐요.
+
+### 모듈 안에 그런 함수가 없어요: AttributeError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 3, in <module>
+    print(ledger.balanc([]))
+          ^^^^^^^^^^^^^
+AttributeError: module 'ledger' has no attribute 'balanc'. Did you mean: 'balance'?
+```
+
+파일은 찾았는데 그 안에 `balanc`가 없다는 뜻이에요. 친절하게 맞는 이름까지 알려 줘요. 함수를 옮기고 나서 호출 쪽을 안 고쳤을 때도 나요.
+
+`from ledger import balanc`처럼 쓰는 방식에서는 ImportError로 나요.
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 1, in <module>
+    from ledger import balanc
+ImportError: cannot import name 'balanc' from 'ledger' (C:\...\python-ledger\ledger.py). Did you mean: 'balance'?
+```
+
+### 넘길 값을 빼먹었어요: TypeError
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 5, in <module>
+    show_list()
+TypeError: show_list() missing 1 required positional argument: 'entries'
+```
+
+`show_list`는 `entries`를 받아야 하는데 빈손으로 불렀다는 뜻이에요. 빠진 매개변수 이름을 그대로 알려 줘요.
+
+### return을 빼먹었어요
+
+`return`이 없는 함수는 `None`을 돌려줘요. 에러는 **쓰는 곳에서** 나서 찾기가 까다로워요.
+
+```python
+def balance(entries):
+    total = 0
+    for entry in entries:
+        total += entry["amount"]
+
+
+result = balance([{"amount": 9000}])
+print(f"잔액: {result:,}원")
+```
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 8, in <module>
+    print(f"잔액: {result:,}원")
+                  ^^^^^^^^^^
+TypeError: unsupported format string passed to NoneType.__format__
+```
+
+`NoneType`이라는 글자가 보이면 "어떤 함수가 값을 안 돌려줬나?"부터 의심해요.
+
+## 7. 커밋하고 올리기
+
+```bash
+git log --oneline -3
+```
+
+```text
+6363a7f refactor: 파일 세 개로 나누기
+1b835c0 feat: 금액 정렬과 잔액 함수
+045fedb refactor: 기능을 함수로 쪼개기
+```
+
+```bash
+git push
+```
+
+GitHub에 커밋이 15개, 파일이 세 개 보이면 끝이에요. [목록](/practice)에서 5단원 완료를 체크해요.
