@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ComponentPropsWithoutRef } from 'react';
 import { Check, Copy } from 'lucide-react';
+import { useNoCopy } from '@/components/practice/type-along';
 
 const FEEDBACK_MS = 2_000;
 
@@ -56,6 +57,8 @@ function languageLabel(props: Record<string, unknown>): string {
 }
 
 export function CodeBlock({ children, ...props }: ComponentPropsWithoutRef<'pre'>) {
+  // 파이썬 손풀기의 따라 치기 칸(TypeAlong) 안이면 복사 버튼 대신 "직접 치기" 라벨을 둔다.
+  const noCopy = useNoCopy();
   const preRef = useRef<HTMLPreElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
@@ -104,28 +107,35 @@ export function CodeBlock({ children, ...props }: ComponentPropsWithoutRef<'pre'
     <div data-code-block>
       <div data-code-header>
         <span data-code-lang>{lang}</span>
-        <button
-          type="button"
-          onClick={handleCopy}
-          data-copy-state={state}
-          // hover가 없는 아이패드에서도 항상 보여야 한다(기존 visibility:"always"와 동등).
-          className="tap-feedback flex h-11 w-11 items-center justify-center"
-          aria-label={label}
-        >
-          {state === 'copied' ? (
-            <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
-          ) : (
-            <Copy className="h-4 w-4 shrink-0" aria-hidden="true" />
-          )}
-        </button>
+        {noCopy ? (
+          // 버튼 자리를 같은 높이 라벨로 채워 헤더 높이를 다른 코드 칸과 같게 둔다.
+          <span className="flex h-11 items-center px-3 text-label font-bold">직접 치기</span>
+        ) : (
+          <button
+            type="button"
+            onClick={handleCopy}
+            data-copy-state={state}
+            // hover가 없는 아이패드에서도 항상 보여야 한다(기존 visibility:"always"와 동등).
+            className="tap-feedback flex h-11 w-11 items-center justify-center"
+            aria-label={label}
+          >
+            {state === 'copied' ? (
+              <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
+            ) : (
+              <Copy className="h-4 w-4 shrink-0" aria-hidden="true" />
+            )}
+          </button>
+        )}
       </div>
       <pre {...props} ref={preRef}>
         {children}
       </pre>
       {/* 성공/실패를 시각(아이콘) 말고 보조기술에도 알린다. */}
-      <span role="status" aria-live="polite" className="sr-only">
-        {state === 'idle' ? '' : label}
-      </span>
+      {noCopy ? null : (
+        <span role="status" aria-live="polite" className="sr-only">
+          {state === 'idle' ? '' : label}
+        </span>
+      )}
     </div>
   );
 }
