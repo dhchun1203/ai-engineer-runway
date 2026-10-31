@@ -1,0 +1,429 @@
+---
+title: "가계부 첫 줄 찍기"
+unit: 1
+slug: "01-first-entry"
+summary: "VS Code와 uv로 가계부 프로젝트를 만들고, 항목과 금액을 받아 한 줄로 찍어요. 첫 커밋을 GitHub에 올리는 데까지 가요."
+feature: "항목과 금액을 받아 한 줄로 출력"
+concepts: ["변수", "자료형", "input", "int", "f-string"]
+minutes: 150
+---
+
+오늘부터 일주일 동안 가계부 프로그램 하나를 키워요. 첫날인 오늘은 프로젝트를 만들고, 항목과 금액을 입력받아 화면에 한 줄로 찍는 데까지 가요.
+
+읽는 시간은 짧게 잡았어요. 대신 코드는 전부 직접 쳐요. **따라 치기** 칸에는 복사 버튼이 없어요. 손이 먼저 기억하게 하려는 거예요.
+
+| 단계 | 하는 일 | 시간 |
+| --- | --- | --- |
+| 1 | 오늘 만들 것 보고, 프로젝트 만들기 | 15분 |
+| 2 | 필요한 개념만 | 20분 |
+| 3 | 따라 치기 | 30분 |
+| 4 | 고쳐 치기 | 30분 |
+| 5 | 혼자 치기 | 40분 |
+| 6 | 자주 나는 에러 | 10분 |
+| 7 | 커밋하고 올리기 | 10분 |
+
+## 1. 오늘 만들 것
+
+오늘이 끝나면 터미널에서 이런 화면을 보게 돼요. 분류, 항목, 금액을 두 번 입력하면 정리해서 보여 주고 합계까지 내요.
+
+```text
+=== 나의 가계부 ===
+분류: 식비
+항목: 점심
+금액: 9000
+분류: 교통
+항목: 버스
+금액: 1500
+[식비] 점심 9,000원
+[교통] 버스 1,500원
+오늘 합계: 10,500원
+```
+
+### VS Code 준비
+
+1. VS Code 왼쪽 막대에서 확장(Extensions, `Ctrl+Shift+X`)을 열고 **Python**을 검색해요. 만든 곳이 Microsoft인 것을 설치해요.
+2. 위 메뉴 **보기 > 터미널**(``Ctrl+` ``)로 아래쪽에 터미널을 열어요.
+
+### 프로젝트 만들기
+
+터미널에서 코드를 모아 두는 폴더로 옮긴 다음, 가계부 프로젝트를 만들어요. 5회차 수업에서 배운 uv를 그대로 써요.
+
+```bash
+uv init --no-package python-ledger
+```
+
+```text
+Initialized project `python-ledger` at `C:\...\python-ledger`
+```
+
+`--no-package`는 "배포용 패키지가 아니라 그냥 실행할 프로그램"이라는 뜻이에요. 빼면 `src` 폴더가 있는 패키지 구조가 만들어져서 `main.py`가 안 생겨요.
+
+만든 폴더를 VS Code로 열어요. 새 창이 뜨면 그 창에서 터미널을 다시 열어요.
+
+```bash
+code python-ledger
+```
+
+`code` 명령을 못 찾는다고 나오면 메뉴 **파일 > 폴더 열기**로 `python-ledger` 폴더를 열면 돼요.
+
+왼쪽 탐색기를 보면 파일이 이렇게 생겨 있어요.
+
+| 파일 | 하는 일 |
+| --- | --- |
+| `main.py` | 오늘 코드를 쓸 파일 |
+| `pyproject.toml` | 프로젝트 이름, 파이썬 버전, 쓰는 패키지 목록 |
+| `.python-version` | 이 프로젝트가 쓸 파이썬 버전(예: `3.12`) |
+| `README.md` | 프로젝트 설명서(7단원에서 채워요) |
+| `.gitignore` | git이 무시할 파일 목록(`.venv` 등) |
+| `.git` | 숨은 폴더. uv가 git 저장소까지 만들어 줬어요 |
+
+마지막 줄이 중요해요. `uv init`은 git 저장소도 같이 만들어요. 그래서 `git init`을 따로 하지 않아도 돼요.
+
+처음 실행해서 잘 만들어졌는지 봐요.
+
+```bash
+uv run main.py
+```
+
+```text
+Using CPython 3.12.10 interpreter at: C:\...\Python312\python.exe
+Creating virtual environment at: .venv
+Hello from python-ledger!
+```
+
+처음 한 번은 가상환경(`.venv`)을 만들고 실행해요. 이때 `uv.lock`도 생겨요. 두 번째부터는 `Hello from python-ledger!` 한 줄만 나와요.
+
+## 2. 필요한 개념만
+
+오늘 쓸 문법은 다섯 가지예요. 터미널에서 `uv run python`을 치면 `>>>`가 뜨는데, 여기서 한 줄씩 쳐 보며 결과를 바로 볼 수 있어요(REPL). 끝낼 때는 `exit()`를 쳐요.
+
+### 변수: 값에 붙이는 이름표
+
+```python
+>>> item = "점심"
+>>> amount = 9000
+```
+
+`=`는 "같다"가 아니라 **오른쪽 값에 왼쪽 이름을 붙인다**는 뜻이에요. 이름은 영어 소문자로 쓰고, 단어 사이는 밑줄로 이어요(`total_amount`).
+
+### 자료형: 글자인가 숫자인가
+
+```python
+>>> type(item)
+<class 'str'>
+>>> type(amount)
+<class 'int'>
+```
+
+따옴표로 감싼 값은 **문자열**(`str`), 따옴표 없는 정수는 **정수**(`int`)예요. 둘은 겉모습이 비슷해도 전혀 다르게 움직여요.
+
+<PredictPrompt />
+
+`"9000" + "1500"`을 치면 무엇이 나올지 예측해 보고 쳐 보세요.
+
+```python
+>>> "9000" + "1500"
+'90001500'
+>>> int("9000") + int("1500")
+10500
+```
+
+문자열끼리 `+`는 **이어 붙이기**예요. 숫자로 더하려면 `int()`로 먼저 바꿔야 해요.
+
+### input(): 입력은 언제나 문자열
+
+```python
+>>> answer = input("금액: ")
+금액: 9000
+>>> type(answer)
+<class 'str'>
+```
+
+`input()`은 괄호 안 글자를 보여 주고, 사용자가 친 값을 돌려줘요. 숫자를 쳐도 **문자열로** 돌려줘요. 그래서 금액은 `int(input("금액: "))`처럼 바로 감싸서 받아요.
+
+### f-string: 값을 글 사이에 끼우기
+
+```python
+>>> f"{item} {amount}원"
+'점심 9000원'
+>>> f"{amount:,}원"
+'9,000원'
+```
+
+따옴표 앞에 `f`를 붙이면 `{}` 안에 변수를 넣을 수 있어요. `{amount:,}`처럼 콜론 뒤에 쉼표를 쓰면 천 단위마다 쉼표가 들어가요.
+
+## 3. 따라 치기
+
+`main.py` 안의 내용을 모두 지우고 아래를 그대로 쳐요. 빈 줄도 똑같이 두세요.
+
+<TypeAlong>
+
+```python
+print("=== 나의 가계부 ===")
+
+item = input("항목: ")
+amount = int(input("금액: "))
+
+print(f"{item} {amount}원을 기록했어요.")
+```
+
+</TypeAlong>
+
+다 쳤으면 `Ctrl+S`로 **저장한 다음** 실행해요. 저장하지 않고 실행하면 옛 코드(Hello)가 돌아요.
+
+```bash
+uv run main.py
+```
+
+```text
+=== 나의 가계부 ===
+항목: 점심
+금액: 9000
+점심 9000원을 기록했어요.
+```
+
+`항목:` 뒤에 커서가 깜빡이면 직접 입력하고 Enter를 쳐요. 결과가 같으면 첫 커밋을 해요.
+
+```bash
+git add .
+git commit -m "feat: 항목과 금액을 받아 한 줄로 출력"
+```
+
+`git add .` 하기 전에 `git status`를 쳐 보면 무엇이 들어가는지 보여요. `main.py`, `pyproject.toml`, `uv.lock` 등은 들어가고, `.venv`는 `.gitignore`에 있어서 빠져요. 가상환경은 `uv sync`로 언제든 다시 만들 수 있으니 올리지 않는 거예요.
+
+`warning: ... LF will be replaced by CRLF` 같은 경고가 나와도 괜찮아요. 윈도우가 줄 끝 글자를 바꿔 저장하겠다는 안내일 뿐이에요.
+
+## 4. 고쳐 치기
+
+방금 코드를 고쳐서 이렇게 나오게 만들어요.
+
+- **분류**를 하나 더 입력받아요(식비, 교통 같은 것).
+- 출력 모양을 `[식비] 점심 9,000원`으로 바꿔요. 금액에는 천 단위 쉼표를 넣어요.
+
+```text
+=== 나의 가계부 ===
+분류: 식비
+항목: 점심
+금액: 9000
+[식비] 점심 9,000원
+```
+
+막히면 힌트를 하나씩 열어 보세요.
+
+<Hints>
+<Hint>
+
+`item = input("항목: ")` 위에 같은 모양으로 한 줄을 더 써요. 변수 이름은 `category`가 좋아요.
+
+</Hint>
+<Hint>
+
+f-string 안의 대괄호 `[ ]`는 그냥 글자예요. `f"[{category}] ..."`처럼 중괄호 바깥에 두면 그대로 찍혀요.
+
+</Hint>
+<Hint>
+
+천 단위 쉼표는 `{amount:,}`예요. "원을 기록했어요." 대신 "원"으로 끝내요.
+
+</Hint>
+</Hints>
+
+<details>
+<summary>정답 코드 보기</summary>
+
+```python
+print("=== 나의 가계부 ===")
+
+category = input("분류: ")
+item = input("항목: ")
+amount = int(input("금액: "))
+
+print(f"[{category}] {item} {amount:,}원")
+```
+
+</details>
+
+결과가 같으면 커밋해요.
+
+```bash
+git add .
+git commit -m "feat: 분류 추가, 금액에 천 단위 쉼표"
+```
+
+## 5. 혼자 치기
+
+이번엔 힌트 없이 처음부터 짜 봐요. 요구사항은 이거예요.
+
+- 분류, 항목, 금액을 **두 번** 입력받아요.
+- 두 건을 `[분류] 항목 금액원` 모양으로 한 줄씩 찍어요.
+- 마지막 줄에 `오늘 합계: 금액원`을 찍어요. 금액은 모두 천 단위 쉼표를 넣어요.
+
+다 짰으면 아래 표대로 입력해 보세요. 출력이 표와 같으면 통과예요. 코드가 정답과 달라도 괜찮아요.
+
+| 입력(분류, 항목, 금액 순서로 두 번) | 마지막 세 줄 출력 |
+| --- | --- |
+| 식비, 점심, 9000 / 교통, 버스, 1500 | `[식비] 점심 9,000원`<br />`[교통] 버스 1,500원`<br />`오늘 합계: 10,500원` |
+| 식비, 커피, 4500 / 쇼핑, 양말, 3000 | `[식비] 커피 4,500원`<br />`[쇼핑] 양말 3,000원`<br />`오늘 합계: 7,500원` |
+
+<details>
+<summary>정답 코드 보기</summary>
+
+```python
+print("=== 나의 가계부 ===")
+
+category1 = input("분류: ")
+item1 = input("항목: ")
+amount1 = int(input("금액: "))
+
+category2 = input("분류: ")
+item2 = input("항목: ")
+amount2 = int(input("금액: "))
+
+total = amount1 + amount2
+
+print(f"[{category1}] {item1} {amount1:,}원")
+print(f"[{category2}] {item2} {amount2:,}원")
+print(f"오늘 합계: {total:,}원")
+```
+
+</details>
+
+<TwistBox title="같은 코드를 두 번 쓰는 게 답답하다면">
+
+정상이에요. 세 건, 열 건이 되면 `category3`, `item10`까지 끝이 없어요.
+
+이 답답함을 푸는 게 3단원의 반복문과 리스트예요. 오늘은 일부러 두 번 써 보고 그 불편함을 기억해 두세요.
+
+</TwistBox>
+
+결과가 표와 같으면 커밋해요. 이 코드가 2단원의 시작 코드예요.
+
+```bash
+git add .
+git commit -m "feat: 두 건 입력받아 합계 내기"
+```
+
+## 6. 자주 나는 에러
+
+에러 메시지는 **맨 아래 줄부터** 읽어요. 맨 아래 줄이 에러 이름과 이유이고, 그 위가 몇 번째 줄에서 났는지예요. 아래 메시지의 `C:\...` 부분은 컴퓨터마다 달라요.
+
+### 숫자를 바꿀 수 없어요: ValueError
+
+금액에 `9천`처럼 숫자가 아닌 걸 치면 나요.
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 2, in <module>
+    amount = int(input("금액: "))
+             ^^^^^^^^^^^^^^^^^^^^
+ValueError: invalid literal for int() with base 10: '9천'
+```
+
+`int()`가 `'9천'`을 정수로 못 바꿨다는 뜻이에요. 지금은 숫자만 치면 되고, 잘못 쳐도 다시 묻게 만드는 건 2단원에서 해요.
+
+### 이름을 모르겠어요: NameError
+
+변수 이름에 오타가 나면 나요.
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 3, in <module>
+    print(f"{item} {amout}원을 기록했어요.")
+                    ^^^^^
+NameError: name 'amout' is not defined. Did you mean: 'amount'?
+```
+
+`amout`이라는 이름은 만든 적이 없다는 뜻이에요. 맨 끝에 `Did you mean: 'amount'?`로 맞는 이름까지 알려 줘요.
+
+### 글자와 숫자를 붙일 수 없어요: TypeError
+
+f-string 대신 `+`로 글자를 이어 붙이다가 숫자를 섞으면 나요.
+
+```python
+amount = int(input("금액: "))
+print("금액: " + amount + "원")
+```
+
+```text
+Traceback (most recent call last):
+  File "C:\...\python-ledger\main.py", line 2, in <module>
+    print("금액: " + amount + "원")
+          ~~~~~~~~~^~~~~~~~
+TypeError: can only concatenate str (not "int") to str
+```
+
+문자열에는 문자열만 이어 붙일 수 있다는 뜻이에요. f-string으로 쓰면 이런 걱정이 없어요.
+
+### 줄이 들쭉날쭉해요: IndentationError
+
+줄 맨 앞에 공백이 하나 들어가면 나요.
+
+```text
+  File "C:\...\python-ledger\main.py", line 2
+    amount = int(input("금액: "))
+IndentationError: unexpected indent
+```
+
+파이썬은 들여쓰기로 블록을 나눠서, 이유 없이 들여 쓴 줄을 에러로 봐요. 2번째 줄 맨 앞 공백을 지우면 돼요.
+
+<TwistBox title="에러가 안 나는 게 더 무서울 때">
+
+금액에 `int()`를 빼먹고 두 금액을 더하면 어떻게 될까요?
+
+```python
+amount1 = input("금액: ")
+amount2 = input("금액: ")
+total = amount1 + amount2
+print(f"합계: {total}원")
+```
+
+```text
+금액: 9000
+금액: 1500
+합계: 90001500원
+```
+
+에러 없이 **틀린 답**이 나와요. 문자열끼리 `+`라서 이어 붙였거든요. 합계가 이상하게 크면 `int()`를 빼먹지 않았는지 먼저 봐요.
+
+</TwistBox>
+
+## 7. 커밋하고 올리기
+
+커밋 세 개가 쌓였는지 봐요.
+
+```bash
+git log --oneline
+```
+
+```text
+a81a1f5 feat: 두 건 입력받아 합계 내기
+a3d925e feat: 분류 추가, 금액에 천 단위 쉼표
+cb9ff22 feat: 항목과 금액을 받아 한 줄로 출력
+```
+
+앞의 일곱 글자(커밋 번호)는 사람마다 달라요.
+
+### GitHub에 저장소 만들기
+
+1. github.com 오른쪽 위 **+** 를 누르고 **New repository**를 골라요.
+2. 이름에 `python-ledger`를 써요. 공개(Public)든 비공개(Private)든 괜찮아요.
+3. **README 추가는 체크하지 않아요.** 내 컴퓨터에 이미 README가 있어서, 체크하면 GitHub 쪽에 내 컴퓨터에 없는 커밋이 생겨 처음 push가 거절돼요.
+4. **Create repository**를 누르면 저장소 주소가 보여요.
+
+### 올리기
+
+터미널로 돌아와 세 줄을 쳐요. 주소의 `내아이디`는 내 GitHub 아이디로 바꿔요.
+
+```bash
+git remote add origin https://github.com/내아이디/python-ledger.git
+git branch -M main
+git push -u origin main
+```
+
+- `git remote add origin`: 이 저장소의 "올릴 곳"을 origin이라는 이름으로 등록해요.
+- `git branch -M main`: 브랜치 이름을 main으로 맞춰요. 컴퓨터 설정에 따라 처음 이름이 master일 수 있어서예요.
+- `git push -u origin main`: 올려요. `-u`를 붙여 두면 다음부터는 `git push`만 쳐도 돼요.
+
+처음 push할 때는 GitHub 로그인 창이 떠요. 브라우저로 로그인하면 다음부터는 묻지 않아요.
+
+GitHub 저장소 페이지를 새로고침해서 `main.py`와 커밋 3개가 보이면 오늘 단원은 끝이에요. [목록](/practice)에서 1단원 완료를 체크해요.
