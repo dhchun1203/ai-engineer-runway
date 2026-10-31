@@ -285,7 +285,7 @@ export function SiteNav() {
     <header ref={headerRef} className="site-header sticky top-0 z-20">
       <nav
         aria-label="주요 내비게이션"
-        className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2 sm:px-6 lg:px-8"
+        className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2 sm:px-6 lg:flex-nowrap lg:px-8"
       >
         <Link
           href="/"
@@ -294,9 +294,11 @@ export function SiteNav() {
           <span className="brand-mark" aria-hidden="true" />
           AI Engineer Hub
         </Link>
+        {/* 한 줄을 지킨다. 두 줄이 되면 sticky 헤더가 두 배로 커져 본문을 가린다. 항목 일곱 개의 폭 합이
+            529px, 가장 좁은 1024px에서 쓸 수 있는 폭이 599px라 간격은 8px까지 들어간다. */}
         <div
           ref={desktopNavRef}
-          className="hidden flex-1 flex-wrap items-center justify-center gap-x-4 gap-y-1 lg:flex"
+          className="hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-x-2 whitespace-nowrap lg:flex"
         >
           {navItems.map((item, index) => {
             // 드롭다운 부모 — 클릭 토글(hover 아님, 아이패드 터치 대응).
