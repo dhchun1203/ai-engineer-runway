@@ -1993,6 +1993,69 @@ code[data-theme*=" "] span {
   border-bottom-color: var(--color-line-dark);
 }
 
+/* 파이썬 손풀기 단계 막대. 글자는 본문 폭에 맞추고 지면과 선만 화면 끝까지 낸다. 번지는 그림자는
+   스크롤 폭에 잡히지 않아 가로 넘침이 없고, clip-path가 위쪽으로 번지는 것을 잘라 헤더를 덮지 않는다. */
+.stage-bar.section-tape {
+  --stage-bar-paper: var(--color-background);
+  --stage-bar-line: var(--color-line);
+  border-bottom: 0;
+  box-shadow:
+    0 0 0 100vmax var(--stage-bar-paper),
+    0 1px 0 100vmax var(--stage-bar-line);
+  clip-path: inset(0 -100vmax -1px);
+  background-color: var(--stage-bar-paper);
+}
+
+.dark .stage-bar.section-tape {
+  --stage-bar-paper: var(--color-background-dark);
+  --stage-bar-line: var(--color-line-dark);
+}
+
+/* 읽은 만큼 자라는 선. 아래 선 1px와 막대 바닥 1px에 걸쳐 2px로 선다. 스크롤을 그대로 따라가므로
+   트랜지션을 걸지 않는다. 시작 값 scaleX(0)은 첫 계산 전 잠깐 길게 보이지 않게 하려는 것이다. */
+.stage-rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background-color: var(--color-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.dark .stage-rail {
+  background-color: var(--color-accent-dark);
+}
+
+/* .tap-feedback의 transition을 덮으므로 transform도 함께 적는다. */
+.stage-cell {
+  transition:
+    color 120ms ease-out,
+    transform 120ms ease-out;
+}
+
+.stage-cell:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.dark .stage-cell:focus-visible {
+  outline-color: var(--color-accent-dark);
+}
+
+.stage-num {
+  font-size: 0.6875rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-cell {
+    transition: none;
+  }
+}
+
 /* 코드 블록 테두리는 래퍼(.prose [data-code-block])가 갖는다 — 헤더와 코드를 한 상자에
    담기 위해 위쪽 규칙으로 옮겼다. 여기서는 <pre>에 따로 테두리를 주지 않는다. */
 
