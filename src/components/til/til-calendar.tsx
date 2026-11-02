@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
@@ -22,6 +22,21 @@ export type TilCalendarPost = { date: string; title: string; slug: string };
 const WEEKDAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
 // 맨 오른쪽 달부터의 표시 범위. 화면이 넓어질수록 왼쪽 달이 더 드러난다.
 const MONTH_VISIBILITY = ['hidden lg:flex', 'hidden md:flex', 'flex'];
+
+// 지금 화면에 보이는 달 수(MONTH_VISIBILITY와 같은 기준). 첫 기록 달이 보이면 더 뒤로 가지 않게 쓴다.
+const LG_QUERY = '(min-width: 64rem)';
+const MD_QUERY = '(min-width: 48rem)';
+
+function subscribeVisibleMonths(onChange: () => void) {
+  const queries = [window.matchMedia(LG_QUERY), window.matchMedia(MD_QUERY)];
+  queries.forEach((q) => q.addEventListener('change', onChange));
+  return () => queries.forEach((q) => q.removeEventListener('change', onChange));
+}
+
+function getVisibleMonths(): number {
+  if (window.matchMedia(LG_QUERY).matches) return 3;
+  return window.matchMedia(MD_QUERY).matches ? 2 : 1;
+}
 
 function dayBandClass(cell: MonthCell, isToday: boolean): string {
   if (cell.written) {
@@ -58,7 +73,7 @@ function DayButton({
       <span
         className={`flex h-8 min-w-0 flex-1 items-center justify-center text-label tabular-nums ${
           cell.linkLeft ? '' : 'ml-[3px]'
-        } ${cell.linkRight ? '' : 'mr-[3px]'} ${dayBandClass(cell, isToday)}`}
+        } ${cell.linkRight ? '-mr-px' : 'mr-[3px]'} ${dayBandClass(cell, isToday)}`}
       >
         {cell.day}
       </span>
@@ -113,6 +128,7 @@ export function TilCalendar({ posts, today }: { posts: readonly TilCalendarPost[
   const thisMonth = today.slice(0, 7);
   const firstMonth = dates.reduce((min, d) => (d.slice(0, 7) < min ? d.slice(0, 7) : min), thisMonth);
   const [endMonth, setEndMonth] = useState(thisMonth);
+  const visibleMonths = useSyncExternalStore(subscribeVisibleMonths, getVisibleMonths, () => 1);
   // 처음에는 가장 최근에 쓴 날을 펼쳐 둔다. posts는 최신순이다.
   const [selected, setSelected] = useState(posts[0]?.date ?? today);
   const selectedPosts = posts.filter((p) => p.date === selected);
@@ -124,7 +140,7 @@ export function TilCalendar({ posts, today }: { posts: readonly TilCalendarPost[
 
   if (posts.length === 0) return null;
 
-  const canGoBack = endMonth > firstMonth;
+  const canGoBack = shiftMonth(endMonth, 1 - visibleMonths) > firstMonth;
   const canGoForward = endMonth < thisMonth;
   const arrow = 'tap-feedback flex h-11 w-11 items-center justify-center disabled:opacity-30';
 
@@ -150,7 +166,7 @@ export function TilCalendar({ posts, today }: { posts: readonly TilCalendarPost[
       </div>
 
       <div className="flex flex-col gap-3 border-t-2 border-foreground pt-2 dark:border-foreground-dark">
-        {firstMonth < thisMonth ? (
+        {canGoBack || canGoForward ? (
           <nav aria-label="달 옮기기" className="-mb-2 flex justify-end">
             <button
               type="button"
