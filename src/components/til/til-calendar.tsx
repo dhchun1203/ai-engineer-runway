@@ -33,7 +33,8 @@ export function TilCalendar({ posts, today }: { posts: readonly TilCalendarPost[
     <section aria-label="학습기록 잔디" className="flex flex-col gap-5">
       <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
         <div className="flex shrink-0 flex-col gap-3">
-          <div className="overflow-x-auto">
+          {/* 고른 칸의 바깥 테두리가 스크롤 영역에 잘리지 않도록 안쪽 여백을 두고, 음수 여백으로 자리를 맞춘다. */}
+          <div className="-m-1 overflow-x-auto p-1">
             <div className="flex w-max gap-1">
               <div aria-hidden="true" className="flex w-[1.125rem] flex-col gap-1">
                 <span className="h-5" />
