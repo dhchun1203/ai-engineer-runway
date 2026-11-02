@@ -16,8 +16,8 @@ import { PageBookmark } from "@/components/page-bookmark";
 import { classQuizKey } from "@/lib/quiz-mistake-key";
 
 // 수업 복습 레슨 리더 — 완전 정적(베이스캠프 레슨 리더와 같은 셸). 본문 아래 확인 퀴즈는
-// 클라이언트에서 채점하고 Server Action으로 오답 노트에 기록한다(cl: 키). 복습 체크리스트는
-// 개인 진도를 읽어야 해서 동적 허브(/class)에 둔다.
+// 클라이언트에서 채점하고 Server Action으로 풀이 기록과 오답 노트에 남긴다(cl: 키). 모든 문항을
+// 한 번 이상 풀면 이 회차가 완료다.
 
 const CLASS_ARTICLE_ID = "class-article";
 
@@ -97,10 +97,14 @@ export default async function ClassLessonPage({
               <span className="text-label font-bold text-accent dark:text-accent-dark">확인 퀴즈</span>
               <h2 className="text-heading font-extrabold break-keep">오늘 수업, 꺼내 보기</h2>
               <p className="break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-                {quiz.length}문항이에요. 고르는 즉시 정답과 해설이 나오고, 틀린 문제는 오답 노트에 모여요.
+                {quiz.length}문항이에요. 고르는 즉시 정답과 해설이 나오고, 틀린 문제는 오답 노트에 모여요. 다 풀면 이 수업이 완료로 표시돼요.
               </p>
             </header>
-            <BasecampQuizSet questions={quiz} keys={quiz.map((q) => classQuizKey(lesson.slug, q.id))} />
+            <BasecampQuizSet
+              questions={quiz}
+              keys={quiz.map((q) => classQuizKey(lesson.slug, q.id))}
+              completeLabel="이 수업 복습 완료"
+            />
             <MistakeNoteLink prefix={`cl:${lesson.slug}:`} variant="step" scope="이 수업" />
           </section>
         ) : null}
@@ -146,7 +150,7 @@ export default async function ClassLessonPage({
             href="/class"
             className="card-interactive panel flex min-h-11 items-center justify-between gap-2 p-4 text-body font-bold"
           >
-            복습 체크리스트 채우러 가기
+            수업 복습 목록으로
             <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
           </Link>
         </nav>

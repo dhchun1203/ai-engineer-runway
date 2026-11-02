@@ -86,6 +86,18 @@ export function pickQuizRefs(
   return [...shuffle(wrong, seed), ...shuffle(unsolved, seed + 1), ...shuffle(right, seed + 2)].slice(0, limit);
 }
 
+/** 회차 퀴즈에서 한 번이라도 푼 문항 수. done === total(문항이 있을 때)이면 그 회차는 완료다. */
+export function classQuizProgress(
+  slug: string,
+  questionIds: readonly string[],
+  attemptedKeys: ReadonlySet<string>,
+): { done: number; total: number } {
+  return {
+    done: questionIds.filter((id) => attemptedKeys.has(`cl:${slug}:${id}`)).length,
+    total: questionIds.length,
+  };
+}
+
 /** 검색어를 공백으로 나눈 낱말이 글 안에 모두 있으면 true(대소문자 무시). 빈 검색어는 통과. */
 export function matchesQuery(text: string, query: string): boolean {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);

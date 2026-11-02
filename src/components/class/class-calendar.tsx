@@ -3,7 +3,7 @@ import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { monthGrid, weekdayIndex } from "@/lib/class-logic";
 
 // 수업 달력(2026-10-27, 설계 3.7). 서버 컴포넌트(표시 전용). 왼쪽은 그 달의 숫자 요약,
-// 오른쪽은 한 달 달력이다. 수업이 있던 날 칸은 그 회차 레슨 링크이고, 복습 체크를 채운 만큼
+// 오른쪽은 한 달 달력이다. 수업이 있던 날 칸은 그 회차 레슨 링크이고, 퀴즈를 푼 만큼
 // 칸이 차오른다(일부는 바닥 막대, 전부는 칸 전체). 간격 복습을 세 번 마친(졸업한) 회차는
 // 칸 구석에 체크가 붙는다. 마우스를 올리면 칸이 떠오르고 회차 이름표가 뜬다(globals.css
 // .cal-day, .cal-tip). 달은 화살표로 옮기며 주소의 ?cal=YYYY-MM으로 받는다.
@@ -12,8 +12,8 @@ export type CalendarDay = {
   session: number;
   href: string;
   title: string;
-  /** 체크리스트 완료 비율 0~1. 진도를 못 읽으면 null */
-  checkRatio: number | null;
+  /** 퀴즈 문항 중 푼 비율 0~1. 기록을 못 읽으면 null */
+  quizRatio: number | null;
   graduated: boolean;
 };
 
@@ -120,7 +120,7 @@ export function ClassCalendar({
         </div>
         <div className="flex flex-col">
           <Stat value={inMonth.length} label="수업" />
-          <Stat value={inMonth.filter((d) => d.checkRatio === 1).length} label="체크 완료" />
+          <Stat value={inMonth.filter((d) => d.quizRatio === 1).length} label="퀴즈 완료" />
           <Stat value={inMonth.filter((d) => d.graduated).length} label="간격 복습 마침" />
         </div>
       </div>
@@ -159,26 +159,26 @@ export function ClassCalendar({
                 </span>
               );
             }
-            const partial = day.checkRatio !== null && day.checkRatio > 0 && day.checkRatio < 1;
+            const partial = day.quizRatio !== null && day.quizRatio > 0 && day.quizRatio < 1;
             const status =
-              day.checkRatio === null
+              day.quizRatio === null
                 ? ""
-                : day.checkRatio === 1
-                  ? ", 복습 체크 완료"
-                  : `, 복습 체크 ${Math.round(day.checkRatio * 100)}%`;
+                : day.quizRatio === 1
+                  ? ", 퀴즈 완료"
+                  : `, 퀴즈 ${Math.round(day.quizRatio * 100)}%`;
             return (
               <Link
                 key={cell.date}
                 href={day.href}
                 aria-label={`${isToday ? "오늘, " : ""}${mon}월 ${dayNumber}일 ${day.session}회차 ${day.title}${status}${day.graduated ? ", 간격 복습 마침" : ""}`}
-                className={`cal-day relative flex h-11 items-center justify-center border text-label font-extrabold tabular-nums ${tileClass(day.checkRatio)} ${todayRing}`}
+                className={`cal-day relative flex h-11 items-center justify-center border text-label font-extrabold tabular-nums ${tileClass(day.quizRatio)} ${todayRing}`}
               >
                 {dayNumber}
                 {partial ? (
                   <span
                     aria-hidden="true"
                     className="absolute bottom-0 left-0 h-1 bg-accent dark:bg-accent-dark"
-                    style={{ width: `${Math.round((day.checkRatio ?? 0) * 100)}%` }}
+                    style={{ width: `${Math.round((day.quizRatio ?? 0) * 100)}%` }}
                   />
                 ) : null}
                 {day.graduated ? (
@@ -198,17 +198,17 @@ export function ClassCalendar({
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
           <span className="flex items-center gap-1.5">
             <span className={`inline-block size-3.5 border ${tileClass(0)}`} aria-hidden="true" />
-            체크 전
+            풀기 전
           </span>
           <span className="flex items-center gap-1.5">
             <span className={`relative inline-block size-3.5 border ${tileClass(0.5)}`} aria-hidden="true">
               <span className="absolute bottom-0 left-0 h-0.5 w-1/2 bg-accent dark:bg-accent-dark" />
             </span>
-            일부 체크
+            푸는 중
           </span>
           <span className="flex items-center gap-1.5">
             <span className={`inline-block size-3.5 border ${tileClass(1)}`} aria-hidden="true" />
-            체크 완료
+            퀴즈 완료
           </span>
           <span className="flex items-center gap-1.5">
             <Check className="size-3" strokeWidth={3.5} aria-hidden="true" />

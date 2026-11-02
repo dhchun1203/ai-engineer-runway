@@ -1,21 +1,6 @@
 # 02-git-setup-remote 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
 # 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
 slug: 02-git-setup-remote
-checklist:
-  - id: class-02-config
-    label: git config --global --list 로 이름과 이메일 확인 (꼬였으면 --unset-all 후 다시)
-  - id: class-02-hooks
-    label: .git/hooks 열어 보고, 훅 하나를 .sample 지우고 chmod +x 해 보기
-  - id: class-02-status-marks
-    label: VS Code의 U, A, M, D 표시를 git status --short 와 맞춰 보기
-  - id: class-02-log-graph
-    label: 브랜치를 하나 만들고 git log --oneline --all --graph 로 갈래 보기
-  - id: class-02-remote
-    label: 빈 GitHub 저장소에 remote add → branch -M main → push -u 해 보기
-  - id: class-02-vim
-    label: vim 열어서 i, Esc, :wq, :q! 로 들어가고 나와 보기
-  - id: class-02-routine
-    label: 수정부터 push까지 루틴을 소리 내어 설명해 보기
 quiz:
   - id: rm-rf-flags
     q: rm -rf old-project/ 에서 -r 과 -f 의 뜻으로 맞는 것은?

@@ -10,7 +10,7 @@ description: 그날 수업 정리(사용자 TIL 저장소의 md 링크 또는 �
 ```
 src/content/class-lessons/NN-<주제 영문 kebab>/
   index.mdx    # 본문 + frontmatter
-  review.yml   # 체크리스트, 퀴즈, 명령어, 용어
+  review.yml   # 퀴즈, 명령어, 용어
 ```
 
 폴더 이름이 곧 slug이고 주소는 `/class/NN-<주제>`다. NN은 회차 번호 두 자리(100회차부터 세 자리).
@@ -51,12 +51,12 @@ src/content/class-lessons/NN-<주제 영문 kebab>/
    - 쓸 수 있는 컴포넌트: `<TwistBox title="...">`, `<PredictPrompt />`(앞 회차 사용례 참고).
    - 어제 배운 것과 이어지는 곳은 "어제 배운 X가 여기서 쓰여요"처럼 한 줄로 잇는다.
 4. **복습 데이터 `review.yml`** (앞 회차 파일을 본보기로)
-   - `checklist`: 원본의 복습 체크리스트를 그대로. id는 `class-NN-<짧은 이름>`, 전 회차에서 유일.
+   - 복습 체크리스트는 두지 않는다(2026-11-02 폐지). 회차 완료는 퀴즈를 다 풀었는지로 정해지므로, 원본의 복습 체크 항목은 퀴즈 문항으로 녹인다.
    - `quiz`: 12~16문항. 문항마다 `id`(영문 소문자, 숫자, - 로 내용을 나타내게, 숫자만은 금지), `q`, 필요하면 `code`(블록은 `|-`), 보기 4개, `answer`(0부터), `explain`(정답 이유와 헷갈리는 보기 설명). 정답 위치는 화면에서 섞이니 신경 쓰지 않아도 된다.
    - `commands`: 그날 나온 명령어, 단축키, 편집기 키를 빠짐없이. `cmd`, `desc`(무엇을 하는지 한 줄), `group`(`Git`, `터미널`, `단축키`, `vim`처럼 명령어 모음의 묶음 이름. 앞 회차와 같은 글자로).
    - `terms`: 그날 새로 나온 핵심 용어 5~10개. `word`(한글 (English) 꼴 권장), `definition`(한두 문장).
 5. **검사** (하나라도 실패하면 고친다)
-   - `npx velite build`: 회차 짝, 퀴즈 id 규칙과 중복, 정답 범위, 체크 id, 모듈 id를 검사해 실패시킨다. 출력에 오류가 없어야 통과.
+   - `npx velite build`: 회차 짝, 퀴즈 id 규칙과 중복, 정답 범위, 모듈 id를 검사해 실패시킨다. 출력에 오류가 없어야 통과.
    - `npx next typegen && npx tsc --noEmit -p .`
    - `node scripts/check-class.mjs`
    - `node scripts/check-brand.mjs 2>&1 | grep -i "class-lessons"` 가 아무것도 출력하지 않아야 한다.

@@ -50,6 +50,7 @@ export function BasecampQuizSet({
   keys,
   notes,
   labels,
+  completeLabel,
 }: {
   questions: readonly BasecampQuizQuestion[];
   /** 문항마다 오답 노트 키(원본 순서). 없으면 기록하지 않는다. */
@@ -58,6 +59,8 @@ export function BasecampQuizSet({
   notes?: readonly (string | undefined)[];
   /** 문항 위에 붙일 출처 꼬리표(여러 회차를 섞은 수업 종합 퀴즈의 "N회차 제목" 등) */
   labels?: readonly (string | undefined)[];
+  /** 로그인 계정이 모든 문항을 한 번 이상 풀었을 때 묶음 위에 보일 글자(수업 복습의 회차 완료) */
+  completeLabel?: string;
 }) {
   // 보기 순서를 섞은 문항(정답 인덱스도 따라 옮긴다). order는 화면 순서 → 원본 순서 표.
   const questions = source.map((q) => {
@@ -72,6 +75,8 @@ export function BasecampQuizSet({
   // 푼 문항이 눈앞에서 사라지지 않게, 열었을 때의 상태로 고정한다.
   const [solvedAtOpen, setSolvedAtOpen] = useState<Set<string>>(() => new Set());
   const [onlyUnsolved, setOnlyUnsolved] = useState(false);
+  // 이번에 저장까지 끝난 문항 키. "모두 다시 풀기"를 눌러도 완료 표시가 꺼지지 않게 따로 둔다.
+  const [savedNow, setSavedNow] = useState<ReadonlySet<string>>(() => new Set());
 
   useEffect(() => {
     if (!keys || keys.length === 0) return;
@@ -102,7 +107,10 @@ export function BasecampQuizSet({
     setSave(qi, { kind: "idle" });
     // 서버에는 원본 순서의 보기 번호를 보낸다(채점은 서버가 원본 데이터로 직접 한다).
     recordQuizAnswer(key, questions[qi].order[oi])
-      .then((outcome) => setSave(qi, { kind: "done", outcome }))
+      .then((outcome) => {
+        setSave(qi, { kind: "done", outcome });
+        setSavedNow((prev) => new Set(prev).add(key));
+      })
       .catch(() => setSave(qi, { kind: "failed" }));
   }
 
@@ -119,6 +127,7 @@ export function BasecampQuizSet({
   const everSolved = latest.filter((v) => v !== null).length;
   const everCorrect = latest.filter((v) => v === true).length;
   const unsolvedAtOpen = keys ? keys.filter((key) => !solvedAtOpen.has(key)).length : 0;
+  const complete = Boolean(past && keys && keys.every((key) => past.has(key) || savedNow.has(key)));
 
   let summary: string;
   if (past) {
@@ -158,6 +167,12 @@ export function BasecampQuizSet({
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3 dark:border-line-dark">
         <p className="text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark" aria-live="polite">
           {summary}
+          {complete && completeLabel ? (
+            <span className="ml-2 inline-flex items-center gap-1 font-bold text-ok dark:text-ok-dark">
+              <Check className="size-4 shrink-0" strokeWidth={3} aria-hidden="true" />
+              {completeLabel}
+            </span>
+          ) : null}
         </p>
         <div className="flex flex-wrap items-center gap-2">
         {past && solvedAtOpen.size > 0 && unsolvedAtOpen > 0 ? (

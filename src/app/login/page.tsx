@@ -36,7 +36,7 @@ const FEATURES: { icon: CustomIconName; title: string; body: string }[] = [
   {
     icon: 'class',
     title: '수업 복습',
-    body: '매일 수업을 쉬운 말로 다시 풀어 쓴 레슨에 복습 체크리스트, 확인 퀴즈, 명령어 모음까지.',
+    body: '매일 수업을 쉬운 말로 다시 풀어 쓴 레슨에 확인 퀴즈, 명령어 모음까지.',
   },
   {
     icon: 'curriculum',

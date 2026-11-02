@@ -2,16 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen, ChevronDown, ClipboardCheck, Terminal } from "lucide-react";
 import { hasUnlockCookie } from "@/lib/auth";
-import { readProgressRows } from "@/lib/progress-store";
+import { readQuizAttempts } from "@/lib/quiz-attempt-store";
 import { readReviewStates } from "@/lib/review-store";
 import { GRADUATE_COUNT } from "@/lib/review";
-import { classReviewId } from "@/lib/class-logic";
+import { classQuizProgress, classReviewId } from "@/lib/class-logic";
 import { todayInSeoul } from "@/lib/today";
-import { basecampProgressId } from "@/content/basecamp";
 import { getOrderedClassLessons, groupClassLessonsByModule, type ClassLesson } from "@/content/class-lesson-helpers";
 import { getClassSession } from "@/content/class-sessions";
 import { buildClassSearchDocs } from "@/content/class-derived";
-import { ClassChecklist } from "@/components/class/class-checklist";
+import { ClassQuizStatus } from "@/components/class/class-quiz-status";
 import { ClassCalendar, type CalendarDay } from "@/components/class/class-calendar";
 import { ClassSearch } from "@/components/class/class-search";
 import { ClassPastLessonRow } from "@/components/class/class-past-lesson-row";
@@ -20,11 +19,12 @@ import type { StepId } from "@/content/modules";
 
 export const metadata: Metadata = {
   title: "수업 복습",
-  description: "개강 후 매 수업 내용을 쉬운 말로 다시 풀어 쓴 복습 레슨. 회차마다 복습 체크리스트와 확인 퀴즈가 있어요.",
+  description: "개강 후 매 수업 내용을 쉬운 말로 다시 풀어 쓴 복습 레슨. 회차마다 확인 퀴즈가 있고, 다 풀면 완료로 표시돼요.",
 };
 
-// 수업 복습 허브 — 베이스캠프 허브와 같은 이유로 동적 렌더(쿠키, 진도 조회). 체크 진도는
-// progress 테이블의 bc: 접두사 행에서, 간격 복습 상태는 lesson_review의 class: 행에서 읽는다.
+// 수업 복습 허브 — 베이스캠프 허브와 같은 이유로 동적 렌더(쿠키, 진도 조회). 회차 완료는
+// quiz_attempt의 cl: 행(모든 문항을 한 번 이상 풀었는지)에서, 간격 복습 상태는 lesson_review의
+// class: 행에서 읽는다.
 // 2026-10-27: 회차가 매일 쌓이므로 지난 수업을 커리큘럼 모듈별로 접고, 달력, 회차 검색,
 // 종합 퀴즈와 명령어 모음 바로가기를 더했다(docs/superpowers/specs/2026-10-27-class-data-structure-design.md).
 export const dynamic = "force-dynamic";
@@ -41,7 +41,15 @@ function formatDate(iso: string): string {
   return `${m}월 ${d}일`;
 }
 
-function LessonCard({ lesson, quizCount }: { lesson: ClassLesson; quizCount: number }) {
+function LessonCard({
+  lesson,
+  quizCount,
+  quiz,
+}: {
+  lesson: ClassLesson;
+  quizCount: number;
+  quiz: { done: number; total: number } | null;
+}) {
   return (
     <Link href={lesson.permalink} className="card-interactive panel flex flex-col gap-2 p-5">
       <span className="flex flex-wrap items-center gap-2">
@@ -49,6 +57,7 @@ function LessonCard({ lesson, quizCount }: { lesson: ClassLesson; quizCount: num
         <span className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
           {formatDate(lesson.date)} 수업, {lesson.topic}
         </span>
+        {quiz ? <ClassQuizStatus done={quiz.done} total={quiz.total} /> : null}
       </span>
       <span className="text-heading font-extrabold break-keep">{lesson.title}</span>
       <span className="break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
@@ -75,10 +84,10 @@ export default async function ClassHubPage({
 }) {
   const params = await searchParams;
   const unlocked = await hasUnlockCookie();
-  const [progressRead, reviewRead] = unlocked
-    ? await Promise.all([readProgressRows(), readReviewStates()])
+  const [attemptsRead, reviewRead] = unlocked
+    ? await Promise.all([readQuizAttempts(), readReviewStates()])
     : [null, null];
-  const doneRawIds = new Set(progressRead?.ok ? progressRead.rows.map((row) => row.lessonSlug) : []);
+  const attemptedKeys = new Set(attemptsRead?.ok ? attemptsRead.rows.map((row) => row.key) : []);
   const today = todayInSeoul();
 
   // 최근 수업이 맨 위. 지난 수업은 그 아래 모듈별 묶음으로 쌓인다.
@@ -87,24 +96,23 @@ export default async function ClassHubPage({
   const latestSession = latest ? getClassSession(latest.slug) : undefined;
   const pastGroups = groupClassLessonsByModule(past);
 
-  function checkCount(slug: string): { done: number; total: number } {
-    const checklist = getClassSession(slug)?.checklist ?? [];
-    return {
-      done: checklist.filter((item) => doneRawIds.has(basecampProgressId(item.id))).length,
-      total: checklist.length,
-    };
+  // 풀이 기록을 못 읽었으면 null(상태를 표시하지 않는다).
+  function quizProgress(slug: string): { done: number; total: number } | null {
+    if (!attemptsRead?.ok) return null;
+    const quiz = getClassSession(slug)?.quiz ?? [];
+    return classQuizProgress(slug, quiz.map((q) => q.id), attemptedKeys);
   }
 
-  // 달력 칸 데이터. 진도를 못 읽었으면 체크 비율은 null(농도 없이 테두리만).
+  // 달력 칸 데이터. 풀이 기록을 못 읽었으면 퀴즈 비율은 null(농도 없이 테두리만).
   const calendarDays = new Map<string, CalendarDay>();
   for (const lesson of lessons) {
-    const { done, total } = checkCount(lesson.slug);
+    const quiz = quizProgress(lesson.slug);
     const reviewCount = reviewRead?.ok ? (reviewRead.states.get(classReviewId(lesson.slug))?.reviewCount ?? 0) : 0;
     calendarDays.set(lesson.date, {
       session: lesson.session,
       href: lesson.permalink,
       title: lesson.title,
-      checkRatio: progressRead?.ok && total > 0 ? done / total : null,
+      quizRatio: quiz && quiz.total > 0 ? quiz.done / quiz.total : null,
       graduated: reviewCount >= GRADUATE_COUNT,
     });
   }
@@ -123,8 +131,8 @@ export default async function ClassHubPage({
         <span className="chip-solid w-fit text-label font-bold">최우선</span>
         <h1 className="text-display font-black break-keep">수업 복습</h1>
         <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          개강 후 수업마다 배운 내용을 쉬운 말로 다시 풀어 썼어요. 레슨을 읽고, 복습 체크리스트를
-          채우고, 확인 퀴즈로 꺼내 보면서 그날 수업을 내 것으로 만들어요.
+          개강 후 수업마다 배운 내용을 쉬운 말로 다시 풀어 썼어요. 레슨을 읽고 확인 퀴즈로 꺼내 보면서
+          그날 수업을 내 것으로 만들어요. 퀴즈를 다 풀면 그 수업은 완료로 표시돼요.
         </p>
       </header>
 
@@ -148,19 +156,7 @@ export default async function ClassHubPage({
         {latest ? (
           <section className="flex flex-col gap-3">
             <span className="w-fit text-label font-bold text-accent dark:text-accent-dark">최근 수업</span>
-            <LessonCard lesson={latest} quizCount={latestSession?.quiz.length ?? 0} />
-            {latestSession && latestSession.checklist.length > 0 ? (
-              <div className="flex flex-col gap-3 pt-2">
-                <h2 className="text-subhead font-extrabold break-keep">오늘의 복습 체크리스트</h2>
-                <ClassChecklist
-                  items={latestSession.checklist}
-                  initialDoneIds={latestSession.checklist
-                    .filter((item) => doneRawIds.has(basecampProgressId(item.id)))
-                    .map((item) => item.id)}
-                  unlocked={unlocked}
-                />
-              </div>
-            ) : null}
+            <LessonCard lesson={latest} quizCount={latestSession?.quiz.length ?? 0} quiz={quizProgress(latest.slug)} />
             <MistakeNoteLink prefix="cl:" variant="link" label="수업 복습 오답 노트" />
           </section>
         ) : (
@@ -176,9 +172,10 @@ export default async function ClassHubPage({
               지난 수업
             </h2>
             {pastGroups.map(({ module: mod, step, lessons: groupLessons, title: groupTitle }) => {
-              const counts = groupLessons.map((l) => checkCount(l.slug));
-              const done = counts.reduce((sum, c) => sum + c.done, 0);
-              const total = counts.reduce((sum, c) => sum + c.total, 0);
+              const completed = groupLessons.filter((l) => {
+                const quiz = quizProgress(l.slug);
+                return quiz !== null && quiz.total > 0 && quiz.done === quiz.total;
+              }).length;
               return (
                 <details key={mod.id} open={latest?.module === mod.id} className="panel group overflow-hidden">
                   <summary
@@ -189,9 +186,9 @@ export default async function ClassHubPage({
                     </span>
                     <span className="flex shrink-0 items-center gap-2 text-label font-normal">
                       <span>{groupLessons.length}개 회차</span>
-                      {progressRead?.ok && total > 0 ? (
+                      {attemptsRead?.ok ? (
                         <span className="text-badge-neutral-text dark:text-badge-neutral-text-dark">
-                          체크 {done}/{total}
+                          완료 {completed}/{groupLessons.length}
                         </span>
                       ) : null}
                       <ChevronDown className="size-4 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
@@ -201,23 +198,16 @@ export default async function ClassHubPage({
                     {groupLessons
                       .slice()
                       .reverse()
-                      .map((lesson) => {
-                        const checklist = getClassSession(lesson.slug)?.checklist ?? [];
-                        return (
-                          <ClassPastLessonRow
-                            key={lesson.slug}
-                            href={lesson.permalink}
-                            session={lesson.session}
-                            title={lesson.title}
-                            dateLabel={formatDate(lesson.date)}
-                            checklist={checklist}
-                            initialDoneIds={checklist
-                              .filter((item) => doneRawIds.has(basecampProgressId(item.id)))
-                              .map((item) => item.id)}
-                            unlocked={unlocked && Boolean(progressRead?.ok)}
-                          />
-                        );
-                      })}
+                      .map((lesson) => (
+                        <ClassPastLessonRow
+                          key={lesson.slug}
+                          href={lesson.permalink}
+                          session={lesson.session}
+                          title={lesson.title}
+                          dateLabel={formatDate(lesson.date)}
+                          quiz={quizProgress(lesson.slug)}
+                        />
+                      ))}
                   </ul>
                 </details>
               );

@@ -476,7 +476,6 @@ export default defineConfig({
       pattern: "src/content/class-lessons/*/review.yml",
       schema: s.object({
         slug: s.string(),
-        checklist: s.array(s.object({ id: s.string(), label: s.string().min(1) })),
         quiz: s.array(
           s.object({
             id: s.string(),
@@ -590,15 +589,8 @@ export default defineConfig({
       if (prev) problems.push(`class: ${prev}와 ${lesson.slug}의 session ${lesson.session}이 겹칩니다`);
       sessionNumbers.set(lesson.session, lesson.slug);
     }
-    const checklistIds = new Map<string, string>();
     for (const review of classReviews) {
       const where = `class: ${review.slug}/review.yml`;
-      for (const item of review.checklist) {
-        if (!item.id.startsWith("class-")) problems.push(`${where}: 체크리스트 id "${item.id}"는 class- 로 시작해야 합니다`);
-        const prev = checklistIds.get(item.id);
-        if (prev) problems.push(`${where}: 체크리스트 id "${item.id}"가 ${prev}에도 있습니다`);
-        checklistIds.set(item.id, review.slug);
-      }
       const quizIds = new Set<string>();
       for (const q of review.quiz) {
         if (!CLASS_QUESTION_ID.test(q.id)) problems.push(`${where}: 퀴즈 id "${q.id}"는 영문 소문자, 숫자, - 로 1~48자(숫자만은 안 됨)여야 합니다`);

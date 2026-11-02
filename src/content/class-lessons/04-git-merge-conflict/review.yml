@@ -1,25 +1,6 @@
 # 04-git-merge-conflict 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
 # 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
 slug: 04-git-merge-conflict
-checklist:
-  - id: class-04-three-way-rule
-    label: "base, current, incoming 이 무엇인지 말하고, 3-way merge 표의 네 경우 중 언제 충돌인지 설명하기"
-  - id: class-04-conflict-cases
-    label: "같은 부분 수정, 수정과 삭제는 충돌이고 다른 줄 수정은 자동으로 합쳐지는 것을 직접 확인하기"
-  - id: class-04-make-conflict
-    label: "conflict-test 폴더에서 main 과 feature 가 같은 줄을 고치게 해 일부러 충돌 만들기"
-  - id: class-04-read-markers
-    label: "git status 의 both modified 를 찾고, <<<<<<< HEAD 와 ======= 와 >>>>>>> 사이가 각각 어느 쪽인지 읽기"
-  - id: class-04-ours-theirs
-    label: "git checkout --ours, --theirs 로 파일 전체를 한쪽으로 골라 보기 (VS Code 버튼도)"
-  - id: class-04-diff-check
-    label: "git diff --check 로 남은 충돌 표시를 확인하고, add, status, commit 으로 마무리한 뒤 git log --oneline --graph 로 merge 커밋 보기"
-  - id: class-04-abort
-    label: "충돌 난 상태에서 git merge --abort 로 merge 이전으로 되돌리기"
-  - id: class-04-prevent
-    label: "충돌 예방 습관 일곱 가지(pull 먼저, 짧은 브랜치, 기준 브랜치 자주 가져오기, 작은 커밋과 PR, 작업 범위 나누기, 대규모 수정 따로, PR 전에 로컬에서 해결) 말해 보기"
-  - id: class-04-revert-rebase
-    label: "push 한 커밋을 git revert 로 되돌려 보고, 혼자 쓰는 feature 를 git rebase main 으로 옮겨 git log --graph 로 비교하기"
 quiz:
   - id: base-current-incoming
     q: "main 에 서서 git merge feature 를 실행했어요. current, incoming, base 는 각각 무엇인가요?"

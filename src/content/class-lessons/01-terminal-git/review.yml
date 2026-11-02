@@ -1,19 +1,6 @@
 # 01-terminal-git 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
 # 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
 slug: 01-terminal-git
-checklist:
-  - id: class-01-git-version
-    label: winget으로 Git 설치 후 git --version 확인
-  - id: class-01-ls-al
-    label: ls -al 출력의 d, l, - 와 rwx 읽어 보기
-  - id: class-01-shortcuts
-    label: Ctrl+u, Ctrl+w, history, !번호, cd - 직접 써 보기
-  - id: class-01-shell
-    label: echo $SHELL 로 셸 종류 확인
-  - id: class-01-first-commit
-    label: git init → add → commit → log 한 바퀴 해 보기
-  - id: class-01-push
-    label: GitHub 저장소를 만들어 push 해 보기
 quiz:
   - id: git-vs-github
     q: Git과 GitHub에 대한 설명으로 맞는 것은?

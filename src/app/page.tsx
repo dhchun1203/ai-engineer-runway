@@ -8,9 +8,10 @@ import { hasUnlockCookie } from "@/lib/auth";
 import { isRoadmapViewer } from "@/lib/roadmap-access";
 import { readProgressRows } from "@/lib/progress-store";
 import { readReviewStates } from "@/lib/review-store";
+import { readQuizAttempts } from "@/lib/quiz-attempt-store";
+import { classQuizProgress } from "@/lib/class-logic";
 import { listPublishedDates } from "@/lib/til/store";
 import { todayInSeoul } from "@/lib/today";
-import { basecampProgressId } from "@/content/basecamp";
 import { latestClassLesson } from "@/content/class-lesson-helpers";
 import { getClassSession } from "@/content/class-sessions";
 import { computeDueClassSessions } from "@/lib/class-review";
@@ -31,11 +32,12 @@ export default async function Home() {
   // 지켜 조건부 호출이 만드는 캐시 문제를 피한다.
   const unlocked = await hasUnlockCookie();
 
-  // 세 조회는 서로의 결과에 의존하지 않으므로 동시에 띄운다. 복습과 TIL 조회는 실패해도
+  // 조회들은 서로의 결과에 의존하지 않으므로 동시에 띄운다. 복습과 TIL 조회는 실패해도
   // 그 칸의 수치만 비우고, 진도 조회 실패만 배너로 알린다.
-  const [progressRead, reviewRead, tilDatesRead, roadmapViewer] = await Promise.all([
+  const [progressRead, reviewRead, attemptsRead, tilDatesRead, roadmapViewer] = await Promise.all([
     unlocked ? readProgressRows() : null,
     unlocked ? readReviewStates() : null,
+    unlocked ? readQuizAttempts() : null,
     unlocked ? listPublishedDates() : null,
     isRoadmapViewer(),
   ]);
@@ -43,10 +45,16 @@ export default async function Home() {
   const doneIds = new Set(progressRead?.ok ? progressRead.rows.map((row) => row.lessonSlug) : []);
   const today = todayInSeoul();
 
-  // 수업 복습: 가장 최근 회차의 복습 체크(bc: 행, class-sessions.ts)와 간격 복습 차례.
+  // 수업 복습: 가장 최근 회차의 퀴즈 진행(모든 문항을 풀면 완료)과 간격 복습 차례.
   const latestClass = latestClassLesson();
-  const classChecklist = latestClass ? (getClassSession(latestClass.slug)?.checklist ?? []) : [];
-  const classDone = classChecklist.filter((item) => doneIds.has(basecampProgressId(item.id))).length;
+  const classQuiz =
+    latestClass && attemptsRead?.ok
+      ? classQuizProgress(
+          latestClass.slug,
+          (getClassSession(latestClass.slug)?.quiz ?? []).map((q) => q.id),
+          new Set(attemptsRead.rows.map((row) => row.key)),
+        )
+      : null;
   const classReviewDue = reviewRead?.ok ? computeDueClassSessions(reviewRead.states, today).length : 0;
 
   // TIL 현황: 발행일(서울 날짜)만으로 센다. 본문까지 읽는 목록 조회를 피한다.
@@ -85,15 +93,15 @@ export default async function Home() {
               label="수업 복습"
               title={latestClass ? `${latestClass.session}회차 ${latestClass.title}` : "아직 정리된 수업이 없어요"}
               detail={
-                !progressOk || classChecklist.length === 0
+                !classQuiz || classQuiz.total === 0
                   ? "최근 수업을 복습하세요"
-                  : classDone === classChecklist.length
-                    ? "복습 체크 완료"
-                    : `복습 체크 ${classDone}/${classChecklist.length}`
+                  : classQuiz.done === classQuiz.total
+                    ? "복습 완료"
+                    : `확인 퀴즈 ${classQuiz.done}/${classQuiz.total}`
               }
               cta="수업 복습으로 가기"
             >
-              {progressOk ? <HomeCellBar done={classDone} total={classChecklist.length} /> : null}
+              {classQuiz ? <HomeCellBar done={classQuiz.done} total={classQuiz.total} /> : null}
             </HomeCard>
           </div>
           {classReviewDue > 0 ? (

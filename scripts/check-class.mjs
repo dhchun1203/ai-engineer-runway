@@ -22,7 +22,7 @@ function runCase(name, fn) {
   }
 }
 
-const { seoulWeekRange, pickQuizRefs, matchesQuery, monthGrid, classReviewId, weekdayIndex } = await import(
+const { seoulWeekRange, pickQuizRefs, matchesQuery, monthGrid, classReviewId, weekdayIndex, classQuizProgress } = await import(
   pathToFileURL(LOGIC_PATH).href
 );
 
@@ -111,6 +111,14 @@ runCase('달력: 2026년 2월(1일이 일요일)', () => {
   assert.equal(grid[grid.length - 1][6].date, '2026-03-01');
 });
 
+// --- classQuizProgress: 맞고 틀림과 상관없이 풀었는지만 센다 ---
+runCase('퀴즈 진행: 그 회차 문항만 센다', () => {
+  const attempted = new Set(['cl:a:q1', 'cl:b:q2', 'bc:a:q2']);
+  assert.deepEqual(classQuizProgress('a', ['q1', 'q2'], attempted), { done: 1, total: 2 });
+});
+runCase('퀴즈 진행: 전부 풀면 done과 total이 같다', () => {
+  assert.deepEqual(classQuizProgress('a', ['q1', 'q2'], new Set(['cl:a:q1', 'cl:a:q2'])), { done: 2, total: 2 });
+});
 runCase('복습 상태 id', () => {
   assert.equal(classReviewId('02-git-setup-remote'), 'class:02-git-setup-remote');
 });
