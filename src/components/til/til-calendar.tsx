@@ -2,160 +2,245 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { buildWeeks, computeStats, formatDayKo, monthLabels } from '@/lib/til/streak-logic';
-import { dayCellClass, dayCellTextClass } from './streak-level';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  buildMonth,
+  computeStats,
+  formatDayKo,
+  shiftMonth,
+  type MonthCell,
+  type MonthGrid,
+} from '@/lib/til/streak-logic';
 
-// TIL 목록 머리의 큰 잔디. 칸마다 날짜가 적혀 있고, 누르면 그날 쓴 글이 아래에 나온다
-// (아이패드에는 hover 툴팁이 없으므로 누르는 것을 기본으로 삼는다).
-// 칸은 터치 영역 44px을 지키는 크기로 고정하고, 넓은 화면은 14주, 좁은 화면은 최근 7주만 보여 준다.
+// TIL 목록 머리의 잉크 띠 달력. 매일 쓰는지가 한눈에 보이도록 안 쓴 날은 숫자만 두고,
+// 연속으로 쓴 날을 하나의 띠로 잇는다. 쉬어도 끊기지 않는 주말은 속이 빈 띠로 그린다.
+// 누르면 그날 쓴 글이 아래에 나온다(아이패드에는 hover 툴팁이 없으므로 누르는 것을 기본으로 삼는다).
+// 넓은 화면은 세 달, 태블릿 세로는 두 달, 좁은 화면은 한 달을 보여 주고 화살표로 달을 옮긴다.
 
 export type TilCalendarPost = { date: string; title: string; slug: string };
 
-const WEEK_COUNT = 14;
-const NARROW_WEEK_COUNT = 7;
-const WEEKDAY_LABELS = ['월', '', '수', '', '금', '', ''];
+const WEEKDAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
+// 맨 오른쪽 달부터의 표시 범위. 화면이 넓어질수록 왼쪽 달이 더 드러난다.
+const MONTH_VISIBILITY = ['hidden lg:flex', 'hidden md:flex', 'flex'];
+
+function dayBandClass(cell: MonthCell, isToday: boolean): string {
+  if (cell.written) {
+    return isToday
+      ? 'bg-accent font-bold text-white dark:bg-accent-dark dark:text-background-dark'
+      : 'bg-foreground font-bold text-surface dark:bg-foreground-dark dark:text-background-dark';
+  }
+  if (cell.bridged) return 'border-y-2 border-foreground dark:border-foreground-dark';
+  if (isToday) return 'font-bold text-accent dark:text-accent-dark';
+  return 'text-badge-neutral-text dark:text-badge-neutral-text-dark';
+}
+
+function DayButton({
+  cell,
+  today,
+  selected,
+  onSelect,
+}: {
+  cell: MonthCell;
+  today: string;
+  selected: boolean;
+  onSelect: (date: string) => void;
+}) {
+  const isToday = cell.date === today;
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(cell.date)}
+      disabled={cell.future}
+      aria-pressed={selected}
+      aria-label={`${formatDayKo(cell.date)}, ${cell.written ? '기록함' : '기록 없음'}${isToday ? ', 오늘' : ''}`}
+      className="tap-feedback relative flex h-11 min-w-0 items-center disabled:opacity-50"
+    >
+      <span
+        className={`flex h-8 min-w-0 flex-1 items-center justify-center text-label tabular-nums ${
+          cell.linkLeft ? '' : 'ml-[3px]'
+        } ${cell.linkRight ? '' : 'mr-[3px]'} ${dayBandClass(cell, isToday)}`}
+      >
+        {cell.day}
+      </span>
+      {selected ? (
+        <span aria-hidden="true" className="absolute inset-x-1.5 bottom-0 h-[3px] bg-foreground dark:bg-foreground-dark" />
+      ) : null}
+    </button>
+  );
+}
+
+function Month({
+  grid,
+  visibility,
+  today,
+  selected,
+  onSelect,
+}: {
+  grid: MonthGrid;
+  visibility: string;
+  today: string;
+  selected: string;
+  onSelect: (date: string) => void;
+}) {
+  return (
+    <div className={`min-w-0 flex-1 flex-col gap-1.5 ${visibility}`}>
+      <h2 className="text-subhead font-black">{grid.label}</h2>
+      <div
+        aria-hidden="true"
+        className="grid grid-cols-7 text-center text-[0.75rem] text-badge-neutral-text dark:text-badge-neutral-text-dark"
+      >
+        {WEEKDAY_LABELS.map((label) => (
+          <span key={label}>{label}</span>
+        ))}
+      </div>
+      <div className="grid grid-cols-7">
+        {grid.cells.map((cell, i) =>
+          cell ? (
+            <DayButton key={cell.date} cell={cell} today={today} selected={selected === cell.date} onSelect={onSelect} />
+          ) : (
+            <span key={`blank-${i}`} aria-hidden="true" />
+          ),
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function TilCalendar({ posts, today }: { posts: readonly TilCalendarPost[]; today: string }) {
   const dates = useMemo(() => posts.map((p) => p.date), [posts]);
-  const weeks = useMemo(() => buildWeeks(dates, today, WEEK_COUNT), [dates, today]);
-  const labels = useMemo(() => monthLabels(weeks), [weeks]);
   const stats = useMemo(() => computeStats(dates, today), [dates, today]);
 
+  const thisMonth = today.slice(0, 7);
+  const firstMonth = dates.reduce((min, d) => (d.slice(0, 7) < min ? d.slice(0, 7) : min), thisMonth);
+  const [endMonth, setEndMonth] = useState(thisMonth);
   // 처음에는 가장 최근에 쓴 날을 펼쳐 둔다. posts는 최신순이다.
   const [selected, setSelected] = useState(posts[0]?.date ?? today);
   const selectedPosts = posts.filter((p) => p.date === selected);
 
+  const months = useMemo(
+    () => [-2, -1, 0].map((delta) => buildMonth(dates, today, shiftMonth(endMonth, delta))),
+    [dates, today, endMonth],
+  );
+
   if (posts.length === 0) return null;
 
-  const firstNarrow = WEEK_COUNT - NARROW_WEEK_COUNT;
+  const canGoBack = endMonth > firstMonth;
+  const canGoForward = endMonth < thisMonth;
+  const arrow = 'tap-feedback flex h-11 w-11 items-center justify-center disabled:opacity-30';
 
   return (
-    <section aria-label="학습기록 잔디" className="flex flex-col gap-5">
-      <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
-        <div className="flex shrink-0 flex-col gap-3">
-          {/* 고른 칸의 바깥 테두리가 스크롤 영역에 잘리지 않도록 안쪽 여백을 두고, 음수 여백으로 자리를 맞춘다. */}
-          <div className="-m-1 overflow-x-auto p-1">
-            <div className="flex w-max gap-1">
-              <div aria-hidden="true" className="flex w-[1.125rem] flex-col gap-1">
-                <span className="h-5" />
-                {WEEKDAY_LABELS.map((label, i) => (
-                  <span
-                    key={i}
-                    className="flex h-11 items-center text-[0.75rem] leading-none text-badge-neutral-text dark:text-badge-neutral-text-dark"
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
-              {weeks.map((week, w) => {
-                // 좁은 화면의 첫 열은 앞 열이 숨어 달 이름이 비기 쉬우니 거기서만 따로 찍는다.
-                const narrowLabel =
-                  w === firstNarrow && !labels[w] ? `${Number(week[0].date.slice(5, 7))}월` : '';
-                return (
-                  <div key={week[0].date} className={`flex-col gap-1 ${w < firstNarrow ? 'hidden md:flex' : 'flex'}`}>
-                    <span
-                      aria-hidden="true"
-                      className="h-5 w-11 whitespace-nowrap text-[0.75rem] font-semibold leading-5 text-badge-neutral-text dark:text-badge-neutral-text-dark"
-                    >
-                      {labels[w] || <span className="md:hidden">{narrowLabel}</span>}
-                    </span>
-                    {week.map((day) =>
-                      day.future ? (
-                        <span key={day.date} aria-hidden="true" className="h-11 w-11" />
-                      ) : (
-                        <button
-                          key={day.date}
-                          type="button"
-                          onClick={() => setSelected(day.date)}
-                          aria-pressed={selected === day.date}
-                          aria-label={`${formatDayKo(day.date)}, ${day.written ? '기록함' : '기록 없음'}${day.date === today ? ', 오늘' : ''}`}
-                          title={`${formatDayKo(day.date)}: ${day.written ? '기록함' : '기록 없음'}`}
-                          className={`tap-feedback flex h-11 w-11 items-center justify-center rounded-sm text-[0.75rem] tabular-nums ${dayCellClass(day.written)} ${dayCellTextClass(day.written)} ${
-                            day.date === today ? 'ring-2 ring-inset ring-accent dark:ring-accent-dark' : ''
-                          } ${
-                            selected === day.date
-                              ? 'font-bold outline-2 outline-offset-1 outline-foreground dark:outline-foreground-dark'
-                              : ''
-                          }`}
-                        >
-                          {Number(day.date.slice(8))}
-                        </button>
-                      ),
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+    <section aria-label="학습기록 달력" className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
+        <div className="flex items-end gap-3.5">
+          <span className="text-[6.5rem] font-black leading-[0.82] tracking-[-0.06em] tabular-nums">{stats.current}</span>
+          <span className="flex flex-col gap-0.5">
+            <span className="text-heading font-black break-keep">
+              {stats.current > 0 ? '일째 이어 쓰는 중' : '일, 오늘 다시 시작해요'}
+            </span>
+            <span className="text-label font-normal break-keep text-badge-neutral-text dark:text-badge-neutral-text-dark">
+              주말은 쉬어도 이어져요
+            </span>
+          </span>
+        </div>
+        <dl className="flex gap-7">
+          <StatItem label="최장 연속" value={stats.longest} />
+          <StatItem label="이번 달" value={stats.monthDays} />
+          <StatItem label="전체" value={stats.totalDays} />
+        </dl>
+      </div>
 
-          <div
-            aria-hidden="true"
-            className="flex flex-wrap items-center gap-x-4 gap-y-1 pl-[1.375rem] text-[0.75rem] text-badge-neutral-text dark:text-badge-neutral-text-dark"
+      <div className="flex flex-col gap-3 border-t-2 border-foreground pt-2 dark:border-foreground-dark">
+        {firstMonth < thisMonth ? (
+          <nav aria-label="달 옮기기" className="-mb-2 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setEndMonth(shiftMonth(endMonth, -1))}
+              disabled={!canGoBack}
+              aria-label="이전 달"
+              className={arrow}
+            >
+              <ChevronLeft className="size-5" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setEndMonth(shiftMonth(endMonth, 1))}
+              disabled={!canGoForward}
+              aria-label="다음 달"
+              className={arrow}
+            >
+              <ChevronRight className="size-5" aria-hidden="true" />
+            </button>
+          </nav>
+        ) : null}
+        <div className="flex items-start gap-[18px]">
+          {months.map((grid, i) => (
+            <Month
+              key={grid.month}
+              grid={grid}
+              visibility={MONTH_VISIBILITY[i]}
+              today={today}
+              selected={selected}
+              onSelect={setSelected}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div
+        aria-hidden="true"
+        className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[0.75rem] text-badge-neutral-text dark:text-badge-neutral-text-dark"
+      >
+        <span className="flex items-center gap-1.5">
+          <span className="h-3 w-[22px] bg-foreground dark:bg-foreground-dark" />
+          기록한 날
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-3 w-[22px] border-y-2 border-foreground dark:border-foreground-dark" />
+          쉬어도 이어지는 주말
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-3 w-[22px] bg-accent dark:bg-accent-dark" />
+          오늘
+        </span>
+      </div>
+
+      <div aria-live="polite" className="hairline flex flex-col gap-1 pt-4">
+        <h3 className="text-label font-bold">{formatDayKo(selected)}</h3>
+        {selectedPosts.length > 0 ? (
+          <ul className="flex flex-col">
+            {selectedPosts.map((post) => (
+              <li key={post.slug}>
+                <Link
+                  href={`/til/${post.slug}`}
+                  className="nav-link tap-feedback flex min-h-11 items-center break-keep text-body font-normal"
+                >
+                  {post.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : selected === today ? (
+          <Link
+            href="/til/new"
+            className="nav-link tap-feedback flex min-h-11 items-center text-body font-bold text-accent dark:text-accent-dark"
           >
-            <span className="flex items-center gap-1.5">
-              <span className={`h-3.5 w-3.5 rounded-sm ${dayCellClass(true)}`} />
-              기록한 날
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-3.5 w-3.5 rounded-sm ring-2 ring-inset ring-accent dark:ring-accent-dark" />
-              오늘
-            </span>
-          </div>
-        </div>
-
-        <div className="flex min-w-0 flex-1 flex-col gap-5">
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 md:grid-cols-4 lg:grid-cols-2">
-            <StatItem label="연속 기록" value={stats.current} unit="일" note="주말은 쉬어도 이어져요" />
-            <StatItem label="최장 연속" value={stats.longest} unit="일" />
-            <StatItem label="이번 달 기록" value={stats.monthDays} unit="일" />
-            <StatItem label="전체 기록" value={stats.totalDays} unit="일" />
-          </dl>
-
-          <div aria-live="polite" className="hairline flex flex-col gap-1 pt-4">
-            <h2 className="text-label font-bold">{formatDayKo(selected)}</h2>
-            {selectedPosts.length > 0 ? (
-              <ul className="flex flex-col">
-                {selectedPosts.map((post) => (
-                  <li key={post.slug}>
-                    <Link
-                      href={`/til/${post.slug}`}
-                      className="nav-link tap-feedback flex min-h-11 items-center break-keep text-body font-normal"
-                    >
-                      {post.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : selected === today ? (
-              <Link
-                href="/til/new"
-                className="nav-link tap-feedback flex min-h-11 items-center text-body font-bold text-accent dark:text-accent-dark"
-              >
-                오늘 기록 쓰기
-              </Link>
-            ) : (
-              <p className="flex min-h-11 items-center text-body font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
-                이 날은 기록이 없어요.
-              </p>
-            )}
-          </div>
-        </div>
+            오늘 기록 쓰기
+          </Link>
+        ) : (
+          <p className="flex min-h-11 items-center text-body font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            이 날은 기록이 없어요.
+          </p>
+        )}
       </div>
     </section>
   );
 }
 
-function StatItem({ label, value, unit, note }: { label: string; value: number; unit: string; note?: string }) {
+function StatItem({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col">
       <dt className="text-label font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">{label}</dt>
-      <dd className="text-heading font-extrabold tabular-nums">
-        {value}
-        <span className="ml-0.5 text-label font-bold">{unit}</span>
-      </dd>
-      {note ? (
-        <dd className="break-keep text-[0.75rem] text-badge-neutral-text dark:text-badge-neutral-text-dark">{note}</dd>
-      ) : null}
+      <dd className="text-subhead font-bold tabular-nums">{value}일</dd>
     </div>
   );
 }

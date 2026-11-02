@@ -21,7 +21,9 @@ function runCase(name, fn) {
   }
 }
 
-const { addDays, buildWeeks, computeStats, formatDayKo, monthLabels } = await import(pathToFileURL(LOGIC_PATH).href);
+const { addDays, buildMonth, buildWeeks, computeStats, formatDayKo, monthLabels, shiftMonth } = await import(
+  pathToFileURL(LOGIC_PATH).href,
+);
 
 // 2026-11-02는 월요일, 2026-10-26도 월요일이다.
 const RECORDS = ['2026-09-10', '2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30', '2026-11-02'];
@@ -54,6 +56,45 @@ runCase('달력: 쓴 날만 표시', () => {
 runCase('달력: 달이 바뀌어도 날짜가 이어짐', () => {
   assert.equal(addDays('2026-10-31', 1), '2026-11-01');
   assert.equal(addDays('2026-01-01', -1), '2025-12-31');
+});
+
+// --- buildMonth ---
+const cellOf = (month, date) => buildMonth(RECORDS, '2026-11-02', month).cells.find((c) => c?.date === date);
+runCase('한 달: 월요일 시작이라 일요일 1일 앞에 빈칸 6개', () => {
+  const { cells, label } = buildMonth(RECORDS, '2026-11-02', '2026-11');
+  assert.equal(label, '11월');
+  assert.deepEqual(cells.slice(0, 6), [null, null, null, null, null, null]);
+  assert.equal(cells[6].date, '2026-11-01');
+  assert.equal(cells.at(-1).date, '2026-11-30');
+});
+runCase('한 달: 쓴 날 사이의 주말은 달을 넘어도 이어짐', () => {
+  assert.equal(cellOf('2026-10', '2026-10-31').bridged, true);
+  assert.equal(cellOf('2026-11', '2026-11-01').bridged, true);
+  assert.equal(cellOf('2026-11', '2026-11-01').linkRight, true);
+  assert.equal(cellOf('2026-11', '2026-11-02').linkLeft, true);
+});
+runCase('한 달: 혼자 쓴 날은 양쪽이 끊김', () => {
+  const c = cellOf('2026-09', '2026-09-10');
+  assert.equal(c.written, true);
+  assert.equal(c.linkLeft, false);
+  assert.equal(c.linkRight, false);
+});
+runCase('한 달: 앞에 쓴 날이 없는 주말은 안 이어짐', () => {
+  assert.equal(cellOf('2026-10', '2026-10-25').bridged, false);
+  assert.equal(cellOf('2026-10', '2026-10-26').linkLeft, false);
+});
+runCase('한 달: 다음 평일을 아직 안 썼으면 주말이 안 이어짐', () => {
+  const c = buildMonth(['2026-10-30'], '2026-10-31', '2026-10').cells.find((x) => x?.date === '2026-10-31');
+  assert.equal(c.bridged, false);
+});
+runCase('한 달: 평일 빈 날은 앞뒤에 써도 안 이어짐', () => {
+  const c = buildMonth(['2026-10-26', '2026-10-28'], '2026-11-02', '2026-10').cells.find((x) => x?.date === '2026-10-27');
+  assert.equal(c.bridged, false);
+  assert.equal(c.linkLeft, false);
+});
+runCase('달 옮기기: 해를 넘김', () => {
+  assert.equal(shiftMonth('2026-01', -1), '2025-12');
+  assert.equal(shiftMonth('2026-12', 1), '2027-01');
 });
 
 // --- monthLabels ---
