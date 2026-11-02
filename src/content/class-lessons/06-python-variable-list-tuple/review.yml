@@ -1,0 +1,293 @@
+# 06-python-variable-list-tuple 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
+# 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
+slug: 06-python-variable-list-tuple
+checklist:
+  - id: class-06-reassign
+    label: "age 에 값을 다시 넣고 type() 과 id() 를 찍어 전후가 어떻게 달라지는지, 가비지 컬렉터가 무슨 일을 하는지 말해 보기"
+  - id: class-06-arithmetic
+    label: "10/2, 10%3, 10//3, 10**2 의 결과를 먼저 말하고 실행해 맞춰 보고, += 와 %= 로 값 줄여 쓰기"
+  - id: class-06-compare-logic
+    label: "== 와 = 의 차이, and, or, not 의 결과를 설명하고 \"apple\" > \"banana\" 가 왜 False 인지 ord() 로 확인하기"
+  - id: class-06-short-circuit
+    label: "False and (10/0 > 1) 은 되고 False or (10/0 > 1) 은 에러가 나는 이유를 단락 평가로 설명하기"
+  - id: class-06-precedence
+    label: "10 + 2 * 5 > 25 와 (10 + 2) * 5 > 25 의 결과를 맞히고, 2*3//4 가 왼쪽부터 계산된다는 걸 확인하기"
+  - id: class-06-format
+    label: "% 방식, format, f-string 으로 같은 문장을 출력하고 {값:>10,} 의 뜻을 하나씩 말하기"
+  - id: class-06-receipt
+    label: "영수증 코드를 직접 쳐서 돌리고, \"=\" * 34 와 for menu, price, qty in orders 가 하는 일 설명하기"
+  - id: class-06-list-tuple
+    label: "리스트 요소를 바꾸고 append, insert, remove 를 써 본 뒤, 튜플을 바꿔 TypeError 를, 없는 값을 remove 해 ValueError 를 직접 보기"
+  - id: class-06-index-slice
+    label: "numbers[1:4], [::2], [::-1], [:3], [3:] 의 결과를 먼저 말하고, 왜 노트북에 마지막 줄만 나오는지 설명하기"
+  - id: class-06-matrix-len-in
+    label: "2차원 리스트에서 값을 [행][열] 로 꺼내고, len 과 in, not in 으로 개수와 포함 여부 확인하기"
+quiz:
+  - id: reassign-id-changes
+    q: "age = 20 뒤에 age = 25 를 실행했어요. 맞는 설명은?"
+    options:
+      - "20 객체의 값이 25 로 고쳐진다"
+      - "age 가 25 객체를 가리키게 되어 id(age) 가 달라진다"
+      - "age 가 20 과 25 를 둘 다 가리킨다"
+      - "에러가 난다"
+    answer: 1
+    explain: "변수는 값을 가리키는 이름표예요. 값을 다시 넣으면 이름표가 다른 객체로 옮겨 가서 id 값이 달라져요."
+  - id: assign-self-order
+    q: "money = 5000 뒤에 money = money + 2000 을 실행하면?"
+    options:
+      - "수학적으로 틀린 식이라 에러가 난다"
+      - "money 는 5000 그대로다"
+      - "오른쪽을 먼저 계산해 7000 을 money 에 넣는다"
+      - "money 는 2000 이 된다"
+    answer: 2
+    explain: "= 는 같다가 아니라 오른쪽을 계산해 왼쪽에 넣으라는 뜻이에요. 줄여 쓰면 money += 2000 이에요."
+  - id: type-after-reassign
+    q: "x = 10 뒤에 x = \"hello\" 를 실행하고 print(type(x)) 를 하면?"
+    options:
+      - "에러가 난다"
+      - "<class 'int'>"
+      - "<class 'str'>"
+      - "<class 'tuple'>"
+    answer: 2
+    explain: "같은 변수에 다른 자료형을 넣어도 에러가 나지 않아요. 지금 가리키는 값이 문자열이니 type 은 str 이에요."
+  - id: garbage-collector-role
+    q: "가비지 컬렉터(Garbage Collector)가 하는 일은?"
+    options:
+      - "코드의 문법 오류를 찾아 준다"
+      - "아무도 안 쓰는 객체의 메모리를 알아서 정리해 개발자가 해제를 신경 쓰지 않게 한다"
+      - "변수 이름을 정리해 준다"
+      - "오래된 파일을 지운다"
+    answer: 1
+    explain: "수업 노트 그대로 \"메모리 할당 해제를 개발자가 신경 쓰지 않는다\" 예요. 가리키는 이름표가 없는 객체를 파이썬이 치워요."
+  - id: arithmetic-results
+    q: "print(10/2), print(10%3), print(10//3) 의 출력을 순서대로 쓰면?"
+    options:
+      - "5, 1, 3"
+      - "5.0, 3, 1"
+      - "5.0, 1, 3"
+      - "5.0, 1, 3.3"
+    answer: 2
+    explain: "/ 의 결과는 나누어떨어져도 소수라 5.0 이에요. % 는 나머지 1, // 는 몫 3 이에요."
+  - id: compound-assign-score
+    q: "score = 100, score += 50, score %= 3 을 차례로 실행한 뒤 score 는?"
+    options:
+      - "0"
+      - "3"
+      - "150"
+      - "50"
+    answer: 0
+    explain: "100 에서 150 이 되고, 150 % 3 은 나누어떨어지니 나머지 0 이에요."
+  - id: string-compare-ord
+    q: "\"apple\" > \"banana\" 의 결과와 이유로 맞는 것은?"
+    options:
+      - "True, 글자 수가 더 적어서"
+      - "False, 첫 글자 a(97)가 b(98)보다 번호가 작아서"
+      - "True, 사전에서 먼저 나와서"
+      - "에러, 문자열은 비교할 수 없어서"
+    answer: 1
+    explain: "문자열은 앞 글자부터 번호로 비교해요. ord(\"a\") 는 97, ord(\"b\") 는 98 이에요."
+  - id: short-circuit-and-or
+    q: "False and (10/0 > 1) 과 False or (10/0 > 1) 을 실행하면?"
+    options:
+      - "둘 다 ZeroDivisionError"
+      - "둘 다 False"
+      - "and 는 False, or 는 ZeroDivisionError"
+      - "and 는 ZeroDivisionError, or 는 False"
+    answer: 2
+    explain: "and 는 왼쪽이 False 면 답이 정해져 오른쪽을 계산하지 않아요. or 는 왼쪽이 False 면 오른쪽을 봐야 해서 0 으로 나누다 에러가 나요."
+  - id: precedence-parens
+    q: "10 + 2 * 5 > 25 와 (10 + 2) * 5 > 25 의 결과는?"
+    options:
+      - "True, True"
+      - "False, False"
+      - "True, False"
+      - "False, True"
+    answer: 3
+    explain: "첫 식은 곱셈이 먼저라 20 > 25 로 False, 둘째는 괄호가 먼저라 60 > 25 로 True 예요."
+  - id: same-rank-left-to-right
+    q: "print(2*3//4) 의 출력과 이유는?"
+    options:
+      - "1, * 와 // 는 같은 등급이라 왼쪽부터 6//4 를 계산한다"
+      - "0, // 를 먼저 계산해 2*0 이 된다"
+      - "1.5, 나눗셈이라 소수가 나온다"
+      - "2, 곱셈이 항상 나중이다"
+    answer: 0
+    explain: "*, /, //, % 는 같은 등급이고 왼쪽부터 계산해요. 2*3 은 6, 6//4 는 1 이에요."
+  - id: fstring-format-spec
+    q: "f\"{13000:>10,}\" 에서 콜론 뒤 >10, 의 뜻은?"
+    options:
+      - "10 보다 큰 값만 출력"
+      - "왼쪽 정렬, 소수점 10 자리"
+      - "오른쪽 정렬, 폭 10 칸, 천 단위 쉼표"
+      - "10 번 반복하고 쉼표로 잇기"
+    answer: 2
+    explain: "> 는 오른쪽 정렬, 10 은 폭, 쉼표는 천 단위예요. 13,000 은 여섯 글자라 앞에 공백 네 칸이 붙어요."
+  - id: percent-format-marks
+    q: "print(\"[%5d]\" % (20)) 과 print(\"%.2f\" % (3.141592)) 의 출력은?"
+    options:
+      - "[20], 3.141592"
+      - "[   20], 3.14"
+      - "[20   ], 3.1"
+      - "[00020], 3.15"
+    answer: 1
+    explain: "%5d 는 정수를 폭 5칸에 넣어 왼쪽에 공백이 붙어요. %.2f 는 소수점 아래 2자리예요."
+  - id: receipt-string-repeat
+    q: "영수증 코드에서 print(\"=\" * 34) 가 하는 일은?"
+    options:
+      - "34 와 같은지 비교한다"
+      - "= 를 34번 반복한 줄을 출력한다"
+      - "에러가 난다"
+      - "34 칸 띄어 = 를 출력한다"
+    answer: 1
+    explain: "문자열에 정수를 곱하면 그만큼 반복해요. 구분선을 그릴 때 이렇게 써요."
+  - id: list-vs-tuple-change
+    q: "리스트와 튜플의 차이로 맞는 것은?"
+    options:
+      - "리스트는 순서가 있고 튜플은 순서가 없다"
+      - "리스트는 바꿀 수 있고, 튜플은 만든 뒤 바꾸면 TypeError 가 난다"
+      - "튜플이 리스트보다 항상 메모리를 더 쓴다"
+      - "튜플은 슬라이싱이 안 된다"
+    answer: 1
+    explain: "둘 다 순서가 있고 인덱스와 슬라이싱이 돼요. 가르는 건 바꿀 수 있는가예요. 크기는 같은 값이면 튜플이 더 작아요."
+  - id: list-methods-result
+    q: "fruits = [\"apple\"] 에 append(\"banana\") 와 insert(0, \"kiwi\") 를 차례로 하면?"
+    options:
+      - "['apple', 'banana', 'kiwi']"
+      - "['banana', 'kiwi', 'apple']"
+      - "['kiwi', 'apple', 'banana']"
+      - "['kiwi', 'banana']"
+    answer: 2
+    explain: "append 는 맨 뒤에, insert(0, 값) 은 0번 자리에 넣어요. 없는 값을 remove 하면 ValueError 예요."
+  - id: tuple-comma
+    q: "point = 1, 2, 3 을 실행하고 print(type(point)) 를 하면?"
+    options:
+      - "에러가 난다"
+      - "<class 'int'>"
+      - "<class 'list'>"
+      - "<class 'tuple'>"
+    answer: 3
+    explain: "괄호 없이 쉼표만으로도 튜플이 돼요. 그래서 (1) 은 정수이고 (1,) 이 튜플이에요."
+  - id: slice-end-exclusive
+    q: "numbers = [0, 1, 2, 3, 4, 5] 에서 numbers[1:4] 와 numbers[::-1] 의 결과는?"
+    options:
+      - "[1, 2, 3], [5, 4, 3, 2, 1, 0]"
+      - "[1, 2, 3, 4], [5, 4, 3, 2, 1, 0]"
+      - "[0, 1, 2, 3], [0, 1, 2, 3, 4, 5]"
+      - "[1, 2, 3], [1, 0]"
+    answer: 0
+    explain: "끝 번호는 포함하지 않아 1번부터 4번 미만이에요. 간격 -1 은 역순이에요."
+  - id: notebook-last-line
+    q: "노트북 한 칸에 numbers[1:4] 와 numbers[3:] 를 차례로 쓰고 실행했어요. 화면에 나오는 것은?"
+    options:
+      - "두 결과 모두"
+      - "아무것도 안 나온다"
+      - "마지막 줄 결과 [3, 4, 5] 만"
+      - "첫 줄 결과 [1, 2, 3] 만"
+    answer: 2
+    explain: "노트북은 칸의 마지막 줄이 값일 때만 자동으로 보여 줘요. 다 보려면 print 로 감싸요."
+  - id: matrix-row-col
+    q: "matrix = [[1,2,3],[4,5,6]] 에서 matrix[1][2] 와 len(matrix[0]) 은?"
+    options:
+      - "2, 2"
+      - "6, 3"
+      - "5, 2"
+      - "6, 2"
+    answer: 1
+    explain: "[행][열] 순서이고 0부터 세요. 두 번째 행의 세 번째 값은 6, 첫 행의 값 개수는 3 이에요. len(matrix) 는 행 개수 2 예요."
+  - id: not-in-result
+    q: "user_roles = [\"admin\", \"member\", \"guest\"] 일 때 \"admin\" not in user_roles 와 \"owner\" not in user_roles 는?"
+    options:
+      - "True, True"
+      - "False, False"
+      - "True, False"
+      - "False, True"
+    answer: 3
+    explain: "admin 은 목록에 있으니 not in 은 False, owner 는 없으니 True 예요."
+commands:
+  - cmd: type(값)
+    desc: 값의 자료형 확인
+    group: Python
+  - cmd: id(값)
+    desc: 값이 가리키는 객체의 고유 번호 확인
+    group: Python
+  - cmd: ord("a")
+    desc: 글자의 번호 확인(a 는 97)
+    group: Python
+  - cmd: + - * / % // **
+    desc: 더하기, 빼기, 곱하기, 나누기(소수), 나머지, 몫, 거듭제곱
+    group: Python
+  - cmd: += -= *= /= %=
+    desc: 복합 대입. score += 50 은 score = score + 50
+    group: Python
+  - cmd: == != > < >= <=
+    desc: 비교 연산자. 결과는 True 또는 False
+    group: Python
+  - cmd: and / or / not
+    desc: 둘 다 참, 하나라도 참, 뒤집기
+    group: Python
+  - cmd: '"%s %d %.2f" % (값들)'
+    desc: "% 방식 포맷. 문자열, 정수, 소수점 2자리"
+    group: Python
+  - cmd: '"{0} {1}".format(a, b)'
+    desc: format 방식 포맷. 숫자는 넣은 값의 순서
+    group: Python
+  - cmd: f"{값:>10,}"
+    desc: f-string 포맷. 오른쪽 정렬, 폭 10칸, 천 단위 쉼표
+    group: Python
+  - cmd: '"=" * 34'
+    desc: 문자열 34번 반복
+    group: Python
+  - cmd: for a, b in 목록
+    desc: 묶음을 하나씩 꺼내 변수에 나눠 담기
+    group: Python
+  - cmd: 리스트.append(값)
+    desc: 맨 뒤에 추가
+    group: Python
+  - cmd: 리스트.insert(자리, 값)
+    desc: 그 자리에 끼워 넣기
+    group: Python
+  - cmd: 리스트.remove(값)
+    desc: 그 값을 찾아 지우기. 없으면 ValueError
+    group: Python
+  - cmd: sys.getsizeof(값)
+    desc: 객체 크기를 바이트로 확인(import sys 필요)
+    group: Python
+  - cmd: 목록[0] / 목록[-1]
+    desc: 맨 앞 값 / 맨 뒤 값 꺼내기
+    group: Python
+  - cmd: 목록[시작:끝:간격]
+    desc: 슬라이싱. 끝은 포함하지 않음. [::-1] 은 역순
+    group: Python
+  - cmd: matrix[행][열]
+    desc: 2차원 리스트에서 값 꺼내기
+    group: Python
+  - cmd: len(값)
+    desc: 개수 세기. 리스트, 튜플, 문자열 모두 가능
+    group: Python
+  - cmd: 값 in 목록 / 값 not in 목록
+    desc: 포함 여부 확인
+    group: Python
+  - cmd: uv add --dev ipykernel
+    desc: 실습 노트북을 돌릴 커널을 개발용 묶음으로 설치
+    group: uv
+terms:
+  - word: 재할당 (reassignment)
+    definition: 이미 있는 변수에 값을 다시 넣는 것. 변수가 다른 객체를 가리키게 되어 id 값이 달라진다.
+  - word: 가비지 컬렉터 (Garbage Collector)
+    definition: 아무도 쓰지 않는 객체의 메모리를 알아서 정리하는 기능. 개발자가 메모리 해제를 신경 쓰지 않게 해 준다.
+  - word: 복합 대입 연산자
+    definition: 계산과 대입을 줄여 쓰는 연산자. score += 50 은 score = score + 50 과 같다.
+  - word: 단락 평가 (short-circuit evaluation)
+    definition: and, or 에서 왼쪽만 보고 답이 정해지면 오른쪽을 계산하지 않는 동작.
+  - word: 연산자 우선순위
+    definition: 한 식에서 먼저 계산하는 순서. 괄호가 가장 먼저이고, 같은 등급은 왼쪽부터 계산한다(거듭제곱 등 일부 제외).
+  - word: f-string
+    definition: 문자열 앞에 f 를 붙이고 {} 안에 변수나 식을 바로 쓰는 포맷 방식. 콜론 뒤에 정렬, 폭, 쉼표를 지정한다.
+  - word: 리스트 (list)
+    definition: 대괄호로 만드는 순서 있는 값 묶음. 만든 뒤에도 요소를 바꾸거나 추가, 삭제할 수 있다.
+  - word: 튜플 (tuple)
+    definition: 쉼표로 만드는 순서 있는 값 묶음. 만든 뒤에는 추가, 수정, 삭제를 할 수 없고 같은 값이면 리스트보다 작다.
+  - word: 슬라이싱 (slicing)
+    definition: "[시작:끝:간격] 형식으로 일부를 잘라 꺼내는 것. 끝은 포함하지 않고, 범위를 넘어도 에러가 나지 않는다."
+  - word: 2차원 리스트
+    definition: 리스트 안에 리스트를 넣은 형태. 표처럼 [행][열] 순서로 값을 꺼낸다.
