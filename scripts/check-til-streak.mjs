@@ -46,9 +46,10 @@ runCase('달력: 일요일이 오늘이면 앞날이 없음', () => {
   assert.equal(last[6].date, '2026-11-08');
   assert.ok(last.every((d) => !d.future));
 });
-runCase('달력: 같은 날 여러 편을 센다', () => {
-  const week = buildWeeks(['2026-11-02', '2026-11-02'], '2026-11-02', 1)[0];
-  assert.equal(week[0].count, 2);
+runCase('달력: 쓴 날만 표시', () => {
+  const week = buildWeeks(['2026-11-02', '2026-11-02'], '2026-11-04', 1)[0];
+  assert.equal(week[0].written, true);
+  assert.equal(week[1].written, false);
 });
 runCase('달력: 달이 바뀌어도 날짜가 이어짐', () => {
   assert.equal(addDays('2026-10-31', 1), '2026-11-01');
@@ -84,12 +85,12 @@ runCase('연속: 토요일이 오늘이고 금요일까지 썼으면 유지', ()
   assert.equal(computeStats(['2026-10-29', '2026-10-30'], '2026-10-31').current, 2);
 });
 runCase('연속: 기록이 없으면 0', () => {
-  assert.deepEqual(computeStats([], '2026-11-02'), { current: 0, longest: 0, monthDays: 0, total: 0 });
+  assert.deepEqual(computeStats([], '2026-11-02'), { current: 0, longest: 0, monthDays: 0, totalDays: 0 });
 });
-runCase('집계: 이번 달은 날 수, 전체는 글 수', () => {
+runCase('집계: 같은 날 여러 편이어도 하루로 센다', () => {
   const s = computeStats(['2026-11-02', '2026-11-02', '2026-10-30'], '2026-11-02');
   assert.equal(s.monthDays, 1);
-  assert.equal(s.total, 3);
+  assert.equal(s.totalDays, 2);
 });
 runCase('날짜 글자: 요일까지', () => {
   assert.equal(formatDayKo('2026-11-02'), '11월 2일 월요일');

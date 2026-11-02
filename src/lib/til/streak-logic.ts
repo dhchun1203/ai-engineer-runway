@@ -1,9 +1,10 @@
 // TIL 잔디의 순수 계산. 날짜는 전부 서울 기준 'YYYY-MM-DD' 문자열로 받는다.
+// 하루에 몇 편을 썼는지는 따지지 않고, 그날 썼는지만 본다.
 // 검사는 scripts/check-til-streak.mjs(import가 없어 Node 타입 스트리핑으로 그대로 로드한다).
 
 export type StreakDay = {
   date: string;
-  count: number;
+  written: boolean;
   future: boolean;
 };
 
@@ -11,7 +12,7 @@ export type StreakStats = {
   current: number;
   longest: number;
   monthDays: number;
-  total: number;
+  totalDays: number;
 };
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
@@ -36,21 +37,15 @@ export function formatDayKo(iso: string): string {
   return `${Number(m)}월 ${Number(d)}일 ${WEEKDAY_KO[toUtc(iso).getUTCDay()]}요일`;
 }
 
-export function countByDate(dates: readonly string[]): Map<string, number> {
-  const counts = new Map<string, number>();
-  for (const d of dates) counts.set(d, (counts.get(d) ?? 0) + 1);
-  return counts;
-}
-
 // 월요일에 시작하는 주 단위 달력. 마지막 열이 오늘이 든 주이고, 오늘 뒤의 칸은 future로 표시한다.
 export function buildWeeks(dates: readonly string[], today: string, weekCount: number): StreakDay[][] {
-  const counts = countByDate(dates);
+  const written = new Set(dates);
   const sinceMonday = (toUtc(today).getUTCDay() + 6) % 7;
   const start = addDays(today, -sinceMonday - (weekCount - 1) * 7);
   return Array.from({ length: weekCount }, (_, w) =>
     Array.from({ length: 7 }, (_, d) => {
       const date = addDays(start, w * 7 + d);
-      return { date, count: counts.get(date) ?? 0, future: date > today };
+      return { date, written: written.has(date), future: date > today };
     }),
   );
 }
@@ -87,6 +82,6 @@ export function computeStats(dates: readonly string[], today: string): StreakSta
     current: run,
     longest,
     monthDays: days.filter((d) => d.startsWith(today.slice(0, 7))).length,
-    total: dates.length,
+    totalDays: days.length,
   };
 }

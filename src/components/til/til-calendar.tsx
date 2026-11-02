@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { buildWeeks, computeStats, formatDayKo, monthLabels } from '@/lib/til/streak-logic';
-import { levelClass, levelTextClass } from './streak-level';
+import { dayCellClass, dayCellTextClass } from './streak-level';
 
 // TIL 목록 머리의 큰 잔디. 칸마다 날짜가 적혀 있고, 누르면 그날 쓴 글이 아래에 나온다
 // (아이패드에는 hover 툴팁이 없으므로 누르는 것을 기본으로 삼는다).
@@ -68,9 +68,9 @@ export function TilCalendar({ posts, today }: { posts: readonly TilCalendarPost[
                           type="button"
                           onClick={() => setSelected(day.date)}
                           aria-pressed={selected === day.date}
-                          aria-label={`${formatDayKo(day.date)}, ${day.count}편${day.date === today ? ', 오늘' : ''}`}
-                          title={`${formatDayKo(day.date)}: ${day.count}편`}
-                          className={`tap-feedback flex h-11 w-11 items-center justify-center rounded-sm text-[0.75rem] tabular-nums ${levelClass(day.count)} ${levelTextClass(day.count)} ${
+                          aria-label={`${formatDayKo(day.date)}, ${day.written ? '기록함' : '기록 없음'}${day.date === today ? ', 오늘' : ''}`}
+                          title={`${formatDayKo(day.date)}: ${day.written ? '기록함' : '기록 없음'}`}
+                          className={`tap-feedback flex h-11 w-11 items-center justify-center rounded-sm text-[0.75rem] tabular-nums ${dayCellClass(day.written)} ${dayCellTextClass(day.written)} ${
                             day.date === today ? 'ring-2 ring-inset ring-accent dark:ring-accent-dark' : ''
                           } ${
                             selected === day.date
@@ -92,16 +92,10 @@ export function TilCalendar({ posts, today }: { posts: readonly TilCalendarPost[
             aria-hidden="true"
             className="flex flex-wrap items-center gap-x-4 gap-y-1 pl-[1.375rem] text-[0.75rem] text-badge-neutral-text dark:text-badge-neutral-text-dark"
           >
-            {[
-              [1, '1편'],
-              [2, '2편'],
-              [3, '3편 이상'],
-            ].map(([count, label]) => (
-              <span key={label} className="flex items-center gap-1.5">
-                <span className={`h-3.5 w-3.5 rounded-sm ${levelClass(count as number)}`} />
-                {label}
-              </span>
-            ))}
+            <span className="flex items-center gap-1.5">
+              <span className={`h-3.5 w-3.5 rounded-sm ${dayCellClass(true)}`} />
+              기록한 날
+            </span>
             <span className="flex items-center gap-1.5">
               <span className="h-3.5 w-3.5 rounded-sm ring-2 ring-inset ring-accent dark:ring-accent-dark" />
               오늘
@@ -114,7 +108,7 @@ export function TilCalendar({ posts, today }: { posts: readonly TilCalendarPost[
             <StatItem label="연속 기록" value={stats.current} unit="일" note="주말은 쉬어도 이어져요" />
             <StatItem label="최장 연속" value={stats.longest} unit="일" />
             <StatItem label="이번 달 기록" value={stats.monthDays} unit="일" />
-            <StatItem label="전체 글" value={stats.total} unit="편" />
+            <StatItem label="전체 기록" value={stats.totalDays} unit="일" />
           </dl>
 
           <div aria-live="polite" className="hairline flex flex-col gap-1 pt-4">

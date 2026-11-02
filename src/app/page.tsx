@@ -51,7 +51,8 @@ export default async function Home() {
 
   // TIL 현황: 발행일(서울 날짜)만으로 센다. 본문까지 읽는 목록 조회를 피한다.
   const tilDates = tilDatesRead?.ok ? tilDatesRead.data : null;
-  const tilThisMonth = tilDates?.filter((date) => date.startsWith(today.slice(0, 7))).length ?? 0;
+  const tilDays = [...new Set(tilDates ?? [])];
+  const tilThisMonth = tilDays.filter((date) => date.startsWith(today.slice(0, 7))).length;
 
   // 파이썬 손풀기: 처음으로 안 끝낸 단원으로 바로 보낸다.
   const practiceUnits = getOrderedPracticeUnits();
@@ -121,7 +122,7 @@ export default async function Home() {
                 : "오늘 기록은 아직이에요"
           }
           detail={
-            tilDates ? `이번 달 ${tilThisMonth}편, 모두 ${tilDates.length}편` : "로그인하면 내 기록 현황이 보여요"
+            tilDates ? `이번 달 ${tilThisMonth}일, 모두 ${tilDays.length}일 기록했어요` : "로그인하면 내 기록 현황이 보여요"
           }
           cta="TIL로 가기"
         >

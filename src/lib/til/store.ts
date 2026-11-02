@@ -187,7 +187,7 @@ export async function slugExists(slug: string, exceptId?: string): Promise<boole
 }
 
 // 발행글의 published_at(timestamptz)을 서울 날짜(YYYY-MM-DD)로 변환한 목록.
-// 잔디/streak 캘린더(TilStreak)가 소비한다. 중복(같은 날 여러 편) 허용.
+// 잔디/streak 캘린더(TilStreak)가 소비한다. 같은 날 여러 편이면 날짜가 겹칠 수 있다.
 export async function listPublishedDates(): Promise<TilRead<string[]>> {
   const userId = await getCurrentUserId();
   if (!userId) return { ok: true, data: [] };

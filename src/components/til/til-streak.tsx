@@ -1,6 +1,6 @@
 import { todayInSeoul } from '@/lib/today';
 import { buildWeeks, computeStats, formatDayKo, monthLabels } from '@/lib/til/streak-logic';
-import { levelClass } from './streak-level';
+import { dayCellClass } from './streak-level';
 
 // 홈 카드 안의 작은 잔디(최근 12주). 카드 전체가 링크라 칸은 누를 수 없는 표시 전용이고,
 // 날짜별 글은 /til의 큰 달력(TilCalendar)에서 본다. dates는 YYYY-MM-DD 발행 날짜들(중복 가능).
@@ -34,8 +34,8 @@ export function TilStreak({ dates }: { dates: readonly string[] }) {
               ) : (
                 <span
                   key={day.date}
-                  title={`${formatDayKo(day.date)}: ${day.count}편`}
-                  className={`h-5 w-5 rounded-sm ${levelClass(day.count)} ${
+                  title={`${formatDayKo(day.date)}: ${day.written ? '기록함' : '기록 없음'}`}
+                  className={`h-5 w-5 rounded-sm ${dayCellClass(day.written)} ${
                     day.date === today ? 'ring-2 ring-inset ring-accent dark:ring-accent-dark' : ''
                   }`}
                 />
