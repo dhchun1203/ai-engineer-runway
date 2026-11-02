@@ -32,24 +32,6 @@ quiz:
       - "에러가 난다"
     answer: 1
     explain: "변수는 값을 가리키는 이름표예요. 값을 다시 넣으면 이름표가 다른 객체로 옮겨 가서 id 값이 달라져요."
-  - id: assign-self-order
-    q: "money = 5000 뒤에 money = money + 2000 을 실행하면?"
-    options:
-      - "수학적으로 틀린 식이라 에러가 난다"
-      - "money 는 5000 그대로다"
-      - "오른쪽을 먼저 계산해 7000 을 money 에 넣는다"
-      - "money 는 2000 이 된다"
-    answer: 2
-    explain: "= 는 같다가 아니라 오른쪽을 계산해 왼쪽에 넣으라는 뜻이에요. 줄여 쓰면 money += 2000 이에요."
-  - id: type-after-reassign
-    q: "x = 10 뒤에 x = \"hello\" 를 실행하고 print(type(x)) 를 하면?"
-    options:
-      - "에러가 난다"
-      - "<class 'int'>"
-      - "<class 'str'>"
-      - "<class 'tuple'>"
-    answer: 2
-    explain: "같은 변수에 다른 자료형을 넣어도 에러가 나지 않아요. 지금 가리키는 값이 문자열이니 type 은 str 이에요."
   - id: garbage-collector-role
     q: "가비지 컬렉터(Garbage Collector)가 하는 일은?"
     options:
@@ -68,15 +50,6 @@ quiz:
       - "5.0, 1, 3.3"
     answer: 2
     explain: "/ 의 결과는 나누어떨어져도 소수라 5.0 이에요. % 는 나머지 1, // 는 몫 3 이에요."
-  - id: compound-assign-score
-    q: "score = 100, score += 50, score %= 3 을 차례로 실행한 뒤 score 는?"
-    options:
-      - "0"
-      - "3"
-      - "150"
-      - "50"
-    answer: 0
-    explain: "100 에서 150 이 되고, 150 % 3 은 나누어떨어지니 나머지 0 이에요."
   - id: string-compare-ord
     q: "\"apple\" > \"banana\" 의 결과와 이유로 맞는 것은?"
     options:
@@ -131,15 +104,6 @@ quiz:
       - "[00020], 3.15"
     answer: 1
     explain: "%5d 는 정수를 폭 5칸에 넣어 왼쪽에 공백이 붙어요. %.2f 는 소수점 아래 2자리예요."
-  - id: receipt-string-repeat
-    q: "영수증 코드에서 print(\"=\" * 34) 가 하는 일은?"
-    options:
-      - "34 와 같은지 비교한다"
-      - "= 를 34번 반복한 줄을 출력한다"
-      - "에러가 난다"
-      - "34 칸 띄어 = 를 출력한다"
-    answer: 1
-    explain: "문자열에 정수를 곱하면 그만큼 반복해요. 구분선을 그릴 때 이렇게 써요."
   - id: list-vs-tuple-change
     q: "리스트와 튜플의 차이로 맞는 것은?"
     options:
