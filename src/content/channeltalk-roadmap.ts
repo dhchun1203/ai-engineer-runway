@@ -434,6 +434,12 @@ export const roadmapStages: readonly RoadmapStage[] = [
         lessonSlug: "redesign-work-ai",
       },
       {
+        title: "고객사 CS 담당자의 일을 직접 듣고, 같이 나온 문제 하나를 끝까지 풀어 보기",
+        coverage: "separate",
+        where: "문제를 찾는 과정 자체가 AX의 시작이다. 공개 자료로 가설을 세우고, 신분을 밝히고 만나서 확인한다",
+        lessonSlug: "field-problem-discovery",
+      },
+      {
         title: "개발자와 비개발자를 오가며 문제를 함께 정의하는 연습",
         coverage: "reinforce",
         where: "Step 2, 3 팀 프로젝트와 Step 4 기업 발표",
