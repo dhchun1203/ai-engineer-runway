@@ -68,10 +68,11 @@ function DayButton({
       disabled={cell.future}
       aria-pressed={selected}
       aria-label={`${formatDayKo(cell.date)}, ${cell.written ? '기록함' : '기록 없음'}${isToday ? ', 오늘' : ''}`}
-      className="tap-feedback relative flex h-11 min-w-0 items-center disabled:opacity-50"
+      className="til-day tap-feedback relative flex h-11 min-w-0 items-center disabled:opacity-50"
     >
       <span
-        className={`flex h-8 min-w-0 flex-1 items-center justify-center text-label tabular-nums ${
+        data-written={cell.written}
+        className={`til-day-band flex h-8 min-w-0 flex-1 items-center justify-center text-label tabular-nums ${
           cell.linkLeft ? '' : 'ml-[3px]'
         } ${cell.linkRight ? '-mr-px' : 'mr-[3px]'} ${dayBandClass(cell, isToday)}`}
       >

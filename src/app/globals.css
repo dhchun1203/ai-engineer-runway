@@ -3058,6 +3058,55 @@ code[data-theme*=" "] span {
   margin-top: 1.2em;
 }
 
+/* TIL 달력 날짜 호버. 고를 수 있다는 신호로 파란 밑줄을 미리 긋는다(고른 날의 밑줄과 같은 자리).
+   안 쓴 날은 옅은 파란 바탕과 파란 숫자, 쓴 날은 띠가 끊겨 보이지 않게 색만 살짝 옅어진다.
+   앞으로의 날짜(disabled)는 반응하지 않는다. 레이어 밖이라 유틸리티의 글자색을 이긴다. */
+.til-day-band {
+  transition:
+    opacity 120ms ease-out,
+    color 120ms ease-out,
+    background-color 120ms ease-out;
+}
+
+@media (hover: hover) {
+  .til-day:enabled {
+    cursor: pointer;
+  }
+
+  .til-day:enabled:not([aria-pressed='true']):hover::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0.375rem;
+    bottom: 0;
+    height: 3px;
+    background-color: var(--color-accent);
+  }
+
+  .til-day:enabled:hover .til-day-band[data-written='true'] {
+    opacity: 0.82;
+  }
+
+  .til-day:enabled:hover .til-day-band[data-written='false'] {
+    color: var(--color-accent);
+    background-color: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  }
+
+  .dark .til-day:enabled:not([aria-pressed='true']):hover::after {
+    background-color: var(--color-accent-dark);
+  }
+
+  .dark .til-day:enabled:hover .til-day-band[data-written='false'] {
+    color: var(--color-accent-dark);
+    background-color: color-mix(in srgb, var(--color-accent-dark) 14%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .til-day-band {
+    transition: none;
+  }
+}
+
 /* ── 복습 퀴즈 보기 호버 (2026-10-14) ────────────────────────────────────────
    베이스캠프 복습 퀴즈와 /review 객관식이 함께 쓰는 보기 버튼. 아직 고르지 않은
    보기(:enabled)에 마우스를 올리면 파란 테두리와 옅은 파란 바탕, 흐림 없는 그림자로 떠오른다. 이미
