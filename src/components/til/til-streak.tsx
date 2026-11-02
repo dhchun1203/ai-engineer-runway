@@ -18,7 +18,8 @@ export function TilStreak({ dates }: { dates: readonly string[] }) {
 
   return (
     <section aria-label="학습기록 잔디" className="flex flex-col gap-2">
-      <div className="flex w-max max-w-full gap-1 overflow-hidden">
+      {/* 맨 오른쪽 달 이름이 칸보다 살짝 길어 잘리지 않도록 오른쪽에 여백을 둔다. */}
+      <div className="flex w-max max-w-full gap-1 overflow-x-auto pr-1">
         {weeks.map((week, w) => (
           <div key={week[0].date} className="flex flex-col gap-1">
             <span
