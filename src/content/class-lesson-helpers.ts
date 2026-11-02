@@ -23,16 +23,21 @@ export function getAdjacentClassLessons(slug: string): { prev: ClassLesson | nul
   return { prev: ordered[index - 1] ?? null, next: ordered[index + 1] ?? null };
 }
 
-export type ClassModuleGroup = { module: Module; step: Step; lessons: ClassLesson[] };
+export type ClassModuleGroup = { module: Module; step: Step; lessons: ClassLesson[]; title: string };
 
 /** 회차를 커리큘럼 모듈별로 묶는다. 묶음은 커리큘럼 순서(Step, 모듈 order), 묶음 안은 회차 순.
- *  module id는 velite prepare가 modules.ts와 대조해 두었다. */
+ *  module id는 velite prepare가 modules.ts와 대조해 두었다.
+ *  title은 묶음 제목으로, 모듈 이름이 아니라 실제로 수업한 주제를 모은다. 모듈 이름을 쓰면
+ *  아직 배우지 않은 내용까지 제목에 나온다("개발 협업 & 생성형 AI 이해"에 Git 회차만 있을 때). */
 export function groupClassLessonsByModule(lessons: readonly ClassLesson[] = getOrderedClassLessons()): ClassModuleGroup[] {
   const groups: ClassModuleGroup[] = [];
   for (const mod of [...modules].sort((a, b) => a.stepId - b.stepId || a.order - b.order)) {
     const inModule = lessons.filter((l) => l.module === mod.id).sort((a, b) => a.session - b.session);
     const step = steps.find((s) => s.id === mod.stepId);
-    if (inModule.length > 0 && step) groups.push({ module: mod, step, lessons: inModule });
+    if (inModule.length > 0 && step) {
+      const title = [...new Set(inModule.map((l) => l.topic))].join(", ");
+      groups.push({ module: mod, step, lessons: inModule, title });
+    }
   }
   return groups;
 }

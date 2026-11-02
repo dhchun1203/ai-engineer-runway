@@ -75,7 +75,7 @@ export default async function ClassQuizPage({
   } else if (scope.kind === "module") {
     const group = groups.find((g) => g.module.id === scope.id);
     lessons = opened.filter((l) => l.module === scope.id);
-    rangeText = group ? `${group.module.id} ${group.module.title} 수업` : rangeText;
+    rangeText = group ? `${group.module.id} ${group.title} 수업` : rangeText;
   } else if (scope.kind === "wrong") {
     rangeText = "지난번에 틀린 문제";
   }
@@ -95,7 +95,7 @@ export default async function ClassQuizPage({
   const scopeLinks: { label: string; scope: Scope }[] = [
     { label: "이번 주", scope: { kind: "week" } },
     { label: "지난주", scope: { kind: "prev" } },
-    ...groups.map((g) => ({ label: `${g.module.id} ${g.module.title}`, scope: { kind: "module", id: g.module.id } as Scope })),
+    ...groups.map((g) => ({ label: `${g.module.id} ${g.title}`, scope: { kind: "module", id: g.module.id } as Scope })),
     { label: "전체", scope: { kind: "all" } },
     { label: "틀린 문제만", scope: { kind: "wrong" } },
   ];

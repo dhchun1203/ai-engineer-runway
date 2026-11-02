@@ -175,7 +175,7 @@ export default async function ClassHubPage({
             >
               지난 수업
             </h2>
-            {pastGroups.map(({ module: mod, step, lessons: groupLessons }) => {
+            {pastGroups.map(({ module: mod, step, lessons: groupLessons, title: groupTitle }) => {
               const counts = groupLessons.map((l) => checkCount(l.slug));
               const done = counts.reduce((sum, c) => sum + c.done, 0);
               const total = counts.reduce((sum, c) => sum + c.total, 0);
@@ -185,7 +185,7 @@ export default async function ClassHubPage({
                     className={`flex min-h-11 cursor-pointer list-none flex-col items-start gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden sm:flex-row sm:items-center sm:justify-between sm:gap-3 ${STEP_HEADER_CLASSES[step.id]}`}
                   >
                     <span className="min-w-0 text-subhead font-bold break-keep">
-                      {mod.id} {mod.title}
+                      {mod.id} {groupTitle}
                     </span>
                     <span className="flex shrink-0 items-center gap-2 text-label font-normal">
                       <span>{groupLessons.length}개 회차</span>
