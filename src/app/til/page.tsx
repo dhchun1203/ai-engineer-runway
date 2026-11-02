@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { listPublishedPosts, listPublishedDates } from '@/lib/til/store';
+import { listPublishedPosts } from '@/lib/til/store';
 import { hasUnlockCookie } from '@/lib/auth';
+import { todayInSeoul } from '@/lib/today';
 import { TilCard } from '@/components/til/til-card';
-import { TilStreak } from '@/components/til/til-streak';
+import { TilCalendar } from '@/components/til/til-calendar';
 import { SpotIllustration } from '@/components/illustrations/spot-illustration';
 
 export const metadata: Metadata = {
@@ -18,8 +19,13 @@ export default async function TilListPage() {
   const unlocked = await hasUnlockCookie();
   const read = await listPublishedPosts();
   const posts = read.ok ? read.data : [];
-  const datesRead = await listPublishedDates();
-  const publishedDates = datesRead.ok ? datesRead.data : [];
+  // 잔디의 날짜는 발행일(published_at)을 서울 날짜로 바꾼 값이다. 글 목록이 최신순이라 그대로 넘긴다.
+  const seoulDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' });
+  const calendarPosts = posts.flatMap((post) =>
+    post.publishedAt
+      ? [{ date: seoulDate.format(new Date(post.publishedAt)), title: post.title, slug: post.slug }]
+      : [],
+  );
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
@@ -48,7 +54,7 @@ export default async function TilListPage() {
         <SpotIllustration name="til" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
 
-      <TilStreak dates={publishedDates} />
+      <TilCalendar posts={calendarPosts} today={todayInSeoul()} />
 
       {read.ok ? (
         posts.length > 0 ? (
