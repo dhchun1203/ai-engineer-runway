@@ -1,0 +1,259 @@
+# 07-python-dict-set-control-flow 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
+# 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
+slug: 07-python-dict-set-control-flow
+quiz:
+  - id: dict-duplicate-key
+    q: "print({\"a\": 1, \"a\": 2}) 의 출력은?"
+    options:
+      - "{'a': 1, 'a': 2}"
+      - "{'a': 1}"
+      - "{'a': 2}"
+      - "에러가 난다"
+    answer: 2
+    explain: "키는 중복될 수 없어요. 같은 키를 다시 쓰면 에러 없이 뒤에 쓴 값만 남아요. 값은 중복돼도 괜찮아요."
+  - id: assign-update-or-add
+    q: "user_info = {\"name\": \"Minji\", \"age\": 28} 에서 user_info[\"role\"] = \"Tutor\" 를 실행하면?"
+    options:
+      - "없는 키라서 KeyError 가 난다"
+      - "role 키가 새로 추가된다"
+      - "age 의 값이 Tutor 로 바뀐다"
+      - "아무 일도 일어나지 않는다"
+    answer: 1
+    explain: "d[키] = 값 은 키가 있으면 수정, 없으면 추가예요. 꺼낼 때(d[키])와 달리 넣을 때는 없는 키여도 에러가 나지 않아요."
+  - id: pop-returns-value
+    q: "d = {\"name\": \"Minji\", \"age\": 38} 에서 age = d.pop(\"age\") 뒤에 print(age, d) 의 출력은?"
+    options:
+      - "38 {'name': 'Minji'}"
+      - "None {'name': 'Minji'}"
+      - "38 {'name': 'Minji', 'age': 38}"
+      - "age {'name': 'Minji'}"
+    answer: 0
+    explain: "pop 은 키를 지우면서 그 값을 돌려줘요. del d[\"age\"] 는 지우기만 하고 값을 돌려주지 않아요."
+  - id: dict-index-keyerror
+    q: "menu = {\"coffee\": 4000, \"tea\": 4500} 에서 menu[0] 을 실행하면?"
+    options:
+      - "coffee 가 나온다"
+      - "4000 이 나온다"
+      - "KeyError: 0 이 난다"
+      - "IndexError 가 난다"
+    answer: 2
+    explain: "딕셔너리의 [ ] 에는 자리 번호가 아니라 키가 들어가요. 0 이라는 키가 없어서 KeyError 예요. 첫 키가 필요하면 list(menu.keys())[0] 이에요."
+  - id: in-checks-keys
+    q: "같은 menu 에서 4000 in menu 와 4000 in menu.values() 의 결과는?"
+    options:
+      - "True, True"
+      - "False, True"
+      - "True, False"
+      - "False, False"
+    answer: 1
+    explain: "딕셔너리에 in 을 쓰면 키에서 찾아요. 4000 은 값이라 False 예요. 값에서 찾으려면 menu.values() 에 써요."
+  - id: get-default-none
+    q: "menu.get(\"cake\", 5000), menu.get(\"cake\"), menu.get(\"coffee\", 0) 의 결과를 순서대로 쓰면? (menu 에 cake 는 없다)"
+    options:
+      - "5000, KeyError, 0"
+      - "5000, None, 4000"
+      - "5000, None, 0"
+      - "KeyError, None, 4000"
+    answer: 1
+    explain: "없는 키면 기본값을, 기본값이 없으면 None 을 돌려줘요. 키가 있으면 기본값은 쓰이지 않아 4000 이에요. get 은 키를 추가하지도 않아요."
+  - id: empty-braces-is-dict
+    q: "type({}) 의 결과와 빈 집합을 만드는 방법으로 맞는 것은?"
+    options:
+      - "<class 'set'>, {} 로 만든다"
+      - "<class 'dict'>, set() 으로 만든다"
+      - "<class 'dict'>, {,} 로 만든다"
+      - "<class 'set'>, set() 으로 만든다"
+    answer: 1
+    explain: "빈 중괄호는 빈 딕셔너리예요. 빈 집합은 set() 으로만 만들 수 있어요."
+  - id: remove-vs-discard
+    q: "s = {2, 5} 에서 없는 값 20 을 지울 때 맞는 설명은?"
+    options:
+      - "remove 와 discard 모두 에러가 난다"
+      - "remove 와 discard 모두 에러가 없다"
+      - "remove(20) 은 KeyError, discard(20) 은 에러 없음"
+      - "remove(20) 은 에러 없음, discard(20) 은 KeyError"
+    answer: 2
+    explain: "remove 는 없는 값이면 KeyError 를 내고, discard 는 조용히 넘어가요."
+  - id: set-operations
+    q: "set_a = {1, 2, 3}, set_b = {3, 4, 5} 일 때 set_a - set_b 의 결과는?"
+    options:
+      - "{3}"
+      - "{1, 2}"
+      - "{4, 5}"
+      - "{1, 2, 3, 4, 5}"
+    answer: 1
+    explain: "- 는 차집합으로, a 에만 있는 값이에요. & 는 교집합 {3}, | 는 합집합 {1, 2, 3, 4, 5} 예요."
+  - id: dedup-keep-order
+    q: "[\"kim\", \"lee\", \"kim\"] 에서 중복을 없애면서 처음 나온 순서를 지키는 방법은?"
+    options:
+      - "list(set(목록))"
+      - "list(dict.fromkeys(목록))"
+      - "sorted(목록)"
+      - "목록.remove(\"kim\")"
+    answer: 1
+    explain: "dict.fromkeys 는 값을 키로 써서 중복이 사라지고, 딕셔너리는 넣은 순서를 지켜요. set 은 순서가 보장되지 않고, sorted 는 중복을 남긴 채 정렬만 해요."
+  - id: if-order-matters
+    q: "score = 95 에서 if score >= 80: print(\"B\") 다음 elif score >= 90: print(\"A\") 를 실행하면?"
+    code: |-
+      score = 95
+      if score >= 80:
+          print("B")
+      elif score >= 90:
+          print("A")
+    options:
+      - "A"
+      - "B"
+      - "B 와 A 둘 다"
+      - "아무것도 안 나온다"
+    answer: 1
+    explain: "조건문은 처음 참인 곳 하나만 실행해요. 95 >= 80 이 먼저 참이라 B 를 찍고, 아래 elif 는 보지 않아요. 범위 조건은 큰 값부터 써요."
+  - id: empty-list-condition
+    q: "cart = [] 일 때 if cart: 아래와 else: 아래 중 어느 쪽이 실행될까요?"
+    options:
+      - "if 쪽, 리스트가 있으니까"
+      - "else 쪽, 빈 리스트는 거짓으로 치니까"
+      - "에러, 조건에 리스트를 쓸 수 없어서"
+      - "둘 다 실행된다"
+    answer: 1
+    explain: "조건 자리에 리스트를 그대로 쓰면, 값이 있으면 참이고 빈 리스트는 거짓이에요. 빈 문자열, 0, None 도 거짓이에요."
+  - id: range-step
+    q: "for i in range(1, 6, 3): print(i) 의 출력은?"
+    options:
+      - "1, 4"
+      - "1, 4, 7"
+      - "1, 3, 6"
+      - "3, 6"
+    answer: 0
+    explain: "range(시작, 끝, 간격) 이고 끝은 포함하지 않아요. 1 에서 3씩 건너 4, 다음 7 은 6 을 넘어서 멈춰요."
+  - id: break-vs-continue
+    q: "for num in range(1, 6): 안에서 짝수일 때 continue 하고 홀수만 출력하면 결과는?"
+    code: |-
+      for num in range(1, 6):
+          if num % 2 == 0:
+              continue
+          print(f"홀수 {num}")
+    options:
+      - "홀수 1 만 나온다"
+      - "홀수 1, 홀수 3, 홀수 5"
+      - "홀수 1, 홀수 2, 홀수 3"
+      - "아무것도 안 나온다"
+    answer: 1
+    explain: "continue 는 이번 차례만 건너뛰고 다음 차례로 가요. 반복을 통째로 끝내는 건 break 예요."
+  - id: nested-break-inner
+    q: "구구단 코드에서 안쪽 for 의 if y == 6: break 는 무엇을 끝낼까요?"
+    options:
+      - "프로그램 전체"
+      - "바깥 for 와 안쪽 for 둘 다"
+      - "안쪽 for 만. 그래서 단마다 5까지만 나오고 다음 단으로 넘어간다"
+      - "바깥 for 만"
+    answer: 2
+    explain: "break 는 자기가 들어 있는 반복 하나만 끝내요. 2단과 3단만 나온 건 바깥의 if x == 4: break 때문이에요."
+  - id: game-digit-guard
+    q: "숫자 맞추기 게임에서 abc 를 입력하면 어떻게 될까요?"
+    code: |-
+      if not user_input.isdigit() and int(user_input) > 0:
+          print("숫자로 입력해주세요.")
+          continue
+    options:
+      - "숫자로 입력해주세요. 가 나온다"
+      - "범위 안내가 나온다"
+      - "int(\"abc\") 를 계산하다 ValueError 로 멈춘다"
+      - "정답과 비교한다"
+    answer: 2
+    explain: "abc 는 숫자가 아니라 and 왼쪽이 True 예요. 그래서 오른쪽 int(\"abc\") 까지 계산하다 ValueError 가 나요. 숫자가 아니면 막으려면 if not user_input.isdigit(): 만 써요."
+commands:
+  - cmd: '{"키": 값}'
+    desc: 딕셔너리 만들기. 키는 중복 불가, 값은 중복 가능
+    group: Python
+  - cmd: d[키] / d[키] = 값
+    desc: 키로 값 꺼내기 / 키가 있으면 수정, 없으면 추가
+    group: Python
+  - cmd: del d[키]
+    desc: 딕셔너리에서 키 지우기
+    group: Python
+  - cmd: d.pop(키)
+    desc: 키를 지우면서 값 돌려받기. d.pop(키, 기본값) 은 없을 때 에러 대신 기본값
+    group: Python
+  - cmd: d.keys() / d.values() / d.items()
+    desc: 키 목록 / 값 목록 / (키, 값) 묶음 목록
+    group: Python
+  - cmd: d.get(키, 기본값)
+    desc: 없는 키도 에러 없이 꺼내기. 기본값이 없으면 None
+    group: Python
+  - cmd: 키 in d / 값 in d.values()
+    desc: 딕셔너리에 그 키가 있는지 / 그 값이 있는지
+    group: Python
+  - cmd: sum(목록)
+    desc: 숫자 모두 더하기. sum(d.values()) 처럼 씀
+    group: Python
+  - cmd: set(목록) / set()
+    desc: 중복 없는 집합 만들기 / 빈 집합 만들기({} 는 빈 딕셔너리)
+    group: Python
+  - cmd: s.add(값)
+    desc: 집합에 값 추가. 이미 있으면 변화 없음
+    group: Python
+  - cmd: s.remove(값) / s.discard(값)
+    desc: 집합에서 지우기. remove 는 없으면 KeyError, discard 는 에러 없음
+    group: Python
+  - cmd: a & b / a | b / a - b
+    desc: 교집합 / 합집합 / 차집합
+    group: Python
+  - cmd: list(dict.fromkeys(목록))
+    desc: 처음 나온 순서를 지키며 중복 제거
+    group: Python
+  - cmd: sorted(목록)
+    desc: 정렬한 새 리스트 돌려받기
+    group: Python
+  - cmd: "if 조건: / elif 조건: / else:"
+    desc: 처음 참인 곳 하나만 실행. 콜론과 들여쓰기 필수
+    group: Python
+  - cmd: pass
+    desc: 아무것도 안 함. 비어 있는 블록의 자리 채우기
+    group: Python
+  - cmd: 값1 if 조건 else 값2
+    desc: 조건이 참이면 값1, 거짓이면 값2(한 줄 표기)
+    group: Python
+  - cmd: "for 변수 in 데이터:"
+    desc: 리스트는 요소, 문자열은 글자, 딕셔너리는 키를 하나씩 꺼내 반복
+    group: Python
+  - cmd: "for k, v in d.items():"
+    desc: 딕셔너리의 키와 값을 나눠 받으며 반복
+    group: Python
+  - cmd: range(끝) / range(시작, 끝, 간격)
+    desc: 숫자 만들기. 끝은 포함하지 않음. 보려면 list(range(5))
+    group: Python
+  - cmd: "while 조건:"
+    desc: 조건이 참인 동안 반복. 안에서 조건을 바꾸지 않으면 끝나지 않음
+    group: Python
+  - cmd: break / continue
+    desc: 반복 끝내기 / 이번 차례만 건너뛰기
+    group: Python
+  - cmd: random.randint(1, 100)
+    desc: 1부터 100 사이 정수 하나(끝값 100 포함). import random 필요
+    group: Python
+  - cmd: input("안내문")
+    desc: 키보드 입력 받기. 숫자를 쳐도 문자열로 돌려줌
+    group: Python
+  - cmd: 문자열.isdigit()
+    desc: 숫자 글자로만 되어 있는지 확인. "-10" 과 "1.5" 는 False
+    group: Python
+  - cmd: int("50")
+    desc: 문자열을 정수로 바꾸기. 숫자가 아니면 ValueError
+    group: Python
+terms:
+  - word: 딕셔너리 (Dictionary)
+    definition: 키와 값을 짝지어 담는 자료구조. 키로 값을 바로 찾고, 키는 중복될 수 없다. 넣은 순서를 유지한다.
+  - word: 집합 (Set)
+    definition: 중복 없는 값의 모음. 순서가 없고, 교집합, 합집합, 차집합을 계산할 수 있다.
+  - word: KeyError
+    definition: 딕셔너리에 없는 키를 꺼내거나 지울 때, 집합에 없는 값을 remove 할 때 나는 에러.
+  - word: 조건문 (Conditional statement)
+    definition: 조건에 따라 실행할 코드를 고르는 문법. if, elif, else 를 쓰고 처음 참인 곳 하나만 실행한다.
+  - word: 반복문 (Loop)
+    definition: 같은 코드를 되풀이하는 문법. 꺼낼 데이터가 정해져 있으면 for, 조건이 참인 동안이면 while 을 쓴다.
+  - word: 무한 루프 (Infinite loop)
+    definition: 끝나는 조건이 오지 않아 영원히 도는 반복. while 안에서 조건을 바꾸는 줄을 빼먹으면 생긴다.
+  - word: 중첩 반복 (Nested loop)
+    definition: 반복문 안에 반복문을 넣은 것. 안쪽 break 는 안쪽 반복만 끝낸다.
+  - word: 누적 변수 (Accumulator)
+    definition: 반복 전에 0 으로 만들고 반복 안에서 += 로 더해 합계나 개수를 쌓는 변수.

@@ -1,0 +1,837 @@
+---
+title: "Python 기초: 딕셔너리, 집합, 조건문과 반복문"
+session: 7
+date: "2026-11-03"
+summary: "키로 값을 찾는 딕셔너리(조회, 수정, 추가, 삭제, keys, values, items, get), 중복 없는 집합과 집합 연산, 리스트의 중복을 없애는 세 가지 방법, if와 for와 while, break와 continue, 회원 데이터 필터링과 숫자 맞추기 게임까지."
+slug: "07-python-dict-set-control-flow"
+module: "1-3"
+topic: "Python"
+preStudy: ["1-3-python-lists-tuples-dicts", "1-3-python-variables-and-types"]
+---
+
+어제는 리스트와 튜플로 값을 **순서대로** 묶었어요. 오늘은 값에 **이름(키)** 을 붙여 묶는 딕셔너리와, 중복을 허락하지 않는 집합을 배웠어요.
+
+후반에는 프로그램이 갈라지고 되풀이하는 법, 조건문과 반복문을 배웠어요. 마지막에는 둘을 합쳐 회원 명단을 거르고 숫자 맞추기 게임을 만들어요.
+
+| 순서 | 내용 | 한 줄로 |
+| --- | --- | --- |
+| 1 | 딕셔너리 기본 | 키는 중복 불가, 값은 중복 가능 |
+| 2 | 조회, 수정, 추가, 삭제 | `d[키]`, `del`, `pop` |
+| 3 | 딕셔너리 메서드 | `keys()`, `values()`, `items()`, `get()` |
+| 4 | 집합(Set) | 중복 없는 모음, 교집합과 합집합과 차집합 |
+| 5 | 중복 제거 | `set`, `dict.fromkeys`, `sorted` |
+| 6 | 조건문 | `if`, `elif`, `else`, 조건 순서 |
+| 7 | 반복문 | `for`, `range`, `while` |
+| 8 | 흐름 끊기 | `break`, `continue`, 중첩 반복 |
+| 9 | 종합 실습 1 | 회원 데이터 필터링 |
+| 10 | 종합 실습 2 | 숫자 맞추기 게임 |
+| 11 | 딕셔너리를 자주 만나는 이유 | 오늘 셀프 체크 질문의 답 |
+
+레슨 끝에 확인 퀴즈가 있어요. 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
+
+## 1. 딕셔너리(Dictionary) 기본
+
+### 기본 규칙
+
+딕셔너리는 `{"키": 값}` 모양으로 씁니다. 사전에서 단어(키)를 찾으면 뜻(값)이 나오는 것과 같아요.
+
+- 키는 중복될 수 없어요.
+- 값은 중복돼도 괜찮아요.
+- 넣은 순서를 유지해요.
+
+```python
+print({"a": 1, "b": 1})
+# {'a': 1, 'b': 1}
+
+print({"a": 1, "a": 2})
+# {'a': 2}
+```
+
+첫 줄은 값 `1`이 두 번 들어가도 괜찮다는 것을 보여 줘요. 둘째 줄처럼 같은 키를 두 번 쓰면 에러는 안 나고, **뒤에 쓴 값만 남아요.**
+
+순서 유지는 파이썬 3.7부터 언어 규칙으로 보장돼요. 3.6에서도 실제로는 순서가 유지됐지만, 그건 구현이 우연히 그랬던 것이라 믿고 쓰면 안 되는 부분이었어요.
+
+## 2. 조회, 수정, 추가, 삭제
+
+### 조회, 수정, 추가는 같은 문법
+
+```python
+user_info = {
+    "name": "Minji",
+    "age": 28,
+}
+
+print(user_info)
+
+user_info["age"]  # 키로 값을 가져오기
+user_info["age"] = 30
+print(user_info["age"])
+user_info["role"] = "Tutor"
+print(user_info)
+```
+
+```text
+{'name': 'Minji', 'age': 28}
+30
+{'name': 'Minji', 'age': 30, 'role': 'Tutor'}
+```
+
+- `user_info["age"]`: 키로 값을 꺼내요. 이 줄은 `print`가 없어서 화면에 아무것도 안 나와요.
+- `user_info["age"] = 30`: **있는 키**에 넣으면 값이 바뀌어요.
+- `user_info["role"] = "Tutor"`: **없는 키**에 넣으면 새로 추가돼요.
+
+수정과 추가가 같은 문법이에요. 키가 이미 있는지에 따라 결과가 달라져요.
+
+### 삭제: del과 pop
+
+```python
+user_info = {
+    "name": "Minji",
+    "age": 38,
+    "role": "Tutor",
+}
+print(user_info)
+
+# del 명령어 사용
+del user_info["role"]
+print(user_info)
+
+# pop 사용 : 꺼내면서 삭제
+age = user_info.pop("age")
+print(age, user_info)
+```
+
+```text
+{'name': 'Minji', 'age': 38, 'role': 'Tutor'}
+{'name': 'Minji', 'age': 38}
+38 {'name': 'Minji'}
+```
+
+| 방법 | 하는 일 |
+| --- | --- |
+| `del d[키]` | 그 키를 지워요 |
+| `d.pop(키)` | 지우면서 값을 돌려줘요. 그래서 `age`에 `38`이 담겼어요 |
+
+둘 다 없는 키를 지우려 하면 `KeyError`가 나요. `pop`은 `user_info.pop("zzz", "없음")`처럼 두 번째 값을 주면 에러 대신 그 값을 돌려줘요.
+
+## 3. 딕셔너리 메서드
+
+### keys(), values(), items()
+
+```python
+menu = {"coffee": 4000, "tea": 4500}
+
+print(menu.keys())    # Key 목록 조회
+print(menu.values())  # Value 목록 조회
+print(menu.items())   # items 조회
+
+# 딕셔너리는 인덱스 방식으로 값을 참조할 수 없다. > list 로 변환
+print(list(menu.keys())[0])
+
+print(sum(menu.values()))
+```
+
+```text
+dict_keys(['coffee', 'tea'])
+dict_values([4000, 4500])
+dict_items([('coffee', 4000), ('tea', 4500)])
+coffee
+8500
+```
+
+| 메서드 | 돌려주는 것 |
+| --- | --- |
+| `keys()` | 키 목록 |
+| `values()` | 값 목록 |
+| `items()` | (키, 값) 묶음 목록. 묶음 하나하나가 어제 배운 튜플이에요 |
+
+- `list(menu.keys())[0]`: 키 목록을 리스트로 바꾸면 어제 배운 인덱스로 꺼낼 수 있어요. 결과는 `coffee`예요.
+- `sum(menu.values())`: 값을 모두 더해요. 4000 + 4500 = `8500`이에요.
+
+딕셔너리에 바로 `menu[0]`을 쓰면 `KeyError: 0`이 나요. 딕셔너리의 `[ ]` 안에는 **자리 번호가 아니라 키**가 들어가요. 파이썬은 `0`이라는 키를 찾다가 없어서 에러를 내요.
+
+### in은 키를 찾아요
+
+```python
+print("coffee" in menu)        # True
+print(4000 in menu)            # False
+print(4000 in menu.values())   # True
+```
+
+어제 배운 `in`을 딕셔너리에 쓰면 **키**에서 찾아요. `4000`은 값이라서 `4000 in menu`는 `False`예요. 값에서 찾으려면 `menu.values()`에 써요.
+
+### get(): 없는 키를 안전하게 꺼내기
+
+```python
+# menu["cake"]  KeyError 발생(없는 키 참조)
+price = menu.get("cake", 5000)
+print(price)
+
+# default 값이 없는 경우 None
+print(menu.get("cake"))
+print(menu.get("coffee", 0))
+print(menu)
+```
+
+```text
+5000
+None
+4000
+{'coffee': 4000, 'tea': 4500}
+```
+
+| 식 | 결과 | 이유 |
+| --- | --- | --- |
+| `menu["cake"]` | `KeyError: 'cake'` | 없는 키를 꺼냈어요 |
+| `menu.get("cake", 5000)` | `5000` | 없으면 두 번째 값(기본값)을 돌려줘요 |
+| `menu.get("cake")` | `None` | 기본값을 안 주면 `None`이에요 |
+| `menu.get("coffee", 0)` | `4000` | 키가 있으면 기본값은 안 쓰여요 |
+
+`get`은 꺼내기만 해요. 마지막 출력에 `cake`가 없듯이, 딕셔너리에 키를 추가하지 않아요.
+
+## 4. 집합(Set)
+
+### 만들기
+
+집합은 **중복 없는 값의 모음**이에요. 중괄호로 쓰거나 `set()` 함수로 만들어요.
+
+```python
+grade = set([1, 2, 2, 3, 3, 3])
+print(grade)
+# {1, 2, 3}
+```
+
+리스트를 `set()`에 넣으면 중복이 사라져요.
+
+```python
+print(type({}))     # {} 빈 딕셔너리
+print(type(set()))
+print({1, 2, 2})
+```
+
+```text
+<class 'dict'>
+<class 'set'>
+{1, 2}
+```
+
+여기서 함정이 하나 있어요. 빈 `{}`는 집합이 아니라 **빈 딕셔너리**예요. 빈 집합은 `set()`으로 만들어요.
+
+### 추가와 삭제
+
+```python
+s = {1, 2}
+
+s.add(2)
+s.add(5)
+print(s)
+
+s.remove(1)  # 값이 없는 것을 삭제하려 하면 KeyError 가 발생한다.
+print(s)
+
+# discard : 값이 없는 것을 삭제하려고 해도 오류가 발생하지 않는다.
+s.discard(20)
+print(s)
+```
+
+```text
+{1, 2, 5}
+{2, 5}
+{2, 5}
+```
+
+| 메서드 | 하는 일 |
+| --- | --- |
+| `add(값)` | 추가해요. `2`는 이미 있어서 변화가 없어요 |
+| `remove(값)` | 지워요. 없는 값이면 `KeyError`가 나요(`s.remove(20)`은 `KeyError: 20`) |
+| `discard(값)` | 지워요. 없는 값이어도 에러가 없어요 |
+
+### 집합 연산
+
+```python
+set_a = {1, 2, 3}
+set_b = {3, 4, 5}
+
+print(set_a & set_b)  # 교집합
+print(set_a | set_b)  # 합집합
+print(set_a - set_b)  # 차집합
+print(3 in set_a)     # 포함 여부
+```
+
+| 식 | 의미 | 결과 |
+| --- | --- | --- |
+| `set_a & set_b` | 교집합(둘 다 있는 것) | `{3}` |
+| `set_a \| set_b` | 합집합(어느 한쪽이라도 있는 것) | `{1, 2, 3, 4, 5}` |
+| `set_a - set_b` | 차집합(a에만 있는 것) | `{1, 2}` |
+| `3 in set_a` | 포함 여부 | `True` |
+
+<TwistBox title="집합과 딕셔너리 키에는 리스트를 못 넣어요">
+
+집합의 값과 딕셔너리의 키는 **바뀌지 않는 값**이어야 해요. 파이썬이 그 값으로 자리를 찾아 두기 때문이에요.
+
+```python
+{[1, 2]}
+# TypeError: unhashable type: 'list'
+
+{[1]: "a"}
+# TypeError: unhashable type: 'list'
+
+print({(1, 2): "a"})
+# {(1, 2): 'a'}
+```
+
+어제 배운 대로 리스트는 바꿀 수 있고, 튜플은 못 바꿔요. 그래서 리스트는 거절되고 튜플은 키가 될 수 있어요. 에러 메시지의 `unhashable`이 "바뀔 수 있어서 자리를 정할 수 없다"는 뜻이에요.
+
+</TwistBox>
+
+## 5. 중복 제거
+
+실무에서 자주 하는 일이에요. 회원 아이디 목록에 같은 아이디가 두 번 들어 있어요.
+
+```python
+raw_ids = ["kim", "lee", "kim"]
+
+# 집합으로 중복 제거
+unique_set = set(raw_ids)
+print(list(unique_set))
+
+# 중복 제거 및 순서 유지
+ordered_ids = list(dict.fromkeys(raw_ids))
+print(ordered_ids)
+
+# sorted
+print(sorted(set(["c", "d", "a", "f", "a"])))
+```
+
+```text
+['lee', 'kim']
+['kim', 'lee']
+['a', 'c', 'd', 'f']
+```
+
+| 방법 | 중복 | 순서 |
+| --- | --- | --- |
+| `list(set(목록))` | 제거 | 보장 안 됨. 위 출력은 `lee`가 먼저 나왔어요 |
+| `list(dict.fromkeys(목록))` | 제거 | 처음 나온 순서 유지(`kim`, `lee`) |
+| `sorted(set(목록))` | 제거 | 정렬됨(`a`, `c`, `d`, `f`) |
+
+- `dict.fromkeys(목록)`: 목록의 값을 **키**로 쓰는 딕셔너리를 만들어요. 값은 모두 `None`이에요. 1장의 규칙 두 가지, "키는 중복 불가"와 "넣은 순서 유지"가 함께 일해서 중복 제거와 순서 유지가 한 번에 돼요.
+- `sorted(...)`: 정렬한 **리스트**를 돌려줘요.
+- `len(set(raw_ids))`는 `2`, `len(raw_ids)`는 `3`이에요. 개수를 비교하면 중복이 있었는지 알 수 있어요.
+
+<TwistBox title="집합의 순서는 실행할 때마다 바뀔 수 있어요">
+
+`list(set(raw_ids))`를 같은 코드로 여섯 번 새로 실행해 봤어요. 다섯 번은 첫 줄처럼, 한 번은 둘째 줄처럼 나왔어요.
+
+```text
+['lee', 'kim']
+['kim', 'lee']
+```
+
+파이썬은 문자열로 자리를 정하는 방식을 실행할 때마다 살짝 바꿔요(보안 때문이에요). 그래서 문자열 집합은 프로그램을 다시 켜면 순서가 달라질 수 있어요.
+
+"`lee`가 먼저 나왔다"를 외울 필요는 없어요. 집합에는 순서가 없다고 기억하고, 순서가 필요하면 `dict.fromkeys`나 `sorted`를 써요.
+
+</TwistBox>
+
+## 6. 조건문: if, elif, else
+
+### 모양
+
+```python
+if 조건식:
+    실행할 코드 #1
+elif 조건식2:
+    실행할 코드 #2
+else:
+    실행할 코드 #3
+```
+
+위에서부터 조건을 보다가 **처음 참인 곳 하나만** 실행하고 빠져나와요. 아무것도 참이 아니면 `else`를 실행해요. 조건식 끝의 콜론(`:`)을 빼먹지 않게 조심해요.
+
+### 들여쓰기가 범위예요
+
+```python
+temp = 30
+
+if temp >= 28:
+    print("에어컨을 켭니다.")
+    print("1시간 후에 자동 종료됩니다.")
+print("프로그램 종료")
+```
+
+```text
+에어컨을 켭니다.
+1시간 후에 자동 종료됩니다.
+프로그램 종료
+```
+
+들여쓴 두 줄은 조건이 참일 때만 실행돼요. 마지막 `print`는 들여쓰기가 없어서 조건과 상관없이 실행돼요. 파이썬은 괄호 대신 **들여쓰기로 어디까지가 if 안인지** 정해요.
+
+### 리스트를 조건에 바로 쓰기
+
+```python
+cart = ["카메라", "삼각대"]
+if cart:
+    print("결제를 진행합니다.")
+else:
+    print("장바구니가 비었습니다.")
+# 결제를 진행합니다.
+```
+
+조건식 자리에 리스트를 그대로 썼어요. 값이 들어 있는 리스트는 참, 빈 리스트 `[]`는 거짓으로 쳐요. `cart = []`로 바꿔 돌리면 `장바구니가 비었습니다.`가 나와요.
+
+| 값 | 조건에서 |
+| --- | --- |
+| `[]`, `""`, `0`, `{}`, `None` | 거짓 |
+| `[0]`, `"0"` | 참(비어 있지 않아서) |
+
+### pass와 한 줄 표기
+
+```python
+if True:
+    pass
+    # TODO: 쇼핑 카트 로직 추가 예정
+```
+
+`pass`는 "아무것도 안 함"이에요. 블록 안에 코드를 아직 못 썼을 때 자리를 채워요. 블록이 비어 있으면 파이썬이 에러를 내기 때문이에요.
+
+```python
+age = 20
+message = "성인" if age >= 20 else "미성년자"
+print(message)
+# 성인
+```
+
+`값1 if 조건 else 값2`는 조건이 참이면 값1, 거짓이면 값2예요. 둘 중 하나를 골라 변수에 넣을 때 한 줄로 써요.
+
+### 조건 순서가 결과를 바꿔요
+
+```python
+score = 95
+
+if score >= 80:
+    print("B")
+elif score >= 90:
+    print("A")
+
+if score >= 90:
+    print("A")
+elif score >= 80:
+    print("B")
+```
+
+```text
+B
+A
+```
+
+95점인데 첫 묶음은 `B`가 나와요. `score >= 80`이 먼저 참이 되어서, 아래 `elif score >= 90`은 **보지도 않아요.**
+
+두 번째 묶음은 90을 먼저 검사해서 `A`가 나와요. 범위 조건은 **좁은 쪽(큰 값)부터** 써요.
+
+<PredictPrompt />
+
+첫 번째 묶음에 `score = 85`를 넣으면 무엇이 나올지 예측해 보세요.
+
+정답은 `B`예요. 85점에는 원래 B가 맞으니 이 경우는 우연히 맞아요. 그래서 이런 실수는 테스트를 대충 하면 지나치기 쉬워요.
+
+### and로 조건 묶기
+
+```python
+is_login = True
+has_permission = True
+if is_login and has_permission:
+    print("관리자 페이지 이동")
+
+x = 10
+if x == 10:
+    print(f"x는 {x} 입니다.")
+```
+
+```text
+관리자 페이지 이동
+x는 10 입니다.
+```
+
+어제 배운 `and`가 여기서 쓰여요. 로그인했고 권한도 있을 때만 들어가요. 같은지 비교는 `=`가 아니라 `==`예요.
+
+## 7. 반복문: for와 while
+
+### for: 하나씩 꺼내기
+
+```python
+for 변수 in 반복할_데이터:
+    반복할 코드 #1
+```
+
+```python
+fruits = ["apple", "banana", "체리"]
+for fruit in fruits:
+    print(fruit)
+
+for ch in "파이썬":
+    print(ch)
+
+menu = {"아아": 4000, "홍차": 4500}
+for key in menu.keys():
+    print(key)
+
+for name, price in menu.items():
+    print(f"{name} : {price}")
+```
+
+```text
+apple
+banana
+체리
+파
+이
+썬
+아아
+홍차
+아아 : 4000
+홍차 : 4500
+```
+
+| 반복할 데이터 | 하나씩 꺼내는 것 |
+| --- | --- |
+| 리스트 | 요소 |
+| 문자열 | 글자 |
+| `딕셔너리.keys()` | 키. `for key in menu:`처럼 그냥 딕셔너리를 써도 키가 나와요 |
+| `딕셔너리.items()` | (키, 값) 묶음. `name, price`로 나눠 받아요 |
+
+어제 영수증에서 본 `for menu, price, qty in orders`와 같은 방식이에요.
+
+### range(): 숫자 만들기
+
+```python
+for i in range(5):
+    print(f"{i+1} 번째 로직 수행")
+
+for i in range(1, 6, 3):
+    print(i)
+
+print(range(5))
+print(list(range(5)))  # 리스트로 변환 후 출력
+```
+
+```text
+1 번째 로직 수행
+2 번째 로직 수행
+3 번째 로직 수행
+4 번째 로직 수행
+5 번째 로직 수행
+1
+4
+range(0, 5)
+[0, 1, 2, 3, 4]
+```
+
+| 식 | 만들어지는 값 |
+| --- | --- |
+| `range(5)` | 0, 1, 2, 3, 4 |
+| `range(1, 6, 3)` | 1, 4 (시작, 끝 직전까지, 간격) |
+
+어제 배운 슬라이싱 `[시작:끝:간격]`과 같은 규칙이에요. **끝은 포함하지 않아요.** 그래서 1번째부터 세려고 `i+1`을 출력했어요.
+
+`print(range(5))`는 숫자 목록이 아니라 `range(0, 5)`가 나와요. range는 필요할 때 숫자를 하나씩 만들어 주는 물건이라서, 값을 다 보려면 `list()`로 바꿔요.
+
+### while: 조건이 참인 동안
+
+```python
+while 조건식:
+    반복할 로직 #1
+```
+
+```python
+num = 1
+while num <= 3:
+    print(f"현재 숫자는 {num}")
+    num += 1
+
+count = 3
+while count > 0:
+    print(count)
+    count -= 1
+```
+
+```text
+현재 숫자는 1
+현재 숫자는 2
+현재 숫자는 3
+3
+2
+1
+```
+
+`while`은 조건이 참인 동안 계속 돌아요. 반복 안에서 `num += 1`, `count -= 1`처럼 **조건을 바꾸는 줄**이 있어야 끝나요. 이 줄을 빼먹으면 영원히 돌아요(무한 루프).
+
+| 쓰는 곳 | 고르는 것 |
+| --- | --- |
+| 몇 번 돌지, 무엇을 돌지 알 때 | `for` |
+| 언제 끝날지 미리 모를 때(예: 정답을 맞힐 때까지) | `while` |
+
+## 8. 흐름 끊기: break와 continue
+
+```python
+for num in range(1, 6):
+    if num == 3:
+        print("즉시 종료")
+        break
+    print(f"현재 num={num}")
+```
+
+```text
+현재 num=1
+현재 num=2
+즉시 종료
+```
+
+```python
+for num in range(1, 6):
+    if num % 2 == 0:  # 짝수
+        continue
+    print(f"홀수 {num}")
+```
+
+```text
+홀수 1
+홀수 3
+홀수 5
+```
+
+| 키워드 | 동작 |
+| --- | --- |
+| `break` | 반복문을 통째로 끝내요 |
+| `continue` | 이번 차례만 건너뛰고 다음 차례로 가요 |
+
+`num % 2 == 0`은 어제 배운 나머지 연산이에요. 2로 나눈 나머지가 0이면 짝수예요.
+
+### 중첩 반복: 구구단
+
+```python
+for x in range(2, 10):
+    if x == 4:
+        break
+    print(f"---{x} 단---")
+    for y in range(1, 10):
+        if y == 6:
+            break
+        print(f"{x} X {y} = {x * y}")
+```
+
+```text
+---2 단---
+2 X 1 = 2
+2 X 2 = 4
+2 X 3 = 6
+2 X 4 = 8
+2 X 5 = 10
+---3 단---
+3 X 1 = 3
+3 X 2 = 6
+3 X 3 = 9
+3 X 4 = 12
+3 X 5 = 15
+```
+
+- 바깥 `for`가 단(x), 안쪽 `for`가 곱하는 수(y)예요.
+- 안쪽 `break`(`y == 6`)는 **안쪽 반복만** 끝내요. 그래서 단마다 5까지만 나오고, 바깥 반복은 다음 단으로 넘어가요.
+- 바깥 `break`(`x == 4`)가 바깥 반복을 끝내서 2단과 3단만 나와요.
+
+`break`는 자기가 들어 있는 반복 하나만 끝낸다고 기억해요.
+
+## 9. 종합 실습 1: 회원 데이터 필터링
+
+딕셔너리를 담은 리스트를 `for`로 돌면서 `if`로 걸러요. 오늘 배운 것이 다 들어 있어요.
+
+```python
+user_database = [
+    {"name": "손흥민", "level": "VIP", "active": True, "point": 15000},
+    {"name": "김민재", "level": "Gold", "active": True, "point": 9000},
+    {"name": "조규성", "level": "VIP", "active": True, "point": 12000},
+    {"name": "이강인", "level": "Gold", "active": True, "point": 8000},
+    {"name": "홍명보", "level": "Bronze", "active": False, "point": 1000},
+]
+
+total_vip_points = 0
+active_user_count = 0
+
+print("=== 마케팅 대상 활성 VIP 및 Gold 회원 결과")
+
+for user in user_database:
+    if user['active'] == True:
+        active_user_count += 1
+
+        if user['level'] == "VIP":
+            total_vip_points += user['point']
+            print(f'[VIP 등급] {user["name"]} 회원님에게 VIP 쿠폰이 발행되었습니다.')
+        elif user['level'] == "Gold":
+            print(f'[Gold 등급] {user["name"]} 회원님에게 Gold 쿠폰이 발행되었습니다.')
+print(f"전체 활성 회원 수    : {active_user_count}")
+print(f"활성 VIP 포인트 누적 : {total_vip_points:,}")
+```
+
+```text
+=== 마케팅 대상 활성 VIP 및 Gold 회원 결과
+[VIP 등급] 손흥민 회원님에게 VIP 쿠폰이 발행되었습니다.
+[Gold 등급] 김민재 회원님에게 Gold 쿠폰이 발행되었습니다.
+[VIP 등급] 조규성 회원님에게 VIP 쿠폰이 발행되었습니다.
+[Gold 등급] 이강인 회원님에게 Gold 쿠폰이 발행되었습니다.
+전체 활성 회원 수    : 4
+활성 VIP 포인트 누적 : 27,000
+```
+
+- **거르기:** `user['active'] == True`로 활성 회원만 통과시켜요. `홍명보`는 `False`라서 빠져요.
+- **중첩 if:** if 안에 if를 넣어, 활성 회원 중에서 다시 등급을 나눠요. Bronze는 VIP도 Gold도 아니라 쿠폰 줄이 없어요.
+- **누적 변수:** 반복 전에 `0`으로 만들고, 반복 안에서 `+=`로 더해요. VIP 15000 + 12000 = `27000`이에요.
+- **포맷:** `{total_vip_points:,}`는 어제 배운 천 단위 쉼표예요. `27,000`이 돼요.
+- **따옴표:** f-string을 작은따옴표로 열었기 때문에 안쪽 `user["name"]`은 큰따옴표로 썼어요. 바깥과 같은 따옴표를 쓰면 문자열이 거기서 끝나 버려요.
+
+`if user['active'] == True:`는 `if user['active']:`로 줄여 써도 같아요. 6장에서 본 것처럼 조건 자리에는 참과 거짓으로 볼 수 있는 값을 그대로 쓰면 돼요.
+
+## 10. 종합 실습 2: 숫자 맞추기 게임
+
+```python
+import random  # 난수 발생을 위한 모듈 임포트
+
+number = random.randint(1, 100)
+comput_number = number
+try_count = 0
+
+print("=" * 39)
+print("컴퓨터가 1부터 100사이의 숫자를 생성했습니다.")
+print("=" * 39)
+
+while True:
+    user_input = input("컴퓨터에 숫자를 입력해보세요. :")
+
+    if user_input == "q":
+        print(f"게임 종료합니다. 정답은 {number} 입니다.")
+        break
+
+    if not user_input.isdigit() and int(user_input) > 0:
+        print("숫자로 입력해주세요.")
+        continue
+
+    if int(user_input) <= 1 or int(user_input) >= 100:
+        print(f"입력값 : {user_input} => 1 에서 100 사이의 값을 입력해주세요.")
+        continue
+
+    user_number = int(user_input)
+    try_count += 1
+
+    if user_number == comput_number:
+        print(f"{user_input} : 정답입니다. {try_count} 회 만에 성공했습니다.")
+        break
+    elif user_number >= comput_number:
+        print(f"{user_number} : 더 작은 수 입니다.")
+    else:
+        print(f"{user_number} : 더 큰 수 입니다.")
+```
+
+### 흐름
+
+1. `random.randint(1, 100)`으로 1부터 100 사이 정답을 정해요. `randint`는 range와 달리 **끝값 100도 포함**해요.
+2. `while True`로 계속 입력을 받아요. 조건이 늘 참이라 `break`를 만나야만 끝나요.
+3. `q`면 정답을 알려 주고 `break`예요.
+4. 범위 밖이면 안내하고 `continue`예요. 시도 횟수는 올라가지 않아요.
+5. 범위 안이면 `try_count`를 올리고 정답과 비교해요. 맞으면 `break`, 크면 `더 작은 수`, 작으면 `더 큰 수`예요.
+
+`input()`이 돌려주는 값은 숫자를 쳐도 **문자열**이에요. 그래서 비교 전에 `int()`로 바꿔요. `isdigit()`은 문자열이 숫자 글자로만 되어 있는지 확인해요.
+
+정답이 8일 때 `2`, `3`, `8`을 넣으면 이렇게 끝나요.
+
+```text
+컴퓨터에 숫자를 입력해보세요. :2
+2 : 더 큰 수 입니다.
+컴퓨터에 숫자를 입력해보세요. :3
+3 : 더 큰 수 입니다.
+컴퓨터에 숫자를 입력해보세요. :8
+8 : 정답입니다. 3 회 만에 성공했습니다.
+```
+
+### 직접 넣어 보면 보이는 것
+
+| 입력 | 결과 |
+| --- | --- |
+| `1`, `100` | 범위 안내가 나와요. 조건이 `<= 1`, `>= 100`이라 1과 100을 거절해요. 그런데 정답은 1이나 100도 나올 수 있어서, 그때는 맞힐 방법이 없어요 |
+| `-10` | 숫자 안내가 아니라 범위 안내가 나와요 |
+| `abc`, `1.5` | `숫자로 입력해주세요.`가 아니라 `ValueError: invalid literal for int() with base 10`으로 프로그램이 멈춰요 |
+
+<TwistBox title="숫자 검사 줄에서 어제 배운 단락 평가가 일해요">
+
+문제의 줄은 이거예요.
+
+```python
+if not user_input.isdigit() and int(user_input) > 0:
+```
+
+`and`는 왼쪽이 거짓이면 오른쪽을 계산하지 않아요(어제 배운 단락 평가).
+
+- `"50"`: 숫자라 `not isdigit()`가 `False`예요. 오른쪽은 계산 안 하고 통과해요.
+- `"abc"`: 숫자가 아니라 왼쪽이 `True`예요. 그래서 오른쪽 `int("abc")`를 계산하다가 `ValueError`가 나요. 안내문을 보여 줄 기회가 없어요.
+- `"-10"`: 왼쪽이 `True`, 오른쪽 `-10 > 0`이 `False`라 전체가 `False`예요. 이 줄을 지나 범위 검사에서 걸려요.
+
+이 줄이 `숫자로 입력해주세요.`를 내는 경우는 거의 없어요. 직접 찾아보니 `" 5"`처럼 앞에 공백이 붙었거나 `"+5"`처럼 부호가 붙은 입력이었어요. 공백이나 `+` 때문에 `isdigit()`은 `False`인데, `int()`는 그걸 받아들여 `5`로 바꾸기 때문이에요.
+
+숫자가 아니면 막고, 범위는 1부터 100까지 받게 고치면 이렇게 돼요.
+
+```python
+if not user_input.isdigit():
+    print("숫자로 입력해주세요.")
+    continue
+
+user_number = int(user_input)
+if not 1 <= user_number <= 100:
+    print(f"입력값 : {user_input} => 1 에서 100 사이의 값을 입력해주세요.")
+    continue
+```
+
+이렇게 고치면 `abc`, `1.5`, `-10`은 숫자 안내가 나오고, `1`과 `100`은 통과해요. `-10`은 `-` 글자 때문에 `isdigit()`이 `False`라 숫자 안내 쪽으로 가요. `1 <= n <= 100`은 "1 이상이고 100 이하"를 한 번에 쓰는 파이썬 문법이에요.
+
+</TwistBox>
+
+## 11. 딕셔너리를 자주 만나는 이유
+
+오늘 TIL의 셀프 체크 질문은 "딕셔너리를 왜 사용하고 앞으로 왜 자주 만나게 될까?"였어요.
+
+**왜 쓰나:** 값에 이름이 붙어요. `user[2]`는 세 번째 값이 무엇인지 기억해야 하지만, `user["point"]`는 읽기만 해도 알아요. 키로 바로 찾으니 목록을 처음부터 뒤질 필요도 없어요.
+
+**왜 자주 만나나:** 프로그램끼리 주고받는 데이터가 대부분 이 모양이기 때문이에요. 웹 API가 돌려주는 JSON은 파이썬에서 딕셔너리로 바뀌어요.
+
+```python
+import json
+
+data = json.loads('{"name": "Minji", "age": 28}')
+print(type(data), data["name"])
+# <class 'dict'> Minji
+```
+
+이 교육과정에서 곧 다룰 LLM API도 대화를 딕셔너리의 리스트로 보내요. 오늘 회원 명단과 같은 모양이에요.
+
+```python
+messages = [{"role": "user", "content": "안녕"}]
+print(messages[0]["content"])
+# 안녕
+```
+
+`messages[0]`은 리스트에서 첫 번째 딕셔너리를 꺼내고, `["content"]`는 그 딕셔너리에서 값을 꺼내요. 오늘 9장의 `user["name"]`과 같은 꺼내기예요.
+
+## 오늘 꼭 기억할 주의점
+
+- 딕셔너리의 키는 중복될 수 없어요. 같은 키를 다시 쓰면 뒤의 값이 남아요. 값은 중복돼도 돼요.
+- `d[키] = 값`은 키가 있으면 수정, 없으면 추가예요.
+- 딕셔너리의 `[ ]`에는 자리 번호가 아니라 키가 들어가요. `menu[0]`은 `KeyError`예요.
+- 없는 키를 꺼내면 `KeyError`예요. 안전하게 꺼내려면 `get(키, 기본값)`을 써요. `get`은 키를 추가하지 않아요.
+- 딕셔너리에 `in`을 쓰면 키를 찾아요. 값은 `in d.values()`로 찾아요.
+- 빈 `{}`는 딕셔너리예요. 빈 집합은 `set()`이에요.
+- 집합에서 없는 값을 `remove`하면 `KeyError`, `discard`는 에러가 없어요.
+- 집합에는 순서가 없어요. 순서를 지키며 중복을 없애려면 `list(dict.fromkeys(목록))`이에요.
+- 조건문은 처음 참인 곳 하나만 실행해요. 범위 조건은 좁은 쪽(큰 값)부터 써요.
+- 들여쓰기가 if와 for의 범위예요. 콜론(`:`)을 빼먹지 않아요.
+- `range`와 슬라이싱은 끝을 포함하지 않아요. `random.randint`는 끝을 포함해요.
+- `while`은 조건을 바꾸는 줄이 없으면 끝나지 않아요.
+- `break`는 반복을 끝내고, `continue`는 이번 차례만 건너뛰어요. 중첩 반복에서 `break`는 자기가 들어 있는 반복 하나만 끝내요.
+- `input()`은 늘 문자열을 돌려줘요. `int()`로 바꾸기 전에 숫자인지 먼저 확인해요.
