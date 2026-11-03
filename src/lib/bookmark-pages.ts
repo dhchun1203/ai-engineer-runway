@@ -8,6 +8,7 @@ import 'server-only';
 import { getLessonBySlug } from '@/content/curriculum-helpers';
 import { getBasecampLessonBySlug } from '@/content/basecamp-lesson-helpers';
 import { getClassLessonBySlug } from '@/content/class-lesson-helpers';
+import { getPracticeUnitBySlug } from '@/content/practice-helpers';
 import { getRoadmapLessonBySlug } from '@/content/roadmap-lesson-helpers';
 import { isRoadmapViewer } from './roadmap-access';
 
@@ -19,6 +20,7 @@ export async function isBookmarkablePage(key: string): Promise<boolean> {
   const slug = key.slice(sep + 1);
   if (kind === 'basecamp') return Boolean(getBasecampLessonBySlug(slug));
   if (kind === 'class') return Boolean(getClassLessonBySlug(slug));
+  if (kind === 'practice') return Boolean(getPracticeUnitBySlug(slug));
   // 로드맵은 허용 계정 전용 페이지라 책갈피도 같은 게이트를 지난다.
   if (kind === 'roadmap') return Boolean(getRoadmapLessonBySlug(slug)) && (await isRoadmapViewer());
   return false;

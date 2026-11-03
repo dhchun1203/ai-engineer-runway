@@ -4,7 +4,7 @@ import 'server-only';
 // 형태를 그대로 미러링한다. 조회 실패와 "북마크 없음"을 타입 수준에서 구분해 반환한다.
 //
 // 레슨 안 소제목(h2) 단위로 꽂는 페이지 책갈피다. 2026-10-29부터 페이지당 하나라
-// (setPageBookmark가 보장), 정규 레슨 외에 basecamp:/roadmap:/class: 접두어 키도 담는다
+// (setPageBookmark가 보장), 정규 레슨 외에 basecamp:/roadmap:/class:/practice: 접두어 키도 담는다
 // (bookmark-pages.ts). 키 자체는 처음의 다중 북마크 시절 (lesson_id, section_index) 복합
 // 키를 그대로 쓴다. section_title을 함께 저장·반환하는 이유는
 // 마이그레이션 주석 참고 — 본문 개정으로 h2 순서가 바뀌어도 제목으로 되찾기 위한 폴백이다.
