@@ -2882,12 +2882,19 @@ code[data-theme*=" "] span {
   animation: lamp-breathe 3s ease-in-out infinite;
 }
 
+/* 빛 번짐은 바깥 그림자가 아니라 안쪽 그림자로 그리고, 그 바깥에 투명한 테두리 2px을 둔다.
+   보이는 고리는 예전과 같다(램프 가장자리에서 3px). 바깥 그림자로 그리면 고리 끝이 이
+   조각의 가장자리와 맞닿는데, FHD 100% 이상에서 램프가 픽셀 사이에 걸치면 그 가장자리의
+   왼쪽과 위쪽 끝에 검은 점이 찍혔다(2026-11-03). 여백을 두면 고리가 가장자리에 닿지 않는다.
+   안쪽 그림자는 4px로 램프 밑까지 1px 들어간다. 3px이면 고리와 램프 사이에 밝은 틈이 보인다.
+   같은 색이 겹치므로 겹친 부분은 티가 나지 않는다. */
 .onair-lamp::after {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -5px;
+  border: 2px solid transparent;
   border-radius: inherit;
-  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 35%, transparent);
+  box-shadow: inset 0 0 0 4px color-mix(in srgb, currentColor 35%, transparent);
   opacity: 0;
   pointer-events: none;
   animation: lamp-glow 3s ease-in-out infinite;
