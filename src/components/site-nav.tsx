@@ -103,6 +103,17 @@ function isMenuActive(pathname: string, item: NavItem): boolean {
   return item.href !== null && isActiveHref(pathname, item.href);
 }
 
+// 데스크톱 드롭다운을 구역 소제목(heading) 기준으로 나눈다. 소제목마다 새 칸이 시작되고,
+// 소제목이 없는 메뉴는 한 칸 그대로다.
+function splitSections(children: readonly NavItem[]): NavItem[][] {
+  const sections: NavItem[][] = [];
+  for (const child of children) {
+    if (child.heading || sections.length === 0) sections.push([]);
+    sections[sections.length - 1].push(child);
+  }
+  return sections;
+}
+
 function NavBadge() {
   return (
     <span className="chip text-label">
@@ -356,7 +367,9 @@ export function SiteNav() {
                           );
                         }
                       }}
-                      className="nav-dropdown-reveal absolute left-0 top-full z-30 min-w-48"
+                      // 두 칸이라 넓어서, 버튼 오른쪽 끝에 맞춰 왼쪽으로 펼친다
+                      // (더보기가 행 끝이라 left-0이면 좁은 창에서 오른쪽으로 넘친다).
+                      className="nav-dropdown-reveal absolute right-0 top-full z-30 min-w-48"
                     >
                       <div className="nav-panel-clip">
                         <div className="flex min-w-48 flex-col border-2 border-foreground bg-background dark:border-foreground-dark dark:bg-background-dark">
@@ -369,45 +382,60 @@ export function SiteNav() {
                           <span className="bg-foreground px-3 py-1.5 text-label font-bold tracking-wide text-background dark:bg-foreground-dark dark:text-background-dark">
                             {item.label}
                           </span>
-                          <div className="flex flex-col p-1">
-                            {item.children.map((child, ci) => {
-                              // 구역 소제목 — 링크가 아니라, 한 단계 진한 면(line) 배경을 깐
-                              // muted 소제목 띠. 크림 지면 위 항목들과 배경으로 또렷이 구분된다.
-                              // -mx-1로 p-1 컨테이너를 상쇄해 위 "더보기" 잉크 머리띠와 폭을
-                              // 맞춘다(가장자리까지 닿는 띠).
-                              if (child.heading) {
-                                return (
-                                  <span
-                                    key={child.label}
-                                    className={`-mx-1 bg-line px-3 py-1 text-label font-semibold text-badge-neutral-text dark:bg-line-dark dark:text-badge-neutral-text-dark ${
-                                      ci === 0 ? "-mt-1" : "mt-1"
-                                    }`}
-                                  >
-                                    {child.label}
-                                  </span>
-                                );
-                              }
-                              if (!child.href) return null;
-                              const childActive = isActiveHref(
-                                pathname,
-                                child.href,
-                              );
-                              return (
-                                <Link
-                                  key={child.label}
-                                  href={child.href}
-                                  onClick={() => setOpenMenu(null)}
-                                  className={`nav-link nav-sublink tap-feedback flex min-h-11 items-center gap-2.5 pl-4 pr-3 text-label font-bold ${
-                                    childActive
-                                      ? "chip-solid"
-                                      : "text-muted dark:text-muted-dark"
-                                  }`}
-                                >
-                                  {child.icon ? <CustomIcon name={child.icon} className="h-4.5 w-4.5" /> : null}
-                                  {child.label}
-                                </Link>
-                              );
-                            })}
+                          {/* 구역(소제목부터 다음 소제목 전까지)마다 한 칸씩 나란히 놓는다
+                              (2026-11-04). 한 줄로 쌓으면 항목이 열두 개라 FHD 100%에서
+                              화면 아래로 넘쳤다. 그래도 짧은 창이면 nav-panel-scroll이
+                              헤더 아래 남은 높이로 가두고 안에서 스크롤시킨다. */}
+                          <div className="nav-panel-scroll flex">
+                            {splitSections(item.children).map((section, si) => (
+                              <div
+                                key={section[0]?.label ?? si}
+                                className={`flex min-w-48 flex-col p-1 ${
+                                  si > 0
+                                    ? "border-l-2 border-line dark:border-line-dark"
+                                    : ""
+                                }`}
+                              >
+                                {section.map((child, ci) => {
+                                  // 구역 소제목 — 링크가 아니라, 한 단계 진한 면(line) 배경을 깐
+                                  // muted 소제목 띠. 크림 지면 위 항목들과 배경으로 또렷이 구분된다.
+                                  // -mx-1로 p-1 컨테이너를 상쇄해 위 "더보기" 잉크 머리띠와 폭을
+                                  // 맞춘다(가장자리까지 닿는 띠).
+                                  if (child.heading) {
+                                    return (
+                                      <span
+                                        key={child.label}
+                                        className={`-mx-1 bg-line px-3 py-1 text-label font-semibold text-badge-neutral-text dark:bg-line-dark dark:text-badge-neutral-text-dark ${
+                                          ci === 0 ? "-mt-1" : "mt-1"
+                                        }`}
+                                      >
+                                        {child.label}
+                                      </span>
+                                    );
+                                  }
+                                  if (!child.href) return null;
+                                  const childActive = isActiveHref(
+                                    pathname,
+                                    child.href,
+                                  );
+                                  return (
+                                    <Link
+                                      key={child.label}
+                                      href={child.href}
+                                      onClick={() => setOpenMenu(null)}
+                                      className={`nav-link nav-sublink tap-feedback flex min-h-11 items-center gap-2.5 pl-4 pr-3 text-label font-bold ${
+                                        childActive
+                                          ? "chip-solid"
+                                          : "text-muted dark:text-muted-dark"
+                                      }`}
+                                    >
+                                      {child.icon ? <CustomIcon name={child.icon} className="h-4.5 w-4.5" /> : null}
+                                      {child.label}
+                                    </Link>
+                                  );
+                                })}
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </div>
