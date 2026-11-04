@@ -369,7 +369,8 @@ export function SiteNav() {
                       }}
                       // 두 칸이라 넓어서, 버튼 오른쪽 끝에 맞춰 왼쪽으로 펼친다
                       // (더보기가 행 끝이라 left-0이면 좁은 창에서 오른쪽으로 넘친다).
-                      className="nav-dropdown-reveal absolute right-0 top-full z-30 min-w-48"
+                      // w-max: 절대배치 폭이 좁은 버튼 칸에 묶여 두 번째 칸이 잘리지 않게.
+                      className="nav-dropdown-reveal absolute right-0 top-full z-30 w-max min-w-48"
                     >
                       <div className="nav-panel-clip">
                         <div className="flex min-w-48 flex-col border-2 border-foreground bg-background dark:border-foreground-dark dark:bg-background-dark">
