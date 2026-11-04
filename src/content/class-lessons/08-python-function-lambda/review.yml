@@ -20,15 +20,6 @@ quiz:
       - "둘 다 1, 2, 3"
     answer: 1
     explain: "매개변수는 함수를 정의하는 쪽의 이름이고, 인수는 호출할 때 실제로 넘기는 값이에요."
-  - id: args-empty-tuple
-    q: "def add_all(*numbers): print(numbers, sum(numbers)) 에서 add_all() 의 출력은?"
-    options:
-      - "None 0"
-      - "[] 0"
-      - "() 0"
-      - "인수가 없어서 TypeError"
-    answer: 2
-    explain: "*numbers 는 넘긴 값을 튜플로 묶어 받아요. 아무것도 안 넘기면 빈 튜플 () 이고, sum(()) 은 0 이에요."
   - id: kwargs-is-dict
     q: "def user_info(**data): print(data) 에서 user_info(name=\"Minji\", level=5) 의 출력은?"
     options:
@@ -38,15 +29,6 @@ quiz:
       - "name=Minji level=5"
     answer: 1
     explain: "** 두 개는 이름 = 값 으로 넘긴 인수를 딕셔너리로 받아요. 이름이 키, 값이 값이 돼요. * 하나면 튜플이에요."
-  - id: zero-is-not-positive
-    q: "number > 0 이면 '양수', 아니면 else 에서 '음수' 를 return 하는 check_ord_number(0) 의 결과는?"
-    options:
-      - "양수"
-      - "음수"
-      - "0"
-      - "None"
-    answer: 1
-    explain: "0 > 0 은 거짓이라 else 로 가서 '음수' 예요. 0 을 따로 다루려면 elif number < 0: 을 넣고 else 에서 0 인 경우를 처리해야 해요."
   - id: code-after-return
     q: "다음 코드의 출력은?"
     code: |-
