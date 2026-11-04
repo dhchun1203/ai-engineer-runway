@@ -1,0 +1,883 @@
+---
+title: "Python 기초: 함수, 변수 스코프, 람다식"
+session: 8
+date: "2026-11-04"
+summary: "def로 함수를 만들고(기본값, *args, **kwargs, return, 여러 개 반환), 지역 변수와 전역 변수와 global을 구분하고, lambda를 map, filter, sorted, max와 함께 써요. 마지막에 가위바위보 게임을 만들고 함수로 다시 짜 봐요."
+slug: "08-python-function-lambda"
+module: "1-3"
+topic: "Python"
+preStudy: ["1-3-python-functions-and-io"]
+---
+
+어제는 조건문과 반복문으로 프로그램이 갈라지고 되풀이하게 만들었어요. 그런데 같은 코드를 여러 곳에 붙여 넣다 보면 고칠 때 전부 찾아서 고쳐야 해요.
+
+오늘은 그 덩어리에 이름을 붙여 한 번 만들고 여러 번 부르는 **함수**를 배웠어요. 함수 안과 밖의 변수가 어떻게 나뉘는지(스코프), 한 줄짜리 이름 없는 함수(람다식)도 배우고, 마지막에 가위바위보 게임을 만들어요.
+
+| 순서 | 내용 | 한 줄로 |
+| --- | --- | --- |
+| 1 | 함수 기본 | `def 이름(매개변수):` |
+| 2 | 기본값 | 안 넘기면 쓰이는 값 |
+| 3 | 가변 인수 | `*numbers`는 튜플로 받기 |
+| 4 | 딕셔너리 가변 인수 | `**data`는 딕셔너리로 받기 |
+| 5 | return | 값을 돌려주고 함수를 끝내기 |
+| 6 | 여러 개 반환 | 튜플 하나로 돌아와요 |
+| 7 | 함수 실습 | 평균 함수, 미니 계산기 |
+| 8 | 변수 스코프 | 지역 변수, 전역 변수, `global` |
+| 9 | 람다식 | `lambda`와 `map`, `filter`, `sorted`, `max` |
+| 10 | 미니 프로젝트 | 가위바위보 게임 |
+| 11 | 함수로 다시 짜기 | 오늘 셀프 체크 질문의 답 |
+
+레슨 끝에 확인 퀴즈가 있어요. 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
+
+## 1. 함수(Function) 기본
+
+함수는 **반복되는 로직을 한데 묶어 이름을 붙인 것**이에요. 한 번 만들어 두면 이름만 불러서 몇 번이고 다시 쓸 수 있어요(재사용성).
+
+사실 함수는 이미 써 왔어요. `print()`, `len()`도 파이썬이 미리 만들어 둔 함수예요. 이름 뒤에 괄호를 붙여 부르기만 하면 단독으로 동작해요.
+
+```python
+def 함수이름(매개변수):
+    실행할 로직 #1
+    실행할 로직 #2
+    실행할 로직 #3
+```
+
+- `def`로 시작하고, 이름 뒤 괄호 안에 **매개변수(parameter)** 를 써요. 함수가 받을 값의 이름이에요.
+- 줄 끝 콜론(`:`)과 들여쓰기가 함수의 범위예요. 어제 배운 if, for와 같은 규칙이에요.
+- 함수 이름은 **snake_case**로 지어요. 소문자로 쓰고 단어 사이를 밑줄로 이어요(`say_hello`, `get_average`).
+
+## 2. 기본값
+
+```python
+def say_hello(name = "홍길동", age  = 30, point = 1000):
+    print(f"{name}님, 안녕하세요. 나이는 {age}입니다.")
+    print(f"초기 지급 포인트 {point}점이 지급되었습니다.")
+
+say_hello()
+```
+
+```text
+홍길동님, 안녕하세요. 나이는 30입니다.
+초기 지급 포인트 1000점이 지급되었습니다.
+```
+
+`name = "홍길동"`처럼 매개변수에 값을 적어 두면 **기본값**이 돼요. `say_hello()`는 아무것도 안 넘겼으니 기본값 세 개가 모두 쓰여요.
+
+일부만 넘기면 넘긴 것만 바뀌어요.
+
+```python
+say_hello("Minji")
+# Minji님, 안녕하세요. 나이는 30입니다.
+# 초기 지급 포인트 1000점이 지급되었습니다.
+
+say_hello(age=25)
+# 홍길동님, 안녕하세요. 나이는 25입니다.
+# 초기 지급 포인트 1000점이 지급되었습니다.
+```
+
+`"Minji"`처럼 그냥 넘기면 **앞에서부터 차례로** 들어가요. 가운데 `age`만 바꾸고 싶으면 `age=25`처럼 이름을 붙여 넘겨요(키워드 인수).
+
+## 3. 가변 인수: *numbers
+
+몇 개를 넘길지 미리 정할 수 없을 때는 매개변수 앞에 `*`를 붙여요.
+
+```python
+def add_all(*numbers): # 매개변수 (Parameter)
+    print(f"입력된 튜플: {numbers}")
+    total = sum(numbers)
+    print(f"합계 결과: {total}")
+
+add_all(1,2,3) # 인수 (Argument)
+add_all(1,2,3,4,5)
+add_all()
+```
+
+```text
+입력된 튜플: (1, 2, 3)
+합계 결과: 6
+입력된 튜플: (1, 2, 3, 4, 5)
+합계 결과: 15
+입력된 튜플: ()
+합계 결과: 0
+```
+
+- `*numbers`는 넘긴 값이 몇 개든 **하나의 튜플로 묶어서** 받아요. 그제 배운 튜플이 여기서 쓰여요.
+- 아무것도 안 넘기면 빈 튜플 `()`이에요. `sum(())`은 `0`이라 에러가 나지 않아요.
+
+여기서 두 용어를 구분해 둬요.
+
+| 용어 | 위치 | 예 |
+| --- | --- | --- |
+| 매개변수 (parameter) | 함수를 **정의하는** 쪽 | `*numbers` |
+| 인수 (argument) | 함수를 **호출하는** 쪽 | `1,2,3` |
+
+매개변수는 빈 그릇의 이름표, 인수는 그 그릇에 실제로 담는 값이라고 생각하면 돼요.
+
+## 4. 딕셔너리 가변 인수: **data
+
+`*` 두 개를 붙이면 `이름 = 값` 모양으로 넘긴 인수를 **딕셔너리로** 받아요.
+
+```python
+def user_info(**data):
+    print(f"전달된 딕셔너리 구조: {data}")
+    for key, value in data.items():
+        print(f"{key}:{value}")
+
+user_info(name = "Minji", level = 5, active = True)
+```
+
+```text
+전달된 딕셔너리 구조: {'name': 'Minji', 'level': 5, 'active': True}
+name:Minji
+level:5
+active:True
+```
+
+`name = "Minji"`의 이름이 키(`'name'`), 값이 값(`'Minji'`)이 돼요. 받은 딕셔너리는 어제 배운 `items()`로 키와 값을 나눠 받으며 돌 수 있어요.
+
+| 표기 | 받는 모양 | 넘기는 법 |
+| --- | --- | --- |
+| `*numbers` | 튜플 | `add_all(1, 2, 3)` |
+| `**data` | 딕셔너리 | `user_info(name = "Minji")` |
+
+이름은 정해져 있지 않아요. 관례로 `*args`, `**kwargs`(keyword arguments)라고 많이 써요. 중요한 건 별표 개수예요.
+
+## 5. return: 결과값 되돌리기
+
+```python
+def check_ord_number(number):
+    if number > 0:
+        return '양수'
+    else:
+        return '음수'
+
+print(check_ord_number(10))
+# 양수
+```
+
+`return`은 두 가지 일을 해요.
+
+1. 값을 함수 밖으로 **돌려줘요.** 그래서 `print()`에 넣거나 변수에 담을 수 있어요.
+2. 그 자리에서 함수를 **끝내요.** `return` 아래 줄은 실행되지 않아요.
+
+```python
+def after_return():
+    return 1
+    print("never")
+
+print(after_return())
+# 1
+```
+
+`print("never")`는 한 번도 실행되지 않아요.
+
+<PredictPrompt />
+
+`check_ord_number(0)`을 부르면 무엇이 나올지 예측해 보세요.
+
+직접 실행하면 `음수`예요. `0 > 0`은 거짓이라 `else`로 가요. 0은 양수도 음수도 아니니, 제대로 하려면 `elif number < 0:`을 넣고 마지막 `else`에서 `'0'`을 돌려주게 나눠야 해요.
+
+### return이 없으면 None
+
+`say_hello()`처럼 `print`만 하고 `return`이 없는 함수는 무엇을 돌려줄까요?
+
+```python
+r = say_hello("Minji")
+print(r)
+```
+
+```text
+Minji님, 안녕하세요. 나이는 30입니다.
+초기 지급 포인트 1000점이 지급되었습니다.
+None
+```
+
+`return`이 없으면 함수는 `None`(값 없음)을 돌려줘요. **화면에 보여 주는 것(print)과 값을 돌려주는 것(return)은 다른 일**이에요. 결과를 다른 계산에 쓰려면 `return`해야 해요.
+
+## 6. 여러 개 반환
+
+```python
+def calc_value(a, b):
+    plus = a + b
+    minus = a - b
+    return plus, minus
+
+result1, result2 = calc_value(1,2)
+print(f"덧셈: {result1}, 뺄셈: {result2}")
+
+result = calc_value(10, 5)
+print(f"튜플: {result}")
+print(type(result))
+```
+
+```text
+덧셈: 3, 뺄셈: -1
+튜플: (15, 5)
+<class 'tuple'>
+```
+
+- `return plus, minus`처럼 쉼표로 이어 쓰면 **튜플 하나**로 돌아와요.
+- `result1, result2 = ...`는 그 튜플을 두 변수에 나누어 받아요. 이렇게 풀어 담는 것을 언패킹(unpacking)이라고 해요.
+- 변수 하나로 받으면 튜플 그대로예요.
+
+수업 노트에서 `type(result)`만 쓰고 `tuple`이 보인 건 주피터 노트북이 마지막 줄의 값을 자동으로 보여 주기 때문이에요. `.py` 파일로 실행할 때는 `print(type(result))`처럼 `print`로 감싸야 보여요.
+
+## 7. 함수 실습
+
+### 평균을 계산해서 반환하는 함수
+
+```python
+def get_average(*args):
+    if len(args) == 0:
+        return 0
+
+    # if not args:
+    #     return 0
+
+    num_list = list(args)
+    sum_num = sum(num_list)
+    len_num = len(num_list)
+    avg_num = sum_num / len_num
+    return avg_num
+
+result1 = get_average(80, 90, 100)
+result2 = get_average(75, 80, 92, 100, 55)
+result3 = get_average()
+
+print(result1)
+print(result2)
+print(result3)
+```
+
+```text
+90.0
+80.4
+0
+```
+
+- `len(args) == 0`: 인수가 하나도 없으면 `0`을 돌려주고 바로 끝내요. 아래의 `/ len_num`이 **0으로 나누기**가 되는 것을 막는 줄이에요.
+- 주석 처리된 `if not args:`도 같은 일을 해요. 빈 튜플은 거짓으로 보기 때문이에요(어제 배운 빈 리스트 조건과 같아요).
+- `/` 나눗셈의 결과는 늘 소수예요. 그래서 `90`이 아니라 `90.0`이에요. 인수가 없을 때만 정수 `0`이 돌아와요.
+
+이렇게 함수 맨 앞에서 예외 상황을 먼저 `return`으로 내보내면, 아래 본 계산은 정상인 경우만 생각하고 쓸 수 있어요.
+
+### 미니 계산기
+
+```python
+def add(a, b):
+    return a + b
+
+def minus(a, b):
+    return a - b
+
+def multiply(a, b):
+    return a * b
+
+def divide(a, b):
+    if b == 0:
+        return "0 으로 나눌 수 없습니다."
+
+    return a / b
+
+a = int(input("첫 번째 숫자: "))
+b = int(input("두 번째 숫자: "))
+
+print(f"덧셈 연산 {a} + {b}: {add(a, b)}")
+print(f"뺄셈 연산 {a} - {b}: {minus(a, b)}")
+print(f"곱셈 연산 {a} * {b}: {multiply(a, b)}")
+print(f"나눗셈 연산 {a} / {b}: {divide(a, b)}")
+```
+
+`4`와 `0`을 넣으면 이렇게 나와요.
+
+```text
+덧셈 연산 4 + 0: 4
+뺄셈 연산 4 - 0: 4
+곱셈 연산 4 * 0: 0
+나눗셈 연산 4 / 0: 0 으로 나눌 수 없습니다.
+```
+
+- 사칙 연산을 함수 네 개로 나누고, 같은 입력으로 네 번 불러요.
+- `divide`는 `b`가 `0`이면 계산하지 않고 안내 문구를 돌려줘요. 평균 함수와 같은 "먼저 막고 내보내기"예요.
+- `input()`은 늘 문자열이라 `int()`로 바꿔요(어제 배운 것).
+
+## 8. 변수 스코프(유효범위)
+
+변수를 **어디에서 만들었느냐**에 따라 쓸 수 있는 범위가 달라요.
+
+| 종류 | 만든 곳 | 쓸 수 있는 곳 |
+| --- | --- | --- |
+| 전역 변수 (global) | 함수 밖 | 어디서나 읽을 수 있어요 |
+| 지역 변수 (local) | 함수 안 | 그 함수 안에서만 |
+
+### 지역 변수
+
+```python
+def local():
+    local_var = 1
+    print(local_var)
+
+local()
+# 1
+
+print(local_var)
+# NameError: name 'local_var' is not defined
+```
+
+`local_var`는 함수 안에서 만들어서 함수가 끝나면 사라져요. 밖에서 부르면 그런 이름이 없다는 `NameError`가 나요.
+
+### 같은 이름의 전역 변수와 지역 변수
+
+```python
+message = "안녕하세요. 우리 몰에 오신 것을 환영합니다."
+
+def greeting():
+    message = "장난감 코너는 3층에 있습니다."
+    print(message)
+
+greeting()
+print(message)
+```
+
+```text
+장난감 코너는 3층에 있습니다.
+안녕하세요. 우리 몰에 오신 것을 환영합니다.
+```
+
+함수 안에서 `message = ...`를 쓰면 전역 변수가 바뀌는 게 아니라 **같은 이름의 지역 변수가 새로 생겨요.** 함수 안에서는 지역 값이 쓰이고, 함수 밖 `message`는 그대로예요.
+
+반대로 함수 안에서 값을 **넣지 않고 읽기만** 하면 전역 변수가 보여요.
+
+```python
+def read_global():
+    print("읽기:", message)
+
+read_global()
+# 읽기: 안녕하세요. 우리 몰에 오신 것을 환영합니다.
+```
+
+### 중첩 함수
+
+```python
+value = "전역 데이터"
+
+def outer_function():
+    value = "지역 변수 1"
+
+    def inner_function():
+        value = "지역 변수 2"
+        print(value)
+
+    inner_function()
+    print(value)
+
+outer_function()
+print(value)
+```
+
+```text
+지역 변수 2
+지역 변수 1
+전역 데이터
+```
+
+| 위치 | `value` | 출력 순서 |
+| --- | --- | --- |
+| `inner_function` 안 | `"지역 변수 2"` | 1번째 |
+| `outer_function` 안 | `"지역 변수 1"` | 2번째 |
+| 함수 밖 | `"전역 데이터"` | 3번째 |
+
+함수 안에 함수를 만들 수도 있어요. 함수마다 자기 `value`를 따로 가져서 서로 영향을 주지 않아요.
+
+### global 키워드
+
+함수 안에서 전역 변수의 값을 **바꾸고** 싶으면 `global`로 알려야 해요.
+
+```python
+counter = 0
+
+def inc_counter():
+    global counter # 전역 변수를 참조하겠다고 선언
+    counter += 1
+
+inc_counter()
+inc_counter()
+print(counter)
+# 2
+```
+
+`global counter`를 쓰면 함수 안의 `counter`가 전역 변수를 가리켜요. 그래서 `+= 1`이 전역 값을 바꾸고, 두 번 불러서 `2`가 돼요.
+
+<TwistBox title="global을 빼면 왜 에러가 날까요?">
+
+```python
+count2 = 0
+
+def bad():
+    count2 += 1
+
+bad()
+# UnboundLocalError: cannot access local variable 'count2' where it is not associated with a value
+```
+
+방금 "읽기만 하면 전역 변수가 보인다"고 했는데 왜 에러일까요?
+
+`count2 += 1`은 `count2 = count2 + 1`이에요. 함수 안에 `count2 = ...`가 **한 줄이라도 있으면** 파이썬은 함수 전체에서 `count2`를 지역 변수로 봐요. 그런데 오른쪽 `count2 + 1`을 계산하려는 순간 지역 `count2`에는 아직 값이 없어요. 그래서 "값이 들어가기 전에 지역 변수를 읽었다"는 에러가 나요.
+
+`global count2`를 함수 첫 줄에 써 주면 이 이름이 전역 변수라고 알려 줘서 해결돼요.
+
+</TwistBox>
+
+`global`은 편하지만 많이 쓰면 어느 함수가 언제 값을 바꿨는지 추적하기 어려워져요. 함수가 값을 받아(매개변수) 결과를 돌려주는(return) 쪽이 보통 더 읽기 쉬워요.
+
+## 9. 람다식(Lambda Expression)
+
+```python
+lambda 매개변수 : 표현식
+```
+
+람다식은 **이름 없는 한 줄짜리 함수**예요.
+
+### 일반 함수와 비교
+
+```python
+def add_five(x):
+    return x + 5
+
+print(add_five(10))
+
+result = lambda x: x + 5
+print(result(10))
+```
+
+```text
+15
+15
+```
+
+- `lambda x: x + 5`와 `def add_five(x): return x + 5`는 같은 일을 해요.
+- 콜론 뒤에는 **식 하나만** 쓸 수 있고, 그 식의 결과가 그대로 반환값이에요. `return`을 쓰지 않아요.
+
+람다식은 보통 변수에 담기보다, 다른 함수에 "이렇게 처리해 줘"라고 **잠깐 건네는** 용도로 써요. 아래 `map`, `filter`, `sorted`, `max`가 그런 함수예요.
+
+### map과 filter
+
+```python
+numbers = [1,2,3,4,5]
+
+result = list(map(lambda x : x + 10, numbers))
+print(result)
+
+# 리스트 컴프리헨션
+print([x + 10 for x in numbers])
+
+filter_result = list(filter(lambda x : x % 2 == 0, numbers))
+print(filter_result)
+
+print([x for x in numbers if x % 2 == 0])
+```
+
+```text
+[11, 12, 13, 14, 15]
+[11, 12, 13, 14, 15]
+[2, 4]
+[2, 4]
+```
+
+| 하는 일 | 람다 방식 | 리스트 컴프리헨션 |
+| --- | --- | --- |
+| 모든 요소를 바꾸기 | `list(map(lambda x : x + 10, numbers))` | `[x + 10 for x in numbers]` |
+| 조건에 맞는 요소만 | `list(filter(lambda x : x % 2 == 0, numbers))` | `[x for x in numbers if x % 2 == 0]` |
+
+- `map(함수, 데이터)`: 모든 요소에 함수를 적용해요.
+- `filter(함수, 데이터)`: 함수의 결과가 참인 요소만 남겨요.
+- 둘 다 같은 결과를 리스트 컴프리헨션으로도 만들 수 있어요. 출력이 서로 같아요.
+- 리스트 컴프리헨션(list comprehension)은 `[만들 값 for 변수 in 데이터 if 조건]` 모양으로 대괄호 안에 for를 써서 새 리스트를 한 줄로 만드는 문법이에요. `if 조건`은 필요할 때만 붙여요.
+
+### 왜 list()로 감싸나요?
+
+`map`과 `filter`는 리스트를 바로 만들지 않아요. 필요할 때 하나씩 꺼내 주는 **꾸러미(map 객체)** 를 돌려줘요.
+
+```python
+print(map(lambda x: x + 10, numbers))
+# <map object at 0x...>   (뒤의 주소는 실행할 때마다 달라요)
+
+m = map(lambda x: x * 2, numbers)
+print(list(m))
+print(list(m))
+```
+
+```text
+[2, 4, 6, 8, 10]
+[]
+```
+
+그래서 `list()`로 감싸야 값이 보여요. 그리고 한 번 꺼내 쓴 꾸러미는 비어서, 두 번째 `list(m)`은 `[]`예요. 여러 번 쓸 거라면 처음부터 `list(...)`로 받아 변수에 담아 둬요.
+
+### 정렬: sorted, max
+
+```python
+players = [("손흥민", 95),("김민재",60),("이강인",80)]
+
+print(sorted(players, key = lambda p : p[1] )) # 오름차순
+print(sorted(players, key = lambda p : p[1], reverse=True )) # 내림차순
+print(max(players, key = lambda p: p[1])) # 최고 점수 추출
+```
+
+```text
+[('김민재', 60), ('이강인', 80), ('손흥민', 95)]
+[('손흥민', 95), ('이강인', 80), ('김민재', 60)]
+('손흥민', 95)
+```
+
+- `key = lambda p : p[1]`: 각 항목 `p`에서 `[1]`번째(점수)를 **비교 기준**으로 삼아요. 항목 자체는 그대로 두고, 무엇으로 비교할지만 정해 주는 거예요.
+- `reverse=True`: 큰 값부터(내림차순).
+- `max(..., key = ...)`: 기준 값이 가장 큰 **항목 전체**를 돌려줘요. 점수만이 아니라 `('손흥민', 95)`가 나와요. `min`도 같은 방식이에요.
+- `sorted`는 정렬한 **새 리스트**를 돌려줘요. 정렬 뒤에도 `players`는 원래 순서 그대로예요.
+
+<TwistBox title="key를 빼면 누가 최고 점수일까요?">
+
+```python
+print(max(players))
+# ('이강인', 80)
+```
+
+95점인 손흥민이 아니라 이강인이 나와요. `key`가 없으면 튜플을 **맨 앞 요소부터** 비교하기 때문이에요. 맨 앞은 이름이라 글자 순서로 비교했고, 한글 순서로 `이`가 `손`과 `김`보다 뒤라서 "가장 큰" 것이 됐어요.
+
+점수로 비교하려면 반드시 `key = lambda p: p[1]`처럼 기준을 알려 줘야 해요.
+
+</TwistBox>
+
+`key`에는 람다가 아닌 함수도 넣을 수 있어요. `sorted(["banana", "kiwi", "apple"], key=len)`은 글자 수 기준이라 `['kiwi', 'apple', 'banana']`예요.
+
+### 연습: 거듭제곱 후 20 이상만
+
+```python
+numbers = [2,3,4,5,6,7]
+
+# 람다식으로 모든 요소의 거듭제곱
+sqr_number = list(map(lambda num: num**2 , numbers))
+print(sqr_number)
+
+# 결과값이 20 이상인 값만 추출
+sqr_number_over_20 = list(filter(lambda num: num >= 20, sqr_number))
+print(sqr_number_over_20)
+```
+
+```text
+[4, 9, 16, 25, 36, 49]
+[25, 36, 49]
+```
+
+`map`으로 제곱한 리스트를 먼저 만들고, 그 결과에 `filter`를 한 번 더 적용해요. `**`는 그제 배운 거듭제곱 연산자예요.
+
+## 10. 미니 프로젝트: 가위바위보 게임
+
+`main.py`에 작성한 **3판 2선승제** 가위바위보예요. 먼저 2번 이기거나 2번 지면 끝나요.
+
+```python
+import random
+# 가위 바위 보 게임 미니 프로젝트
+
+
+print("=" * 30)
+print("가위바위보 게임")
+print("=" * 30)
+
+# 플레이어 이름 입력
+player_name = input("플레이어 이름을 입력하세요 : ")
+
+game_data = {"1":"가위", "2":"바위", "3":"보"}
+
+retry_value = "" # 재도전 여부
+win_cnt = 0 # 승리 카운터
+winning_streak_cnt = 0 # 연승 카운터
+lose_cnt = 0 # 패배 카운터
+game_record_list = [] # 경기 기록 리스트
+
+
+while retry_value == "yes" or retry_value == "":
+    target_num = str(random.randint(1,3))
+
+    print("1. 가위 / 2. 바위 / 3. 보")
+    input_num = input("번호를 선택하세요. : ")
+    while int(input_num) < 1 or int(input_num) > 3:
+        print("1 부터 3 까지의 숫자만 입력 가능합니다.")
+        input_num = input("번호를 선택하세요. : ")
+
+
+    print()
+    print("[게임 결과]")
+    print(f"{player_name}: {game_data[input_num]}  vs  컴퓨터: {game_data[target_num]}")
+
+    game_result = ""
+
+    if game_data[input_num] == "가위": # 내가 가위를 낸 경우의 수
+        if game_data[target_num] == "보":
+            game_result = "승리"
+            win_cnt += 1
+            winning_streak_cnt +=1
+        elif game_data[target_num] == "바위":
+            game_result = "패배"
+            lose_cnt += 1
+            winning_streak_cnt = 0
+        else:
+            game_result = "비김"
+            winning_streak_cnt = 0
+    elif game_data[input_num] == "바위": # 내가 바위를 낸 경우의 수
+        if game_data[target_num] == "가위":
+            game_result = "승리"
+            win_cnt += 1
+            winning_streak_cnt += 1
+        elif game_data[target_num] == "보":
+            game_result = "패배"
+            lose_cnt += 1
+            winning_streak_cnt = 0
+        else:
+            game_result = "비김"
+            winning_streak_cnt = 0
+    else: # 내가 보를 낸 경우의 수
+        if game_data[target_num] == "바위":
+            game_result = "승리"
+            win_cnt += 1
+            winning_streak_cnt += 1
+        elif game_data[target_num] == "가위":
+            game_result = "패배"
+            lose_cnt += 1
+            winning_streak_cnt = 0
+        else:
+            game_result = "비김"
+            winning_streak_cnt = 0
+    print(f'=> {game_result}')
+
+    game_record_list.append(game_result)
+
+    print()
+
+    if win_cnt == 2 or lose_cnt == 2: # 3판 2선제 적용 및 승패 목록 출력
+        print(f"최종 스코어\t{player_name} {win_cnt} : {lose_cnt} 컴퓨터")
+        print(f"승패 목록 : {game_record_list}")
+        break
+
+    print(f"현재 스코어\t{player_name} {win_cnt} : {lose_cnt} 컴퓨터")
+    print(f"현재 연승 카운트 : {winning_streak_cnt}")
+    print()
+
+    retry_value = input("다시 도전 (yes/no) : ")
+
+    if retry_value == "no":
+        print("bye bye")
+        print(f"승패 목록 : {game_record_list}")
+
+    while retry_value != "yes" and retry_value != "no":
+        print("yes 혹은 no 만 입력해주세요.")
+        retry_value = input("다시 도전 (yes/no) : ")
+```
+
+### 쓰인 것
+
+| 변수 | 역할 |
+| --- | --- |
+| `game_data` | 입력 번호(`"1"`, `"2"`, `"3"`)를 `가위`, `바위`, `보`로 바꾸는 딕셔너리 |
+| `win_cnt`, `lose_cnt` | 승리, 패배 횟수 |
+| `winning_streak_cnt` | 연승 횟수. 이기면 +1, 지거나 비기면 0 |
+| `game_record_list` | `승리`, `패배`, `비김`을 순서대로 담는 리스트 |
+| `retry_value` | 다시 도전할지 입력받은 값. 처음엔 `""`라서 첫 판이 시작돼요 |
+
+어제 배운 딕셔너리, 리스트의 `append`, 중첩 if, while, break가 한꺼번에 들어 있어요.
+
+### 흐름
+
+1. 이름을 입력받아요.
+2. `random.randint(1,3)`으로 컴퓨터의 번호를 정해요. 딕셔너리의 키가 문자열(`"1"`)이라 `str()`로 바꿔요.
+3. 번호를 입력받아요. 1~3이 아니면 안내하고 다시 받아요(안쪽 `while`).
+4. 내가 낸 것(바깥 `if`)과 컴퓨터가 낸 것(안쪽 `if`)으로 승리, 패배, 비김을 가려요.
+5. 결과를 기록 리스트에 넣고, 승리나 패배가 2번이 되면 최종 스코어와 승패 목록을 출력하고 `break`예요.
+6. 아니면 현재 스코어와 연승 카운트를 보여 주고 다시 도전할지 물어요.
+7. `no`면 `bye bye`와 승패 목록을 출력하고 끝나요. `yes`면 맨 위 `while`로 돌아가요.
+
+컴퓨터가 보, 바위, 가위를 냈고 내가 가위, 가위, 바위를 냈다면 이렇게 끝나요.
+
+```text
+==============================
+가위바위보 게임
+==============================
+플레이어 이름을 입력하세요 : Minji
+1. 가위 / 2. 바위 / 3. 보
+번호를 선택하세요. : 1
+
+[게임 결과]
+Minji: 가위  vs  컴퓨터: 보
+=> 승리
+
+현재 스코어	Minji 1 : 0 컴퓨터
+현재 연승 카운트 : 1
+
+다시 도전 (yes/no) : yes
+1. 가위 / 2. 바위 / 3. 보
+번호를 선택하세요. : 1
+
+[게임 결과]
+Minji: 가위  vs  컴퓨터: 바위
+=> 패배
+
+현재 스코어	Minji 1 : 1 컴퓨터
+현재 연승 카운트 : 0
+
+다시 도전 (yes/no) : yes
+1. 가위 / 2. 바위 / 3. 보
+번호를 선택하세요. : 2
+
+[게임 결과]
+Minji: 바위  vs  컴퓨터: 가위
+=> 승리
+
+최종 스코어	Minji 2 : 1 컴퓨터
+승패 목록 : ['승리', '패배', '승리']
+```
+
+`\t`는 탭(넓은 띄어쓰기)이라 `최종 스코어`와 이름 사이가 벌어져 보여요.
+
+### 직접 넣어 보면 보이는 것
+
+| 입력 | 결과 |
+| --- | --- |
+| 번호에 `abc` | 안내문이 아니라 `ValueError: invalid literal for int() with base 10: 'abc'`로 멈춰요 |
+| 번호에 `01` | 범위 검사는 통과하고, `[게임 결과]`를 찍은 뒤 `KeyError: '01'`로 멈춰요 |
+| 재도전에 `abc`, 다시 `no` | `yes 혹은 no 만 입력해주세요.` 뒤에 `no`를 넣으면 `bye bye`도 승패 목록도 없이 그냥 끝나요 |
+| 재도전에 바로 `no` | `bye bye`와 승패 목록이 나오고 끝나요 |
+
+<TwistBox title="01은 왜 범위 검사를 통과하고 나서 멈출까요?">
+
+범위 검사 줄은 `int(input_num)`, 즉 **숫자로 바꾼 값**을 봐요. `int("01")`은 `1`이라 1부터 3 사이라서 통과해요.
+
+그런데 그 아래 `game_data[input_num]`은 **바꾸기 전 문자열** `"01"`을 키로 찾아요. 딕셔너리에는 `"1"`만 있고 `"01"`은 없으니 `KeyError`예요. 검사한 값과 실제로 쓰는 값이 달라서 생긴 틈이에요. `abc`는 `int()`에서 바로 `ValueError`가 나고요.
+
+어제 숫자 맞추기 게임에서 본 것과 같은 교훈이에요. 입력을 숫자로 바꾸기 **전에** 쓸 수 있는 값인지 확인해요. 이 게임은 `"1"`, `"2"`, `"3"` 셋만 받으면 되니, `input_num not in game_data`(어제 배운 키 찾기 `in`)로 검사하면 `abc`도 `01`도 한 번에 걸러져요.
+
+재도전 쪽도 순서 문제예요. `if retry_value == "no":`가 잘못된 입력을 다시 묻는 `while`보다 **먼저** 있어서, 다시 물어서 받은 `no`는 이 검사를 거치지 않아요. 바깥 `while` 조건이 거짓이 돼서 인사 없이 끝나요. 다시 묻는 반복을 먼저 두고 그다음에 `no`를 검사하면 고쳐져요.
+
+</TwistBox>
+
+## 11. 함수로 다시 짜기: 함수를 재사용한다는 것
+
+오늘 TIL의 셀프 체크 질문은 "함수를 재사용한다는 것이 의미하는 게 뭘까?"였고, 요약에는 "코드 더 개선해보자"라고 적었어요. 둘을 한 번에 풀어 볼게요.
+
+**재사용이란** 한 번 만든 로직을 이름으로 **여러 번, 여러 곳에서** 부르는 거예요. 복사해 붙인 코드는 고칠 때 모든 사본을 찾아 고쳐야 하지만, 함수는 한 곳만 고치면 부르는 곳 전부가 바뀌어요.
+
+가위바위보 코드에서 되풀이되는 것이 두 가지 보여요.
+
+1. **"잘못 넣으면 다시 묻기"**: 번호 입력과 재도전 입력에서 같은 모양의 `while`이 두 번 나와요.
+2. **"승패 가리기"**: 가위, 바위, 보마다 `if`가 세 벌 있고, 안에서 `win_cnt += 1` 같은 줄이 계속 반복돼요.
+
+이 둘을 함수로 꺼내면 이렇게 돼요.
+
+```python
+import random
+
+game_data = {"1": "가위", "2": "바위", "3": "보"}
+beats = {"가위": "보", "바위": "가위", "보": "바위"}  # 키가 값을 이긴다
+
+
+def ask(prompt, allowed, warning):
+    answer = input(prompt).strip()
+    while answer not in allowed:
+        print(warning)
+        answer = input(prompt).strip()
+    return answer
+
+
+def judge(me, computer):
+    if me == computer:
+        return "비김"
+    if beats[me] == computer:
+        return "승리"
+    return "패배"
+
+
+print("=" * 30)
+print("가위바위보 게임")
+print("=" * 30)
+player_name = input("플레이어 이름을 입력하세요 : ")
+
+win_cnt = 0
+lose_cnt = 0
+winning_streak_cnt = 0
+game_record_list = []
+
+while True:
+    computer = game_data[str(random.randint(1, 3))]
+    print("1. 가위 / 2. 바위 / 3. 보")
+    num = ask("번호를 선택하세요. : ", ["1", "2", "3"], "1 부터 3 까지의 숫자만 입력 가능합니다.")
+    me = game_data[num]
+
+    print()
+    print("[게임 결과]")
+    print(f"{player_name}: {me}  vs  컴퓨터: {computer}")
+
+    game_result = judge(me, computer)
+    if game_result == "승리":
+        win_cnt += 1
+        winning_streak_cnt += 1
+    elif game_result == "패배":
+        lose_cnt += 1
+        winning_streak_cnt = 0
+    else:
+        winning_streak_cnt = 0
+    print(f"=> {game_result}")
+    game_record_list.append(game_result)
+    print()
+
+    if win_cnt == 2 or lose_cnt == 2:
+        print(f"최종 스코어\t{player_name} {win_cnt} : {lose_cnt} 컴퓨터")
+        print(f"승패 목록 : {game_record_list}")
+        break
+
+    print(f"현재 스코어\t{player_name} {win_cnt} : {lose_cnt} 컴퓨터")
+    print(f"현재 연승 카운트 : {winning_streak_cnt}")
+    print()
+
+    retry_value = ask("다시 도전 (yes/no) : ", ["yes", "no"], "yes 혹은 no 만 입력해주세요.")
+    if retry_value == "no":
+        print("bye bye")
+        print(f"승패 목록 : {game_record_list}")
+        break
+```
+
+| 바뀐 곳 | 어떻게 |
+| --- | --- |
+| `ask` | 다시 묻는 `while`을 한 번만 써 두고 두 곳에서 불러요. 안내 문구만 인수로 바꿔 넘겨요. 이게 재사용이에요 |
+| `judge` | "무엇이 무엇을 이기나"를 `beats` 딕셔너리 한 줄로 적어 두고, 세 벌의 `if`를 대신해요 |
+| 점수 올리기 | `judge`가 돌려준 결과로 한 번만 처리해서, 아홉 갈래였던 점수 처리가 세 갈래로 줄었어요 |
+| 입력 버그 | `ask`가 허락된 값(`"1"`, `"2"`, `"3"`)인지 문자열 그대로 검사해서 `abc`, `01`은 다시 물어요. `.strip()`이 앞뒤 공백도 지워 줘서 ` 2`도 받아요 |
+| 재도전 버그 | `ask`가 `yes`나 `no`만 돌려주니, 다시 물어서 받은 `no`도 `bye bye`를 찍고 끝나요 |
+
+직접 돌려 보니 같은 순서로 내면 원래 코드와 똑같이 `최종 스코어	Minji 2 : 1 컴퓨터`로 끝났어요. `judge`도 아홉 가지 조합을 모두 넣어 확인했어요.
+
+```text
+가위 ['비김', '패배', '승리']
+바위 ['승리', '비김', '패배']
+보 ['패배', '승리', '비김']
+```
+
+(각 줄은 내가 낸 것, 대괄호 안은 컴퓨터가 가위, 바위, 보를 냈을 때의 결과예요.)
+
+함수로 나누면 좋은 점이 하나 더 있어요. `judge`는 입력도 출력도 없이 값만 받아 결과를 돌려주니, 위처럼 **따로 떼어 시험해 볼 수 있어요.** 게임을 처음부터 여러 판 하지 않아도 승패 규칙이 맞는지 바로 확인돼요.
+
+## 오늘 꼭 기억할 주의점
+
+- 함수는 `def 이름(매개변수):`로 만들고, 콜론과 들여쓰기가 범위예요. 이름은 snake_case로 지어요.
+- 매개변수는 정의하는 쪽의 이름, 인수는 호출할 때 넘기는 값이에요.
+- 기본값이 있으면 인수를 안 넘겨도 돼요. 가운데 하나만 바꾸려면 `age=25`처럼 이름을 붙여 넘겨요.
+- `*args`는 튜플로, `**kwargs`는 딕셔너리로 받아요. 아무것도 안 넘기면 빈 튜플, 빈 딕셔너리예요.
+- `return`은 값을 돌려주고 함수를 그 자리에서 끝내요. 아래 줄은 실행되지 않아요.
+- `return`이 없으면 `None`을 돌려줘요. `print`로 보여 주는 것과 `return`으로 돌려주는 것은 달라요.
+- `return a, b`는 튜플 하나로 돌아와요. 두 변수로 나눠 받을 수 있어요.
+- 나누기 전에 0인지 먼저 검사해서 `return`으로 내보내요. `/`의 결과는 늘 소수예요.
+- 함수 안에서 만든 변수는 함수 밖에서 쓸 수 없어요(`NameError`).
+- 함수 안에서 `변수 = 값`을 쓰면 같은 이름의 지역 변수가 새로 생겨요. 전역 변수는 그대로예요.
+- 함수 안에서 전역 변수를 바꾸려면 `global`이 필요해요. 없이 `+=`를 쓰면 `UnboundLocalError`예요.
+- `lambda`는 식 하나만 쓰고, 그 결과가 반환값이에요.
+- `map`, `filter`는 `list()`로 감싸야 값이 보이고, 한 번 꺼내 쓰면 비어요.
+- `sorted`, `max`, `min`의 `key`는 비교 기준이에요. `key`를 빼면 튜플의 맨 앞 요소로 비교해요.
+- 입력은 쓸 값 그대로 검사해요. `int()`로 바꾼 값을 검사하고 바꾸기 전 문자열을 쓰면 `01` 같은 틈이 생겨요.
