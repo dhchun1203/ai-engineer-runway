@@ -935,6 +935,15 @@ textarea,
   overscroll-behavior: contain;
 }
 
+/* 데스크톱 "더보기" 드롭다운용(2026-11-04). 위에 잉크 머리띠(약 2rem)가 한 줄 더 얹히므로
+   그만큼 더 빼야 아주 짧은 창에서도 아래 끝이 화면 안에 남는다. */
+.nav-dropdown-scroll {
+  max-height: calc(100vh - var(--site-header-height) - 3rem);
+  max-height: calc(100dvh - var(--site-header-height) - 3rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nav-panel-reveal[data-state="open"],
   .nav-panel-reveal[data-state="closed"] {

@@ -385,9 +385,9 @@ export function SiteNav() {
                           </span>
                           {/* 구역(소제목부터 다음 소제목 전까지)마다 한 칸씩 나란히 놓는다
                               (2026-11-04). 한 줄로 쌓으면 항목이 열두 개라 FHD 100%에서
-                              화면 아래로 넘쳤다. 그래도 짧은 창이면 nav-panel-scroll이
+                              화면 아래로 넘쳤다. 그래도 짧은 창이면 nav-dropdown-scroll이
                               헤더 아래 남은 높이로 가두고 안에서 스크롤시킨다. */}
-                          <div className="nav-panel-scroll flex">
+                          <div className="nav-dropdown-scroll flex">
                             {splitSections(item.children).map((section, si) => (
                               <div
                                 key={section[0]?.label ?? si}
