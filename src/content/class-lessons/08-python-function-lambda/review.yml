@@ -3,7 +3,12 @@
 slug: 08-python-function-lambda
 quiz:
   - id: default-keyword-arg
-    q: "def say_hello(name=\"홍길동\", age=30): 일 때 say_hello(age=25) 가 출력에 쓰는 값은?"
+    q: "다음 코드에서 출력에 쓰이는 값은?"
+    code: |-
+      def say_hello(name="홍길동", age=30):
+          print(f"{name}, {age}살")
+
+      say_hello(age=25)
     options:
       - "name 은 홍길동, age 는 25"
       - "name 은 25, age 는 30"
@@ -11,17 +16,13 @@ quiz:
       - "인수가 하나 모자라 에러가 난다"
     answer: 0
     explain: "age=25 처럼 이름을 붙여 넘기면 그 매개변수만 바뀌고, 나머지는 기본값이 쓰여요. 이름 없이 say_hello(25) 로 넘기면 앞에서부터 들어가 name 이 25 가 돼요."
-  - id: parameter-vs-argument
-    q: "def add_all(*numbers): 와 add_all(1, 2, 3) 에서 매개변수와 인수를 바르게 짝지은 것은?"
-    options:
-      - "매개변수: 1, 2, 3 / 인수: *numbers"
-      - "매개변수: *numbers / 인수: 1, 2, 3"
-      - "둘 다 *numbers"
-      - "둘 다 1, 2, 3"
-    answer: 1
-    explain: "매개변수는 함수를 정의하는 쪽의 이름이고, 인수는 호출할 때 실제로 넘기는 값이에요."
   - id: kwargs-is-dict
-    q: "def user_info(**data): print(data) 에서 user_info(name=\"Minji\", level=5) 의 출력은?"
+    q: "다음 코드의 출력은?"
+    code: |-
+      def user_info(**data):
+          print(data)
+
+      user_info(name="Minji", level=5)
     options:
       - "('Minji', 5)"
       - "{'name': 'Minji', 'level': 5}"
@@ -44,17 +45,14 @@ quiz:
       - "None"
     answer: 1
     explain: "return 은 값을 돌려주면서 그 자리에서 함수를 끝내요. 그 아래 print(\"never\") 는 실행되지 않아요."
-  - id: no-return-none
-    q: "print 만 하고 return 이 없는 함수 say_hello 에서 r = say_hello() 뒤 print(r) 은?"
-    options:
-      - "인사말이 한 번 더 나온다"
-      - "None"
-      - "빈 줄"
-      - "에러가 난다"
-    answer: 1
-    explain: "return 이 없는 함수는 None 을 돌려줘요. 화면에 보여 주는 print 와 값을 돌려주는 return 은 다른 일이에요."
   - id: multiple-return-tuple
-    q: "def calc_value(a, b): return a + b, a - b 에서 result = calc_value(10, 5) 일 때 print(result, type(result)) 는?"
+    q: "다음 코드의 출력은?"
+    code: |-
+      def calc_value(a, b):
+          return a + b, a - b
+
+      result = calc_value(10, 5)
+      print(result, type(result))
     options:
       - "15 <class 'int'>"
       - "[15, 5] <class 'list'>"
@@ -62,24 +60,6 @@ quiz:
       - "15 5 <class 'tuple'>"
     answer: 2
     explain: "return 뒤에 쉼표로 이어 쓰면 튜플 하나로 돌아와요. 변수 하나로 받으면 튜플 그대로이고, r1, r2 = 로 받으면 나누어 담겨요."
-  - id: average-guard
-    q: "평균 함수 get_average(*args) 맨 앞에 if len(args) == 0: return 0 을 두는 이유는?"
-    options:
-      - "결과를 정수로 만들려고"
-      - "인수가 없을 때 0 으로 나누는 에러를 막으려고"
-      - "인수를 리스트로 바꾸려고"
-      - "음수 평균을 막으려고"
-    answer: 1
-    explain: "인수가 없으면 len 이 0 이라 sum / len 이 0 으로 나누기가 돼요. 먼저 막고 return 으로 내보내요. if not args: 도 같은 일을 해요. 평균은 / 결과라 90 이 아니라 90.0 처럼 소수예요."
-  - id: local-var-nameerror
-    q: "함수 안에서만 local_var = 1 을 만든 뒤, 함수 밖에서 print(local_var) 를 실행하면?"
-    options:
-      - "1"
-      - "None"
-      - "NameError: name 'local_var' is not defined"
-      - "UnboundLocalError"
-    answer: 2
-    explain: "함수 안에서 만든 지역 변수는 그 함수 안에서만 쓸 수 있어요. 밖에서는 그런 이름이 없어서 NameError 예요."
   - id: same-name-local
     q: "다음 코드의 출력 두 줄은?"
     code: |-
@@ -99,7 +79,14 @@ quiz:
     answer: 2
     explain: "함수 안에서 message = 를 쓰면 전역 변수를 바꾸는 게 아니라 같은 이름의 지역 변수가 새로 생겨요. 함수 밖 message 는 그대로예요."
   - id: global-unbound-local
-    q: "counter = 0 이 있고, 함수 안에 global 없이 counter += 1 만 쓴 뒤 그 함수를 부르면?"
+    q: "다음 코드를 실행하면?"
+    code: |-
+      counter = 0
+
+      def increase():
+          counter += 1
+
+      increase()
     options:
       - "counter 가 1 이 된다"
       - "함수 안에 새 counter 가 1 로 생긴다"
@@ -107,17 +94,12 @@ quiz:
       - "아무 일도 일어나지 않는다"
     answer: 2
     explain: "함수 안에 counter = ... 가 있으면 파이썬은 counter 를 지역 변수로 봐요. 값이 들어가기 전에 counter + 1 을 읽으려 해서 UnboundLocalError 예요. 함수 첫 줄에 global counter 를 쓰면 전역 값이 바뀌어요."
-  - id: lambda-equivalent
-    q: "lambda x: x + 5 와 같은 일을 하는 것은?"
-    options:
-      - "def f(x): print(x + 5)"
-      - "def f(x): return x + 5"
-      - "def f(): return x + 5"
-      - "def f(x): x + 5"
-    answer: 1
-    explain: "람다는 콜론 뒤 식 하나의 결과를 그대로 돌려줘요. return 이 있는 함수와 같아요. return 이 없는 def f(x): x + 5 는 None 을 돌려줘요."
   - id: map-object-once
-    q: "m = map(lambda x: x * 2, [1, 2, 3]) 뒤에 print(list(m)) 을 두 번 실행하면?"
+    q: "다음 코드의 출력 두 줄은?"
+    code: |-
+      m = map(lambda x: x * 2, [1, 2, 3])
+      print(list(m))
+      print(list(m))
     options:
       - "[2, 4, 6] 이 두 번"
       - "[2, 4, 6] 다음 []"
@@ -126,7 +108,9 @@ quiz:
     answer: 1
     explain: "map 은 하나씩 꺼내 주는 꾸러미를 돌려줘요. list() 로 한 번 다 꺼내면 비어서 두 번째는 [] 예요. 여러 번 쓸 거면 처음부터 list(...) 로 받아 둬요."
   - id: filter-vs-comprehension
-    q: "list(filter(lambda x: x % 2 == 0, [1, 2, 3, 4, 5])) 와 결과가 같은 것은?"
+    q: "다음 코드와 결과가 같은 것은?"
+    code: |-
+      list(filter(lambda x: x % 2 == 0, [1, 2, 3, 4, 5]))
     options:
       - "[x % 2 == 0 for x in [1, 2, 3, 4, 5]]"
       - "[x for x in [1, 2, 3, 4, 5] if x % 2 == 0]"
@@ -135,7 +119,11 @@ quiz:
     answer: 1
     explain: "filter 는 조건이 참인 요소만 남겨서 [2, 4] 예요. 같은 일을 리스트 컴프리헨션의 if 로 할 수 있어요. 첫 보기와 map 보기는 참 거짓 값 다섯 개를 만들어요."
   - id: max-without-key
-    q: "players = [(\"손흥민\", 95), (\"김민재\", 60), (\"이강인\", 80)] 에서 max(players) 와 max(players, key=lambda p: p[1]) 의 결과는?"
+    q: "다음 코드의 출력 두 줄은?"
+    code: |-
+      players = [("손흥민", 95), ("김민재", 60), ("이강인", 80)]
+      print(max(players))
+      print(max(players, key=lambda p: p[1]))
     options:
       - "둘 다 ('손흥민', 95)"
       - "('이강인', 80), ('손흥민', 95)"
@@ -144,7 +132,15 @@ quiz:
     answer: 1
     explain: "key 가 없으면 튜플의 맨 앞 요소(이름)로 비교해서 글자 순서가 가장 뒤인 이강인이 나와요. key=lambda p: p[1] 을 줘야 점수로 비교해요. max 는 기준 값이 아니라 항목 전체를 돌려줘요."
   - id: rps-string-key-check
-    q: "가위바위보에서 int(input_num) 으로 1~3 범위를 검사한 뒤 game_data[input_num] 을 쓸 때, 번호에 01 을 넣으면?"
+    q: "가위바위보 코드가 다음과 같을 때, 번호에 01 을 넣으면?"
+    code: |-
+      game_data = {"1": "가위", "2": "바위", "3": "보"}
+
+      input_num = input("번호를 선택하세요. : ")   # 01 입력
+      while int(input_num) < 1 or int(input_num) > 3:
+          print("1 부터 3 까지의 숫자만 입력 가능합니다.")
+          input_num = input("번호를 선택하세요. : ")
+      print(game_data[input_num])
     options:
       - "가위로 처리된다"
       - "범위 안내가 나오고 다시 묻는다"
@@ -152,15 +148,6 @@ quiz:
       - "ValueError 로 멈춘다"
     answer: 2
     explain: "int(\"01\") 은 1 이라 검사는 통과하지만, 딕셔너리는 바꾸기 전 문자열 \"01\" 로 찾아서 KeyError 예요. 검사한 값과 쓰는 값이 달라서 생긴 틈이에요. input_num not in game_data 로 문자열 그대로 검사하면 막혀요."
-  - id: function-reuse
-    q: "가위바위보에서 다시 묻는 반복을 ask(prompt, allowed, warning) 함수로 꺼냈을 때 얻는 것으로 가장 알맞은 것은?"
-    options:
-      - "프로그램이 더 빨리 실행된다"
-      - "같은 로직을 한 번만 써 두고 번호 입력과 재도전 입력 두 곳에서 부를 수 있다"
-      - "전역 변수를 쓸 수 없게 된다"
-      - "random 을 import 하지 않아도 된다"
-    answer: 1
-    explain: "재사용은 한 번 만든 로직을 이름으로 여러 곳에서 부르는 거예요. 고칠 일이 생기면 함수 한 곳만 고치면 부르는 곳 전부가 바뀌어요."
 commands:
   - cmd: "def 함수이름(매개변수):"
     desc: 함수 만들기. 콜론과 들여쓰기가 범위, 이름은 snake_case

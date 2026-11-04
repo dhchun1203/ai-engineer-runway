@@ -2,15 +2,6 @@
 # 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
 slug: 05-python-setup-uv
 quiz:
-  - id: boilerplate-meaning
-    q: "보일러플레이트(boilerplate)를 가장 잘 설명한 것은?"
-    options:
-      - "프로그램의 핵심 로직"
-      - "하려는 일과 상관없이 형식상 매번 써야 하는 코드"
-      - "외부에서 가져온 라이브러리"
-      - "실행 속도를 높이는 코드"
-    answer: 1
-    explain: "Java 는 Hello 한 줄을 찍으려 해도 클래스와 main 함수 틀이 필요해요. 파이썬은 파일 자체가 프로그램이라 print(\"Hello\") 한 줄이면 돼요."
   - id: interpreter-vs-compiler
     q: "인터프리터 방식에 대한 설명으로 맞는 것은?"
     options:
@@ -20,15 +11,6 @@ quiz:
       - "실행 전에 반드시 빌드 단계가 필요하다"
     answer: 1
     explain: "인터프리터는 동시통역처럼 실행하면서 번역해요. 전체를 미리 번역하는 건 컴파일 방식이고 C 가 예예요. 파이썬(CPython)은 속에서 바이트코드라는 중간 단계를 거치지만, 보통 인터프리터 방식으로 분류해요."
-  - id: pycache-meaning
-    q: "파이썬 파일을 import 해 실행했더니 __pycache__/calc.cpython-312.pyc 가 생겼어요. 이 파일은?"
-    options:
-      - "내가 꼭 커밋해야 하는 소스 코드"
-      - "다음 실행을 빠르게 하려고 저장한 바이트코드 캐시라 커밋하지 않는다"
-      - "가상환경 설정 파일"
-      - "에러 기록 파일"
-    answer: 1
-    explain: "CPython 은 코드를 바이트코드로 바꿔 실행하고, import 한 파일은 바이트코드를 __pycache__ 에 저장해 둬요. 자동으로 생기는 캐시라 uv 가 만든 .gitignore 에도 __pycache__/ 가 들어 있어요."
   - id: why-virtualenv
     q: "가상환경을 쓰는 가장 큰 이유는?"
     options:
@@ -47,15 +29,6 @@ quiz:
       - ".venv 와 uv.lock"
     answer: 3
     explain: "uv init 은 .git, .gitignore, .python-version, README.md, main.py, pyproject.toml 을 만들어요. .venv 와 uv.lock 은 uv add 나 uv run 을 실행할 때 생겨요."
-  - id: python-pin
-    q: "uv python pin 3.12 가 하는 일은?"
-    options:
-      - "파이썬 3.12 를 컴퓨터 전체 기본값으로 바꾼다"
-      - ".python-version 파일에 3.12 를 적어 이 프로젝트가 쓸 버전을 정한다"
-      - "pyproject.toml 의 dependencies 에 python 을 추가한다"
-      - "파이썬 3.12 를 지운다"
-    answer: 1
-    explain: "pin 은 이 프로젝트의 .python-version 만 바꿔요. 실행해 보면 Pinned `.python-version` to `3.12` 라고 나와요. 그 버전이 없으면 uv 가 필요할 때 받아 와요."
   - id: uv-add-three-things
     q: "uv add fastapi 가 한 번에 하는 일이 아닌 것은?"
     options:
@@ -66,7 +39,15 @@ quiz:
     answer: 3
     explain: "uv add 는 설치, pyproject.toml 기록, uv.lock 갱신을 해요. 커밋은 직접 해요. 두 파일 모두 커밋하고 .venv 는 커밋하지 않아요."
   - id: pyproject-vs-lock
-    q: "pyproject.toml 에는 \"fastapi>=0.162.0\", uv.lock 에는 version = \"0.162.0\" 이 있어요. 맞는 설명은?"
+    q: "두 파일에 다음처럼 적혀 있어요. 맞는 설명은?"
+    code: |-
+      # pyproject.toml
+      dependencies = ["fastapi>=0.162.0"]
+
+      # uv.lock
+      [[package]]
+      name = "fastapi"
+      version = "0.162.0"
     options:
       - "pyproject.toml 은 허용 범위(원하는 것), uv.lock 은 실제로 고른 정확한 버전이다"
       - "두 파일은 같은 내용이라 하나만 있으면 된다"
@@ -92,15 +73,6 @@ quiz:
       - "pyproject.toml 을 원래대로 되돌린다"
     answer: 1
     explain: "--locked 는 두 파일이 어긋나면 에러예요(The lockfile at `uv.lock` needs to be updated). 옵션 없는 uv sync 는 lock 을 다시 만들고, --frozen 은 lock 만 믿어 새 패키지를 설치하지 않아요."
-  - id: source-why
-    q: "Git Bash 에서 가상환경을 활성화할 때 source .venv/Scripts/activate 처럼 source 를 쓰는 이유는?"
-    options:
-      - "파일을 관리자 권한으로 실행하려고"
-      - "지금 쓰는 터미널에서 그대로 실행해야 PATH 같은 설정이 이 터미널에 남아서"
-      - "파일을 다운로드하려고"
-      - "source 가 없으면 파일을 지워서"
-    answer: 1
-    explain: "source 없이 실행하면 새 프로세스에서 돌고 끝나면 바뀐 설정도 사라져요. 실제로 bash 로 실행하면 You must source this script 라며 막아요."
   - id: which-vs-virtualenv
     q: "가상환경을 활성화한 터미널에서 which python 과 echo $VIRTUAL_ENV 가 보여 주는 것은?"
     options:
@@ -111,7 +83,10 @@ quiz:
     answer: 1
     explain: "which python 은 python 을 쳤을 때 실행될 파일의 경로예요. 가상환경 폴더 자체는 $VIRTUAL_ENV 로 봐요. deactivate 하면 which python 은 시스템 경로로 돌아가고 $VIRTUAL_ENV 는 빈 줄이 돼요."
   - id: uv-run-no-activate
-    q: "활성화하지 않은 터미널에서 uv add fastapi 후 python main.py(안에 import fastapi)를 실행하면?"
+    q: "가상환경을 활성화하지 않은 터미널에서 다음을 실행하면?"
+    code: |-
+      $ uv add fastapi
+      $ python main.py     # main.py 첫 줄: import fastapi
     options:
       - "항상 잘 실행된다"
       - "시스템 파이썬으로 돌아 ModuleNotFoundError 가 날 수 있다. uv run main.py 로 실행하면 된다"
@@ -128,15 +103,6 @@ quiz:
       - "아무것도 안 해도 된다"
     answer: 1
     explain: "ipykernel 은 노트북이 코드를 실행하는 엔진(커널)이에요. 커널을 .venv 로 골라야 그 환경에 설치한 패키지를 쓸 수 있어요. 개발할 때만 쓰니 uv add --dev ipykernel 로 나눠 둘 수도 있어요."
-  - id: jupyter-shortcuts
-    q: "노트북에서 셀을 마크다운 셀로 바꾸려고 M 을 눌렀는데 글자 m 이 입력됐어요. 먼저 할 일은?"
-    options:
-      - "Ctrl + Enter 를 누른다"
-      - "Esc 로 명령 모드에 들어간 뒤 M 을 누른다"
-      - "D 를 두 번 누른다"
-      - "노트북을 다시 연다"
-    answer: 1
-    explain: "M, Y, A, B, DD 같은 단축키는 명령 모드에서 동작해요. 셀 안(편집 모드)이면 그냥 글자가 입력돼요. 한영이 영문인지도 확인해요."
 commands:
   - cmd: python
     desc: 파이썬 REPL(>>>) 열기

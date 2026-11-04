@@ -30,7 +30,9 @@ quiz:
     answer: 0
     explain: 공유된 이력은 revert로 고쳐요. 원래 커밋은 남겨 두고 정반대 변경을 새 커밋으로 쌓으니, 팀원은 pull만 하면 돼요. reset으로 이력을 지우면 팀원의 이력과 어긋나요.
   - id: reset-soft
-    q: git reset --soft HEAD~1 을 실행한 직후, 마지막 커밋에 들어 있던 변경은 어떻게 되나요?
+    q: "다음 명령을 실행한 직후, 마지막 커밋에 들어 있던 변경은 어떻게 되나요?"
+    code: |-
+      git reset --soft HEAD~1
     options:
       - 완전히 사라진다
       - 작업 폴더에만 남고 Staging Area에서는 빠진다
@@ -38,15 +40,6 @@ quiz:
       - Staging Area에 그대로 담겨 있다
     answer: 3
     explain: "--soft는 커밋만 취소하고 변경은 Staging Area에 그대로 둬요. 실제로 실행 후 git status --short를 보면 맨 앞에 M이 붙은 \"M  README.md\"가 보여요. 작업 폴더에만 남기는 건 --mixed, 변경까지 버리는 건 --hard예요."
-  - id: reset-default
-    q: 옵션 없이 git reset HEAD~1 만 실행하면 어떤 옵션과 같나요?
-    options:
-      - "--soft"
-      - "--mixed"
-      - "--hard"
-      - "--keep"
-    answer: 1
-    explain: 기본값은 --mixed예요. 커밋과 Staging을 취소하고, 작업 폴더의 변경은 남겨 둬요. 택배로 치면 상자에서 물건을 꺼내 방에 내려놓는 것과 같아요.
   - id: ls-al-line
     q: ls -al 결과에 다음 줄이 보여요. 이 줄에서 알 수 있는 것은?
     code: "-rw-r--r--  1 user group 12 Oct 26 16:01 README.md"
@@ -72,7 +65,11 @@ quiz:
     answer: 3
     explain: ">>는 파일 끝에 이어 쓰고, >는 파일을 새로 써요. 두 번째 줄까지는 A와 B 두 줄이었지만, 세 번째 줄의 >가 파일을 통째로 다시 써서 C 한 줄만 남아요."
   - id: cd-dash
-    q: cd ~/projects 로 이동한 다음 cd /tmp 로 옮겼어요. 여기서 cd - 를 실행하면?
+    q: "다음을 차례로 실행하면 마지막 cd - 는 어디로 갈까요?"
+    code: |-
+      cd ~/projects
+      cd /tmp
+      cd -
     options:
       - 홈 폴더(~)로 간다
       - ~/projects로 돌아간다
@@ -80,15 +77,6 @@ quiz:
       - 터미널이 종료된다
     answer: 1
     explain: cd -는 바로 전에 있던 폴더로 돌아가요. TV 리모컨의 "이전 채널" 버튼처럼 두 폴더를 오갈 때 편해요. 홈 폴더는 cd ~, 한 칸 위는 cd .. 예요.
-  - id: clear-line
-    q: 입력하던 긴 명령 줄을 한 번에 전부 지우는 단축키는?
-    options:
-      - Ctrl + u
-      - Ctrl + w
-      - Ctrl + a
-      - Ctrl + l
-    answer: 0
-    explain: Ctrl + u는 입력 줄 전체를 지워요. Ctrl + w는 단어 하나씩 지우고, Ctrl + a는 줄 맨 앞으로 이동하고, Ctrl + l은 화면을 정리해요.
   - id: diff-staged
     q: README.md를 고치고 git add까지 했어요. 이 변경 내용을 확인하려면?
     options:
@@ -98,15 +86,6 @@ quiz:
       - git restore README.md
     answer: 2
     explain: add 한 변경은 git diff --staged로 봐요. 이미 Staging으로 넘어갔기 때문에 git diff는 아무것도 보여 주지 않아요. git restore는 add 하지 않은 수정을 버리는 명령이라 여기서 쓰면 안 돼요.
-  - id: winget-id
-    q: 이름이 비슷한 패키지가 많을 때 Git을 가장 안전하게 설치하는 명령은?
-    options:
-      - winget install git
-      - winget install --id Git.Git -e
-      - winget search git --count 5
-      - winget upgrade
-    answer: 1
-    explain: 설치는 ID 기준으로 하고, -e(--exact)로 정확히 일치하는 것만 고르면 엉뚱한 패키지를 받지 않아요. search는 찾기만 하고, upgrade는 이미 설치된 프로그램을 올리는 명령이에요.
   - id: env-committed
     q: .env 파일을 실수로 커밋해 GitHub에 push한 뒤에야 .gitignore에 추가했어요. 맞는 설명은?
     options:
