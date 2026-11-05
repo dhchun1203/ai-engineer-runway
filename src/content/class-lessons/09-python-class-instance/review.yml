@@ -1,0 +1,228 @@
+# 09-python-class-instance 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
+# 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
+slug: 09-python-class-instance
+quiz:
+  - id: init-auto-call
+    q: "다음 코드의 출력은?"
+    code: |-
+      class User:
+          def __init__(self, name):
+              print("생성:", name)
+              self.name = name
+
+      u = User("손흥민")
+    options:
+      - "생성: 손흥민"
+      - "아무것도 출력되지 않는다"
+      - "손흥민"
+      - "__init__ 을 부르지 않아 에러가 난다"
+    answer: 0
+    explain: "User(\"손흥민\") 으로 인스턴스를 만드는 순간 파이썬이 __init__ 을 자동으로 불러요. 그래서 직접 부르지 않아도 print 가 실행돼요."
+  - id: same-value-different-object
+    q: "다음 코드의 출력은?"
+    code: |-
+      class User:
+          def __init__(self, name):
+              self.name = name
+
+      a = User("손흥민")
+      b = User("손흥민")
+      print(a is b, a.name == b.name)
+    options:
+      - "True True"
+      - "False True"
+      - "False False"
+      - "True False"
+    answer: 1
+    explain: "같은 클래스, 같은 값으로 만들어도 a 와 b 는 서로 다른 객체라 is 는 False 예요. 안에 든 name 값은 둘 다 \"손흥민\" 이라 == 는 True 예요."
+  - id: self-is-caller
+    q: "다음 코드의 출력은?"
+    code: |-
+      class Monitor:
+          def check(self):
+              print(id(self) == id(monitor))
+
+      monitor = Monitor()
+      monitor.check()
+    options:
+      - "False"
+      - "True"
+      - "self 가 정의되지 않아 에러가 난다"
+      - "id 숫자 두 개"
+    answer: 1
+    explain: "monitor.check() 처럼 부르면 점 앞의 monitor 가 self 로 들어가요. 같은 객체라 id 가 같아서 True 예요."
+  - id: attribute-before-set
+    q: "다음 코드를 실행하면?"
+    code: |-
+      class Monitor:
+          def display_info(self):
+              self.resolution = "1920X1080"
+
+      monitor = Monitor()
+      print(monitor.resolution)
+    options:
+      - "1920X1080"
+      - "None"
+      - "AttributeError"
+      - "빈 줄이 출력된다"
+    answer: 2
+    explain: "resolution 은 display_info() 안의 self.resolution = ... 줄이 실행돼야 생겨요. 메서드를 부르기 전에 꺼내면 'Monitor' object has no attribute 'resolution' 에러가 나요. 생성자에서 속성을 미리 만들어 두는 이유예요."
+  - id: battery-per-instance
+    q: "다음 코드의 출력은?"
+    code: |-
+      class SmartPhone:
+          def __init__(self, model):
+              self.model = model
+              self.battery = 50
+
+          def charge(self, amount):
+              self.battery += amount
+              if self.battery > 100:
+                  self.battery = 100
+
+      phone_a = SmartPhone("아이폰")
+      phone_a.charge(30)
+      phone_a.charge(30)
+      phone_b = SmartPhone("갤럭시")
+      print(phone_a.battery, phone_b.battery)
+    options:
+      - "110 50"
+      - "100 100"
+      - "100 50"
+      - "80 50"
+    answer: 2
+    explain: "phone_a 는 50 에서 80, 다시 110 이 됐다가 100 을 넘어서 100 으로 맞춰져요. phone_b 는 새 인스턴스라 자기 battery 가 50 에서 시작해요."
+  - id: fstring-method-order
+    q: "다음 코드의 출력 순서는?"
+    code: |-
+      class BankAccount:
+          def __init__(self, balance):
+              self.balance = balance
+
+          def withdraw(self, amount):
+              self.balance -= amount
+              print(f"{amount:,}원 출금 완료")
+              return self.balance
+
+      account = BankAccount(600000)
+      print(f"잔액 : {account.withdraw(200000):,}원")
+    options:
+      - "잔액 : 400,000원 다음 줄에 200,000원 출금 완료"
+      - "200,000원 출금 완료 다음 줄에 잔액 : 400,000원"
+      - "잔액 : 400,000원 만 출력된다"
+      - "잔액 : 200,000원 출금 완료400,000원"
+    answer: 1
+    explain: "print 는 괄호 안의 문장을 다 만든 다음에 찍어요. 문장을 만들려면 f-string 안의 withdraw(200000) 부터 실행해야 해서, 메서드 안의 print 가 먼저 찍히고 돌려받은 400000 이 들어간 문장이 나중에 찍혀요."
+  - id: none-return-format-error
+    q: "잔액이 100,000원일 때 다음 줄을 실행하면?"
+    code: |-
+      def withdraw(self, amount):
+          if self.balance < amount:
+              print("출금 잔액이 부족합니다.")
+              return
+          self.balance -= amount
+          return self.balance
+
+      print(f"잔액 : {account.withdraw(999999):,}원")
+    options:
+      - "출금 잔액이 부족합니다. 다음 줄에 잔액 : 100,000원"
+      - "출금 잔액이 부족합니다. 다음 줄에 잔액 : None원"
+      - "출금 잔액이 부족합니다. 다음 줄에 TypeError"
+      - "아무것도 출력되지 않는다"
+    answer: 2
+    explain: "잔액이 모자라면 메시지를 찍고 값 없이 return 해서 None 을 돌려줘요. None 에는 천 단위 쉼표 :, 를 붙일 수 없어서 TypeError 가 나요. :, 없이 {...} 만 썼다면 '잔액 : None원' 이 찍혔을 거예요."
+  - id: str-vs-repr-in-list
+    q: "다음 코드의 출력은?"
+    code: |-
+      class T:
+          def __str__(self):
+              return "STR"
+
+          def __repr__(self):
+              return "REPR"
+
+      t = T()
+      print(t)
+      print([t])
+    options:
+      - "STR 다음 줄에 [STR]"
+      - "REPR 다음 줄에 [REPR]"
+      - "STR 다음 줄에 [REPR]"
+      - "REPR 다음 줄에 [STR]"
+    answer: 2
+    explain: "print(객체) 는 __str__ 을 써요. 리스트를 출력하면 안에 든 객체는 __repr__ 로 보여요. 그래서 STR 과 [REPR] 이에요."
+  - id: remove-new-equal-object
+    q: "cart 에 item_a = Item(\"초코파이\", 5000) 을 담아 두었어요. 다음 줄을 실행하면?"
+    code: |-
+      class Item:
+          def __init__(self, name, price):
+              self.name = name
+              self.price = price
+
+      cart.remove_item(Item("초코파이", 5000))  # 안에서 self.bucket.remove(item)
+    options:
+      - "item_a 가 카트에서 빠진다"
+      - "ValueError: list.remove(x): x not in list"
+      - "아무 일도 일어나지 않는다"
+      - "카트가 통째로 비워진다"
+    answer: 1
+    explain: "이름과 가격이 같아도 Item(\"초코파이\", 5000) 은 방금 새로 만든 다른 객체라 리스트에서 찾지 못해요. 담을 때 쓴 item_a 를 넘겨야 빠져요."
+  - id: why-constructor
+    q: "클래스에 생성자 __init__ 을 두는 이유로 맞지 않는 것은?"
+    options:
+      - "인스턴스가 만들어질 때 꼭 필요한 값을 받으려고"
+      - "어떤 메서드를 먼저 부르든 속성이 이미 있게 하려고"
+      - "인스턴스마다 자기 값(예: 카트마다 자기 bucket 리스트)을 따로 가지게 하려고"
+      - "모든 인스턴스가 하나의 값을 함께 나눠 쓰게 하려고"
+    answer: 3
+    explain: "__init__ 안에서 self.이름 = 값 으로 만든 속성은 인스턴스마다 따로 생겨요. 모든 인스턴스가 하나를 나눠 쓰는 건 클래스 바로 아래에 쓴 변수예요(bucket = [] 를 클래스 바로 아래에 두면 카트끼리 상품이 섞여요)."
+commands:
+  - cmd: "class 클래스이름:"
+    desc: 클래스(설계도) 만들기. 이름은 PascalCase(BankAccount)
+    group: Python
+  - cmd: "def __init__(self, 매개변수):"
+    desc: 생성자. 인스턴스가 만들어질 때 자동으로 실행
+    group: Python
+  - cmd: self.속성 = 값
+    desc: 인스턴스 안에 값(속성) 담기. 이 줄이 실행된 뒤에 속성이 생김
+    group: Python
+  - cmd: 변수 = 클래스이름(인수)
+    desc: 인스턴스 만들기. 인수는 __init__ 의 매개변수로 들어감
+    group: Python
+  - cmd: 인스턴스.속성 / 인스턴스.메서드()
+    desc: 점으로 속성 꺼내기, 메서드 부르기. 점 앞의 인스턴스가 self 로 들어감
+    group: Python
+  - cmd: "def __str__(self):"
+    desc: print(객체), f"{객체}" 로 출력할 때 보일 문자열 돌려주기
+    group: Python
+  - cmd: "def __repr__(self):"
+    desc: 리스트 안에 든 객체 등을 출력할 때 보일 문자열 돌려주기
+    group: Python
+  - cmd: id(객체)
+    desc: 객체의 메모리 번호. 같은 객체인지 비교할 때 사용
+    group: Python
+  - cmd: a is b
+    desc: 두 이름이 같은 객체를 가리키는지 확인. 값이 같은지는 ==
+    group: Python
+  - cmd: 리스트.remove(값)
+    desc: 리스트에서 그 값 빼기. 없으면 ValueError
+    group: Python
+terms:
+  - word: 클래스 (Class)
+    definition: 데이터(속성)와 동작(메서드)을 묶은 설계도. 붕어빵 틀에 비유한다.
+  - word: 인스턴스 (Instance)
+    definition: 클래스로 만들어 낸 실제 객체. 같은 클래스로 만든 인스턴스끼리도 서로 다른 객체다.
+  - word: 생성자 (Constructor, __init__)
+    definition: 인스턴스가 만들어질 때 자동으로 실행되는 메서드. 필요한 값을 받아 속성을 준비한다.
+  - word: self
+    definition: 메서드를 부른 인스턴스 자기 자신. 메서드의 첫 매개변수로 받고, 호출할 때 점 앞의 객체가 들어간다.
+  - word: 속성 (Attribute)
+    definition: 인스턴스가 가진 데이터. self.이름 = 값 으로 만들고 인스턴스.이름 으로 꺼낸다.
+  - word: 메서드 (Method)
+    definition: 클래스 안에 만든 함수. 인스턴스가 할 수 있는 동작이다.
+  - word: __str__, __repr__
+    definition: 객체를 글자로 보여 줄 모양을 정하는 메서드. print(객체) 는 __str__, 리스트 안의 객체는 __repr__ 로 보인다.
+  - word: 의사 코드 (Pseudo Code)
+    definition: 코드를 쓰기 전에 할 일을 말이나 주석으로 먼저 적어 둔 것.
+  - word: PascalCase
+    definition: 단어 첫 글자를 대문자로 붙여 쓰는 이름 표기. 파이썬 클래스 이름에 쓴다.
