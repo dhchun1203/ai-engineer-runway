@@ -11,7 +11,7 @@
 // 편집기 스크롤은 편집기 상자 안에서만 움직인다(페이지 스크롤은 건드리지 않는다).
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
+import { Check, Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { RefactorReplayData, ReplayStep } from '@/content/refactor-replays/types';
 
@@ -103,6 +103,8 @@ export function RefactorReplayPlayer({ data }: { data: RefactorReplayData }) {
   const [playing, setPlaying] = useState(false);
   const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState<number>(2);
+  // 지금 단계 안에서 진행한 비율(0..1). 파란 선이 단계 사이에서도 자라게 한다.
+  const [progress, setProgress] = useState(0);
 
   // 재생 루프가 읽고 쓰는 값
   const linesRef = useRef<Line[]>(lines);
@@ -174,6 +176,7 @@ export function RefactorReplayPlayer({ data }: { data: RefactorReplayData }) {
       linesRef.current = snaps[Math.min(i, N)].map((t) => ({ t, k: '' }));
       curRef.current = -1;
       setHeader(i);
+      setProgress(0);
       paint();
       if (edRef.current) edRef.current.scrollTop = 0;
     },
@@ -208,15 +211,19 @@ export function RefactorReplayPlayer({ data }: { data: RefactorReplayData }) {
       linesRef.current = snaps[i].map((t) => ({ t, k: '' }));
       curRef.current = -1;
       setHeader(i);
+      setProgress(0);
       paint();
+      const ops = steps[i].ops;
       const texts = () => linesRef.current.map((l) => l.t);
-      for (const op of steps[i].ops) {
+      for (let o = 0; o < ops.length; o++) {
+        const op = ops[o];
         if ('mark' in op) {
           const [s, e] = findRange(texts(), op.mark);
           for (let j = s; j <= e; j++) linesRef.current[j].k = 'mark';
           scrollTo(Math.round((s + e) / 2));
           paint();
           await sleep(2600);
+          setProgress((o + 1) / ops.length);
           continue;
         }
         let at: number;
@@ -239,7 +246,11 @@ export function RefactorReplayPlayer({ data }: { data: RefactorReplayData }) {
           }
           at = s;
         }
-        for (let k = 0; k < op.lines.length; k++) await typeLine(at + k, op.lines[k]);
+        for (let k = 0; k < op.lines.length; k++) {
+          await typeLine(at + k, op.lines[k]);
+          setProgress((o + (k + 1) / op.lines.length) / ops.length);
+        }
+        if (op.lines.length === 0) setProgress((o + 1) / ops.length);
         curRef.current = -1;
         paint();
         await sleep(500);
@@ -278,43 +289,63 @@ export function RefactorReplayPlayer({ data }: { data: RefactorReplayData }) {
     header < 0 ? '원래 코드' : header >= N ? '완성' : `${header + 1}. ${steps[header].title}`;
   const say =
     header < 0
-      ? '재생을 누르면 한 단계씩 고쳐 나가요. 위 단계 이름을 누르면 그 단계부터 볼 수 있어요.'
+      ? '재생을 누르면 한 단계씩 고쳐 나가요. 위 번호를 누르면 그 단계부터 볼 수 있어요.'
       : header >= N
         ? `${original.length}줄이 ${snaps[N].length}줄이 됐어요. ${doneSay}`
         : steps[header].say;
   const running = playing && !paused;
-  const chips = [...steps.map((s) => s.title), '완성'];
+  const cells = [...steps.map((s) => s.title), '완성'];
+  // 파란 선이 닿는 곳: 칸이 같은 폭이라 (지금 칸 + 그 단계에서 진행한 비율) / 칸 수.
+  const railEnd = header < 0 ? 0 : header >= N ? 1 : (header + progress) / cells.length;
 
   return (
-    <div className="not-prose my-6 border border-line dark:border-line-dark" data-refactor-replay>
-      <div className="flex flex-wrap gap-2 border-b border-line bg-surface-2 p-3 dark:border-line-dark dark:bg-surface-2-dark">
-        {chips.map((c, i) => {
+    <div
+      className="not-prose my-6 border border-line bg-surface dark:border-line-dark dark:bg-surface-dark"
+      data-refactor-replay
+    >
+      <nav aria-label="리팩터링 단계" className="relative flex border-b border-line px-1 dark:border-line-dark">
+        {cells.map((c, i) => {
           const on = i === header;
           const done = header >= 0 && i < header;
+          const last = i === cells.length - 1;
           return (
             <button
               key={c}
               type="button"
               onClick={() => go(i)}
+              aria-label={last ? '완성' : `${i + 1}단계. ${c}`}
+              title={last ? '완성' : `${i + 1}. ${c}`}
               aria-current={on ? 'step' : undefined}
-              className={`tap-feedback min-h-11 border px-3 text-label ${
-                on
-                  ? 'border-accent bg-accent text-surface dark:border-accent-dark dark:bg-accent-dark dark:text-background-dark'
-                  : done
-                    ? 'border-line bg-surface text-foreground dark:border-line-dark dark:bg-surface-dark dark:text-foreground-dark'
-                    : 'border-line bg-surface text-muted dark:border-line-dark dark:bg-surface-dark dark:text-muted-dark'
+              className={`replay-cell tap-feedback flex min-h-11 min-w-0 flex-1 items-center justify-center ${
+                on || done
+                  ? 'text-foreground dark:text-foreground-dark'
+                  : 'text-muted hover:text-foreground dark:text-muted-dark dark:hover:text-foreground-dark'
               }`}
             >
-              {i + 1}. {c}
+              <span
+                aria-hidden="true"
+                className={`flex h-6 w-6 items-center justify-center text-label font-semibold tabular-nums ${
+                  on ? 'bg-foreground text-background dark:bg-foreground-dark dark:text-background-dark' : ''
+                }`}
+              >
+                {last ? <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> : i + 1}
+              </span>
             </button>
           );
         })}
-      </div>
+        <span
+          aria-hidden="true"
+          className="replay-rail"
+          style={{ transform: `scaleX(${railEnd})` }}
+        />
+      </nav>
 
-      <div className="bg-surface px-4 pb-3 pt-4 dark:bg-surface-dark">
-        <div className="flex items-baseline gap-3">
+      <div className="px-4 pb-3 pt-4">
+        <div className="flex items-baseline justify-between gap-3">
           <p className="text-subhead font-bold">{title}</p>
-          <p className="text-label text-muted dark:text-muted-dark">{lines.length}줄</p>
+          <p className="shrink-0 text-label tabular-nums text-muted dark:text-muted-dark">
+            {lines.length}줄
+          </p>
         </div>
         <p className="mt-1 min-h-[3.3em] text-label text-muted dark:text-muted-dark" aria-live="polite">
           {say}

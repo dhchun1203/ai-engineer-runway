@@ -2068,6 +2068,46 @@ code[data-theme*=" "] span {
   }
 }
 
+/* 리팩터링 재생기의 단계 막대. 단계 막대(.stage-bar)와 같은 말씨로 지금 칸은 번호만 잉크로 채우고,
+   아래 선 위로 파란 2px 선이 재생한 만큼 자란다. 재생 루프가 한 줄 칠 때마다 값을 바꾸므로
+   짧은 트랜지션으로 이어 붙인다. */
+.replay-rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background-color: var(--color-accent);
+  transform-origin: left;
+  transition: transform 300ms ease-out;
+}
+
+.dark .replay-rail {
+  background-color: var(--color-accent-dark);
+}
+
+.replay-cell {
+  transition:
+    color 120ms ease-out,
+    transform 120ms ease-out;
+}
+
+.replay-cell:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.dark .replay-cell:focus-visible {
+  outline-color: var(--color-accent-dark);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .replay-rail,
+  .replay-cell {
+    transition: none;
+  }
+}
+
 /* 코드 블록 테두리는 래퍼(.prose [data-code-block])가 갖는다 — 헤더와 코드를 한 상자에
    담기 위해 위쪽 규칙으로 옮겼다. 여기서는 <pre>에 따로 테두리를 주지 않는다. */
 
