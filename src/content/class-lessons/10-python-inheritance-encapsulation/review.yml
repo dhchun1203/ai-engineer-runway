@@ -1,0 +1,256 @@
+# 10-python-inheritance-encapsulation 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
+# 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
+slug: 10-python-inheritance-encapsulation
+quiz:
+  - id: init-typo-no-constructor
+    q: "다음 코드를 실행하면?"
+    code: |-
+      class Typo:
+          def __int__(self, nickname):
+              self.nickname = nickname
+
+      t = Typo("코딩왕")
+    options:
+      - "t.nickname 에 코딩왕 이 들어간다"
+      - "TypeError: Typo() takes no arguments"
+      - "AttributeError: 'Typo' object has no attribute 'nickname'"
+      - "아무 일도 일어나지 않는다"
+    answer: 1
+    explain: "생성자 이름은 정확히 __init__ 이어야 해요. __int__ 는 그냥 다른 메서드라 이 클래스에는 생성자가 없고, 값을 넘기면 \"인수를 받지 않는다\"는 TypeError 가 나요. 값 없이 Typo() 로 만들고 nickname 을 꺼내면 AttributeError 예요."
+  - id: missing-self-dot
+    q: "다음 코드를 실행하면?"
+    code: |-
+      class User:
+          def __init__(self, name):
+              name = name
+
+          def hello(self):
+              return self.name
+
+      print(User("코딩왕").hello())
+    options:
+      - "코딩왕"
+      - "None"
+      - "AttributeError: 'User' object has no attribute 'name'"
+      - "TypeError"
+    answer: 2
+    explain: "self. 없이 name = name 이라고 쓰면 지역 변수에 넣은 것이라 __init__ 이 끝나면 사라져요. 객체에는 name 속성이 생기지 않아서 self.name 을 읽을 때 AttributeError 가 나요."
+  - id: objects-keep-own-data
+    q: "다음 코드의 출력은?"
+    code: |-
+      class Account:
+          def __init__(self, balance):
+              self.balance = balance
+
+          def deposit(self, amount):
+              self.balance += amount
+
+      a = Account(7000)
+      b = Account(7000)
+      a.deposit(500)
+      print(a.balance, b.balance)
+    options:
+      - "7500 7500"
+      - "7500 7000"
+      - "7000 7000"
+      - "7000 7500"
+    answer: 1
+    explain: "같은 클래스로 만들어도 객체마다 balance 를 따로 가져요. a 에만 입금했으니 a 만 7500 이 되고 b 는 7000 그대로예요."
+  - id: negative-withdraw-grows
+    q: "다음 코드의 출력은?"
+    code: |-
+      class Account:
+          def __init__(self, balance):
+              self.balance = balance
+
+          def withdraw(self, amount):
+              if self.balance >= amount:
+                  self.balance -= amount
+              return self.balance
+
+      test = Account(7000)
+      print(test.withdraw(-5000))
+    options:
+      - "2000"
+      - "7000"
+      - "12000"
+      - "ValueError"
+    answer: 2
+    explain: "7000 >= -5000 은 참이라 출금이 진행되고, 7000 - (-5000) 은 12000 이에요. 금액을 검사하지 않아서 출금했는데 잔액이 늘었어요. if amount <= 0: raise ValueError(...) 로 먼저 막아야 해요."
+  - id: inheritance-one-way
+    q: "다음 코드의 출력은?"
+    code: |-
+      class Animal:
+          def breathe(self):
+              print("숨을 쉽니다.")
+
+      class Dog(Animal):
+          def bark(self):
+              print("멍멍 짖습니다.")
+
+      baduk = Dog()
+      print(isinstance(baduk, Animal), issubclass(Animal, Dog))
+    options:
+      - "True True"
+      - "True False"
+      - "False True"
+      - "False False"
+    answer: 1
+    explain: "Dog 는 Animal 을 물려받았으니 Dog 로 만든 baduk 은 Animal 이기도 해서 True 예요. 상속은 한 방향이라 Animal 은 Dog 의 자식이 아니어서 issubclass(Animal, Dog) 는 False 예요."
+  - id: override-parent-unchanged
+    q: "다음 코드의 출력은?"
+    code: |-
+      class Animal:
+          def sound(self):
+              print("소리를 냅니다.")
+
+      class Cat(Animal):
+          def sound(self):
+              print("야옹 하고 웁니다.")
+
+      Cat().sound()
+      Animal().sound()
+    options:
+      - "야옹 하고 웁니다. 다음 줄에 소리를 냅니다."
+      - "야옹 하고 웁니다. 두 줄"
+      - "소리를 냅니다. 두 줄"
+      - "소리를 냅니다. 다음 줄에 야옹 하고 웁니다."
+    answer: 0
+    explain: "자식 Cat 에 같은 이름의 sound 가 있으니 Cat 객체는 자식 것을 실행해요(오버라이딩). 부모 Animal 은 바뀌지 않아서 Animal 객체는 원래 문장을 출력해요."
+  - id: super-init-missing
+    q: "다음 코드를 실행하면?"
+    code: |-
+      class Person:
+          def __init__(self, name):
+              self.name = name
+
+      class Student(Person):
+          def __init__(self, name, major):
+              self.major = major
+
+      print(Student("김철수", "컴퓨터공학").name)
+    options:
+      - "김철수"
+      - "컴퓨터공학"
+      - "None"
+      - "AttributeError: 'Student' object has no attribute 'name'"
+    answer: 3
+    explain: "자식에 __init__ 을 만들면 부모의 __init__ 이 덮여서 실행되지 않아요. self.name 을 채우던 부모 코드가 돌지 않았으니 name 이 없어요. super().__init__(name) 을 먼저 불러야 해요."
+  - id: name-mangling-dict
+    q: "다음 코드의 출력은?"
+    code: |-
+      class Secret:
+          def __init__(self):
+              self.__password = "1234"
+
+      my_secret = Secret()
+      print(my_secret.__dict__)
+    options:
+      - "{'__password': '1234'}"
+      - "{'_Secret__password': '1234'}"
+      - "{'password': '1234'}"
+      - "{} (숨긴 속성은 보이지 않는다)"
+    answer: 1
+    explain: "클래스 안에서 밑줄 두 개로 시작한 속성은 _클래스이름__속성 으로 이름이 바뀌어 저장돼요(이름 변형). 숨겨지는 게 아니라 이름만 바뀌어서, 바뀐 이름을 알면 밖에서도 읽고 쓸 수 있어요."
+  - id: fake-attribute-outside
+    q: "다음 코드의 출력은?"
+    code: |-
+      class ProtectedAccount:
+          def __init__(self, balance):
+              self.__balance = balance
+
+          def get_balance(self):
+              return self.__balance
+
+      acc = ProtectedAccount(3000)
+      acc.__balance = -5000
+      print(acc.get_balance())
+    options:
+      - "-5000"
+      - "3000"
+      - "AttributeError"
+      - "-2000"
+    answer: 1
+    explain: "이름 변형은 클래스 안에서 쓴 __이름 에만 일어나요. 밖에서 쓴 acc.__balance 는 이름이 안 바뀌어 __balance 라는 가짜 속성이 새로 생길 뿐이고, 진짜 잔액 _ProtectedAccount__balance 는 3000 그대로예요."
+  - id: minus-account-limit
+    q: "다음 코드의 출력은?"
+    code: |-
+      class MinusAccount:
+          def __init__(self, balance, limit):
+              self.balance = balance
+              self.limit = limit
+
+          def withdraw(self, amount):
+              if (self.balance + self.limit) >= amount:
+                  self.balance -= amount
+                  print("출금 완료")
+              else:
+                  print("출금 실패")
+
+      m = MinusAccount(5000, 10000)
+      m.withdraw(12000)
+      m.withdraw(5000)
+      print(m.balance)
+    options:
+      - "출금 완료, 출금 완료, -12000"
+      - "출금 실패, 출금 완료, 0"
+      - "출금 완료, 출금 실패, -7000"
+      - "출금 실패, 출금 실패, 5000"
+    answer: 2
+    explain: "처음엔 5000 + 10000 = 15000 이 12000 이상이라 출금되고 잔액은 -7000 이에요. 다음엔 -7000 + 10000 = 3000 이 5000 보다 작아 한도 초과로 실패해서 잔액은 -7000 그대로예요."
+commands:
+  - cmd: "class 자식(부모):"
+    desc: 상속. 부모의 속성과 메서드를 물려받는 클래스 만들기
+    group: Python
+  - cmd: pass
+    desc: 아무것도 안 하는 자리 채우기. 빈 클래스나 빈 함수에 사용
+    group: Python
+  - cmd: super().__init__(인수)
+    desc: 자식 __init__ 에서 부모의 생성자 먼저 실행하기
+    group: Python
+  - cmd: isinstance(객체, 클래스)
+    desc: 객체가 그 클래스(또는 자식 클래스)로 만든 것인지 확인
+    group: Python
+  - cmd: issubclass(자식, 부모)
+    desc: 클래스가 다른 클래스를 물려받았는지 확인
+    group: Python
+  - cmd: self.__속성
+    desc: 이름 변형. _클래스__속성 으로 바꿔 저장(보안이 아니라 실수 방지)
+    group: Python
+  - cmd: 객체.__dict__
+    desc: 객체가 가진 속성을 딕셔너리로 보기
+    group: Python
+  - cmd: "@property / @이름.setter"
+    desc: 속성처럼 읽고 쓰지만 실제로는 Getter, Setter 메서드가 실행
+    group: Python
+  - cmd: raise ValueError("메시지")
+    desc: 잘못된 값이 들어오면 에러를 일으켜 실행 멈추기
+    group: Python
+  - cmd: 클래스.메서드(객체)
+    desc: 객체.메서드() 와 같은 호출. 객체가 self 자리에 들어감
+    group: Python
+  - cmd: keyword.iskeyword("이름")
+    desc: 그 이름이 파이썬 키워드인지 확인. self 는 False
+    group: Python
+  - cmd: 셀 마지막 줄 끝에 ;
+    desc: 주피터 셀이 마지막 줄 값을 자동으로 보여 주지 않게 하기
+    group: 주피터
+terms:
+  - word: 객체지향 (Object-Oriented Programming)
+    definition: 데이터(상태)와 기능(행동)을 객체 하나로 묶어 프로그램을 만드는 방식. 데이터와 함수를 따로 두는 절차지향과 대비된다.
+  - word: 상속 (Inheritance)
+    definition: class 자식(부모) 로 부모 클래스의 속성과 메서드를 물려받는 것. 한 방향이라 부모는 자식 것을 쓸 수 없다.
+  - word: 오버라이딩 (Overriding)
+    definition: 물려받은 메서드를 자식에서 같은 이름으로 다시 정의하는 것. 자식 객체에서는 자식의 메서드가 실행되고 부모는 그대로다.
+  - word: super()
+    definition: 부모 클래스를 가리키는 함수. 자식 __init__ 에서 super().__init__(...) 으로 부모의 준비를 먼저 실행한다.
+  - word: 캡슐화 (Encapsulation)
+    definition: 데이터를 감싸서 밖에서 함부로 바꾸지 못하게 하고, 정해진 메서드로만 다루게 하는 것.
+  - word: 이름 변형 (Name Mangling)
+    definition: 클래스 안에서 밑줄 두 개로 시작한 속성 이름을 _클래스__속성 으로 바꿔 저장하는 것. 보안이 아니라 실수를 막는 장치다.
+  - word: Getter, Setter
+    definition: 숨긴 속성을 다루는 통로 메서드. Getter 는 값을 꺼내 주고, Setter 는 값을 검사한 뒤 바꾼다.
+  - word: "@property"
+    definition: 메서드를 속성처럼 읽고 쓰게 해 주는 데코레이터. obj.temp = 25 처럼 쓰지만 검사 메서드가 실행된다.
+  - word: __dict__
+    definition: 객체가 가진 속성을 이름과 값의 딕셔너리로 보여 주는 속성.
