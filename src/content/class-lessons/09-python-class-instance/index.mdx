@@ -359,7 +359,7 @@ print(Item("새우깡", 2000))
 - `상품` 클래스: 속성은 제품명, 가격
 
 ```python
-class ShoppingCard:
+class ShoppingCart:
     # 저장 기능
     def __init__(self):
         self.bucket = []
@@ -383,7 +383,7 @@ class Item:
         self.price = price
 
 # 쇼핑 카트 생성
-cart = ShoppingCard()
+cart = ShoppingCart()
 
 # 상품 3개 생성
 item_a = Item("초코파이", 5000)
@@ -408,10 +408,9 @@ for item in cart.show_items():
 
 | 클래스 | 속성 | 메서드 |
 | --- | --- | --- |
-| `ShoppingCard` | `bucket` (빈 리스트에서 시작) | `add_item`, `remove_item`, `show_items` |
+| `ShoppingCart` | `bucket` (빈 리스트에서 시작) | `add_item`, `remove_item`, `show_items` |
 | `Item` | `name`, `price` | 없음 |
 
-- 클래스 이름은 코드에 `ShoppingCard`로 적혀 있지만 뜻은 장바구니(cart)예요.
 - `self.bucket = []`: 카트마다 자기 리스트를 하나씩 가져요. 직접 실행해 보면 한 카트에 담아도 새로 만든 카트의 `bucket`은 `[]`예요.
 - `add_item`은 리스트의 `append`, `remove_item`은 리스트의 `remove`를 감싸요. 이미 있는 기능에 "장바구니 담기" 같은 알아보기 쉬운 이름을 붙인 거예요.
 - `Item`은 데이터만 담는 클래스라 메서드가 없어요. `__init__`으로 `name`, `price`를 받아 속성으로 저장해요.
