@@ -1,0 +1,983 @@
+---
+title: "Python 기초: 함수로 짜는 가위바위보, 상속과 캡슐화 복습"
+session: 11
+date: "2026-11-09"
+summary: "3판 2선승제 가위바위보를 역할별 함수로 나눠 다시 짜요. 상수, 입력 검증, 승패 판정, enumerate, 연승 기록을 짚고, 비김이 패배로 세어지는 버그와 import만 해도 게임이 시작되는 문제를 고쳐요. 뒤에는 상속, super(), 이름 변형, Getter와 Setter를 복습하고, 프로그램을 처음부터 짜는 순서를 정리해요."
+slug: "11-python-rps-functions-class-review"
+module: "1-3"
+topic: "Python"
+preStudy: ["1-3-python-functions-and-io"]
+---
+
+8회차에 만든 가위바위보는 한 덩어리였어요. 변수와 `if`가 위에서 아래로 길게 이어져서, 어디가 입력이고 어디가 판정인지 한눈에 안 들어왔어요.
+
+오늘은 같은 게임을 **역할별 함수**로 나눠 처음부터 다시 짰어요. 손 이름과 종료 조건은 상수로 빼고, 입력, 판정, 출력, 게임 진행을 각각 함수 하나에 맡겼어요. 뒤에서는 지난 시간에 배운 상속과 캡슐화를 노트북(`class_study.ipynb`)으로 다시 정리했어요.
+
+| 순서 | 내용 | 한 줄로 |
+| --- | --- | --- |
+| 1 | 게임 설계 | 함수 11개와 호출 관계 |
+| 2 | 상수 | `HANDS`, `GOAL_WINS` |
+| 3 | 입력 함수 | 맞는 값이 올 때까지 다시 묻기 |
+| 4 | 승패 판정 | 비김이 패배로 세어지는 버그 |
+| 5 | 출력 함수 | `enumerate`로 번호 붙이기 |
+| 6 | 한 게임: play_game | `and` 조건과 `True`/`False` 반환 |
+| 7 | 전체 흐름: main | 연승 기록, 한 줄 조건 표현식 |
+| 8 | 맨 아래 main() | `import`만 해도 게임이 시작되는 이유 |
+| 9 | 함수에서 클래스로 | 들고 다니던 값을 객체에 |
+| 10 | 상속과 오버라이딩 다시 보기 | 형제 클래스끼리도 못 빌려 써요 |
+| 11 | super() 다시 보기 | 부모의 `__init__` 부르기 |
+| 12 | 캡슐화 다시 보기 | 이름 변형, Getter, Setter |
+| 13 | 셀프 체크 | 프로그램을 처음부터 짜는 순서 |
+
+레슨 끝에 확인 퀴즈가 있어요. 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
+
+## 1. 게임 설계: 함수 11개
+
+만든 게임은 **3판 2선승제** 가위바위보예요. 먼저 2번 이긴 쪽이 이기고, 한 게임이 끝나면 판별 기록을 보여 주고, 다시 할지 물어요. 연달아 이기면 연승도 세요.
+
+이 일을 함수 11개로 나눴어요.
+
+| 함수 | 하는 일 |
+| --- | --- |
+| `show_title()` | 제목 출력 |
+| `ask_name()` | 이름 입력(비우면 `게스트`) |
+| `ask_number()` | 번호 입력(1~3만 받음) |
+| `check_result()` | 승패 판정 |
+| `show_result()` | 한 판의 결과 출력 |
+| `show_score()` | 현재 스코어 출력 |
+| `show_final_result()` | 최종 결과 출력 |
+| `show_records()` | 판별 승패 목록 출력 |
+| `ask_play_again()` | 다시 할지 입력(`yes`/`no`) |
+| `play_game()` | 한 게임(3판 2선승제) 진행 |
+| `main()` | 전체 흐름, 연승 기록 |
+
+이름에 규칙이 있어요. 사용자에게 **묻는** 함수는 `ask_`, 화면에 **보여 주는** 함수는 `show_`로 시작해요. 이름만 보고도 그 함수가 입력인지 출력인지 알 수 있어요.
+
+누가 누구를 부르는지 들여쓰기로 그리면 이래요.
+
+```text
+main()
+    show_title()
+    ask_name()
+    play_game(name)            게임 한 번
+        ask_number()
+        check_result()
+        show_result()
+        show_score()
+        show_final_result()
+        show_records()
+    ask_play_again()           yes면 play_game을 다시
+```
+
+`main()`은 큰 순서만 알고, 세부 일은 아래 함수들이 맡아요. 함수 하나가 한 가지 일만 하니, 고칠 곳을 찾기도 쉬워요.
+
+전체 코드예요.
+
+```python
+# 가위 바위 보 게임 (3판 2선승제)
+import random
+
+# 번호와 손 저장한 딕셔너리
+HANDS = {1:"가위", 2:"바위", 3:"보"}
+
+# 게임의 종료 조건
+GOAL_WINS = 2
+
+# 게임 타이틀 출력
+def show_title():
+    print("="*40)
+    print("가위/바위/보 게임")
+    print("="*40)
+
+# 플레이어 이름 입력
+def ask_name():
+    name = input("플레이어 이름을 입력하세요. ").strip()
+    if name == "":
+        name = "게스트"
+
+    return name
+
+# 플레이어 번호 입력
+def ask_number():
+    while True:
+        print("1. 가위 / 2. 바위 / 3. 보")
+        answer = input("번호를 선택하세요. : " ).strip()
+
+        if answer in ("1", "2", "3"):
+            return int(answer)
+
+        print("1, 2, 3 중에서 입력하세요.")
+
+
+# 승패 판정
+# 1 - 1 / 2 - 2 / 3 - 3 무승부 조건 판정
+# 1 - 3 / 2 - 1 / 3 - 2 플레이어 승리 조건
+def check_result(user_number, computer_number):
+    if user_number == 1 and computer_number == 3: return "승리"
+    if user_number == 2 and computer_number == 1: return "승리"
+    if user_number == 3 and computer_number == 2: return "승리"
+
+    return "패배"
+
+# 한 판의 게임 결과 출력
+def show_result(name, user_number, computer_number, result):
+    print("\n[게임 결과]")
+    print(f"{name} : {HANDS[user_number]} VS 컴퓨터: {HANDS[computer_number]}")
+    print(f"=> {result}")
+
+# 현재 스코어 표시
+def show_score(name, my_wins, computer_wins):
+    print(f"\n현재 스코어 {name} {my_wins} : {computer_wins} 컴퓨터\n") # 게스트 1 : 0 컴퓨터
+
+# 최종 결과 표시
+def show_final_result(name, my_wins, computer_wins):
+    print("-" * 40)
+    print(f"[최종 결과] {name} {my_wins} : {computer_wins} 컴퓨터")
+    if my_wins > computer_wins:
+        print(f"==> {name} 최종 승리!")
+    else:
+        print("==> 컴퓨터 승리!")
+
+# 승패 판결 목록 표시
+def show_records(records):
+    print("\n[판별 승패 목록]")
+    # "1판 : 가위 vs 바위 => 패배"
+    for number, record in enumerate(records, start=1):
+        print(f"{number}판 : {record}")
+
+# 게임 재시작 여부
+def ask_play_again():
+    while True:
+        answer = input("\n다시 도전 (yes/no) : ").strip().lower()
+        if answer == "yes" or answer == "y":
+            return True
+        if answer == "no" or answer == "n":
+            return False
+
+        print("yes 또는 no 로 입력해주세요.")
+
+
+# 게임 루프 (3판 2선승제)
+def play_game(name):
+    my_wins = 0
+    computer_wins = 0
+    records = [] # 승패를 기록할 리스트
+
+    # 둘 다 2승이 안됐을 때 다음 판을 진행
+    while my_wins < GOAL_WINS and computer_wins < GOAL_WINS:
+        user_number = ask_number()
+        computer_number = random.randint(1, 3) # 1, 2, 3
+
+        # 승패 판정
+        result = check_result(user_number, computer_number)
+
+        if result == "승리":
+            my_wins += 1
+        elif result == "패배":
+            computer_wins += 1
+
+        # 승패 결과 목록에 저장
+        records.append(f"{HANDS[user_number]} vs {HANDS[computer_number]} => {result}")
+
+        show_result(name, user_number, computer_number, result)
+        show_score(name, my_wins, computer_wins)
+
+    show_final_result(name, my_wins, computer_wins)
+    show_records(records)
+    # 플레이어가 승리하면 True
+    return my_wins == GOAL_WINS
+
+# 게임의 전체 루프
+def main():
+    show_title()
+    name = ask_name()
+
+    # 연승 기록을 위한 변수
+    co_wins = 0
+
+    while True:
+        my_won = play_game(name)
+        if my_won:
+            co_wins += 1 # 연승 기록 누적
+        else:
+            co_wins = 0 # 연승 기록 초기화
+
+        print(f"\n현재 연승: {co_wins} 연승") if co_wins > 0 else ""
+
+        if not ask_play_again():
+            break
+
+    print("게임을 종료합니다.")
+
+
+# 게임 시작
+main()
+```
+
+이름 `민지`로 가위를 두 번 내고, 컴퓨터가 보를 두 번 낸 경우를 돌려 봤어요. 다시 도전에는 `no`를 넣었어요.
+
+```text
+========================================
+가위/바위/보 게임
+========================================
+플레이어 이름을 입력하세요. 민지
+1. 가위 / 2. 바위 / 3. 보
+번호를 선택하세요. : 1
+
+[게임 결과]
+민지 : 가위 VS 컴퓨터: 보
+=> 승리
+
+현재 스코어 민지 1 : 0 컴퓨터
+
+1. 가위 / 2. 바위 / 3. 보
+번호를 선택하세요. : 1
+
+[게임 결과]
+민지 : 가위 VS 컴퓨터: 보
+=> 승리
+
+현재 스코어 민지 2 : 0 컴퓨터
+
+----------------------------------------
+[최종 결과] 민지 2 : 0 컴퓨터
+==> 민지 최종 승리!
+
+[판별 승패 목록]
+1판 : 가위 vs 보 => 승리
+2판 : 가위 vs 보 => 승리
+
+현재 연승: 1 연승
+
+다시 도전 (yes/no) : no
+게임을 종료합니다.
+```
+
+## 2. 상수: HANDS, GOAL_WINS
+
+```python
+HANDS = {1:"가위", 2:"바위", 3:"보"}
+GOAL_WINS = 2
+```
+
+- `HANDS`는 번호를 키로, 손 이름을 값으로 둔 딕셔너리예요. `HANDS[1]`이 `"가위"`예요.
+- `GOAL_WINS`는 "몇 번 이기면 끝나나"를 이름 하나로 적은 거예요.
+
+이름을 전부 **대문자**로 쓰는 건 "프로그램이 도는 동안 바꾸지 않는 값(상수)"이라는 약속이에요. 파이썬이 막아 주지는 않지만, 읽는 사람에게 "여기 값은 손대지 마세요"라고 알려 줘요.
+
+상수로 빼 두면 규칙을 한 곳에서 바꿀 수 있어요. `GOAL_WINS = 3`으로 바꾸고 돌려 보니, 3번 이겨야 끝나는 5판 3선승제가 됐어요.
+
+```text
+현재 스코어 민지 1 : 0 컴퓨터
+현재 스코어 민지 2 : 0 컴퓨터
+현재 스코어 민지 3 : 0 컴퓨터
+[최종 결과] 민지 3 : 0 컴퓨터
+==> 민지 최종 승리!
+```
+
+`2`라는 숫자가 코드 여기저기에 흩어져 있었다면, 하나라도 빠뜨리는 순간 버그가 돼요.
+
+## 3. 입력 함수: 맞는 값이 올 때까지 다시 묻기
+
+### ask_name()
+
+```python
+def ask_name():
+    name = input("플레이어 이름을 입력하세요. ").strip()
+    if name == "":
+        name = "게스트"
+
+    return name
+```
+
+`.strip()`이 앞뒤 공백을 지워요. 그래서 스페이스만 치고 엔터를 눌러도 빈 문자열이 되고, 이름은 `게스트`가 돼요.
+
+### ask_number()
+
+```python
+def ask_number():
+    while True:
+        print("1. 가위 / 2. 바위 / 3. 보")
+        answer = input("번호를 선택하세요. : " ).strip()
+
+        if answer in ("1", "2", "3"):
+            return int(answer)
+
+        print("1, 2, 3 중에서 입력하세요.")
+```
+
+`while True`는 스스로는 끝나지 않는 반복이에요. 이 반복을 끝내는 건 `return`이에요. `return`은 값을 돌려주면서 **함수 전체를 그 자리에서 끝내기** 때문에, 반복도 함께 멈춰요.
+
+`a`와 `5`를 넣어 보니 오류 없이 다시 물었어요.
+
+```text
+번호를 선택하세요. : a
+1, 2, 3 중에서 입력하세요.
+1. 가위 / 2. 바위 / 3. 보
+번호를 선택하세요. : 5
+1, 2, 3 중에서 입력하세요.
+1. 가위 / 2. 바위 / 3. 보
+번호를 선택하세요. : 2
+```
+
+통과한 값을 `int()`로 바꿔 돌려주는 건 `HANDS`의 키가 숫자(`1`, `2`, `3`)라서예요. 문자열 `"1"`로는 `HANDS`에서 `가위`를 꺼낼 수 없어요.
+
+8회차 코드에서는 `abc`를 넣으면 `ValueError`로 멈췄어요. 그때는 `int()`로 먼저 바꾼 뒤 검사했기 때문이에요. 이번에는 **문자열 그대로** `("1", "2", "3")` 안에 있는지 먼저 보고, 통과한 값만 `int()`로 바꿔요. 순서 하나로 버그가 사라졌어요.
+
+### ask_play_again()
+
+```python
+def ask_play_again():
+    while True:
+        answer = input("\n다시 도전 (yes/no) : ").strip().lower()
+        if answer == "yes" or answer == "y":
+            return True
+        if answer == "no" or answer == "n":
+            return False
+
+        print("yes 또는 no 로 입력해주세요.")
+```
+
+`.strip().lower()`는 공백을 지운 결과에 이어서 소문자로 바꿔요. 그래서 ` Yes `, `Y`, `YES`도 모두 `yes`나 `y`가 돼서 통과해요. `maybe`처럼 엉뚱한 값은 안내를 띄우고 다시 물어요.
+
+이 함수는 글자가 아니라 `True`나 `False`를 돌려줘요. 부르는 쪽에서 `if not ask_play_again():`처럼 바로 조건에 쓸 수 있어요.
+
+## 4. 승패 판정과 비김 버그
+
+```python
+# 1 - 1 / 2 - 2 / 3 - 3 무승부 조건 판정
+# 1 - 3 / 2 - 1 / 3 - 2 플레이어 승리 조건
+def check_result(user_number, computer_number):
+    if user_number == 1 and computer_number == 3: return "승리"
+    if user_number == 2 and computer_number == 1: return "승리"
+    if user_number == 3 and computer_number == 2: return "승리"
+
+    return "패배"
+```
+
+| 내가 낸 것 | 컴퓨터가 낸 것 | 결과 |
+| --- | --- | --- |
+| 1 (가위) | 3 (보) | 승리 |
+| 2 (바위) | 1 (가위) | 승리 |
+| 3 (보) | 2 (바위) | 승리 |
+| 그 외 | | 패배 |
+
+이기는 경우 세 가지만 적고, 나머지는 모두 `패배`로 돌려줘요. `if` 뒤에 콜론을 찍고 같은 줄에 `return`을 쓴 건 짧은 `if`를 한 줄로 쓰는 방법이에요.
+
+<PredictPrompt />
+
+둘 다 가위(1, 1)를 내면 이 함수는 무엇을 돌려줄지 예측해 보세요.
+
+아홉 가지 조합을 모두 넣어 봤어요. 각 줄은 내가 낸 것, 대괄호 안은 컴퓨터가 가위, 바위, 보를 냈을 때의 결과예요.
+
+```text
+가위 ['패배', '패배', '승리']
+바위 ['승리', '패배', '패배']
+보 ['패배', '승리', '패배']
+```
+
+같은 손을 낸 비김(가위 vs 가위, 바위 vs 바위, 보 vs 보)이 모두 `패배`예요. 주석에는 무승부 조건이 적혀 있는데, 코드에는 그 줄이 없어요. 실제로 돌려 보면 비겼는데 컴퓨터 점수가 올라가요.
+
+```text
+[게임 결과]
+게스트 : 가위 VS 컴퓨터: 가위
+=> 패배
+
+현재 스코어 게스트 0 : 1 컴퓨터
+```
+
+<TwistBox title="비김을 고치려면 어디를 바꿔야 할까요?">
+
+`check_result()` 맨 앞에 한 줄이면 돼요. 같은 번호면 다른 검사보다 먼저 `무승부`를 돌려줘요.
+
+```python
+def check_result(user_number, computer_number):
+    if user_number == computer_number: return "무승부"
+    if user_number == 1 and computer_number == 3: return "승리"
+    if user_number == 2 and computer_number == 1: return "승리"
+    if user_number == 3 and computer_number == 2: return "승리"
+
+    return "패배"
+```
+
+```text
+가위 ['무승부', '패배', '승리']
+바위 ['승리', '무승부', '패배']
+보 ['패배', '승리', '무승부']
+```
+
+`play_game()`은 고칠 필요가 없어요. `승리`면 내 점수, `패배`면 컴퓨터 점수를 올리고, `무승부`는 어느 쪽에도 해당하지 않으니 점수가 그대로예요. 둘 다 2승이 안 됐으니 반복도 계속돼요.
+
+비김을 두 번 섞어 돌려 보니, 판은 다섯 번 했지만 점수는 결정된 판만 셌어요.
+
+```text
+[판별 승패 목록]
+1판 : 가위 vs 가위 => 무승부
+2판 : 바위 vs 보 => 패배
+3판 : 바위 vs 가위 => 승리
+4판 : 가위 vs 가위 => 무승부
+5판 : 가위 vs 바위 => 패배
+```
+
+판정을 함수로 떼어 둔 덕분에 이런 버그를 쉽게 찾아요. 게임을 처음부터 여러 판 하지 않고, `check_result(1, 1)`처럼 함수만 불러 아홉 가지를 바로 확인할 수 있으니까요.
+
+</TwistBox>
+
+8회차에서 본 것처럼 "무엇이 무엇을 이기나"를 딕셔너리로 적어도 돼요. 아홉 가지 결과는 위와 똑같았어요.
+
+```python
+WIN = {1: 3, 2: 1, 3: 2}  # 키가 값을 이긴다
+
+def check_result(user_number, computer_number):
+    if user_number == computer_number:
+        return "무승부"
+    if WIN[user_number] == computer_number:
+        return "승리"
+    return "패배"
+```
+
+## 5. 출력 함수와 enumerate
+
+`show_result()`, `show_score()`, `show_final_result()`는 받은 값을 f-string으로 찍기만 해요. 손 이름은 `HANDS[user_number]`처럼 상수 딕셔너리에서 꺼내요.
+
+`show_records()`에는 새 함수 `enumerate`가 나와요.
+
+```python
+def show_records(records):
+    print("\n[판별 승패 목록]")
+    for number, record in enumerate(records, start=1):
+        print(f"{number}판 : {record}")
+```
+
+`enumerate`는 리스트의 값마다 **번호를 붙여 (번호, 값) 묶음**으로 하나씩 꺼내 줘요. 꺼내 보면 튜플이에요.
+
+```python
+records = ["가위 vs 보 => 승리", "바위 vs 보 => 패배"]
+print(list(enumerate(records, start=1)))
+# [(1, '가위 vs 보 => 승리'), (2, '바위 vs 보 => 패배')]
+print(list(enumerate(records)))
+# [(0, '가위 vs 보 => 승리'), (1, '바위 vs 보 => 패배')]
+```
+
+- `start=1`이 없으면 번호가 0부터 시작해요. 사람이 보는 "1판, 2판"을 만들려고 1부터 세게 했어요.
+- `for number, record in ...`는 튜플 `(1, '...')`을 두 변수로 나눠 받아요. 함수에서 `return a, b`를 두 변수로 받던 것과 같은 모양이에요.
+
+```text
+1판 : 가위 vs 보 => 승리
+2판 : 바위 vs 보 => 패배
+```
+
+## 6. 한 게임: play_game()
+
+```python
+while my_wins < GOAL_WINS and computer_wins < GOAL_WINS:
+```
+
+`and`는 양쪽이 모두 참일 때만 참이에요. 그래서 **둘 다 아직 2승이 안 됐을 때만** 다음 판을 해요. 한쪽이라도 2승이 되면 거짓이 돼서 반복이 끝나요.
+
+| 내 승 | 컴퓨터 승 | 반복 조건 |
+| --- | --- | --- |
+| 0 | 0 | True (계속) |
+| 1 | 1 | True (계속) |
+| 2 | 0 | False (끝) |
+| 1 | 2 | False (끝) |
+
+한 판은 이 순서로 돌아요.
+
+1. `ask_number()`로 내 번호를 받아요.
+2. `random.randint(1, 3)`으로 컴퓨터 번호를 정해요. 끝값 3도 나와요.
+3. `check_result()`로 판정해요.
+4. 점수를 올리고, 기록 리스트에 `"가위 vs 보 => 승리"` 같은 문장을 넣어요.
+5. `show_result()`, `show_score()`로 보여 줘요.
+
+반복이 끝나면 최종 결과와 기록을 출력하고 이 줄로 끝나요.
+
+```python
+return my_wins == GOAL_WINS
+```
+
+`my_wins == GOAL_WINS`는 비교라서 값이 `True`나 `False`예요. 내가 2승이면 `True`, 아니면 `False`를 돌려줘요. `main()`은 이 값을 받아 연승을 계산해요.
+
+`my_wins`, `computer_wins`, `records`는 `play_game()` 안에서 만든 **지역 변수**예요. 함수를 부를 때마다 0과 빈 리스트로 새로 만들어지니, 다시 도전하면 점수와 기록이 자연스럽게 처음부터 시작돼요. 8회차에서 배운 변수 스코프가 여기서 쓰여요.
+
+## 7. 전체 흐름: main()과 연승 기록
+
+```python
+def main():
+    show_title()
+    name = ask_name()
+
+    co_wins = 0
+
+    while True:
+        my_won = play_game(name)
+        if my_won:
+            co_wins += 1
+        else:
+            co_wins = 0
+
+        print(f"\n현재 연승: {co_wins} 연승") if co_wins > 0 else ""
+
+        if not ask_play_again():
+            break
+
+    print("게임을 종료합니다.")
+```
+
+`co_wins`는 연승 횟수예요. 이기면 1을 더하고, 지면 0으로 되돌려요. 이 변수는 `play_game()` 바깥인 `main()`에 있어서, 게임을 여러 번 해도 사라지지 않고 이어져요.
+
+두 게임을 연달아 이겼더니 이렇게 나왔어요.
+
+```text
+현재 연승: 2 연승
+```
+
+### 한 줄 조건 표현식
+
+```python
+print(f"\n현재 연승: {co_wins} 연승") if co_wins > 0 else ""
+```
+
+`값1 if 조건 else 값2`는 조건이 참이면 값1, 거짓이면 값2가 되는 **조건 표현식**이에요. 여기서는 연승이 있을 때만 `print()`가 실행되고, 지면 아무것도 찍히지 않아요.
+
+동작은 하지만, 이 문법은 원래 **값을 고를 때** 쓰는 거예요. 만들어진 값을 변수에 담아 보면 어색함이 보여요.
+
+```python
+co_wins = 0
+r = print("연승!") if co_wins > 0 else ""
+print(repr(r))   # ''
+
+co_wins = 2
+r = print(f"현재 연승: {co_wins} 연승") if co_wins > 0 else ""
+# 현재 연승: 2 연승
+print(repr(r))   # None
+```
+
+`else ""`의 빈 문자열은 어디에도 쓰이지 않고 버려져요. "조건이 맞으면 무언가를 한다"는 평범한 `if`가 더 읽기 쉬워요.
+
+```python
+if co_wins > 0:
+    print(f"\n현재 연승: {co_wins} 연승")
+```
+
+조건 표현식은 `label = "승리" if my_wins > computer_wins else "패배"`처럼 둘 중 하나의 **값**을 고를 때 쓰면 딱 맞아요.
+
+## 8. 맨 아래 main()과 import
+
+파일 맨 아래에서 `main()`을 바로 불러요.
+
+```python
+# 게임 시작
+main()
+```
+
+`python rps_game.py`로 실행할 때는 이게 맞아요. 그런데 다른 파일에서 `import rps_game`으로 이 파일의 함수만 빌려 쓰려고 하면 문제가 생겨요. **불러오기만 했는데 게임이 시작돼요.**
+
+`import`는 그 파일을 위에서 아래로 한 번 실행해요. 함수 정의(`def`)는 함수를 만들기만 하지만, 맨 아래 `main()`은 진짜로 실행되니까요. 직접 `import rps_game`을 해 보니 제목이 찍히고 이름을 묻는 데서 멈췄어요.
+
+```text
+========================================
+가위/바위/보 게임
+========================================
+```
+
+5회차에 `uv init`이 만들어 준 `main.py` 맨 아래 두 줄을 기억하나요? 그게 이 문제의 답이에요.
+
+```python
+if __name__ == "__main__":
+    main()
+```
+
+`__name__`은 파이썬이 파일마다 자동으로 넣어 주는 이름표예요.
+
+- 그 파일을 **직접 실행**하면 `__name__`은 `"__main__"`이에요.
+- 다른 파일이 **import**하면 `__name__`은 파일 이름(`"rps_game"`)이에요.
+
+`print(__name__)` 한 줄만 있는 `greet.py`로 확인해 봤어요.
+
+| 실행 방법 | 찍힌 값 |
+| --- | --- |
+| `python greet.py` | `__main__` |
+| `main.py`에서 `import greet` | `greet` |
+
+그래서 이 `if`로 감싸면 직접 실행할 때만 게임이 시작돼요. 맨 아래를 이렇게 고친 파일을 `rps_game2.py`로 저장하고 `import`하니, 게임은 시작되지 않고 함수와 상수만 가져왔어요(4절의 비김 수정도 넣은 파일이에요).
+
+```python
+import rps_game2
+print(rps_game2.check_result(1, 1), rps_game2.HANDS[3])
+# 무승부 보
+```
+
+## 9. 함수에서 클래스로
+
+TIL 요약에 "역시 클래스부터 어렵다"라고 적었죠. 방금 짠 함수 코드에서 클래스가 **왜** 필요한지 보이는 곳이 있어요.
+
+```python
+show_result(name, user_number, computer_number, result)
+show_score(name, my_wins, computer_wins)
+show_final_result(name, my_wins, computer_wins)
+```
+
+`name`, `my_wins`, `computer_wins`를 함수마다 계속 넘기고 있어요. 이 값들은 늘 같이 다니는 "한 게임의 점수판"이에요. 이렇게 **늘 같이 다니는 값과, 그 값을 쓰는 기능**을 하나로 묶은 것이 클래스예요.
+
+```python
+class Scoreboard:
+    def __init__(self, name):
+        self.name = name
+        self.my_wins = 0
+        self.computer_wins = 0
+        self.records = []
+
+    def add(self, user_number, computer_number, result):
+        if result == "승리":
+            self.my_wins += 1
+        elif result == "패배":
+            self.computer_wins += 1
+        self.records.append(f"{HANDS[user_number]} vs {HANDS[computer_number]} => {result}")
+
+    def is_over(self):
+        return self.my_wins >= GOAL_WINS or self.computer_wins >= GOAL_WINS
+
+    def show_score(self):
+        print(f"현재 스코어 {self.name} {self.my_wins} : {self.computer_wins} 컴퓨터")
+```
+
+```python
+board = Scoreboard("민지")
+board.add(1, 1, "무승부")
+board.add(1, 3, "승리")
+board.show_score()   # 현재 스코어 민지 1 : 0 컴퓨터
+print(board.is_over())   # False
+board.add(2, 1, "승리")
+board.show_score()   # 현재 스코어 민지 2 : 0 컴퓨터
+print(board.is_over())   # True
+
+other = Scoreboard("게스트")
+other.show_score()   # 현재 스코어 게스트 0 : 0 컴퓨터
+```
+
+| 함수 버전 | 클래스 버전 |
+| --- | --- |
+| `show_score(name, my_wins, computer_wins)` | `board.show_score()` |
+| 점수 변수 3개와 리스트 1개를 따로 관리 | `board` 하나가 전부 들고 있음 |
+| 새 게임이면 변수를 다시 0으로 | `Scoreboard("게스트")`로 새 점수판 |
+
+`self`는 "지금 이 점수판"이에요. `board.show_score()`를 부르면 `self`가 `board`라서 `self.my_wins`는 `board`의 점수예요. `other`는 따로 만든 점수판이라 0 : 0에서 시작해요.
+
+클래스가 어렵게 느껴지면 이 세 문장만 붙잡으세요.
+
+1. 클래스는 **같이 다니는 값과 기능을 묶은 설계도**예요.
+2. `__init__`은 객체가 처음 만들어질 때 **값을 채우는 곳**이에요.
+3. `self.이름`은 **그 객체 자신의 값**이에요.
+
+## 10. 상속과 오버라이딩 다시 보기
+
+지난 시간에 배운 상속을 노트북으로 다시 정리했어요.
+
+- **상속(Inheritance)**: 부모 클래스의 기능을 자식 클래스가 물려받아요. 부모 클래스는 Base Class, Super Class, Parent Class라고도 불러요.
+- **메서드 오버라이딩(Method Overriding)**: 부모에 있는 메서드를 자식이 같은 이름으로 다시 정의해요.
+
+```python
+# 부모 클래스 Base Class, Super Class, Parent Class
+class Animal():
+    # 공통 기능
+    def breathe(self):
+        print("숨을 쉽니다.")
+
+    def sound(self):
+        print("소리를 냅니다.")
+
+# 상속 (Inheritance)
+class Dog(Animal):
+    # 상속받은 클래스에만 있는 고유 기능
+    def bark(self):
+        print("멍멍")
+
+dog1 = Dog()
+dog1.breathe() # 부모 클래스로부터 물려받은 메서드
+dog1.bark()
+
+# 메서드 오버라이딩: 부모의 메서드를 다시 정의
+class Cat(Animal):
+    def sound(self):
+        print("야옹") # 재정의
+
+nabi = Cat()
+nabi.sound()
+```
+
+```text
+숨을 쉽니다.
+멍멍
+야옹
+```
+
+`class Animal():`처럼 빈 괄호를 써도, `class Animal:`처럼 괄호를 빼도 똑같아요. 둘 다 아무것도 안 적으면 파이썬의 기본 부모 `object`를 물려받아요.
+
+`Dog`는 `sound()`를 다시 정의하지 않았으니 부모 것 `소리를 냅니다.`가 그대로 나와요. `Cat`만 `야옹`으로 바뀌어요.
+
+<TwistBox title="Cat은 Dog의 bark()를 쓸 수 있을까요?">
+
+`Dog`와 `Cat`은 같은 부모 `Animal`을 둔 형제예요. 그래도 서로의 메서드는 못 써요.
+
+```python
+Cat().bark()
+# AttributeError: 'Cat' object has no attribute 'bark'
+Animal().bark()
+# AttributeError: 'Animal' object has no attribute 'bark'
+```
+
+상속은 **부모에서 자식으로, 위에서 아래로만** 흘러요. `bark()`는 `Dog`에만 있으니 부모 `Animal`도, 형제 `Cat`도 갖고 있지 않아요. `isinstance(nabi, Animal)`은 `True`지만 `isinstance(nabi, Dog)`는 `False`예요.
+
+</TwistBox>
+
+## 11. super() 다시 보기
+
+자식 클래스가 `__init__`을 새로 만들면 부모의 `__init__`은 **자동으로 실행되지 않아요.** `super()`로 부모 쪽을 직접 불러 줘야 해요.
+
+```python
+class Person():
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+class Student(Person):
+    def __init__(self, name, age, major):
+        super().__init__(name, age) # 부모의 생성자로 name, age 설정
+        self.major = major
+
+std1 = Student("김철수", 32, "체육교육")
+print(std1.name)  # 부모에게서 물려받은 속성
+print(std1.major) # 자식 고유의 속성
+```
+
+```text
+김철수
+체육교육
+```
+
+- `super().__init__(name, age)`가 부모의 `__init__`을 실행해 `self.name`, `self.age`를 만들어요.
+- 이 줄을 빼면 `std1.name`에서 `AttributeError: 'Student2' object has no attribute 'name'`이 나요(빼고 돌린 클래스 이름이 `Student2`예요).
+
+자식이 `__init__`을 아예 안 만들면 어떨까요? 그때는 부모의 `__init__`을 그대로 써요. 대신 부모가 받는 만큼만 넘겨야 해요.
+
+```python
+class Student3(Person):
+    pass
+
+s3 = Student3("이영희", 25)
+print(s3.name, s3.age)   # 이영희 25
+Student3("이영희", 25, "수학")
+# TypeError: Person.__init__() takes 3 positional arguments but 4 were given
+```
+
+`self`까지 세서 3개라는 뜻이에요. 전공처럼 자식만의 값을 받고 싶으면 `__init__`을 새로 만들고, 그 안에서 `super().__init__()`을 불러요.
+
+## 12. 캡슐화 다시 보기: 이름 변형, Getter, Setter
+
+### 비공개 변수와 이름 변형
+
+속성 이름 앞에 밑줄 두 개(`__`)를 붙이면, 클래스 바깥에서 그 이름으로는 바로 꺼낼 수 없어요.
+
+```python
+class Secret():
+    def __init__(self):
+        self.__password = "1234"
+
+my_password = Secret()
+print(my_password._Secret__password)   # 1234
+print(my_password.__password)
+# AttributeError: 'Secret' object has no attribute '__password'
+```
+
+파이썬이 `__password`를 `_Secret__password`(`_클래스이름__속성이름`)로 **이름을 바꿔 저장**하기 때문이에요(name mangling). 바뀐 이름을 알면 꺼낼 수 있으니 완전히 잠그는 장치는 아니에요. "실수로 건드리지 말자"는 표시에 가까워요.
+
+### Getter, Setter
+
+숨긴 속성은 메서드를 통해서만 읽고 바꾸게 해요. 값을 꺼내 주는 메서드가 **Getter**, 검사한 뒤 바꾸는 메서드가 **Setter**예요.
+
+```python
+class Wallet():
+    def __init__(self): # 숨겨진 데이터
+        self.__money = 1000
+
+    def get_money(self): # Getter: 값을 안전하게 전달
+        return self.__money
+
+    def set_money(self, amount): # Setter: 검증 로직 추가
+        if amount >= 0:
+            self.__money += amount
+        else:
+            print("잘못된 값입니다.")
+
+wallet = Wallet()
+wallet.set_money(2000)
+print(wallet.get_money())   # 3000
+wallet.set_money(-500)      # 잘못된 값입니다.
+print(wallet.get_money())   # 3000
+```
+
+`amount >= 0` 검사를 통과해야 바뀌고, 음수는 안내만 하고 잔액은 그대로예요.
+
+<TwistBox title="set_money(2000)인데 왜 3000일까요?">
+
+`set_money` 안이 `=`가 아니라 `+=`라서, 1000에 2000이 **더해졌어요.** 500을 두 번 넣어 보면 더 잘 보여요.
+
+```python
+w2 = Wallet()
+w2.set_money(500)
+w2.set_money(500)
+print(w2.get_money())   # 2000
+```
+
+`set`은 "그 값으로 정한다"는 뜻이라, 이름만 보면 `500`이 나올 것 같아요. 하지만 실제로는 입금처럼 동작해요. 동작은 맞아도 **이름과 하는 일이 다르면** 나중에 읽는 사람(미래의 나 포함)이 헷갈려요.
+
+둘 중 하나로 맞추면 깔끔해요.
+
+```python
+    def set_money(self, amount):   # 그 값으로 정하기
+        if amount >= 0:
+            self.__money = amount
+        else:
+            print("잘못된 값입니다.")
+
+    def add_money(self, amount):   # 더하기
+        if amount > 0:
+            self.__money += amount
+        else:
+            print("잘못된 값입니다.")
+```
+
+```python
+w4 = Wallet()   # 두 메서드로 고친 Wallet
+w4.set_money(2000); print(w4.get_money())   # 2000
+w4.add_money(500);  print(w4.get_money())   # 2500
+w4.add_money(0)                             # 잘못된 값입니다.
+```
+
+더하기는 0을 넣어도 의미가 없으니 `amount > 0`으로 막았어요. 함수 이름을 `ask_`, `show_`로 맞춘 것처럼, 메서드 이름도 하는 일과 맞춰 두는 게 좋아요.
+
+</TwistBox>
+
+## 13. 셀프 체크: 프로그램 짤 수 있겠어?
+
+오늘 TIL의 셀프 체크 질문이에요. 오늘 게임을 만든 과정을 거꾸로 따라가면, 빈 파일에서 시작하는 순서가 나와요.
+
+| 순서 | 할 일 | 가위바위보에서는 |
+| --- | --- | --- |
+| 1 | 요구사항을 한국어로 적기 | 3판 2선승제, 판별 기록, 연승, 다시 하기 |
+| 2 | 화면에 나올 모습을 먼저 적기 | `[게임 결과]`, `현재 스코어 민지 1 : 0 컴퓨터` |
+| 3 | 바뀔 수 있는 값은 상수로 | `HANDS`, `GOAL_WINS` |
+| 4 | 할 일을 동사로 나눠 함수 이름 짓기 | 묻기는 `ask_`, 보여 주기는 `show_` |
+| 5 | 누가 누구를 부르는지 그리기 | 1절의 호출 관계 |
+| 6 | 작은 함수부터 채우고 하나씩 시험 | `check_result(1, 1)`로 비김 확인 |
+| 7 | 큰 함수로 합치기 | `play_game()`, 마지막에 `main()` |
+
+핵심은 6번이에요. 전부 다 쓴 다음 한꺼번에 돌리면, 틀렸을 때 어디가 틀렸는지 찾기 어려워요. 입력이 없는 함수(`check_result`)는 값만 넣어 바로 확인하고, 입력 함수는 이상한 값(`a`, `5`, 공백)을 일부러 넣어 봐요.
+
+### 연습: 숫자 맞추기를 같은 방법으로
+
+7회차의 숫자 맞추기 게임을 이 순서로 다시 짜 봐요. 요구사항은 이래요.
+
+- 1부터 100 사이 정답을 컴퓨터가 정해요.
+- 숫자를 넣으면 `업`(더 큰 수), `다운`(더 작은 수), `정답`을 알려 줘요.
+- 맞히면 몇 번 만에 맞혔는지 보여 주고, `q`를 넣으면 정답을 알려 주고 끝나요.
+
+함수는 `ask_guess()`, `check_guess()`, `play_game()`, `main()` 네 개면 충분해요. 먼저 직접 짜 보고, 아래 답과 비교해 보세요.
+
+```python
+import random
+
+LOW = 1
+HIGH = 100
+
+
+def ask_guess():
+    while True:
+        answer = input(f"{LOW}~{HIGH} 사이 숫자 (그만하려면 q) : ").strip()
+        if answer == "q":
+            return None
+        if answer.isdigit() and LOW <= int(answer) <= HIGH:
+            return int(answer)
+        print(f"{LOW}부터 {HIGH}까지의 숫자만 입력하세요.")
+
+
+def check_guess(guess, target):
+    if guess < target:
+        return "업"
+    if guess > target:
+        return "다운"
+    return "정답"
+
+
+def play_game():
+    target = random.randint(LOW, HIGH)
+    tries = 0
+    while True:
+        guess = ask_guess()
+        if guess is None:
+            print(f"정답은 {target}이었어요.")
+            return None
+        tries += 1
+        result = check_guess(guess, target)
+        if result == "정답":
+            print(f"정답! {tries}번 만에 맞혔어요.")
+            return tries
+        print(result)
+
+
+def main():
+    play_game()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+정답이 8일 때 돌려 보니 이렇게 나왔어요.
+
+```text
+1~100 사이 숫자 (그만하려면 q) : 50
+다운
+1~100 사이 숫자 (그만하려면 q) : abc
+1부터 100까지의 숫자만 입력하세요.
+1~100 사이 숫자 (그만하려면 q) : 0
+1부터 100까지의 숫자만 입력하세요.
+1~100 사이 숫자 (그만하려면 q) : 100
+다운
+1~100 사이 숫자 (그만하려면 q) : 1
+업
+1~100 사이 숫자 (그만하려면 q) : 25
+다운
+1~100 사이 숫자 (그만하려면 q) : 12
+다운
+1~100 사이 숫자 (그만하려면 q) : 8
+정답! 6번 만에 맞혔어요.
+```
+
+- `answer.isdigit()`을 먼저 검사해서 `abc`는 `int()`까지 가지 않아요. `and`는 앞이 거짓이면 뒤를 아예 보지 않거든요.
+- `LOW <= int(answer) <= HIGH`는 "1 이상이고 100 이하"를 한 번에 쓴 거예요. 7회차 코드와 달리 1과 100도 받아요.
+- `q`를 넣으면 숫자 대신 `None`을 돌려줘요. `None`인지 확인할 때는 `==`보다 `is None`을 써요.
+- 잘못 넣은 `abc`, `0`은 시도 횟수에 들어가지 않아요. `tries += 1`이 검사를 통과한 뒤에 있어서예요.
+- `check_guess(3, 8)`, `check_guess(9, 8)`, `check_guess(8, 8)`은 `업 다운 정답`이에요. 게임을 하지 않고도 판정을 확인할 수 있어요.
+
+## 오늘 꼭 기억할 주의점
+
+- 함수 하나에 한 가지 일만 맡기고, 이름으로 역할을 드러내요(`ask_`는 입력, `show_`는 출력).
+- 바뀔 수 있는 규칙(손 이름, 몇 승에 끝나나)은 대문자 상수로 빼서 한 곳에서 고쳐요.
+- `while True` 안의 `return`은 값을 돌려주면서 반복과 함수를 함께 끝내요.
+- 입력은 문자열 그대로 먼저 검사하고, 통과한 값만 `int()`로 바꿔요.
+- `.strip().lower()`로 공백과 대소문자를 정리하면 `Y`, ` Yes `도 받아요.
+- 이기는 경우만 적고 나머지를 `패배`로 돌려주면 비김도 패배가 돼요. 같은 번호인지 먼저 검사해요.
+- 주석과 코드가 다르면 코드가 실제 동작이에요. 함수를 따로 불러 확인해요.
+- `enumerate(리스트, start=1)`은 (번호, 값)을 꺼내 줘요. `start`가 없으면 0부터예요.
+- `and` 반복 조건은 둘 다 참일 때만 계속돼요. 한쪽이 목표에 닿으면 끝나요.
+- `return 비교식`은 `True`나 `False`를 돌려줘요.
+- 함수 안 변수는 부를 때마다 새로 만들어져요. 게임 사이에 이어질 값(연승)은 바깥 함수에 둬요.
+- 조건 표현식(`값1 if 조건 else 값2`)은 값을 고를 때 쓰고, 동작만 할 때는 평범한 `if`를 써요.
+- 파일 맨 아래 `main()`은 `import`만 해도 실행돼요. `if __name__ == "__main__":`으로 감싸요.
+- 같이 다니는 값이 많아지면 클래스로 묶을 때예요. `self.이름`은 그 객체 자신의 값이에요.
+- 상속은 부모에서 자식으로만 흘러요. 부모도 형제 클래스도 자식의 메서드를 못 써요.
+- 자식이 `__init__`을 만들면 `super().__init__()`으로 부모의 준비를 불러야 해요.
+- `__속성`은 `_클래스__속성`으로 이름만 바뀌어요. 완전히 잠그는 게 아니에요.
+- Setter는 검사를 거쳐 값을 바꿔요. 이름(`set`)과 동작(`+=`)을 맞춰 두세요.
