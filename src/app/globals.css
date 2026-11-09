@@ -2108,6 +2108,41 @@ code[data-theme*=" "] span {
   }
 }
 
+/* 빌드 재생기(BuildReplay): 객체 보드에서 값이 바뀐 칸은 경고색 테두리로 한 번 깜박이고,
+   새로 생긴 칸은 아래에서 올라온다. 장바구니 줄과 상품 카드를 잇는 점선은 CartLine 색(warn). */
+@keyframes build-flash {
+  0% { box-shadow: 0 0 0 0 transparent; }
+  20% { box-shadow: 0 0 0 3px var(--color-warn); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@keyframes build-flash-dark {
+  0% { box-shadow: 0 0 0 0 transparent; }
+  20% { box-shadow: 0 0 0 3px var(--color-warn-dark); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@keyframes build-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.build-flash { animation: build-flash 1.4s ease-out; }
+.dark .build-flash { animation-name: build-flash-dark; }
+.build-enter { animation: build-enter 0.45s ease-out both; }
+.build-links path {
+  fill: none;
+  stroke: var(--color-warn);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+.build-links circle { fill: var(--color-warn); }
+.dark .build-links path { stroke: var(--color-warn-dark); }
+.dark .build-links circle { fill: var(--color-warn-dark); }
+@media (prefers-reduced-motion: reduce) {
+  .build-flash,
+  .build-enter {
+    animation: none;
+  }
+}
+
 /* 코드 블록 테두리는 래퍼(.prose [data-code-block])가 갖는다 — 헤더와 코드를 한 상자에
    담기 위해 위쪽 규칙으로 옮겼다. 여기서는 <pre>에 따로 테두리를 주지 않는다. */
 
