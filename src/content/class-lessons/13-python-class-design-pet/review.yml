@@ -1,0 +1,237 @@
+# 13-python-class-design-pet 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
+# 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
+slug: 13-python-class-design-pet
+quiz:
+  - id: class-variable-shared
+    q: "다음 코드의 출력은?"
+    code: |-
+      class Pet:
+          count = 0
+
+          def __init__(self, name):
+              self.name = name
+              Pet.count += 1
+
+      a = Pet("초코")
+      b = Pet("두부")
+      c = Pet("콩이")
+      print(Pet.count, a.count)
+    options:
+      - "3 3"
+      - "3 1"
+      - "1 1"
+      - "0 3"
+    answer: 0
+    explain: "count 는 클래스 변수라 모든 펫이 함께 보는 값 하나예요. Pet.count += 1 이 세 번 실행돼 3 이고, a.count 로 읽어도 a 에는 count 가 없으니 클래스의 3 을 읽어요."
+  - id: self-count-makes-instance-var
+    q: "다음 코드의 출력은?"
+    code: |-
+      class Pet:
+          count = 0
+
+          def __init__(self, name):
+              self.name = name
+              self.count += 1
+
+      a = Pet("초코")
+      b = Pet("두부")
+      print(Pet.count, a.count)
+    options:
+      - "2 2"
+      - "0 1"
+      - "2 1"
+      - "0 0"
+    answer: 1
+    explain: "self.count += 1 은 self.count = self.count + 1 이에요. 읽을 때는 클래스의 0 을 읽지만, 쓸 때는 객체에 새 count 를 만들어 1 을 넣어요. 클래스의 count 는 그대로 0 이에요. 함께 쓰는 값은 Pet.count 로 바꿔야 해요."
+  - id: print-calls-str
+    q: "다음 코드의 출력은?"
+    code: |-
+      class Pet:
+          def __init__(self, name):
+              self.name = name
+
+          def __str__(self):
+              return f"{self.name} ^_^"
+
+      print(Pet("초코"))
+    options:
+      - "<__main__.Pet object at 0x...>"
+      - "초코"
+      - "초코 ^_^"
+      - "None"
+    answer: 2
+    explain: "print(객체) 는 그 객체의 __str__() 을 불러 돌려받은 문자열을 출력해요. __str__ 이 없을 때만 <__main__.Pet object at 0x...> 모양이 나와요."
+  - id: bar-floor-division
+    q: "다음 코드의 출력은?"
+    code: |-
+      def bar(value):
+          filled = value // 10
+          return "■" * filled + "□" * (10 - filled)
+
+      print(bar(45))
+    options:
+      - "■■■■□□□□□□"
+      - "■■■■■□□□□□"
+      - "■■■■"
+      - "TypeError"
+    answer: 0
+    explain: "// 는 몫만 남겨서 45 // 10 은 4 예요. 채운 칸 4개, 빈칸 10 - 4 = 6개라 ■ 4개 뒤에 □ 6개예요. 반올림하지 않으니 5칸이 아니에요."
+  - id: clamp-keeps-range
+    q: "다음 코드의 출력은?"
+    code: |-
+      def clamp(value):
+          if value < 0: return 0
+          if value > 100: return 100
+          return value
+
+      print(clamp(130), clamp(-5), clamp(50))
+    options:
+      - "130 -5 50"
+      - "100 0 50"
+      - "100 -5 50"
+      - "0 0 50"
+    answer: 1
+    explain: "0 보다 작으면 0, 100 보다 크면 100 으로 가두고, 그 사이는 그대로 돌려줘요. 그래서 130 은 100, -5 는 0, 50 은 50 이에요."
+  - id: keyword-argument-default
+    q: "다음 코드의 출력은?"
+    code: |-
+      class Pet:
+          def __init__(self):
+              self.hunger = 30
+              self.happy = 70
+
+          def _change(self, hunger=0, happy=0):
+              self.hunger = self.hunger + hunger
+              self.happy = self.happy + happy
+
+      p = Pet()
+      p._change(happy=15)
+      print(p.hunger, p.happy)
+    options:
+      - "45 70"
+      - "30 85"
+      - "45 85"
+      - "TypeError"
+    answer: 1
+    explain: "happy=15 처럼 이름을 붙여 넘기면 happy 에만 들어가고, hunger 는 기본값 0 이 쓰여 그대로 30 이에요. 이름 없이 p._change(15) 라고 하면 첫 매개변수 hunger 에 들어가 45 70 이 돼요."
+  - id: single-vs-double-underscore
+    q: "다음 코드를 실행하면?"
+    code: |-
+      class Toy:
+          def _hello(self):
+              return "안녕"
+
+          def __bye(self):
+              return "잘 가"
+
+      t = Toy()
+      print(t._hello())
+      print(t.__bye())
+    options:
+      - "안녕 다음 줄에 잘 가"
+      - "처음부터 AttributeError"
+      - "안녕 이 찍히고 AttributeError"
+      - "아무것도 출력되지 않는다"
+    answer: 2
+    explain: "밑줄 하나(_hello)는 안에서 쓰자는 약속일 뿐이라 밖에서도 불려요. 밑줄 둘(__bye)은 _Toy__bye 로 이름이 바뀌어서 원래 이름으로 부르면 AttributeError 가 나요."
+  - id: feed-returns-none-on-success
+    q: "다음 코드의 출력은?"
+    code: |-
+      class Pet:
+          def __init__(self):
+              self.hunger = 30
+
+          def feed(self):
+              if self.hunger <= 10:
+                  return False
+              self.hunger -= 30
+
+      p = Pet()
+      print(p.feed(), p.feed())
+    options:
+      - "True False"
+      - "None False"
+      - "None None"
+      - "False False"
+    answer: 1
+    explain: "첫 feed() 는 30 > 10 이라 밥을 먹고 끝나는데, 성공 쪽에 return 이 없어서 None 을 돌려줘요. 두 번째는 배고픔이 0 이라 거절되어 False 예요. 성공은 True, 거절은 False 로 맞춰 두면 헷갈리지 않아요."
+  - id: mood-check-order
+    q: "다음 코드의 출력은?"
+    code: |-
+      def mood(hunger, happy):
+          if hunger >= 80 or happy <= 20: return "T_T"
+          if happy >= 70 and hunger <= 40: return "^_^"
+          return "-_-"
+
+      print(mood(85, 90), mood(30, 80), mood(50, 50))
+    options:
+      - "^_^ ^_^ -_-"
+      - "T_T ^_^ -_-"
+      - "T_T ^_^ ^_^"
+      - "-_- ^_^ -_-"
+    answer: 1
+    explain: "첫 줄이 or 라서 배고픔 85 하나만으로도 T_T 예요. 행복도 90 은 볼 기회가 없어요. (30, 80) 은 두 번째 조건에 맞아 ^_^, (50, 50) 은 어디에도 안 맞아 -_- 예요."
+  - id: always-day-seven
+    q: "다음 코드의 출력은?"
+    code: |-
+      hunger = 30
+      day = 0
+      while hunger < 100:
+          hunger += 10
+          day += 1
+      print(day)
+    options:
+      - "6"
+      - "7"
+      - "8"
+      - "10"
+    answer: 1
+    explain: "30 에서 하루에 10씩 오르면 40, 50, 60, 70, 80, 90, 100 으로 7번째에 100 이 돼요. 테스트 코드에서 펫이 장난감 이벤트와 상관없이 늘 7일차에 떠나는 이유예요."
+commands:
+  - cmd: "클래스이름.변수 += 1"
+    desc: 모든 객체가 함께 쓰는 클래스 변수 바꾸기(self.변수 로 쓰면 객체에 새 변수가 생김)
+    group: Python
+  - cmd: "def __str__(self):"
+    desc: print(객체) 할 때 보여 줄 문자열을 돌려주는 메서드
+    group: Python
+  - cmd: "f\"{값:>3}\""
+    desc: 3칸 너비에 오른쪽 정렬해서 쓰기
+    group: Python
+  - cmd: "(\"문자열1\" \"문자열2\")"
+    desc: 괄호 안에 나란히 쓴 문자열은 하나로 이어짐(쉼표를 넣으면 튜플)
+    group: Python
+  - cmd: "\"■\" * 4"
+    desc: 문자열을 4번 되풀이
+    group: Python
+  - cmd: "max(0, min(100, 값))"
+    desc: 값을 0~100 안에 가두기
+    group: Python
+  - cmd: "def _이름(self):"
+    desc: 밑줄 하나. 클래스 안에서 쓰자는 약속(밖에서도 불림)
+    group: Python
+  - cmd: "객체._change(happy=15)"
+    desc: 기본값이 있는 매개변수 중 바꿀 것만 이름 붙여 넘기기
+    group: Python
+  - cmd: "random.randint(1, 5) == 1"
+    desc: 20% 확률로 참
+    group: Python
+  - cmd: "super().메서드()"
+    desc: 자식 클래스에서 부모의 같은 이름 메서드 불러 쓰기
+    group: Python
+terms:
+  - word: 클래스 변수 (Class Variable)
+    definition: 클래스 바로 아래에 만든 변수. 모든 객체가 함께 보는 값 하나라서 클래스이름.변수 로 바꾼다.
+  - word: 인스턴스 변수 (Instance Variable)
+    definition: __init__ 안에서 self.이름 으로 만든 변수. 객체마다 따로 갖는다.
+  - word: __str__
+    definition: print(객체) 나 str(객체) 를 할 때 파이썬이 부르는 메서드. 돌려준 문자열이 그대로 출력된다.
+  - word: 내부 메서드 (Internal Method)
+    definition: 이름 앞에 밑줄 하나(_)를 붙여 클래스 안에서 쓰려고 만든 메서드라고 표시한 것. 파이썬이 막지는 않는 약속이다.
+  - word: 클램프 (Clamp)
+    definition: 값을 정해진 범위(예 0~100) 안에 가두는 것. 넘으면 끝값으로 맞춘다.
+  - word: 조기 반환 (Early Return)
+    definition: 조건에 안 맞으면 함수 앞부분에서 바로 return 해서 아래 코드를 실행하지 않는 방식.
+  - word: 상태 (State)
+    definition: 객체가 지금 가진 값들. 펫의 배고픔, 행복도, 에너지처럼 행동에 따라 바뀐다.
+  - word: 난수 (Random Number)
+    definition: 정해지지 않고 실행할 때마다 달라지는 수. random.randint 로 확률 이벤트를 만든다.

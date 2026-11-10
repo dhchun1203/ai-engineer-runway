@@ -1,0 +1,620 @@
+---
+title: "Python 기초: 클래스 설계, 다마고치 펫 키우기"
+session: 13
+date: "2026-11-10"
+summary: "펫 한 마리를 Pet 클래스로 설계해요. 모든 펫이 함께 쓰는 클래스 변수, print()가 부르는 __str__, 상태 막대, 값을 0~100에 가두는 _clamp와 상태를 한 곳에서 바꾸는 _change, 밥 주기와 놀아 주기, 하루 지나기와 랜덤 이벤트까지 만들고, 떠난 펫이 밥을 먹는 빈틈을 찾아 고쳐요."
+slug: "13-python-class-design-pet"
+module: "1-3"
+topic: "Python"
+preStudy: []
+---
+
+11회차에는 가위바위보의 점수판을 클래스로 묶어 봤고, 12회차 장바구니 미니 프로젝트에서는 클래스 여러 개가 협력했어요. 이번에는 클래스 **하나**를 처음부터 꼼꼼히 설계하는 연습을 했어요. 주제는 펫을 키우는 다마고치 게임이에요.
+
+펫 한 마리는 자기 상태(배고픔, 행복도, 에너지)를 가져요. 밥을 주고, 놀아 주고, 재우고, 하루가 지날 때마다 그 상태가 바뀌어요. "상태를 가진 것이 행동으로 바뀐다", 이게 클래스를 쓰기 딱 좋은 모양이에요.
+
+| 순서 | 내용 | 한 줄로 |
+| --- | --- | --- |
+| 1 | Pet 클래스 설계 | 상태 5개, 메서드 10개 |
+| 2 | 클래스 변수 count | 모든 펫이 함께 보는 값 |
+| 3 | `__init__`과 시작 상태 | 펫마다 따로 갖는 값 |
+| 4 | `__str__`과 상태 막대 | `print(펫)`이 보여 주는 것 |
+| 5 | mood: 표정 고르기 | 조건 검사 순서 |
+| 6 | 상태는 한 곳에서 | `_clamp`와 `_change` |
+| 7 | 밑줄 하나와 둘 | 약속과 이름 변형 |
+| 8 | 행동 메서드 | 밥, 놀이, 잠 |
+| 9 | 하루 지나기 | 랜덤 이벤트와 떠나는 조건 |
+| 10 | 테스트 코드 | 왜 늘 7일차에 끝날까 |
+| 11 | 떠난 펫의 빈틈 | 떠나도 밥을 먹어요 |
+| 12 | 셀프 체크: 더 만들어 보기 | 연습 세 가지 |
+
+레슨 끝에 확인 퀴즈가 있어요. 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
+
+## 1. Pet 클래스 설계
+
+| 구분 | 이름 | 역할 |
+| --- | --- | --- |
+| 클래스 변수 | `count` | 지금까지 입양한 펫 수 |
+| 인스턴스 변수 | `name`, `hunger`, `happy`, `energy`, `alive` | 이름, 배고픔(30), 행복도(70), 에너지(70), 살아 있는지 |
+| 표시 | `__str__()`, `mood()`, `bar()` | 상태 출력, 표정, 10칸 막대 |
+| 내부 메서드 | `_clamp()`, `_change()` | 값 범위 지키기, 상태 값 바꾸기 |
+| 행동 | `feed()`, `play()`, `sleep()` | 밥 주기, 놀아 주기, 재우기 |
+| 시간 | `pass_time()` | 하루 지나기, 랜덤 이벤트, 떠나는 조건 |
+
+행동과 시간 메서드는 상태를 직접 건드리지 않고, 모두 `_change()`를 거쳐요. `_change()`는 다시 `_clamp()`로 값이 0~100을 벗어나지 않게 막아요.
+
+```text
+feed() / play() / sleep() / pass_time()
+    _change(hunger, happy, energy)
+        _clamp(값)      0 ~ 100 유지
+```
+
+전체 코드예요. 원래 코드는 표정을 이모지로 돌려줬는데, 이 사이트에서는 이모지를 쓰지 않아서 `T_T`, `^_^`, `-_-`로 바꿔 적었어요.
+
+```python
+# 펫 한마리를 표현하는 클래스
+import random
+class Pet:
+    # 클래스 변수
+    count = 0 # 지금까지 입양한 펫 수를 기록
+
+    def __init__(self, name):
+        self.name = name  # 이름
+        self.hunger = 30 # 배고픔(0~100)
+        self.happy = 70 # 행복도(0~100)
+        self.energy = 70 # 에너지(0~100)
+        self.alive = True
+        Pet.count += 1
+
+    def __str__(self):
+        state = self.mood() if self.alive else "떠남"
+        return (
+            f"{self.name} {state}\n"
+            f"배고픔: {self.bar(self.hunger)} {self.hunger:>3}\n"
+            f"행복도: {self.bar(self.happy)} {self.happy:>3}\n"
+            f"에너지: {self.bar(self.energy)} {self.energy:>3}\n"
+        )
+
+    def mood(self):
+        if self.hunger >= 80 or self.happy <= 20: return "T_T"
+        if self.happy >= 70 and self.hunger <= 40: return "^_^"
+        return "-_-"
+
+    def bar(self, value):
+        # 0 ~ 100 값을 10칸의 막대로 변환
+        filled = value // 10
+        return "■" * filled + "□" * (10 - filled)
+
+
+    # 공통 메서드
+    def _clamp(self, value): # 내부 메서드의 네이밍 컨벤션 _name()
+        # 값의 범위를 (0 ~ 100) 유지
+        if value < 0: return 0
+        if value > 100: return 100
+        return value
+
+    def _change(self, hunger = 0, happy = 0, energy = 0):
+        # 상태값은 반드시 이 메서드를 사용한다.
+        self.hunger = self._clamp(self.hunger + hunger)
+        self.happy = self._clamp(self.happy + happy)
+        self.energy = self._clamp(self.energy + energy)
+
+    # 밥주기
+    def feed(self):
+        if self.hunger <= 10:
+            print(f"{self.name}: 배불러요~")
+            return False
+        self._change(hunger=-30, happy=5)
+        print(f"{self.name}에게 밥을 먹였습니다.")
+
+    # 놀아주기
+    def play(self):
+        if self.energy < 20:
+            print(f"{self.name}: 너무 피곤해요...")
+            return
+        self._change(hunger=10, happy=25, energy=-20)
+        print(f"{self.name}와 신나게 놀았습니다.")
+        return True
+
+    # 잠자기
+    def sleep(self):
+        self._change(hunger=5, energy=40)
+        print(f"{self.name}가 잠들었어요 zZZ")
+        return True
+
+    # 시간 체크
+    def pass_time(self):
+        # 하루 지날때 마다 상태값 자연 감소
+        self._change(hunger=10, happy=-10, energy=-5)
+        # 즐거운 이벤트를 확률계산 (20%)
+        if random.randint(1, 5) == 1 :
+            self._change(happy=15)
+            print(f"{self.name} 숨겨진 장난감을 찾았어요.")
+
+        if self.hunger >= 100 or self.happy <= 0:
+            self.alive = False
+```
+
+## 2. 클래스 변수 count
+
+```python
+class Pet:
+    count = 0 # 지금까지 입양한 펫 수를 기록
+
+    def __init__(self, name):
+        ...
+        Pet.count += 1
+```
+
+`count`는 `__init__` 밖, 클래스 바로 아래에 있어요. 이런 변수를 **클래스 변수**라고 해요. 펫마다 따로 갖는 게 아니라 **모든 펫이 함께 보는 값 하나**예요. 12회차 장바구니에서 상품 번호를 나눠 준 `Product.next_number`(번호표 발급기)와 같은 쓰임이에요.
+
+그래서 올릴 때도 `Pet.count += 1`처럼 클래스 이름으로 올려요. 펫을 만들 때마다 `__init__`이 실행되니, `초코`와 `두부`를 만들면 `Pet.count`는 2가 돼요.
+
+```text
+입양한 펫 수: 2
+```
+
+| 구분 | 어디에 쓰나 | 누구 것 | 예 |
+| --- | --- | --- | --- |
+| 클래스 변수 | 클래스 바로 아래 | 모든 객체가 함께 | `count` |
+| 인스턴스 변수 | `__init__` 안의 `self.이름` | 객체마다 따로 | `hunger`, `happy` |
+
+<TwistBox title="Pet.count 대신 self.count += 1이라고 쓰면?">
+
+한 글자만 바꿔 봤어요.
+
+```python
+class Pet:
+    count = 0
+
+    def __init__(self, name):
+        self.name = name
+        self.count += 1
+
+a = Pet("초코")
+b = Pet("두부")
+print(Pet.count, a.count)   # 0 1
+```
+
+두 마리를 만들었는데 `Pet.count`는 **0**이에요.
+
+`self.count += 1`은 `self.count = self.count + 1`이에요. 오른쪽에서 읽을 때는 객체에 `count`가 없으니 클래스의 `0`을 읽어요. 그런데 왼쪽에서 **쓸 때는 객체에 새 `count`를 만들어** 거기에 `1`을 넣어요. 클래스의 `count`는 그대로 0이고, 펫마다 자기만의 `count = 1`이 생겼어요.
+
+`a.__dict__`를 보면 `{'name': '초코', 'count': 1}`처럼 객체 안에 `count`가 생긴 게 보여요. 12회차에서 `a.next_number = 99`처럼 객체 이름으로 대입하면 클래스 변수가 가려진다고 했죠. `self.count += 1`도 결국 객체 이름으로 대입하는 거라 같은 일이 생겨요. 모두가 함께 쓰는 값을 바꿀 때는 꼭 `클래스이름.변수`로 써요.
+
+9회차에서 리스트를 클래스 변수로 두었다가 모든 카트가 하나의 `bucket`을 함께 쓴 일이 있었죠. 그건 리스트를 `append`로 **고쳐서** 생긴 일이고, 이건 숫자에 `+=`로 **새로 넣어서** 생긴 일이라 방향이 반대예요.
+
+</TwistBox>
+
+## 3. `__init__`과 시작 상태
+
+```python
+    def __init__(self, name):
+        self.name = name  # 이름
+        self.hunger = 30 # 배고픔(0~100)
+        self.happy = 70 # 행복도(0~100)
+        self.energy = 70 # 에너지(0~100)
+        self.alive = True
+        Pet.count += 1
+```
+
+밖에서 받는 건 이름 하나뿐이에요. 나머지는 모든 펫이 같은 값(배고픔 30, 행복도 70, 에너지 70)으로 시작해요. 생성자가 "처음 상태를 채우는 곳"이라는 걸 잘 보여 줘요.
+
+`alive`는 `True`/`False` 값이에요. 펫이 떠나면 `False`가 되고, 테스트 코드의 `while choco.alive:`가 이 값을 봐요.
+
+## 4. `__str__`과 상태 막대
+
+`print(펫)`을 하면 파이썬이 그 객체의 `__str__()`을 불러서, 돌려받은 문자열을 출력해요. 새로 만든 `두부`를 출력하면 이렇게 나와요.
+
+```text
+두부 ^_^
+배고픔: ■■■□□□□□□□  30
+행복도: ■■■■■■■□□□  70
+에너지: ■■■■■■■□□□  70
+```
+
+`__str__` 안에 처음 보는 것이 세 가지 있어요.
+
+### 값을 고르는 조건 표현식
+
+```python
+state = self.mood() if self.alive else "떠남"
+```
+
+지난 시간에 배운 `값1 if 조건 else 값2`예요. 살아 있으면 표정, 떠났으면 `"떠남"`이 `state`에 들어가요. 이번에는 **값을 골라 변수에 담으니**, 조건 표현식을 제자리에 쓴 예예요.
+
+### 괄호로 이어 붙인 여러 줄 문자열
+
+```python
+return (
+    f"{self.name} {state}\n"
+    f"배고픔: ..."
+    ...
+)
+```
+
+괄호 안에서 문자열을 쉼표 없이 나란히 쓰면 파이썬이 **하나로 이어 붙여요.** 긴 문자열을 여러 줄로 나눠 읽기 쉽게 쓰는 방법이에요. 쉼표를 넣으면 튜플이 되니 주의해요.
+
+### 오른쪽 정렬 `:>3`
+
+`{self.hunger:>3}`은 값을 **3칸 너비에 오른쪽으로 붙여** 써요. 숫자가 몇 자리든 끝이 맞아서 막대 옆 숫자가 줄을 맞춰요.
+
+```python
+print(f"[{5:>3}] [{45:>3}] [{100:>3}]")
+# [  5] [ 45] [100]
+```
+
+### bar(): 10칸 막대
+
+```python
+    def bar(self, value):
+        filled = value // 10
+        return "■" * filled + "□" * (10 - filled)
+```
+
+`//`는 몫만 남기는 나눗셈이라 `45 // 10`은 `4`예요. 채운 칸 4개, 빈칸 6개로 `■■■■□□□□□□`가 돼요. `100`은 10칸 모두, `7`은 `7 // 10`이 0이라 빈칸만 10개예요. 문자열에 숫자를 곱하면 그만큼 되풀이되는 것도 함께 쓰였어요.
+
+## 5. mood: 표정 고르기
+
+```python
+    def mood(self):
+        if self.hunger >= 80 or self.happy <= 20: return "T_T"
+        if self.happy >= 70 and self.hunger <= 40: return "^_^"
+        return "-_-"
+```
+
+| 배고픔 | 행복도 | 표정 | 이유 |
+| --- | --- | --- | --- |
+| 85 | 90 | `T_T` | 첫 줄 `hunger >= 80`이 먼저 걸려요 |
+| 30 | 80 | `^_^` | 행복하고 배부름 |
+| 50 | 50 | `-_-` | 둘 다 아님 |
+| 30 | 20 | `T_T` | `happy <= 20` |
+
+순서가 중요해요. 첫 줄은 `or`라서 **둘 중 하나만** 나빠도 우는 얼굴이에요. 행복도가 90이어도 배고픔이 85면 `T_T`예요. "나쁜 상태"를 먼저 걸러 내고 "좋은 상태"를 보는 순서라서, 행복도만 보고 웃는 일이 없어요.
+
+## 6. 상태는 한 곳에서: _clamp와 _change
+
+```python
+    def _clamp(self, value):
+        if value < 0: return 0
+        if value > 100: return 100
+        return value
+
+    def _change(self, hunger = 0, happy = 0, energy = 0):
+        self.hunger = self._clamp(self.hunger + hunger)
+        self.happy = self._clamp(self.happy + happy)
+        self.energy = self._clamp(self.energy + energy)
+```
+
+`_clamp()`는 값을 0~100 안에 **가둬요.** `130`은 `100`, `-5`는 `0`, `50`은 그대로 `50`이에요. 파이썬 내장 함수로 `max(0, min(100, value))`라고 써도 같아요.
+
+`_change()`는 바꿀 양을 받아서 더한 뒤 `_clamp()`로 가둬요. 매개변수마다 기본값 `0`이 있어서, 바꾸고 싶은 것만 이름을 붙여 넘기면 돼요. 8회차에 배운 기본값과 키워드 인수가 여기서 쓰여요.
+
+```python
+k = Pet("콩이")
+k._change(happy=15)
+print(k.hunger, k.happy, k.energy)   # 30 85 70
+```
+
+이름 없이 `k._change(15)`라고 넘기면 첫 번째 매개변수 `hunger`에 들어가 배고픔이 45가 돼요. 그래서 이름을 붙여 넘기는 게 안전해요.
+
+**상태를 바꾸는 길을 하나로 모은 것**이 이 설계의 핵심이에요.
+
+- 범위 검사를 `feed`, `play`, `sleep`, `pass_time`마다 쓰지 않아도 돼요.
+- 범위를 0~200으로 바꾸고 싶으면 `_clamp()` 한 곳만 고치면 돼요.
+- 밥을 먹여 배고픔이 `30 - 30 = 0`이 되거나, 실컷 놀아 행복도가 100을 넘을 뻔해도 0~100을 벗어나지 않아요.
+
+## 7. 밑줄 하나와 둘
+
+`_clamp`, `_change`처럼 이름 앞에 **밑줄 하나**를 붙이는 건 "클래스 안에서 쓰려고 만든 메서드예요"라는 **약속**이에요. 파이썬은 막지 않아요. 직접 해 보니 밖에서 `p._clamp(130)`도 그냥 불렸고 `100`을 돌려줬어요.
+
+지난 시간에 배운 **밑줄 두 개**는 달라요. 이름이 `_클래스__이름`으로 바뀌어서, 원래 이름으로는 밖에서 부를 수 없어요.
+
+```python
+class Toy:
+    def _hello(self):
+        return "안녕"
+
+    def __bye(self):
+        return "잘 가"
+
+t = Toy()
+print(t._hello())   # 안녕
+print(t.__bye())
+# AttributeError: 'Toy' object has no attribute '__bye'
+```
+
+| 이름 | 뜻 | 밖에서 부르면 |
+| --- | --- | --- |
+| `name` | 누구나 쓰는 것 | 됨 |
+| `_name` | 안에서 쓰자는 약속 | 됨(쓰지 말자는 표시만) |
+| `__name` | 이름 변형 | 원래 이름으로는 안 됨 |
+
+`_change`는 밖에서도 부를 수는 있어요. 그래도 "상태는 반드시 행동 메서드로 바꾼다"는 약속을 지키라고 밑줄을 붙인 거예요.
+
+## 8. 행동 메서드: 밥, 놀이, 잠
+
+| 메서드 | 거절 조건 | 배고픔 | 행복도 | 에너지 |
+| --- | --- | --- | --- | --- |
+| `feed()` | 배고픔 10 이하 | -30 | +5 | |
+| `play()` | 에너지 20 미만 | +10 | +25 | -20 |
+| `sleep()` | 없음 | +5 | | +40 |
+| `pass_time()` | 없음 | +10 | -10 (20% 확률로 +15 더) | -5 |
+
+조건에 안 맞으면 메시지만 출력하고 `return`으로 바로 끝나요. 그래서 그 아래 `_change()`가 실행되지 않고 상태도 그대로예요.
+
+새 펫 `콩이`로 차례대로 해 봤어요.
+
+```text
+콩이에게 밥을 먹였습니다.          배고픔 0, 행복도 75
+콩이: 배불러요~                    배고픔 0 (거절)
+콩이와 신나게 놀았습니다.          에너지 50
+콩이와 신나게 놀았습니다.          에너지 30
+콩이와 신나게 놀았습니다.          에너지 10
+콩이: 너무 피곤해요...             에너지 10 (거절)
+콩이가 잠들었어요 zZZ              에너지 50
+```
+
+<TwistBox title="세 메서드가 돌려주는 값을 모아 보면?">
+
+각 메서드의 반환값을 받아서 찍어 봤어요.
+
+| 메서드 | 성공했을 때 | 거절했을 때 |
+| --- | --- | --- |
+| `feed()` | `None` | `False` |
+| `play()` | `True` | `None` |
+| `sleep()` | `True` | (거절 없음) |
+
+제각각이에요. `feed()`는 성공 쪽에 `return`이 없어서 `None`, `play()`는 거절 쪽이 값 없는 `return`이라 `None`이에요. 지금은 반환값을 쓰는 곳이 없어 문제가 안 보이지만, `if pet.feed():`처럼 쓰는 순간 성공했는데 실패로 읽혀요.
+
+"성공하면 `True`, 거절하면 `False`"로 모든 행동 메서드를 맞춰 두면, 부르는 쪽이 헷갈리지 않아요. 아래 12절 연습에서 이렇게 고쳐요.
+
+</TwistBox>
+
+하나 더 눈에 띄는 게 있어요. 메시지가 `{self.name}와`, `{self.name}가`라서, 이름이 받침으로 끝나면 `구름와 신나게 놀았습니다.`, `구름가 잠들었어요`가 돼요. 이름 뒤에 조사가 오지 않게 `{self.name}: 신나게 놀았어요!`처럼 쓰면 어떤 이름이든 자연스러워요.
+
+## 9. 하루 지나기: 랜덤 이벤트와 떠나는 조건
+
+```python
+    def pass_time(self):
+        self._change(hunger=10, happy=-10, energy=-5)
+        if random.randint(1, 5) == 1 :
+            self._change(happy=15)
+            print(f"{self.name} 숨겨진 장난감을 찾았어요.")
+
+        if self.hunger >= 100 or self.happy <= 0:
+            self.alive = False
+```
+
+- 하루가 지나면 배고픔 +10, 행복도 -10, 에너지 -5예요.
+- `random.randint(1, 5)`는 1~5 중 하나라서 `== 1`일 확률은 5분의 1, 20%예요. 만 번 뽑아 보니 1,948번이 1이었어요.
+- 배고픔이 100 이상이거나 행복도가 0 이하면 `alive`가 `False`가 돼서 펫이 떠나요.
+
+에너지는 떠나는 조건에 없어요. 에너지가 0이어도 펫은 떠나지 않고, `play()`만 거절돼요.
+
+## 10. 테스트 코드: 왜 늘 7일차에 끝날까
+
+```python
+#-----------------테스트코드-------------------
+choco = Pet("초코")
+dubu = Pet("두부")
+
+print("입양한 펫 수:", Pet.count)
+
+day = 1
+
+while choco.alive:
+    choco.pass_time()
+    print(f"{day}일차: 배고픔 {choco.hunger}, 행복도 {choco.happy}")
+    day += 1
+
+print(choco)
+```
+
+`두부`는 만들기만 하고 쓰지 않아요. `Pet.count`가 2가 되는 걸 보여 주려고 입양만 한 거예요. 하루씩 지나게 하면서 초코가 떠날 때까지 반복해요.
+
+장난감 이벤트가 한 번도 안 나온 경우예요.
+
+```text
+입양한 펫 수: 2
+1일차: 배고픔 40, 행복도 60
+2일차: 배고픔 50, 행복도 50
+3일차: 배고픔 60, 행복도 40
+4일차: 배고픔 70, 행복도 30
+5일차: 배고픔 80, 행복도 20
+6일차: 배고픔 90, 행복도 10
+7일차: 배고픔 100, 행복도 0
+초코 떠남
+배고픔: ■■■■■■■■■■ 100
+행복도: □□□□□□□□□□   0
+에너지: ■■■□□□□□□□  35
+```
+
+TIL에 적은 실행 예시처럼 장난감을 세 번 찾으면 행복도는 높게 남지만, 그래도 **7일차**에 떠나요.
+
+<PredictPrompt />
+
+장난감 이벤트는 난수인데 왜 늘 7일차일지 예측해 보세요.
+
+배고픔 때문이에요. 30에서 시작해 하루에 **딱 10씩만** 오르고, 이 테스트 코드는 밥을 한 번도 주지 않아요. 30, 40, ... 100으로 7일째에 꼭 100이 돼요.
+
+행복도는 장난감 이벤트로 올라갈 수는 있지만 배고픔을 바꾸지는 못해요. 행복도가 이벤트 없이 가장 빨리 떨어져도 70에서 하루 10씩이라 7일째에 0이에요. 그래서 어느 쪽이든 7일보다 빨리 떠날 수 없고, 7일보다 오래 버틸 수도 없어요.
+
+난수 시작값을 0부터 499까지 바꿔 500번 돌려 보니, 끝난 날은 모두 7일이었어요.
+
+## 11. 떠난 펫의 빈틈
+
+떠난 펫에게 밥을 줘 봤어요.
+
+```python
+g = Pet("구름")
+g.hunger = 95
+g.pass_time()          # 이벤트 없음
+print(g.alive)         # False
+g.feed()               # 구름에게 밥을 먹였습니다.
+print(g.hunger)        # 70
+```
+
+떠났는데도 밥을 먹고 배고픔이 줄어요. `feed()`, `play()`, `sleep()` 어디에도 `alive`를 보는 검사가 없어서예요. 출력하면 `떠남`인데 배고픔은 70인, 앞뒤가 안 맞는 상태가 돼요.
+
+행동 메서드를 부르기 전에 밖에서 `if pet.alive:`를 확인할 수도 있지만, 그러면 부르는 곳마다 검사를 써야 해요. 6절에서 범위 검사를 `_clamp()` 한 곳에 모았듯이, 이 검사도 클래스 안에 두는 게 좋아요. 12절 연습 1에서 고쳐요.
+
+## 12. 셀프 체크: 더 만들어 보기
+
+오늘 셀프 체크는 "클래스 익숙해졌어? 아니면 더 만들어 봐"였어요. 오늘 Pet을 바탕으로 세 가지를 더 만들어 봐요. 먼저 직접 짜 보고 답과 비교하세요.
+
+TIL 요약에 "클래스를 게임에서 가장 많이 쓰겠다"라고 적었죠. 게임에서 특히 잘 보이지만, 상태를 가진 것이 행동으로 바뀌는 곳이면 어디든 같아요. 장바구니, 은행 계좌, 웹 서비스의 회원도 다 같은 모양이에요.
+
+### 연습 1: 떠난 펫 막기와 반환값 맞추기
+
+`Pet`을 고치지 않고, 10회차에 배운 상속으로 `SafePet`을 만들어요. 떠난 펫은 행동을 거절하고, 행동은 성공하면 `True`, 거절하면 `False`를 돌려주게 해요. `feed()` 하나만 예로 들어요.
+
+```python
+class SafePet(Pet):
+    def _can_act(self):
+        if not self.alive:
+            print(f"{self.name}: (이미 떠나서 대답이 없어요)")
+            return False
+        return True
+
+    def feed(self):
+        if not self._can_act():
+            return False
+        if self.hunger <= 10:
+            print(f"{self.name}: 배불러요~")
+            return False
+        self._change(hunger=-30, happy=5)
+        print(f"{self.name}에게 밥을 먹였습니다.")
+        return True
+```
+
+```python
+g = SafePet("구름")
+print(g.feed(), g.feed())
+# 구름에게 밥을 먹였습니다.
+# 구름: 배불러요~
+# True False
+g.alive = False
+print(g.feed(), g.hunger)
+# 구름: (이미 떠나서 대답이 없어요)
+# False 0
+```
+
+`play()`와 `sleep()`도 맨 앞에 `if not self._can_act(): return False`를 넣고, 끝에 `return True`를 맞추면 돼요. 검사를 `_can_act()` 하나에 모아서, 떠나는 조건이 바뀌어도 한 곳만 고치면 돼요.
+
+### 연습 2: 메뉴로 키우기
+
+11회차의 함수 설계(`ask_`로 묻기, `main()`이 큰 흐름)와 오늘의 `Pet`을 합쳐요. 매일 행동 하나를 고르면 하루가 지나요.
+
+```python
+def ask_action():
+    while True:
+        answer = input("1.밥 2.놀기 3.잠 q.그만 : ").strip()
+        if answer in ("1", "2", "3", "q"):
+            return answer
+        print("1, 2, 3, q 중에서 고르세요.")
+
+def main():
+    pet = Pet("초코")
+    day = 1
+    while pet.alive:
+        print(f"\n[{day}일차]")
+        print(pet)
+        action = ask_action()
+        if action == "q":
+            break
+        if action == "1":
+            pet.feed()
+        elif action == "2":
+            pet.play()
+        else:
+            pet.sleep()
+        pet.pass_time()
+        day += 1
+    print(f"{pet.name}와 {day - 1}일을 함께했어요.")
+```
+
+`x`, `1`, `2`, `q`를 차례로 넣고, 장난감 이벤트는 나오지 않게 해서 돌린 결과예요.
+
+```text
+[1일차]
+초코 ^_^
+배고픔: ■■■□□□□□□□  30
+행복도: ■■■■■■■□□□  70
+에너지: ■■■■■■■□□□  70
+
+1.밥 2.놀기 3.잠 q.그만 : x
+1, 2, 3, q 중에서 고르세요.
+1.밥 2.놀기 3.잠 q.그만 : 1
+초코에게 밥을 먹였습니다.
+
+[2일차]
+초코 -_-
+배고픔: ■□□□□□□□□□  10
+행복도: ■■■■■■□□□□  65
+에너지: ■■■■■■□□□□  65
+
+1.밥 2.놀기 3.잠 q.그만 : 2
+초코와 신나게 놀았습니다.
+
+[3일차]
+초코 ^_^
+배고픔: ■■■□□□□□□□  30
+행복도: ■■■■■■■■□□  80
+에너지: ■■■■□□□□□□  40
+
+1.밥 2.놀기 3.잠 q.그만 : q
+초코와 2일을 함께했어요.
+```
+
+`main()`에는 배고픔이나 행복도를 직접 고치는 줄이 하나도 없어요. 상태는 `Pet`이 알아서 관리하고, `main()`은 "무엇을 할지"만 정해요. 함수와 클래스가 일을 나누는 모습이에요.
+
+### 연습 3: 고양이는 덜 지쳐요
+
+`Cat`이 `Pet`을 물려받아 `play()`만 바꿔요. 부모의 `play()`를 그대로 실행한 뒤, 성공했으면 에너지를 10 돌려줘요.
+
+```python
+class Cat(Pet):
+    def play(self):
+        if super().play():
+            self._change(energy=10)  # 고양이는 덜 지쳐요
+            print(f"{self.name}가 혼자서도 잘 놀아요.")
+            return True
+        return False
+```
+
+```python
+nabi = Cat("나비")
+print(nabi.play(), nabi.energy)
+# 나비와 신나게 놀았습니다.
+# 나비가 혼자서도 잘 놀아요.
+# True 60
+nabi.energy = 15
+print(nabi.play(), nabi.energy)
+# 나비: 너무 피곤해요...
+# False 15
+```
+
+- `super()`는 `__init__`뿐 아니라 **어떤 메서드든** 부모 것을 부를 수 있어요. `super().play()`가 부모의 거절 검사, 상태 변화, 메시지를 다 해 줘요.
+- 부모 `play()`는 거절할 때 `None`을 돌려주는데, `if`에서 `None`은 거짓이라 거절로 처리돼요.
+- 에너지 70에서 놀면 부모가 -20, 자식이 +10이라 60이에요.
+- `Cat`을 만들어도 부모의 `__init__`이 `Pet.count += 1`을 하니 입양 수가 1 늘어요.
+
+## 오늘 꼭 기억할 주의점
+
+- 상태(값)와 행동(메서드)이 같이 다니면 클래스로 묶어요.
+- 클래스 변수는 모든 객체가 함께 보는 값 하나예요. 바꿀 때는 `클래스이름.변수 += 1`로 써요.
+- `self.count += 1`은 클래스 변수를 바꾸지 않고 객체에 새 변수를 만들어요.
+- `print(객체)`는 `__str__()`이 돌려준 문자열을 출력해요.
+- 괄호 안에 문자열을 나란히 쓰면 하나로 이어져요. 쉼표를 넣으면 튜플이 돼요.
+- `{값:>3}`은 3칸 너비에 오른쪽 정렬이에요.
+- `//`는 몫만 남겨요. `45 // 10`은 4예요.
+- `or` 조건은 하나만 맞아도 참이에요. 나쁜 상태를 먼저 검사해요.
+- 값 범위 검사(`_clamp`)와 상태 변경(`_change`)은 한 곳에 모아 두면 고칠 곳도 한 곳이에요.
+- 바꿀 값만 이름을 붙여 넘겨요(`_change(happy=15)`). 이름 없이 넘기면 첫 매개변수에 들어가요.
+- 밑줄 하나(`_name`)는 약속이라 밖에서도 불려요. 밑줄 둘(`__name`)은 이름이 바뀌어요.
+- 조건에 안 맞으면 `return`으로 일찍 끝내서 상태를 바꾸지 않아요.
+- 비슷한 메서드는 반환값을 맞춰요(성공 `True`, 거절 `False`). 값 없는 `return`은 `None`이에요.
+- `random.randint(1, 5) == 1`은 20% 확률이에요.
+- 떠난 상태(`alive = False`)를 행동 메서드도 확인해야 앞뒤가 맞아요.
+- `super().메서드()`로 부모의 어떤 메서드든 불러 쓰고, 그 뒤에 자식만의 일을 더할 수 있어요.
