@@ -244,6 +244,7 @@ const contentFiles = [
   ...walkFiles(path.join(ROOT, 'src', 'content', 'articles'), /\.mdx$/),
   // 수업 복습 회차(본문과 복습 데이터). check-font-glyph-coverage.mjs와 같은 목록이다.
   ...walkFiles(path.join(ROOT, 'src', 'content', 'class-lessons'), /\.(mdx|yml)$/),
+  ...walkFiles(path.join(ROOT, 'src', 'content', 'build-replays'), /\.ts$/),
   path.join(ROOT, 'src', 'content', 'modules.ts'),
   path.join(ROOT, 'src', 'content', 'terms.ts'),
   ...walkFiles(path.join(ROOT, 'src'), /\.tsx$/),

@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { BuildGroup, BuildReplayData, BuildState } from '@/content/build-replays/types';
+import type { BuildBoardLabels, BuildGroup, BuildReplayData, BuildState } from '@/content/build-replays/types';
 
 type LineKind = '' | 'new' | 'del';
 type Line = { t: string; k: LineKind };
@@ -90,7 +90,17 @@ function Say({ text }: { text: string }) {
 
 const won = (n: number) => n.toLocaleString('ko-KR');
 
-function ObjectBoard({ board }: { board: Board }) {
+const DEFAULT_LABELS: Required<BuildBoardLabels> = {
+  counter: 'next_number',
+  cart: 'Cart 객체, cart.lines',
+  empty: 'lines = [] (비어 있음)',
+  ptr: 'item',
+  qty: 'qty',
+  note: '점선은 장바구니 줄이 상품 객체를 가리킨다는 뜻이에요(복사가 아니에요).',
+};
+
+function ObjectBoard({ board, labels }: { board: Board; labels?: BuildBoardLabels }) {
+  const L = { ...DEFAULT_LABELS, ...labels };
   const { state: s, prev, animate } = board;
   const P = prev ?? EMPTY;
   const boxRef = useRef<HTMLDivElement>(null);
@@ -148,7 +158,7 @@ function ObjectBoard({ board }: { board: Board }) {
             key={`nn-${board.key}`}
             className={`border border-dashed border-accent px-2 font-mono dark:border-accent-dark ${enter(P.nextNumber === null)}`}
           >
-            next_number = <b className="tabular-nums">{s.nextNumber}</b>
+            {L.counter} = <b className="tabular-nums">{s.nextNumber}</b>
             <span className="text-muted dark:text-muted-dark"> (발급기)</span>
           </span>
         )}
@@ -207,12 +217,12 @@ function ObjectBoard({ board }: { board: Board }) {
               </>
             ) : (
               <>
-                <b className={GROUP.cart.text}>cart</b> = Cart 객체, cart.lines
+                <b className={GROUP.cart.text}>cart</b> = {L.cart}
               </>
             )}
           </p>
           {s.lines.length === 0 && (
-            <p className="pb-1 font-mono text-label text-muted dark:text-muted-dark">lines = [] (비어 있음)</p>
+            <p className="pb-1 font-mono text-label text-muted dark:text-muted-dark">{L.empty}</p>
           )}
           <div className="flex flex-col gap-1.5">
             {s.lines.map((l) => {
@@ -226,11 +236,11 @@ function ObjectBoard({ board }: { board: Board }) {
                   }`}
                 >
                   <span data-ptr className={`font-mono ${GROUP.line.text}`}>
-                    item{l.number !== null ? ` → #${l.number}` : ''}
+                    {L.ptr}{l.number !== null ? ` → #${l.number}` : ''}
                   </span>
                   <span className="min-w-0 flex-1 truncate font-semibold">{l.name}</span>
                   <span className="font-mono tabular-nums">
-                    qty <b className={GROUP.line.text}>{l.qty}</b>
+                    {L.qty} <b className={GROUP.line.text}>{l.qty}</b>
                   </span>
                   <span className="font-mono tabular-nums">{won(l.subtotal)}원</span>
                 </div>
@@ -273,7 +283,7 @@ function ObjectBoard({ board }: { board: Board }) {
       )}
       {s.holder && (
         <p className="relative z-10 mt-2 text-label text-muted dark:text-muted-dark">
-          점선은 장바구니 줄이 상품 객체를 가리킨다는 뜻이에요(복사가 아니에요).
+          {L.note}
         </p>
       )}
     </div>
@@ -285,7 +295,7 @@ class Cancel {}
 const SPEEDS = [1, 2, 4] as const;
 
 export function BuildReplayPlayer({ data }: { data: BuildReplayData }) {
-  const { file, blocks, steps } = data;
+  const { file, blocks, steps, board: labels } = data;
   const N = steps.length;
 
   // 단계 s(1부터)에서 보이는 줄. kind: old = 전부터 있던 줄, new = 이번에 생긴 줄, gone = 이번에 지워지는 줄
@@ -641,7 +651,7 @@ export function BuildReplayPlayer({ data }: { data: BuildReplayData }) {
             <span className="text-label font-bold">객체 보드</span>
             <span className="text-label text-muted dark:text-muted-dark">이 단계 코드를 실행한 뒤의 상태</span>
           </p>
-          <ObjectBoard board={board} />
+          <ObjectBoard board={board} labels={labels} />
         </section>
         <section aria-label="실행 결과" className="min-w-0 border-b border-line p-3 dark:border-line-dark">
           <p className="mb-2 flex flex-wrap items-baseline justify-between gap-2">

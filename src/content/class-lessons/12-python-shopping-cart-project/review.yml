@@ -1,5 +1,6 @@
 # 12-python-shopping-cart-project 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
-# 퀴즈 코드의 출력은 모두 직접 실행해 확인했다(2026-11-10).
+# 2026-11-11 튜터 답안 기준으로 본문을 바꾸며 코드 이름을 맞췄다(mangled-stock 문항은 dict-get-default로 교체).
+# 퀴즈 코드의 출력은 모두 직접 실행해 확인했다.
 slug: 12-python-shopping-cart-project
 quiz:
   - id: shared-object-qty
@@ -25,22 +26,22 @@ quiz:
     q: "다음 코드의 출력은?"
     code: |-
       class Product:
-          next_number = 1
+          next_id = 1
 
           def __init__(self, name):
-              Product.next_number += 1
-              self.number = Product.next_number
+              Product.next_id += 1
+              self.id = Product.next_id
 
       a = Product("A")
       b = Product("B")
-      print(a.number, b.number)
+      print(a.id, b.id)
     options:
       - "1 2"
       - "2 3"
       - "3 3"
       - "1 1"
     answer: 1
-    explain: "발급기를 먼저 올린 뒤 저장해서 첫 상품이 2번이 돼요. 1번부터 붙이려면 self.number = Product.next_number 로 먼저 저장하고, 그다음 Product.next_number += 1 로 올려요."
+    explain: "발급기를 먼저 올린 뒤 저장해서 첫 상품이 2번이 돼요. 1번부터 붙이려면 튜터 답안처럼 self.id = Product.next_id 로 먼저 저장하고, 그다음 Product.next_id += 1 로 올려요."
   - id: number-not-saved
     q: "다음 코드의 출력은?"
     code: |-
@@ -65,47 +66,41 @@ quiz:
     q: "다음 코드의 출력은?"
     code: |-
       class Product:
-          next_number = 1
+          next_id = 1
 
       a = Product()
-      a.next_number = 99
-      print(Product.next_number, a.next_number)
+      a.next_id = 99
+      print(Product.next_id, a.next_id)
     options:
       - "99 99"
       - "1 99"
       - "1 1"
       - "AttributeError"
     answer: 1
-    explain: "객체 이름으로 대입하면 클래스 변수가 바뀌지 않고, 그 객체에 같은 이름의 속성이 새로 생겨 클래스 변수를 가려요. 클래스 변수는 Product.next_number = 값 처럼 클래스 이름으로 바꿔요."
-  - id: mangled-stock
+    explain: "객체 이름으로 대입하면 클래스 변수가 바뀌지 않고, 그 객체에 같은 이름의 속성이 새로 생겨 클래스 변수를 가려요. 클래스 변수는 Product.next_id += 1 처럼 클래스 이름으로 바꿔요."
+  - id: dict-get-default
     q: "다음 코드의 출력은?"
     code: |-
-      class Product:
-          def __init__(self, stock):
-              self.__stock = stock
-
-          def get_stock(self):
-              return self.__stock
-
-      p = Product(10)
-      p.__stock = 0
-      print(p.get_stock())
+      items = {}
+      items["텀블러"] = items.get("텀블러", 0) + 9
+      items["텀블러"] = items.get("텀블러", 0) + 1
+      print(items)
     options:
-      - "10"
-      - "0"
-      - "AttributeError"
-      - "None"
+      - "{'텀블러': 10}"
+      - "{'텀블러': 1}"
+      - "{'텀블러': 9, '텀블러': 1}"
+      - "KeyError"
     answer: 0
-    explain: "클래스 안의 self.__stock 은 _Product__stock 으로 이름이 바뀌어 저장돼요. 밖에서 p.__stock = 0 을 쓰면 __stock 이라는 다른 속성이 하나 더 생길 뿐이라, get_stock() 은 그대로 10을 돌려줘요."
+    explain: "get(키, 0) 은 키가 없으면 0을 돌려줘서 처음에는 0 + 9 = 9가 들어가요. 두 번째는 이미 있는 9를 꺼내 1을 더해 10이 돼요. 딕셔너리의 키는 하나뿐이라 같은 키에 대입하면 값이 바뀌어요. items[\"텀블러\"] 로 바로 읽었다면 처음에 KeyError 가 나요."
   - id: can-add-quantity
     q: "다음 코드의 출력은?"
     code: |-
       stock = 10
-      in_cart = 9
+      in_cart_qty = 9
       qty = 2
-      can_add = stock - in_cart
-      if qty > can_add:
-          print(f"재고가 부족합니다. (담을 수 있는 수량: {can_add}개)")
+      extra_qty = stock - in_cart_qty
+      if qty > extra_qty:
+          print(f"재고가 부족합니다. (담을 수 있는 수량: {extra_qty}개)")
       else:
           print("담았습니다.")
     options:
@@ -119,12 +114,12 @@ quiz:
     q: "다음 코드의 출력은?"
     code: |-
       class RateDiscount:
-          def __init__(self, rate, max_amount):
+          def __init__(self, rate, max_discount):
               self.rate = rate
-              self.max_amount = max_amount
+              self.max_discount = max_discount
 
           def discount_amount(self, total):
-              return min(int(total * self.rate), self.max_amount)
+              return min(int(total * self.rate), self.max_discount)
 
       c = RateDiscount(0.1, 5000)
       print(c.discount_amount(313000), c.discount_amount(15000))
@@ -138,21 +133,23 @@ quiz:
   - id: polymorphism-same-call
     q: "다음 코드의 출력은? (줄바꿈은 쉼표로 적었어요)"
     code: |-
-      class Discount:
+      class Coupon:
+          def __init__(self, name):
+              self.name = name
+
           def discount_amount(self, total):
               return 0
 
-      class FixedDiscount(Discount):
+      class FixedDiscount(Coupon):
           def __init__(self, amount, min_total):
+              super().__init__("정액 할인")
               self.amount = amount
               self.min_total = min_total
 
           def discount_amount(self, total):
-              if total >= self.min_total:
-                  return self.amount
-              return 0
+              return self.amount if total >= self.min_total else 0
 
-      for c in [Discount(), FixedDiscount(3000, 20000)]:
+      for c in [Coupon("쿠폰 없음"), FixedDiscount(3000, 20000)]:
           print(c.discount_amount(25000))
     options:
       - "0, 3000"
@@ -160,18 +157,16 @@ quiz:
       - "0, 0"
       - "25000, 22000"
     answer: 0
-    explain: "같은 discount_amount(25000) 호출인데 객체마다 다르게 계산해요. 부모 Discount 는 항상 0, FixedDiscount 는 20,000원 이상이라 3,000을 돌려줘요. 이것이 다형성이에요."
+    explain: "같은 discount_amount(25000) 호출인데 객체마다 다르게 계산해요. 부모 Coupon 은 항상 0, FixedDiscount 는 20,000원 이상이라 3,000을 돌려줘요. 이것이 다형성이에요."
   - id: shipping-after-discount
     q: "다음 코드의 출력은?"
     code: |-
-      def shipping_fee(total, discount, line_count):
-          if line_count == 0:
+      def shipping(subtotal, discount, is_empty):
+          if is_empty:
               return 0
-          if total - discount >= 30000:
-              return 0
-          return 3000
+          return 0 if subtotal - discount >= 30_000 else 3_000
 
-      print(shipping_fee(32000, 3000, 1))
+      print(shipping(32_000, 3_000, False))
     options:
       - "0"
       - "3000"
@@ -198,23 +193,38 @@ quiz:
     answer: 1
     explain: "while 안에서 menu_choice 가 바뀌지 않아서 조건이 계속 참이에요. 여기서는 count 가 3일 때 break 로 빠져나와 3이 찍혀요. break 도 input() 도 없으면 영원히 반복해요. 반복 안에서 input() 을 다시 받아야 해요."
 commands:
-  - cmd: "python shopping_cart.py"
-    desc: "완성한 장바구니 프로그램 실행"
+  - cmd: "uv run main.py"
+    desc: "완성한 장바구니 프로그램 실행(uv 없이 python main.py 도 돼요)"
     group: 터미널
-  - cmd: "클래스이름.클래스변수"
-    desc: "모든 객체가 함께 보는 값 읽기, 바꾸기. 예 Product.next_number += 1"
+  - cmd: "uv run product.py"
+    desc: "파일 하나만 실행해 그 파일의 테스트 코드 돌려 보기"
+    group: 터미널
+  - cmd: "Product.next_id += 1"
+    desc: "클래스 변수(발급기) 올리기. 저장(self.id = Product.next_id)이 먼저"
     group: Python
-  - cmd: "self.number = Product.next_number"
-    desc: "지금 번호를 이 객체의 번호로 저장(저장 먼저, 올리기 나중)"
+  - cmd: "self.items.get(product, 0)"
+    desc: "딕셔너리에 키가 있으면 그 값, 없으면 0"
     group: Python
-  - cmd: "self.__stock"
-    desc: "밖에서 직접 못 바꾸게 숨긴 속성. 실제로는 _Product__stock 으로 저장"
+  - cmd: "del self.items[product]"
+    desc: "딕셔너리에서 그 키를 통째로 지우기"
     group: Python
-  - cmd: "class RateDiscount(Discount):"
-    desc: "Discount 를 물려받는 자식 클래스 만들기"
+  - cmd: "for p, q in self.items.items():"
+    desc: "딕셔너리의 키(상품)와 값(수량)을 함께 꺼내며 반복"
     group: Python
-  - cmd: "a is b"
-    desc: "두 이름이 같은 객체를 가리키는지 확인"
+  - cmd: "sum(p.price * q for p, q in self.items.items())"
+    desc: "제너레이터 식으로 가격 x 수량을 모두 더하기"
+    group: Python
+  - cmd: "self.items.clear()"
+    desc: "딕셔너리를 비우기(결제 뒤 장바구니 비우기)"
+    group: Python
+  - cmd: "f\"{값:<10}\" / f\"{값:>8,}\""
+    desc: "10칸 왼쪽 정렬 / 8칸 오른쪽 정렬에 천 단위 쉼표"
+    group: Python
+  - cmd: "class RateDiscount(Coupon):"
+    desc: "Coupon 을 물려받는 자식 클래스 만들기"
+    group: Python
+  - cmd: "super().__init__(이름)"
+    desc: "자식의 __init__ 에서 부모의 __init__ 부르기(이름 저장은 부모가)"
     group: Python
   - cmd: "min(a, b)"
     desc: "둘 중 작은 값. 할인 상한을 넘지 않게 자를 때"
@@ -222,24 +232,22 @@ commands:
   - cmd: "int(실수)"
     desc: "소수점 아래를 버리고 정수로. 원 단위 미만 버림"
     group: Python
-  - cmd: "sum([식 for 변수 in 리스트])"
-    desc: "리스트 컴프리헨션으로 만든 값들을 모두 더하기"
-    group: Python
-  - cmd: "값 if 조건 else 0"
-    desc: "조건 표현식. 줄이 있으면 그 수량, 없으면 0"
-    group: Python
 terms:
   - word: "조합 (Composition)"
-    definition: "한 객체가 다른 객체를 속성으로 가지는 구조. 장바구니 한 줄(CartLine)이 상품 객체를 item 으로 가리키는 것처럼 has-a 관계다."
+    definition: "한 객체가 다른 객체를 속성으로 가지는 구조. 장바구니(Cart)가 상품 객체를 딕셔너리 키로, 쿠폰 객체를 coupon 으로 가지는 것처럼 has-a 관계다."
   - word: "클래스 변수 (Class Variable)"
-    definition: "클래스에 하나만 있고 모든 객체가 함께 보는 변수. 클래스이름.변수 로 바꾼다. 상품 자동 번호의 발급기 역할을 한다."
+    definition: "클래스에 하나만 있고 모든 객체가 함께 보는 변수. 클래스이름.변수 로 바꾼다. 상품 자동 번호의 발급기(Product.next_id) 역할을 한다."
   - word: "인스턴스 변수 (Instance Variable)"
     definition: "self.이름 으로 객체마다 따로 갖는 변수. 같은 이름의 클래스 변수가 있으면 이쪽이 가린다."
+  - word: "__str__ (문자열 표현)"
+    definition: "print(객체) 를 했을 때 찍힐 글자를 돌려주는 메서드. 상품목록 한 줄처럼 객체를 어떻게 보여 줄지 정한다."
+  - word: "super()"
+    definition: "자식 클래스에서 부모 클래스의 메서드를 부르는 방법. super().__init__(이름) 으로 이름 저장을 부모에게 맡긴다."
+  - word: "오버라이딩 (Overriding)"
+    definition: "부모에게 물려받은 메서드를 자식이 같은 이름으로 다시 정의하는 것. 쿠폰마다 discount_amount 를 다르게 쓴다."
   - word: "다형성 (Polymorphism)"
     definition: "같은 메서드 호출이 객체의 클래스에 따라 다르게 동작하는 것. 쿠폰 종류를 몰라도 discount_amount(합계) 하나로 부를 수 있다."
-  - word: "캡슐화 (Encapsulation)"
-    definition: "객체의 상태를 밖에서 직접 바꾸지 못하게 하고 메서드로만 바꾸게 하는 것. 재고는 decrease_stock() 으로만 줄인다."
-  - word: "오버라이딩 (Overriding)"
-    definition: "부모에게 물려받은 메서드를 자식이 같은 이름으로 다시 정의하는 것."
+  - word: "제너레이터 식 (Generator Expression)"
+    definition: "괄호 안에 for 를 쓴 식. sum(가격 * 수량 for ...) 처럼 리스트를 따로 만들지 않고 값을 하나씩 만들어 넘긴다."
   - word: "참조 (Reference)"
-    definition: "변수나 리스트 칸이 값을 복사해 갖지 않고 객체를 가리키는 것. 두 곳이 같은 객체를 가리키면 한쪽에서 바꾼 값이 다른 쪽에도 보인다."
+    definition: "변수나 리스트 칸, 딕셔너리 키가 값을 복사해 갖지 않고 객체를 가리키는 것. 두 곳이 같은 객체를 가리키면 한쪽에서 바꾼 값이 다른 쪽에도 보인다."

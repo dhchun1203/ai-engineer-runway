@@ -2,7 +2,7 @@
 title: "Python 미니 프로젝트: 쇼핑몰 장바구니와 할인 쿠폰"
 session: 12
 date: "2026-11-10"
-summary: "터미널에서 도는 쇼핑몰 장바구니를 클래스 여러 개로 만들어요. 재고와 담은 수량을 한 변수에 섞어서 막혔던 지점을 짚고, 상품(클래스 변수 자동 번호, 캡슐화), 장바구니 한 줄(조합), 쿠폰(상속, 오버라이딩, 다형성), 결제 금액 계산을 빈 파일에서 한 단계씩 쌓아 가는 재생기로 따라가요."
+summary: "튜터 답안을 따라 터미널 쇼핑몰 장바구니를 파일 4개로 만들어요. 상품(클래스 변수 자동 번호, 목록 출력), 딕셔너리 {상품: 수량} 장바구니, 부모 Coupon을 물려받는 쿠폰 두 종류(super, 오버라이딩, 다형성), 할인 뒤 배송비와 결제를 빈 파일에서 한 단계씩 쌓아 가요."
 slug: "12-python-shopping-cart-project"
 module: "1-3"
 topic: "Python"
@@ -11,22 +11,22 @@ preStudy: []
 
 이번 미니 프로젝트는 터미널에서 도는 **쇼핑몰 장바구니**예요. 상품을 둘러보고, 담고 빼고, 할인 쿠폰을 골라 적용한 뒤 결제해요. 결제하면 재고가 줄어요.
 
-가위바위보와 다른 점은 **클래스 여러 개가 서로 협력**한다는 거예요. 처음 짠 코드는 5시간을 붙잡고도 숫자가 계속 어긋났어요. 문법이 아니라 설계, 그중에서도 "이 값은 누가 갖고 누가 바꾸나"가 원인이었어요. 그 지점부터 짚고, 빈 파일에서 완성까지 13단계로 다시 쌓아요.
+처음 짠 코드는 5시간을 붙잡고도 숫자가 계속 어긋났어요. 원인은 문법이 아니라 "이 값은 누가 갖고 누가 바꾸나"였어요. 그 지점을 먼저 짚고, **튜터님 답안**을 기준으로 빈 파일에서 완성까지 14단계로 다시 쌓아요.
 
 | 순서 | 내용 | 한 줄로 |
 | --- | --- | --- |
 | 1 | 발제 읽기 | 메뉴 7개, 쿠폰 3종, 금액 계산 순서 |
 | 2 | 처음 막힌 곳 | `qty` 하나에 재고와 담은 수량을 섞었어요 |
-| 3 | 설계 | 클래스 4개의 역할부터 정해요 |
-| 4 | 빈 파일에서 완성까지 | 13단계 재생기 |
-| 5 | 상품과 자동 번호 | 클래스 변수는 발급기예요 |
-| 6 | 재고 숨기기 | 재고는 메서드로만 바꿔요 |
-| 7 | 장바구니 한 줄 | 조합: 상품은 가리키고 수량은 따로 |
-| 8 | 담기와 빼기 | 담을 수 있는 수량 = 재고 - 이미 담은 수량 |
-| 9 | 쿠폰 | 상속, 오버라이딩, 다형성 |
-| 10 | 결제 금액 계산 | 상품 합계, 할인, 배송비, 결제 금액 |
+| 3 | 튜터 답안의 설계 | 파일 4개, 장바구니는 딕셔너리 하나 |
+| 4 | 빈 파일에서 완성까지 | 14단계 재생기 |
+| 5 | product.py | 자동 번호와 `__str__` |
+| 6 | 담기 | 담을 수 있는 수량 = 재고 - 이미 담은 수량 |
+| 7 | 빼기와 합계 | `del`, `sum()`, 배송비, 장바구니 출력 |
+| 8 | 직접 고쳐 보기 | 0개 담기, import 때 실행, 한글 정렬, 재고 줄이기 |
+| 9 | coupon.py | 부모 `Coupon`, `super()`, 오버라이딩, 다형성 |
+| 10 | 장바구니에 쿠폰 연결 | 배송비는 할인 뒤 금액으로 |
 | 11 | 결제와 메뉴 | 재고는 결제할 때만 줄어요 |
-| 12 | 완성 코드 | 217줄 전체와 실행 화면 |
+| 12 | 완성 코드 | 파일 4개와 실행 화면 |
 
 레슨 끝에 확인 퀴즈가 있어요. 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
 
@@ -38,24 +38,24 @@ preStudy: []
 
 | 번호 | 목표 | 이 프로젝트에서 |
 | --- | --- | --- |
-| 1 | 역할이 다른 클래스 여러 개를 설계할 수 있다 | `Product`, `CartLine`, `Cart`, `Discount` 계열 |
-| 2 | 한 객체가 다른 객체를 속성으로 가지는 구조(조합)를 만들 수 있다 | `CartLine`이 상품을, `Cart`가 줄과 쿠폰을 가져요 |
-| 3 | 상속으로 공통 틀을 만들고, 자식 클래스에서 오버라이딩할 수 있다 | `Discount`를 물려받는 쿠폰 두 종류 |
-| 4 | 같은 메서드 호출이 객체에 따라 다르게 동작하는 다형성을 설명할 수 있다 | `discount_amount(합계)` 한 줄 |
-| 5 | 객체의 상태 변경을 메서드로만 하도록 캡슐화할 수 있다 | 재고는 `decrease_stock()`으로만 |
-| 6 | 클래스 변수로 객체에 자동 번호를 붙일 수 있다 | `Product.next_number` |
+| 1 | 역할이 다른 클래스 여러 개를 설계할 수 있다 | `Product`, `Cart`, `Coupon` 계열 |
+| 2 | 한 객체가 다른 객체를 속성으로 가지는 구조(조합)를 만들 수 있다 | `Cart`가 상품 객체(딕셔너리 키)와 쿠폰 객체를 가져요 |
+| 3 | 상속으로 공통 틀을 만들고, 자식 클래스에서 오버라이딩할 수 있다 | `Coupon`을 물려받는 쿠폰 두 종류 |
+| 4 | 같은 메서드 호출이 객체에 따라 다르게 동작하는 다형성을 설명할 수 있다 | `discount_amount(total)` 한 줄 |
+| 5 | 객체의 상태 변경을 메서드로만 하도록 캡슐화할 수 있다 | 재고는 결제 한 곳에서만 줄여요. 메서드로 묶는 연습은 8절 |
+| 6 | 클래스 변수로 객체에 자동 번호를 붙일 수 있다 | `Product.next_id` |
 
 ### 판매 상품
 
-초기 상품 목록은 자유예요. 발제의 예시를 그대로 썼어요.
+초기 상품 목록은 자유예요. 튜터 답안의 목록을 그대로 써요.
 
 | 번호 | 상품명 | 가격 | 재고 |
 | --- | --- | --- | --- |
-| 1 | 무선 이어폰 | 89,000원 | 3 |
+| 1 | 무선이어폰 | 89,000원 | 3 |
 | 2 | 텀블러 | 15,000원 | 10 |
 | 3 | 보조배터리 | 32,000원 | 5 |
 | 4 | 마우스패드 | 9,000원 | 0 (품절) |
-| 5 | USB 허브 | 18,000원 | 4 |
+| 5 | USB 허브 | 30,000원 | 10 |
 
 상품 번호는 직접 쓰지 않고 **객체를 만들 때 자동으로 1, 2, 3...** 이 붙어야 해요.
 
@@ -69,7 +69,7 @@ preStudy: []
 | --- | --- |
 | 1. 상품목록 | 전체 상품을 번호, 가격, 재고(또는 품절)로 출력 |
 | 2. 담기 | 상품 번호와 수량을 받아 장바구니에 추가. 이미 담긴 상품이면 수량을 더함 |
-| 3. 빼기 | 상품 번호를 받아 장바구니에서 제거 |
+| 3. 빼기 | 상품 번호와 수량을 받아 장바구니에서 빼기 |
 | 4. 장바구니 | 담긴 상품, 상품 합계, 할인, 배송비, 결제 금액 출력 |
 | 5. 쿠폰 | 쿠폰 목록을 보여 주고 하나를 골라 적용(한 번에 1장) |
 | 6. 결제 | 영수증 출력, 재고 감소, 장바구니 비우기, 쿠폰 초기화 |
@@ -77,10 +77,10 @@ preStudy: []
 
 ### 할인 쿠폰
 
-| 쿠폰 | 클래스 | 할인 금액 계산 |
+| 쿠폰 | 객체 | 할인 금액 계산 |
 | --- | --- | --- |
-| 쿠폰 없음 | `Discount` | 항상 0원 |
-| 10% 할인 (최대 5,000원) | `RateDiscount(rate=0.1, max_amount=5000)` | 상품 합계 x 10%, 단 5,000원을 넘지 않음. 원 단위 미만은 버림 |
+| 쿠폰 없음 | `Coupon("쿠폰 없음")` | 항상 0원 |
+| 10% 할인 (최대 5,000원) | `RateDiscount(rate=0.1, max_discount=5000)` | 상품 합계 x 10%, 단 5,000원을 넘지 않음. 원 단위 미만은 버림 |
 | 3,000원 할인 (20,000원 이상 구매 시) | `FixedDiscount(amount=3000, min_total=20000)` | 상품 합계가 20,000원 이상이면 3,000원, 아니면 0원 |
 
 ### 결제 금액 계산 순서
@@ -159,82 +159,76 @@ while not menu_choice in ("1", "2", "3", "4", "5", "6", "q"):
 
 재고 10과 담은 수량 9는 서로 다른 값이라 저장할 곳도 달라야 해요.
 
-- **재고**는 상품 객체가 가져요. 결제 전까지 바뀌지 않아요.
-- **담은 수량**은 장바구니 쪽 "한 줄"이 따로 가져요. 이 줄은 상품을 복사하지 않고 가리키기만 해요.
+- **재고**는 상품 객체가 가져요(`product.stock`). 결제 전까지 바뀌지 않아요.
+- **담은 수량**은 장바구니가 따로 가져요. 튜터 답안은 딕셔너리 `{상품: 수량}` 하나로 해결해요. 키는 상품 객체 그 자체라 복사가 아니라 가리키기예요.
 
 그러면 담을 수 있는 수량은 `상품의 재고 - 이미 담은 수량`이고, 결제할 때만 담은 수량만큼 재고를 줄여요. 이 구조가 학습 목표 2번의 조합이에요.
 
 </TwistBox>
 
-## 3. 설계: 클래스 4개의 역할
+## 3. 튜터 답안의 설계: 파일 4개, 장바구니는 딕셔너리
 
-코드를 쓰기 전에 클래스마다 "무엇을 알고, 무엇을 하는지" 한 줄씩 정해요. 이 표가 있으면 값이 어디 있어야 하는지 헷갈릴 때 돌아올 곳이 생겨요.
+튜터 답안은 클래스를 역할마다 **파일 하나**에 나눠 둬요. 아래쪽 파일이 위쪽 파일을 `import`해서 써요.
 
-| 클래스 | 아는 것 | 하는 일 |
-| --- | --- | --- |
-| `Product` | 번호, 이름, 가격, 재고 | 재고 알려 주기, 재고 줄이기, 목록 한 줄 만들기 |
-| `CartLine` | 어떤 상품인지(가리킴), 담은 수량 | 이 줄의 금액(가격 x 수량) |
-| `Cart` | 줄 목록, 적용한 쿠폰 | 담기, 빼기, 합계, 할인, 배송비, 결제 금액, 결제 |
-| `Discount`와 자식 2개 | 쿠폰 이름, 할인 규칙 | 상품 합계를 받아 할인 금액 돌려주기 |
+| 파일 | 클래스 | 아는 것 | 하는 일 |
+| --- | --- | --- | --- |
+| `product.py` | `Product` | 번호, 이름, 가격, 재고 | 품절인지 알려 주기, 목록 한 줄 만들기 |
+| `coupon.py` | `Coupon`과 자식 2개 | 쿠폰 이름, 할인 규칙 | 상품 합계를 받아 할인 금액 돌려주기 |
+| `cart.py` | `Cart` | `items` 딕셔너리 `{상품: 수량}`, 적용한 쿠폰 | 담기, 빼기, 합계, 할인, 배송비, 결제 금액, 결제 |
+| `main.py` | 없음 | 상품 목록, 쿠폰 목록 | 메뉴를 돌리며 장바구니 메서드 부르기 |
 
-만드는 순서는 **기대는 쪽을 나중에** 만들어요. `CartLine`은 상품의 가격(`item.price`)에 기대고, `Cart`는 `CartLine`과 쿠폰에 기대요. 그래서 `Product`, `CartLine`, `Cart`, 쿠폰, 메뉴 순서예요.
+장바구니 "한 줄"을 클래스로 따로 만들지 않은 게 핵심이에요. 딕셔너리의 **키가 상품 객체**, **값이 담은 수량**이라, 한 줄에 필요한 두 값이 키와 값으로 바로 짝지어져요.
+
+```text
+cart.items = {
+    <텀블러 객체>    : 9,     키에서 p.price, p.stock을 바로 꺼내요
+    <무선이어폰 객체> : 2,
+}
+```
+
+파일마다 맨 아래에 `if __name__ == "__main__":` 테스트가 있어서, 파일 하나만 따로 돌려 볼 수 있어요. 튜터 답안은 `uv` 프로젝트라 `uv run product.py`처럼 실행해요. 만드는 순서도 **기대는 쪽을 나중에**예요. `Cart`가 상품과 쿠폰에 기대니까 상품, 장바구니, 쿠폰, 메뉴 순서로 쌓아요.
 
 ## 4. 빈 파일에서 완성까지
 
-아래 재생기는 빈 파일에서 시작해 13단계로 코드를 쌓아요. 단계마다 새 줄은 초록, 지우는 줄은 빨강으로 보여요.
+아래 재생기는 파일 4개를 이어 붙인 화면에서 14단계로 코드를 쌓아요. 단계마다 새 줄은 초록, 지우는 줄은 빨강으로 보여요.
 
-코드가 다 쌓이면 **그 단계까지의 코드를 실제로 실행한 결과**가 실행 결과 창에 나오고, 객체 보드가 그때의 상태로 바뀌어요. 보드의 점선은 장바구니 줄이 상품 객체를 가리킨다는 뜻이에요.
+코드가 다 쌓이면 **그 단계까지의 코드를 실제로 실행한 결과**가 실행 결과 창에 나오고, 객체 보드가 그때의 상태로 바뀌어요. 보드의 점선은 장바구니 딕셔너리의 키가 상품 객체 그 자체라는 뜻이에요.
 
 <BuildReplay id="shopping-cart" />
 
 단계마다 "생각해 보기"가 있어요. 답을 열기 전에 먼저 소리 내어 말해 보세요. 위 번호를 누르면 그 단계의 완성 화면으로 바로 가요.
 
-## 5. 상품과 자동 번호: 클래스 변수
+## 5. product.py: 자동 번호와 `__str__`
 
 ```python
 class Product:
-    next_number = 1   # 클래스 변수: 다음에 줄 번호 (발급기)
+    next_id = 1 # 클래스 변수
 
+    # 새 상품의 초기 정보 저장
     def __init__(self, name, price, stock):
-        self.number = Product.next_number   # ① 현재 번호를 내 번호표로
-        Product.next_number += 1            # ② 발급기 번호 올리기
+        self.id = Product.next_id
+        Product.next_id += 1 # 다음 상품을 위해 Index 값 + 1
         self.name = name
         self.price = price
-        self.__stock = stock   # 재고: 밖에서 직접 못 바꾸게 숨김
+        self.stock = stock
 
-    def get_stock(self):
-        return self.__stock
+    def is_sold_out(self):
+        return self.stock == 0
 
-    def decrease_stock(self, qty):   # 재고는 이 메서드로만 줄인다
-        if qty > self.__stock:
-            print("재고보다 많이 줄일 수 없습니다.")
-            return
-        self.__stock -= qty
-
-    def line_text(self):   # 상품목록의 한 줄
-        if self.__stock == 0:
-            stock_text = "(품절)"
-        else:
-            stock_text = f"(재고 {self.__stock}개)"
-        return f"{self.number}. {self.name}\t{self.price:,}원  {stock_text}"
+    def __str__(self):
+        stock_text = "품절" if self.is_sold_out() else f"재고 {self.stock}개"
+        return f"{self.id}: {self.name:<10} {self.price:>8,} {self.stock} ({stock_text})"
 ```
 
-`next_number`는 `def` 밖, 클래스 바로 아래에 있어요. 이런 변수를 **클래스 변수**라고 해요. 클래스에 하나만 있고 모든 상품이 같이 봐요. 은행 번호표 발급기처럼요.
+`next_id`는 `def` 밖, 클래스 바로 아래에 있어요. 이런 변수를 **클래스 변수**라고 해요. 클래스에 하나만 있고 모든 상품이 같이 봐요. 은행 번호표 발급기처럼요.
 
 | 비유 | 실제 코드 |
 | --- | --- |
-| 지점에 하나뿐인 번호표 발급기 | 클래스 변수 `Product.next_number` |
+| 지점에 하나뿐인 번호표 발급기 | 클래스 변수 `Product.next_id` |
 | 손님이 번호표를 뽑는 순간 | `Product(...)`로 객체를 만드는 순간(`__init__`) |
-| 손님이 받아 든 번호표 | 인스턴스 변수 `self.number` |
+| 손님이 받아 든 번호표 | 인스턴스 변수 `self.id` |
 
-①에서 지금 번호를 내 번호표로 저장하고, ②에서 발급기를 올려요. 상품 셋을 만들어 확인하면 이래요.
-
-```text
-1 2 3
-4
-```
-
-`1 2 3`은 각 상품의 번호, `4`는 다음 상품이 받을 번호예요.
+`self.id = Product.next_id`로 지금 번호를 내 번호표로 저장하고, 그다음 `Product.next_id += 1`로 발급기를 올려요. 상품 다섯 개를 만들면 번호는 `[1, 2, 3, 4, 5]`, 발급기는 다음 상품을 위해 `6`이 돼요.
 
 <TwistBox title="번호가 3 3 3으로 나오는 코드는 뭐가 빠졌을까요?">
 
@@ -248,206 +242,362 @@ class Product:
         Product.number = self.number + 1
 ```
 
-발급기 숫자만 올리고 번호표는 아무도 받지 않았어요. `a`에는 `number`가 없으니 `a.number`는 클래스의 `Product.number`를 읽고, 그 값은 마지막에 3이에요. `self.number = ...`로 객체에 저장하는 줄이 있어야 해요.
+발급기 숫자만 올리고 번호표는 아무도 받지 않았어요. `a`에는 `number`가 없으니 `a.number`는 클래스의 `Product.number`를 읽고, 그 값은 마지막에 3이에요. 튜터 답안처럼 `self.id = ...`로 객체에 저장하는 줄이 있어야 해요.
 
 두 줄의 순서를 바꿔 올리기를 먼저 하면 첫 상품이 2번이 돼요. 저장이 먼저, 올리기가 나중이에요.
 
 </TwistBox>
 
-클래스 변수는 **클래스 이름으로** 바꿔요(`Product.next_number = 1`). 객체 이름으로 대입하면(`a.next_number = 99`) 클래스 변수는 그대로고, 그 객체에 같은 이름의 속성이 새로 생겨 클래스 변수를 가려요.
+클래스 변수는 **클래스 이름으로** 바꿔요(`Product.next_id += 1`). 객체 이름으로 대입하면(`a.next_id = 99`) 클래스 변수는 그대로고, 그 객체에 같은 이름의 속성이 새로 생겨 클래스 변수를 가려요.
 
-## 6. 재고 숨기기: 캡슐화
+`__str__`은 `print(상품)`을 했을 때 찍힐 글자를 돌려주는 메서드예요. 상품을 어떻게 보여 줄지는 상품이 제일 잘 아니까 상품 클래스에 둬요.
 
-5절 코드에서 재고는 `self.__stock`이에요. 밑줄 두 개로 시작하면 파이썬이 이름을 `_Product__stock`으로 바꿔 저장해서, 밖에서 `상품.__stock`으로는 닿지 않아요.
-
-재고는 `get_stock()`으로 읽고 `decrease_stock()`으로만 줄여요. 재고보다 많이 줄이려는 실수는 이 메서드 한 곳에서 막아요.
-
-```python
-t = Product("텀블러", 15000, 10)
-t.decrease_stock(20)
-t.__stock = 0
-print(t.get_stock())
-print(vars(t))
-```
+| 서식 | 뜻 | 예 |
+| --- | --- | --- |
+| `{self.name:<10}` | 10칸을 잡고 왼쪽 정렬 | `텀블러` 뒤에 빈칸이 채워져요 |
+| `{self.price:>8,}` | 8칸 오른쪽 정렬, 천 단위 쉼표 | `  15,000` |
+| `89_000` | 숫자 중간의 `_`는 읽기 쉽게 끊는 표시 | `89000`과 같은 값 |
 
 ```text
-재고보다 많이 줄일 수 없습니다.
-10
-{'number': 1, 'name': '텀블러', 'price': 15000, '_Product__stock': 10, '__stock': 0}
+1: 무선이어폰        89,000 3 (재고 3개)
+2: 텀블러          15,000 10 (재고 10개)
+3: 보조배터리        32,000 5 (재고 5개)
+4: 마우스패드         9,000 0 (품절)
+5: USB 허브       30,000 10 (재고 10개)
 ```
 
-- `decrease_stock(20)`은 재고 10보다 많아서 거절돼요.
-- `t.__stock = 0`은 진짜 재고를 바꾸지 못하고, `__stock`이라는 속성을 하나 더 만들 뿐이에요. `get_stock()`은 그대로 10이에요.
+`uv run product.py`로 돌린 화면이에요. 이름 칸이 조금씩 어긋나 보이는 이유는 8절에서 봐요.
 
-## 7. 장바구니 한 줄: 조합
+## 6. 담기: 재고에서 이미 담은 수량을 빼요
 
 ```python
-class CartLine:
-    def __init__(self, item, qty):
-        self.item = item   # 상품 객체를 가리킴 (조합)
-        self.qty = qty     # 담은 수량 (재고와 별개)
+from product import Product
 
-    def subtotal(self):
-        return self.item.price * self.qty
-```
-
-`CartLine`은 상품 객체를 `item`으로 **가리키고**, 담은 수량은 자기 `qty`에 둬요. 2절에서 섞였던 두 값이 여기서 갈라져요.
-
-```python
-line = CartLine(t, 9)   # t는 재고 10인 텀블러
-print(line.qty, line.item.get_stock(), line.subtotal())
-```
-
-```text
-9 10 135000
-```
-
-담은 수량은 9, 상품의 재고는 10 그대로, 이 줄의 금액은 15,000 x 9 = 135,000원이에요. 줄의 금액에 가격이 필요하니 `self.item.price`로 상품에 물어봐요.
-
-## 8. 담기와 빼기
-
-```python
 class Cart:
     def __init__(self):
-        self.lines = []   # CartLine 객체들
-        self.coupon = Discount()   # 처음엔 쿠폰 없음
+        # 빈 장바구니 생성
+        self.items = {} # {상품: 수량}
 
-    def find_line(self, item):   # 이 상품이 담긴 줄 찾기
-        for line in self.lines:
-            if line.item is item:
-                return line
-        return None
-
-    def add(self, item, qty):
-        line = self.find_line(item)
-        in_cart = line.qty if line else 0
-        can_add = item.get_stock() - in_cart   # 재고 - 이미 담은 수량
-        if qty > can_add:
-            print(f"재고가 부족합니다. (담을 수 있는 수량: {can_add}개)")
+    # 장바구니에 상품 담기
+    def add(self, product, qty):
+        # 품절 상품은 담을 수 없다.
+        if product.is_sold_out():
+            print("품절된 상품입니다.")
             return
-        if line:
-            line.qty += qty   # 이미 있으면 수량만 더함
-        else:
-            self.lines.append(CartLine(item, qty))
-        print(f"{item.name} {qty}개를 담았습니다.")
+
+        # 이미 장바구니에 담겨있는 수량
+        in_cart_qty = self.items.get(product, 0)
+        # 더 담을 수 있는 수량
+        extra_qty = product.stock - in_cart_qty
+        if qty > extra_qty: # 재고 수량 범위를 벗어난 경우
+            print(f"재고가 부족합니다. (담을 수 있는 수량: {extra_qty}개)")
+            return
+
+        self.items[product] = self.items.get(product, 0) + qty
+        print(f"{product.name} {qty}개를 담았습니다.")
 ```
 
-- `find_line`은 이 상품이 이미 담긴 줄을 찾아요. 같은 상품 **객체**인지 `is`로 비교해요.
-- `in_cart = line.qty if line else 0`은 조건 표현식이에요. 줄이 있으면 그 수량, 없으면 0이에요.
-- `can_add = item.get_stock() - in_cart`가 발제 예시의 "담을 수 있는 수량"이에요.
-- 이미 있는 상품이면 새 줄을 만들지 않고 `qty`만 더해요.
-
-텀블러로 확인해 볼게요.
+- `self.items.get(product, 0)`은 키가 있으면 그 값을, 없으면 0을 돌려줘요. 처음 담는 상품이어도 `KeyError` 없이 계산돼요.
+- `extra_qty = product.stock - in_cart_qty`가 발제 예시의 "담을 수 있는 수량"이에요.
+- 이미 있는 상품이면 새 키를 만들지 않고 값만 더해요. 키가 상품 객체라 같은 상품은 같은 키예요.
+- 담는 동안 `product.stock`은 건드리지 않아요.
 
 ```python
 cart = Cart()
-cart.add(t, 9)
-cart.add(t, 2)
-cart.add(t, 1)
-print(len(cart.lines), cart.lines[0].qty, t.get_stock())
+tumbler = products[1]
+cart.add(tumbler, 9)
+cart.add(tumbler, 2)
+cart.add(products[3], 1)
+print(cart.items[tumbler], tumbler.stock)
 ```
 
 ```text
 텀블러 9개를 담았습니다.
 재고가 부족합니다. (담을 수 있는 수량: 1개)
-텀블러 1개를 담았습니다.
-1 10 10
+품절된 상품입니다.
+9 10
 ```
 
-9개를 담은 뒤 2개는 거절되고, 1개는 담겨서 줄은 1개, 수량은 10이에요. 재고는 담는 동안 10 그대로예요.
+9개를 담은 뒤 2개는 거절되고, 마우스패드는 품절이라 거절돼요. 담은 수량은 9, 재고는 10 그대로예요.
+
+## 7. 빼기와 합계
 
 ```python
-    def remove(self, item):
-        line = self.find_line(item)
-        if line is None:
-            print("장바구니에 없는 상품입니다.")
+    # 장바구니에서 상품 제거(빼기)
+    def remove(self,product, qty):
+
+        if product not in self.items:
+            print("장바구니에 해당 상품이 없습니다.")
             return
-        self.lines.remove(line)
-        print(f"{item.name}을(를) 장바구니에서 뺐습니다.")
 
-    def item_total(self):   # ① 상품 합계
-        return sum([line.subtotal() for line in self.lines])
+        # 담은 수량 이상 빼면 상품을 통째로 삭제
+        if qty >= self.items[product]:
+            del self.items[product]
+            print(f"{product.name}을 장바구니에서 모두 뺐습니다.")
+        else:
+            self.items[product] -= qty
+            print(f"{product.name} {qty}개를 뺐습니다.")
+
+    # 장바구니 비었는지 확인
+    def is_empty(self):
+        return len(self.items) == 0
+
+    # 상품 합계 계산
+    def subtotal(self):
+        return sum(p.price * q for p, q in self.items.items())
+
+    # 배송비
+    def shipping(self):
+        if self.is_empty(): return 0
+        return 0 if self.subtotal() >= 30_000 else 3_000
+
+    # 결제 금액 계산
+    def total(self):
+        return self.subtotal() + self.shipping()
 ```
 
-빼기는 그 상품의 줄을 찾아 리스트에서 지워요. 상품 합계(①)는 줄마다 `subtotal()`을 모아 더해요. 합계를 변수에 저장해 두지 않고 부를 때마다 계산해서, 담기나 빼기를 할 때 합계를 따로 고칠 필요가 없어요.
+- `product not in self.items`는 딕셔너리에 그 키가 없는지 물어요. 없으면 먼저 돌려보내요.
+- 담은 수량 이상을 빼면 `del`로 키를 통째로 지워요. 수량이 0이나 음수로 남지 않아요.
+- `self.items.items()`는 (키, 값) 짝을 하나씩 꺼내요. `for p, q in ...`로 상품과 수량을 함께 받아요.
+- `sum(p.price * q for p, q in ...)`는 가격 x 수량을 모두 더해요. 괄호 안이 리스트가 아닌 **제너레이터 식**이라 리스트를 따로 만들지 않아요.
+- 합계를 변수에 저장해 두지 않고 부를 때마다 계산해요. 담거나 뺄 때 합계를 따로 고칠 필요가 없어요.
 
-## 9. 쿠폰: 상속, 오버라이딩, 다형성
+`show()`는 줄마다 이름, 수량, 금액을 찍고 아래에 합계를 모아 찍어요. 텀블러 9개와 무선이어폰 2개를 담고 부른 화면이에요.
+
+```text
+----------------------------------------
+텀블러        x 9 =      135,000원
+무선이어폰      x 2 =      178,000원
+----------------------------------------
+상품 합계              313,000원
+배송비                      0원
+결제 금액              313,000원
+----------------------------------------
+```
+
+아직 쿠폰이 없어서 할인 줄이 없어요. 쿠폰은 9절과 10절에서 붙여요.
+
+## 8. 직접 고쳐 보기
+
+튜터 답안을 그대로 돌리며 이상한 입력을 넣어 봤어요. 고칠 거리가 네 군데 나와요. 첫 번째와 두 번째는 완성 코드에 넣었고, 세 번째와 네 번째는 해 보면 좋은 연습이에요.
+
+### 0개와 음수를 담으면
 
 ```python
-class Discount:   # 부모: 쿠폰 없음
-    name = "쿠폰 없음"
+cart = Cart()
+cart.add(tumbler, 6)
+cart.add(tumbler, -5)
+print(cart.items[tumbler])
+```
 
+```text
+텀블러 6개를 담았습니다.
+텀블러 -5개를 담았습니다.
+1
+```
+
+`-5`는 `extra_qty`보다 작아서 검사를 통과하고, 6에 -5를 더해 1이 돼요. 0개를 담으면 `{텀블러: 0}`이 생겨요. 상품은 없는데 키가 하나 있으니 `is_empty()`가 `False`이고 배송비 3,000원이 붙어요.
+
+`add()` 맨 앞에 검사 하나로 막아요.
+
+```python
+        # 1개 이상만 담을 수 있다.
+        if qty <= 0:
+            print("1개 이상 담아 주세요.")
+            return
+```
+
+메뉴에서는 `ask_number()`가 1 이상만 받아서 이 경우가 나오지 않아요. 그래도 `Cart`를 다른 곳에서 쓸 수 있으니 장바구니 스스로 지키는 편이 안전해요.
+
+### import만 했는데 테스트가 돌면
+
+튜터 답안의 `cart.py`는 테스트 코드가 파일 맨 아래에 그냥 놓여 있어요. 그래서 `main.py`가 `from cart import Cart`만 해도 테스트가 먼저 돌아요.
+
+```text
+텀블러 3개를 담았습니다.
+무선이어폰 2개를 담았습니다.
+----------------------------------------
+텀블러        x 3 =       45,000원
+무선이어폰      x 2 =      178,000원
+----------------------------------------
+상품 합계              223,000원
+배송비                      0원
+결제 금액              223,000원
+----------------------------------------
+결제가 완료되었습니다. 감사합니다!
+```
+
+메뉴가 뜨기도 전에 이 화면이 먼저 나오고, 테스트용 상품의 결제까지 끝나 버려요.
+
+`product.py`처럼 테스트를 `if __name__ == "__main__":` 아래로 옮기면 직접 실행할 때만 돌아요. 11회차에서 본 그 장치예요.
+
+### 한글 이름의 칸이 어긋나면
+
+5절 화면에서 `무선이어폰`과 `텀블러` 뒤의 칸이 맞지 않았어요. `:<10`은 **글자 수**로 10칸을 채우는데, 한글은 화면에서 한 글자가 두 칸이에요. 글자 폭을 직접 세서 빈칸을 채우면 맞춰져요.
+
+```python
+import unicodedata
+
+def pad(text, width):
+    w = sum(2 if unicodedata.east_asian_width(ch) in "WF" else 1 for ch in text)
+    return text + " " * (width - w)
+
+for name in ["무선이어폰", "텀블러", "USB 허브"]:
+    print(f"{pad(name, 12)}|")
+```
+
+```text
+무선이어폰  |
+텀블러      |
+USB 허브    |
+```
+
+`east_asian_width()`가 `W`(넓음)나 `F`(전각)를 돌려주면 두 칸으로 세요. `__str__`과 `show()`의 `{p.name:<10}` 자리에 `{pad(p.name, 12)}`를 넣으면 돼요. 발제 채점과는 상관없는 다듬기라 완성 코드에는 넣지 않았어요.
+
+### 재고를 메서드로만 줄이려면
+
+튜터 답안의 결제는 `Cart`가 `p.stock -= q`로 상품의 재고를 직접 바꿔요(11절). 동작은 맞지만, 학습 목표 5번(상태 변경은 메서드로만)까지 맞추려면 재고 줄이기를 상품에게 맡겨요.
+
+```python
+# product.py의 Product 안에
+    def decrease_stock(self, qty):
+        if qty > self.stock:
+            print("재고보다 많이 줄일 수 없습니다.")
+            return
+        self.stock -= qty
+
+# cart.py의 checkout() 안에
+        for p, q in self.items.items():
+            p.decrease_stock(q)
+```
+
+이러면 "재고보다 많이 줄이기" 같은 실수를 상품 한 곳에서 막을 수 있어요.
+
+## 9. coupon.py: 부모 Coupon과 자식 쿠폰 둘
+
+튜터님이 올린 `coupon.py`는 틀까지 만들어져 있어요. 부모 `Coupon`이 이름을 받고, 자식 둘이 `super().__init__(이름)`으로 부모에게 이름을 넘겨요. 할인 계산은 아직 `pass`로 비어 있어요.
+
+```python
+class FixedDiscount(Coupon):
+    def __init__(self, amount, min_total):
+        super().__init__(f"쿠폰이름- {min_total}만원이상 {amount}원 할인쿠폰 ")
+
+    def discount_amount(self, total):
+        pass
+        # 상품 합계가 20,000원 이상이면 3,000원, 아니면 0원
+```
+
+이대로 장바구니에 연결하면 세 군데서 걸려요. 직접 돌려 확인했어요.
+
+| 증상 | 이유 |
+| --- | --- |
+| `discount_amount()`가 `None`을 돌려줘요. `313000 - None`에서 `TypeError` | 몸통이 `pass`뿐이라 아무것도 `return`하지 않아요 |
+| `f.amount`에서 `AttributeError` | `__init__`이 `amount`, `min_total`을 받기만 하고 `self`에 저장하지 않았어요 |
+| 이름이 `쿠폰이름- 20000만원이상 3000원 할인쿠폰` | `min_total`이 이미 20000원인데 뒤에 "만원"을 붙였어요 |
+
+세 군데를 채우고 이름을 발제 표기에 맞춘 `coupon.py`예요.
+
+```python
+class Coupon:
+    def __init__(self, name):
+        self.name = name
+
+    # 할인 금액 반환
     def discount_amount(self, total):
         return 0
 
-
-class RateDiscount(Discount):   # 상속
-    def __init__(self, rate, max_amount):
+# 10% 할인 쿠폰
+class RateDiscount(Coupon):
+    # 할인율과 최대 할인 금액 적용
+    def __init__(self, rate, max_discount):
+        super().__init__(f"{int(rate * 100)}% 할인 (최대 {max_discount:,}원)")
         self.rate = rate
-        self.max_amount = max_amount
-        self.name = f"{int(rate * 100)}% 할인 (최대 {max_amount:,}원)"
+        self.max_discount = max_discount
 
-    def discount_amount(self, total):   # 오버라이딩
-        amount = int(total * self.rate)   # 원 단위 미만 버림
-        return min(amount, self.max_amount)
+    def discount_amount(self, total):
+        # 상품합계 X 10%, 단 5,000원을 넘지 않는다. 원단위 미만은 버림
+        amount = int(total * self.rate)
+        return min(amount, self.max_discount)
 
-
-class FixedDiscount(Discount):   # 상속
+# 정액 할인 쿠폰
+class FixedDiscount(Coupon):
     def __init__(self, amount, min_total):
+        super().__init__(f"{amount:,}원 할인 ({min_total:,}원 이상 구매 시)")
         self.amount = amount
         self.min_total = min_total
-        self.name = f"{amount:,}원 할인 ({min_total:,}원 이상 구매 시)"
 
-    def discount_amount(self, total):   # 오버라이딩
-        if total >= self.min_total:
-            return self.amount
-        return 0
+    def discount_amount(self, total):
+        # 상품 합계가 20,000원 이상이면 3,000원, 아니면 0원
+        return self.amount if total >= self.min_total else 0
 ```
 
-- 부모 `Discount`는 "모든 쿠폰은 `discount_amount(total)`을 가진다"는 공통 틀이에요. 부모 자체가 "쿠폰 없음"이라 항상 0원을 돌려줘요.
-- `RateDiscount`와 `FixedDiscount`는 `Discount`를 물려받고 `discount_amount`만 **오버라이딩**해요.
-- `int(total * self.rate)`가 원 단위 미만을 버리고, `min(..., self.max_amount)`가 5,000원을 넘지 않게 잘라요.
-- 자식의 `self.name`은 부모의 클래스 변수 `name`을 가려요. 5절에서 본 그 현상이에요.
+- 부모 `Coupon`은 "모든 쿠폰은 `name`과 `discount_amount(total)`을 가진다"는 공통 틀이에요. 할인이 없어서 항상 0원이라, `Coupon("쿠폰 없음")`이 곧 "쿠폰 없음" 쿠폰이에요.
+- 자식의 `super().__init__(이름)`은 부모의 `__init__`을 불러 `self.name`을 저장해요. 이름 저장은 부모가 하고, 자식은 자기만의 값(`rate`, `amount`...)만 저장해요.
+- 자식이 `discount_amount`를 같은 이름으로 다시 정의하는 것이 **오버라이딩**이에요.
+- `int(total * self.rate)`가 원 단위 미만을 버리고, `min(..., self.max_discount)`가 5,000원을 넘지 않게 잘라요.
 
 세 쿠폰에 같은 호출을 해 보면 이래요(합계 15,000원과 313,000원).
 
 ```python
-for c in [Discount(), RateDiscount(rate=0.1, max_amount=5000), FixedDiscount(amount=3000, min_total=20000)]:
-    print(c.name, "->", c.discount_amount(15000), c.discount_amount(313000))
+for c in [Coupon("쿠폰 없음"), RateDiscount(0.1, 5_000), FixedDiscount(3_000, 20_000)]:
+    print(c.name, c.discount_amount(15_000), c.discount_amount(313_000))
 ```
 
 ```text
-쿠폰 없음 -> 0 0
-10% 할인 (최대 5,000원) -> 1500 5000
-3,000원 할인 (20,000원 이상 구매 시) -> 0 3000
+쿠폰 없음 0 0
+10% 할인 (최대 5,000원) 1500 5000
+3,000원 할인 (20,000원 이상 구매 시) 0 3000
 ```
 
 부르는 코드는 한 줄인데 객체마다 다르게 계산해요. 이것이 **다형성**이에요. 덕분에 `Cart`는 쿠폰이 어떤 클래스인지 묻지 않아요. 새 쿠폰을 추가해도 `Cart`는 고칠 필요가 없어요.
 
-`Cart`는 처음에 `self.coupon = Discount()`로 "쿠폰 없음"을 들고 시작하고, `set_coupon()`으로 바꿔요. 쿠폰이 없을 때를 `None`으로 두지 않아서, 매번 "쿠폰이 있나?"를 `if`로 검사하지 않아도 돼요.
+## 10. 장바구니에 쿠폰 연결: 배송비는 할인 뒤 금액으로
 
-## 10. 결제 금액 계산
+`cart.py`에 쿠폰을 붙이는 곳은 다섯 군데예요.
 
 ```python
-    def discount(self):   # ② 할인 (쿠폰 종류는 묻지 않음)
-        return self.coupon.discount_amount(self.item_total())
+from coupon import Coupon
 
-    def shipping_fee(self):   # ③ 배송비
-        if len(self.lines) == 0:
-            return 0
-        if self.item_total() - self.discount() >= 30000:
-            return 0
-        return 3000
+class Cart:
+    def __init__(self):
+        # 빈 장바구니 생성
+        self.items = {} # {상품: 수량}
+        self.coupon = Coupon("쿠폰 없음") # 처음엔 쿠폰 없음
 
-    def pay_amount(self):   # ④ 결제 금액
-        return self.item_total() - self.discount() + self.shipping_fee()
+    # 쿠폰 적용 (한 번에 1장)
+    def apply_coupon(self, coupon):
+        self.coupon = coupon
+        print(f"[{coupon.name}] 쿠폰을 적용했습니다.")
+
+    # 할인 금액 (쿠폰 종류는 묻지 않는다)
+    def discount(self):
+        return self.coupon.discount_amount(self.subtotal())
+
+    # 배송비 (할인을 뺀 금액으로 정한다)
+    def shipping(self):
+        if self.is_empty(): return 0
+        return 0 if self.subtotal() - self.discount() >= 30_000 else 3_000
+
+    # 결제 금액 계산
+    def total(self):
+        return self.subtotal() - self.discount() + self.shipping()
 ```
 
-발제의 ①부터 ④를 메서드 하나씩으로 옮겼어요. 배송비는 **할인을 뺀 금액**으로 정해요. 발제의 두 예시를 직접 돌려 확인했어요.
+`show()`에는 상품 합계 아래에 할인 줄 하나를 더해요.
+
+```python
+        print(f"{'할인':<10} {-self.discount():>15,}원  [{self.coupon.name}]")
+```
+
+- 장바구니는 처음부터 `Coupon("쿠폰 없음")`을 들고 시작해요. 쿠폰이 없을 때를 `None`으로 두지 않아서, 매번 "쿠폰이 있나?"를 `if`로 검사하지 않아도 돼요.
+- `apply_coupon()`은 들고 있는 쿠폰을 바꿔 끼워요. 한 번에 1장이라 앞의 쿠폰은 사라져요.
+- 배송비만 바뀐 게 아니에요. 7절의 `shipping()`은 상품 합계로 배송비를 정했는데, 발제는 **할인을 뺀 금액**으로 정하라고 해요.
+
+발제의 두 예시를 직접 돌려 확인했어요.
 
 | | 예시 1 | 예시 2 |
 | --- | --- | --- |
-| 담은 것 | 무선 이어폰 x 2, 텀블러 x 9 | 텀블러 x 1 |
+| 담은 것 | 무선이어폰 x 2, 텀블러 x 9 | 텀블러 x 1 |
 | 쿠폰 | 10% 할인 (최대 5,000원) | 3,000원 할인 (20,000원 이상 구매 시) |
 | ① 상품 합계 | 313,000원 | 15,000원 |
 | ② 할인 | 5,000원(31,300원이지만 상한) | 0원(20,000원 미만) |
@@ -458,281 +608,323 @@ for c in [Discount(), RateDiscount(rate=0.1, max_amount=5000), FixedDiscount(amo
 
 ```text
 ----------------------------------------
-텀블러	x 1	    15,000원
+텀블러        x 1 =       15,000원
 ----------------------------------------
-상품 합계		    15,000원
-할인			         0원  [3,000원 할인 (20,000원 이상 구매 시)]
-배송비			     3,000원
-결제 금액		    18,000원
+상품 합계               15,000원
+할인                       0원  [3,000원 할인 (20,000원 이상 구매 시)]
+배송비                  3,000원
+결제 금액               18,000원
 ----------------------------------------
 ```
+
+할인 뒤 금액으로 배송비를 정하는 차이는 보조배터리 1개(32,000원)에 3,000원 쿠폰을 쓰면 보여요. 할인 뒤 29,000원이라 배송비 3,000원이 붙고, 결제 금액은 32,000원이에요. 상품 합계로만 보면 무료 배송처럼 보여서 헷갈리는 곳이에요.
 
 ## 11. 결제와 메뉴
 
+튜터님이 올린 `checkout()`에 세 가지를 더했어요.
+
 ```python
+    # 결제
     def checkout(self):
-        if len(self.lines) == 0:
-            print("장바구니가 비어 있습니다.")
+        if self.is_empty():
+            print("장바구니가 비어있습니다.")
             return
+
         print("[영수증]")
         self.show()
-        for line in self.lines:
-            line.item.decrease_stock(line.qty)   # 재고는 결제할 때만 줄어든다
-        self.lines = []             # 장바구니 비우기
-        self.coupon = Discount()    # 쿠폰 초기화
+        # 재고 감소 처리
+        for p, q in self.items.items():
+            p.stock -= q
+
+        # 장바구니 비우기
+        self.items.clear()
+        # 쿠폰 초기화
+        self.coupon = Coupon("쿠폰 없음")
+
+        # 결제 성공여부
         print("결제가 완료되었습니다. 감사합니다!")
 ```
 
-발제의 결제 순서 그대로예요. 영수증을 찍고, 줄마다 담은 수량만큼 `decrease_stock()`으로 재고를 줄이고, 장바구니를 비우고, 쿠폰을 "쿠폰 없음"으로 되돌려요. 재고가 줄어드는 곳은 프로그램 전체에서 여기 한 곳뿐이에요.
+| 더한 것 | 이유 |
+| --- | --- |
+| 빈 장바구니면 `장바구니가 비어있습니다.` | 튜터 답안은 아무 말 없이 돌아가서, 6번을 눌렀는데 화면에 아무 일도 없어요 |
+| `[영수증]` 머리글 | 발제의 결제 순서 첫 번째가 영수증 출력이에요 |
+| 쿠폰 초기화 | 발제 규칙이에요. 안 하면 다음 손님 장바구니에 쿠폰이 남아요 |
 
-시작 데이터와 메뉴는 지금까지 만든 객체를 부르기만 해요.
+재고가 줄어드는 곳은 프로그램 전체에서 여기 한 곳뿐이에요. 담을 때는 재고를 건드리지 않았으니까요. `items.clear()`는 지금 딕셔너리를 비우는 메서드예요.
 
-```python
-products = [
-    Product("무선 이어폰", 89000, 3),
-    Product("텀블러", 15000, 10),
-    Product("보조배터리", 32000, 5),
-    Product("마우스패드", 9000, 0),
-    Product("USB 허브", 18000, 4),
-]
-coupons = [
-    Discount(),
-    RateDiscount(rate=0.1, max_amount=5000),
-    FixedDiscount(amount=3000, min_total=20000),
-]
-cart = Cart()
-```
+`main.py`는 지금까지 만든 객체를 부르기만 해요.
 
 ```python
-def main():
-    while True:
-        print("-" * 50)
-        print("1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료")
-        print("-" * 50)
-        choice = input("선택: ").strip()
+from product import Product
+from coupon import Coupon, RateDiscount, FixedDiscount
+from cart import Cart
 
-        if choice == "1":
-            for product in products:
-                print(product.line_text())
-        elif choice == "2":
-            product = products[ask_number("상품 번호: ", len(products)) - 1]
-            if product.get_stock() == 0:
-                print("품절된 상품입니다.")
-                continue
-            cart.add(product, ask_int("수량: "))
-        elif choice == "3":
-            product = products[ask_number("상품 번호: ", len(products)) - 1]
-            cart.remove(product)
-        elif choice == "4":
-            cart.show()
-        elif choice == "5":
-            for number, coupon in enumerate(coupons, start=1):
-                print(f"{number}. {coupon.name}")
-            coupon = coupons[ask_number("쿠폰 번호: ", len(coupons)) - 1]
-            cart.set_coupon(coupon)
-            print(f"[{coupon.name}] 쿠폰을 적용했습니다.")
-        elif choice == "6":
-            cart.checkout()
-        elif choice == "q":
-            print("종료합니다.")
-            break
-        else:
-            print("메뉴 항목 중 하나를 선택해주세요.")
+# (상품 목록 products, 쿠폰 목록 coupons는 12절 완성 코드)
 
-
-if __name__ == "__main__":
-    main()
-```
-
-- 입력 검사 함수(`ask_number`, `ask_int`)는 `while True` 안에서 `input()`을 다시 받아요. 2절의 무한 반복이 여기서 고쳐져요.
-- 품절 검사는 수량을 묻기 전에 해요. 발제 예시에서도 마우스패드는 `품절된 상품입니다.`가 바로 나오고 수량을 묻지 않아요.
-- 11회차에서 배운 대로 메뉴는 `main()`에 넣고 `if __name__ == "__main__":` 아래에서 불러요. `import`만 할 때는 메뉴가 뜨지 않아요.
-
-## 12. 완성 코드
-
-전체 217줄이에요. `shopping_cart.py`로 저장하고 `python shopping_cart.py`로 실행해요.
-
-```python
-# ===== 1. 상품 =====
-class Product:
-    next_number = 1   # 클래스 변수: 다음에 줄 번호 (발급기)
-
-    def __init__(self, name, price, stock):
-        self.number = Product.next_number   # ① 현재 번호를 내 번호표로
-        Product.next_number += 1            # ② 발급기 번호 올리기
-        self.name = name
-        self.price = price
-        self.__stock = stock   # 재고: 밖에서 직접 못 바꾸게 숨김
-
-    def get_stock(self):
-        return self.__stock
-
-    def decrease_stock(self, qty):   # 재고는 이 메서드로만 줄인다
-        if qty > self.__stock:
-            print("재고보다 많이 줄일 수 없습니다.")
-            return
-        self.__stock -= qty
-
-    def line_text(self):   # 상품목록의 한 줄
-        if self.__stock == 0:
-            stock_text = "(품절)"
-        else:
-            stock_text = f"(재고 {self.__stock}개)"
-        return f"{self.number}. {self.name}\t{self.price:,}원  {stock_text}"
-
-
-# ===== 2. 장바구니 한 줄 =====
-class CartLine:
-    def __init__(self, item, qty):
-        self.item = item   # 상품 객체를 가리킴 (조합)
-        self.qty = qty     # 담은 수량 (재고와 별개)
-
-    def subtotal(self):
-        return self.item.price * self.qty
-
-
-# ===== 3. 쿠폰 =====
-class Discount:   # 부모: 쿠폰 없음
-    name = "쿠폰 없음"
-
-    def discount_amount(self, total):
-        return 0
-
-
-class RateDiscount(Discount):   # 상속
-    def __init__(self, rate, max_amount):
-        self.rate = rate
-        self.max_amount = max_amount
-        self.name = f"{int(rate * 100)}% 할인 (최대 {max_amount:,}원)"
-
-    def discount_amount(self, total):   # 오버라이딩
-        amount = int(total * self.rate)   # 원 단위 미만 버림
-        return min(amount, self.max_amount)
-
-
-class FixedDiscount(Discount):   # 상속
-    def __init__(self, amount, min_total):
-        self.amount = amount
-        self.min_total = min_total
-        self.name = f"{amount:,}원 할인 ({min_total:,}원 이상 구매 시)"
-
-    def discount_amount(self, total):   # 오버라이딩
-        if total >= self.min_total:
-            return self.amount
-        return 0
-
-
-# ===== 4. 장바구니 =====
-class Cart:
-    def __init__(self):
-        self.lines = []   # CartLine 객체들
-        self.coupon = Discount()   # 처음엔 쿠폰 없음
-
-    def find_line(self, item):   # 이 상품이 담긴 줄 찾기
-        for line in self.lines:
-            if line.item is item:
-                return line
-        return None
-
-    def add(self, item, qty):
-        line = self.find_line(item)
-        in_cart = line.qty if line else 0
-        can_add = item.get_stock() - in_cart   # 재고 - 이미 담은 수량
-        if qty > can_add:
-            print(f"재고가 부족합니다. (담을 수 있는 수량: {can_add}개)")
-            return
-        if line:
-            line.qty += qty   # 이미 있으면 수량만 더함
-        else:
-            self.lines.append(CartLine(item, qty))
-        print(f"{item.name} {qty}개를 담았습니다.")
-
-    def remove(self, item):
-        line = self.find_line(item)
-        if line is None:
-            print("장바구니에 없는 상품입니다.")
-            return
-        self.lines.remove(line)
-        print(f"{item.name}을(를) 장바구니에서 뺐습니다.")
-
-    def item_total(self):   # ① 상품 합계
-        return sum([line.subtotal() for line in self.lines])
-
-    def set_coupon(self, coupon):
-        self.coupon = coupon
-
-    def discount(self):   # ② 할인 (쿠폰 종류는 묻지 않음)
-        return self.coupon.discount_amount(self.item_total())
-
-    def shipping_fee(self):   # ③ 배송비
-        if len(self.lines) == 0:
-            return 0
-        if self.item_total() - self.discount() >= 30000:
-            return 0
-        return 3000
-
-    def pay_amount(self):   # ④ 결제 금액
-        return self.item_total() - self.discount() + self.shipping_fee()
-
-    def show(self):
-        print("-" * 40)
-        for line in self.lines:
-            print(f"{line.item.name}\tx {line.qty}\t{line.subtotal():>10,}원")
-        print("-" * 40)
-        print(f"상품 합계\t\t{self.item_total():>10,}원")
-        print(f"할인\t\t\t{-self.discount():>10,}원  [{self.coupon.name}]")
-        print(f"배송비\t\t\t{self.shipping_fee():>10,}원")
-        print(f"결제 금액\t\t{self.pay_amount():>10,}원")
-        print("-" * 40)
-
-    def checkout(self):
-        if len(self.lines) == 0:
-            print("장바구니가 비어 있습니다.")
-            return
-        print("[영수증]")
-        self.show()
-        for line in self.lines:
-            line.item.decrease_stock(line.qty)   # 재고는 결제할 때만 줄어든다
-        self.lines = []             # 장바구니 비우기
-        self.coupon = Discount()    # 쿠폰 초기화
-        print("결제가 완료되었습니다. 감사합니다!")
-
-
-# ===== 5. 시작 데이터 =====
-products = [
-    Product("무선 이어폰", 89000, 3),
-    Product("텀블러", 15000, 10),
-    Product("보조배터리", 32000, 5),
-    Product("마우스패드", 9000, 0),
-    Product("USB 허브", 18000, 4),
-]
-coupons = [
-    Discount(),
-    RateDiscount(rate=0.1, max_amount=5000),
-    FixedDiscount(amount=3000, min_total=20000),
-]
-cart = Cart()
-
-
-# ===== 6. 입력 도우미 =====
-def ask_number(message, max_number):   # 1 ~ max_number 번호만
+# 1 ~ max_number 사이 번호만 받는다
+def ask_number(message, max_number):
     while True:
         answer = input(message).strip()
         if answer.isdigit() and 1 <= int(answer) <= max_number:
             return int(answer)
         print(f"1~{max_number} 사이의 번호를 입력하세요.")
 
+# 상품 번호를 받아 상품 객체를 돌려준다
+def ask_product():
+    number = ask_number("상품 번호: ", len(products))
+    return products[number - 1]
+```
 
-def ask_int(message):   # 1 이상의 숫자만
+- `ask_number()`는 `while True` 안에서 `input()`을 다시 받아요. 2절의 무한 반복이 여기서 고쳐져요.
+- `answer.isdigit()`가 숫자가 아닌 입력을, `1 <= int(answer) <= max_number`가 범위 밖 번호를 걸러요. 리스트 칸은 0부터라 `products[number - 1]`이에요.
+- 메뉴 `2`는 수량을 묻기 전에 품절부터 검사해요. 발제 예시에서도 마우스패드는 `품절된 상품입니다.`가 바로 나오고 수량을 묻지 않아요.
+- 장바구니 `cart`는 `main()` 안에서 만들어요. 메뉴는 `main()`에 넣고 `if __name__ == "__main__":` 아래에서 불러요.
+
+## 12. 완성 코드
+
+파일 4개를 한 폴더에 두고 `uv run main.py`(또는 `python main.py`)로 실행해요. `product.py`는 튜터 답안 그대로예요.
+
+### product.py
+
+```python
+class Product:
+    next_id = 1 # 클래스 변수
+
+    # 새 상품의 초기 정보 저장
+    def __init__(self, name, price, stock):
+        self.id = Product.next_id
+        Product.next_id += 1 # 다음 상품을 위해 Index 값 + 1
+        self.name = name
+        self.price = price
+        self.stock = stock
+
+    def is_sold_out(self):
+        return self.stock == 0
+
+    def __str__(self):
+        stock_text = "품절" if self.is_sold_out() else f"재고 {self.stock}개"
+        return f"{self.id}: {self.name:<10} {self.price:>8,} {self.stock} ({stock_text})"
+
+# 테스트 코드=========================================
+# 이 파일을 직접 실행시켰을 때만 코드가 실행 되도록 하는 로직
+# uv run product.py
+if __name__ == "__main__":
+    products = [
+        Product("무선이어폰", 89_000, 3),
+        Product("텀블러", 15_000, 10),
+        Product("보조배터리", 32_000, 5),
+        Product("마우스패드", 9_000, 0),
+        Product("USB 허브", 30_000, 10),
+    ]
+
+    for p in products: print(p)
+```
+
+### coupon.py
+
+```python
+class Coupon:
+    def __init__(self, name):
+        self.name = name
+
+    # 할인 금액 반환
+    def discount_amount(self, total):
+        return 0
+
+# 10% 할인 쿠폰
+class RateDiscount(Coupon):
+    # 할인율과 최대 할인 금액 적용
+    def __init__(self, rate, max_discount):
+        super().__init__(f"{int(rate * 100)}% 할인 (최대 {max_discount:,}원)")
+        self.rate = rate
+        self.max_discount = max_discount
+
+    def discount_amount(self, total):
+        # 상품합계 X 10%, 단 5,000원을 넘지 않는다. 원단위 미만은 버림
+        amount = int(total * self.rate)
+        return min(amount, self.max_discount)
+
+# 정액 할인 쿠폰
+class FixedDiscount(Coupon):
+    def __init__(self, amount, min_total):
+        super().__init__(f"{amount:,}원 할인 ({min_total:,}원 이상 구매 시)")
+        self.amount = amount
+        self.min_total = min_total
+
+    def discount_amount(self, total):
+        # 상품 합계가 20,000원 이상이면 3,000원, 아니면 0원
+        return self.amount if total >= self.min_total else 0
+```
+
+### cart.py
+
+```python
+from product import Product
+from coupon import Coupon, RateDiscount
+
+class Cart:
+    def __init__(self):
+        # 빈 장바구니 생성
+        self.items = {} # {상품: 수량}
+        self.coupon = Coupon("쿠폰 없음") # 처음엔 쿠폰 없음
+
+    # 장바구니에 상품 담기
+    def add(self, product, qty):
+        # 1개 이상만 담을 수 있다.
+        if qty <= 0:
+            print("1개 이상 담아 주세요.")
+            return
+
+        # 품절 상품은 담을 수 없다.
+        if product.is_sold_out():
+            print("품절된 상품입니다.")
+            return
+
+        # 이미 장바구니에 담겨있는 수량
+        in_cart_qty = self.items.get(product, 0)
+        # 더 담을 수 있는 수량
+        extra_qty = product.stock - in_cart_qty
+        if qty > extra_qty: # 재고 수량 범위를 벗어난 경우
+            print(f"재고가 부족합니다. (담을 수 있는 수량: {extra_qty}개)")
+            return
+
+        self.items[product] = self.items.get(product, 0) + qty
+        print(f"{product.name} {qty}개를 담았습니다.")
+
+    # 장바구니에서 상품 제거(빼기)
+    def remove(self,product, qty):
+
+        if product not in self.items:
+            print("장바구니에 해당 상품이 없습니다.")
+            return
+
+        # 담은 수량 이상 빼면 상품을 통째로 삭제
+        if qty >= self.items[product]:
+            del self.items[product]
+            print(f"{product.name}을 장바구니에서 모두 뺐습니다.")
+        else:
+            self.items[product] -= qty
+            print(f"{product.name} {qty}개를 뺐습니다.")
+
+    # 장바구니 비었는지 확인
+    def is_empty(self):
+        return len(self.items) == 0
+
+    # 상품 합계 계산
+    def subtotal(self):
+        return sum(p.price * q for p, q in self.items.items())
+
+    # 쿠폰 적용 (한 번에 1장)
+    def apply_coupon(self, coupon):
+        self.coupon = coupon
+        print(f"[{coupon.name}] 쿠폰을 적용했습니다.")
+
+    # 할인 금액 (쿠폰 종류는 묻지 않는다)
+    def discount(self):
+        return self.coupon.discount_amount(self.subtotal())
+
+    # 배송비 (할인을 뺀 금액으로 정한다)
+    def shipping(self):
+        if self.is_empty(): return 0
+        return 0 if self.subtotal() - self.discount() >= 30_000 else 3_000
+
+    # 결제 금액 계산
+    def total(self):
+        return self.subtotal() - self.discount() + self.shipping()
+
+    # 장바구니 내용 출력
+    def show(self):
+        line = "-" * 40
+        print(line)
+
+        if self.is_empty():
+            print("장바구니가 비어있습니다.")
+
+        for p, q in self.items.items():
+            # 제품명 가격 x 수량 = 총합계
+            print(f"{p.name:<10} x {q} = {p.price * q:>12,}원")
+
+        print(line)
+        print(f"{'상품 합계':<10} {self.subtotal():>15,}원")
+        print(f"{'할인':<10} {-self.discount():>15,}원  [{self.coupon.name}]")
+        print(f"{'배송비':<10} {self.shipping():>15,}원")
+        print(f"{'결제 금액':<10} {self.total():>15,}원")
+        print(line)
+
+    # 결제
+    def checkout(self):
+        if self.is_empty():
+            print("장바구니가 비어있습니다.")
+            return
+
+        print("[영수증]")
+        self.show()
+        # 재고 감소 처리
+        for p, q in self.items.items():
+            p.stock -= q
+
+        # 장바구니 비우기
+        self.items.clear()
+        # 쿠폰 초기화
+        self.coupon = Coupon("쿠폰 없음")
+
+        # 결제 성공여부
+        print("결제가 완료되었습니다. 감사합니다!")
+
+#테스트 코드=========================================
+if __name__ == "__main__":
+    # 제품 인스턴스 생성
+    tumbler = Product("텀블러", 15_000, 10)
+    earphone = Product("무선이어폰", 89_000, 3)
+
+    # 카트 인스턴스 생성
+    cart = Cart()
+    cart.add(tumbler, 9)
+    cart.add(earphone, 2)
+    cart.apply_coupon(RateDiscount(rate=0.1, max_discount=5_000))
+    cart.show()
+```
+
+### main.py
+
+```python
+from product import Product
+from coupon import Coupon, RateDiscount, FixedDiscount
+from cart import Cart
+
+# 판매 상품
+products = [
+    Product("무선이어폰", 89_000, 3),
+    Product("텀블러", 15_000, 10),
+    Product("보조배터리", 32_000, 5),
+    Product("마우스패드", 9_000, 0),
+    Product("USB 허브", 30_000, 10),
+]
+
+# 쿠폰 목록
+coupons = [
+    Coupon("쿠폰 없음"),
+    RateDiscount(rate=0.1, max_discount=5_000),
+    FixedDiscount(amount=3_000, min_total=20_000),
+]
+
+# 1 ~ max_number 사이 번호만 받는다
+def ask_number(message, max_number):
     while True:
         answer = input(message).strip()
-        if answer.isdigit() and int(answer) > 0:
+        if answer.isdigit() and 1 <= int(answer) <= max_number:
             return int(answer)
-        print("1 이상의 숫자를 입력하세요.")
+        print(f"1~{max_number} 사이의 번호를 입력하세요.")
 
+# 상품 번호를 받아 상품 객체를 돌려준다
+def ask_product():
+    number = ask_number("상품 번호: ", len(products))
+    return products[number - 1]
 
-# ===== 7. 메뉴 =====
 def main():
+    cart = Cart()
+
     while True:
         print("-" * 50)
         print("1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료")
@@ -740,25 +932,22 @@ def main():
         choice = input("선택: ").strip()
 
         if choice == "1":
-            for product in products:
-                print(product.line_text())
+            for p in products: print(p)
         elif choice == "2":
-            product = products[ask_number("상품 번호: ", len(products)) - 1]
-            if product.get_stock() == 0:
+            product = ask_product()
+            if product.is_sold_out():
                 print("품절된 상품입니다.")
                 continue
-            cart.add(product, ask_int("수량: "))
+            cart.add(product, ask_number("수량: ", 99))
         elif choice == "3":
-            product = products[ask_number("상품 번호: ", len(products)) - 1]
-            cart.remove(product)
+            product = ask_product()
+            cart.remove(product, ask_number("뺄 수량: ", 99))
         elif choice == "4":
             cart.show()
         elif choice == "5":
             for number, coupon in enumerate(coupons, start=1):
                 print(f"{number}. {coupon.name}")
-            coupon = coupons[ask_number("쿠폰 번호: ", len(coupons)) - 1]
-            cart.set_coupon(coupon)
-            print(f"[{coupon.name}] 쿠폰을 적용했습니다.")
+            cart.apply_coupon(coupons[ask_number("쿠폰 번호: ", len(coupons)) - 1])
         elif choice == "6":
             cart.checkout()
         elif choice == "q":
@@ -772,18 +961,20 @@ if __name__ == "__main__":
     main()
 ```
 
-발제의 실행 예시대로 입력했을 때 화면이에요. 입력한 값이 프롬프트 뒤에 보이게 찍었어요.
+### 실행 화면
+
+발제의 실행 예시와 같은 순서로 입력했어요(상품목록, 품절 담기, 텀블러 9개, 텀블러 2개 더, 무선이어폰 2개, 10% 쿠폰, 장바구니, 결제, 상품목록, 종료).
 
 ```text
 --------------------------------------------------
 1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료
 --------------------------------------------------
 선택: 1
-1. 무선 이어폰	89,000원  (재고 3개)
-2. 텀블러	15,000원  (재고 10개)
-3. 보조배터리	32,000원  (재고 5개)
-4. 마우스패드	9,000원  (품절)
-5. USB 허브	18,000원  (재고 4개)
+1: 무선이어폰        89,000 3 (재고 3개)
+2: 텀블러          15,000 10 (재고 10개)
+3: 보조배터리        32,000 5 (재고 5개)
+4: 마우스패드         9,000 0 (품절)
+5: USB 허브       30,000 10 (재고 10개)
 --------------------------------------------------
 1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료
 --------------------------------------------------
@@ -810,7 +1001,7 @@ if __name__ == "__main__":
 선택: 2
 상품 번호: 1
 수량: 2
-무선 이어폰 2개를 담았습니다.
+무선이어폰 2개를 담았습니다.
 --------------------------------------------------
 1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료
 --------------------------------------------------
@@ -825,13 +1016,13 @@ if __name__ == "__main__":
 --------------------------------------------------
 선택: 4
 ----------------------------------------
-텀블러	x 9	   135,000원
-무선 이어폰	x 2	   178,000원
+텀블러        x 9 =      135,000원
+무선이어폰      x 2 =      178,000원
 ----------------------------------------
-상품 합계		   313,000원
-할인			    -5,000원  [10% 할인 (최대 5,000원)]
-배송비			         0원
-결제 금액		   308,000원
+상품 합계              313,000원
+할인                  -5,000원  [10% 할인 (최대 5,000원)]
+배송비                      0원
+결제 금액              308,000원
 ----------------------------------------
 --------------------------------------------------
 1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료
@@ -839,24 +1030,24 @@ if __name__ == "__main__":
 선택: 6
 [영수증]
 ----------------------------------------
-텀블러	x 9	   135,000원
-무선 이어폰	x 2	   178,000원
+텀블러        x 9 =      135,000원
+무선이어폰      x 2 =      178,000원
 ----------------------------------------
-상품 합계		   313,000원
-할인			    -5,000원  [10% 할인 (최대 5,000원)]
-배송비			         0원
-결제 금액		   308,000원
+상품 합계              313,000원
+할인                  -5,000원  [10% 할인 (최대 5,000원)]
+배송비                      0원
+결제 금액              308,000원
 ----------------------------------------
 결제가 완료되었습니다. 감사합니다!
 --------------------------------------------------
 1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료
 --------------------------------------------------
 선택: 1
-1. 무선 이어폰	89,000원  (재고 1개)
-2. 텀블러	15,000원  (재고 1개)
-3. 보조배터리	32,000원  (재고 5개)
-4. 마우스패드	9,000원  (품절)
-5. USB 허브	18,000원  (재고 4개)
+1: 무선이어폰        89,000 1 (재고 1개)
+2: 텀블러          15,000 1 (재고 1개)
+3: 보조배터리        32,000 5 (재고 5개)
+4: 마우스패드         9,000 0 (품절)
+5: USB 허브       30,000 10 (재고 10개)
 --------------------------------------------------
 1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료
 --------------------------------------------------
@@ -864,20 +1055,21 @@ if __name__ == "__main__":
 종료합니다.
 ```
 
-결제 전 장바구니 금액은 308,000원이고, 결제 뒤 상품목록에서 무선 이어폰과 텀블러가 각각 `(재고 1개)`로 줄었어요.
+결제 전 장바구니 금액은 308,000원이고, 결제 뒤 상품목록에서 무선이어폰과 텀블러가 각각 `(재고 1개)`로 줄었어요.
 
 ## 오늘 꼭 기억할 주의점
 
 - 한 값에는 한 가지 뜻만 담아요. 재고와 담은 수량을 같은 변수에 두면 서로 덮어써요.
-- 리스트에 객체를 넣어도 복사되지 않아요. 두 곳이 같은 객체를 가리키면 한쪽에서 바꾼 값이 다른 쪽에도 보여요.
-- 코드를 쓰기 전에 클래스마다 "아는 것"과 "하는 일"을 한 줄씩 적어요. 기대는 클래스를 나중에 만들어요.
-- 모든 객체가 같이 보는 값은 클래스 변수, 객체마다 다른 값은 인스턴스 변수예요.
-- 자동 번호는 지금 번호를 `self.number`에 저장한 뒤 클래스 변수를 올려요. 순서가 바뀌면 2번부터 시작해요.
+- 리스트나 딕셔너리에 객체를 넣어도 복사되지 않아요. 두 곳이 같은 객체를 가리키면 한쪽에서 바꾼 값이 다른 쪽에도 보여요.
+- 장바구니는 딕셔너리 `{상품: 수량}` 하나로 충분해요. 키가 상품 객체라 `p.price`, `p.stock`을 바로 꺼내요.
+- `dict.get(키, 0)`은 처음 담는 상품도 `KeyError` 없이 0부터 세게 해 줘요.
+- 담을 수 있는 수량은 `재고 - 이미 담은 수량`이고, 재고는 결제할 때만 줄여요.
+- 모든 객체가 같이 보는 값은 클래스 변수, 객체마다 다른 값은 인스턴스 변수예요. 자동 번호는 저장 먼저, 올리기 나중이에요.
 - 클래스 변수는 `클래스이름.변수`로 바꿔요. `객체.변수 = 값`은 새 속성을 만들어 가려요.
-- 상태를 바꾸는 일(재고 줄이기)은 메서드 하나에 모으고, 그 안에서 잘못된 값을 막아요.
-- 조합은 "가리키기"예요. 장바구니 줄은 상품을 복사하지 않고 `item`으로 가리켜요.
-- 부모 클래스로 공통 틀을 정하고 자식이 오버라이딩하면, 부르는 쪽은 종류를 몰라도 돼요(다형성).
-- "없음"도 객체로 두면(`Discount()`) `None` 검사가 사라져요.
-- 배송비처럼 순서가 정해진 계산은 발제의 순서 그대로 메서드로 옮겨요. 배송비는 할인 뒤 금액으로 정해요.
-- 재고는 결제할 때만 줄여요. 발제 예시의 숫자(담을 수 있는 수량 1개, 결제 후 재고 1개)로 직접 확인해요.
+- 수량 같은 입력은 받는 쪽(메서드)에서도 0과 음수를 막아요.
+- 파일마다 테스트는 `if __name__ == "__main__":` 아래에 둬요. 안 그러면 `import`만 해도 돌아요.
+- 부모 클래스로 공통 틀을 정하고 자식이 오버라이딩하면, 부르는 쪽은 종류를 몰라도 돼요(다형성). 자식의 `__init__`은 `super().__init__()`으로 부모 몫을 맡겨요.
+- 자식 `__init__`에서 받은 값은 `self`에 저장해야 다른 메서드에서 쓸 수 있어요. 메서드 몸통이 `pass`뿐이면 `None`을 돌려줘요.
+- "없음"도 객체로 두면(`Coupon("쿠폰 없음")`) `None` 검사가 사라져요.
+- 배송비는 할인 뒤 금액으로 정해요. 발제 예시의 숫자(313,000원, 5,000원, 0원, 308,000원)로 직접 확인해요.
 - 입력 검사 `while` 안에서는 반드시 `input()`을 다시 받아요.

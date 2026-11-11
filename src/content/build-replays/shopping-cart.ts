@@ -1,127 +1,72 @@
-// 12회차 쇼핑몰 장바구니 미니 프로젝트를 빈 파일에서 한 단계씩 쌓아 가는 재생기 데이터.
+// 12회차 쇼핑몰 장바구니 미니 프로젝트(튜터 답안 기준)를 빈 파일에서 한 단계씩 쌓아 가는 재생기 데이터.
+// 파일 4개(product.py, coupon.py, cart.py, main.py)를 이어 붙여 보여 준다. import 줄은 실행할 때만 뺀다.
 // blocks는 완성 코드의 조각이고, from 단계에 나타나 until 단계에 사라진다(1부터).
 // steps[i].run과 state는 i+1단계까지의 코드를 실제로 파이썬으로 실행해서 뽑은 값이다
-// (마지막 단계는 발제의 실행 예시 입력 그대로, 2026-11-10 확인).
+// (마지막 단계는 발제의 실행 예시 입력 그대로, 2026-11-11 확인).
 import type { BuildReplayData } from "./types";
 
 export const shoppingCart: BuildReplayData = {
-  "file": "shopping_cart.py",
+  "file": "product.py, coupon.py, cart.py, main.py",
+  "board": {
+    "counter": "next_id",
+    "cart": "Cart 객체, cart.items {상품: 수량}",
+    "empty": "items = {} (비어 있음)",
+    "ptr": "키",
+    "qty": "수량",
+    "note": "점선은 장바구니 딕셔너리의 키가 상품 객체 그 자체라는 뜻이에요(복사가 아니에요)."
+  },
   "blocks": [
     {
       "from": 1,
       "lines": [
-        "# ===== 1. 상품 =====",
+        "# ===== product.py =====",
         "class Product:"
       ]
     },
     {
       "from": 2,
       "lines": [
-        "    next_number = 1   # 클래스 변수: 다음에 줄 번호 (발급기)",
+        "    next_id = 1 # 클래스 변수",
         ""
       ]
     },
     {
       "from": 1,
       "lines": [
+        "    # 새 상품의 초기 정보 저장",
         "    def __init__(self, name, price, stock):"
       ]
     },
     {
       "from": 2,
       "lines": [
-        "        self.number = Product.next_number   # ① 현재 번호를 내 번호표로",
-        "        Product.next_number += 1            # ② 발급기 번호 올리기"
+        "        self.id = Product.next_id",
+        "        Product.next_id += 1 # 다음 상품을 위해 Index 값 + 1"
       ]
     },
     {
       "from": 1,
       "lines": [
         "        self.name = name",
-        "        self.price = price"
-      ]
-    },
-    {
-      "from": 1,
-      "until": 3,
-      "lines": [
+        "        self.price = price",
         "        self.stock = stock"
       ]
     },
     {
       "from": 3,
       "lines": [
-        "        self.__stock = stock   # 재고: 밖에서 직접 못 바꾸게 숨김"
+        "",
+        "    def is_sold_out(self):",
+        "        return self.stock == 0"
       ]
     },
     {
       "from": 3,
       "lines": [
         "",
-        "    def get_stock(self):",
-        "        return self.__stock",
-        "",
-        "    def decrease_stock(self, qty):   # 재고는 이 메서드로만 줄인다",
-        "        if qty > self.__stock:",
-        "            print(\"재고보다 많이 줄일 수 없습니다.\")",
-        "            return",
-        "        self.__stock -= qty"
-      ]
-    },
-    {
-      "from": 4,
-      "lines": [
-        "",
-        "    def line_text(self):   # 상품목록의 한 줄",
-        "        if self.__stock == 0:",
-        "            stock_text = \"(품절)\"",
-        "        else:",
-        "            stock_text = f\"(재고 {self.__stock}개)\"",
-        "        return f\"{self.number}. {self.name}\\t{self.price:,}원  {stock_text}\""
-      ]
-    },
-    {
-      "from": 5,
-      "lines": [
-        "",
-        "",
-        "# ===== 2. 장바구니 한 줄 =====",
-        "class CartLine:",
-        "    def __init__(self, item, qty):",
-        "        self.item = item   # 상품 객체를 가리킴 (조합)",
-        "        self.qty = qty     # 담은 수량 (재고와 별개)",
-        "",
-        "    def subtotal(self):",
-        "        return self.item.price * self.qty"
-      ]
-    },
-    {
-      "from": 8,
-      "lines": [
-        "",
-        "",
-        "# ===== 3. 쿠폰 =====",
-        "class Discount:   # 부모: 쿠폰 없음",
-        "    name = \"쿠폰 없음\"",
-        "",
-        "    def discount_amount(self, total):",
-        "        return 0"
-      ]
-    },
-    {
-      "from": 9,
-      "lines": [
-        "",
-        "",
-        "class RateDiscount(Discount):   # 상속",
-        "    def __init__(self, rate, max_amount):",
-        "        self.rate = rate",
-        "        self.max_amount = max_amount",
-        "        self.name = f\"{int(rate * 100)}% 할인 (최대 {max_amount:,}원)\"",
-        "",
-        "    def discount_amount(self, total):   # 오버라이딩",
-        "        amount = int(total * self.rate)   # 원 단위 미만 버림",
-        "        return min(amount, self.max_amount)"
+        "    def __str__(self):",
+        "        stock_text = \"품절\" if self.is_sold_out() else f\"재고 {self.stock}개\"",
+        "        return f\"{self.id}: {self.name:<10} {self.price:>8,} {self.stock} ({stock_text})\""
       ]
     },
     {
@@ -129,169 +74,327 @@ export const shoppingCart: BuildReplayData = {
       "lines": [
         "",
         "",
-        "class FixedDiscount(Discount):   # 상속",
-        "    def __init__(self, amount, min_total):",
-        "        self.amount = amount",
-        "        self.min_total = min_total",
-        "        self.name = f\"{amount:,}원 할인 ({min_total:,}원 이상 구매 시)\"",
+        "# ===== coupon.py =====",
+        "class Coupon:",
+        "    def __init__(self, name):",
+        "        self.name = name",
         "",
-        "    def discount_amount(self, total):   # 오버라이딩",
-        "        if total >= self.min_total:",
-        "            return self.amount",
+        "    # 할인 금액 반환",
+        "    def discount_amount(self, total):",
         "        return 0"
-      ]
-    },
-    {
-      "from": 6,
-      "lines": [
-        "",
-        "",
-        "# ===== 4. 장바구니 =====",
-        "class Cart:",
-        "    def __init__(self):",
-        "        self.lines = []   # CartLine 객체들"
-      ]
-    },
-    {
-      "from": 8,
-      "lines": [
-        "        self.coupon = Discount()   # 처음엔 쿠폰 없음"
-      ]
-    },
-    {
-      "from": 6,
-      "lines": [
-        "",
-        "    def find_line(self, item):   # 이 상품이 담긴 줄 찾기",
-        "        for line in self.lines:",
-        "            if line.item is item:",
-        "                return line",
-        "        return None",
-        "",
-        "    def add(self, item, qty):",
-        "        line = self.find_line(item)",
-        "        in_cart = line.qty if line else 0",
-        "        can_add = item.get_stock() - in_cart   # 재고 - 이미 담은 수량",
-        "        if qty > can_add:",
-        "            print(f\"재고가 부족합니다. (담을 수 있는 수량: {can_add}개)\")",
-        "            return",
-        "        if line:",
-        "            line.qty += qty   # 이미 있으면 수량만 더함",
-        "        else:",
-        "            self.lines.append(CartLine(item, qty))",
-        "        print(f\"{item.name} {qty}개를 담았습니다.\")"
-      ]
-    },
-    {
-      "from": 7,
-      "lines": [
-        "",
-        "    def remove(self, item):",
-        "        line = self.find_line(item)",
-        "        if line is None:",
-        "            print(\"장바구니에 없는 상품입니다.\")",
-        "            return",
-        "        self.lines.remove(line)",
-        "        print(f\"{item.name}을(를) 장바구니에서 뺐습니다.\")",
-        "",
-        "    def item_total(self):   # ① 상품 합계",
-        "        return sum([line.subtotal() for line in self.lines])"
-      ]
-    },
-    {
-      "from": 8,
-      "lines": [
-        "",
-        "    def set_coupon(self, coupon):",
-        "        self.coupon = coupon"
       ]
     },
     {
       "from": 11,
       "lines": [
         "",
-        "    def discount(self):   # ② 할인 (쿠폰 종류는 묻지 않음)",
-        "        return self.coupon.discount_amount(self.item_total())",
+        "# 10% 할인 쿠폰",
+        "class RateDiscount(Coupon):",
+        "    # 할인율과 최대 할인 금액 적용",
+        "    def __init__(self, rate, max_discount):",
+        "        super().__init__(f\"{int(rate * 100)}% 할인 (최대 {max_discount:,}원)\")",
+        "        self.rate = rate",
+        "        self.max_discount = max_discount",
         "",
-        "    def shipping_fee(self):   # ③ 배송비",
-        "        if len(self.lines) == 0:",
-        "            return 0",
-        "        if self.item_total() - self.discount() >= 30000:",
-        "            return 0",
-        "        return 3000",
+        "    def discount_amount(self, total):",
+        "        # 상품합계 X 10%, 단 5,000원을 넘지 않는다. 원단위 미만은 버림",
+        "        amount = int(total * self.rate)",
+        "        return min(amount, self.max_discount)",
         "",
-        "    def pay_amount(self):   # ④ 결제 금액",
-        "        return self.item_total() - self.discount() + self.shipping_fee()",
+        "# 정액 할인 쿠폰",
+        "class FixedDiscount(Coupon):",
+        "    def __init__(self, amount, min_total):",
+        "        super().__init__(f\"{amount:,}원 할인 ({min_total:,}원 이상 구매 시)\")",
+        "        self.amount = amount",
+        "        self.min_total = min_total",
         "",
-        "    def show(self):",
-        "        print(\"-\" * 40)",
-        "        for line in self.lines:",
-        "            print(f\"{line.item.name}\\tx {line.qty}\\t{line.subtotal():>10,}원\")",
-        "        print(\"-\" * 40)",
-        "        print(f\"상품 합계\\t\\t{self.item_total():>10,}원\")",
-        "        print(f\"할인\\t\\t\\t{-self.discount():>10,}원  [{self.coupon.name}]\")",
-        "        print(f\"배송비\\t\\t\\t{self.shipping_fee():>10,}원\")",
-        "        print(f\"결제 금액\\t\\t{self.pay_amount():>10,}원\")",
-        "        print(\"-\" * 40)"
+        "    def discount_amount(self, total):",
+        "        # 상품 합계가 20,000원 이상이면 3,000원, 아니면 0원",
+        "        return self.amount if total >= self.min_total else 0"
+      ]
+    },
+    {
+      "from": 4,
+      "lines": [
+        "",
+        "",
+        "# ===== cart.py =====",
+        "from product import Product"
+      ]
+    },
+    {
+      "from": 12,
+      "lines": [
+        "from coupon import Coupon"
+      ]
+    },
+    {
+      "from": 4,
+      "lines": [
+        "",
+        "class Cart:",
+        "    def __init__(self):",
+        "        # 빈 장바구니 생성",
+        "        self.items = {} # {상품: 수량}"
+      ]
+    },
+    {
+      "from": 12,
+      "lines": [
+        "        self.coupon = Coupon(\"쿠폰 없음\") # 처음엔 쿠폰 없음"
+      ]
+    },
+    {
+      "from": 5,
+      "lines": [
+        "",
+        "    # 장바구니에 상품 담기",
+        "    def add(self, product, qty):"
+      ]
+    },
+    {
+      "from": 9,
+      "lines": [
+        "        # 1개 이상만 담을 수 있다.",
+        "        if qty <= 0:",
+        "            print(\"1개 이상 담아 주세요.\")",
+        "            return",
+        ""
+      ]
+    },
+    {
+      "from": 5,
+      "lines": [
+        "        # 품절 상품은 담을 수 없다.",
+        "        if product.is_sold_out():",
+        "            print(\"품절된 상품입니다.\")",
+        "            return",
+        "",
+        "        # 이미 장바구니에 담겨있는 수량",
+        "        in_cart_qty = self.items.get(product, 0)",
+        "        # 더 담을 수 있는 수량",
+        "        extra_qty = product.stock - in_cart_qty",
+        "        if qty > extra_qty: # 재고 수량 범위를 벗어난 경우",
+        "            print(f\"재고가 부족합니다. (담을 수 있는 수량: {extra_qty}개)\")",
+        "            return",
+        "",
+        "        self.items[product] = self.items.get(product, 0) + qty",
+        "        print(f\"{product.name} {qty}개를 담았습니다.\")"
+      ]
+    },
+    {
+      "from": 6,
+      "lines": [
+        "",
+        "    # 장바구니에서 상품 제거(빼기)",
+        "    def remove(self,product, qty):",
+        "",
+        "        if product not in self.items:",
+        "            print(\"장바구니에 해당 상품이 없습니다.\")",
+        "            return",
+        "",
+        "        # 담은 수량 이상 빼면 상품을 통째로 삭제",
+        "        if qty >= self.items[product]:",
+        "            del self.items[product]",
+        "            print(f\"{product.name}을 장바구니에서 모두 뺐습니다.\")",
+        "        else:",
+        "            self.items[product] -= qty",
+        "            print(f\"{product.name} {qty}개를 뺐습니다.\")"
+      ]
+    },
+    {
+      "from": 4,
+      "lines": [
+        "",
+        "    # 장바구니 비었는지 확인",
+        "    def is_empty(self):",
+        "        return len(self.items) == 0"
+      ]
+    },
+    {
+      "from": 7,
+      "lines": [
+        "",
+        "    # 상품 합계 계산",
+        "    def subtotal(self):",
+        "        return sum(p.price * q for p, q in self.items.items())"
       ]
     },
     {
       "from": 12,
       "lines": [
         "",
-        "    def checkout(self):",
-        "        if len(self.lines) == 0:",
-        "            print(\"장바구니가 비어 있습니다.\")",
-        "            return",
-        "        print(\"[영수증]\")",
-        "        self.show()",
-        "        for line in self.lines:",
-        "            line.item.decrease_stock(line.qty)   # 재고는 결제할 때만 줄어든다",
-        "        self.lines = []             # 장바구니 비우기",
-        "        self.coupon = Discount()    # 쿠폰 초기화",
-        "        print(\"결제가 완료되었습니다. 감사합니다!\")"
+        "    # 쿠폰 적용 (한 번에 1장)",
+        "    def apply_coupon(self, coupon):",
+        "        self.coupon = coupon",
+        "        print(f\"[{coupon.name}] 쿠폰을 적용했습니다.\")",
+        "",
+        "    # 할인 금액 (쿠폰 종류는 묻지 않는다)",
+        "    def discount(self):",
+        "        return self.coupon.discount_amount(self.subtotal())"
+      ]
+    },
+    {
+      "from": 7,
+      "lines": [
+        ""
+      ]
+    },
+    {
+      "from": 7,
+      "lines": [
+        "    # 배송비 계산"
+      ],
+      "until": 12
+    },
+    {
+      "from": 12,
+      "lines": [
+        "    # 배송비 (할인을 뺀 금액으로 정한다)"
+      ]
+    },
+    {
+      "from": 7,
+      "lines": [
+        "    def shipping(self):",
+        "        if self.is_empty(): return 0"
+      ]
+    },
+    {
+      "from": 7,
+      "lines": [
+        "        return 0 if self.subtotal() >= 30_000 else 3_000"
+      ],
+      "until": 12
+    },
+    {
+      "from": 12,
+      "lines": [
+        "        return 0 if self.subtotal() - self.discount() >= 30_000 else 3_000"
+      ]
+    },
+    {
+      "from": 7,
+      "lines": [
+        "",
+        "    # 결제 금액 계산",
+        "    def total(self):"
+      ]
+    },
+    {
+      "from": 7,
+      "lines": [
+        "        return self.subtotal() + self.shipping()"
+      ],
+      "until": 12
+    },
+    {
+      "from": 12,
+      "lines": [
+        "        return self.subtotal() - self.discount() + self.shipping()"
+      ]
+    },
+    {
+      "from": 8,
+      "lines": [
+        "",
+        "    # 장바구니 내용 출력",
+        "    def show(self):",
+        "        line = \"-\" * 40",
+        "        print(line)",
+        "",
+        "        if self.is_empty():",
+        "            print(\"장바구니가 비어있습니다.\")",
+        "",
+        "        for p, q in self.items.items():",
+        "            # 제품명 가격 x 수량 = 총합계",
+        "            print(f\"{p.name:<10} x {q} = {p.price * q:>12,}원\")",
+        "",
+        "        print(line)",
+        "        print(f\"{'상품 합계':<10} {self.subtotal():>15,}원\")"
+      ]
+    },
+    {
+      "from": 12,
+      "lines": [
+        "        print(f\"{'할인':<10} {-self.discount():>15,}원  [{self.coupon.name}]\")"
+      ]
+    },
+    {
+      "from": 8,
+      "lines": [
+        "        print(f\"{'배송비':<10} {self.shipping():>15,}원\")",
+        "        print(f\"{'결제 금액':<10} {self.total():>15,}원\")",
+        "        print(line)"
       ]
     },
     {
       "from": 13,
       "lines": [
         "",
+        "    # 결제",
+        "    def checkout(self):",
+        "        if self.is_empty():",
+        "            print(\"장바구니가 비어있습니다.\")",
+        "            return",
         "",
-        "# ===== 5. 시작 데이터 =====",
+        "        print(\"[영수증]\")",
+        "        self.show()",
+        "        # 재고 감소 처리",
+        "        for p, q in self.items.items():",
+        "            p.stock -= q",
+        "",
+        "        # 장바구니 비우기",
+        "        self.items.clear()",
+        "        # 쿠폰 초기화",
+        "        self.coupon = Coupon(\"쿠폰 없음\")",
+        "",
+        "        # 결제 성공여부",
+        "        print(\"결제가 완료되었습니다. 감사합니다!\")"
+      ]
+    },
+    {
+      "from": 14,
+      "lines": [
+        "",
+        "",
+        "# ===== main.py =====",
+        "from product import Product",
+        "from coupon import Coupon, RateDiscount, FixedDiscount",
+        "from cart import Cart",
+        "",
+        "# 판매 상품",
         "products = [",
-        "    Product(\"무선 이어폰\", 89000, 3),",
-        "    Product(\"텀블러\", 15000, 10),",
-        "    Product(\"보조배터리\", 32000, 5),",
-        "    Product(\"마우스패드\", 9000, 0),",
-        "    Product(\"USB 허브\", 18000, 4),",
+        "    Product(\"무선이어폰\", 89_000, 3),",
+        "    Product(\"텀블러\", 15_000, 10),",
+        "    Product(\"보조배터리\", 32_000, 5),",
+        "    Product(\"마우스패드\", 9_000, 0),",
+        "    Product(\"USB 허브\", 30_000, 10),",
         "]",
+        "",
+        "# 쿠폰 목록",
         "coupons = [",
-        "    Discount(),",
-        "    RateDiscount(rate=0.1, max_amount=5000),",
-        "    FixedDiscount(amount=3000, min_total=20000),",
+        "    Coupon(\"쿠폰 없음\"),",
+        "    RateDiscount(rate=0.1, max_discount=5_000),",
+        "    FixedDiscount(amount=3_000, min_total=20_000),",
         "]",
-        "cart = Cart()",
         "",
-        "",
-        "# ===== 6. 입력 도우미 =====",
-        "def ask_number(message, max_number):   # 1 ~ max_number 번호만",
+        "# 1 ~ max_number 사이 번호만 받는다",
+        "def ask_number(message, max_number):",
         "    while True:",
         "        answer = input(message).strip()",
         "        if answer.isdigit() and 1 <= int(answer) <= max_number:",
         "            return int(answer)",
         "        print(f\"1~{max_number} 사이의 번호를 입력하세요.\")",
         "",
+        "# 상품 번호를 받아 상품 객체를 돌려준다",
+        "def ask_product():",
+        "    number = ask_number(\"상품 번호: \", len(products))",
+        "    return products[number - 1]",
         "",
-        "def ask_int(message):   # 1 이상의 숫자만",
-        "    while True:",
-        "        answer = input(message).strip()",
-        "        if answer.isdigit() and int(answer) > 0:",
-        "            return int(answer)",
-        "        print(\"1 이상의 숫자를 입력하세요.\")",
-        "",
-        "",
-        "# ===== 7. 메뉴 =====",
         "def main():",
+        "    cart = Cart()",
+        "",
         "    while True:",
         "        print(\"-\" * 50)",
         "        print(\"1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\")",
@@ -299,25 +402,22 @@ export const shoppingCart: BuildReplayData = {
         "        choice = input(\"선택: \").strip()",
         "",
         "        if choice == \"1\":",
-        "            for product in products:",
-        "                print(product.line_text())",
+        "            for p in products: print(p)",
         "        elif choice == \"2\":",
-        "            product = products[ask_number(\"상품 번호: \", len(products)) - 1]",
-        "            if product.get_stock() == 0:",
+        "            product = ask_product()",
+        "            if product.is_sold_out():",
         "                print(\"품절된 상품입니다.\")",
         "                continue",
-        "            cart.add(product, ask_int(\"수량: \"))",
+        "            cart.add(product, ask_number(\"수량: \", 99))",
         "        elif choice == \"3\":",
-        "            product = products[ask_number(\"상품 번호: \", len(products)) - 1]",
-        "            cart.remove(product)",
+        "            product = ask_product()",
+        "            cart.remove(product, ask_number(\"뺄 수량: \", 99))",
         "        elif choice == \"4\":",
         "            cart.show()",
         "        elif choice == \"5\":",
         "            for number, coupon in enumerate(coupons, start=1):",
         "                print(f\"{number}. {coupon.name}\")",
-        "            coupon = coupons[ask_number(\"쿠폰 번호: \", len(coupons)) - 1]",
-        "            cart.set_coupon(coupon)",
-        "            print(f\"[{coupon.name}] 쿠폰을 적용했습니다.\")",
+        "            cart.apply_coupon(coupons[ask_number(\"쿠폰 번호: \", len(coupons)) - 1])",
         "        elif choice == \"6\":",
         "            cart.checkout()",
         "        elif choice == \"q\":",
@@ -338,10 +438,10 @@ export const shoppingCart: BuildReplayData = {
       "title": "상품 클래스부터",
       "concept": "클래스, 인스턴스 변수",
       "group": "product",
-      "say": "가게에 있는 상품 정보를 담는 틀이에요. 재고는 `stock` 하나만 두고, 장바구니에 담은 수량은 여기 두지 않아요. 재고와 담은 수량을 `qty` 하나에 섞으면 숫자가 서로 덮어써지기 때문이에요.",
+      "say": "가게에 있는 상품 하나의 정보를 담는 틀이에요. 이름, 가격, 재고만 둬요. 장바구니에 담은 수량은 여기 두지 않아요.",
       "think": {
-        "q": "담은 수량을 `Product`에 두면 왜 안 될까요?",
-        "a": "상품 객체 하나가 상품 목록과 장바구니 양쪽에서 같은 객체로 쓰여요. 속성 하나에 두 뜻을 담으면 한쪽을 바꿀 때 다른 쪽도 같이 바뀌어요."
+        "q": "담은 수량을 `Product`에 같이 두면 왜 안 될까요?",
+        "a": "상품 객체 하나가 상품 목록과 장바구니 양쪽에서 같은 객체로 쓰여요. 속성 하나에 재고와 담은 수량을 섞으면 한쪽을 바꿀 때 다른 쪽도 같이 바뀌어요."
       },
       "run": [
         {
@@ -358,7 +458,7 @@ export const shoppingCart: BuildReplayData = {
         "products": [
           {
             "number": null,
-            "name": "무선 이어폰",
+            "name": "무선이어폰",
             "price": 89000,
             "stock": 3,
             "hidden": false,
@@ -391,8 +491,8 @@ export const shoppingCart: BuildReplayData = {
           {
             "number": null,
             "name": "USB 허브",
-            "price": 18000,
-            "stock": 4,
+            "price": 30000,
+            "stock": 10,
             "hidden": false,
             "listed": false
           }
@@ -408,18 +508,18 @@ export const shoppingCart: BuildReplayData = {
       "title": "번호를 자동으로 붙이기",
       "concept": "클래스 변수",
       "group": "product",
-      "say": "`next_number`는 모든 상품이 함께 보는 번호표 발급기예요. `__init__`에서 지금 값을 `self.number`에 저장하고, 그다음 발급기를 1 올려요. 상품을 5개 만들면 발급기는 6을 가리켜요.",
+      "say": "`next_id`는 `def` 밖, 클래스 바로 아래에 있는 클래스 변수예요. 상품을 만들 때마다 지금 번호를 `self.id`에 저장하고 `Product.next_id`를 1 올려요.",
       "think": {
-        "q": "①과 ② 두 줄의 순서를 바꾸면 첫 상품의 번호는 몇 번이 될까요?",
-        "a": "2번이에요. 발급기를 먼저 올린 뒤 저장하기 때문이에요. 순서를 바꿔 실제로 실행해 확인했어요."
+        "q": "두 줄의 순서를 바꿔 올리기를 먼저 하면 첫 상품은 몇 번이 될까요?",
+        "a": "2번이에요. 발급기를 먼저 2로 올린 뒤 그 값을 저장하니까요. 저장이 먼저, 올리기가 나중이에요."
       },
       "run": [
         {
-          "code": "print([p.number for p in products])",
+          "code": "print([p.id for p in products])",
           "out": "[1, 2, 3, 4, 5]"
         },
         {
-          "code": "print(Product.next_number)",
+          "code": "print(Product.next_id)",
           "out": "6"
         }
       ],
@@ -428,7 +528,7 @@ export const shoppingCart: BuildReplayData = {
         "products": [
           {
             "number": 1,
-            "name": "무선 이어폰",
+            "name": "무선이어폰",
             "price": 89000,
             "stock": 3,
             "hidden": false,
@@ -461,8 +561,8 @@ export const shoppingCart: BuildReplayData = {
           {
             "number": 5,
             "name": "USB 허브",
-            "price": 18000,
-            "stock": 4,
+            "price": 30000,
+            "stock": 10,
             "hidden": false,
             "listed": false
           }
@@ -474,32 +574,89 @@ export const shoppingCart: BuildReplayData = {
       }
     },
     {
-      "short": "재고 숨기기",
-      "title": "재고는 메서드로만 바꾸기",
-      "concept": "캡슐화, 이름 변형",
+      "short": "품절과 출력",
+      "title": "품절 확인과 목록 한 줄",
+      "concept": "메서드, __str__",
       "group": "product",
-      "say": "`self.stock`을 `self.__stock`으로 바꿔요. 이제 밖에서 `상품.__stock`으로는 닿지 않아요. 재고는 `get_stock()`으로 읽고 `decrease_stock()`으로만 줄여요. 재고보다 많이 줄이는 실수는 이 메서드 한 곳에서 막아요.",
+      "say": "`is_sold_out()`은 재고가 0인지 알려 줘요. `__str__`을 만들어 두면 `print(p)`만으로 목록 한 줄이 나와요. `:<10`은 10칸 왼쪽 정렬, `:>8,`은 8칸 오른쪽 정렬에 천 단위 쉼표예요.",
       "think": {
-        "q": "밖에서 `products[1].__stock = 0`을 실행하면 재고가 0이 될까요?",
-        "a": "아니요. 그 객체에 `__stock`이라는 새 속성이 하나 생길 뿐이고, 진짜 재고인 `_Product__stock`은 10 그대로예요. 실제로 실행해 확인했어요."
+        "q": "상품목록을 찍을 때마다 f-string을 메뉴 코드에 쓰지 않고 `__str__`에 둔 이유는요?",
+        "a": "상품을 어떻게 보여 줄지는 상품이 제일 잘 알아요. 한 곳에 두면 목록, 테스트, 영수증 어디서 찍든 같은 모양이 나와요."
       },
       "run": [
         {
-          "code": "tumbler = products[1]",
+          "code": "for p in products: print(p)",
+          "out": "1: 무선이어폰        89,000 3 (재고 3개)\n2: 텀블러          15,000 10 (재고 10개)\n3: 보조배터리        32,000 5 (재고 5개)\n4: 마우스패드         9,000 0 (품절)\n5: USB 허브       30,000 10 (재고 10개)"
+        }
+      ],
+      "state": {
+        "nextNumber": 6,
+        "products": [
+          {
+            "number": 1,
+            "name": "무선이어폰",
+            "price": 89000,
+            "stock": 3,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 2,
+            "name": "텀블러",
+            "price": 15000,
+            "stock": 10,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 3,
+            "name": "보조배터리",
+            "price": 32000,
+            "stock": 5,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 4,
+            "name": "마우스패드",
+            "price": 9000,
+            "stock": 0,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 5,
+            "name": "USB 허브",
+            "price": 30000,
+            "stock": 10,
+            "hidden": false,
+            "listed": true
+          }
+        ],
+        "holder": null,
+        "lines": [],
+        "coupon": null,
+        "totals": null
+      }
+    },
+    {
+      "short": "빈 장바구니",
+      "title": "장바구니는 딕셔너리 하나",
+      "concept": "딕셔너리, 조합",
+      "group": "cart",
+      "say": "장바구니는 `items` 딕셔너리 하나예요. 키는 상품 객체, 값은 담은 수량이에요. 재고는 상품이, 담은 수량은 장바구니가 따로 가져요.",
+      "think": {
+        "q": "키로 상품 이름(문자열) 대신 상품 객체를 쓰면 좋은 점은요?",
+        "a": "키에서 바로 `p.price`, `p.stock`을 꺼낼 수 있어요. 이름으로 상품 목록을 다시 찾는 코드가 필요 없어요."
+      },
+      "run": [
+        {
+          "code": "cart = Cart()",
           "out": ""
         },
         {
-          "code": "print(tumbler.get_stock())",
-          "out": "10"
-        },
-        {
-          "code": "tumbler.decrease_stock(20)",
-          "out": "재고보다 많이 줄일 수 없습니다."
-        },
-        {
-          "code": "print(tumbler.__stock)",
-          "out": "AttributeError: 'Product' object has no attribute '__stock'",
-          "error": true
+          "code": "print(cart.items, cart.is_empty())",
+          "out": "{} True"
         }
       ],
       "state": {
@@ -507,220 +664,81 @@ export const shoppingCart: BuildReplayData = {
         "products": [
           {
             "number": 1,
-            "name": "무선 이어폰",
+            "name": "무선이어폰",
             "price": 89000,
             "stock": 3,
-            "hidden": true,
-            "listed": false
+            "hidden": false,
+            "listed": true
           },
           {
             "number": 2,
             "name": "텀블러",
             "price": 15000,
             "stock": 10,
-            "hidden": true,
-            "listed": false
+            "hidden": false,
+            "listed": true
           },
           {
             "number": 3,
             "name": "보조배터리",
             "price": 32000,
             "stock": 5,
-            "hidden": true,
-            "listed": false
+            "hidden": false,
+            "listed": true
           },
           {
             "number": 4,
             "name": "마우스패드",
             "price": 9000,
             "stock": 0,
-            "hidden": true,
-            "listed": false
+            "hidden": false,
+            "listed": true
           },
           {
             "number": 5,
             "name": "USB 허브",
-            "price": 18000,
-            "stock": 4,
-            "hidden": true,
-            "listed": false
+            "price": 30000,
+            "stock": 10,
+            "hidden": false,
+            "listed": true
           }
         ],
-        "holder": null,
+        "holder": "cart",
         "lines": [],
-        "coupon": null,
-        "totals": null
-      }
-    },
-    {
-      "short": "목록 한 줄",
-      "title": "상품은 자기 한 줄을 만든다",
-      "concept": "메서드, 책임 나누기",
-      "group": "product",
-      "say": "메뉴 1(상품목록)에 찍힐 한 줄을 상품이 직접 만들어요. 재고가 0이면 `(품절)`로 바꾸는 판단도 자기 재고를 아는 상품이 해요.",
-      "think": {
-        "q": "목록 전체를 찍는 반복문은 왜 `Product` 안에 넣지 않을까요?",
-        "a": "상품 하나는 다른 상품을 몰라요. 여러 상품을 도는 일은 상품 리스트를 가진 쪽, 마지막 단계의 메뉴 코드가 해요."
-      },
-      "run": [
-        {
-          "code": "for p in products:\n    print(p.line_text())",
-          "out": "1. 무선 이어폰\t89,000원  (재고 3개)\n2. 텀블러\t15,000원  (재고 10개)\n3. 보조배터리\t32,000원  (재고 5개)\n4. 마우스패드\t9,000원  (품절)\n5. USB 허브\t18,000원  (재고 4개)"
-        }
-      ],
-      "state": {
-        "nextNumber": 6,
-        "products": [
-          {
-            "number": 1,
-            "name": "무선 이어폰",
-            "price": 89000,
-            "stock": 3,
-            "hidden": true,
-            "listed": true
-          },
-          {
-            "number": 2,
-            "name": "텀블러",
-            "price": 15000,
-            "stock": 10,
-            "hidden": true,
-            "listed": true
-          },
-          {
-            "number": 3,
-            "name": "보조배터리",
-            "price": 32000,
-            "stock": 5,
-            "hidden": true,
-            "listed": true
-          },
-          {
-            "number": 4,
-            "name": "마우스패드",
-            "price": 9000,
-            "stock": 0,
-            "hidden": true,
-            "listed": true
-          },
-          {
-            "number": 5,
-            "name": "USB 허브",
-            "price": 18000,
-            "stock": 4,
-            "hidden": true,
-            "listed": true
-          }
-        ],
-        "holder": null,
-        "lines": [],
-        "coupon": null,
-        "totals": null
-      }
-    },
-    {
-      "short": "장바구니 한 줄",
-      "title": "담은 수량은 따로 두기",
-      "concept": "조합(has-a)",
-      "group": "line",
-      "say": "`CartLine`은 상품 객체를 `item`으로 가리키고, 담은 수량은 자기 `qty`에 둬요. 9개를 담아도 상품의 재고는 10 그대로예요. 아래 보드의 점선이 \"복사가 아니라 가리킨다\"는 뜻이에요.",
-      "think": {
-        "q": "`line.item.get_stock()`이 9가 아니라 10인 이유는 뭘까요?",
-        "a": "`CartLine`은 상품을 복사하지 않고 가리키기만 해요. 담은 수량 9는 `line.qty`에만 들어가요."
-      },
-      "run": [
-        {
-          "code": "line = CartLine(products[1], 9)",
-          "out": ""
-        },
-        {
-          "code": "print(line.qty, line.item.get_stock())",
-          "out": "9 10"
-        },
-        {
-          "code": "print(line.subtotal())",
-          "out": "135000"
-        }
-      ],
-      "state": {
-        "nextNumber": 6,
-        "products": [
-          {
-            "number": 1,
-            "name": "무선 이어폰",
-            "price": 89000,
-            "stock": 3,
-            "hidden": true,
-            "listed": true
-          },
-          {
-            "number": 2,
-            "name": "텀블러",
-            "price": 15000,
-            "stock": 10,
-            "hidden": true,
-            "listed": true
-          },
-          {
-            "number": 3,
-            "name": "보조배터리",
-            "price": 32000,
-            "stock": 5,
-            "hidden": true,
-            "listed": true
-          },
-          {
-            "number": 4,
-            "name": "마우스패드",
-            "price": 9000,
-            "stock": 0,
-            "hidden": true,
-            "listed": true
-          },
-          {
-            "number": 5,
-            "name": "USB 허브",
-            "price": 18000,
-            "stock": 4,
-            "hidden": true,
-            "listed": true
-          }
-        ],
-        "holder": "line",
-        "lines": [
-          {
-            "name": "텀블러",
-            "number": 2,
-            "qty": 9,
-            "subtotal": 135000
-          }
-        ],
         "coupon": null,
         "totals": null
       }
     },
     {
       "short": "담기",
-      "title": "담을 수 있는 수량 계산",
-      "concept": "조합, is 비교",
+      "title": "담기: 재고 - 이미 담은 수량",
+      "concept": "dict.get, 조건 검사",
       "group": "cart",
-      "say": "담을 수 있는 수량은 재고에서 이미 담은 수량을 뺀 값이에요. 텀블러 재고 10에 9개가 담겨 있으면 1개까지만 돼요. 이미 담긴 상품이면 새 줄을 만들지 않고 `qty`만 더해요. `find_line`은 같은 상품 객체인지 `is`로 비교해요.",
+      "say": "`self.items.get(product, 0)`은 담긴 적이 없으면 0을 돌려줘요. 더 담을 수 있는 수량은 `product.stock - in_cart_qty`예요. 재고는 담는 동안 줄지 않아요.",
       "think": {
-        "q": "텀블러 9개가 담긴 상태에서 1개를 더 담으면 장바구니 줄은 몇 개일까요?",
-        "a": "1개 그대로이고 그 줄의 `qty`가 10이 돼요. 10 - 9 = 1이라 담을 수 있고, 같은 상품이라 수량만 더해요. 실제로 실행해 확인했어요."
+        "q": "텀블러 9개를 담은 뒤 2개를 더 담으면 무엇이 나올까요?",
+        "a": "재고 10에서 이미 담은 9를 빼면 1이라 `재고가 부족합니다. (담을 수 있는 수량: 1개)`가 나와요. 발제 예시 그대로예요."
       },
       "run": [
         {
-          "code": "cart.add(products[1], 9)",
+          "code": "cart = Cart()\ntumbler = products[1]",
+          "out": ""
+        },
+        {
+          "code": "cart.add(tumbler, 9)",
           "out": "텀블러 9개를 담았습니다."
         },
         {
-          "code": "cart.add(products[1], 2)",
+          "code": "cart.add(tumbler, 2)",
           "out": "재고가 부족합니다. (담을 수 있는 수량: 1개)"
         },
         {
-          "code": "cart.add(products[0], 2)",
-          "out": "무선 이어폰 2개를 담았습니다."
+          "code": "cart.add(products[3], 1)",
+          "out": "품절된 상품입니다."
+        },
+        {
+          "code": "print(cart.items[tumbler], tumbler.stock)",
+          "out": "9 10"
         }
       ],
       "state": {
@@ -728,10 +746,10 @@ export const shoppingCart: BuildReplayData = {
         "products": [
           {
             "number": 1,
-            "name": "무선 이어폰",
+            "name": "무선이어폰",
             "price": 89000,
             "stock": 3,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -739,7 +757,7 @@ export const shoppingCart: BuildReplayData = {
             "name": "텀블러",
             "price": 15000,
             "stock": 10,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -747,7 +765,7 @@ export const shoppingCart: BuildReplayData = {
             "name": "보조배터리",
             "price": 32000,
             "stock": 5,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -755,15 +773,100 @@ export const shoppingCart: BuildReplayData = {
             "name": "마우스패드",
             "price": 9000,
             "stock": 0,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
             "number": 5,
             "name": "USB 허브",
-            "price": 18000,
-            "stock": 4,
-            "hidden": true,
+            "price": 30000,
+            "stock": 10,
+            "hidden": false,
+            "listed": true
+          }
+        ],
+        "holder": "cart",
+        "lines": [
+          {
+            "name": "텀블러",
+            "number": 2,
+            "qty": 9,
+            "subtotal": 135000
+          }
+        ],
+        "coupon": null,
+        "totals": null
+      }
+    },
+    {
+      "short": "빼기",
+      "title": "빼기: 일부만 또는 통째로",
+      "concept": "del, in",
+      "group": "cart",
+      "say": "장바구니에 없는 상품이면 먼저 돌려보내요. 담은 수량 이상을 빼면 `del`로 키를 지우고, 아니면 수량만 줄여요.",
+      "think": {
+        "q": "2개 담긴 상품에서 5개를 빼라고 하면 어떻게 될까요?",
+        "a": "`qty >= self.items[product]`가 참이라 키가 통째로 지워지고 `모두 뺐습니다`가 나와요. 수량이 음수로 남지 않아요."
+      },
+      "run": [
+        {
+          "code": "cart = Cart()\ncart.add(products[1], 9)",
+          "out": "텀블러 9개를 담았습니다."
+        },
+        {
+          "code": "cart.add(products[0], 3)",
+          "out": "무선이어폰 3개를 담았습니다."
+        },
+        {
+          "code": "cart.remove(products[0], 1)",
+          "out": "무선이어폰 1개를 뺐습니다."
+        },
+        {
+          "code": "cart.remove(products[2], 1)",
+          "out": "장바구니에 해당 상품이 없습니다."
+        }
+      ],
+      "state": {
+        "nextNumber": 6,
+        "products": [
+          {
+            "number": 1,
+            "name": "무선이어폰",
+            "price": 89000,
+            "stock": 3,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 2,
+            "name": "텀블러",
+            "price": 15000,
+            "stock": 10,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 3,
+            "name": "보조배터리",
+            "price": 32000,
+            "stock": 5,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 4,
+            "name": "마우스패드",
+            "price": 9000,
+            "stock": 0,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 5,
+            "name": "USB 허브",
+            "price": 30000,
+            "stock": 10,
+            "hidden": false,
             "listed": true
           }
         ],
@@ -776,7 +879,7 @@ export const shoppingCart: BuildReplayData = {
             "subtotal": 135000
           },
           {
-            "name": "무선 이어폰",
+            "name": "무선이어폰",
             "number": 1,
             "qty": 2,
             "subtotal": 178000
@@ -787,27 +890,23 @@ export const shoppingCart: BuildReplayData = {
       }
     },
     {
-      "short": "빼기와 합계",
-      "title": "빼기와 상품 합계",
-      "concept": "리스트 컴프리헨션",
+      "short": "합계",
+      "title": "상품 합계, 배송비, 결제 금액",
+      "concept": "제너레이터 식, sum",
       "group": "cart",
-      "say": "`remove`는 그 상품의 줄을 찾아 리스트에서 지워요. 상품 합계는 줄마다 `subtotal()`을 모아 더한 값으로, 규칙 3-4의 ①이에요.",
+      "say": "`sum(p.price * q for p, q in self.items.items())`는 키와 값을 함께 꺼내 가격 x 수량을 모두 더해요. 합계를 변수에 저장하지 않고 부를 때마다 계산해서, 담거나 뺄 때 따로 고칠 필요가 없어요.",
       "think": {
-        "q": "합계를 변수에 저장해 두지 않고 부를 때마다 계산하면 좋은 점은 뭘까요?",
-        "a": "담기나 빼기를 할 때마다 합계를 따로 고칠 필요가 없어서, 줄 목록과 합계가 어긋날 일이 없어요."
+        "q": "텀블러 1개(15,000원)만 담으면 결제 금액은요?",
+        "a": "30,000원 미만이라 배송비 3,000원이 붙어 18,000원이에요."
       },
       "run": [
         {
-          "code": "print(cart.item_total())",
-          "out": "313000"
+          "code": "cart = Cart()\ncart.add(products[1], 9)\ncart.add(products[0], 2)",
+          "out": "텀블러 9개를 담았습니다.\n무선이어폰 2개를 담았습니다."
         },
         {
-          "code": "cart.remove(products[0])",
-          "out": "무선 이어폰을(를) 장바구니에서 뺐습니다."
-        },
-        {
-          "code": "print(cart.item_total())",
-          "out": "135000"
+          "code": "print(cart.subtotal(), cart.shipping(), cart.total())",
+          "out": "313000 0 313000"
         }
       ],
       "state": {
@@ -815,10 +914,10 @@ export const shoppingCart: BuildReplayData = {
         "products": [
           {
             "number": 1,
-            "name": "무선 이어폰",
+            "name": "무선이어폰",
             "price": 89000,
             "stock": 3,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -826,7 +925,7 @@ export const shoppingCart: BuildReplayData = {
             "name": "텀블러",
             "price": 15000,
             "stock": 10,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -834,7 +933,7 @@ export const shoppingCart: BuildReplayData = {
             "name": "보조배터리",
             "price": 32000,
             "stock": 5,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -842,15 +941,15 @@ export const shoppingCart: BuildReplayData = {
             "name": "마우스패드",
             "price": 9000,
             "stock": 0,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
             "number": 5,
             "name": "USB 허브",
-            "price": 18000,
-            "stock": 4,
-            "hidden": true,
+            "price": 30000,
+            "stock": 10,
+            "hidden": false,
             "listed": true
           }
         ],
@@ -861,30 +960,212 @@ export const shoppingCart: BuildReplayData = {
             "number": 2,
             "qty": 9,
             "subtotal": 135000
+          },
+          {
+            "name": "무선이어폰",
+            "number": 1,
+            "qty": 2,
+            "subtotal": 178000
           }
         ],
         "coupon": null,
-        "totals": null
+        "totals": {
+          "total": 313000,
+          "discount": 0,
+          "ship": 0,
+          "pay": 313000
+        }
+      }
+    },
+    {
+      "short": "장바구니 출력",
+      "title": "장바구니 보여 주기",
+      "concept": "f-string 정렬",
+      "group": "cart",
+      "say": "`show()`는 줄마다 이름, 수량, 금액을 찍고 아래에 합계를 모아 찍어요. 한글은 한 글자가 화면에서 두 칸이라 `:<10`으로 맞춰도 줄이 조금 어긋나요.",
+      "think": {
+        "q": "장바구니가 비었을 때 `show()`는 무엇을 찍을까요?",
+        "a": "`장바구니가 비어있습니다.`를 찍고, 합계와 배송비, 결제 금액은 모두 0원이에요. `shipping()`이 빈 장바구니면 0을 돌려주니까요."
+      },
+      "run": [
+        {
+          "code": "cart = Cart()\ncart.add(products[1], 9)\ncart.add(products[0], 2)",
+          "out": "텀블러 9개를 담았습니다.\n무선이어폰 2개를 담았습니다."
+        },
+        {
+          "code": "cart.show()",
+          "out": "----------------------------------------\n텀블러        x 9 =      135,000원\n무선이어폰      x 2 =      178,000원\n----------------------------------------\n상품 합계              313,000원\n배송비                      0원\n결제 금액              313,000원\n----------------------------------------"
+        }
+      ],
+      "state": {
+        "nextNumber": 6,
+        "products": [
+          {
+            "number": 1,
+            "name": "무선이어폰",
+            "price": 89000,
+            "stock": 3,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 2,
+            "name": "텀블러",
+            "price": 15000,
+            "stock": 10,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 3,
+            "name": "보조배터리",
+            "price": 32000,
+            "stock": 5,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 4,
+            "name": "마우스패드",
+            "price": 9000,
+            "stock": 0,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 5,
+            "name": "USB 허브",
+            "price": 30000,
+            "stock": 10,
+            "hidden": false,
+            "listed": true
+          }
+        ],
+        "holder": "cart",
+        "lines": [
+          {
+            "name": "텀블러",
+            "number": 2,
+            "qty": 9,
+            "subtotal": 135000
+          },
+          {
+            "name": "무선이어폰",
+            "number": 1,
+            "qty": 2,
+            "subtotal": 178000
+          }
+        ],
+        "coupon": null,
+        "totals": {
+          "total": 313000,
+          "discount": 0,
+          "ship": 0,
+          "pay": 313000
+        }
+      }
+    },
+    {
+      "short": "수량 검사",
+      "title": "0개와 음수 막기",
+      "concept": "입력 검사",
+      "group": "cart",
+      "say": "튜터 답안 그대로면 `cart.add(텀블러, -5)`가 `텀블러 -5개를 담았습니다.`로 통과해요. 맨 앞에 `qty <= 0` 검사를 하나 넣어 막아요.",
+      "think": {
+        "q": "0개를 담으면 무엇이 문제였을까요?",
+        "a": "`{텀블러: 0}`이 생겨요. 상품은 없는데 `is_empty()`는 키가 하나 있으니 False가 되고, 배송비 3,000원이 붙어요."
+      },
+      "run": [
+        {
+          "code": "cart = Cart()",
+          "out": ""
+        },
+        {
+          "code": "cart.add(products[1], -5)",
+          "out": "1개 이상 담아 주세요."
+        },
+        {
+          "code": "cart.add(products[1], 0)",
+          "out": "1개 이상 담아 주세요."
+        },
+        {
+          "code": "print(cart.is_empty())",
+          "out": "True"
+        }
+      ],
+      "state": {
+        "nextNumber": 6,
+        "products": [
+          {
+            "number": 1,
+            "name": "무선이어폰",
+            "price": 89000,
+            "stock": 3,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 2,
+            "name": "텀블러",
+            "price": 15000,
+            "stock": 10,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 3,
+            "name": "보조배터리",
+            "price": 32000,
+            "stock": 5,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 4,
+            "name": "마우스패드",
+            "price": 9000,
+            "stock": 0,
+            "hidden": false,
+            "listed": true
+          },
+          {
+            "number": 5,
+            "name": "USB 허브",
+            "price": 30000,
+            "stock": 10,
+            "hidden": false,
+            "listed": true
+          }
+        ],
+        "holder": "cart",
+        "lines": [],
+        "coupon": null,
+        "totals": {
+          "total": 0,
+          "discount": 0,
+          "ship": 0,
+          "pay": 0
+        }
       }
     },
     {
       "short": "쿠폰의 틀",
-      "title": "모든 쿠폰의 공통 틀",
+      "title": "부모 쿠폰 Coupon",
       "concept": "상속(부모 클래스)",
       "group": "coupon",
-      "say": "부모 `Discount`가 \"모든 쿠폰은 `discount_amount(total)`을 가진다\"는 약속을 정해요. 부모 자체는 \"쿠폰 없음\"이라 항상 0원이에요. 장바구니는 이 쿠폰을 들고 시작하고, `set_coupon`으로 바꿔요.",
+      "say": "모든 쿠폰은 이름(`name`)과 `discount_amount(total)`을 가진다는 공통 틀이에요. 부모 `Coupon`은 할인이 없어서 항상 0원을 돌려줘요. 그래서 `Coupon(\"쿠폰 없음\")`이 곧 \"쿠폰 없음\"이에요.",
       "think": {
-        "q": "\"쿠폰 없음\"을 `None` 대신 `Discount()` 객체로 두면 좋은 점은 뭘까요?",
-        "a": "쿠폰이 없을 때도 `cart.coupon.discount_amount(...)`를 그대로 부를 수 있어서, \"쿠폰이 있나?\"를 매번 `if`로 검사하지 않아도 돼요."
+        "q": "\"쿠폰 없음\"을 `None` 대신 객체로 두면 좋은 점은요?",
+        "a": "장바구니가 할인 금액을 구할 때 \"쿠폰이 있나?\"를 `if`로 매번 검사하지 않아도 돼요. 언제나 `discount_amount()`를 부르면 돼요."
       },
       "run": [
         {
-          "code": "print(cart.coupon.name)",
-          "out": "쿠폰 없음"
+          "code": "c = Coupon(\"쿠폰 없음\")",
+          "out": ""
         },
         {
-          "code": "print(cart.coupon.discount_amount(cart.item_total()))",
-          "out": "0"
+          "code": "print(c.name, c.discount_amount(313_000))",
+          "out": "쿠폰 없음 0"
         }
       ],
       "state": {
@@ -892,10 +1173,10 @@ export const shoppingCart: BuildReplayData = {
         "products": [
           {
             "number": 1,
-            "name": "무선 이어폰",
+            "name": "무선이어폰",
             "price": 89000,
             "stock": 3,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -903,7 +1184,7 @@ export const shoppingCart: BuildReplayData = {
             "name": "텀블러",
             "price": 15000,
             "stock": 10,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -911,7 +1192,7 @@ export const shoppingCart: BuildReplayData = {
             "name": "보조배터리",
             "price": 32000,
             "stock": 5,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -919,67 +1200,42 @@ export const shoppingCart: BuildReplayData = {
             "name": "마우스패드",
             "price": 9000,
             "stock": 0,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
             "number": 5,
             "name": "USB 허브",
-            "price": 18000,
-            "stock": 4,
-            "hidden": true,
+            "price": 30000,
+            "stock": 10,
+            "hidden": false,
             "listed": true
           }
         ],
-        "holder": "cart",
-        "lines": [
-          {
-            "name": "텀블러",
-            "number": 2,
-            "qty": 9,
-            "subtotal": 135000
-          },
-          {
-            "name": "무선 이어폰",
-            "number": 1,
-            "qty": 2,
-            "subtotal": 178000
-          }
-        ],
-        "coupon": "쿠폰 없음",
+        "holder": null,
+        "lines": [],
+        "coupon": null,
         "totals": null
       }
     },
     {
-      "short": "10% 쿠폰",
-      "title": "10% 쿠폰과 오버라이딩",
-      "concept": "상속, 오버라이딩",
+      "short": "쿠폰 둘",
+      "title": "자식 쿠폰 두 종류",
+      "concept": "상속, 오버라이딩, 다형성",
       "group": "coupon",
-      "say": "`RateDiscount`는 `Discount`를 물려받고 `discount_amount`만 다시 정의해요. `int()`로 원 단위 미만을 버리고 `min()`으로 5,000원을 넘지 않게 해요. `self.name`은 부모의 클래스 변수 `name`을 가려요.",
+      "say": "`RateDiscount`와 `FixedDiscount`는 `Coupon`을 물려받아요. 이름은 `super().__init__(이름)`으로 부모에게 맡기고, `discount_amount`만 다시 정의해요(오버라이딩). 부르는 코드는 같은데 객체마다 다르게 계산해요(다형성).",
       "think": {
-        "q": "상품 합계가 15,000원이면 이 쿠폰의 할인은 얼마일까요?",
-        "a": "1,500원이에요. 15,000 x 0.1 = 1,500이고 5,000원보다 작아요. 실행 결과에도 1500이 나와요."
+        "q": "313,000원의 10%는 31,300원인데 왜 5,000이 나올까요?",
+        "a": "`min(amount, self.max_discount)`가 최대 5,000원을 넘지 않게 잘라요."
       },
       "run": [
         {
-          "code": "c = RateDiscount(rate=0.1, max_amount=5000)",
+          "code": "coupons = [Coupon(\"쿠폰 없음\"), RateDiscount(0.1, 5_000), FixedDiscount(3_000, 20_000)]",
           "out": ""
         },
         {
-          "code": "print(c.name)",
-          "out": "10% 할인 (최대 5,000원)"
-        },
-        {
-          "code": "print(c.discount_amount(313000))",
-          "out": "5000"
-        },
-        {
-          "code": "print(c.discount_amount(15000))",
-          "out": "1500"
-        },
-        {
-          "code": "cart.set_coupon(c)",
-          "out": ""
+          "code": "for c in coupons:\n    print(c.name, c.discount_amount(15_000), c.discount_amount(313_000))",
+          "out": "쿠폰 없음 0 0\n10% 할인 (최대 5,000원) 1500 5000\n3,000원 할인 (20,000원 이상 구매 시) 0 3000"
         }
       ],
       "state": {
@@ -987,10 +1243,10 @@ export const shoppingCart: BuildReplayData = {
         "products": [
           {
             "number": 1,
-            "name": "무선 이어폰",
+            "name": "무선이어폰",
             "price": 89000,
             "stock": 3,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -998,7 +1254,7 @@ export const shoppingCart: BuildReplayData = {
             "name": "텀블러",
             "price": 15000,
             "stock": 10,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -1006,7 +1262,7 @@ export const shoppingCart: BuildReplayData = {
             "name": "보조배터리",
             "price": 32000,
             "stock": 5,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -1014,138 +1270,46 @@ export const shoppingCart: BuildReplayData = {
             "name": "마우스패드",
             "price": 9000,
             "stock": 0,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
             "number": 5,
             "name": "USB 허브",
-            "price": 18000,
-            "stock": 4,
-            "hidden": true,
-            "listed": true
-          }
-        ],
-        "holder": "cart",
-        "lines": [
-          {
-            "name": "텀블러",
-            "number": 2,
-            "qty": 9,
-            "subtotal": 135000
-          },
-          {
-            "name": "무선 이어폰",
-            "number": 1,
-            "qty": 2,
-            "subtotal": 178000
-          }
-        ],
-        "coupon": "10% 할인 (최대 5,000원)",
-        "totals": null
-      }
-    },
-    {
-      "short": "3,000원 쿠폰",
-      "title": "같은 호출, 다른 계산",
-      "concept": "다형성",
-      "group": "coupon",
-      "say": "`FixedDiscount`도 같은 이름의 메서드를 가져요. 그래서 쿠폰이 어떤 클래스인지 몰라도 `c.discount_amount(합계)` 한 줄로 부를 수 있어요. 같은 호출이 객체에 따라 다르게 동작하는 것이 다형성이에요.",
-      "think": {
-        "q": "\"20% 할인 (최대 10,000원)\" 쿠폰을 새로 추가하려면 `Cart`를 고쳐야 할까요?",
-        "a": "아니요. `RateDiscount(0.2, 10000)` 객체를 하나 만들어 쿠폰 목록에 넣으면 돼요. `Cart`는 `discount_amount`만 부르기 때문이에요."
-      },
-      "run": [
-        {
-          "code": "coupons = [Discount(), RateDiscount(0.1, 5000), FixedDiscount(3000, 20000)]",
-          "out": ""
-        },
-        {
-          "code": "for c in coupons:\n    print(c.name, '→', c.discount_amount(15000))",
-          "out": "쿠폰 없음 → 0\n10% 할인 (최대 5,000원) → 1500\n3,000원 할인 (20,000원 이상 구매 시) → 0"
-        }
-      ],
-      "state": {
-        "nextNumber": 6,
-        "products": [
-          {
-            "number": 1,
-            "name": "무선 이어폰",
-            "price": 89000,
-            "stock": 3,
-            "hidden": true,
-            "listed": true
-          },
-          {
-            "number": 2,
-            "name": "텀블러",
-            "price": 15000,
+            "price": 30000,
             "stock": 10,
-            "hidden": true,
-            "listed": true
-          },
-          {
-            "number": 3,
-            "name": "보조배터리",
-            "price": 32000,
-            "stock": 5,
-            "hidden": true,
-            "listed": true
-          },
-          {
-            "number": 4,
-            "name": "마우스패드",
-            "price": 9000,
-            "stock": 0,
-            "hidden": true,
-            "listed": true
-          },
-          {
-            "number": 5,
-            "name": "USB 허브",
-            "price": 18000,
-            "stock": 4,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           }
         ],
-        "holder": "cart",
-        "lines": [
-          {
-            "name": "텀블러",
-            "number": 2,
-            "qty": 9,
-            "subtotal": 135000
-          },
-          {
-            "name": "무선 이어폰",
-            "number": 1,
-            "qty": 2,
-            "subtotal": 178000
-          }
-        ],
-        "coupon": "10% 할인 (최대 5,000원)",
+        "holder": null,
+        "lines": [],
+        "coupon": null,
         "totals": null
       }
     },
     {
-      "short": "금액 계산",
-      "title": "규칙 3-4를 메서드로",
-      "concept": "다형성 활용",
+      "short": "쿠폰 적용",
+      "title": "장바구니에 쿠폰 넣기",
+      "concept": "조합, 다형성 활용",
       "group": "cart",
-      "say": "① 상품 합계, ② 할인, ③ 배송비, ④ 결제 금액 순서를 메서드로 옮겨요. `discount()`는 쿠폰 종류를 묻지 않고 `discount_amount`를 불러요. 배송비는 (① - ②)가 30,000원 이상이거나 장바구니가 비면 0원이에요.",
+      "say": "장바구니가 `self.coupon`을 하나 들고, `discount()`는 쿠폰 종류를 묻지 않고 `discount_amount()`만 불러요. 배송비는 할인을 뺀 금액으로 정하도록 바꿔요.",
       "think": {
-        "q": "텀블러 1개(15,000원)에 3,000원 쿠폰을 적용하면 결제 금액은 얼마일까요?",
-        "a": "18,000원이에요. 20,000원 미만이라 할인은 0원, 15,000원이 30,000원 미만이라 배송비 3,000원이 붙어요. 실제로 실행해 확인했어요."
+        "q": "상품 합계 32,000원에 3,000원 쿠폰이면 배송비는요?",
+        "a": "할인 뒤 29,000원이라 30,000원 미만이에요. 배송비 3,000원이 붙어요."
       },
       "run": [
         {
-          "code": "cart.set_coupon(RateDiscount(rate=0.1, max_amount=5000))",
-          "out": ""
+          "code": "cart = Cart()\ncart.add(products[1], 9)\ncart.add(products[0], 2)",
+          "out": "텀블러 9개를 담았습니다.\n무선이어폰 2개를 담았습니다."
+        },
+        {
+          "code": "cart.apply_coupon(RateDiscount(rate=0.1, max_discount=5_000))",
+          "out": "[10% 할인 (최대 5,000원)] 쿠폰을 적용했습니다."
         },
         {
           "code": "cart.show()",
-          "out": "----------------------------------------\n텀블러\tx 9\t   135,000원\n무선 이어폰\tx 2\t   178,000원\n----------------------------------------\n상품 합계\t\t   313,000원\n할인\t\t\t    -5,000원  [10% 할인 (최대 5,000원)]\n배송비\t\t\t         0원\n결제 금액\t\t   308,000원\n----------------------------------------"
+          "out": "----------------------------------------\n텀블러        x 9 =      135,000원\n무선이어폰      x 2 =      178,000원\n----------------------------------------\n상품 합계              313,000원\n할인                  -5,000원  [10% 할인 (최대 5,000원)]\n배송비                      0원\n결제 금액              308,000원\n----------------------------------------"
         }
       ],
       "state": {
@@ -1153,10 +1317,10 @@ export const shoppingCart: BuildReplayData = {
         "products": [
           {
             "number": 1,
-            "name": "무선 이어폰",
+            "name": "무선이어폰",
             "price": 89000,
             "stock": 3,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -1164,7 +1328,7 @@ export const shoppingCart: BuildReplayData = {
             "name": "텀블러",
             "price": 15000,
             "stock": 10,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -1172,7 +1336,7 @@ export const shoppingCart: BuildReplayData = {
             "name": "보조배터리",
             "price": 32000,
             "stock": 5,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -1180,15 +1344,15 @@ export const shoppingCart: BuildReplayData = {
             "name": "마우스패드",
             "price": 9000,
             "stock": 0,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
             "number": 5,
             "name": "USB 허브",
-            "price": 18000,
-            "stock": 4,
-            "hidden": true,
+            "price": 30000,
+            "stock": 10,
+            "hidden": false,
             "listed": true
           }
         ],
@@ -1201,7 +1365,7 @@ export const shoppingCart: BuildReplayData = {
             "subtotal": 135000
           },
           {
-            "name": "무선 이어폰",
+            "name": "무선이어폰",
             "number": 1,
             "qty": 2,
             "subtotal": 178000
@@ -1218,22 +1382,26 @@ export const shoppingCart: BuildReplayData = {
     },
     {
       "short": "결제",
-      "title": "재고는 결제할 때만 줄어든다",
-      "concept": "캡슐화 활용",
+      "title": "결제할 때만 재고 줄이기",
+      "concept": "책임 나누기",
       "group": "cart",
-      "say": "영수증을 찍고, 줄마다 `decrease_stock(담은 수량)`을 부르고, 장바구니를 비우고, 쿠폰을 \"쿠폰 없음\"으로 되돌려요. 보드에서 텀블러 재고가 10에서 1로, 무선 이어폰이 3에서 1로 바뀌어요.",
+      "say": "`checkout()`은 영수증을 찍고, 담은 수량만큼 `p.stock -= q`로 재고를 줄이고, 장바구니를 비우고, 쿠폰을 되돌려요. 담을 때는 재고를 건드리지 않았으니, 재고가 줄어드는 곳은 여기 한 곳뿐이에요.",
       "think": {
-        "q": "재고를 `add`가 아니라 `checkout`에서 줄이는 이유는 뭘까요?",
-        "a": "발제 규칙이 \"결제하면 재고가 줄어듭니다\"이기 때문이에요. 담았다가 빼는 경우에도 재고를 되돌릴 필요가 없어요."
+        "q": "`checkout()`에서 `self.items = {}` 대신 `clear()`를 쓴 차이는요?",
+        "a": "여기서는 결과가 같아요. 둘 다 장바구니를 비워요. `clear()`는 지금 딕셔너리를 비우고, `= {}`는 새 딕셔너리로 바꿔 끼워요."
       },
       "run": [
         {
-          "code": "cart.checkout()",
-          "out": "[영수증]\n----------------------------------------\n텀블러\tx 9\t   135,000원\n무선 이어폰\tx 2\t   178,000원\n----------------------------------------\n상품 합계\t\t   313,000원\n할인\t\t\t    -5,000원  [10% 할인 (최대 5,000원)]\n배송비\t\t\t         0원\n결제 금액\t\t   308,000원\n----------------------------------------\n결제가 완료되었습니다. 감사합니다!"
+          "code": "cart = Cart()\ncart.add(products[1], 9)\ncart.add(products[0], 2)\ncart.apply_coupon(RateDiscount(rate=0.1, max_discount=5_000))",
+          "out": "텀블러 9개를 담았습니다.\n무선이어폰 2개를 담았습니다.\n[10% 할인 (최대 5,000원)] 쿠폰을 적용했습니다."
         },
         {
-          "code": "print(products[1].line_text())",
-          "out": "2. 텀블러\t15,000원  (재고 1개)"
+          "code": "cart.checkout()",
+          "out": "[영수증]\n----------------------------------------\n텀블러        x 9 =      135,000원\n무선이어폰      x 2 =      178,000원\n----------------------------------------\n상품 합계              313,000원\n할인                  -5,000원  [10% 할인 (최대 5,000원)]\n배송비                      0원\n결제 금액              308,000원\n----------------------------------------\n결제가 완료되었습니다. 감사합니다!"
+        },
+        {
+          "code": "print(products[1].stock, products[0].stock, cart.is_empty(), cart.coupon.name)",
+          "out": "1 1 True 쿠폰 없음"
         }
       ],
       "state": {
@@ -1241,10 +1409,10 @@ export const shoppingCart: BuildReplayData = {
         "products": [
           {
             "number": 1,
-            "name": "무선 이어폰",
+            "name": "무선이어폰",
             "price": 89000,
             "stock": 1,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -1252,7 +1420,7 @@ export const shoppingCart: BuildReplayData = {
             "name": "텀블러",
             "price": 15000,
             "stock": 1,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -1260,7 +1428,7 @@ export const shoppingCart: BuildReplayData = {
             "name": "보조배터리",
             "price": 32000,
             "stock": 5,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -1268,15 +1436,15 @@ export const shoppingCart: BuildReplayData = {
             "name": "마우스패드",
             "price": 9000,
             "stock": 0,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
             "number": 5,
             "name": "USB 허브",
-            "price": 18000,
-            "stock": 4,
-            "hidden": true,
+            "price": 30000,
+            "stock": 10,
+            "hidden": false,
             "listed": true
           }
         ],
@@ -1292,19 +1460,19 @@ export const shoppingCart: BuildReplayData = {
       }
     },
     {
-      "short": "메뉴 연결",
-      "title": "만든 객체를 메뉴에 연결",
+      "short": "메뉴",
+      "title": "main.py에서 메뉴 연결",
       "concept": "전체 흐름",
       "group": "menu",
-      "say": "시작 데이터로 상품 5개, 쿠폰 3개, 장바구니 1개를 만들고, `while` 반복에서 메뉴마다 메서드를 불러요. 메뉴 코드는 계산을 직접 하지 않고 객체에 시키기만 해요. 실행 결과는 발제의 실행 예시대로 입력해 실제로 돌린 것이에요.",
+      "say": "`main.py`는 상품과 쿠폰 목록을 만들고, 메뉴에서 고른 번호대로 장바구니 메서드를 부르기만 해요. 번호 입력은 `ask_number()`가 `while True` 안에서 다시 받아요.",
       "think": {
-        "q": "입력 검사 함수에서 무한 반복이 생기지 않는 이유는 뭘까요?",
-        "a": "`while` 안에서 `input()`을 다시 받기 때문에, 잘못 입력해도 다음 바퀴에 값이 바뀔 기회가 있어요."
+        "q": "결제 뒤 상품목록에서 무선이어폰과 텀블러 재고는 몇 개일까요?",
+        "a": "무선이어폰 3 - 2 = 1개, 텀블러 10 - 9 = 1개예요. 담을 때가 아니라 결제할 때 줄었어요."
       },
       "run": [
         {
-          "code": "python shopping_cart.py",
-          "out": "--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 1\n1. 무선 이어폰\t89,000원  (재고 3개)\n2. 텀블러\t15,000원  (재고 10개)\n3. 보조배터리\t32,000원  (재고 5개)\n4. 마우스패드\t9,000원  (품절)\n5. USB 허브\t18,000원  (재고 4개)\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 2\n상품 번호: 4\n품절된 상품입니다.\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 2\n상품 번호: 2\n수량: 9\n텀블러 9개를 담았습니다.\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 2\n상품 번호: 2\n수량: 2\n재고가 부족합니다. (담을 수 있는 수량: 1개)\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 2\n상품 번호: 1\n수량: 2\n무선 이어폰 2개를 담았습니다.\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 5\n1. 쿠폰 없음\n2. 10% 할인 (최대 5,000원)\n3. 3,000원 할인 (20,000원 이상 구매 시)\n쿠폰 번호: 2\n[10% 할인 (최대 5,000원)] 쿠폰을 적용했습니다.\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 4\n----------------------------------------\n텀블러\tx 9\t   135,000원\n무선 이어폰\tx 2\t   178,000원\n----------------------------------------\n상품 합계\t\t   313,000원\n할인\t\t\t    -5,000원  [10% 할인 (최대 5,000원)]\n배송비\t\t\t         0원\n결제 금액\t\t   308,000원\n----------------------------------------\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 6\n[영수증]\n----------------------------------------\n텀블러\tx 9\t   135,000원\n무선 이어폰\tx 2\t   178,000원\n----------------------------------------\n상품 합계\t\t   313,000원\n할인\t\t\t    -5,000원  [10% 할인 (최대 5,000원)]\n배송비\t\t\t         0원\n결제 금액\t\t   308,000원\n----------------------------------------\n결제가 완료되었습니다. 감사합니다!\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 1\n1. 무선 이어폰\t89,000원  (재고 1개)\n2. 텀블러\t15,000원  (재고 1개)\n3. 보조배터리\t32,000원  (재고 5개)\n4. 마우스패드\t9,000원  (품절)\n5. USB 허브\t18,000원  (재고 4개)\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: q\n종료합니다."
+          "code": "uv run main.py",
+          "out": "--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 1\n1: 무선이어폰        89,000 3 (재고 3개)\n2: 텀블러          15,000 10 (재고 10개)\n3: 보조배터리        32,000 5 (재고 5개)\n4: 마우스패드         9,000 0 (품절)\n5: USB 허브       30,000 10 (재고 10개)\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 2\n상품 번호: 4\n품절된 상품입니다.\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 2\n상품 번호: 2\n수량: 9\n텀블러 9개를 담았습니다.\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 2\n상품 번호: 2\n수량: 2\n재고가 부족합니다. (담을 수 있는 수량: 1개)\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 2\n상품 번호: 1\n수량: 2\n무선이어폰 2개를 담았습니다.\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 5\n1. 쿠폰 없음\n2. 10% 할인 (최대 5,000원)\n3. 3,000원 할인 (20,000원 이상 구매 시)\n쿠폰 번호: 2\n[10% 할인 (최대 5,000원)] 쿠폰을 적용했습니다.\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 4\n----------------------------------------\n텀블러        x 9 =      135,000원\n무선이어폰      x 2 =      178,000원\n----------------------------------------\n상품 합계              313,000원\n할인                  -5,000원  [10% 할인 (최대 5,000원)]\n배송비                      0원\n결제 금액              308,000원\n----------------------------------------\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 6\n[영수증]\n----------------------------------------\n텀블러        x 9 =      135,000원\n무선이어폰      x 2 =      178,000원\n----------------------------------------\n상품 합계              313,000원\n할인                  -5,000원  [10% 할인 (최대 5,000원)]\n배송비                      0원\n결제 금액              308,000원\n----------------------------------------\n결제가 완료되었습니다. 감사합니다!\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: 1\n1: 무선이어폰        89,000 1 (재고 1개)\n2: 텀블러          15,000 1 (재고 1개)\n3: 보조배터리        32,000 5 (재고 5개)\n4: 마우스패드         9,000 0 (품절)\n5: USB 허브       30,000 10 (재고 10개)\n--------------------------------------------------\n1.상품목록 2.담기 3.빼기 4.장바구니 5.쿠폰 6.결제 q.종료\n--------------------------------------------------\n선택: q\n종료합니다."
         }
       ],
       "state": {
@@ -1312,10 +1480,10 @@ export const shoppingCart: BuildReplayData = {
         "products": [
           {
             "number": 1,
-            "name": "무선 이어폰",
+            "name": "무선이어폰",
             "price": 89000,
             "stock": 1,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -1323,7 +1491,7 @@ export const shoppingCart: BuildReplayData = {
             "name": "텀블러",
             "price": 15000,
             "stock": 1,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -1331,7 +1499,7 @@ export const shoppingCart: BuildReplayData = {
             "name": "보조배터리",
             "price": 32000,
             "stock": 5,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
@@ -1339,15 +1507,15 @@ export const shoppingCart: BuildReplayData = {
             "name": "마우스패드",
             "price": 9000,
             "stock": 0,
-            "hidden": true,
+            "hidden": false,
             "listed": true
           },
           {
             "number": 5,
             "name": "USB 허브",
-            "price": 18000,
-            "stock": 4,
-            "hidden": true,
+            "price": 30000,
+            "stock": 10,
+            "hidden": false,
             "listed": true
           }
         ],

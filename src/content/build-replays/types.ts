@@ -41,8 +41,25 @@ export type BuildStep = {
   state: BuildState;
 };
 
+/** 객체 보드의 이름표. 코드의 변수 이름에 맞춰 바꿀 수 있고, 없으면 기본값을 쓴다. */
+export type BuildBoardLabels = {
+  /** 클래스 변수 발급기 이름 (기본 next_number) */
+  counter?: string;
+  /** "cart = " 뒤에 붙는 설명 (기본 Cart 객체, cart.lines) */
+  cart?: string;
+  /** 장바구니가 비었을 때 문구 (기본 lines = [] (비어 있음)) */
+  empty?: string;
+  /** 장바구니 줄에서 상품을 가리키는 이름 (기본 item) */
+  ptr?: string;
+  /** 담은 수량 이름 (기본 qty) */
+  qty?: string;
+  /** 보드 아래 점선 설명 */
+  note?: string;
+};
+
 export type BuildReplayData = {
   file: string;
+  board?: BuildBoardLabels;
   blocks: BuildBlock[];
   steps: BuildStep[];
 };
