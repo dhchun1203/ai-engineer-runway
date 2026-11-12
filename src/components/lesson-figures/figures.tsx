@@ -79,7 +79,7 @@ export function rich(text: string): ReactNode {
 // 그림 한 장의 바깥 틀. 본문 글꼴 규칙(prose)을 끊고, 좁은 화면에서는 그림만 가로로 밀린다.
 export function Figure({ label, children }: { label?: string; children: ReactNode }) {
   return (
-    <figure className="not-prose panel my-6 flex font-sans flex-col gap-4 overflow-x-auto p-4 sm:p-5">
+    <figure data-figure className="not-prose panel my-6 flex flex-col gap-4 overflow-x-auto p-4 sm:p-5">
       {label ? <figcaption className={`text-label font-bold ${MUTED}`}>{label}</figcaption> : null}
       {children}
     </figure>
@@ -90,6 +90,7 @@ export function Figure({ label, children }: { label?: string; children: ReactNod
 export function Hint({ children }: { children: ReactNode }) {
   return (
     <div
+      data-figure
       className={`not-prose -mt-2 mb-6 text-label leading-relaxed ${MUTED} [&_code]:rounded-sm [&_code]:bg-surface-2 [&_code]:px-1 [&_code]:font-mono [&_code]:text-[0.88em] dark:[&_code]:bg-surface-2-dark`}
     >
       {children}
