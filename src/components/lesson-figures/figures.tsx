@@ -104,7 +104,7 @@ function Box({ title, lines = [], tone = "neutral", dashed = false, note }: BoxD
   return (
     <div className={`min-w-0 flex-1 border-2 px-4 py-3 ${TONE[tone].box} ${dashed ? "border-dashed" : ""}`}>
       <p className={`font-mono text-body font-semibold ${TONE[tone].title}`}>{title}</p>
-      {note ? <p className={`text-label ${MUTED}`}>{note}</p> : null}
+      {note ? <p className={`text-label ${MUTED}`}>{rich(note)}</p> : null}
       {lines.length > 0 ? (
         <ul className={`mt-1.5 flex list-disc flex-col gap-0.5 pl-4 text-label leading-relaxed ${MUTED}`}>
           {lines.map((l, i) => (
