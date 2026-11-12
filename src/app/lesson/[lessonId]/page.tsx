@@ -4,8 +4,7 @@ import { MDXContent } from "@/components/mdx-content";
 import { DepthBadge } from "@/components/depth-badge";
 import { EstimatedTime } from "@/components/estimated-time";
 import { LessonBreadcrumb, LessonPager } from "@/components/lesson-nav";
-import { SectionTape } from "@/components/section-tape";
-import { LessonToc } from "@/components/roadmap/lesson-toc";
+import { StageChips } from "@/components/stage-chips";
 import { PageBookmark } from "@/components/page-bookmark";
 import { SectionScrollRestore } from "@/components/section-scroll-restore";
 import { ProgressProvider } from "@/components/progress-provider";
@@ -74,9 +73,6 @@ export default async function LessonPage(
       // 패딩만 준다(globals.css의 .note-page-spacer).
       className="note-page-spacer relative mx-auto flex w-full max-w-3xl min-[1800px]:max-w-4xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8"
     >
-      {/* 스크롤을 따라다니는 목차(로드맵, 수업 레슨과 같은 것). 넓은 화면의 왼쪽 여백에만
-          뜬다. 위쪽 구간 테이프와 같은 h2를 읽으므로 둘이 가리키는 절이 같다. */}
-      <LessonToc contentId={LESSON_ARTICLE_ID} />
       <ProgressProvider lessonId={lesson.slug}>
         {/* "이어서 읽기"(quick 260901-v4u) 기록기 — 화면에 아무것도 그리지
             않고 useEffect에서만 동작하므로 이 페이지의 정적 셸 계약(레슨 =
@@ -112,7 +108,8 @@ export default async function LessonPage(
           </header>
           {lesson.hasContent ? (
             <>
-              <SectionTape articleId={LESSON_ARTICLE_ID} stepId={lesson.stepId as StepId} />
+              {/* 목차는 위에 붙어 따라오는 막대 하나로 둔다(예전 구간 테이프와 왼쪽 목차를 합쳤다). 누르면 전체 목차가 펼쳐진다. */}
+              <StageChips contentId={LESSON_ARTICLE_ID} compact />
               {/* 북마크에서 되돌아왔을 때 그 소제목으로 스크롤(화면엔 아무것도 안 그림). */}
               <SectionScrollRestore articleId={LESSON_ARTICLE_ID} />
               {/* 좌하단 고정 책갈피(페이지당 하나) — 꽂기, 이동, 옮기기. 자체 fetch로

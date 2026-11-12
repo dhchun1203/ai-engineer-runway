@@ -11,7 +11,7 @@ import { BasecampNote } from "@/components/basecamp-note";
 import { BasecampCopyPrompt } from "@/components/lesson-copy-prompt";
 import { PrintButton } from "@/components/print-button";
 import { ReadingAssistant } from "@/components/reading-assistant/reading-assistant";
-import { LessonToc } from "@/components/roadmap/lesson-toc";
+import { StageChips } from "@/components/stage-chips";
 import { PageBookmark } from "@/components/page-bookmark";
 
 // 베이스캠프 전용 학습 레슨 리더 — 완전 정적. concepts·roadmap 리더와 같은 셸이되
@@ -57,8 +57,6 @@ export default async function BasecampLessonPage({
     // 여백을 준다(정규 레슨 페이지와 동일). 메모가 잠겨 렌더되지 않아도 여백만
     // 조금 남을 뿐이라, 마운트 후 잠금 여부가 확정되기 전 레이아웃 시프트를 피한다.
     <main className="note-page-spacer relative mx-auto flex w-full max-w-3xl min-[1800px]:max-w-4xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      {/* 스크롤을 따라다니는 목차(로드맵, 수업 레슨과 같은 것). 넓은 화면의 왼쪽 여백에만 뜬다. */}
-      <LessonToc contentId={BASECAMP_ARTICLE_ID} />
       <PageBookmark pageKey={`basecamp:${lesson.slug}`} pageTitle={lesson.title} articleId={BASECAMP_ARTICLE_ID} />
       <article className="flex flex-col gap-8">
         <header className="flex flex-col gap-3">
@@ -92,6 +90,9 @@ export default async function BasecampLessonPage({
             </span>
           </div>
         </header>
+
+        {/* 목차는 위에 붙어 따라오는 막대 하나로 둔다. 누르면 전체 목차가 펼쳐진다(수업 레슨과 같은 것). */}
+        <StageChips contentId={BASECAMP_ARTICLE_ID} compact />
 
         <div id={BASECAMP_ARTICLE_ID} className="prose dark:prose-invert max-w-none">
           <MDXContent code={lesson.code} />

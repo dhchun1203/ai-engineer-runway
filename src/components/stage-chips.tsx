@@ -110,9 +110,14 @@ export function StageChips({ contentId, compact = false }: { contentId: string; 
   // 펼친 목차: 막대 바로 아래, 막대와 같은 폭. 바깥을 누르거나 Esc를 누르면 닫는다.
   useEffect(() => {
     if (!open) return;
-    const place = () => {
+    let raf = 0;
+    const measure = () => {
+      raf = 0;
       const r = navRef.current?.getBoundingClientRect();
       if (r) setPanelBox({ top: r.bottom + 6, left: r.left, width: r.width });
+    };
+    const place = () => {
+      if (!raf) raf = requestAnimationFrame(measure);
     };
     const onPointer = (e: PointerEvent) => {
       const t = e.target as Node;
@@ -125,13 +130,13 @@ export function StageChips({ contentId, compact = false }: { contentId: string; 
         toggleRef.current?.focus();
       }
     };
-    const raf = requestAnimationFrame(place);
+    place();
     window.addEventListener("resize", place);
     window.addEventListener("scroll", place, { passive: true });
     document.addEventListener("pointerdown", onPointer);
     document.addEventListener("keydown", onKey);
     return () => {
-      cancelAnimationFrame(raf);
+      if (raf) cancelAnimationFrame(raf);
       window.removeEventListener("resize", place);
       window.removeEventListener("scroll", place);
       document.removeEventListener("pointerdown", onPointer);
