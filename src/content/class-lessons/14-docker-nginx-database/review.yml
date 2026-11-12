@@ -1,0 +1,325 @@
+# 14-docker-nginx-database 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
+# SQL 문항의 결과는 PostgreSQL 엔진(PGlite)으로 직접 실행해 확인했다.
+slug: 14-docker-nginx-database
+quiz:
+  - id: hello-world-exited
+    q: "다음 명령을 차례로 친 뒤, 마지막 docker ps 에 hello-world 컨테이너가 보이지 않는 이유는?"
+    code: |-
+      docker run hello-world
+      docker ps
+    options:
+      - "메시지를 찍고 할 일을 끝내 스스로 정지(Exited)했기 때문"
+      - "run 이 이미지만 받고 컨테이너는 만들지 않기 때문"
+      - "컨테이너가 끝나면 자동으로 삭제되기 때문"
+      - "--name 을 주지 않아서 목록에 이름이 없기 때문"
+    answer: 0
+    explain: "hello-world 는 메시지를 한 번 찍고 끝나는 이미지라, 끝나면 컨테이너가 Exited (0) 이 돼요. docker ps 는 켜진 것만 보여 주고, 정지된 것까지 보려면 docker ps -a 를 써요. 자동 삭제는 --rm 을 줬을 때만이에요."
+  - id: port-host-container
+    q: "다음 명령으로 nginx 를 켰어요. 내 PC 브라우저에서 들어갈 주소는?"
+    code: |-
+      docker run -d --name my-nginx2 -p 8081:80 nginx
+    options:
+      - "http://localhost:80"
+      - "http://localhost:8081"
+      - "http://my-nginx2:8081"
+      - "http://localhost:8080"
+    answer: 1
+    explain: "-p 호스트:컨테이너 에서 왼쪽이 내 PC, 오른쪽이 컨테이너예요. 내 PC 8081번으로 온 요청이 컨테이너 80번으로 넘어가요. 컨테이너 80번은 -p 없이는 내 PC 브라우저에서 바로 닿지 않아요."
+  - id: container-rm-data-lost
+    q: "다음을 차례로 실행했을 때 마지막 cat 의 결과는?"
+    code: |-
+      docker run -it --name my-ubuntu ubuntu:24.04 bash
+      # (컨테이너 안) echo "hello docker" > /root/hello.txt
+      # (컨테이너 안) exit
+      docker rm my-ubuntu
+      docker run -it --name my-ubuntu ubuntu:24.04 bash
+      # (컨테이너 안) cat /root/hello.txt
+    options:
+      - "hello docker"
+      - "No such file or directory 오류"
+      - "빈 줄"
+      - "컨테이너 이름이 겹쳐 두 번째 run 이 실패한다"
+    answer: 1
+    explain: "컨테이너 안에서 만든 파일은 그 컨테이너의 쓰기 레이어에 있어요. docker rm 으로 지우면 함께 사라지고, 새 컨테이너는 이미지 그대로 시작해요. 앞 컨테이너를 지웠으니 이름은 다시 쓸 수 있어요. stop 만 했다면 start -ai 로 다시 켰을 때 파일이 남아 있어요."
+  - id: volume-name-vs-folder
+    q: "내 PC의 site 폴더를 잇고 싶어서 다음처럼 쳤어요. 무슨 일이 생길까?"
+    code: |-
+      docker run -d --name web -p 8080:80 -v site:/usr/share/nginx/html nginx
+    options:
+      - "내 PC의 site 폴더가 그대로 이어진다"
+      - "경로가 잘못돼 오류가 나고 컨테이너가 안 만들어진다"
+      - "오류 없이 site 라는 이름의 볼륨이 새로 생기고, 내 폴더 파일은 안 보인다"
+      - "site 폴더가 내 PC에 새로 만들어진다"
+    answer: 2
+    explain: "./ 없이 이름만 쓰면 도커는 폴더가 아니라 볼륨 이름으로 읽어요. 그래서 오류 없이 빈 볼륨이 생겨요. 내 폴더를 이으려면 -v ./site:/usr/share/nginx/html 처럼 ./ 로 시작해요."
+  - id: dockerfile-cmd-timing
+    q: "다음 Dockerfile 에서 docker run 할 때마다 실행되는 줄은?"
+    code: |-
+      FROM astral/uv:python3.14-bookworm-slim
+      WORKDIR /app
+      COPY . .
+      RUN uv sync
+      CMD ["uv", "run", "main.py"]
+    options:
+      - "RUN uv sync"
+      - "COPY . ."
+      - "CMD [\"uv\", \"run\", \"main.py\"]"
+      - "다섯 줄 모두"
+    answer: 2
+    explain: "FROM, WORKDIR, COPY, RUN 은 docker build 할 때 한 번 실행되고 결과가 이미지에 담겨요. CMD 만 컨테이너를 켤 때마다 실행돼요. 그래서 main.py 를 고치면 COPY 가 새 코드를 담도록 build 부터 다시 해요."
+  - id: compose-down-volume
+    q: "compose.yaml 로 PostgreSQL 을 켜서 데이터를 넣었어요. 다음 중 볼륨의 데이터까지 지우는 명령은? (볼륨은 external 이 아니에요)"
+    options:
+      - "docker compose stop"
+      - "docker compose down"
+      - "docker compose down -v"
+      - "docker compose ps"
+    answer: 2
+    explain: "down 은 컨테이너와 네트워크만 지우고 볼륨은 남겨서, 다시 up -d 하면 데이터가 이어져요. down -v 는 볼륨까지 지워요. 단, external: true 로 가져다 쓴 볼륨은 down -v 로도 지워지지 않아요."
+  - id: proxy-pass-service-name
+    q: "Compose 로 nginx(web)와 menu 앱을 함께 켰어요. nginx 설정이 다음과 같을 때 localhost/menu/ 에 들어가면?"
+    code: |-
+      location /menu/ {
+          proxy_pass http://localhost:8000/;
+      }
+    options:
+      - "menu 앱의 첫 화면이 나온다"
+      - "502 Bad Gateway 가 난다"
+      - "nginx 의 index.html 이 나온다"
+      - "브라우저가 8000번 포트로 자동 이동한다"
+    answer: 1
+    explain: "컨테이너 안의 localhost 는 nginx 컨테이너 자신이에요. 거기엔 menu 앱이 없어서 연결에 실패하고 502 가 나요. Compose 안에서는 서비스 이름이 주소라 proxy_pass http://menu/; 처럼 적어요."
+  - id: primary-key-duplicate
+    q: "다음 SQL 을 차례로 실행하면 세 번째 INSERT 는?"
+    code: |-
+      CREATE TABLE orders (id INT PRIMARY KEY, menu VARCHAR(20), qty INT);
+      INSERT INTO orders VALUES (1, 'latte', 2);
+      INSERT INTO orders VALUES (2, 'americano', 1);
+      INSERT INTO orders VALUES (1, 'mocha', 1);
+    options:
+      - "1번 주문이 mocha 로 바뀐다"
+      - "id 1 인 행이 두 개가 된다"
+      - "기본 키가 겹친다는 오류가 나고 들어가지 않는다"
+      - "id 가 자동으로 3 으로 바뀌어 들어간다"
+    answer: 2
+    explain: "기본 키는 행마다 겹칠 수 없어요. 직접 실행하면 duplicate key value violates unique constraint 오류가 나고 행이 들어가지 않아요. 값을 바꾸려면 UPDATE 를 써야 하고, 자동 번호는 AUTO_INCREMENT 나 SERIAL 을 줬을 때만이에요."
+  - id: where-stock-filter
+    q: "product 표에 다음 5개가 있어요. 아래 SELECT 의 결과는 몇 행일까?"
+    code: |-
+      -- (이름, 가격, 재고)
+      -- 무선 키보드 35000 120 / 게이밍 마우스 28000 85 / 27인치 모니터 259000 15
+      -- USB-C 허브 19900 200 / 노트북 거치대 24000 7
+      SELECT name, stock FROM product WHERE stock < 20;
+    options:
+      - "1행 (노트북 거치대)"
+      - "2행 (27인치 모니터, 노트북 거치대)"
+      - "3행"
+      - "5행 (WHERE 는 정렬만 한다)"
+    answer: 1
+    explain: "WHERE 는 조건에 맞는 행만 남겨요. 재고가 20보다 작은 건 15개인 모니터와 7개인 거치대 둘이에요. 정렬은 ORDER BY 가 해요."
+  - id: db-env-first-init
+    q: "pgdata 볼륨에 데이터가 이미 있는 상태에서 다음처럼 새 비밀번호로 켰어요. 접속할 때 맞는 비밀번호는?"
+    code: |-
+      # 처음에는 POSTGRES_PASSWORD=1234 로 켜서 데이터를 넣었다
+      docker rm -f my-pg
+      docker run -d --name my-pg -e POSTGRES_PASSWORD=abcd -p 5432:5432 -v pgdata:/var/lib/postgresql postgres:18
+    options:
+      - "abcd (새 비밀번호)"
+      - "1234 (예전 비밀번호)"
+      - "둘 다 된다"
+      - "비밀번호가 겹쳐 컨테이너가 안 켜진다"
+    answer: 1
+    explain: "-e 로 준 비밀번호와 init 폴더는 데이터 폴더가 비어 있을 때 처음 한 번만 읽어요. 볼륨에 예전 데이터가 남아 있으니 abcd 는 무시되고 1234 가 그대로예요. 새로 시작하려면 볼륨을 지워야 하고, 그러면 데이터도 사라져요."
+commands:
+  - cmd: "docker --version / docker compose version / docker info"
+    desc: "도커와 Compose 버전, 데몬이 켜져 있는지 확인"
+    group: Docker
+  - cmd: "docker pull 이미지:태그"
+    desc: "Docker Hub에서 이미지 내려받기(태그를 빼면 latest)"
+    group: Docker
+  - cmd: "docker images"
+    desc: "내 PC에 받은 이미지 목록"
+    group: Docker
+  - cmd: "docker run hello-world"
+    desc: "이미지로 새 컨테이너를 만들어 실행(칠 때마다 새로 만듦)"
+    group: Docker
+  - cmd: "docker run -it --name my-ubuntu ubuntu:24.04 bash"
+    desc: "대화형 터미널로 컨테이너에 들어가 bash 실행(exit하면 꺼짐)"
+    group: Docker
+  - cmd: "docker run -d --name my-nginx -p 8080:80 nginx"
+    desc: "뒤에서 실행, 내 PC 8080을 컨테이너 80에 잇기"
+    group: Docker
+  - cmd: "docker run -d --name my-mysql -e MYSQL_ROOT_PASSWORD=1234 -p 3306:3306 mysql:8.4"
+    desc: "환경 변수(-e)로 root 비밀번호를 주고 MySQL 켜기"
+    group: Docker
+  - cmd: "docker run -d --name web -p 8080:80 -v cafe-html:/usr/share/nginx/html nginx"
+    desc: "볼륨(이름)을 컨테이너 경로에 잇기"
+    group: Docker
+  - cmd: "docker run -d --name web -p 8080:80 -v ./site:/usr/share/nginx/html nginx"
+    desc: "내 PC 폴더를 컨테이너 경로에 잇기(./ 꼭 붙이기)"
+    group: Docker
+  - cmd: "docker run --rm cart"
+    desc: "실행이 끝나면 컨테이너를 자동으로 지우기"
+    group: Docker
+  - cmd: "docker ps / docker ps -a"
+    desc: "켜진 컨테이너 / 꺼진 것까지 전부"
+    group: Docker
+  - cmd: "docker stop web / docker start web"
+    desc: "컨테이너 정지 / 다시 시작"
+    group: Docker
+  - cmd: "docker start -ai my-ubuntu"
+    desc: "정지된 컨테이너를 켜면서 터미널에 붙기(-a attach, -i interactive)"
+    group: Docker
+  - cmd: "docker exec -it web bash"
+    desc: "켜 둔 컨테이너 안에서 bash 실행(exit해도 컨테이너는 계속 돎)"
+    group: Docker
+  - cmd: "docker logs web / docker logs -f web"
+    desc: "컨테이너 로그 보기 / 실시간으로 따라가기(Ctrl + C로 나옴)"
+    group: Docker
+  - cmd: "docker cp products.sql my-pg:/tmp/products.sql"
+    desc: "내 PC 파일을 컨테이너 안으로 복사(컨테이너쪽은 이름:경로)"
+    group: Docker
+  - cmd: "docker rm web / docker rm -f web"
+    desc: "꺼진 컨테이너 삭제 / 켜져 있어도 정지 + 삭제"
+    group: Docker
+  - cmd: "docker rm -f -v my-pg"
+    desc: "컨테이너와 이어진 익명 볼륨까지 함께 삭제"
+    group: Docker
+  - cmd: "docker rmi nginx"
+    desc: "이미지 삭제(그 이미지를 쓰는 컨테이너가 없어야 함)"
+    group: Docker
+  - cmd: "docker build -t cart ."
+    desc: "현재 폴더의 Dockerfile로 cart 이미지 만들기"
+    group: Docker
+  - cmd: "docker volume create pgdata / docker volume ls / docker volume inspect pgdata"
+    desc: "볼륨 만들기 / 목록 / 상세(실제 위치 Mountpoint)"
+    group: Docker
+  - cmd: "docker volume rm pgdata / docker volume prune"
+    desc: "볼륨 삭제 / 안 쓰는 익명 볼륨 정리"
+    group: Docker
+  - cmd: "docker system prune -a --volumes"
+    desc: "안 쓰는 컨테이너, 이미지, 볼륨 전부 삭제(다른 프로젝트 데이터도 지워질 수 있어 주의)"
+    group: Docker
+  - cmd: "FROM / WORKDIR / COPY / RUN / CMD"
+    desc: "Dockerfile 지시어. CMD만 run할 때마다, 나머지는 build할 때 실행"
+    group: Docker
+  - cmd: "docker compose config"
+    desc: "compose.yaml 문법 검사와 최종 설정 출력"
+    group: Docker Compose
+  - cmd: "docker compose up -d"
+    desc: "파일에 적힌 서비스를 만들고 뒤에서 켜기"
+    group: Docker Compose
+  - cmd: "docker compose ps / docker compose logs db"
+    desc: "서비스 상태 / 서비스 로그(-f 실시간)"
+    group: Docker Compose
+  - cmd: "docker compose exec db psql -U postgres"
+    desc: "서비스 이름으로 컨테이너에 들어가기(-it 없이도 터미널이 붙음)"
+    group: Docker Compose
+  - cmd: "docker compose exec cache getent hosts db"
+    desc: "서비스 이름이 IP로 찾아지는지 확인"
+    group: Docker Compose
+  - cmd: "docker compose stop / docker compose start"
+    desc: "서비스 정지 / 다시 시작"
+    group: Docker Compose
+  - cmd: "docker compose down / docker compose down -v"
+    desc: "컨테이너와 네트워크 삭제(볼륨 남김) / 볼륨까지 삭제(external 제외)"
+    group: Docker Compose
+  - cmd: "docker exec cafe-web-1 nginx -t"
+    desc: "nginx 설정 파일 검사"
+    group: nginx
+  - cmd: "docker exec cafe-web-1 nginx -s reload"
+    desc: "nginx를 끄지 않고 설정 다시 읽기"
+    group: nginx
+  - cmd: "proxy_pass http://menu/;"
+    desc: "요청을 menu 서비스로 넘기기(localhost 금지, 끝 /는 /menu/를 떼고 넘김)"
+    group: nginx
+  - cmd: "CREATE DATABASE cafe;"
+    desc: "데이터베이스 만들기"
+    group: SQL
+  - cmd: "CREATE TABLE orders (id INT PRIMARY KEY, menu VARCHAR(20), qty INT);"
+    desc: "열 이름과 타입, 기본 키를 정해 표 만들기"
+    group: SQL
+  - cmd: "INSERT INTO orders VALUES (1, 'latte', 2);"
+    desc: "행 하나 넣기(글자는 작은따옴표)"
+    group: SQL
+  - cmd: "INSERT INTO product (name, price) VALUES ('키보드', 35000), ('마우스', 18000);"
+    desc: "열을 골라 여러 행을 한 번에 넣기"
+    group: SQL
+  - cmd: "SELECT * FROM orders WHERE id = 1;"
+    desc: "조건(같다는 = 하나)에 맞는 행의 모든 열 꺼내기"
+    group: SQL
+  - cmd: "SELECT name, price * stock AS stock_value FROM product ORDER BY stock_value DESC;"
+    desc: "계산한 열에 별칭 붙이고 큰 순서로 정렬"
+    group: SQL
+  - cmd: "docker exec -it my-mysql mysql -uroot -p"
+    desc: "MySQL 컨테이너에 root로 접속(여기 -p는 비밀번호 묻기)"
+    group: MySQL
+  - cmd: "SHOW DATABASES; / USE shop; / SHOW TABLES; / DESCRIBE orders;"
+    desc: "DB 목록 / DB 옮기기 / 표 목록 / 표 모양"
+    group: MySQL
+  - cmd: "docker exec -it my-pg psql -U postgres"
+    desc: "PostgreSQL 컨테이너에 postgres 사용자로 접속"
+    group: psql
+  - cmd: "psql -U postgres -c \"SELECT * FROM product;\""
+    desc: "psql에 들어가지 않고 SQL 한 줄만 실행"
+    group: psql
+  - cmd: "psql -U postgres -f /tmp/products.sql"
+    desc: "SQL 파일을 읽어 실행"
+    group: psql
+  - cmd: "docker exec -i my-pg psql -U postgres < products.sql"
+    desc: "파일을 표준 입력으로 흘려 넣기(-t 없이 -i만, PowerShell은 안 됨)"
+    group: psql
+  - cmd: "\\l / \\c shop / \\dt / \\d product / \\i 파일 / \\q"
+    desc: "DB 목록 / DB 옮기기 / 표 목록 / 표 구조 / 파일 실행 / 나가기"
+    group: psql
+  - cmd: "docker exec -it my-redis redis-cli"
+    desc: "Redis 명령줄 클라이언트로 접속"
+    group: Redis
+  - cmd: "PING / SET 키 값 / GET 키"
+    desc: "연결 확인(PONG) / 저장 / 꺼내기"
+    group: Redis
+  - cmd: "INCR score / INCRBY score 50"
+    desc: "숫자 1 늘리기 / 50 늘리기"
+    group: Redis
+  - cmd: "SET session:abc \"login\" EX 30 / TTL session:abc"
+    desc: "30초 뒤 자동 삭제 / 남은 시간(-2는 키 없음)"
+    group: Redis
+  - cmd: "LPUSH ranking \"A\" \"B\" \"C\" / LRANGE ranking 0 -1"
+    desc: "리스트 앞에 넣기 / 처음부터 끝까지 꺼내기(C, B, A)"
+    group: Redis
+  - cmd: "KEYS *"
+    desc: "모든 키 보기"
+    group: Redis
+  - cmd: "apt update / apt install -y curl"
+    desc: "Ubuntu 컨테이너에서 패키지 목록 받기 / 묻지 않고 설치"
+    group: 터미널
+  - cmd: "cat /etc/os-release / whoami"
+    desc: "OS 정보 보기 / 지금 사용자 보기"
+    group: 터미널
+  - cmd: "curl http://localhost:8080"
+    desc: "터미널에서 웹 페이지 요청해 보기"
+    group: 터미널
+  - cmd: "export MSYS_NO_PATHCONV=1"
+    desc: "Git Bash가 /usr/... 경로를 Windows 경로로 바꾸지 않게 하기"
+    group: 터미널
+terms:
+  - word: "이미지 (Image)"
+    definition: "컨테이너를 만드는 읽기 전용 틀. 실행에 필요한 파일과 켜질 때 실행할 명령이 레이어로 쌓여 있다. 파이썬으로 치면 클래스다."
+  - word: "컨테이너 (Container)"
+    definition: "이미지를 실행한 격리된 프로세스. 이미지 위에 쓰기 레이어를 얹어 돌고, 지우면 그 안의 데이터도 사라진다. 파이썬으로 치면 객체다."
+  - word: "볼륨 (Volume)"
+    definition: "도커가 관리하는 컨테이너 바깥 저장 공간. -v 이름:경로 로 이으면 컨테이너를 지워도 데이터가 남는다."
+  - word: "레지스트리 (Registry)"
+    definition: "이미지를 저장하고 나누는 원격 저장소. 대표가 Docker Hub이고, docker pull 로 내려받는다."
+  - word: "도커 데몬 (Docker Daemon)"
+    definition: "뒤에서 계속 돌며 이미지 받기, 컨테이너 만들기와 실행 같은 실제 일을 하는 프로그램(dockerd). docker 명령은 데몬에 일을 전달한다."
+  - word: "포트 포워딩 (Port Forwarding)"
+    definition: "내 PC의 포트로 온 요청을 컨테이너의 포트로 넘기는 것. -p 8080:80 은 왼쪽이 내 PC, 오른쪽이 컨테이너다."
+  - word: "Dockerfile"
+    definition: "내 이미지를 만드는 방법을 적은 파일. FROM, WORKDIR, COPY, RUN 은 build 때, CMD 는 run 할 때마다 실행된다."
+  - word: "Docker Compose"
+    definition: "여러 컨테이너의 실행 옵션을 compose.yaml 에 적어 두고 up 과 down 한 줄로 켜고 끄는 도구. 서비스 이름이 서로를 찾는 주소가 된다."
+  - word: "리버스 프록시 (Reverse Proxy)"
+    definition: "nginx 같은 서버가 요청을 대신 받아 뒤의 앱에 넘기고 답을 돌려주는 구조. 밖에는 80번 하나만 열고 경로로 앱을 고른다."
+  - word: "기본 키 (Primary Key)"
+    definition: "표에서 행마다 겹치지 않고 비울 수도 없는 값. 주문 번호처럼 행 하나를 콕 집는 이름표다."
