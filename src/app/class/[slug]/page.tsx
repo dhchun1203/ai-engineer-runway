@@ -13,6 +13,7 @@ import { PrintButton } from "@/components/print-button";
 import { ReadingAssistant } from "@/components/reading-assistant/reading-assistant";
 import { StageChips } from "@/components/stage-chips";
 import { PageBookmark } from "@/components/page-bookmark";
+import { lessonFigureComponents } from "@/components/lesson-figures/lesson-figure-components";
 import { classQuizKey } from "@/lib/quiz-mistake-key";
 
 // 수업 복습 레슨 리더 — 완전 정적(베이스캠프 레슨 리더와 같은 셸). 본문 아래 확인 퀴즈는
@@ -89,7 +90,7 @@ export default async function ClassLessonPage({
         <StageChips contentId={CLASS_ARTICLE_ID} compact />
 
         <div id={CLASS_ARTICLE_ID} className="prose dark:prose-invert max-w-none">
-          <MDXContent code={lesson.code} />
+          <MDXContent code={lesson.code} components={lessonFigureComponents} />
         </div>
 
         {quiz.length > 0 ? (
