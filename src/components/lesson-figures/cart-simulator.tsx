@@ -104,8 +104,8 @@ export function CartSimulator() {
     t === "ok" ? "text-ok dark:text-ok-dark" : t === "warn" ? "text-action dark:text-action-dark" : t === "dim" ? muted : "";
 
   return (
-    <div className="not-prose panel @container my-6 p-4 sm:p-5">
-      <div className="grid grid-cols-1 gap-5 @2xl:grid-cols-2">
+    <div className="not-prose panel @container my-6 p-4 font-sans sm:p-5">
+      <div className="grid grid-cols-1 gap-5 @xl:grid-cols-2">
         <section className="flex min-w-0 flex-col gap-1" aria-label="상품">
           <h3 className="text-label font-bold">상품 목록</h3>
           {products.map((p, i) => (

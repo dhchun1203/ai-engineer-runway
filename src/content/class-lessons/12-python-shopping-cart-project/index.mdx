@@ -22,16 +22,14 @@ preStudy: []
 반대로 상품과 쿠폰은 장바구니를 전혀 몰라요. 그래서 `cart.py` 맨 위에만 `from product import Product`, `from coupon import Coupon`이 있어요.
 
 <Figure>
-  <Boxes
-    row={[
-      { title: "Product", tone: "rust", note: "product.py", lines: ["번호, 이름, 가격, 재고", "`is_sold_out()`", "`__str__()`"] },
-      { arrow: "Cart가 꺼내 씀", dir: "left" },
-      { title: "Cart", tone: "blue", note: "cart.py", lines: ["`items = {상품: 수량}`", "`add()`, `remove()`", "`subtotal()`, `discount()`, `shipping()`, `total()`", "`show()`, `checkout()`"] },
-      { arrow: "할인 금액을 물어봄", dir: "right" },
-      { title: "Coupon", tone: "amber", note: "coupon.py", lines: ["쿠폰 이름", "`discount_amount(total)`"] },
-    ]}
-    below={[
-      { title: "main.py", note: "메뉴", dashed: true, lines: ["상품 목록과 쿠폰 목록을 만들고, 메뉴를 돌리며 Cart의 메서드를 불러요. 계산은 하나도 직접 하지 않아요."] },
+  <Layers
+    layers={[
+      [{ title: "main.py", note: "메뉴", dashed: true, lines: ["상품 목록과 쿠폰 목록을 만들고, 메뉴를 돌리며 Cart의 메서드를 불러요. 계산은 하나도 직접 하지 않아요."] }],
+      [{ title: "Cart", note: "cart.py, 일을 하는 쪽", tone: "blue", via: "메뉴가 장바구니의 메서드를 불러요", lines: ["`items = {상품: 수량}`", "`add()`, `remove()`, `apply_coupon()`", "`subtotal()`, `discount()`, `shipping()`, `total()`", "`show()`, `checkout()`"] }],
+      [
+        { title: "Product", note: "product.py", tone: "rust", via: "Cart가 가격과 재고를 꺼내 써요", lines: ["번호, 이름, 가격, 재고", "`is_sold_out()`, `__str__()`"] },
+        { title: "Coupon", note: "coupon.py", tone: "amber", via: "Cart가 할인 금액을 물어봐요", lines: ["쿠폰 이름", "`discount_amount(total)`"] },
+      ],
     ]}
   />
 </Figure>

@@ -55,7 +55,7 @@ const TONE: Record<Tone, { box: string; title: string; chip: string; line: strin
 };
 
 const CODE =
-  "rounded-sm bg-surface-2 px-1 py-px font-mono text-[0.88em] dark:bg-surface-2-dark";
+  "whitespace-nowrap rounded-sm bg-surface-2 px-1 py-px font-mono text-[0.88em] dark:bg-surface-2-dark";
 const MUTED = "text-badge-neutral-text dark:text-badge-neutral-text-dark";
 
 // `코드`와 **굵게**만 다룬다. 둘 다 짝이 맞지 않으면 글자 그대로 둔다.
@@ -79,7 +79,7 @@ export function rich(text: string): ReactNode {
 // 그림 한 장의 바깥 틀. 본문 글꼴 규칙(prose)을 끊고, 좁은 화면에서는 그림만 가로로 밀린다.
 export function Figure({ label, children }: { label?: string; children: ReactNode }) {
   return (
-    <figure className="not-prose panel my-6 flex flex-col gap-4 overflow-x-auto p-4 sm:p-5">
+    <figure className="not-prose panel my-6 flex font-sans flex-col gap-4 overflow-x-auto p-4 sm:p-5">
       {label ? <figcaption className={`text-label font-bold ${MUTED}`}>{label}</figcaption> : null}
       {children}
     </figure>
@@ -102,10 +102,8 @@ type BoxData = { title: string; lines?: string[]; tone?: Tone; dashed?: boolean;
 function Box({ title, lines = [], tone = "neutral", dashed = false, note }: BoxData) {
   return (
     <div className={`min-w-0 flex-1 border-2 px-4 py-3 ${TONE[tone].box} ${dashed ? "border-dashed" : ""}`}>
-      <p className={`font-mono text-body font-semibold ${TONE[tone].title}`}>
-        {title}
-        {note ? <span className={`ml-2 font-sans text-label font-normal ${MUTED}`}>{note}</span> : null}
-      </p>
+      <p className={`font-mono text-body font-semibold ${TONE[tone].title}`}>{title}</p>
+      {note ? <p className={`text-label ${MUTED}`}>{note}</p> : null}
       {lines.length > 0 ? (
         <ul className={`mt-1.5 flex list-disc flex-col gap-0.5 pl-4 text-label leading-relaxed ${MUTED}`}>
           {lines.map((l, i) => (
@@ -147,6 +145,35 @@ export function Boxes({ row, below = [] }: { row: BoxItem[]; below?: BoxData[] }
       </div>
       {below.map((b, i) => (
         <Box key={i} {...b} />
+      ))}
+    </div>
+  );
+}
+
+type LayerBox = BoxData & { via?: string };
+
+// 위에서 아래로 기대는 구조: 위층이 아래층을 꺼내 쓴다. 한 층에 상자가 여럿이면 나란히 놓고,
+// via는 그 상자 바로 위에 붙는 화살표 말("Cart가 꺼내 씀")이다. 상자가 셋 이상 한 줄에 서면
+// 본문 폭에서 코드가 잘게 끊겨서, 지도는 이 층 구조로 그린다.
+export function Layers({ layers }: { layers: LayerBox[][] }) {
+  return (
+    <div className="flex flex-col gap-1">
+      {layers.map((row, i) => (
+        <div key={i} className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+          {row.map(({ via, ...box }, j) => (
+            <div key={j} className="flex min-w-0 flex-1 flex-col gap-1">
+              {via ? (
+                <div className={`flex items-center gap-1.5 py-1 pl-3 text-label ${MUTED}`}>
+                  <ArrowDown className="h-4 w-4 shrink-0 text-foreground dark:text-foreground-dark" aria-hidden="true" />
+                  <span className="break-keep">{rich(via)}</span>
+                </div>
+              ) : null}
+              <div className="flex flex-1">
+                <Box {...box} />
+              </div>
+            </div>
+          ))}
+        </div>
       ))}
     </div>
   );
