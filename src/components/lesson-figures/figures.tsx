@@ -248,7 +248,7 @@ export function Blueprint({
 type Gate = { q: string; code?: string; yes?: string; out: string; outTone?: Tone };
 
 // 문지기 흐름: 질문마다 "예"면 옆으로 빠지고, "아니오"면 아래로 내려간다. 끝까지 오면 통과.
-export function GateFlow({ gates, pass, noLabel = "아니오" }: { gates: Gate[]; pass: { text: string; code?: string }; noLabel?: string }) {
+export function GateFlow({ gates, pass, noLabel = "아니오" }: { gates: Gate[]; pass: { text: string; code?: string; tone?: Tone }; noLabel?: string }) {
   return (
     <div className="flex flex-col">
       {gates.map((g, i) => (
@@ -271,7 +271,7 @@ export function GateFlow({ gates, pass, noLabel = "아니오" }: { gates: Gate[]
           </div>
         </Fragment>
       ))}
-      <div className={`border-2 px-3.5 py-2.5 text-body font-semibold sm:max-w-[calc(50%-2.25rem)] ${TONE.ok.box}`}>
+      <div className={`border-2 px-3.5 py-2.5 text-body font-semibold sm:max-w-[calc(50%-2.25rem)] ${TONE[pass.tone ?? "ok"].box}`}>
         {rich(pass.text)}
         {pass.code ? <span className={`mt-0.5 block font-mono text-label font-normal ${MUTED}`}>{pass.code}</span> : null}
       </div>

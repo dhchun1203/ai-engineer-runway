@@ -2,7 +2,7 @@
 title: "Python 시작하기: 실행 방식, uv, 가상환경, 주피터"
 session: 5
 date: "2026-10-30"
-summary: "파이썬이 어떤 언어이고 어떻게 실행되는지(인터프리터, REPL), 패키지와 의존성과 가상환경이 왜 필요한지, uv로 프로젝트를 만들고(init, pin, add) pyproject.toml과 uv.lock을 맞추는 법(sync), uv run과 가상환경 활성화, 주피터 노트북과 단축키까지."
+summary: "파이썬이 어떤 언어이고 어떻게 실행되는지(인터프리터, REPL), 패키지와 의존성과 가상환경이 왜 필요한지, uv로 프로젝트를 만들고(init, pin, add) pyproject.toml과 uv.lock을 맞추는 법(sync), uv run과 가상환경 활성화, 주피터 노트북과 단축키까지 그림으로 따라가요."
 slug: "05-python-setup-uv"
 module: "1-3"
 topic: "Python"
@@ -11,22 +11,36 @@ preStudy: ["1-1-dev-environment-setup"]
 
 나흘 동안 Git으로 기록하는 법을 익혔어요. 오늘부터는 그 저장소 안에 **파이썬 코드**를 쓰기 시작해요.
 
-코드를 쓰기 전에 할 일이 있어요. 파이썬이 어떤 언어이고 어떻게 돌아가는지 알고, 프로젝트마다 깨끗한 작업 공간을 만드는 거예요. 오늘은 그 준비를 uv라는 도구 하나로 끝내는 법을 배웠어요.
-
-| 순서 | 내용 | 한 줄로 |
-| --- | --- | --- |
-| 1 | 파이썬이란 | 역사, 특징, 보일러플레이트 |
-| 2 | 파이썬은 어떻게 실행될까 | 인터프리터와 REPL |
-| 3 | 개발 환경 용어 | 패키지, 의존성, 가상환경 |
-| 4 | uv 소개와 설치 | 여러 도구를 하나로 |
-| 5 | 프로젝트 시작하기 | `uv init`, `uv python pin`, `uv add` |
-| 6 | pyproject.toml과 uv.lock 맞추기 | `uv sync`와 두 옵션 |
-| 7 | 코드 실행과 가상환경 | `uv run`, 활성화, `source` |
-| 8 | 주피터 노트북 | 셀, 커널, 단축키 |
+코드를 쓰기 전에 할 일이 있어요. 파이썬이 어떻게 돌아가는지 알고, 프로젝트마다 깨끗한 작업 공간을 만드는 거예요. 오늘은 그 준비를 uv라는 도구 하나로 끝내는 법을 배웠어요.
 
 레슨 끝에 확인 퀴즈가 있어요. 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
 
-## 1. 파이썬이란
+## 1. 전체 그림: 프로젝트 폴더 하나에 다 들어간다
+
+오늘 만드는 건 `my-project`라는 폴더 하나예요. 그 안에서 uv가 목록을 적고, 목록대로 설치하고, 코드를 대신 실행해 줘요.
+
+내가 직접 쓰는 건 `main.py`뿐이에요. 나머지 파일은 uv 명령어가 만들고 고쳐요.
+
+<Figure>
+  <Layers
+    layers={[
+      [
+        { title: "main.py", note: "내가 쓰는 코드", lines: ["`uv run main.py`로 실행해요"] },
+        { title: "uv", note: "관리 도구 하나", tone: "blue", lines: ["`uv init`, `uv python pin`, `uv add`", "`uv sync`, `uv run`"] },
+      ],
+      [{ title: "pyproject.toml, uv.lock, .python-version", tone: "rust", via: "uv가 목록을 적어요", lines: ["`pyproject.toml`: 내가 원하는 것(장보기 목록)", "`uv.lock`: 실제로 고른 정확한 버전(영수증)", "`.python-version`: 이 프로젝트가 쓸 파이썬 버전", "셋 다 Git에 커밋해요"] }],
+      [{ title: ".venv", note: "가상환경", tone: "amber", dashed: true, via: "목록대로 설치해요", lines: ["이 프로젝트 전용 설치 공간(공구함)", "파이썬과 fastapi 같은 패키지가 여기에 깔려요", "커밋하지 않아요(`.gitignore`에 들어 있어요)"] }],
+    ]}
+  />
+</Figure>
+
+<Hint>
+
+위에서부터 차례로 읽으면 이 그림의 칸이 하나씩 채워져요. 2절과 3절은 파이썬 자체, 4절부터는 이 폴더 이야기예요.
+
+</Hint>
+
+## 2. 파이썬이란: 형식보다 본론부터 쓰는 언어
 
 ### 만든 사람과 역사
 
@@ -36,7 +50,7 @@ preStudy: ["1-1-dev-environment-setup"]
 - ABC라는 언어의 뒤를 잇는 언어로 만들었고, ABC에서 **읽기 쉬움과 들여쓰기** 아이디어를 가져왔어요.
 - 이름은 뱀이 아니라 영국 코미디 쇼 **Monty Python's Flying Circus**에서 따왔어요.
 
-지금 우리가 쓰는 건 3.x 버전이에요. 2.x와 3.x는 문법이 꽤 달라서, 오래된 자료에서 `print "Hello"`(괄호 없음)를 보면 2.x 코드구나 하고 넘기면 돼요.
+지금 우리가 쓰는 건 3.x 버전이에요. 2.x와 3.x는 문법이 꽤 달라요. 오래된 자료에서 `print "Hello"`(괄호 없음)를 보면 2.x 코드구나 하고 넘기면 돼요.
 
 ### 특징과 장점
 
@@ -66,20 +80,32 @@ public class Main {
 print("Hello")
 ```
 
-Java는 클래스와 main 함수라는 틀을 먼저 세워야 해요. 파이썬은 **파일 자체가 프로그램**이라서, 클래스도 main도 없이 첫 줄부터 바로 본론을 써요.
+<Figure>
+  <Boxes
+    row={[
+      { title: "Java", note: "틀부터 세워요", lines: ["클래스 `public class Main`", "그 안에 main 함수", "그 안에야 본론 `System.out.println(\"Hello\")`"] },
+      { arrow: "같은 일" },
+      { title: "Python", note: "파일 자체가 프로그램", tone: "blue", lines: ["`print(\"Hello\")` 한 줄", "클래스도 main도 없이 첫 줄부터 본론"] },
+    ]}
+  />
+</Figure>
 
-## 2. 파이썬은 어떻게 실행될까
+Java는 클래스와 main 함수라는 틀을 먼저 세워야 해요. 파이썬은 **파일 자체가 프로그램**이라서 첫 줄부터 바로 본론을 써요.
+
+## 3. 실행 방식: 파이썬은 동시통역사
 
 ### 번역이 필요해요
 
 컴퓨터는 파이썬을 몰라요. 누군가 컴퓨터가 알아듣는 말(기계어)로 번역해 줘야 해요. 번역하는 방식은 두 가지예요.
 
-| 구분 | 컴파일 방식 | 인터프리터 방식 |
-| --- | --- | --- |
-| 번역 시점 | 전체를 미리 번역한 뒤 실행 | 실행하면서 차례대로 번역 |
-| 비유 | 책 전체를 번역해서 전달 | 동시통역 |
-| 특징 | 실행 전에 번역 단계가 필요 | 바로 실행해 볼 수 있음 |
-| 예 | C 등 | Python |
+<Figure>
+  <Boxes
+    row={[
+      { title: "컴파일 방식", note: "예: C 등", lines: ["**전체를 미리** 번역한 뒤 실행", "비유: 책 전체를 번역해서 전달", "실행 전에 번역 단계가 필요"] },
+      { title: "인터프리터 방식", note: "예: Python", tone: "blue", lines: ["**실행하면서 차례대로** 번역", "비유: 동시통역", "바로 실행해 볼 수 있음"] },
+    ]}
+  />
+</Figure>
 
 파이썬은 보통 **인터프리터 방식**으로 분류해요. 그래서 파일을 저장하고 곧바로 `python main.py`로 돌려 볼 수 있어요.
 
@@ -87,7 +113,19 @@ Java는 클래스와 main 함수라는 틀을 먼저 세워야 해요. 파이썬
 
 TIL에 "CPython은 내부적으로 바이트코드로 바꾼 뒤 실행한다고 알고 있다"고 적었죠. 맞아요. 직접 확인해 봤어요.
 
-우리가 설치한 파이썬(CPython)은 코드를 바로 기계어로 바꾸지 않고, 먼저 **바이트코드**라는 중간 명령으로 바꿔요. 그걸 파이썬 안의 실행기가 한 줄씩 읽어 돌려요. `dis` 모듈로 바이트코드를 들여다볼 수 있어요.
+우리가 설치한 파이썬(CPython)은 코드를 바로 기계어로 바꾸지 않아요. 먼저 **바이트코드**라는 중간 명령으로 바꾸고, 그걸 파이썬 안의 실행기가 한 줄씩 읽어 돌려요.
+
+<Figure>
+  <Layers
+    layers={[
+      [{ title: "print(a + b)", note: "내가 쓴 코드" }],
+      [{ title: "바이트코드", note: "잘게 쪼갠 중간 명령", tone: "blue", via: "CPython이 먼저 바꿔요", lines: ["`LOAD_NAME`으로 a, b 꺼내기", "`BINARY_OP`로 더하기", "`CALL`로 print 부르기"] }],
+      [{ title: "실행기", note: "파이썬 안에 들어 있어요", tone: "rust", via: "한 줄씩 읽어 돌려요", lines: ["결과를 화면에 출력해요"] }],
+    ]}
+  />
+</Figure>
+
+`dis` 모듈로 바이트코드를 들여다볼 수 있어요.
 
 ```bash
 python -c "import dis; dis.dis('print(a + b)')"
@@ -117,13 +155,21 @@ find . -type f
 
 다음 실행 때 다시 바꾸지 않으려고 저장해 둔 캐시예요. 그래서 uv가 만든 `.gitignore`에 `__pycache__/`와 `*.py[oc]`가 들어 있어요. 내가 쓴 코드가 아니니 커밋하지 않아요.
 
-정리하면 "미리 통째로 기계어로 번역"은 안 하니 인터프리터 방식으로 부르는 게 맞고, 속에서는 바이트코드라는 중간 단계를 거쳐요.
+정리하면 "미리 통째로 기계어로 번역"은 안 하니 인터프리터 방식으로 부르는 게 맞아요. 속에서는 바이트코드라는 중간 단계를 거쳐요.
 
 </TwistBox>
 
-### REPL: 인터프리터를 직접 써 보기
+### REPL: 인터프리터와 한 줄씩 대화하기
 
-REPL은 **Read, Eval, Print, Loop**의 앞 글자예요. 입력을 읽고(Read), 실행하고(Eval), 결과를 출력하는(Print) 일을 반복(Loop)해요.
+REPL은 **Read, Eval, Print, Loop**의 앞 글자예요. 입력을 읽고, 실행하고, 결과를 출력하는 일을 계속 되풀이해요.
+
+<Figure>
+  <Trail
+    label="`>>>` 한 줄마다:"
+    values={["Read (읽기)", "Eval (실행)", "Print (출력)", "Loop (다시 Read로)"]}
+    tone="blue"
+  />
+</Figure>
 
 터미널에서 `python`을 입력하면 `>>>` 화면이 열려요. 한 줄 넣으면 결과가 바로 나와요.
 
@@ -137,9 +183,9 @@ Hello
 
 나갈 때는 `exit()`예요. 1회차에 배운 터미널과 비슷하게, 여기도 "입력하면 바로 반응하는" 대화창이에요.
 
-## 3. 개발 환경 용어 정리
+## 4. 패키지와 가상환경: 프로젝트마다 공구함을 따로 둔다
 
-다음 장의 uv를 이해하려면 이 세 단어부터 알아야 해요.
+다음 절의 uv를 이해하려면 이 세 단어부터 알아야 해요.
 
 | 용어 | 뜻 | 예 |
 | --- | --- | --- |
@@ -149,9 +195,21 @@ Hello
 
 프로젝트마다 필요한 패키지와 버전이 달라요. A 프로젝트는 pandas 1.x, B 프로젝트는 pandas 2.x가 필요할 수 있어요.
 
-가상환경이 없으면 한 컴퓨터에 전부 섞여서 설치되고, 한쪽 버전을 올리면 다른 프로젝트가 깨질 수 있어요. 그래서 **프로젝트마다 설치 공간을 나눠요.** 방마다 따로 쓰는 공구함이라고 생각하면 돼요.
+가상환경이 없으면 한 컴퓨터에 전부 섞여서 설치돼요. 한쪽 버전을 올리면 다른 프로젝트가 깨질 수 있어요.
 
-## 4. uv로 파이썬 환경 만들기
+<Figure>
+  <Boxes
+    row={[
+      { title: "가상환경 없이", tone: "red", lines: ["한 컴퓨터에 전부 섞여 설치", "pandas는 한 버전만 있을 수 있어요", "B를 위해 2.x로 올리면 A가 깨져요"] },
+      { arrow: "프로젝트마다 나누면" },
+      { title: "가상환경으로", tone: "ok", lines: ["A 프로젝트의 `.venv`: pandas 1.x", "B 프로젝트의 `.venv`: pandas 2.x", "서로 부딪히지 않아요"] },
+    ]}
+  />
+</Figure>
+
+그래서 **프로젝트마다 설치 공간을 나눠요.** 방마다 따로 쓰는 공구함이라고 생각하면 돼요.
+
+## 5. uv: 공구 여러 개를 하나로 합쳤다
 
 ### uv란
 
@@ -161,7 +219,7 @@ TIL에 남긴 질문이 있었죠. "패키지, 버전, 의존성, 가상환경�
 
 ### 기존 방식과 비교
 
-예전에는 일마다 도구를 따로 썼어요. uv는 그걸 하나로 합쳤어요. 표의 명령어는 5장부터 하나씩 직접 돌려 봐요.
+예전에는 일마다 도구를 따로 썼어요. uv는 그걸 하나로 합쳤어요. 표의 명령어는 6절부터 하나씩 직접 돌려 봐요.
 
 | 작업 | 기존 방식 | uv |
 | --- | --- | --- |
@@ -190,13 +248,15 @@ winget install --id=astral-sh.uv -e
 uv --version
 ```
 
-`winget install uv`처럼 이름만 써도 되지만, 이름이 비슷한 다른 패키지와 헷갈릴 수 있어요. **ID(`astral-sh.uv`)와 `-e`(정확히 일치)** 로 지정하는 게 안전해요.
+<Note title="설치는 ID로 정확히, 안 잡히면 터미널을 새로">
+
+`winget install uv`처럼 이름만 써도 되지만, 이름이 비슷한 다른 패키지와 헷갈릴 수 있어요. **ID**(`astral-sh.uv`)와 `-e`(정확히 일치)로 지정하는 게 안전해요.
 
 설치한 뒤 `uv --version`이 안 나오면 **터미널을 새로 열어서** 다시 확인해요. 새 프로그램 위치를 터미널이 알려면 다시 열어야 해요.
 
-## 5. 프로젝트 시작하기
+</Note>
 
-### 명령어 세 개로 시작해요
+## 6. 프로젝트 시작: 명령어 세 개면 된다
 
 ```bash
 uv init --no-package
@@ -204,7 +264,17 @@ uv python pin 3.12
 uv add fastapi
 ```
 
-빈 폴더 `my-project`에서 하나씩 돌려 봤어요.
+빈 폴더 `my-project`에서 하나씩 돌려 봤어요. 세 줄이 각각 무엇을 만드는지 먼저 보면 이래요.
+
+<Figure>
+  <Seq
+    steps={[
+      { title: "`uv init --no-package`", body: "프로젝트 뼈대를 만들어요. `main.py`, `pyproject.toml`, `.python-version`, `README.md`, `.gitignore`, `.git`이 생겨요." },
+      { title: "`uv python pin 3.12`", body: "`.python-version`에 `3.12`를 적어요. 이 프로젝트가 쓸 파이썬 버전이에요." },
+      { title: "`uv add fastapi`", body: "`.venv`를 만들어 설치하고, `pyproject.toml`과 `uv.lock`에 기록해요." },
+    ]}
+  />
+</Figure>
 
 ### uv init --no-package: 프로젝트 만들기
 
@@ -285,9 +355,31 @@ uv add fastapi
 
 fastapi 하나를 달라고 했는데 11개가 설치됐어요. fastapi가 동작하려면 pydantic, starlette 같은 패키지가 필요하고, 그것들이 또 다른 패키지를 필요로 해서예요. 이것도 의존성이에요.
 
+<Figure>
+  <Layers
+    layers={[
+      [{ title: "fastapi", note: "내가 달라고 한 것", tone: "blue" }],
+      [
+        { title: "pydantic", via: "fastapi가 필요로 해요", tone: "rust" },
+        { title: "starlette", via: "fastapi가 필요로 해요", tone: "rust" },
+      ],
+      [
+        { title: "annotated-types 등", via: "pydantic이 또 필요로 해요" },
+        { title: "anyio 등", via: "starlette이 또 필요로 해요" },
+      ],
+    ]}
+  />
+</Figure>
+
+<Hint>
+
+`uv tree`를 치면 이 줄기를 직접 볼 수 있어요. 모두 합쳐 11개가 `.venv`에 깔렸어요.
+
+</Hint>
+
 FastAPI는 **파이썬으로 API 서버를 만드는 라이브러리**예요. 나중에 수업에서 서버를 만들 때 써요.
 
-## 6. pyproject.toml과 uv.lock 맞추기
+## 7. pyproject.toml과 uv.lock: 장보기 목록과 영수증
 
 ### 두 파일은 하는 일이 달라요
 
@@ -308,14 +400,21 @@ version = "0.162.0"
 source = { registry = "https://pypi.org/simple" }
 ```
 
-| 파일 | 담는 것 | 비유 |
-| --- | --- | --- |
-| `pyproject.toml` | 내가 필요하다고 **선언**한 것(라이브러리와 허용 버전 범위) | 장보기 목록 "우유 1L 이상" |
-| `uv.lock` | 실제로 **선택된 정확한 버전**(딸려 온 패키지까지 전부) | 영수증 "서울우유 1L, 이 매장" |
+`pyproject.toml`은 내가 필요하다고 **선언**한 것이에요. `uv.lock`은 실제로 **선택된 정확한 버전**이에요. 딸려 온 패키지까지 전부 적혀 있어요.
+
+<Figure>
+  <Boxes
+    row={[
+      { title: "pyproject.toml", note: "장보기 목록: \"우유 1L 이상\"", tone: "rust", lines: ["`\"fastapi>=0.162.0\"`", "라이브러리와 허용 버전 **범위**"] },
+      { arrow: "uv가 골라서 적어요" },
+      { title: "uv.lock", note: "영수증: \"서울우유 1L, 이 매장\"", tone: "blue", lines: ["`fastapi` `0.162.0`", "딸려 온 패키지까지 **정확한 버전** 전부"] },
+    ]}
+  />
+</Figure>
 
 `>=0.162.0`은 "0.162.0 이상이면 괜찮아"라는 범위예요. 시간이 지나 더 새 버전이 나오면 범위 안에서 다른 버전이 깔릴 수 있어요. lock은 그걸 막고 **지금 이 조합**을 정확히 적어 둬요.
 
-둘이 어긋나면 "원하는 것"과 "설치되는 것"이 달라져요. 맞춰 두면 팀원, 다른 컴퓨터, 서버가 **같은 버전**으로 설치되어 버전 차이로 코드가 깨지는 일을 막아요. **두 파일 모두 Git에 커밋해요.**
+둘이 어긋나면 "원하는 것"과 "설치되는 것"이 달라져요. 맞춰 두면 팀원, 다른 컴퓨터, 서버가 **같은 버전**으로 설치해요. 버전 차이로 코드가 깨지는 일을 막아요. **두 파일 모두 Git에 커밋해요.**
 
 ### uv sync: 목록대로 맞추기
 
@@ -334,7 +433,19 @@ uv sync
 
 ### --locked와 --frozen: 어긋났을 때의 태도
 
-일부러 어긋나게 만들어 봤어요. `pyproject.toml`의 목록에 `"sniffio"`를 손으로 한 줄 넣고, lock은 그대로 뒀어요.
+일부러 어긋나게 만들어 봤어요. `pyproject.toml`의 목록에 `"sniffio"`를 손으로 한 줄 넣고, lock은 그대로 뒀어요. 같은 상태에서 세 가지로 쳐 보면 반응이 달라요.
+
+<Figure label="pyproject.toml에만 sniffio를 적고 uv.lock은 그대로 둔 상태">
+  <FanOut
+    call="uv sync [옵션]"
+    tone="blue"
+    targets={[
+      { title: "`uv sync`", result: "맞춤", why: "lock을 다시 만들고 `sniffio==1.3.1`을 설치해요" },
+      { title: "`uv sync --locked`", result: "멈춤", why: "두 파일이 어긋나서 에러로 멈춰요" },
+      { title: "`uv sync --frozen`", result: "무시", why: "lock만 보고 설치해요. pyproject 변경은 안 봐서 sniffio가 안 깔려요" },
+    ]}
+  />
+</Figure>
 
 ```bash
 uv sync --locked
@@ -344,7 +455,7 @@ uv sync --locked
 # hint: To update the lockfile, run `uv lock`.
 ```
 
-`--locked`는 **두 파일이 어긋나 있으면 에러**를 내요. "lock을 고치지 말고 확인만 해"라는 뜻이라, 서버에 배포할 때처럼 몰래 버전이 바뀌면 안 되는 곳에서 써요.
+`--locked`는 **두 파일이 어긋나 있으면 에러**를 내요. "lock을 고치지 말고 확인만 해"라는 뜻이에요. 서버에 배포할 때처럼 몰래 버전이 바뀌면 안 되는 곳에서 써요.
 
 ```bash
 uv sync --frozen
@@ -371,7 +482,7 @@ uv sync
 | `uv sync --locked` | 에러로 멈춤 |
 | `uv sync --frozen` | lock만 보고 설치(pyproject 변경은 무시) |
 
-## 7. 코드 실행과 가상환경
+## 8. 실행과 가상환경: uv run이 대신 들어가 준다
 
 ### 가장 간편한 방법: uv run
 
@@ -406,13 +517,22 @@ source .venv/Scripts/activate
 deactivate
 ```
 
-### source 명령어
+### source: 지금 터미널에서 실행하기
 
 `source`는 **파일 안의 명령어를 지금 쓰고 있는 터미널에서 그대로 실행**하는 명령어예요.
 
-`source` 없이 실행하면 새로운 프로세스(잠깐 열린 다른 터미널)에서 돌고, 끝나면 바뀐 것도 같이 사라져요. 활성화는 **지금 터미널의 설정(`PATH` 등)** 을 바꿔야 해서 `source`를 써요.
+`source` 없이 실행하면 새로운 프로세스(잠깐 열린 다른 터미널)에서 돌아요. 끝나면 바뀐 것도 같이 사라져요. 활성화는 **지금 터미널의 설정**(`PATH` 등)을 바꿔야 해서 `source`를 써요.
 
-직접 `source` 없이 돌려 봤더니 스크립트가 알아서 막아요.
+<Figure>
+  <Boxes
+    row={[
+      { title: "bash .venv/Scripts/activate", tone: "red", lines: ["새 프로세스에서 돌고 끝나면 사라져요", "지금 터미널은 그대로", "스크립트가 알아서 막아요"] },
+      { title: "source .venv/Scripts/activate", tone: "ok", lines: ["**지금 터미널**에서 그대로 실행", "`PATH`가 바뀐 채로 남아요", "프롬프트에 `(my-project)`가 붙어요"] },
+    ]}
+  />
+</Figure>
+
+직접 `source` 없이 돌려 봤더니 정말 막혔어요.
 
 ```bash
 bash .venv/Scripts/activate
@@ -427,7 +547,13 @@ bash .venv/Scripts/activate
 | 명령 프롬프트(cmd) | `activate.bat` |
 | PowerShell | `Activate.ps1` |
 
-uv가 만든 `.venv`에서는 PowerShell용이 `activate.ps1`(소문자)로 보여요. Windows는 파일 이름 대소문자를 구분하지 않아서 어느 쪽으로 쳐도 돼요. Mac이나 Linux에서는 `Scripts`가 아니라 `.venv/bin/activate`예요.
+<Note title="파일 이름의 대소문자와 Mac, Linux" tone="info">
+
+uv가 만든 `.venv`에서는 PowerShell용이 `activate.ps1`(소문자)로 보여요. Windows는 파일 이름 대소문자를 구분하지 않아서 어느 쪽으로 쳐도 돼요.
+
+Mac이나 Linux에서는 `Scripts`가 아니라 `.venv/bin/activate`예요.
+
+</Note>
 
 ### 활성화됐는지 확인하기
 
@@ -462,7 +588,7 @@ which python
 
 정답은 "fastapi를 못 찾을 수 있다"예요. fastapi는 `.venv`에만 설치됐는데, 활성화하지 않은 `python`은 시스템 파이썬이니까요. 그래서 `uv run main.py`로 실행하거나, 먼저 활성화해요.
 
-## 8. 주피터 노트북
+## 9. 주피터 노트북: 코드, 결과, 설명을 한 문서에
 
 ### 주피터(Jupyter)란
 
@@ -470,8 +596,15 @@ which python
 
 노트북은 **셀(cell)** 단위로 이뤄져요.
 
-- **코드 셀**: 파이썬 코드를 쓰고 실행하면 결과가 바로 아래에 나와요.
-- **마크다운 셀**: 설명이나 메모를 글로 써요(단축키 `M`으로 바꿔요).
+<Figure>
+  <Boxes
+    row={[
+      { title: "마크다운 셀", note: "단축키 M으로 바꿔요", lines: ["설명이나 메모를 글로 써요"] },
+      { title: "코드 셀", note: "단축키 Y로 바꿔요", tone: "blue", lines: ["파이썬 코드를 쓰고 실행해요", "결과가 바로 아래에 나와요"] },
+    ]}
+    below={[{ title: "노트북 한 권 (.ipynb)", note: "한 문서에 셀이 위아래로 이어져요. 앞 셀에서 만든 변수를 뒤 셀에서 써요", dashed: true }]}
+  />
+</Figure>
 
 TIL에 "이름이 Julia, Python, R에서 왔다고 알고 있는데 확인하지 못했다"고 적었죠. Project Jupyter도 이름이 처음 지원한 세 언어 **Ju**lia, **Py**thon, **R**에서 왔다고 설명해요. 맞게 알고 있었어요.
 
@@ -482,10 +615,13 @@ TIL에 "이름이 Julia, Python, R에서 왔다고 알고 있는데 확인하지
 - **앞 셀의 결과가 메모리에 남아요.** 앞 셀에서 만든 변수를 뒤 셀에서 써요. 데이터 불러오기처럼 오래 걸리는 일을 매번 다시 안 하고 뒤쪽만 다시 돌려요.
 - **데이터 분석과 머신러닝 실험에 많이 써요.**
 
-### 주의할 점
+<Note title="셀 실행 순서가 뒤섞이면 헷갈려요">
 
-- 셀을 실행한 **순서가 뒤섞이면** 변수 값이 달라져 결과가 헷갈려요. 이상하면 위에서부터 다시 실행해 봐요.
-- 실제 서비스로 돌아가는 코드는 보통 `.py` 파일로 써요. 노트북은 실험과 학습 쪽에 더 많이 써요.
+셀을 실행한 **순서가 뒤섞이면** 변수 값이 달라져 결과가 헷갈려요. 이상하면 위에서부터 다시 실행해 봐요.
+
+실제 서비스로 돌아가는 코드는 보통 `.py` 파일로 써요. 노트북은 실험과 학습 쪽에 더 많이 써요.
+
+</Note>
 
 ### VS Code에서 쓰기
 
@@ -496,9 +632,19 @@ TIL에 "이름이 Julia, Python, R에서 왔다고 알고 있는데 확인하지
 uv add ipykernel
 ```
 
-3. `.ipynb` 파일에서 **Select Kernel → Python Environments → 내 프로젝트(`.venv`)** 를 골라요.
+3. `.ipynb` 파일에서 **Select Kernel**, **Python Environments**, **내 프로젝트**(`.venv`)를 차례로 골라요.
 
-`ipykernel`은 노트북이 파이썬 코드를 실행할 때 쓰는 **실행 엔진(커널)** 이에요. 커널을 `.venv`로 골라야 `uv add`로 설치한 패키지를 노트북에서 import할 수 있어요.
+`ipykernel`은 노트북이 파이썬 코드를 실행할 때 쓰는 **실행 엔진**(커널)이에요. 커널을 `.venv`로 골라야 `uv add`로 설치한 패키지를 노트북에서 import할 수 있어요.
+
+<Figure>
+  <Layers
+    layers={[
+      [{ title: "노트북 (.ipynb)", note: "VS Code의 Jupyter 확장으로 열어요", tone: "blue", lines: ["셀을 실행하면 코드를 커널에 보내요"] }],
+      [{ title: "커널 (ipykernel)", via: "코드를 보내 실행해요", tone: "rust", lines: ["파이썬 코드를 실제로 돌리는 엔진"] }],
+      [{ title: ".venv", via: "Select Kernel에서 이걸 골라야 해요", tone: "amber", dashed: true, lines: ["`uv add`로 설치한 패키지가 여기 있어요", "다른 환경을 고르면 import가 안 돼요"] }],
+    ]}
+  />
+</Figure>
 
 <TwistBox title="개발할 때만 쓰는 패키지는 --dev로">
 
@@ -541,8 +687,12 @@ dev = [
 | `Shift + Enter` | 셀 실행 후 다음 셀로 이동 | 공통 |
 | `Alt + Enter` | 셀 실행 후 아래에 새 셀 추가 | 공통 |
 
+<Note title="단축키가 안 먹을 때">
+
 - `M`이 안 먹을 때: 편집 모드가 아닌지(`Esc`), 셀이 선택되어 있는지, 한영이 **영문**인지 확인해요.
 - 셀 안에서 `Ctrl + Enter`는 줄 바꿈이 아니라 **셀 실행**이에요.
+
+</Note>
 
 ## 오늘 꼭 기억할 주의점
 

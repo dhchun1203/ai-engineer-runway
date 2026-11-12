@@ -34,7 +34,7 @@ src/content/class-lessons/NN-<주제 영문 kebab>/
    - module: `src/content/modules.ts`의 모듈 id 중 그날 수업이 실제로 속한 것(예: Git은 `1-2`, Python 기초는 `1-3`). 애매하면 그날 가장 큰 주제를 따른다.
    - topic: 짧은 주제 이름(`Git`, `Python`, `SQL`). 같은 주제는 앞 회차와 같은 글자로 쓴다(`grep -h "^topic:" src/content/class-lessons/*/index.mdx`).
    - preStudy: 개강 전에 읽은 정규 레슨 중 **내용이 실제로 같은 것만** slug로(`src/content/lessons/`를 grep해서 확인). 같은 모듈이라도 주제가 다르면 넣지 않는다(예: Git 수업에 생성형 AI 레슨). 없으면 `[]`.
-3. **본문 `index.mdx`** (eli5 톤, 앞 회차 본문과 같은 구성)
+3. **본문 `index.mdx`** (그림 중심 문체, 본보기는 12회차 `12-python-shopping-cart-project/index.mdx`)
    ```mdx
    ---
    title: "..."
@@ -47,8 +47,12 @@ src/content/class-lessons/NN-<주제 영문 kebab>/
    preStudy: ["1-2-git-branch-and-pr"]
    ---
    ```
-   - 도입 두 문단 → 순서 표(순서, 내용, 한 줄로) → `## 1. ...`부터 번호 붙은 절 → `## 오늘 꼭 기억할 주의점`.
-   - 쓸 수 있는 컴포넌트: `<TwistBox title="...">`, `<PredictPrompt />`(앞 회차 사용례 참고).
+   - 짧은 도입(두세 문단, 끝에 퀴즈 안내 한 줄) → `## 1. ...`부터 번호 붙은 절 → `## 오늘 꼭 기억할 주의점`. 순서 표는 두지 않는다(위쪽 목차 막대가 대신한다). 전체 그림이 있는 날은 1절을 그 그림으로 연다.
+   - 절 제목은 요점을 말하는 문장이나 비유로 쓴다("담기: 문지기 두 명을 통과해야 들어간다").
+   - 개념 하나 = 짧은 글 한두 문단 + 바로 아래 `<Figure>` 그림 한 장 + 필요하면 `<Hint>`. 구조, 흐름, 상태 변화, 계산이 있는 곳에 그림을 둔다. 예시 값은 그날 수업의 실제 값(파일 이름, 숫자, 출력)으로.
+   - 그림 부품(`src/components/lesson-figures/figures.tsx`): Layers, Boxes, Trail, Blueprint, GateFlow, DictView, Relay, Seq, SharedRef, Inherit, FanOut. 고칠 거리는 `<Note title="...">`로 모은다. 그 밖에 `<TwistBox title="...">`, `<PredictPrompt />`.
+   - 직접 눌러 보는 것이 도움이 되면 레슨 전용 시뮬레이터 하나를 `src/components/lesson-figures/`에 만들고 `lesson-figure-components.ts`에 등록한다(본보기 `cart-simulator.tsx`, 출력은 실제 출력 글자 그대로).
+   - 명령어 목록, 옵션 같은 참조용 내용은 표로 두고, 개념 설명용 표는 그림으로 바꾼다.
    - 어제 배운 것과 이어지는 곳은 "어제 배운 X가 여기서 쓰여요"처럼 한 줄로 잇는다.
 4. **복습 데이터 `review.yml`** (앞 회차 파일을 본보기로)
    - 복습 체크리스트는 두지 않는다(2026-11-02 폐지). 회차 완료는 퀴즈를 다 풀었는지로 정해지므로, 원본의 복습 체크 항목은 퀴즈 문항으로 녹인다.

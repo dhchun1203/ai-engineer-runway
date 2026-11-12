@@ -2,7 +2,7 @@
 title: "Python 기초: 클래스와 인스턴스"
 session: 9
 date: "2026-11-05"
-summary: "class로 설계도를 만들고 인스턴스를 찍어 내요. 생성자 __init__, self, 속성과 메서드, __str__과 __repr__을 배우고, 은행 계좌와 쇼핑 카트를 클래스로 만들어 봐요."
+summary: "class로 설계도를 만들고 인스턴스를 찍어 내요. 생성자 __init__, self, 속성과 메서드, __str__과 __repr__을 그림으로 따라가고, 은행 계좌와 쇼핑 카트를 클래스로 만들어 봐요. 시뮬레이터로 인스턴스마다 값이 따로 남는 모습도 눌러 봐요."
 slug: "09-python-class-instance"
 module: "1-3"
 topic: "Python"
@@ -13,22 +13,11 @@ preStudy: []
 
 오늘은 데이터와 동작을 한 덩어리로 묶는 **클래스**를 배웠어요. 클래스는 설계도이고, 그 설계도로 찍어 낸 것이 **인스턴스**예요. 마지막에 은행 계좌와 쇼핑 카트를 클래스로 만들어 봐요.
 
-| 순서 | 내용 | 한 줄로 |
-| --- | --- | --- |
-| 1 | 클래스와 인스턴스 | 붕어빵 틀과 붕어빵 |
-| 2 | 생성자 `__init__` | 인스턴스가 생길 때 자동으로 실행 |
-| 3 | `self` | 점 앞의 그 인스턴스 |
-| 4 | 속성과 메서드 | 데이터는 속성, 동작은 메서드 |
-| 5 | 실습: 은행 계좌 | 입금, 출금, 잔액 부족 |
-| 6 | `__str__`과 `__repr__` | 출력할 때 보이는 모양 |
-| 7 | 실습: 쇼핑 카트 | 클래스 두 개가 함께 일하기 |
-| 8 | 생성자는 왜 있을까 | 오늘 셀프 체크 질문의 답 |
-
 레슨 끝에 확인 퀴즈가 있어요. 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
 
-## 1. 클래스(Class)와 인스턴스(Instance)
+## 1. 클래스는 붕어빵 틀, 인스턴스는 붕어빵
 
-클래스는 **붕어빵 틀**, 인스턴스는 그 틀로 찍어 낸 **붕어빵**이에요. 틀은 하나여도 붕어빵은 몇 개든 만들 수 있고, 붕어빵마다 속 재료가 달라도 돼요.
+클래스(Class)는 **붕어빵 틀**, 인스턴스(Instance)는 그 틀로 찍어 낸 **붕어빵**이에요. 틀은 하나여도 붕어빵은 몇 개든 만들 수 있고, 붕어빵마다 속 재료가 달라도 돼요.
 
 ```python
 # 클래스 정의(선언)
@@ -68,11 +57,17 @@ False
 (위와 다른 id 값)
 ```
 
-| 비유 | 파이썬 |
-| --- | --- |
-| 붕어빵 틀 | 클래스 `User` (설계도) |
-| 붕어빵 | 인스턴스 `user_a`, `user_b` |
-| 틀에 넣는 속 재료 | `User("손흥민")`에서 넘기는 값 |
+틀은 클래스 `User`(설계도)이고, 찍어 낸 붕어빵은 인스턴스 `user_a`, `user_b`예요. 틀에 넣는 속 재료는 `User("손흥민")`에서 넘기는 값이에요.
+
+<Figure>
+  <Blueprint
+    template={{ title: "class User (붕어빵 틀)", lines: ["`__init__(self, name)`: 받은 이름을 `self.name`에 담아요", "`show()`: `회원 이름 : ...` 문자열을 돌려줘요"] }}
+    cards={[
+      { badge: "user_a", lines: ["속 재료: `\"손흥민\"`", "`user_a.name`은 손흥민", "`user_a.show()`는 회원 이름 : 손흥민"] },
+      { badge: "user_b", lines: ["속 재료: `\"이강인\"`", "`user_b.name`은 이강인", "`user_b.show()`는 회원 이름 : 이강인"] },
+    ]}
+  />
+</Figure>
 
 - `class User:`로 클래스를 선언해요. 콜론과 들여쓰기가 범위인 건 어제 배운 `def`와 같아요.
 - 클래스 이름은 단어 첫 글자를 대문자로 붙여 써요(`User`, `BankAccount`). 이런 표기를 **PascalCase**라고 해요. 함수와 변수의 snake_case와 일부러 다르게 써서 이름만 봐도 클래스인지 알 수 있어요.
@@ -87,7 +82,7 @@ False
 
 `type(user_a)`는 `<class '__main__.User'>`예요. `__main__`은 "지금 직접 실행한 파일"이라는 뜻이라, 이 파일에서 만든 `User` 클래스라는 말이에요.
 
-## 2. 생성자 `__init__`
+## 2. 생성자 `__init__`: 태어나는 순간 저절로 불린다
 
 `__init__`은 **인스턴스가 만들어지는 순간 파이썬이 알아서 불러 주는 메서드**예요. 이런 메서드를 생성자(Constructor)라고 불러요. 이름 앞뒤에 밑줄이 두 개씩 붙어요.
 
@@ -106,6 +101,16 @@ u = User("손흥민")
 
 `__init__`을 직접 부르지 않았는데 출력이 나와요. `User("손흥민")`이 인스턴스를 만들면서 `__init__`을 불렀기 때문이에요.
 
+<Figure label='u = User("손흥민") 한 줄에서 일어나는 일'>
+  <Relay
+    legs={[
+      { fn: "User(\"손흥민\")", desc: "빈 인스턴스가 하나 만들어져요", value: "새 붕어빵" },
+      { fn: "__init__ 자동 호출", desc: "넘긴 값이 매개변수 `name`으로 들어가요", ex: "print(\"생성:\", name)", value: "생성: 손흥민" },
+      { fn: "self.name = name", desc: "받은 값을 **인스턴스 안에** 담아 둬요", value: "u.name = \"손흥민\"" },
+    ]}
+  />
+</Figure>
+
 - `User("손흥민")`에 넘긴 `"손흥민"`이 `__init__`의 `name`으로 들어가요.
 - `self.name = name`은 받은 값을 **인스턴스 안에 담아 두는** 줄이에요. 이렇게 담아 둔 값을 인스턴스 변수(속성)라고 해요. 인스턴스마다 자기 `name`을 따로 가져요.
 - 생성자가 받는 값을 빠뜨리면 인스턴스가 만들어지지 않아요.
@@ -117,7 +122,7 @@ User()
 
 어제 배운 함수의 매개변수 규칙이 그대로예요. 필요한 인수가 모자라면 `TypeError`가 나요.
 
-## 3. `self`: 점 앞의 그 인스턴스
+## 3. `self`: 점 앞의 그 인스턴스가 들어온다
 
 메서드의 첫 매개변수 `self`는 **지금 메서드를 부른 인스턴스 자기 자신**이에요. `monitor.display_info()`라고 부르면 점 앞의 `monitor`가 `self`로 들어가요.
 
@@ -144,6 +149,13 @@ monitor.display_info()
 
 `id(monitor)`와 메서드 안의 `id(self)`가 같은 숫자예요. 이름만 다를 뿐 같은 객체라는 증거예요.
 
+<Figure>
+  <SharedRef
+    names={["monitor (밖에서 부르는 이름)", "self (display_info 안의 이름)"]}
+    target={{ title: "Monitor 인스턴스", lines: ["`id(monitor)`와 `id(self)`가 같은 숫자", "`self.resolution = ...`은 이 상자에 값을 넣어요"] }}
+  />
+</Figure>
+
 ### 속성은 그 줄이 실행된 뒤에 생겨요
 
 이 예제는 `__init__` 없이 메서드 안에서 속성을 만들어요. 그래서 `display_info()`를 부르기 전에는 속성이 아직 없어요.
@@ -155,6 +167,16 @@ print(monitor.resolution)
 ```
 
 `self.resolution = ...` 줄이 실행돼야 비로소 `resolution`이 생겨요. 이 문제는 8절에서 생성자가 왜 필요한지 이야기할 때 다시 나와요.
+
+<Figure>
+  <Boxes
+    row={[
+      { title: "Monitor() 직후", tone: "red", lines: ["속성이 하나도 없어요", "`monitor.resolution`은 `AttributeError`"] },
+      { arrow: "`monitor.display_info()`" },
+      { title: "display_info() 실행 뒤", tone: "ok", lines: ["`resolution = \"1920X1080\"`", "`size = \"27인치\"`"] },
+    ]}
+  />
+</Figure>
 
 <TwistBox title="메서드에 self를 빼먹으면 어떻게 될까요?">
 
@@ -173,7 +195,7 @@ Bad().hi()
 
 </TwistBox>
 
-## 4. 속성(Attribute)과 메서드(Method)
+## 4. 속성은 가진 것, 메서드는 하는 일
 
 ```python
 class SmartPhone:
@@ -203,12 +225,20 @@ phone_b = SmartPhone("갤럭시")
 배터리 충전 완료 : 100%
 ```
 
-| 이름 | 무엇 | 예 |
-| --- | --- | --- |
-| 속성 (attribute) | 인스턴스가 가진 데이터 | `self.model`, `self.battery` |
-| 메서드 (method) | 인스턴스가 할 수 있는 동작 | `charge()` |
+**속성**(attribute)은 인스턴스가 가진 데이터예요(`self.model`, `self.battery`). **메서드**(method)는 인스턴스가 할 수 있는 동작이에요(`charge()`).
 
 메서드는 **클래스 안에 만든 함수**예요. 어제 배운 `def`를 클래스 안에 들여 쓰고, 첫 매개변수로 `self`를 받는다는 점만 달라요.
+
+<Figure>
+  <Blueprint
+    template={{ title: "class SmartPhone", lines: ["속성(데이터): `model`, `battery`", "`battery`는 인수 없이 50에서 시작", "메서드(동작): `charge(amount)`, 100을 넘으면 100으로"] }}
+    cards={[
+      { badge: "phone_a", lines: ["model: 아이폰", "battery: 100", "`charge(30)`을 두 번 불렀어요"] },
+      { badge: "phone_b", lines: ["model: 갤럭시", "battery: 50", "한 번도 충전 안 했어요"] },
+    ]}
+    trail={{ label: "`phone_a.battery` 변화:", values: ["50", "80 (충전 중)", "110이라 100으로 맞춤 (충전 완료)"] }}
+  />
+</Figure>
 
 - `self.battery = 50`: 인수로 받지 않은 속성도 만들 수 있어요. 모든 인스턴스가 `50`에서 시작해요.
 - `charge(30)` 첫 번째: 50 + 30 = `80`이에요. 100을 넘지 않아 `else`로 가요.
@@ -217,7 +247,7 @@ phone_b = SmartPhone("갤럭시")
 
 `phone_b`는 새 인스턴스라 배터리가 다시 `50`에서 시작해요. 직접 실행하면 `phone_a.battery`는 `100`, `phone_b.battery`는 `50`이에요. 붕어빵 하나를 베어 물어도 다른 붕어빵은 그대로인 것과 같아요.
 
-## 5. 실습: 은행 계좌 클래스
+## 5. 은행 계좌: 잔액이 모자라면 먼저 막고 나간다
 
 ```python
 class BankAccount:
@@ -270,25 +300,45 @@ print([account_a, account_c])
 [예금주 : 김민지, 잔액: 100,000원, 예금주 : 홍길동, 잔액: 200,000원]
 ```
 
-### 어떻게 흐르나
+`withdraw`는 문지기 하나를 먼저 세워요. 잔액이 모자라면 메시지만 찍고 `return`으로 바로 끝나요. 아래 `self.balance -= amount`까지 가지 않으니 잔액은 그대로예요.
 
-| 줄 | 동작 | 잔액 |
-| --- | --- | --- |
-| `BankAccount("김민지", 100000)` | 계좌 생성 | 100,000 |
-| `deposit(500000)` | 입금 | 600,000 |
-| `withdraw(1000000)` | 잔액 부족 메시지, `return`으로 끝남 | 600,000 |
-| `withdraw(200000)` | 출금 | 400,000 |
-| `withdraw(300000)` | 출금 | 100,000 |
+<Figure label="withdraw(amount)">
+  <GateFlow
+    gates={[
+      { q: "잔액이 출금액보다 적은가?", code: "self.balance < amount", out: "`출금 잔액이 부족합니다. ...` 찍고 값 없이 `return` (그래서 `None`)" },
+    ]}
+    pass={{ text: "잔액에서 빼고 출금 후 잔액을 돌려주기", code: "self.balance -= amount, return self.balance" }}
+  />
+</Figure>
 
-- **먼저 막고 나가기:** `withdraw`는 잔액이 모자라면 메시지만 찍고 `return`으로 바로 끝나요. 아래 `self.balance -= amount`까지 가지 않으니 잔액은 그대로예요. 어제 나누기 전에 0인지 먼저 검사하고 `return`으로 내보낸 것과 같은 모양이에요.
-- **Pseudo Code:** 코드를 치기 전에 "잔액 확인" 같은 할 일을 주석으로 먼저 적어 두는 것을 의사 코드(Pseudo Code)라고 해요. 주석을 보며 한 줄씩 코드로 바꾸면 길을 잃지 않아요.
+`account_a`의 잔액은 줄마다 이렇게 바뀌어요.
+
+<Figure label="account_a.balance">
+  <Trail
+    values={["100,000 (계좌 생성)", "600,000 (deposit(500000) 입금)", "600,000 (withdraw(1000000) 부족, return으로 끝)", "400,000 (withdraw(200000))", "100,000 (withdraw(300000))"]}
+  />
+</Figure>
+
+- **먼저 막고 나가기**: 어제 나누기 전에 0인지 먼저 검사하고 `return`으로 내보낸 것과 같은 모양이에요.
+- **Pseudo Code**: 코드를 치기 전에 "잔액 확인" 같은 할 일을 주석으로 먼저 적어 두는 것을 의사 코드(Pseudo Code)라고 해요. 주석을 보며 한 줄씩 코드로 바꾸면 길을 잃지 않아요.
 - `{self.balance:,}`: 천 단위 쉼표예요. 앞 회차에서 배운 포맷이 여기서 쓰여요.
 
 <PredictPrompt />
 
 `print(f"잔액 : {account_a.withdraw(200000):,}원")`에서 무엇이 먼저 찍힐지 예측해 보세요.
 
-직접 실행하면 `200,000원 출금 완료`가 먼저, `잔액 : 400,000원`이 나중이에요. `print`는 괄호 안의 문장을 다 만든 뒤에 찍어요. 문장을 만들려면 f-string 안의 `withdraw(200000)`부터 실행해야 하고, 그 메서드 안의 `print`가 먼저 돌아요. 그다음 돌려받은 잔액 `400000`이 문장에 들어가요.
+직접 실행하면 `200,000원 출금 완료`가 먼저, `잔액 : 400,000원`이 나중이에요. `print`는 괄호 안의 문장을 다 만든 뒤에 찍어요.
+
+<Figure label='print(f"잔액 : {account_a.withdraw(200000):,}원")'>
+  <Seq
+    steps={[
+      { title: "문장을 만들려고 f-string 안부터 실행해요.", body: "`withdraw(200000)`가 먼저 불려요." },
+      { title: "메서드 안의 print가 먼저 돌아요.", body: "`200,000원 출금 완료`가 찍혀요." },
+      { title: "돌려받은 잔액이 문장에 들어가요.", body: "`return self.balance`의 `400000`이 `:,`로 `400,000`이 돼요." },
+      { title: "그제야 바깥 print가 찍어요.", body: "`잔액 : 400,000원`" },
+    ]}
+  />
+</Figure>
 
 <TwistBox title="잔액이 부족한 출금을 f-string 안에서 부르면?">
 
@@ -307,7 +357,7 @@ TypeError: unsupported format string passed to NoneType.__format__
 
 </TwistBox>
 
-## 6. `__str__`과 `__repr__`
+## 6. `__str__`과 `__repr__`: 혼자 찍힐 때와 리스트 속에서 얼굴이 다르다
 
 둘 다 **객체를 글자로 보여 줄 때 쓰는 모양**을 정하는 메서드예요. 은행 계좌 예제는 두 메서드가 같은 문자열을 돌려줘서 어느 쪽이 쓰였는지 출력만으로는 알 수 없어요. 그래서 일부러 다르게 만들어 봐요.
 
@@ -348,9 +398,26 @@ print(Item("새우깡", 2000))
 # <__main__.Item object at 0x000001C2120F0C20>
 ```
 
-"이 파일의 `Item` 객체가 메모리 어디에 있다"는 뜻이에요. 뒤의 주소는 실행할 때마다 달라요. 무엇이 든 객체인지 알 수 없으니, 출력해 볼 클래스에는 `__str__`을 만들어 두면 좋아요.
+"이 파일의 `Item` 객체가 메모리 어디에 있다"는 뜻이에요. 뒤의 주소는 실행할 때마다 달라요.
 
-## 7. 실습: 쇼핑 카트
+<Figure label="같은 print인데 찍히는 글자가 달라요">
+  <FanOut
+    call="print(...)"
+    targets={[
+      { title: "print(t)", result: "STR", why: "혼자 찍히면 `__str__`" },
+      { title: "print([t])", result: "[REPR]", why: "리스트 안에 들면 `__repr__`" },
+      { title: "print(Item(\"새우깡\", 2000))", result: "<__main__.Item object at 0x...>", why: "둘 다 없으면 기본 모양" },
+    ]}
+  />
+</Figure>
+
+<Hint>
+
+기본 모양으로는 무엇이 든 객체인지 알 수 없으니, 출력해 볼 클래스에는 `__str__`을 만들어 두면 좋아요.
+
+</Hint>
+
+## 7. 쇼핑 카트: 카트는 담고 빼고, 상품은 이름과 가격만
 
 요구사항(파일 맨 위 주석):
 
@@ -406,10 +473,20 @@ for item in cart.show_items():
 빅파이 3000
 ```
 
-| 클래스 | 속성 | 메서드 |
-| --- | --- | --- |
-| `ShoppingCart` | `bucket` (빈 리스트에서 시작) | `add_item`, `remove_item`, `show_items` |
-| `Item` | `name`, `price` | 없음 |
+클래스 두 개가 일을 나눠 맡아요. 카트는 "담고 빼는 일", 상품은 "이름과 가격"만 맡아요. 일을 나눠 맡기는 것이 클래스를 여러 개 만드는 이유예요.
+
+<Figure>
+  <Layers
+    layers={[
+      [{ title: "ShoppingCart", note: "담고 빼는 쪽", tone: "blue", lines: ["속성: `bucket` (빈 리스트에서 시작)", "메서드: `add_item`, `remove_item`, `show_items`"] }],
+      [
+        { title: "item_a", note: "Item", tone: "rust", via: "카트가 상품 인스턴스를 `bucket`에 담아요", lines: ["`name`: 초코파이", "`price`: 5000"] },
+        { title: "item_b", note: "Item, remove_item으로 빠짐", tone: "red", dashed: true, via: "`remove_item(item_b)`", lines: ["`name`: 새우깡", "`price`: 2000"] },
+        { title: "item_c", note: "Item", tone: "rust", via: "남은 두 개가 출력돼요", lines: ["`name`: 빅파이", "`price`: 3000"] },
+      ],
+    ]}
+  />
+</Figure>
 
 - `self.bucket = []`: 카트마다 자기 리스트를 하나씩 가져요. 직접 실행해 보면 한 카트에 담아도 새로 만든 카트의 `bucket`은 `[]`예요.
 - `add_item`은 리스트의 `append`, `remove_item`은 리스트의 `remove`를 감싸요. 이미 있는 기능에 "장바구니 담기" 같은 알아보기 쉬운 이름을 붙인 거예요.
@@ -417,7 +494,7 @@ for item in cart.show_items():
 - `for item in cart.show_items():`로 꺼낸 `item`은 `Item` 인스턴스라 `item.name`, `item.price`로 속을 볼 수 있어요.
 - `remove_item(item_b)`로 `새우깡`이 빠져 `초코파이`와 `빅파이`만 출력돼요.
 
-클래스 하나가 다른 클래스의 인스턴스를 리스트에 담아 다루고 있어요. 카트는 "담고 빼는 일", 상품은 "이름과 가격"만 맡아요. 일을 나눠 맡기는 것이 클래스를 여러 개 만드는 이유예요.
+클래스 하나가 다른 클래스의 인스턴스를 리스트에 담아 다루고 있어요.
 
 <TwistBox title="똑같은 상품을 새로 만들어 빼면 빠질까요?">
 
@@ -452,27 +529,49 @@ print(y.bucket)
 
 `x`에만 담았는데 `y`에도 초코파이가 들어 있어요.
 
-클래스 바로 아래에 쓴 변수는 **틀 자체에 붙은 하나뿐인 값**이라 모든 인스턴스가 같은 리스트를 나눠 써요. `__init__` 안에서 `self.bucket = []`로 만들어야 인스턴스마다 새 리스트가 생겨요. 수업 코드가 `__init__` 안에 둔 이유예요.
+클래스 바로 아래에 쓴 변수는 **틀 자체에 붙은 하나뿐인 값**이라 모든 인스턴스가 같은 리스트를 나눠 써요.
+
+<Figure>
+  <SharedRef
+    names={["x.bucket", "y.bucket"]}
+    target={{ title: "SharedCart.bucket (틀에 하나뿐)", lines: ["`['초코파이']`", "`x`로 담아도 `y`에서 보여요"] }}
+    tone="red"
+  />
+</Figure>
+
+`__init__` 안에서 `self.bucket = []`로 만들어야 인스턴스마다 새 리스트가 생겨요. 수업 코드가 `__init__` 안에 둔 이유예요.
 
 </TwistBox>
 
-## 8. 생성자는 왜 있을까
+## 8. 생성자는 왜 있을까: 쓸 수 있는 상태로 태어나게 한다
 
 오늘 셀프 체크 질문은 "클래스에 생성자 함수가 존재하는 이유가 뭐야?"였어요. 오늘 본 예제들로 답할 수 있어요.
 
-**1. 인스턴스가 태어나는 순간 꼭 필요한 값을 받으려고**
-
-`BankAccount("김민지", 100000)`처럼 만들 때 예금주와 잔액을 바로 넣어요. 빠뜨리면 2절처럼 `TypeError`가 나서 **예금주 없는 계좌는 아예 만들어지지 않아요.**
-
-**2. 모든 속성을 처음부터 준비해 두려고**
-
-3절의 `Monitor`는 `__init__`이 없어서 `display_info()`를 부르기 전에는 `resolution`이 없었어요(`AttributeError`). 생성자에서 속성을 다 만들어 두면 어떤 메서드를 먼저 부르든 속성이 이미 있어요.
-
-**3. 인스턴스마다 자기 값을 따로 가지게 하려고**
-
-`SmartPhone`의 `self.battery = 50`, 쇼핑 카트의 `self.bucket = []`는 인스턴스가 생길 때마다 새로 만들어져요. 그래서 `phone_a`를 충전해도 `phone_b`는 그대로이고, 카트끼리 상품이 섞이지 않아요.
+<Figure label="생성자가 하는 세 가지 일">
+  <Seq
+    steps={[
+      { title: "인스턴스가 태어나는 순간 꼭 필요한 값을 받아요.", body: "`BankAccount(\"김민지\", 100000)`처럼 만들 때 예금주와 잔액을 바로 넣어요. 빠뜨리면 2절처럼 `TypeError`가 나서 **예금주 없는 계좌는 아예 만들어지지 않아요.**" },
+      { title: "모든 속성을 처음부터 준비해 둬요.", body: "3절의 `Monitor`는 `__init__`이 없어서 `display_info()`를 부르기 전에는 `resolution`이 없었어요(`AttributeError`). 생성자에서 속성을 다 만들어 두면 어떤 메서드를 먼저 부르든 속성이 이미 있어요." },
+      { title: "인스턴스마다 자기 값을 따로 가지게 해요.", body: "`SmartPhone`의 `self.battery = 50`, 쇼핑 카트의 `self.bucket = []`는 인스턴스가 생길 때마다 새로 만들어져요. 그래서 `phone_a`를 충전해도 `phone_b`는 그대로이고, 카트끼리 상품이 섞이지 않아요." },
+    ]}
+  />
+</Figure>
 
 한 문장으로 줄이면 이래요. **생성자는 인스턴스가 쓸 수 있는 상태로 태어나게 해 주는 시작 준비**예요. 생성자가 자동으로 불리니, 준비를 깜빡하는 일도 없어요.
+
+### 직접 눌러 보기: 인스턴스마다 따로 남는 값
+
+세 번째 이유를 직접 눌러 확인해요. 위쪽은 `phone_a`와 `phone_b`를 따로 충전하고, 아래쪽은 `bucket` 리스트를 만드는 곳을 바꿔 가며 `x`, `y` 카트에 담아 봐요.
+
+출력 창의 문장은 파이썬이 찍는 글자 그대로이고, 뒤의 `#`는 왜 그렇게 됐는지예요.
+
+<InstanceSimulator />
+
+<Hint>
+
+해 볼 것: `phone_a`만 여러 번 충전해 보세요. `phone_b`의 배터리는 50 그대로예요. 90에서 `charge(10)`을 하면 딱 100이라 100을 넘지 않아서 `충전 중 ... : 100%`가 찍혀요. 아래쪽을 "클래스 바로 아래"로 바꾸고 `x`에만 담은 뒤 `print(...)`를 누르면 `y.bucket`에도 같은 상품이 보여요.
+
+</Hint>
 
 ## 오늘 꼭 기억할 주의점
 

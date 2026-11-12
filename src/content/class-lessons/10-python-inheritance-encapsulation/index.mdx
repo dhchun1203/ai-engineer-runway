@@ -2,7 +2,7 @@
 title: "Python 기초: 상속과 캡슐화"
 session: 10
 date: "2026-11-06"
-summary: "클래스를 다시 짚고, 부모 클래스를 물려받는 상속, 같은 이름으로 다시 정의하는 오버라이딩, super()를 배워요. 속성을 숨기는 이름 변형과 Getter, Setter, @property로 잔액을 지키고, 마이너스 통장과 잠긴 잔액 계좌를 만들어 봐요."
+summary: "클래스를 다시 짚고, 부모 클래스를 물려받는 상속, 같은 이름으로 다시 정의하는 오버라이딩, super()를 그림으로 따라가요. 속성을 숨기는 이름 변형과 Getter, Setter, @property로 잔액을 지키고, 마이너스 통장과 잠긴 잔액 계좌를 만들어 봐요."
 slug: "10-python-inheritance-encapsulation"
 module: "1-3"
 topic: "Python"
@@ -11,26 +11,23 @@ preStudy: []
 
 어제는 클래스로 설계도를 만들고 인스턴스를 찍어 냈어요. 그런데 어제 만든 계좌에는 빈틈이 있어요. `withdraw(-5000)`처럼 음수를 넣으면 출금했는데 잔액이 늘어나요.
 
-오늘은 그 빈틈을 막는 **캡슐화**와, 이미 만든 클래스를 물려받아 고쳐 쓰는 **상속**을 배웠어요. 앞부분에서는 어제 배운 클래스를 몇 가지 더 짚고, 마지막에 마이너스 통장과 잔액을 숨긴 계좌를 만들어요.
+오늘은 그 빈틈을 막는 **캡슐화**와, 이미 만든 클래스를 물려받아 고쳐 쓰는 **상속**을 배웠어요. 앞부분에서는 어제 배운 클래스를 몇 가지 더 짚고, 마지막에 계좌 하나에서 두 갈래로 뻗어 나가요.
 
-| 순서 | 내용 | 한 줄로 |
-| --- | --- | --- |
-| 1 | 절차지향과 객체지향 | 데이터와 기능을 한 객체에 |
-| 2 | 클래스 다시 보기 | `pass`, 출력 모양, `__init__` 오타 |
-| 3 | self 더 알기 | 두 가지 호출, 관례적인 이름, 흔한 실수 |
-| 4 | 계좌 두 개는 따로 산다 | `__repr__`, 독립성 |
-| 5 | 음수 금액 문제 | 들어오는 값을 먼저 검사 |
-| 6 | 상속 | `class 자식(부모):` |
-| 7 | 오버라이딩 | 같은 이름으로 다시 정의 |
-| 8 | super() | 부모의 `__init__`을 먼저 |
-| 9 | 이름 변형 | `__속성`은 `_클래스__속성`으로 |
-| 10 | Getter, Setter, @property | 숨긴 값은 통로 메서드로 |
-| 11 | 실습: 마이너스 통장 | 상속하고 출금만 바꾸기 |
-| 12 | 실습: 잔액을 숨긴 계좌 | 가짜 속성과 Setter 우회 |
+<Figure>
+  <Layers
+    layers={[
+      [{ title: "BankAccount", note: "4절에서 다시 만드는 계좌", tone: "blue", lines: ["`owner`, `balance`", "`deposit()`, `withdraw()`", "빈틈: `withdraw(-5000)`이면 잔액이 늘어요(5절)"] }],
+      [
+        { title: "MinusAccount", note: "11절, 상속", tone: "rust", via: "물려받고 출금만 바꿔요", lines: ["이름과 잔액은 부모에게 맡기고 `limit`만 더해요", "`withdraw()`를 잔액 + 한도로 다시 정의"] },
+        { title: "ProtectedAccount", note: "12절, 캡슐화", tone: "amber", via: "잔액을 숨겨서 다시 만들어요", lines: ["잔액은 `__balance`로 숨겨요", "`get_balance()`, `set_balance()`로만 드나들어요"] },
+      ],
+    ]}
+  />
+</Figure>
 
 레슨 끝에 확인 퀴즈가 있어요. 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
 
-## 1. 절차지향과 객체지향
+## 1. 객체지향: 데이터와 기능을 한 상자에 담는다
 
 지금까지는 데이터와 함수를 따로 두고, 함수를 부를 때 데이터를 인수로 넘겼어요. 이런 방식을 **절차지향**이라고 해요.
 
@@ -44,7 +41,7 @@ print_user_name(user_name)
 # 회원 이름: 코딩왕
 ```
 
-어제 배운 클래스는 데이터(상태)와 함수(행동)를 **객체 하나에 묶어요**. 이것이 **객체지향(OOP, Object-Oriented Programming)** 이에요.
+어제 배운 클래스는 데이터(상태)와 함수(행동)를 **객체 하나에 묶어요**. 이것이 **객체지향**(OOP, Object-Oriented Programming)이에요.
 
 ```python
 class User:
@@ -61,14 +58,23 @@ user_instance.show()
 
 출력은 같아요. 차이는 `show()`가 이름을 인수로 받지 않는다는 점이에요. 객체가 자기 이름을 이미 들고 있으니까요.
 
-| 방식 | 데이터 | 기능 | 부르는 법 |
-| --- | --- | --- | --- |
-| 절차지향 | 변수 `user_name` | 함수 `print_user_name` | `print_user_name(user_name)` |
-| 객체지향 | 속성 `self.name` | 메서드 `show` | `user_instance.show()` |
+<Figure>
+  <Boxes
+    row={[
+      { title: "절차지향", note: "데이터와 기능이 따로 살아요", lines: ["데이터: 변수 `user_name`", "기능: 함수 `print_user_name`", "부르기: `print_user_name(user_name)`"] },
+      { arrow: "한 객체로 묶기" },
+      { title: "객체지향", note: "객체가 둘 다 들고 있어요", tone: "blue", lines: ["데이터: 속성 `self.name`", "기능: 메서드 `show`", "부르기: `user_instance.show()`"] },
+    ]}
+  />
+</Figure>
+
+<Hint>
 
 사실 우리는 객체를 이미 써 왔어요. 리스트도 객체라서 `fruits.append("사과")`의 `append`는 **리스트 클래스의 메서드**예요. 점 뒤에 붙여 부르는 것들이 다 메서드였던 거예요.
 
-## 2. 클래스 다시 보기
+</Hint>
+
+## 2. 클래스 다시 보기: 틀이 같아도 객체는 따로다
 
 ### 빈 클래스와 pass
 
@@ -138,7 +144,7 @@ t.nickname
 
 </TwistBox>
 
-## 3. self 더 알기
+## 3. self: 지금 일하는 객체 자신
 
 ```python
 class Monitor:
@@ -174,11 +180,11 @@ print(keyword.iskeyword("self"))
 # False
 ```
 
-`if`, `def` 같은 키워드가 아니라 **모두가 그렇게 쓰기로 한 이름(관례)** 이에요. 첫 매개변수 이름을 `me`로 바꿔도 동작은 해요. 그래도 읽는 사람을 위해 반드시 `self`로 써요.
+`if`, `def` 같은 키워드가 아니라 **모두가 그렇게 쓰기로 한 이름**(관례)이에요. 첫 매개변수 이름을 `me`로 바꿔도 동작은 해요. 그래도 읽는 사람을 위해 반드시 `self`로 써요.
 
 Java나 JavaScript에서는 같은 역할을 `this`라는 키워드가 맡아요.
 
-### self 관련 흔한 실수 두 가지
+<Note title="self 관련 흔한 실수 두 가지">
 
 | 실수 | 결과 | 이유 |
 | --- | --- | --- |
@@ -186,6 +192,8 @@ Java나 JavaScript에서는 같은 역할을 `this`라는 키워드가 맡아요
 | `__init__` 안에서 `name = name` (`self.` 없음) | 나중에 `self.name`을 쓰면 `AttributeError` | 그냥 지역 변수라 메서드가 끝나면 사라져요 |
 
 두 번째 실수는 어제 배운 함수의 지역 변수 규칙 그대로예요. `self.`을 붙여야 객체 안에 남아요.
+
+</Note>
 
 ## 4. 계좌 두 개는 따로 산다
 
@@ -264,7 +272,18 @@ print(id(account_chulsoo) == id(account_younghee))
 
 철수만 7500이 되고 영희는 7000 그대로예요. 같은 클래스로 만들어도 **객체마다 데이터는 따로** 가져요.
 
-## 5. 음수 금액 문제
+<Figure>
+  <Blueprint
+    template={{ title: "class BankAccount (틀)", tone: "blue", lines: ["`deposit()`, `withdraw()`, `__str__`, `__repr__`은 같은 설계", "`owner`, `balance`는 객체마다 따로"] }}
+    tone="blue"
+    cards={[
+      { badge: "account_chulsoo", lines: ["김철수", "5000원으로 시작", "입금 2000, 입금 500", "지금 **7500원**"] },
+      { badge: "account_younghee", lines: ["이영희", "10000원으로 시작", "출금 3000", "지금 **7000원**"] },
+    ]}
+  />
+</Figure>
+
+## 5. 음수 금액: 검사 없는 출금은 잔액을 늘린다
 
 잔액보다 많이 빼면 실패 메시지가 잘 나와요.
 
@@ -285,11 +304,18 @@ test.withdraw(-5000)
 # [테스트 계좌] -5000원 출금 / 현재 잔액: 12000원
 ```
 
-출금했는데 잔액이 **늘었어요**.
+출금했는데 잔액이 **늘었어요**. 조건도 통과하고, 빼기는 사실 더하기가 됐어요.
 
-- 조건 `7000 >= -5000`은 참이라 출금이 진행돼요.
-- `7000 - (-5000)`은 `7000 + 5000`이라 `12000`이 돼요.
-- 거꾸로 `deposit(-1000)`은 잔액을 6000으로 **줄여요**.
+<Figure label="test.withdraw(-5000)">
+  <Relay
+    legs={[
+      { fn: "if self.balance >= amount", desc: "잔액이 출금액 이상인가?", ex: "7000 >= -5000", value: "True" },
+      { fn: "self.balance -= amount", desc: "음수를 빼면 더하기가 돼요", ex: "7000 - (-5000) = 7000 + 5000", value: "12000원" },
+    ]}
+  />
+</Figure>
+
+거꾸로 `deposit(-1000)`은 잔액을 6000으로 **줄여요**.
 
 메서드가 들어오는 값을 검사하지 않아서 생긴 일이에요. `raise`로 막을 수 있어요. `raise`는 에러를 일부러 일으켜 그 자리에서 실행을 멈추는 문장이에요(예외 처리를 배울 때 자세히 다뤄요).
 
@@ -306,9 +332,9 @@ ValueError: 출금액은 0보다 커야 합니다.
 
 메서드는 **들어온 값을 먼저 검사**하고 나서 일을 해요. 어제 잔액 부족을 먼저 막고 `return`한 것과 같은 생각이에요.
 
-## 6. 상속(Inheritance)
+## 6. 상속: 자식은 부모 것을 물려받는다
 
-클래스 이름 뒤 괄호에 다른 클래스를 적으면, 그 클래스의 속성과 메서드를 **물려받아요**. 물려주는 쪽을 부모(상위) 클래스, 받는 쪽을 자식(하위) 클래스라고 해요.
+클래스 이름 뒤 괄호에 다른 클래스를 적으면, 그 클래스의 속성과 메서드를 **물려받아요**. 이것이 상속(Inheritance)이에요. 물려주는 쪽을 부모(상위) 클래스, 받는 쪽을 자식(하위) 클래스라고 해요.
 
 ```python
 class Animal:
@@ -333,6 +359,16 @@ True True
 
 `Dog`에는 `breathe`를 쓰지 않았는데도 부를 수 있어요. 부모에게 물려받았기 때문이에요.
 
+<Figure>
+  <Inherit
+    parent={{ title: "Animal (부모)", lines: ["`breathe()`: 숨을 쉽니다."] }}
+    edge="`class Dog(Animal):` 괄호 안의 부모를 물려받아요"
+    kids={[
+      { title: "Dog (자식)", lines: ["물려받음: `breathe()`", "자기 것: `bark()`: 멍멍 짖습니다."] },
+    ]}
+  />
+</Figure>
+
 | 함수 | 묻는 것 | 예 |
 | --- | --- | --- |
 | `isinstance(객체, 클래스)` | 이 객체가 그 클래스(또는 자식 클래스)로 만든 것인가 | `isinstance(baduk, Animal)`은 `True` |
@@ -347,9 +383,9 @@ Animal().bark()
 
 자식은 부모 것을 쓸 수 있지만, **부모는 자식 것을 쓸 수 없어요**. 부모 `Animal`은 자식에게 `bark`가 있는지 몰라요. 그래서 `isinstance(Animal(), Dog)`, `issubclass(Animal, Dog)`도 둘 다 `False`예요.
 
-## 7. 오버라이딩(Overriding)
+## 7. 오버라이딩: 자식이 같은 이름으로 덮어쓴다
 
-물려받은 메서드를 자식에서 **같은 이름으로 다시 정의**하면, 자식 객체에서는 자식의 메서드가 실행돼요. 이것을 오버라이딩이라고 해요.
+물려받은 메서드를 자식에서 **같은 이름으로 다시 정의**하면, 자식 객체에서는 자식의 메서드가 실행돼요. 이것을 오버라이딩(Overriding)이라고 해요.
 
 ```python
 class Animal:
@@ -370,12 +406,21 @@ Animal().sound()
 소리를 냅니다.
 ```
 
-- `nabi.sound()`: 자식에 `sound`가 있으니 자식 것이 실행돼요.
-- `Animal().sound()`: 부모는 그대로예요. 오버라이딩은 부모를 고치는 게 아니라 **자식에서 덮어쓰는 것**이에요.
+<Figure>
+  <FanOut
+    call=".sound()"
+    targets={[
+      { title: "nabi (Cat 객체)", result: "야옹 하고 웁니다.", why: "자식에 `sound`가 있으니 자식 것이 실행돼요" },
+      { title: "Animal() (부모 객체)", result: "소리를 냅니다.", why: "부모는 그대로예요" },
+    ]}
+  />
+</Figure>
+
+오버라이딩은 부모를 고치는 게 아니라 **자식에서 덮어쓰는 것**이에요.
 
 파이썬은 메서드를 찾을 때 객체의 클래스(자식)부터 보고, 없으면 부모로 올라가요. 그래서 자식에 같은 이름이 있으면 거기서 멈춰요.
 
-## 8. super(): 부모의 `__init__` 먼저
+## 8. super(): 부모의 `__init__`을 먼저 부른다
 
 `__init__`도 메서드라서 자식에 `__init__`을 만들면 **부모의 `__init__`도 오버라이딩돼요**. 그러면 부모가 하던 준비가 실행되지 않아요. 이때 `super()`로 부모의 `__init__`을 불러 줘요.
 
@@ -401,6 +446,16 @@ print(std.major)
 
 `super()`는 "부모 클래스"를 가리켜요. `super().__init__(name)`은 부모의 생성자에게 `name`을 넘겨 `self.name`을 채우게 해요. 자식은 자기에게만 있는 `major`만 채우면 돼요.
 
+<Figure label='Student("김철수", "컴퓨터공학")'>
+  <Inherit
+    parent={{ title: "Person (부모)", lines: ["`__init__(self, name)`: `self.name` 채우기"] }}
+    edge="`super().__init__(name)`으로 이름 채우기는 부모에게 맡겨요"
+    kids={[
+      { title: "Student (자식)", lines: ["1. `super().__init__(name)`: `self.name`은 김철수", "2. `self.major = major`: 컴퓨터공학"] },
+    ]}
+  />
+</Figure>
+
 <TwistBox title="super()를 빠뜨리면?">
 
 ```python
@@ -420,7 +475,7 @@ Student2("김철수", "컴퓨터공학").name
 
 </TwistBox>
 
-## 9. 이름 변형(Name Mangling): 캡슐화 첫걸음
+## 9. 이름 변형: 밑줄 두 개면 이름표가 바뀐다
 
 공개된 속성은 밖에서 아무 값이나 넣을 수 있어요.
 
@@ -435,9 +490,9 @@ print(p.age)
 # -100
 ```
 
-나이가 -100이 돼도 막을 방법이 없어요. 데이터를 함부로 못 바꾸게 감싸 두는 것을 **캡슐화(Encapsulation)**, 숨겨 두는 것을 **정보 은닉**이라고 해요.
+나이가 -100이 돼도 막을 방법이 없어요. 데이터를 함부로 못 바꾸게 감싸 두는 것을 **캡슐화**(Encapsulation), 숨겨 두는 것을 **정보 은닉**이라고 해요.
 
-파이썬에는 Java의 `private` 같은 키워드가 없어요. 대신 속성 이름 앞에 **밑줄 두 개**(`__`)를 붙이면 파이썬이 이름을 바꿔 저장해요.
+파이썬에는 Java의 `private` 같은 키워드가 없어요. 대신 속성 이름 앞에 **밑줄 두 개**(`__`)를 붙이면 파이썬이 이름을 바꿔 저장해요. 이것을 이름 변형(Name Mangling)이라고 해요.
 
 ```python
 class Secret:
@@ -455,12 +510,22 @@ print(my_secret._Secret__password)
 # 1234
 ```
 
-- `__dict__`는 객체가 가진 속성을 딕셔너리로 보여 줘요. 속을 들여다볼 때 써요.
-- `self.__password`는 실제로 `_Secret__password`라는 이름으로 저장돼요. `_클래스이름__속성` 꼴이에요.
-- 그래서 밖에서 `__password`로 찾으면 없다고 해요.
-- 하지만 바뀐 이름 `_Secret__password`를 알면 누구나 읽고 바꿀 수 있어요. **이름 변형은 보안 장치가 아니라 실수를 막는 장치**예요.
+<Figure>
+  <Boxes
+    row={[
+      { title: "코드에 쓴 이름", tone: "blue", lines: ["`self.__password`", "클래스 안의 메서드는 그냥 이 이름으로 써요"] },
+      { arrow: "파이썬이 바꿔 저장" },
+      { title: "실제로 저장된 이름", tone: "amber", lines: ["`_Secret__password`", "`_클래스이름__속성` 꼴", "`__dict__`에 보이는 이름"] },
+    ]}
+    below={[
+      { title: "밖에서 찾으면", lines: ["`my_secret.__password`: 그런 이름은 없어서 `AttributeError`", "`my_secret._Secret__password`: 바뀐 이름을 알면 `1234`가 나와요"] },
+    ]}
+  />
+</Figure>
 
-클래스 안의 메서드에서는 그냥 `self.__password`로 쓰면 돼요. 파이썬이 같은 규칙으로 바꿔 주니까요.
+- `__dict__`는 객체가 가진 속성을 딕셔너리로 보여 줘요. 속을 들여다볼 때 써요.
+- 클래스 안의 메서드에서는 그냥 `self.__password`로 쓰면 돼요. 파이썬이 같은 규칙으로 바꿔 주니까요.
+- 하지만 바뀐 이름 `_Secret__password`를 알면 누구나 읽고 바꿀 수 있어요. **이름 변형은 보안 장치가 아니라 실수를 막는 장치**예요.
 
 | 쓰는 법 | 뜻 | 이름이 바뀌나 |
 | --- | --- | --- |
@@ -468,7 +533,7 @@ print(my_secret._Secret__password)
 | `self._balance` | "내부용이니 밖에서 건드리지 마세요"라는 관례. 접근은 돼요 | 아니요 |
 | `self.__balance` | 이름 변형 | 예, `_클래스__balance`로 |
 
-## 10. Getter, Setter, @property
+## 10. Getter, Setter, @property: 숨긴 값은 통로로만 드나든다
 
 숨긴 속성은 밖에서 직접 만지지 않고 **통로 메서드**로 다뤄요. 값을 꺼내 주는 메서드를 Getter, 검사하고 바꿔 주는 메서드를 Setter라고 해요.
 
@@ -498,6 +563,15 @@ print(w.get_money())
 경고: 지갑의 돈은 음수가 될 수 없습니다.
 3000
 ```
+
+<Figure label="w.set_money(값)">
+  <GateFlow
+    gates={[
+      { q: "음수인가?", code: "amount >= 0 이 아니면", out: "`경고: 지갑의 돈은 음수가 될 수 없습니다.` 찍고 그대로. -500은 여기서 막혀요" },
+    ]}
+    pass={{ text: "숨긴 값을 바꾸기. 3000은 통과해요", code: "self.__money = amount" }}
+  />
+</Figure>
 
 -500은 Setter의 검사에 걸려 막히고, 3000은 통과해서 바뀌어요. 5절의 음수 금액 문제를 이렇게 막는 거예요.
 
@@ -529,9 +603,15 @@ t.temp = -100
 # ValueError: 너무 낮은 온도입니다.
 ```
 
-`t.temp = 25`는 대입문처럼 보이지만 `@temp.setter`가 붙은 메서드가 실행돼요. 괄호 없이 `t.temp`로 읽는다는 점이 Getter 메서드와 달라요(`t.temp()`라고 쓰면 `TypeError`예요).
+`t.temp = 25`는 대입문처럼 보이지만 `@temp.setter`가 붙은 메서드가 실행돼요.
 
-## 11. 실습: 마이너스 통장
+<Hint>
+
+괄호 없이 `t.temp`로 읽는다는 점이 Getter 메서드와 달라요. `t.temp()`라고 쓰면 `TypeError`예요.
+
+</Hint>
+
+## 11. 실습: 마이너스 통장은 출금 하나만 바꾼다
 
 이번 실습은 `deposit` 없이 출금만 있는 짧은 `BankAccount`를 부모로 써요. 이것을 물려받아, 잔액이 0 밑으로 내려가도 한도 안이면 출금되는 마이너스 통장을 만들어요.
 
@@ -577,17 +657,38 @@ print(minus_acc)
 홍길동님의 계좌 (현재 잔액: -7000원)
 ```
 
-| 줄 | 검사 | 결과 |
-| --- | --- | --- |
-| `withdraw(12000)` | 5000 + 10000 = 15000, 12000 이상 | 출금, 잔액 -7000 |
-| `withdraw(5000)` | -7000 + 10000 = 3000, 5000 미만 | 한도 초과로 실패 |
+<Figure>
+  <Inherit
+    parent={{ title: "BankAccount (부모)", lines: ["`owner`, `balance` 저장", "`__str__`: 홍길동님의 계좌 (현재 잔액: ...)", "`withdraw`: 잔액 >= 출금액이면 출금", "`deposit`은 없어요"] }}
+    edge="`super().__init__(owner, balance)`로 이름과 잔액은 부모에게"
+    kids={[
+      { title: "MinusAccount (자식)", lines: ["자기 것: `limit`", "`withdraw` 다시 정의: **잔액 + 한도** >= 출금액이면 출금", "`__str__`은 다시 안 써도 물려받아요"] },
+    ]}
+  />
+</Figure>
+
+잔액 5000에 한도 10000이면 -10000원까지 뺄 수 있어요. 두 번의 출금을 이어서 따라가 보면 이래요.
+
+<Figure label='MinusAccount("홍길동", 5000, 10000)'>
+  <Relay
+    legs={[
+      { fn: "withdraw(12000)", desc: "5000 + 10000 = 15000, 12000 이상이라 출금", ex: "5000 - 12000", value: "-7000원" },
+      { fn: "withdraw(5000)", desc: "-7000 + 10000 = 3000, 5000 미만이라 한도 초과로 실패", ex: "잔액 그대로", value: "-7000원" },
+    ]}
+  />
+</Figure>
 
 - `super().__init__(owner, balance)`: 이름과 잔액 설정은 부모에게 맡기고, 자식은 `limit`만 더해요.
-- `withdraw`만 오버라이딩해서 "잔액 + 한도"로 검사해요. 잔액 5000에 한도 10000이면 -10000원까지 뺄 수 있어요.
+- `withdraw`만 오버라이딩해서 "잔액 + 한도"로 검사해요.
 - `__str__`은 다시 쓰지 않았는데 `print(minus_acc)`가 잘 나와요. **부모에게 물려받았기** 때문이에요.
-- 이번 부모 `BankAccount`에는 `deposit`이 없어서 `minus_acc.deposit(1000)`은 `AttributeError`예요. 물려받을 수 있는 건 부모에 있는 것뿐이에요.
 
-## 12. 실습: 잔액을 숨긴 계좌
+<Note title="부모에 없는 건 물려받을 수 없어요">
+
+이번 부모 `BankAccount`에는 `deposit`이 없어서 `minus_acc.deposit(1000)`은 `AttributeError`예요. 물려받을 수 있는 건 부모에 있는 것뿐이에요.
+
+</Note>
+
+## 12. 실습: 잔액을 숨긴 계좌, 그래도 뚫리는 길
 
 잔액을 `__balance`로 숨기고 Getter, Setter로만 다루는 계좌예요.
 
@@ -636,6 +737,15 @@ print(acc.__balance)
 
 속성이 **두 개**가 됐어요.
 
+<Figure label="acc.__dict__">
+  <DictView
+    name="acc"
+    pairs={[["owner", "'이몽룡'"], ["_ProtectedAccount__balance", "5000"], ["__balance", "-5000"]]}
+    keyLabel="키: 속성 이름. 진짜 잔액은 `_ProtectedAccount__balance`, 밖에서 만든 가짜는 `__balance`"
+    valueLabel="값"
+  />
+</Figure>
+
 이름 변형은 **클래스 안에서 쓴 `__이름`에만** 일어나요. 클래스 밖에서 쓴 `acc.__balance`는 이름이 바뀌지 않아서, `__balance`라는 **가짜 속성이 새로 생겼어요**. 진짜 잔액 `_ProtectedAccount__balance`는 안전하지만, `acc.__balance`로 읽으면 -5000이 나와 착각하기 쉬워요.
 
 </TwistBox>
@@ -648,7 +758,20 @@ print(acc.get_balance())
 # -999
 ```
 
-Setter의 검사를 거치지 않고 잔액이 음수가 됐어요. 그래서 밖에서는 **반드시 Getter, Setter만 쓰는 것이 약속**이에요. 이름 변형은 실수를 막아 줄 뿐, 일부러 하는 접근까지 막지는 못해요.
+Setter의 검사를 거치지 않고 잔액이 음수가 됐어요. 밖에서 잔액을 음수로 만들려는 세 가지 시도를 나란히 놓으면 차이가 보여요.
+
+<Figure label="시도한 뒤 acc.get_balance()로 확인한 잔액">
+  <FanOut
+    call="acc.get_balance()"
+    targets={[
+      { title: "밖에서 `acc.__balance`에 -5000 대입", result: "3000원", why: "가짜 속성이 새로 생기고 진짜 잔액은 그대로예요" },
+      { title: "`set_balance(-1000)`", result: "3000원", why: "Setter의 검사에 막혀요" },
+      { title: "바뀐 이름으로 -999 대입", result: "-999원", why: "Setter를 건너뛰어 음수가 돼요" },
+    ]}
+  />
+</Figure>
+
+그래서 밖에서는 **반드시 Getter, Setter만 쓰는 것이 약속**이에요. 이름 변형은 실수를 막아 줄 뿐, 일부러 하는 접근까지 막지는 못해요.
 
 ### 상속과 `__` 속성
 
