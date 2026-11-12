@@ -11,7 +11,7 @@ import { BasecampCopyPrompt } from "@/components/lesson-copy-prompt";
 import { MistakeNoteLink } from "@/components/mistake-note-link";
 import { PrintButton } from "@/components/print-button";
 import { ReadingAssistant } from "@/components/reading-assistant/reading-assistant";
-import { LessonToc } from "@/components/roadmap/lesson-toc";
+import { StageChips } from "@/components/stage-chips";
 import { PageBookmark } from "@/components/page-bookmark";
 import { classQuizKey } from "@/lib/quiz-mistake-key";
 
@@ -58,8 +58,6 @@ export default async function ClassLessonPage({
 
   return (
     <main className="relative mx-auto flex w-full max-w-3xl min-[1800px]:max-w-4xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      {/* 스크롤을 따라다니는 목차(로드맵 레슨과 같은 것). 넓은 화면의 왼쪽 여백에만 뜬다. */}
-      <LessonToc contentId={CLASS_ARTICLE_ID} />
       <PageBookmark pageKey={`class:${lesson.slug}`} pageTitle={lesson.title} articleId={CLASS_ARTICLE_ID} />
       <article className="flex flex-col gap-8">
         <header className="flex flex-col gap-3">
@@ -86,6 +84,9 @@ export default async function ClassLessonPage({
             </span>
           </div>
         </header>
+
+        {/* 목차는 위에 붙어 따라오는 막대 하나로 둔다(절이 많아 왼쪽 목차가 길게 늘어졌다). 누르면 전체 목차가 펼쳐진다. */}
+        <StageChips contentId={CLASS_ARTICLE_ID} compact />
 
         <div id={CLASS_ARTICLE_ID} className="prose dark:prose-invert max-w-none">
           <MDXContent code={lesson.code} />

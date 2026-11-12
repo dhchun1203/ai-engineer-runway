@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { MDXContent } from "@/components/mdx-content";
 import { ReadingAssistant } from "@/components/reading-assistant/reading-assistant";
 import { PageBookmark } from "@/components/page-bookmark";
-import { StageChips } from "@/components/practice/stage-chips";
+import { StageChips } from "@/components/stage-chips";
 import { TypeAlong } from "@/components/practice/type-along";
 import { Hints, Hint } from "@/components/practice/hints";
 import {
