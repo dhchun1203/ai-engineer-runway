@@ -13,65 +13,72 @@
 
   /* 지면과 패널 */
   --color-background: #f5f4f0; /* 종이 */
-  --color-background-dark: #0b0d13;
+  /* 다크 모드(2026-11-13): 남색 위 형광색이던 팔레트를 "밤에 펼친 같은 종이"로 바꿨다.
+     지면은 따뜻한 먹색, 잉크는 크림색, 강조색은 채도를 낮춘 같은 파랑과 주황이다. */
+  --color-background-dark: #161513;
   --color-surface: #ffffff; /* 패널 */
-  --color-surface-dark: #10141f;
+  --color-surface-dark: #1e1d1a;
   --color-surface-2: #eceae4; /* 한 단계 눌린 면 — 칩 배경, 표 머리 */
-  --color-surface-2-dark: #171c2b;
+  --color-surface-2-dark: #282621;
 
   --color-foreground: #14161c; /* 본문 잉크이자 테두리 색 */
-  --color-foreground-dark: #e8ecf8;
+  --color-foreground-dark: #ece7dc;
+  /* 다크에서 패널, 머리 띠의 굵은 테두리 색. 라이트는 잉크색 테두리가 서명이지만,
+     어두운 지면에서 크림색 테두리는 너무 번쩍여 중간 톤으로 낮춘다. */
+  --color-border-strong-dark: #555046;
+  /* 다크 코드 블록 바탕. 지면(#161513)과 패널(#1e1d1a) 사이의 먹색이다. */
+  --color-code-bg-dark: #1b1a17;
   --color-muted: #5a6070; /* 보조 텍스트 */
-  --color-muted-dark: #8a93ad;
+  --color-muted-dark: #a7a194;
   /* 독서 도우미에서 비초점 문장을 낮출 때 쓰는 흐림 색. opacity 대신 색으로 낮춰
      iOS WebKit이 opacity로 합성된 인라인 글자의 상단을 클립하는 문제를 피한다.
      지면색과 잉크색 사이의 옅은 회색이다. */
   --color-reading-dim: #b0aca1;
-  --color-reading-dim-dark: #565d70;
+  --color-reading-dim-dark: #5f5b53;
   --color-line: #cbc7bd; /* 얇은 구분선 */
-  --color-line-dark: #303a5c;
+  --color-line-dark: #3b3832;
 
   /* 하드 그림자 색 — 흐림 0, 오프셋만. 이 디자인의 서명이다. */
   --color-shadow-hard: #dedad0;
-  --color-shadow-hard-dark: #1a2140;
+  --color-shadow-hard-dark: #0a0908;
 
   /* 강조 두 축: accent(파랑)는 링크·활성 상태, action(주황)은 실행 버튼 */
   --color-accent: #2c4fd6;
-  --color-accent-dark: #6f8dff;
+  --color-accent-dark: #93a6f2;
   --color-action: #c2410c;
-  --color-action-dark: #ff5c00;
+  --color-action-dark: #ee8a4d;
 
   --color-ok: #15803d;
-  --color-ok-dark: #2fd48a;
+  --color-ok-dark: #63c08d;
   --color-warn: #a16207;
-  --color-warn-dark: #ffb020;
+  --color-warn-dark: #e2b45e;
   --color-destructive: #c02033;
-  --color-destructive-dark: #ff4d6d;
+  --color-destructive-dark: #ec7179;
   /* ON AIR 램프(오프라인 모드, 2026-09-23). 온라인은 ok, 오프라인은 destructive와 같은
      값이다. 따로 이름을 두는 이유: 램프 색을 바꿀 때 완료, 경고 표시까지 같이 바뀌지
      않게 한다. */
   --color-onair: #15803d;
-  --color-onair-dark: #2fd48a;
+  --color-onair-dark: #63c08d;
   --color-offair: #c02033;
-  --color-offair-dark: #ff4d6d;
+  --color-offair-dark: #ec7179;
 
   /* Step 상징 색 (D-04) — 세 Step을 구분하는 역할은 그대로 두되 값은 위
      팔레트 안에서만 고른다. 파랑·주황·황토는 서로 충분히 구분되고 종이
      배경에서 같은 채도대로 읽힌다. 예전 파랑/보라/주황 삼색은 이 팔레트에
      보라가 없어 그대로 쓸 수 없다. */
   --color-step-1: #2c4fd6;
-  --color-step-1-dark: #6f8dff;
+  --color-step-1-dark: #93a6f2;
   --color-step-2: #c2410c;
-  --color-step-2-dark: #ff5c00;
+  --color-step-2-dark: #ee8a4d;
   --color-step-3: #a16207;
-  --color-step-3-dark: #ffb020;
+  --color-step-3-dark: #e2b45e;
 
   /* 중성 배지 — 기존 토큰 이름을 유지한다(호출 지점 30여 곳). bg는 눌린 면,
      text는 보조 텍스트로 각각 위 토큰과 같은 값이다. */
   --color-badge-neutral-text: #5a6070;
   --color-badge-neutral-bg: #eceae4;
-  --color-badge-neutral-text-dark: #8a93ad;
-  --color-badge-neutral-bg-dark: #171c2b;
+  --color-badge-neutral-text-dark: #a7a194;
+  --color-badge-neutral-bg-dark: #282621;
 
   /* ─────────────────────────────────────────────────────────────────────
      모서리 — 전부 각지게. Tailwind v4의 rounded-* 유틸리티가 이 네임스페이스를
@@ -110,13 +117,13 @@
   /* 옥스포드 노트 색(D-7, R-6) — 메모장은 이 팔레트 안에서도 별도의 "종이"다.
      본문 지면(--color-background)보다 살짝 따뜻하게 두어 두 종이가 구분된다. */
   --color-note-paper: #fbf8f1;
-  --color-note-paper-dark: #151d2b;
+  --color-note-paper-dark: #201e1a;
   --color-note-rule: #dcd7cb;
-  --color-note-rule-dark: #24334a;
+  --color-note-rule-dark: #36322b;
   --color-note-margin: #dd9aa2;
-  --color-note-margin-dark: #7a4750;
+  --color-note-margin-dark: #7d4f52;
   --color-note-ink: #14161c;
-  --color-note-ink-dark: #e8ecf8;
+  --color-note-ink-dark: #ece7dc;
 }
 
 /* 구간 테이프(Section Tape) 기하 단일 소스 (06-09, G-06-9). 테이프 높이(44px,
@@ -283,7 +290,7 @@ textarea,
   .dark .panel,
   .dark .panel-hero {
     background-color: var(--color-surface-dark);
-    border-color: var(--color-foreground-dark);
+    border-color: var(--color-border-strong-dark);
   }
 
   .panel {
@@ -585,7 +592,7 @@ textarea,
 
   .dark .site-header {
     background-color: var(--color-background-dark);
-    border-bottom-color: var(--color-foreground-dark);
+    border-bottom-color: var(--color-border-strong-dark);
     box-shadow: 0 4px 0 0 var(--color-shadow-hard-dark);
   }
 
@@ -1411,7 +1418,9 @@ code[data-theme*=" "] span {
 .dark code[data-theme*=" "],
 .dark code[data-theme*=" "] span {
   color: var(--shiki-dark);
-  background-color: var(--shiki-dark-bg);
+  /* 테마 기본 배경(--shiki-dark-bg)은 푸른 회색이라 따뜻한 다크 지면에서 혼자 떠 보인다
+     (2026-11-13). 글자 색은 테마를 그대로 쓰고 바탕만 지면과 패널 사이의 먹색으로 둔다. */
+  background-color: var(--color-code-bg-dark);
 }
 
 /* 코드 복사 버튼 (src/components/code-block.tsx).
