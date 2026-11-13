@@ -225,7 +225,26 @@ export function SiteNav() {
   // reduced-motion에선 animation:none이라 onAnimationEnd가 영영 안 뜨므로(패널이 남음)
   // 그 경우에만 즉시 내린다. 두 분기 모두 값이 실제로 다를 때만 setState해 렌더
   // 루프를 막는다.
-  if (openMenu !== null) {
+  // 주소가 바뀌면 펼친 메뉴(드롭다운, 햄버거)를 바로 접는다(2026-11-13). 안 접으면 열린 채
+  // 다른 화면으로 넘어간다. 특히 /login은 내비를 숨겨 바깥 클릭으로도 못 닫혀서, 거기서
+  // "가입 승인"을 누르면 /admin에 더보기 드롭다운이 펼친 채로 나타나 화면을 덮었다.
+  // 위 마운트 게이트와 같은 렌더 중 조정 패턴이다. 새 화면에서 접힘 애니메이션은 필요 없어
+  // 마운트 상태까지 한 번에 내린다.
+  const [navPath, setNavPath] = useState(pathname);
+  const pathChanged = navPath !== pathname;
+  if (pathChanged) {
+    setNavPath(pathname);
+    setOpenMenu(null);
+    setMountedMenu(null);
+    setOpen(false);
+    setPanelMounted(false);
+  }
+
+  // 주소가 막 바뀐 렌더에서는 아래 두 게이트를 건너뛴다. 이 렌더의 openMenu, open은 아직
+  // 옛 값이라, 돌리면 방금 내린 패널을 다시 마운트한다.
+  if (pathChanged) {
+    // 위에서 모두 내렸다.
+  } else if (openMenu !== null) {
     if (mountedMenu !== openMenu) setMountedMenu(openMenu);
   } else if (mountedMenu !== null && prefersReducedMotion()) {
     setMountedMenu(null);
@@ -236,7 +255,9 @@ export function SiteNav() {
   // 언마운트하지 않는다 — conceal 애니메이션이 끝나면 패널의 onAnimationEnd가
   // panelMounted를 내린다. 단 reduced-motion에서는 animation:none이라 onAnimationEnd가
   // 영영 안 뜨므로(패널이 남아 클릭을 가로챔), 그 경우에만 즉시 내린다.
-  if (open) {
+  if (pathChanged) {
+    // 위에서 모두 내렸다.
+  } else if (open) {
     if (!panelMounted) setPanelMounted(true);
   } else if (panelMounted && prefersReducedMotion()) {
     setPanelMounted(false);
