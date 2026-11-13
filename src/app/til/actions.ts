@@ -1,7 +1,9 @@
 'use server';
 
 import { hasUnlockCookie } from '@/lib/auth';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { getCurrentUserId } from '@/lib/current-user';
+import { getUserDb } from '@/lib/supabase/db';
+import { TIL_IMAGE_BUCKET, TIL_IMAGE_TYPES, tilImageUrl } from '@/lib/til/image';
 import { compileTilBody } from '@/lib/til/compile';
 import { isTilTemplate } from '@/lib/til/templates';
 import { slugify, uniqueSlug } from '@/lib/til/slug';
@@ -106,16 +108,22 @@ export async function uploadTilImageAction(
   const file = formData.get('file');
   if (!(file instanceof File)) return { ok: false, error: '파일이 없습니다' };
   if (file.size > 5 * 1024 * 1024) return { ok: false, error: '이미지는 5MB 이하만' };
+  // 이미지는 본인만 본다(2026-11-13). 파일은 "<내 id>/..." 폴더에 로그인 본인 자격으로 올리고,
+  // 저장소 규칙이 첫 폴더가 본인 id일 때만 허락한다. 화면 주소는 세션을 확인하는
+  // /api/til-image 라우트다(버킷은 비공개라 공개 주소가 없다).
+  const ext = TIL_IMAGE_TYPES[file.type];
+  if (!ext) return { ok: false, error: 'PNG, JPG, GIF, WebP 이미지만 올릴 수 있어요' };
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: false, error: 'unauthorized' };
 
-  const ext = (file.name.split('.').pop() ?? 'png').toLowerCase();
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const path = `${userId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
   const bytes = new Uint8Array(await file.arrayBuffer());
 
-  const { error } = await supabaseAdmin.storage
-    .from('til-image')
-    .upload(path, bytes, { contentType: file.type || 'image/png', upsert: false });
+  const db = await getUserDb();
+  const { error } = await db.storage
+    .from(TIL_IMAGE_BUCKET)
+    .upload(path, bytes, { contentType: file.type, upsert: false });
   if (error) return { ok: false, error: error.message };
 
-  const { data } = supabaseAdmin.storage.from('til-image').getPublicUrl(path);
-  return { ok: true, url: data.publicUrl };
+  return { ok: true, url: tilImageUrl(path) };
 }
