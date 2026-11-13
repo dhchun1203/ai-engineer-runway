@@ -39,13 +39,15 @@ export const metadata: Metadata = {
 
 // FOUC/hydration-mismatch를 피하기 위해 React context 테마 프로바이더 대신
 // 하이드레이션 이전에 실행되는 인라인 스크립트로 .dark 클래스를 토글한다 (D-05).
+// 기본은 라이트다(2026-11-13). 고른 적이 없으면 시스템이 다크여도 라이트로 연다.
+// 시스템 따라가기는 테마 버튼에서 "자동"을 골랐을 때만("theme" = "auto") 쓴다.
 const themeInitScript = `
 (function () {
   try {
     var stored = localStorage.getItem("theme");
     var isDark =
       stored === "dark" ||
-      (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      (stored === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
     document.documentElement.classList.toggle("dark", isDark);
   } catch (e) {}
 })();

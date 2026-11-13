@@ -29,7 +29,7 @@ function subscribeToTheme(onStoreChange: () => void) {
     try {
       stored = localStorage.getItem("theme");
     } catch {}
-    if (stored === null) {
+    if (stored === "auto") {
       document.documentElement.classList.toggle("dark", media.matches);
     }
     onStoreChange();
@@ -39,6 +39,9 @@ function subscribeToTheme(onStoreChange: () => void) {
   // 모드 전환이 클래스를 안 바꾸는 경우가 있다 — 다크 → 자동인데 시스템도
   // 다크면 classList가 그대로라 MutationObserver가 안 깨어나고, 라벨이 낡은
   // 모드를 보여준다(실측으로 잡은 버그). cycleTheme이 이 커스텀 이벤트를 쏴서
+//
+// 2026-11-13: 기본을 라이트로 바꿨다. 저장된 키가 없으면 라이트이고, "자동"은 키를 지우는
+// 대신 "auto"를 저장한다(layout.tsx 인라인 스크립트와 같은 규칙).
   // 저장소(localStorage) 변화도 스냅샷 재독을 트리거하게 한다.
   window.addEventListener("theme-mode-change", onStoreChange);
 
@@ -52,9 +55,9 @@ function subscribeToTheme(onStoreChange: () => void) {
 function getThemeSnapshot(): ThemeMode | null {
   try {
     const stored = localStorage.getItem("theme");
-    if (stored === "light" || stored === "dark") return stored;
+    if (stored === "dark" || stored === "auto") return stored;
   } catch {}
-  return "auto";
+  return "light";
 }
 
 // 서버 렌더와 하이드레이션 시점에는 실제 테마를 알 수 없다 — null을 돌려 기존과 같은
@@ -79,14 +82,10 @@ export function ThemeToggle() {
   const mode = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getThemeServerSnapshot);
 
   const cycleTheme = () => {
-    const current = getThemeSnapshot() ?? "auto";
+    const current = getThemeSnapshot() ?? "light";
     const next = NEXT_MODE[current];
     try {
-      if (next === "auto") {
-        localStorage.removeItem("theme");
-      } else {
-        localStorage.setItem("theme", next);
-      }
+      localStorage.setItem("theme", next);
     } catch {
       // localStorage 접근 불가(프라이빗 모드 등)여도 클래스 토글은 이번 세션에 반영된다.
     }
@@ -98,14 +97,14 @@ export function ThemeToggle() {
     window.dispatchEvent(new Event("theme-mode-change"));
   };
 
-  const current = mode ?? "auto";
+  const current = mode ?? "light";
   const next = NEXT_MODE[current];
 
   return (
     <button
       type="button"
       onClick={cycleTheme}
-      aria-label={`테마: ${MODE_LABEL[current]} — 누르면 ${MODE_LABEL[next]}`}
+      aria-label={`테마: ${MODE_LABEL[current]}, 누르면 ${MODE_LABEL[next]}`}
       title={MODE_LABEL[current]}
       className="tap-feedback flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-badge-neutral-text hover:bg-badge-neutral-bg dark:text-badge-neutral-text-dark dark:hover:bg-badge-neutral-bg-dark"
     >
