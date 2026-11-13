@@ -134,7 +134,7 @@ docker run -d --name my-pg \
     targets={[
       { title: "뒤에서 켜기", result: "-d", why: "터미널을 붙잡지 않아요" },
       { title: "컨테이너 이름", result: "--name", why: "`my-pg`로 불러요" },
-      { title: "환경 변수", result: "-e", why: "`POSTGRES_PASSWORD=admin`" },
+      { title: "환경 변수", result: "-e", why: "비밀번호 `admin`을 넘겨요" },
       { title: "포트 잇기", result: "-p", why: "내 PC `5432`를 컨테이너 `5432`로" },
       { title: "볼륨 잇기", result: "-v", why: "볼륨 `pg-data`를 데이터 폴더에" },
       { title: "이미지 (맨 끝)", result: "postgres:18", why: "빠지면 안 돼요" },
@@ -312,7 +312,7 @@ psql: error: C:/Users/.../Temp/my_shop.sql: No such file or directory
     row={[
       { title: "내가 친 것", tone: "blue", lines: ["`-f /tmp/my_shop.sql`"] },
       { arrow: "Git Bash가 몰래 바꿈" },
-      { title: "컨테이너가 받은 것", tone: "red", lines: ["`C:/Users/.../Temp/my_shop.sql`", "컨테이너 안에는 그런 경로가 없어요"] },
+      { title: "컨테이너가 받은 것", tone: "red", lines: ["`/tmp`가 `C:/Users/.../Temp`로", "컨테이너 안에는 그런 경로가 없어요"] },
     ]}
   />
 </Figure>
