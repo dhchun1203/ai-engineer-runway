@@ -164,16 +164,16 @@
      맞닿는 곳에서 뒤 글자가 또렷하게 비쳤다. 유리 면을 이만큼 경계 너머로 늘려 흐리게 하고,
      늘린 부분은 마스크로 숨긴다. */
   --glass-reach: 24px;
-  --glass-paper: color-mix(in srgb, var(--color-background) 58%, transparent);
-  --glass-pressed: color-mix(in srgb, var(--color-surface-2) 52%, transparent);
-  --glass-panel: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  --glass-paper: color-mix(in srgb, var(--color-background) 52%, transparent);
+  --glass-pressed: color-mix(in srgb, var(--color-surface-2) 46%, transparent);
+  --glass-panel: color-mix(in srgb, var(--color-surface) 55%, transparent);
   --glass-edge: color-mix(in srgb, var(--color-foreground) 12%, transparent);
 }
 
 .dark {
-  --glass-paper: color-mix(in srgb, var(--color-background-dark) 58%, transparent);
-  --glass-pressed: color-mix(in srgb, var(--color-surface-2-dark) 52%, transparent);
-  --glass-panel: color-mix(in srgb, var(--color-surface-dark) 62%, transparent);
+  --glass-paper: color-mix(in srgb, var(--color-background-dark) 52%, transparent);
+  --glass-pressed: color-mix(in srgb, var(--color-surface-2-dark) 46%, transparent);
+  --glass-panel: color-mix(in srgb, var(--color-surface-dark) 57%, transparent);
   --glass-edge: color-mix(in srgb, var(--color-foreground-dark) 12%, transparent);
 }
 
