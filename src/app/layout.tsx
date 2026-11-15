@@ -50,12 +50,21 @@ const themeInitScript = `
       (stored === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
     document.documentElement.classList.toggle("dark", isDark);
   } catch (e) {}
+  // 큰 모니터 배율(globals.css html[data-screen]). 창 폭이 아니라 모니터 폭(screen.width)으로
+  // 정한다. 창 폭으로 정하면 브라우저 배율을 줄일 때 창이 넓게 계산되어 글자가 도리어 커졌다
+  // (80% -> 75%에서 커짐, 2026-11-16). screen.width는 브라우저 배율에 따라 변하지 않는다.
+  try {
+    var sw = window.screen.width;
+    if (sw >= 3200) document.documentElement.dataset.screen = "4k";
+    else if (sw >= 2200) document.documentElement.dataset.screen = "qhd";
+  } catch (e) {}
 })();
 `;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
+      suppressHydrationWarning
       lang="ko"
       className={`${pretendard.variable} ${newsreader.variable} ${notoSerifKr.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
