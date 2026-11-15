@@ -177,7 +177,7 @@ export function StageChips({ contentId, compact = false }: { contentId: string; 
           ref={navRef}
           aria-label="목차"
           data-section-tape
-          className="stage-bar section-tape sticky z-10 flex w-full items-stretch"
+          className="stage-bar section-tape sticky z-12 flex w-full items-stretch"
         >
           {current ? (
             <button
@@ -209,40 +209,40 @@ export function StageChips({ contentId, compact = false }: { contentId: string; 
             ref={panelRef}
             id={panelId}
             data-print-hide
-            className="stage-index panel fixed z-20 overflow-y-auto overscroll-contain p-1.5"
-            style={{
-              top: panelBox.top,
-              left: panelBox.left,
-              width: panelBox.width,
-              maxHeight: `calc(100dvh - ${panelBox.top}px - 16px)`,
-            }}
+            className="stage-index fixed z-11"
+            style={{ top: panelBox.top, left: panelBox.left, width: panelBox.width }}
           >
-            <ol className="flex flex-col">
-              {stages.map((stage, i) => {
-                const active = stage.id === activeId;
-                return (
-                  <li key={stage.id}>
-                    <a
-                      href={`#${stage.id}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setOpen(false);
-                        goTo(stage.id);
-                      }}
-                      aria-current={active ? "location" : undefined}
-                      className={`stage-index-item tap-feedback flex min-h-11 items-center gap-2.5 px-2.5 text-label break-keep ${
-                        active
-                          ? "font-bold text-foreground dark:text-foreground-dark"
-                          : "font-normal text-badge-neutral-text hover:text-foreground dark:text-badge-neutral-text-dark dark:hover:text-foreground-dark"
-                      }`}
-                    >
-                      {numBox(i + 1, active)}
-                      <span>{stage.label}</span>
-                    </a>
-                  </li>
-                );
-              })}
-            </ol>
+            <div
+              className="stage-index-scroll overflow-y-auto overscroll-contain p-1.5"
+              style={{ maxHeight: `calc(100dvh - ${panelBox.top}px - 16px)` }}
+            >
+              <ol className="flex flex-col">
+                {stages.map((stage, i) => {
+                  const active = stage.id === activeId;
+                  return (
+                    <li key={stage.id}>
+                      <a
+                        href={`#${stage.id}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOpen(false);
+                          goTo(stage.id);
+                        }}
+                        aria-current={active ? "location" : undefined}
+                        className={`stage-index-item tap-feedback flex min-h-11 items-center gap-2.5 px-2.5 text-label break-keep ${
+                          active
+                            ? "font-bold text-foreground dark:text-foreground-dark"
+                            : "font-normal text-badge-neutral-text hover:text-foreground dark:text-badge-neutral-text-dark dark:hover:text-foreground-dark"
+                        }`}
+                      >
+                        {numBox(i + 1, active)}
+                        <span>{stage.label}</span>
+                      </a>
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
           </div>
         ) : null}
       </>
@@ -255,7 +255,7 @@ export function StageChips({ contentId, compact = false }: { contentId: string; 
       ref={navRef}
       aria-label="단원 단계"
       data-section-tape
-      className="stage-bar section-tape sticky z-10 flex w-full items-stretch justify-between"
+      className="stage-bar section-tape sticky z-12 flex w-full items-stretch justify-between"
     >
       {stages.map((stage, i) => {
         const active = stage.id === activeId;

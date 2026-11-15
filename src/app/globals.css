@@ -160,6 +160,10 @@
      반투명 색은 기존 지면 토큰을 섞어 만든다(새 색 없음). 흐림을 못 하는 브라우저는
      아래 @supports not 블록이 불투명 면으로 되돌린다. */
   --glass-blur: blur(18px) saturate(1.6);
+  /* 흐림은 면의 가장자리에서 약해진다(면 밖을 못 보고 안쪽만 섞기 때문). 그래서 헤더와 막대가
+     맞닿는 곳에서 뒤 글자가 또렷하게 비쳤다. 유리 면을 이만큼 경계 너머로 늘려 흐리게 하고,
+     늘린 부분은 마스크로 숨긴다. */
+  --glass-reach: 24px;
   --glass-paper: color-mix(in srgb, var(--color-background) 58%, transparent);
   --glass-pressed: color-mix(in srgb, var(--color-surface-2) 52%, transparent);
   --glass-panel: color-mix(in srgb, var(--color-surface) 60%, transparent);
@@ -614,16 +618,27 @@ textarea,
      흐림 색과 선 색은 공용 유리 토큰(@theme 아래 :root의 --glass-*)을 쓴다. */
   .site-header {
     background-color: transparent;
-    border-bottom: 1px solid var(--glass-edge);
   }
 
+  /* 아래 선은 테두리 대신 ::before 안에 그린다. 테두리로 두면 그 1px만 흐림 밖이라 글자가 비친다.
+     ::before는 헤더 아래로 선 1px + --glass-reach만큼 늘어나고, 늘어난 부분은 마스크로 숨는다. */
   .site-header::before {
     content: "";
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: calc(-1 * (var(--glass-reach) + 1px));
     z-index: -1;
     pointer-events: none;
-    background-color: var(--glass-paper);
+    background: linear-gradient(
+      to bottom,
+      var(--glass-paper) 0 calc(100% - var(--glass-reach) - 1px),
+      var(--glass-edge) 0 calc(100% - var(--glass-reach)),
+      transparent 0
+    );
+    -webkit-mask-image: linear-gradient(to bottom, black calc(100% - var(--glass-reach)), transparent 0);
+    mask-image: linear-gradient(to bottom, black calc(100% - var(--glass-reach)), transparent 0);
     -webkit-backdrop-filter: var(--glass-blur);
     backdrop-filter: var(--glass-blur);
   }
@@ -2014,13 +2029,13 @@ code[data-theme*=" "] span {
   border-bottom-color: var(--color-line-dark);
 }
 
-/* 파이썬 손풀기 단계 막대. 글자는 본문 폭에 맞추고 지면과 선만 화면 끝까지 낸다. 번지는 그림자는
-   스크롤 폭에 잡히지 않아 가로 넘침이 없고, clip-path가 위쪽으로 번지는 것을 잘라 헤더를 덮지 않는다. */
+/* 단계 막대. 글자는 본문 폭에 맞추고 지면과 선만 화면 끝까지 낸다. */
 /* 막대 바탕은 한 단계 눌린 면(surface-2)을 유리로 깐 것이다(2026-11-15). 본문과 같은 색이면
    막대가 어디서 끝나는지 구분되지 않았고, 사용자가 비교 미리보기에서 유리를 골랐다.
    예전에는 번지는 그림자로 화면 끝까지 칠했지만 그림자에는 흐림이 안 걸린다. 그래서 ::before를
    양옆으로 길게 뻗고, 넘친 부분은 #main-content의 overflow-x: clip이 잘라 가로 넘침을 막는다.
-   아래 선은 이 ::before의 아래 테두리다(막대 바닥에서 1px 밑). */
+   위아래로도 --glass-reach만큼 늘려(가장자리 흐림 약화 방지) 마스크로 숨긴다. 아래 선(막대 바닥에서
+   1px 밑)은 같은 ::before 안에 그린다. */
 .stage-bar.section-tape {
   border-bottom: 0;
   background-color: transparent;
@@ -2029,25 +2044,65 @@ code[data-theme*=" "] span {
 .stage-bar.section-tape::before {
   content: "";
   position: absolute;
-  top: 0;
-  bottom: -1px;
+  top: calc(-1 * var(--glass-reach));
+  bottom: calc(-1 * (var(--glass-reach) + 1px));
   left: -100vmax;
   right: -100vmax;
   z-index: -1;
   pointer-events: none;
-  background-color: var(--glass-pressed);
-  border-bottom: 1px solid var(--glass-edge);
+  background:
+    linear-gradient(
+      to bottom,
+      transparent 0 calc(100% - var(--glass-reach) - 1px),
+      var(--glass-edge) 0 calc(100% - var(--glass-reach)),
+      transparent 0
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 0 var(--glass-reach),
+      var(--glass-pressed) 0 calc(100% - var(--glass-reach)),
+      transparent 0
+    );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent var(--glass-reach),
+    black 0 calc(100% - var(--glass-reach)),
+    transparent 0
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent var(--glass-reach),
+    black 0 calc(100% - var(--glass-reach)),
+    transparent 0
+  );
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
 }
 
 /* 펼친 목차도 같은 유리. 막대에 바로 붙으므로 위쪽 모서리는 각지게 두고 아래만 둥글린다
-   (위까지 둥글리면 모서리 틈으로 본문이 비친다). */
-.stage-index.panel {
-  background-color: var(--glass-panel);
-  border-color: var(--glass-edge);
+   (위까지 둥글리면 모서리 틈으로 본문이 비친다). 유리는 ::before에 깔고 위로 --glass-reach만큼
+   막대 밑까지 늘려 숨긴다. 그래서 목차는 막대보다 아래 층(z-11 < 막대 z-12)이어야 막대 글자가
+   목차 유리에 번져 들지 않는다. 스크롤은 안쪽 .stage-index-scroll이 맡는다(바깥이 스크롤하면
+   ::before가 같이 밀려 잘린다). */
+.stage-index {
   border-radius: 0 0 14px 14px;
-  box-shadow: none;
+}
+
+.stage-index::before {
+  content: "";
+  position: absolute;
+  top: calc(-1 * var(--glass-reach));
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  pointer-events: none;
+  border: 1px solid var(--glass-edge);
+  border-top: 0;
+  border-radius: 0 0 14px 14px;
+  background: linear-gradient(to bottom, transparent 0 var(--glass-reach), var(--glass-panel) 0);
+  -webkit-mask-image: linear-gradient(to bottom, transparent var(--glass-reach), black 0);
+  mask-image: linear-gradient(to bottom, transparent var(--glass-reach), black 0);
   -webkit-backdrop-filter: blur(22px) saturate(1.6);
   backdrop-filter: blur(22px) saturate(1.6);
 }
