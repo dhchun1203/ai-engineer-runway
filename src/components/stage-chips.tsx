@@ -108,13 +108,15 @@ export function StageChips({ contentId, compact = false }: { contentId: string; 
   useEffect(drawRail, [activeId, stages]);
 
   // 펼친 목차: 막대 바로 아래, 막대와 같은 폭. 바깥을 누르거나 Esc를 누르면 닫는다.
+  // 틈 없이 붙인다(2026-11-15). 틈이 있으면 그 사이로 뒤 본문 글자가 비쳐 보였다.
+  // +1은 막대 아래 선(1px)과 읽은 선(막대 바닥에서 1px 내려온다) 바로 밑이다.
   useEffect(() => {
     if (!open) return;
     let raf = 0;
     const measure = () => {
       raf = 0;
       const r = navRef.current?.getBoundingClientRect();
-      if (r) setPanelBox({ top: r.bottom + 6, left: r.left, width: r.width });
+      if (r) setPanelBox({ top: r.bottom + 1, left: r.left, width: r.width });
     };
     const place = () => {
       if (!raf) raf = requestAnimationFrame(measure);

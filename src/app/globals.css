@@ -1984,8 +1984,10 @@ code[data-theme*=" "] span {
 
 /* 파이썬 손풀기 단계 막대. 글자는 본문 폭에 맞추고 지면과 선만 화면 끝까지 낸다. 번지는 그림자는
    스크롤 폭에 잡히지 않아 가로 넘침이 없고, clip-path가 위쪽으로 번지는 것을 잘라 헤더를 덮지 않는다. */
+/* 막대 바탕은 지면이 아니라 한 단계 눌린 면(surface-2)이다(2026-11-15). 본문과 같은 색이면
+   막대가 어디서 끝나는지 구분되지 않았다. */
 .stage-bar.section-tape {
-  --stage-bar-paper: var(--color-background);
+  --stage-bar-paper: var(--color-surface-2);
   --stage-bar-line: var(--color-line);
   border-bottom: 0;
   box-shadow:
@@ -1996,7 +1998,7 @@ code[data-theme*=" "] span {
 }
 
 .dark .stage-bar.section-tape {
-  --stage-bar-paper: var(--color-background-dark);
+  --stage-bar-paper: var(--color-surface-2-dark);
   --stage-bar-line: var(--color-line-dark);
 }
 
