@@ -155,6 +155,35 @@
   --section-tape-scroll-offset: calc(
     var(--site-header-height) + var(--section-tape-height) + 8px
   );
+
+  /* 유리 면(2026-11-15). 위에 붙어 따라오는 헤더, 단계 막대, 펼친 목차가 같이 쓴다.
+     반투명 색은 기존 지면 토큰을 섞어 만든다(새 색 없음). 흐림을 못 하는 브라우저는
+     아래 @supports not 블록이 불투명 면으로 되돌린다. */
+  --glass-blur: blur(18px) saturate(1.6);
+  --glass-paper: color-mix(in srgb, var(--color-background) 58%, transparent);
+  --glass-pressed: color-mix(in srgb, var(--color-surface-2) 52%, transparent);
+  --glass-panel: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  --glass-edge: color-mix(in srgb, var(--color-foreground) 12%, transparent);
+}
+
+.dark {
+  --glass-paper: color-mix(in srgb, var(--color-background-dark) 58%, transparent);
+  --glass-pressed: color-mix(in srgb, var(--color-surface-2-dark) 52%, transparent);
+  --glass-panel: color-mix(in srgb, var(--color-surface-dark) 62%, transparent);
+  --glass-edge: color-mix(in srgb, var(--color-foreground-dark) 12%, transparent);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --glass-paper: var(--color-background);
+    --glass-pressed: var(--color-surface-2);
+    --glass-panel: var(--color-surface);
+  }
+  .dark {
+    --glass-paper: var(--color-background-dark);
+    --glass-pressed: var(--color-surface-2-dark);
+    --glass-panel: var(--color-surface-dark);
+  }
 }
 
 /* 메모장(Lesson Notepad) 기하 단일 소스 (Task 2, G-06-9 재발 방지 조항). 이 파일은
@@ -578,22 +607,25 @@ textarea,
   }
 
   /* ── 헤더 ────────────────────────────────────────────────────────────────
-     종이와 같은 색에 굵은 잉크 밑줄 하나. 얇은 회색 경계선은 이 디자인의
-     문법이 아니다. */
+     유리 헤더(2026-11-15, 사용자가 비교 미리보기에서 고름). 반투명 지면 + 흐림으로
+     뒤 본문이 흐리게 비치고, 아래는 옅은 선 하나로 끝난다. 예전의 잉크 밑줄과 각진
+     그림자는 걷어 냈다. 흐림은 헤더 자신이 아니라 ::before에 건다. 헤더에 직접 걸면
+     헤더가 안쪽 position: fixed 요소의 기준 상자가 되어 버리기 때문이다.
+     흐림 색과 선 색은 공용 유리 토큰(@theme 아래 :root의 --glass-*)을 쓴다. */
   .site-header {
-    background-color: var(--color-background);
-    border-bottom: 2px solid var(--color-foreground);
-    /* 잉크 밑줄 아래로 각진 하드 그림자 턱을 하나 더 얹는다 — 흐림 0, 아래
-       오프셋만. 소프트/블러 그림자는 이 디자인의 서명(--color-shadow-hard,
-       "흐림 0")을 깨므로 쓰지 않는다. 오프셋 4px은 .panel과 같은 고도라,
-       스티키 헤더가 본문 위에 뜬 하나의 면(panel)처럼 읽힌다. */
-    box-shadow: 0 4px 0 0 var(--color-shadow-hard);
+    background-color: transparent;
+    border-bottom: 1px solid var(--glass-edge);
   }
 
-  .dark .site-header {
-    background-color: var(--color-background-dark);
-    border-bottom-color: var(--color-border-strong-dark);
-    box-shadow: 0 4px 0 0 var(--color-shadow-hard-dark);
+  .site-header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: var(--glass-paper);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
   }
 
   /* 로고 앞의 작은 사각형 — accent 블록에 action 색 하드 그림자. 이 사이트가
@@ -1984,22 +2016,40 @@ code[data-theme*=" "] span {
 
 /* 파이썬 손풀기 단계 막대. 글자는 본문 폭에 맞추고 지면과 선만 화면 끝까지 낸다. 번지는 그림자는
    스크롤 폭에 잡히지 않아 가로 넘침이 없고, clip-path가 위쪽으로 번지는 것을 잘라 헤더를 덮지 않는다. */
-/* 막대 바탕은 지면이 아니라 한 단계 눌린 면(surface-2)이다(2026-11-15). 본문과 같은 색이면
-   막대가 어디서 끝나는지 구분되지 않았다. */
+/* 막대 바탕은 한 단계 눌린 면(surface-2)을 유리로 깐 것이다(2026-11-15). 본문과 같은 색이면
+   막대가 어디서 끝나는지 구분되지 않았고, 사용자가 비교 미리보기에서 유리를 골랐다.
+   예전에는 번지는 그림자로 화면 끝까지 칠했지만 그림자에는 흐림이 안 걸린다. 그래서 ::before를
+   양옆으로 길게 뻗고, 넘친 부분은 #main-content의 overflow-x: clip이 잘라 가로 넘침을 막는다.
+   아래 선은 이 ::before의 아래 테두리다(막대 바닥에서 1px 밑). */
 .stage-bar.section-tape {
-  --stage-bar-paper: var(--color-surface-2);
-  --stage-bar-line: var(--color-line);
   border-bottom: 0;
-  box-shadow:
-    0 0 0 100vmax var(--stage-bar-paper),
-    0 1px 0 100vmax var(--stage-bar-line);
-  clip-path: inset(0 -100vmax -1px);
-  background-color: var(--stage-bar-paper);
+  background-color: transparent;
 }
 
-.dark .stage-bar.section-tape {
-  --stage-bar-paper: var(--color-surface-2-dark);
-  --stage-bar-line: var(--color-line-dark);
+.stage-bar.section-tape::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: -1px;
+  left: -100vmax;
+  right: -100vmax;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--glass-pressed);
+  border-bottom: 1px solid var(--glass-edge);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+/* 펼친 목차도 같은 유리. 막대에 바로 붙으므로 위쪽 모서리는 각지게 두고 아래만 둥글린다
+   (위까지 둥글리면 모서리 틈으로 본문이 비친다). */
+.stage-index.panel {
+  background-color: var(--glass-panel);
+  border-color: var(--glass-edge);
+  border-radius: 0 0 14px 14px;
+  box-shadow: none;
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  backdrop-filter: blur(22px) saturate(1.6);
 }
 
 /* 읽은 만큼 자라는 선. 아래 선 1px와 막대 바닥 1px에 걸쳐 2px로 선다. 스크롤을 그대로 따라가므로

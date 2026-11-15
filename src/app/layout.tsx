@@ -80,7 +80,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             — body의 flex-col 컨텍스트를 이 래퍼가 그대로 이어받아야 각 페이지의
             <main className="... flex-1 ...">가 기존과 동일하게 남은 세로 공간을
             채운다(래퍼 삽입으로 인한 레이아웃 회귀 방지). */}
-        <div id="main-content" tabIndex={-1} className="flex flex-1 flex-col">
+        <div id="main-content" tabIndex={-1} className="flex flex-1 flex-col overflow-x-clip">
           {children}
         </div>
         {/* 맨 위로 가기 — 어느 화면에서든 같은 자리에 있어야 하므로 루트에 한 번만

@@ -16,7 +16,7 @@ import { ChevronDown } from "lucide-react";
 // - compact(수업 레슨): 절이 20개까지 늘어 칸을 다 늘어놓으면 44px 터치 칸이 한 줄에 안 들어간다.
 //   그래서 지금 절의 번호와 이름, "3 / 20"만 보이고, 누르면 전체 목차가 막대 아래로 펼쳐진다.
 //   선은 글 전체에서 읽은 만큼 자란다.
-// 펼친 목차는 막대 밖 형제로 둔다. 막대의 clip-path가 아래로 넘치는 것을 잘라 내기 때문이다.
+// 펼친 목차는 막대 밖 형제로 둔다(position: fixed로 막대 바로 아래에 붙인다).
 
 type Stage = { id: string; label: string };
 
