@@ -480,8 +480,8 @@ DETAIL:  Key (sport_id)=(1) is still referenced from table "courses".
 <Figure>
   <Boxes
     row={[
-      { title: "넣을 때 막아요", tone: "red", lines: ["강좌가 없는 종목 30번을 가리키려 함", "`... is not present in table \"sports\"`"] },
-      { title: "지울 때도 막아요", tone: "red", lines: ["강좌가 가리키는 수영(1번)을 지우려 함", "`... is still referenced from table \"courses\"`"] },
+      { title: "넣을 때 막아요", tone: "red", lines: ["강좌가 없는 종목 30번을 가리키려 함", "DETAIL: `is not present`"] },
+      { title: "지울 때도 막아요", tone: "red", lines: ["강좌가 가리키는 수영(1번)을 지우려 함", "DETAIL: `is still referenced`"] },
     ]}
   />
 </Figure>
