@@ -117,7 +117,7 @@ Git에는 파일이 머무는 곳이 세 군데 있어요. 택배 보내는 과�
   />
 </Figure>
 
-### git reset: 시간을 되감기
+### `git reset`: 시간을 되감기
 
 현재 브랜치(HEAD)를 지정한 커밋으로 옮겨요. `HEAD~1`은 "지금 커밋에서 하나 전"이라는 뜻이에요. `git reset --soft HEAD~1`이면 마지막 커밋 하나를 취소해요.
 
@@ -156,7 +156,7 @@ git status --short
 # M  README.md        <- 맨 앞 M이 "Staging에 담긴 수정"이라는 뜻
 ```
 
-### git revert: 반대로 고치는 새 커밋
+### `git revert`: 반대로 고치는 새 커밋
 
 지정한 커밋의 변경을 정반대로 적용한 **새 커밋**을 만들어요. 원래 커밋도 이력에 그대로 남아요.
 
@@ -294,7 +294,7 @@ ls -al      # 숨김 파일 + 자세히 (가장 자주 써요)
 
 `.git` 폴더는 이름이 점으로 시작해서 그냥 `ls`로는 안 보여요. 저장소인지 확인할 때 `ls -a`를 쳐 보는 이유예요.
 
-### 7-2. ls -al 한 줄은 네 조각으로 끊어 읽는다
+### 7-2. `ls -al` 한 줄은 네 조각으로 끊어 읽는다
 
 `ls -al`은 이런 줄을 보여 줘요.
 
@@ -478,7 +478,7 @@ git log --oneline                       # 커밋 기록 보기
 ```
 
 <Figure>
-  <Trail label="README.md가 지나는 길:" values={["Untracked (방에만 있음)", "Staging (git add)", "361fe59 (git commit)"]} tone="blue" />
+  <Trail label="`README.md`가 지나는 길:" values={["Untracked (방에만 있음)", "Staging (git add)", "361fe59 (git commit)"]} tone="blue" />
 </Figure>
 
 `-m` 뒤의 글자가 커밋 메시지예요. `docs:`처럼 앞에 종류를 붙이면 나중에 이력을 읽기 쉬워요.
@@ -543,7 +543,7 @@ git restore README.md   # 아직 add 하지 않은 수정을 버리고 마지막
 
 9절의 `git-practice` 폴더를 그대로 옮겨 왔어요. 버튼 하나가 명령어 한 줄이고, 터미널 창의 글자는 실제 Git이 찍는 출력 그대로예요.
 
-위의 세 칸이 작업 폴더, Staging Area, 저장소예요. 명령을 누를 때마다 README.md가 어느 칸에 어떤 모습으로 있는지, `git status --short`가 어떻게 바뀌는지 같이 보세요.
+위의 세 칸이 작업 폴더, Staging Area, 저장소예요. 명령을 누를 때마다 `README.md`가 어느 칸에 어떤 모습으로 있는지, `git status --short`가 어떻게 바뀌는지 같이 보세요.
 
 <GitAreasSimulator />
 

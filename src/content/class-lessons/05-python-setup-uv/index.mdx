@@ -276,7 +276,7 @@ uv add fastapi
   />
 </Figure>
 
-### uv init --no-package: 프로젝트 만들기
+### `uv init --no-package`: 프로젝트 만들기
 
 ```bash
 uv init --no-package
@@ -318,7 +318,7 @@ dependencies = []
 
 아직 `.venv`와 `uv.lock`은 없어요. 이 둘은 나중에 `uv add`나 `uv run`을 실행할 때 생겨요.
 
-### uv python pin 3.12: 파이썬 버전 정하기
+### `uv python pin 3.12`: 파이썬 버전 정하기
 
 ```bash
 uv python pin 3.12
@@ -332,7 +332,7 @@ cat .python-version
 
 `uv init`도 컴퓨터에 있는 파이썬을 보고 이 파일을 미리 만들어 둬요. 그래도 pin으로 한 번 더 못 박아 두면 팀원과 버전을 맞추기 쉬워요.
 
-### uv add fastapi: 라이브러리 설치하기
+### `uv add fastapi`: 라이브러리 설치하기
 
 ```bash
 uv add fastapi
@@ -379,7 +379,7 @@ fastapi 하나를 달라고 했는데 11개가 설치됐어요. fastapi가 동�
 
 FastAPI는 **파이썬으로 API 서버를 만드는 라이브러리**예요. 나중에 수업에서 서버를 만들 때 써요.
 
-## 7. pyproject.toml과 uv.lock: 장보기 목록과 영수증
+## 7. `pyproject.toml`과 `uv.lock`: 장보기 목록과 영수증
 
 ### 두 파일은 하는 일이 달라요
 
@@ -416,7 +416,7 @@ source = { registry = "https://pypi.org/simple" }
 
 둘이 어긋나면 "원하는 것"과 "설치되는 것"이 달라져요. 맞춰 두면 팀원, 다른 컴퓨터, 서버가 **같은 버전**으로 설치해요. 버전 차이로 코드가 깨지는 일을 막아요. **두 파일 모두 Git에 커밋해요.**
 
-### uv sync: 목록대로 맞추기
+### `uv sync`: 목록대로 맞추기
 
 ```bash
 uv sync
@@ -431,7 +431,7 @@ uv sync
 - **`git clone` 직후.** `.venv`는 `.gitignore`에 들어 있어서 저장소에 안 올라가요. 받은 사람은 `uv sync` 한 번으로 똑같은 환경을 만들어요. `.venv`를 지우고 돌려 봤더니 목록 그대로 다시 설치됐어요.
 - **`pyproject.toml`을 직접 고친 뒤.** 손으로 고친 목록을 lock과 `.venv`에 반영해요.
 
-### --locked와 --frozen: 어긋났을 때의 태도
+### `--locked`와 `--frozen`: 어긋났을 때의 태도
 
 일부러 어긋나게 만들어 봤어요. `pyproject.toml`의 목록에 `"sniffio"`를 손으로 한 줄 넣고, lock은 그대로 뒀어요. 같은 상태에서 세 가지로 쳐 보면 반응이 달라요.
 
@@ -482,9 +482,9 @@ uv sync
 | `uv sync --locked` | 에러로 멈춤 |
 | `uv sync --frozen` | lock만 보고 설치(pyproject 변경은 무시) |
 
-## 8. 실행과 가상환경: uv run이 대신 들어가 준다
+## 8. 실행과 가상환경: `uv run`이 대신 들어가 준다
 
-### 가장 간편한 방법: uv run
+### 가장 간편한 방법: `uv run`
 
 ```bash
 uv run main.py

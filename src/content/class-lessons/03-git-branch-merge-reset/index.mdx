@@ -193,7 +193,7 @@ git status --short
 
 팀마다 타입 구성이 조금씩 달라요. 새 프로젝트에 들어가면 그 팀의 규칙부터 확인해요.
 
-## 4. git clone: 이력까지 통째로 복사해 온다
+## 4. `git clone`: 이력까지 통째로 복사해 온다
 
 GitHub에 이미 있는 저장소를 내 컴퓨터로 가져올 때 써요.
 
@@ -218,7 +218,7 @@ git remote -v
 
 어제 배운 것과 정리하면 이래요. 이미 GitHub에 있으면 `clone`, 내 컴퓨터에서 먼저 만들었으면 `remote add`예요.
 
-## 5. git log 읽기: 내 main과 원격 main은 따로 움직인다
+## 5. `git log` 읽기: 내 main과 원격 main은 따로 움직인다
 
 clone한 저장소에서 커밋을 하나 더 하고 log를 보면 이렇게 나와요.
 
@@ -234,7 +234,7 @@ git log --oneline
 <Figure>
   <Boxes
     row={[
-      { title: "4bb7219", note: "docs: README.md 추가" },
+      { title: "4bb7219", note: "docs: `README.md` 추가" },
       { arrow: "다음 커밋" },
       { title: "f99921f", note: "feat: .gitignore 파일 생성", tone: "amber", lines: ["`origin/main`: 원격 main이 가리키는 곳", "마지막으로 원격과 주고받았을 때의 위치"] },
       { arrow: "내가 하나 더 커밋" },
@@ -258,7 +258,7 @@ git status
 
 </Hint>
 
-## 6. git reset: 세 옵션은 지우는 범위가 다르다
+## 6. `git reset`: 세 옵션은 지우는 범위가 다르다
 
 1회차에서 reset은 "시간을 되감기"라고 배웠어요. 오늘은 세 옵션이 **어디까지 되감는지**를 다시 정리했어요. 되감을 지점은 해시로 정해도 되고, 상대 위치로 정해도 돼요.
 
@@ -309,7 +309,7 @@ git status --short
 
 </Note>
 
-## 7. git reflog: HEAD의 발자국 일지
+## 7. `git reflog`: HEAD의 발자국 일지
 
 `reset --hard`로 커밋을 날렸다고 끝이 아니에요. Git은 **HEAD가 움직일 때마다** 따로 일지를 써 둬요. 그게 `reflog`예요.
 
@@ -398,7 +398,7 @@ git branch
 
 `git branch 이름`은 책갈피만 꽂고 그 자리에 그대로 있어요. `git checkout -b`는 꽂고 바로 그 책갈피로 넘어가요. 1회차에서 본 `git switch -c`와 같은 일이에요.
 
-## 9. git stash: 하던 작업을 서랍에 맡긴다
+## 9. `git stash`: 하던 작업을 서랍에 맡긴다
 
 작업하다가 **급하게 다른 브랜치로 가야 하는데**, 아직 커밋하기엔 애매할 때가 있어요. 그대로 옮기려 하면 Git이 막을 수 있어요.
 
@@ -479,7 +479,7 @@ git status --short
 
 </Note>
 
-## 10. git merge: 받는 쪽에 서서 끌어온다
+## 10. `git merge`: 받는 쪽에 서서 끌어온다
 
 merge는 "**다른 브랜치를 지금 내 브랜치로 가져와 합쳐**"라는 명령이에요. 그래서 합쳐질 대상(보통 main)으로 먼저 이동해요.
 
@@ -560,7 +560,7 @@ merge 커밋에도 메시지가 필요해서, `-m` 없이 치면 메시지를 �
 
 </Hint>
 
-### --no-ff: Fast-forward여도 merge 커밋 남기기
+### `--no-ff`: Fast-forward여도 merge 커밋 남기기
 
 Fast-forward는 깔끔하지만, 나중에 보면 "여기서부터 여기까지가 로그인 기능이었다"는 흔적이 없어요. 흔적을 남기고 싶으면 `--no-ff`(no fast-forward)를 붙여요.
 
@@ -668,7 +668,7 @@ VS Code에서 충돌 파일을 열면 표시 위에 "현재 변경 사항 수락
 
 </Note>
 
-### 그만두고 싶으면: git merge --abort
+### 그만두고 싶으면: `git merge --abort`
 
 충돌이 너무 복잡해서 일단 멈추고 싶으면 merge 전 상태로 되돌릴 수 있어요.
 
@@ -716,7 +716,7 @@ feature 브랜치는 **develop에서** 갈라져 나오고, 다 만들면 PR을 
 - 그래서 develop의 새 변경을 내 feature로 **자주 가져와 맞춰요**(feature에 서서 develop을 merge).
 - 충돌은 보통 **PR을 올리기 전에 feature 쪽에서** 풀고, 깨끗한 상태로 리뷰를 받아요.
 
-## 13. 브랜치 삭제: -d는 조심성 있게, -D는 강제로
+## 13. 브랜치 삭제: `-d`는 조심성 있게, `-D`는 강제로
 
 merge가 끝난 브랜치는 지워서 목록을 깔끔하게 해요.
 

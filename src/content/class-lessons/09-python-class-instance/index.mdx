@@ -404,8 +404,8 @@ print(Item("새우깡", 2000))
   <FanOut
     call="print(...)"
     targets={[
-      { title: "print(t)", result: "STR", why: "혼자 찍히면 `__str__`" },
-      { title: "print([t])", result: "[REPR]", why: "리스트 안에 들면 `__repr__`" },
+      { title: "`print(t)`", result: "STR", why: "혼자 찍히면 `__str__`" },
+      { title: "`print([t])`", result: "[REPR]", why: "리스트 안에 들면 `__repr__`" },
       { title: "print(Item(\"새우깡\", 2000))", result: "<__main__.Item object at 0x...>", why: "둘 다 없으면 기본 모양" },
     ]}
   />
@@ -481,7 +481,7 @@ for item in cart.show_items():
       [{ title: "ShoppingCart", note: "담고 빼는 쪽", tone: "blue", lines: ["속성: `bucket` (빈 리스트에서 시작)", "메서드: `add_item`, `remove_item`, `show_items`"] }],
       [
         { title: "item_a", note: "Item", tone: "rust", via: "카트가 상품 인스턴스를 `bucket`에 담아요", lines: ["`name`: 초코파이", "`price`: 5000"] },
-        { title: "item_b", note: "Item, remove_item으로 빠짐", tone: "red", dashed: true, via: "`remove_item(item_b)`", lines: ["`name`: 새우깡", "`price`: 2000"] },
+        { title: "item_b", note: "Item, `remove_item`으로 빠짐", tone: "red", dashed: true, via: "`remove_item(item_b)`", lines: ["`name`: 새우깡", "`price`: 2000"] },
         { title: "item_c", note: "Item", tone: "rust", via: "남은 두 개가 출력돼요", lines: ["`name`: 빅파이", "`price`: 3000"] },
       ],
     ]}

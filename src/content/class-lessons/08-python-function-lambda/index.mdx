@@ -79,9 +79,9 @@ say_hello(age=25)
 <Figure>
   <Boxes
     row={[
-      { title: "say_hello()", note: "아무것도 안 넘김", lines: ["name = \"홍길동\" (기본값)", "age = 30 (기본값)", "point = 1000 (기본값)"] },
-      { title: "say_hello(\"Minji\")", note: "그냥 넘김", tone: "blue", lines: ["name = \"Minji\" (**첫 칸**에 들어감)", "age = 30 (기본값)", "point = 1000 (기본값)"] },
-      { title: "say_hello(age=25)", note: "이름 붙여 넘김", tone: "blue", lines: ["name = \"홍길동\" (기본값)", "age = 25 (**이름으로 골라** 넣음)", "point = 1000 (기본값)"] },
+      { title: "say_hello()", note: "아무것도 안 넘김", lines: ["`name = \"홍길동\"` (기본값)", "`age = 30` (기본값)", "`point = 1000` (기본값)"] },
+      { title: "say_hello(\"Minji\")", note: "그냥 넘김", tone: "blue", lines: ["`name = \"Minji\"` (**첫 칸**에 들어감)", "`age = 30` (기본값)", "`point = 1000` (기본값)"] },
+      { title: "say_hello(age=25)", note: "이름 붙여 넘김", tone: "blue", lines: ["`name = \"홍길동\"` (기본값)", "`age = 25` (**이름으로 골라** 넣음)", "`point = 1000` (기본값)"] },
     ]}
   />
 </Figure>
@@ -593,7 +593,7 @@ print([x for x in numbers if x % 2 == 0])
 
 리스트 컴프리헨션(list comprehension)은 `[만들 값 for 변수 in 데이터 if 조건]` 모양으로 대괄호 안에 for를 써서 새 리스트를 한 줄로 만드는 문법이에요. `if 조건`은 필요할 때만 붙여요.
 
-### 왜 list()로 감싸나요?
+### 왜 `list()`로 감싸나요?
 
 `map`과 `filter`는 리스트를 바로 만들지 않아요. 필요할 때 하나씩 꺼내 주는 **꾸러미**(map 객체)를 돌려줘요.
 

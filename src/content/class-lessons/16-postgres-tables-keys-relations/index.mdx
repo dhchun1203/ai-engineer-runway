@@ -27,11 +27,11 @@ preStudy: ["1-4-relational-db-basics"]
         { title: "sports", note: "종목", tone: "rust", lines: ["PK `sport_id`"] },
       ],
       [
-        { title: "lockers", note: "사물함 배정, 1:1", tone: "blue", via: "members를 가리켜요", lines: ["`member_id`에 UNIQUE", "회원이 지워지면 같이 지워져요"] },
-        { title: "courses", note: "강좌, 1:N", tone: "blue", via: "sports를 가리켜요", lines: ["종목 하나에 강좌 여러 개", "강사 번호도 적어요 (4강)"] },
-        { title: "instructors", note: "강사, 1:N", tone: "blue", via: "sports를 가리켜요", lines: ["담당 종목 번호"] },
+        { title: "lockers", note: "사물함 배정, 1:1", tone: "blue", via: "`members`를 가리켜요", lines: ["`member_id`에 `UNIQUE`", "회원이 지워지면 같이 지워져요"] },
+        { title: "courses", note: "강좌, 1:N", tone: "blue", via: "`sports`를 가리켜요", lines: ["종목 하나에 강좌 여러 개", "강사 번호도 적어요 (4강)"] },
+        { title: "instructors", note: "강사, 1:N", tone: "blue", via: "`sports`를 가리켜요", lines: ["담당 종목 번호"] },
       ],
-      [{ title: "enrollments", note: "수강 신청, N:M을 잇는 가운데 표", tone: "amber", via: "members와 courses를 둘 다 가리켜요", lines: ["회원, 강좌, 수강 월 세 열을 합친 복합 키"] }],
+      [{ title: "enrollments", note: "수강 신청, N:M을 잇는 가운데 표", tone: "amber", via: "`members`와 `courses`를 둘 다 가리켜요", lines: ["회원, 강좌, 수강 월 세 열을 합친 복합 키"] }],
     ]}
   />
 </Figure>
@@ -42,10 +42,10 @@ preStudy: ["1-4-relational-db-basics"]
   <Seq
     steps={[
       { title: "빈 DB 만들고 들어가기", body: "compose로 PostgreSQL 18을 띄우고 `CREATE DATABASE` (3절, 4절)" },
-      { title: "회원 표와 기본 키", body: "열 타입, NOT NULL, PRIMARY KEY, SERIAL (5절~7절)" },
-      { title: "종목과 강좌, 외래 키", body: "REFERENCES가 넣을 때도 지울 때도 막아요 (8절, 9절)" },
-      { title: "사물함 1:1과 수강 신청 N:M", body: "UNIQUE, ON DELETE CASCADE, 중간 표, 복합 키, ERD (10절~12절)" },
-      { title: "DDL과 DML 정리, 강사 표", body: "명세표만 보고 만들기, ALTER, DROP (13절~15절)" },
+      { title: "회원 표와 기본 키", body: "열 타입, `NOT NULL`, `PRIMARY KEY`, `SERIAL` (5절~7절)" },
+      { title: "종목과 강좌, 외래 키", body: "`REFERENCES`가 넣을 때도 지울 때도 막아요 (8절, 9절)" },
+      { title: "사물함 1:1과 수강 신청 N:M", body: "`UNIQUE`, `ON DELETE CASCADE`, 중간 표, 복합 키, ERD (10절~12절)" },
+      { title: "DDL과 DML 정리, 강사 표", body: "명세표만 보고 만들기, `ALTER`, `DROP` (13절~15절)" },
       { title: "과제: 상품 DB 설계", body: "장바구니 표를 고쳐 봐요 (17절)" },
     ]}
   />
@@ -112,7 +112,7 @@ volumes:
 | `name: sportscenter` | 이 Compose 프로젝트의 이름. 네트워크, 볼륨 이름 앞에 붙어요(소문자로) |
 | `services:` 아래 `db:` | 실행할 컨테이너를 `db`라는 이름으로 불러요 |
 | `container_name` | `docker ps`에 보이는 이름을 `sportscenter-db`로 고정 |
-| `POSTGRES_PASSWORD` | 관리자 계정(postgres)의 비밀번호. 빠뜨리면 컨테이너가 바로 꺼져요 |
+| `POSTGRES_PASSWORD` | 관리자 계정(`postgres`)의 비밀번호. 빠뜨리면 컨테이너가 바로 꺼져요 |
 | `"5432:5432"` | 내 컴퓨터 포트 : 컨테이너 포트 |
 | `pgdata:/var/lib/postgresql` | 데이터를 볼륨에 저장. 컨테이너를 지웠다 다시 만들어도 남아요 |
 
@@ -142,7 +142,7 @@ docker volume ls         # local  sportscenter_pgdata
 
 `docker volume inspect sportscenter_pgdata`의 `Mountpoint`에 실제 저장 경로가 나오지만, Docker Desktop(macOS, Windows)에서는 Docker 가상 머신 안의 경로라 탐색기로 열 수 없어요. 용량은 Docker Desktop 앱의 Volumes 메뉴에서 봐요.
 
-### 왜 DB를 직접 만들고 -d로 들어가야 하지?
+### 왜 DB를 직접 만들고 `-d`로 들어가야 하지?
 
 compose 파일에 `POSTGRES_DB`를 주지 않았으니 `sportscenter`라는 DB는 아직 없어요. 그리고 **표는 지금 접속한 DB 안에 만들어져요.** 그래서 먼저 기본 DB로 들어가 `CREATE DATABASE`를 하고, 그 DB로 옮겨 가요.
 
@@ -150,10 +150,10 @@ compose 파일에 `POSTGRES_DB`를 주지 않았으니 `sportscenter`라는 DB�
   <Seq
     tone="rust"
     steps={[
-      { title: "docker compose exec db psql -U postgres", body: "기본 DB `postgres`로 들어가요. 프롬프트가 `postgres=#`. compose에서는 컨테이너 이름이 아니라 서비스 이름 `db`로 불러요." },
-      { title: "CREATE DATABASE sportscenter;", body: "빈 DB를 만들어요. `\\l`로 보면 목록에 생겨요." },
-      { title: "\\c sportscenter", body: "만든 DB로 옮겨 가요. 프롬프트가 `sportscenter=#`로 바뀌어요. `\\dt`는 아직 Did not find any relations." },
-      { title: "다음부터: -d sportscenter", body: "`\\q`로 나간 뒤에는 `docker compose exec db psql -U postgres -d sportscenter`로 바로 들어가요." },
+      { title: "`docker compose exec db psql -U postgres`", body: "기본 DB `postgres`로 들어가요. 프롬프트가 `postgres=#`. compose에서는 컨테이너 이름이 아니라 서비스 이름 `db`로 불러요." },
+      { title: "`CREATE DATABASE sportscenter;`", body: "빈 DB를 만들어요. `\\l`로 보면 목록에 생겨요." },
+      { title: "`\\c sportscenter`", body: "만든 DB로 옮겨 가요. 프롬프트가 `sportscenter=#`로 바뀌어요. `\\dt`는 아직 Did not find any relations." },
+      { title: "다음부터: `-d sportscenter`", body: "`\\q`로 나간 뒤에는 `docker compose exec db psql -U postgres -d sportscenter`로 바로 들어가요." },
     ]}
   />
 </Figure>
@@ -162,7 +162,7 @@ psql 안에서 쓰는 명령이에요. `\`로 시작하는 건 SQL이 아니라 
 
 | psql 명령 | 뜻 |
 | --- | --- |
-| `\l` | 데이터베이스 목록 (처음엔 postgres, template0, template1 세 개) |
+| `\l` | 데이터베이스 목록 (처음엔 `postgres`, `template0`, `template1` 세 개) |
 | `\c 이름` | 다른 데이터베이스로 접속 전환 |
 | `\dt` | 테이블 목록 |
 | `\d 테이블`, `\d+ 테이블` | 열과 규칙 보기 (`+`는 더 자세히) |
@@ -173,7 +173,7 @@ psql 안에서 쓰는 명령이에요. `\`로 시작하는 건 SQL이 아니라 
 
 ### 끄고 켜기, 그리고 지우지 말아야 할 것
 
-| 명령 | 하는 일 | sportscenter 데이터 |
+| 명령 | 하는 일 | `sportscenter` 데이터 |
 | --- | --- | --- |
 | `docker compose stop` / `start` | 수업 끝나면 끄기 / 다음 수업에 다시 켜기 | 유지 |
 | `docker compose up -d` | 없으면 만들고, 있으면 켜기 | 유지 |
@@ -196,7 +196,7 @@ DBeaver 같은 프로그램으로도 붙을 수 있어요. Host `localhost`, Por
 
 그래서 여러 줄로 나눠 써도 `;`가 나올 때까지는 한 문장이에요. 긴 `CREATE TABLE`을 줄 바꿔 쓸 수 있는 이유예요.
 
-### SELECT에서 붙인 별명을 WHERE에서 못 쓴다
+### `SELECT`에서 붙인 별명을 `WHERE`에서 못 쓴다
 
 ```sql
 SELECT 1 + 1 AS total
@@ -296,7 +296,7 @@ Indexes:
   <Boxes
     row={[
       { title: "Type", tone: "blue", lines: ["정식 이름으로 보여요", "`VARCHAR(20)`은 `character varying(20)`", "`CHAR(1)`은 `character(1)`"] },
-      { title: "Nullable", tone: "rust", lines: ["`not null`이면 빈 값 금지", "PK와 NOT NULL을 붙인 다섯 열"] },
+      { title: "Nullable", tone: "rust", lines: ["`not null`이면 빈 값 금지", "PK와 `NOT NULL`을 붙인 다섯 열"] },
       { title: "Default", tone: "amber", lines: ["값을 안 넣을 때 들어갈 값", "`SERIAL`은 사실 integer에 `nextval(...)`을 붙인 것"] },
     ]}
   />
@@ -310,9 +310,9 @@ Indexes:
 
 </Hint>
 
-## 6. INSERT 하나가 행 하나, SELECT로 꺼내 본다
+## 6. `INSERT` 하나가 행 하나, `SELECT`로 꺼내 본다
 
-`INSERT INTO 표 (열 목록) VALUES (값 목록)`으로 한 행씩 넣어요. `member_id`는 SERIAL이 정해 주니 열 목록에서 빼요. 문자열과 날짜는 **작은따옴표**로 감싸고, 값이 없으면 `NULL`을 써요.
+`INSERT INTO 표 (열 목록) VALUES (값 목록)`으로 한 행씩 넣어요. `member_id`는 `SERIAL`이 정해 주니 열 목록에서 빼요. 문자열과 날짜는 **작은따옴표**로 감싸고, 값이 없으면 `NULL`을 써요.
 
 ```sql
 INSERT INTO members (name, gender, birth_year, phone, email, region, join_date)
@@ -336,13 +336,13 @@ INSERT 0 1
 
 `INSERT 0 1`은 "1행을 넣었다"는 뜻이에요. `*`는 모든 열이고요. `member_id`에 1, 2가 저절로 들어갔고, 이준호의 `email` 칸은 비어 있어요(NULL). 수업 예시의 이메일 주소는 여기서 아이디 `haneul`로 줄여 적었어요.
 
-INSERT는 쓰는 꼴이 몇 가지 있어요. 수업 SQL 파일 주석에 적어 둔 것들이에요.
+`INSERT`는 쓰는 꼴이 몇 가지 있어요. 수업 SQL 파일 주석에 적어 둔 것들이에요.
 
 <Figure>
   <Boxes
     row={[
       { title: "열을 골라서", tone: "ok", lines: ["`INSERT INTO members (열1, 열2) VALUES (값1, 값2);`", "가장 안전해요. 빠진 열은 기본값이나 NULL"] },
-      { title: "모든 열을 순서대로", tone: "amber", lines: ["`INSERT INTO members VALUES (...);`", "열 순서를 다 맞춰야 해요. SERIAL 자리는 `DEFAULT`"] },
+      { title: "모든 열을 순서대로", tone: "amber", lines: ["`INSERT INTO members VALUES (...);`", "열 순서를 다 맞춰야 해요. `SERIAL` 자리는 `DEFAULT`"] },
     ]}
     below={[
       { title: "여러 행을 한 번에", tone: "blue", lines: ["`VALUES (...), (...), (...);` 괄호를 쉼표로 이어요 (14절)"] },
@@ -374,7 +374,7 @@ SELECT name, region FROM public.members;
 
 ## 7. 기본 키: 번호가 겹치거나 비면 문 앞에서 돌려보낸다
 
-### PK와 SERIAL은?
+### PK와 `SERIAL`은?
 
 PK는 행 하나를 콕 집어야 하니 **중복과 NULL을 둘 다** 막아요. 일부러 어겨 봐요.
 
@@ -401,16 +401,16 @@ DETAIL:  Failing row contains (null, 박서윤, F, 1972, null, null, null, 2025-
 <Figure>
   <GateFlow
     gates={[
-      { q: "member_id가 비었나?", code: "VALUES (NULL, ...)", out: "not-null constraint 오류" },
+      { q: "`member_id`가 비었나?", code: "VALUES (NULL, ...)", out: "not-null constraint 오류" },
       { q: "이미 있는 번호인가?", code: "VALUES (1, ...)", out: "duplicate key ... \"members_pkey\" 오류" },
     ]}
-    pass={{ text: "들어가요: INSERT 0 1", tone: "ok" }}
+    pass={{ text: "들어가요: `INSERT 0 1`", tone: "ok" }}
   />
 </Figure>
 
-두 번 다 ERROR이고, `SELECT * FROM members`를 다시 해도 여전히 2명이에요. **실패한 INSERT는 행을 남기지 않아요.** `members_pkey`는 PostgreSQL이 PK 규칙에 저절로 붙인 이름이고, `DETAIL` 줄이 무엇이 문제인지 알려 줘요.
+두 번 다 ERROR이고, `SELECT * FROM members`를 다시 해도 여전히 2명이에요. **실패한 `INSERT`는 행을 남기지 않아요.** `members_pkey`는 PostgreSQL이 PK 규칙에 저절로 붙인 이름이고, `DETAIL` 줄이 무엇이 문제인지 알려 줘요.
 
-`SERIAL`은 "자동 번호표에서 다음 번호를 꺼내라"는 기본값이라 **번호가 되돌아가지 않아요.** 지난 회차에 본 대로 실패한 INSERT도 번호를 쓸 수 있고, 회원을 지워도 그 번호는 다시 안 나와요(10절에서 직접 봐요).
+`SERIAL`은 "자동 번호표에서 다음 번호를 꺼내라"는 기본값이라 **번호가 되돌아가지 않아요.** 지난 회차에 본 대로 실패한 `INSERT`도 번호를 쓸 수 있고, 회원을 지워도 그 번호는 다시 안 나와요(10절에서 직접 봐요).
 
 ## 8. 외래 키: 가리키는 값이 저쪽 표에 실제로 있어야 한다
 
@@ -452,7 +452,7 @@ VALUES (2, '헬스 자유이용', '자유', '매일', '06:00', 50, 50000);
   />
 </Figure>
 
-### REFERENCES(외래 키)는 뭘 막지? (셀프 체크: 외래키가 하는 역할이 뭘까?)
+### `REFERENCES`(외래 키)는 뭘 막지? (셀프 체크: 외래키가 하는 역할이 뭘까?)
 
 "가리키는 값이 저 표에 **실제로 있어야 한다**"는 약속이에요. 이 약속을 **참조 무결성**이라고 해요. 그래서 두 방향을 다 막아요.
 
@@ -526,7 +526,7 @@ DETAIL:  Key (sport_id)=(1) is still referenced from table "courses".
   />
 </Figure>
 
-## 10. 1:1은 외래 키에 UNIQUE 하나를 더한 것
+## 10. 1:1은 외래 키에 `UNIQUE` 하나를 더한 것
 
 회원 한 명은 사물함을 **최대 하나**만 배정받아요. 배정 기록에 회원 번호(FK)를 적되, 같은 회원 번호가 두 번 나오지 못하게 `UNIQUE`를 붙이면 1:1이 돼요. 회원이 탈퇴하면 배정 기록도 같이 지워지도록 `ON DELETE CASCADE`를 붙여요.
 
@@ -540,17 +540,17 @@ CREATE TABLE lockers (
 INSERT INTO lockers VALUES (101, 1, '2026-11-01');
 ```
 
-`locker_no`는 사물함에 적힌 번호를 그대로 쓰니 SERIAL이 아니라 `INT`예요. 직접 적어 넣어요.
+`locker_no`는 사물함에 적힌 번호를 그대로 쓰니 `SERIAL`이 아니라 `INT`예요. 직접 적어 넣어요.
 
-### 1:1과 ON DELETE CASCADE는?
+### 1:1과 `ON DELETE CASCADE`는?
 
 FK에 `UNIQUE`를 더하면 같은 회원 번호가 표에 **한 번만** 나올 수 있어요. 그래서 1:1이에요. `UNIQUE`가 없으면 한 회원이 여러 번 나올 수 있으니 1:N이에요.
 
 <Figure>
   <Boxes
     row={[
-      { title: "FK만", note: "courses.sport_id", tone: "blue", lines: ["같은 번호가 여러 번 나와도 돼요", "종목 하나에 강좌 여러 개: 1:N"] },
-      { title: "FK + UNIQUE", note: "lockers.member_id", tone: "rust", lines: ["같은 번호는 한 번만", "회원 하나에 사물함 하나: 1:1"] },
+      { title: "FK만", note: "`courses.sport_id`", tone: "blue", lines: ["같은 번호가 여러 번 나와도 돼요", "종목 하나에 강좌 여러 개: 1:N"] },
+      { title: "FK + UNIQUE", note: "`lockers.member_id`", tone: "rust", lines: ["같은 번호는 한 번만", "회원 하나에 사물함 하나: 1:1"] },
     ]}
   />
 </Figure>
@@ -560,8 +560,8 @@ FK에 `UNIQUE`를 더하면 같은 회원 번호가 표에 **한 번만** 나올
 <Figure>
   <Boxes
     row={[
-      { title: "CASCADE 없음", note: "courses → sports", tone: "red", lines: ["강좌가 있는 종목은 지울 수 없어요", "`is still referenced` 오류"] },
-      { title: "ON DELETE CASCADE", note: "lockers → members", tone: "ok", lines: ["회원을 지우면", "그 회원의 사물함 행도 같이 지워져요"] },
+      { title: "CASCADE 없음", note: "`courses` → `sports`", tone: "red", lines: ["강좌가 있는 종목은 지울 수 없어요", "`is still referenced` 오류"] },
+      { title: "ON DELETE CASCADE", note: "`lockers` → `members`", tone: "ok", lines: ["회원을 지우면", "그 회원의 사물함 행도 같이 지워져요"] },
     ]}
   />
 </Figure>
@@ -602,7 +602,7 @@ SELECT * FROM lockers;
 
 <Hint>
 
-해 볼 것: "102번을 회원 1번에게"(UNIQUE에 걸림) → "102번을 회원 3번에게"(3번이 아직 없어 FK에 걸림) → 임시회원 넣기 → 다시 "102번을 회원 3번에게" → 회원 3번 지우기 → SELECT. 그다음 임시회원을 한 번 더 넣으면 4번을 받고, "102번을 회원 3번에게"는 다시 FK에 걸려요. 교안 문제 해결 표의 "임시회원이 3번이 아님"이 바로 이 경우예요.
+해 볼 것: "102번을 회원 1번에게"(`UNIQUE`에 걸림) → "102번을 회원 3번에게"(3번이 아직 없어 FK에 걸림) → 임시회원 넣기 → 다시 "102번을 회원 3번에게" → 회원 3번 지우기 → `SELECT`. 그다음 임시회원을 한 번 더 넣으면 4번을 받고, "102번을 회원 3번에게"는 다시 FK에 걸려요. 교안 문제 해결 표의 "임시회원이 3번이 아님"이 바로 이 경우예요.
 
 </Hint>
 
@@ -667,7 +667,7 @@ DETAIL:  Key (member_id, course_id, enroll_month)=(1, 1, 2026-09) already exists
   />
 </Figure>
 
-<Note title="PRIMARY KEY는 표에 한 번만">
+<Note title="`PRIMARY KEY`는 표에 한 번만">
 
 열마다 `PRIMARY KEY`를 붙이면 `multiple primary keys for table "enrollments" are not allowed`가 나요. 여러 열을 묶을 때는 맨 아래에 `PRIMARY KEY (a, b, c)` 한 번만 써요. 월을 `'2026-9-1'`처럼 적으면 `value too long for type character(7)`이에요.
 
@@ -686,19 +686,19 @@ ERD(개체 관계도)는 표와 관계선을 그린 그림이에요. 교안 ERD�
 
 오늘 만든 관계가 `CREATE TABLE`의 어디에서 드러나는지 이어 봐요.
 
-| 관계 | 종류 | CREATE TABLE에서 드러나는 곳 |
+| 관계 | 종류 | `CREATE TABLE`에서 드러나는 곳 |
 | --- | --- | --- |
-| members, lockers | 1:1 (회원은 사물함 0~1개) | `lockers.member_id ... UNIQUE REFERENCES members` |
-| sports, courses | 1:N (종목 하나에 강좌 여러 개) | `courses.sport_id ... REFERENCES sports` |
-| members, courses | N:M (enrollments가 연결) | `enrollments`의 FK 2개 + 복합 PK |
+| `members`, `lockers` | 1:1 (회원은 사물함 0~1개) | `lockers.member_id ... UNIQUE REFERENCES members` |
+| `sports`, `courses` | 1:N (종목 하나에 강좌 여러 개) | `courses.sport_id ... REFERENCES sports` |
+| `members`, `courses` | N:M (`enrollments`가 연결) | `enrollments`의 FK 2개 + 복합 PK |
 
-4강에서 강사 표를 만들면 sports와 instructors, instructors와 courses 사이 선이 더해져요.
+4강에서 강사 표를 만들면 `sports`와 `instructors`, `instructors`와 `courses` 사이 선이 더해져요.
 
 ### 미션: 회원 1번을 지울 수 있을까?
 
 <PredictPrompt />
 
-김하늘(1번)에게는 사물함 101번과 수강 기록이 있어요. `DELETE`하기 전에 lockers와 enrollments 중 어느 쪽이 막을지 먼저 짐작해 보세요.
+김하늘(1번)에게는 사물함 101번과 수강 기록이 있어요. `DELETE`하기 전에 `lockers`와 `enrollments` 중 어느 쪽이 막을지 먼저 짐작해 보세요.
 
 ```sql
 DELETE FROM members WHERE member_id = 1;
@@ -712,13 +712,13 @@ DETAIL:  Key (member_id)=(1) is still referenced from table "enrollments".
 <Figure>
   <Boxes
     row={[
-      { title: "lockers", note: "ON DELETE CASCADE", tone: "ok", lines: ["막지 않아요. 원래는 같이 지울 쪽"] },
-      { title: "enrollments", note: "CASCADE 없음", tone: "red", lines: ["여기가 막아요", "문장 전체가 취소돼요"] },
+      { title: "lockers", note: "`ON DELETE CASCADE`", tone: "ok", lines: ["막지 않아요. 원래는 같이 지울 쪽"] },
+      { title: "enrollments", note: "`CASCADE` 없음", tone: "red", lines: ["여기가 막아요", "문장 전체가 취소돼요"] },
     ]}
   />
 </Figure>
 
-오류가 나면 **문장 전체가 취소**되니 사물함 101번 배정도 그대로 남아요. ERD로 읽으면 enrollments와 members 사이 선에서 members 쪽은 "정확히 1"(수강 기록에는 반드시 회원 한 명), enrollments 쪽은 "0개 이상"(회원은 수강 기록이 없을 수도, 여러 개일 수도 있어요)이에요.
+오류가 나면 **문장 전체가 취소**되니 사물함 101번 배정도 그대로 남아요. ERD로 읽으면 `enrollments`와 `members` 사이 선에서 `members` 쪽은 "정확히 1"(수강 기록에는 반드시 회원 한 명), `enrollments` 쪽은 "0개 이상"(회원은 수강 기록이 없을 수도, 여러 개일 수도 있어요)이에요.
 
 ## 13. 구조를 바꾸면 DDL, 행을 바꾸면 DML
 
@@ -747,14 +747,14 @@ CREATE TABLE 테이블명 (
 
 | 제약 조건 | 막는 것 | 처음 쓴 곳 |
 | --- | --- | --- |
-| `PRIMARY KEY` | 중복, NULL | members (2강) |
-| `NOT NULL` | NULL | members (2강) |
-| `REFERENCES` | 없는 값 참조, 참조 중인 행 삭제 | courses (2강) |
-| `UNIQUE` | 중복 (NULL은 여러 개 허용) | lockers (3강) |
+| `PRIMARY KEY` | 중복, NULL | `members` (2강) |
+| `NOT NULL` | NULL | `members` (2강) |
+| `REFERENCES` | 없는 값 참조, 참조 중인 행 삭제 | `courses` (2강) |
+| `UNIQUE` | 중복 (NULL은 여러 개 허용) | `lockers` (3강) |
 
-### \d로 PK, UNIQUE, FK를 한눈에
+### `\d`로 PK, `UNIQUE`, FK를 한눈에
 
-`\d+`의 짧은 버전 `\d`로 사물함 표를 보면, 아래쪽에 PK, UNIQUE, FK가 모두 이름과 함께 나와요.
+`\d+`의 짧은 버전 `\d`로 사물함 표를 보면, 아래쪽에 PK, `UNIQUE`, FK가 모두 이름과 함께 나와요.
 
 ```text
                 Table "public.lockers"
@@ -778,7 +778,7 @@ Foreign-key constraints:
 | --- | --- | --- |
 | `instructor_id` | 강사 번호, 자동 증가 | PK |
 | `name` | 이름, 최대 20자 | 필수 |
-| `sport_id` | 담당 종목 번호 | 필수, sports 참조 |
+| `sport_id` | 담당 종목 번호 | 필수, `sports` 참조 |
 | `phone` | 전화번호, 최대 20자 | 없을 수 있음 |
 | `hire_date` | 입사일 | 필수 |
 
@@ -786,8 +786,8 @@ Foreign-key constraints:
   <Seq
     steps={[
       { title: "자동 증가 + PK", body: "`instructor_id SERIAL PRIMARY KEY`" },
-      { title: "필수 = NOT NULL", body: "`name VARCHAR(20) NOT NULL`, `hire_date DATE NOT NULL`" },
-      { title: "참조 = REFERENCES", body: "`sport_id INT NOT NULL REFERENCES sports (sport_id)`" },
+      { title: "필수 = `NOT NULL`", body: "`name VARCHAR(20) NOT NULL`, `hire_date DATE NOT NULL`" },
+      { title: "참조 = `REFERENCES`", body: "`sport_id INT NOT NULL REFERENCES sports (sport_id)`" },
       { title: "없을 수 있음 = 표시 없음", body: "`phone VARCHAR(20)`" },
     ]}
   />
@@ -834,13 +834,13 @@ INSERT 0 2
 
 <Hint>
 
-입사일을 뺀 오류의 DETAIL은 `Failing row contains (3, 오민재, 1, null, null).`이에요. 맨 앞 `3`은 SERIAL이 이미 뽑아 둔 번호예요. 실패한 INSERT도 번호를 쓰니 다음 강사는 4번부터 받아요. 번호가 건너뛰는 건 정상이에요.
+입사일을 뺀 오류의 DETAIL은 `Failing row contains (3, 오민재, 1, null, null).`이에요. 맨 앞 `3`은 `SERIAL`이 이미 뽑아 둔 번호예요. 실패한 `INSERT`도 번호를 쓰니 다음 강사는 4번부터 받아요. 번호가 건너뛰는 건 정상이에요.
 
 </Hint>
 
-## 15. 만든 표는 ALTER로 고치고, DROP으로 지운다
+## 15. 만든 표는 `ALTER`로 고치고, `DROP`으로 지운다
 
-### 있는 표에 열 더하기: ALTER TABLE
+### 있는 표에 열 더하기: `ALTER TABLE`
 
 강좌마다 담당 강사를 적고 싶어요. `courses`에는 이미 데이터가 있으니 지우고 다시 만드는 대신 **열을 하나 더해요.** 자유이용 강좌처럼 강사가 없을 수 있으니 `NOT NULL`은 안 붙여요.
 
@@ -860,7 +860,7 @@ ALTER TABLE
 
 새 열이 맨 오른쪽에 생겼고, 기존 강좌 2개의 `instructor_id`는 NULL이에요. 실제 담당 강사는 2장의 시드 데이터가 채워요.
 
-### 표 지우기: DROP TABLE
+### 표 지우기: `DROP TABLE`
 
 연습용 표 `practice_memo`는 만들었다 바로 지워져요. 그런데 다른 표가 가리키는 표는 못 지워요.
 
@@ -879,18 +879,18 @@ HINT:  Use DROP ... CASCADE to drop the dependent objects too.
   <Boxes
     row={[
       { title: "practice_memo", tone: "ok", lines: ["아무도 안 가리켜요", "`DROP TABLE` 바로 성공"] },
-      { title: "sports", tone: "red", lines: ["courses와 instructors가 가리켜요", "`cannot drop table` 오류"] },
+      { title: "sports", tone: "red", lines: ["`courses`와 `instructors`가 가리켜요", "`cannot drop table` 오류"] },
     ]}
   />
 </Figure>
 
-<Note title="DROP TABLE은 되돌릴 수 없어요">
+<Note title="`DROP TABLE`은 되돌릴 수 없어요">
 
 `DROP TABLE`은 표 구조와 데이터를 함께 지우고 되돌릴 수 없어요. HINT에 나오는 `CASCADE`는 가리키는 표까지 지우는 옵션이라 이 과정에서는 쓰지 않아요.
 
 </Note>
 
-마지막에 `\dt`로 보면 표 여섯 개(courses, enrollments, instructors, lockers, members, sports)가 있고, 각 표에는 직접 넣은 1~3행만 들어 있어요. 분석을 하려면 수십, 수백 건이 있어야 하니 2장을 시작할 때 **시드 데이터**를 한 번에 채워요.
+마지막에 `\dt`로 보면 표 여섯 개(`courses`, `enrollments`, `instructors`, `lockers`, `members`, `sports`)가 있고, 각 표에는 직접 넣은 1~3행만 들어 있어요. 분석을 하려면 수십, 수백 건이 있어야 하니 2장을 시작할 때 **시드 데이터**를 한 번에 채워요.
 
 <Hint>
 
@@ -919,9 +919,9 @@ HINT:  Use DROP ... CASCADE to drop the dependent objects too.
     tone="rust"
     targets={[
       { title: "기본 키", result: "members_pkey", why: "표 이름 + `_pkey`" },
-      { title: "UNIQUE", result: "lockers_member_id_key", why: "표 + 열 + `_key`" },
+      { title: "`UNIQUE`", result: "lockers_member_id_key", why: "표 + 열 + `_key`" },
       { title: "외래 키", result: "courses_sport_id_fkey", why: "표 + 열 + `_fkey`" },
-      { title: "NOT NULL", result: "members_name_not_null", why: "표 + 열 + `_not_null` (18부터 보여요)" },
+      { title: "`NOT NULL`", result: "members_name_not_null", why: "표 + 열 + `_not_null` (18부터 보여요)" },
     ]}
   />
 </Figure>
@@ -944,14 +944,14 @@ HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 | `FATAL: database "sportscenter" does not exist` | 아직 `CREATE DATABASE`를 안 함 | `-d` 없이 들어가 만들기 |
 | `ERROR: database "sportscenter" already exists` | 이미 만들어 둠(볼륨에 남아 있음) | 문제없음. `\c sportscenter` |
 | 프롬프트가 `postgres-#` | 세미콜론 빠짐 | `;` 치고 Enter |
-| `postgres=#`에서 표를 만듦 | sportscenter로 안 옮김 | `\c sportscenter` 후 다시 |
+| `postgres=#`에서 표를 만듦 | `sportscenter`로 안 옮김 | `\c sportscenter` 후 다시 |
 | `relation "members" already exists` | 같은 표를 또 만듦 | 이미 있으니 다음 단계로 |
 | `syntax error at or near ")"` | 마지막 열 뒤에 쉼표가 남음 | 마지막 쉼표 지우기 |
 | `column "김하늘" does not exist` | 문자열을 큰따옴표로 감쌈 | 작은따옴표 `'김하늘'` |
-| 회원이 3명 이상 보임 | INSERT를 두 번 실행 | 괜찮아요. 2장 시드 데이터로 처음 상태를 다시 채워요 |
-| 사물함 102번 INSERT가 FK 오류 | 임시회원이 3번이 아님(INSERT를 여러 번 함) | `SELECT member_id, name FROM members;`로 번호를 보고 그 번호 쓰기 |
-| `column "instructor_id" of relation "courses" already exists` | ALTER TABLE을 두 번 | 이미 추가됨. 다음으로 |
-| `relation "instructors" does not exist` | 강사 표보다 ALTER를 먼저 | 강사 표부터 만들기 |
+| 회원이 3명 이상 보임 | `INSERT`를 두 번 실행 | 괜찮아요. 2장 시드 데이터로 처음 상태를 다시 채워요 |
+| 사물함 102번 `INSERT`가 FK 오류 | 임시회원이 3번이 아님(`INSERT`를 여러 번 함) | `SELECT member_id, name FROM members;`로 번호를 보고 그 번호 쓰기 |
+| `column "instructor_id" of relation "courses" already exists` | `ALTER TABLE`을 두 번 | 이미 추가됨. 다음으로 |
+| `relation "instructors" does not exist` | 강사 표보다 `ALTER`를 먼저 | 강사 표부터 만들기 |
 
 ## 17. 과제: 장바구니는 "누가 무엇을" 조합이 겹치면 안 된다
 
@@ -1000,7 +1000,7 @@ CREATE TABLE carts (
 세 가지를 고쳤어요.
 
 - **carts**: 막아야 할 건 "같은 사용자가 **같은 상품을** 두 줄로 담기"예요. 그래서 두 열의 조합에 `UNIQUE(cart_cust_id, product_id)`를 걸어요. 11절의 복합 PK와 같은 생각이에요.
-- **products**: 카테고리를 글자로 적지 않고, 종목과 강좌처럼 **카테고리 번호**(정수)를 적고 `REFERENCES`로 `categories`를 가리켜요.
+- **`products`**: 카테고리를 글자로 적지 않고, 종목과 강좌처럼 **카테고리 번호**(정수)를 적고 `REFERENCES`로 `categories`를 가리켜요.
 - **순서**: SQL은 위에서부터 차례로 실행돼요. 가리킬 표가 먼저 있어야 하니 `categories`를 `products`보다 먼저 만들어요. 거꾸로면 `relation "categories" does not exist`가 나요.
 
 ```sql
@@ -1038,7 +1038,7 @@ CREATE TABLE carts (
   <Boxes
     row={[
       { title: "(7, 사과) (7, 바나나) (8, 사과)", tone: "ok", lines: ["사용자나 상품 하나만 같으면 괜찮아요"] },
-      { title: "(7, 사과) 또", tone: "red", lines: ["두 열이 모두 같아요", "조합 UNIQUE에 걸려요"] },
+      { title: "(7, 사과) 또", tone: "red", lines: ["두 열이 모두 같아요", "조합 `UNIQUE`에 걸려요"] },
     ]}
   />
 </Figure>
@@ -1060,7 +1060,7 @@ CREATE TABLE carts (
 - 타입은 "**계산할 값인가**"로 골라요. 전화번호는 문자열이에요. 없을 수 있는 열만 `NOT NULL`을 빼요.
 - PK는 중복과 NULL을 막고, `SERIAL` 번호는 되돌아가지 않아요. 회원 3번을 지워도 다음은 4번이에요.
 - **외래 키는 "가리키는 값이 실제로 있어야 한다"는 약속이에요.** 없는 번호로 넣는 것도, 누가 가리키는 행을 지우는 것도 막아요.
-- FK만 있으면 1:N, **FK + UNIQUE면 1:1**, N:M은 가운데 표와 복합 키로 이어요.
+- FK만 있으면 1:N, **FK + `UNIQUE`면 1:1**, N:M은 가운데 표와 복합 키로 이어요.
 - 같은 FK라도 지울 때 막을지(기본), 같이 지울지(`ON DELETE CASCADE`)를 표마다 정해요. 오류가 나면 문장 전체가 취소돼요.
 - 가리킬 표를 **먼저** 만들어요. 순서가 바뀌면 `relation ... does not exist`예요.
 - 오류의 제약 이름(`_pkey`, `_key`, `_fkey`)으로 어느 규칙인지, `DETAIL:`로 어떤 값인지 읽어요.

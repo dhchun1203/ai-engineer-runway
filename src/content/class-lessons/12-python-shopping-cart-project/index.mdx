@@ -25,10 +25,10 @@ preStudy: []
   <Layers
     layers={[
       [{ title: "main.py", note: "메뉴", dashed: true, lines: ["상품 목록과 쿠폰 목록을 만들고, 메뉴를 돌리며 Cart의 메서드를 불러요. 계산은 하나도 직접 하지 않아요."] }],
-      [{ title: "Cart", note: "cart.py, 일을 하는 쪽", tone: "blue", via: "메뉴가 장바구니의 메서드를 불러요", lines: ["`items = {상품: 수량}`", "`add()`, `remove()`, `apply_coupon()`", "`subtotal()`, `discount()`, `shipping()`, `total()`", "`show()`, `checkout()`"] }],
+      [{ title: "Cart", note: "`cart.py`, 일을 하는 쪽", tone: "blue", via: "메뉴가 장바구니의 메서드를 불러요", lines: ["`items = {상품: 수량}`", "`add()`, `remove()`, `apply_coupon()`", "`subtotal()`, `discount()`, `shipping()`, `total()`", "`show()`, `checkout()`"] }],
       [
-        { title: "Product", note: "product.py", tone: "rust", via: "Cart가 가격과 재고를 꺼내 써요", lines: ["번호, 이름, 가격, 재고", "`is_sold_out()`, `__str__()`"] },
-        { title: "Coupon", note: "coupon.py", tone: "amber", via: "Cart가 할인 금액을 물어봐요", lines: ["쿠폰 이름", "`discount_amount(total)`"] },
+        { title: "Product", note: "`product.py`", tone: "rust", via: "Cart가 가격과 재고를 꺼내 써요", lines: ["번호, 이름, 가격, 재고", "`is_sold_out()`, `__str__()`"] },
+        { title: "Coupon", note: "`coupon.py`", tone: "amber", via: "Cart가 할인 금액을 물어봐요", lines: ["쿠폰 이름", "`discount_amount(total)`"] },
       ],
     ]}
   />
@@ -198,7 +198,7 @@ while not menu_choice in ("1", "2", "3", "4", "5", "6", "q"):
 
 단계마다 "생각해 보기"가 있어요. 답을 열기 전에 먼저 소리 내어 말해 보세요. 위 번호를 누르면 그 단계의 완성 화면으로 바로 가요.
 
-## 6. product.py: 클래스는 붕어빵 틀, next_id는 공용 번호표
+## 6. `product.py`: 클래스는 붕어빵 틀, `next_id`는 공용 번호표
 
 ```python
 class Product:
@@ -528,7 +528,7 @@ USB 허브    |
 
 </Note>
 
-## 10. coupon.py: 부모가 틀을 정하고, 자식이 계산을 채운다
+## 10. `coupon.py`: 부모가 틀을 정하고, 자식이 계산을 채운다
 
 튜터님이 올린 `coupon.py`는 틀까지 만들어져 있어요. 부모 `Coupon`이 이름을 받고, 자식 둘이 `super().__init__(이름)`으로 부모에게 이름을 넘겨요. 할인 계산은 아직 `pass`로 비어 있어요.
 
@@ -786,7 +786,7 @@ def ask_product():
 
 파일 4개를 한 폴더에 두고 `uv run main.py`(또는 `python main.py`)로 실행해요. `product.py`는 튜터 답안 그대로예요.
 
-### product.py
+### `product.py`
 
 ```python
 class Product:
@@ -822,7 +822,7 @@ if __name__ == "__main__":
     for p in products: print(p)
 ```
 
-### coupon.py
+### `coupon.py`
 
 ```python
 class Coupon:
@@ -858,7 +858,7 @@ class FixedDiscount(Coupon):
         return self.amount if total >= self.min_total else 0
 ```
 
-### cart.py
+### `cart.py`
 
 ```python
 from product import Product
@@ -987,7 +987,7 @@ if __name__ == "__main__":
     cart.show()
 ```
 
-### main.py
+### `main.py`
 
 ```python
 from product import Product

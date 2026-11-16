@@ -405,7 +405,7 @@ docker rm my-ubuntu
 docker ps -a
 ```
 
-## 7. nginx: -p 바깥:안으로 내 PC의 문을 컨테이너에 잇는다
+## 7. nginx: `-p 바깥:안`으로 내 PC의 문을 컨테이너에 잇는다
 
 `-d`, `-p`로 웹 서버를 띄우고, 실행 중인 컨테이너에 `exec`로 들어가 첫 페이지를 바꿔 봐요.
 
@@ -682,7 +682,7 @@ docker run --rm -it cart
 
 </TwistBox>
 
-## 10. Docker Compose: 긴 docker run을 파일 한 장에 적어 둔다
+## 10. Docker Compose: 긴 `docker run`을 파일 한 장에 적어 둔다
 
 `docker run` 옵션이 점점 길어졌죠. 컨테이너가 두세 개가 되면 매번 치기 힘들어요.
 
@@ -942,7 +942,7 @@ MySQL에서 Enter를 쳤는데 결과 대신 프롬프트가 `->`(PostgreSQL은 
 
 </TwistBox>
 
-## 13. MySQL: -e로 비밀번호를 줘야 켜진다
+## 13. MySQL: `-e`로 비밀번호를 줘야 켜진다
 
 `-e`로 꼭 필요한 환경 변수를 줘서 DB를 띄우고, 컨테이너 안의 `mysql` 클라이언트로 SQL을 실행해요.
 

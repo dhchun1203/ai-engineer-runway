@@ -199,7 +199,7 @@ git status
 
 ### 4-3. 충돌 표시 읽기
 
-a.txt를 열면 Git이 두 내용을 나란히 적어 뒀어요.
+`a.txt`를 열면 Git이 두 내용을 나란히 적어 뒀어요.
 
 ```text
 <<<<<<< HEAD
@@ -378,7 +378,7 @@ cat a.txt
 
 ## 5. 수정과 삭제가 부딪히면: 남길지 지울지 정한다
 
-2번에서 본 두 번째 경우예요. main은 c.txt를 고쳤는데, feature는 c.txt를 지웠어요.
+2번에서 본 두 번째 경우예요. main은 `c.txt`를 고쳤는데, feature는 `c.txt`를 지웠어요.
 
 ```bash
 git merge feature
@@ -395,8 +395,8 @@ git status
 <Figure>
   <Boxes
     row={[
-      { title: "main (HEAD, 우리)", tone: "blue", lines: ["c.txt를 고쳤어요"] },
-      { title: "feature (them, 저쪽)", tone: "rust", lines: ["c.txt를 지웠어요"] },
+      { title: "main (HEAD, 우리)", tone: "blue", lines: ["`c.txt`를 고쳤어요"] },
+      { title: "feature (them, 저쪽)", tone: "rust", lines: ["`c.txt`를 지웠어요"] },
     ]}
     below={[
       {
@@ -628,7 +628,7 @@ git log --oneline --graph --all
 
 ### rebase에서도 충돌이 나요
 
-오늘 실습과 같은 a.txt 충돌을 rebase로 내 봤어요.
+오늘 실습과 같은 `a.txt` 충돌을 rebase로 내 봤어요.
 
 ```bash
 git checkout feature
