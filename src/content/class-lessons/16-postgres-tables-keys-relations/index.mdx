@@ -13,7 +13,7 @@ preStudy: ["1-4-relational-db-basics"]
 
 오늘의 한 줄은 이거예요. **잘못된 데이터가 애초에 들어오지 못하게 하는 건 프로그램이 아니라 DB의 제약 조건이에요.** 같은 회원 번호가 두 번 들어가거나, 없는 종목의 강좌가 생기는 걸 DB가 문 앞에서 돌려보내요.
 
-수업 정리와 교안 1장(1강부터 4강)을 함께 따라가요. SQL은 모두 PostgreSQL 엔진으로 직접 실행해 오류 글자까지 확인했어요. 레슨 끝에 확인 퀴즈가 있고, 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
+수업 정리와 교안 1장(1강부터 4강)을 함께 따라가요. 레슨 끝에 확인 퀴즈가 있고, 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
 
 ## 1. 오늘의 지도: 표 여섯 개가 키로 이어진다
 
@@ -32,21 +32,6 @@ preStudy: ["1-4-relational-db-basics"]
         { title: "instructors", note: "강사, 1:N", tone: "blue", via: "`sports`를 가리켜요", lines: ["담당 종목 번호"] },
       ],
       [{ title: "enrollments", note: "수강 신청, N:M을 잇는 가운데 표", tone: "amber", via: "`members`와 `courses`를 둘 다 가리켜요", lines: ["회원, 강좌, 수강 월 세 열을 합친 복합 키"] }],
-    ]}
-  />
-</Figure>
-
-이 레슨은 이 순서로 따라가요.
-
-<Figure>
-  <Seq
-    steps={[
-      { title: "빈 DB 만들고 들어가기", body: "compose로 PostgreSQL 18을 띄우고 `CREATE DATABASE` (3절, 4절)" },
-      { title: "회원 표와 기본 키", body: "열 타입, `NOT NULL`, `PRIMARY KEY`, `SERIAL` (5절~7절)" },
-      { title: "종목과 강좌, 외래 키", body: "`REFERENCES`가 넣을 때도 지울 때도 막아요 (8절, 9절)" },
-      { title: "사물함 1:1과 수강 신청 N:M", body: "`UNIQUE`, `ON DELETE CASCADE`, 중간 표, 복합 키, ERD (10절~12절)" },
-      { title: "DDL과 DML 정리, 강사 표", body: "명세표만 보고 만들기, `ALTER`, `DROP` (13절~15절)" },
-      { title: "과제: 상품 DB 설계", body: "장바구니 표를 고쳐 봐요 (17절)" },
     ]}
   />
 </Figure>
@@ -138,9 +123,9 @@ docker volume ls         # local  sportscenter_pgdata
  ✔ Container sportscenter-db     Started
 ```
 
-볼륨 이름이 `pgdata`가 아니라 `sportscenter_pgdata`예요. 맨 위 `name:`에서 정한 프로젝트 이름이 앞에 붙었어요. `SportsCenter` 폴더를 열어 봐도 yaml 파일 하나뿐인데, 정상이에요. 이름 있는 볼륨은 프로젝트 폴더가 아니라 Docker가 관리하는 저장 공간에 생겨요.
+볼륨 이름 앞에 `name:`의 프로젝트 이름이 붙어 `sportscenter_pgdata`가 됐어요. 볼륨은 프로젝트 폴더가 아니라 Docker가 관리하는 곳에 생기니, 폴더에 yaml 하나뿐인 게 정상이에요.
 
-`docker volume inspect sportscenter_pgdata`의 `Mountpoint`에 실제 저장 경로가 나오지만, Docker Desktop(macOS, Windows)에서는 Docker 가상 머신 안의 경로라 탐색기로 열 수 없어요. 용량은 Docker Desktop 앱의 Volumes 메뉴에서 봐요.
+`docker volume inspect sportscenter_pgdata`의 `Mountpoint`가 실제 경로인데, Docker Desktop에서는 가상 머신 안이라 탐색기로 못 열어요. 용량은 Docker Desktop의 Volumes 메뉴에서 봐요.
 
 ### 왜 DB를 직접 만들고 `-d`로 들어가야 하지?
 
@@ -334,7 +319,7 @@ INSERT 0 1
 (2 rows)
 ```
 
-`INSERT 0 1`은 "1행을 넣었다"는 뜻이에요. `*`는 모든 열이고요. `member_id`에 1, 2가 저절로 들어갔고, 이준호의 `email` 칸은 비어 있어요(NULL). 수업 예시의 이메일 주소는 여기서 아이디 `haneul`로 줄여 적었어요.
+`INSERT 0 1`은 "1행을 넣었다"는 뜻이에요. `*`는 모든 열이고요. `member_id`에 1, 2가 저절로 들어갔고, 이준호의 `email` 칸은 비어 있어요(NULL).
 
 `INSERT`는 쓰는 꼴이 몇 가지 있어요. 수업 SQL 파일 주석에 적어 둔 것들이에요.
 
@@ -360,7 +345,7 @@ INSERT 0 1
 SELECT name, region FROM public.members;
 ```
 
-`public.members`는 "public 스키마의 members"를 정확히 부르는 이름이에요. `public`은 기본값이라 보통 생략해요. 열 이름을 나열하면 그 열만 나와요.
+`public`은 기본값이라 보통 생략해요. 열 이름을 나열하면 그 열만 나와요.
 
 <Figure>
   <Layers
@@ -397,16 +382,6 @@ VALUES (NULL, '박서윤', 'F', 1972, '2025-03-15');
 ERROR:  null value in column "member_id" of relation "members" violates not-null constraint
 DETAIL:  Failing row contains (null, 박서윤, F, 1972, null, null, null, 2025-03-15).
 ```
-
-<Figure>
-  <GateFlow
-    gates={[
-      { q: "`member_id`가 비었나?", code: "VALUES (NULL, ...)", out: "not-null constraint 오류" },
-      { q: "이미 있는 번호인가?", code: "VALUES (1, ...)", out: "duplicate key ... \"members_pkey\" 오류" },
-    ]}
-    pass={{ text: "들어가요: `INSERT 0 1`", tone: "ok" }}
-  />
-</Figure>
 
 두 번 다 ERROR이고, `SELECT * FROM members`를 다시 해도 여전히 2명이에요. **실패한 `INSERT`는 행을 남기지 않아요.** `members_pkey`는 PostgreSQL이 PK 규칙에 저절로 붙인 이름이고, `DETAIL` 줄이 무엇이 문제인지 알려 줘요.
 
@@ -544,7 +519,7 @@ INSERT INTO lockers VALUES (101, 1, '2026-11-01');
 
 ### 1:1과 `ON DELETE CASCADE`는?
 
-FK에 `UNIQUE`를 더하면 같은 회원 번호가 표에 **한 번만** 나올 수 있어요. 그래서 1:1이에요. `UNIQUE`가 없으면 한 회원이 여러 번 나올 수 있으니 1:N이에요.
+같은 FK라도 `UNIQUE`가 있으면 같은 번호가 **한 번만** 나올 수 있어요.
 
 <Figure>
   <Boxes
@@ -571,15 +546,6 @@ FK에 `UNIQUE`를 더하면 같은 회원 번호가 표에 **한 번만** 나올
 ```text
 ERROR:  duplicate key value violates unique constraint "lockers_member_id_key"
 DETAIL:  Key (member_id)=(1) already exists.
-INSERT 0 1
- member_id |   name
------------+----------
-         1 | 김하늘
-         2 | 이준호
-         3 | 임시회원
-(3 rows)
-
-INSERT 0 1
 ```
 
 탈퇴할 임시회원(3번)을 넣고 102번을 배정한 뒤, 회원을 지우면 102번도 같이 사라져요.
@@ -602,7 +568,7 @@ SELECT * FROM lockers;
 
 <Hint>
 
-해 볼 것: "102번을 회원 1번에게"(`UNIQUE`에 걸림) → "102번을 회원 3번에게"(3번이 아직 없어 FK에 걸림) → 임시회원 넣기 → 다시 "102번을 회원 3번에게" → 회원 3번 지우기 → `SELECT`. 그다음 임시회원을 한 번 더 넣으면 4번을 받고, "102번을 회원 3번에게"는 다시 FK에 걸려요. 교안 문제 해결 표의 "임시회원이 3번이 아님"이 바로 이 경우예요.
+해 볼 것: 102번을 회원 1번에게(`UNIQUE`에 걸림), 회원 3번에게(FK에 걸림), 임시회원 넣기, 다시 회원 3번에게, 회원 3번 지우기 순서로 눌러 보세요. 그다음 임시회원을 또 넣으면 4번을 받아서 "회원 3번에게"는 다시 FK에 걸려요. 교안 문제 해결 표의 "임시회원이 3번이 아님"이 이 경우예요.
 
 </Hint>
 
@@ -658,15 +624,6 @@ DETAIL:  Key (member_id, course_id, enroll_month)=(1, 1, 2026-09) already exists
 
 같은 강좌를 10월에 다시 신청하는 건 돼요. `(1, 1, '2026-10', '수강중', 70000)`은 세 열 중 `enroll_month`가 다르니 `INSERT 0 1`이에요.
 
-<Figure>
-  <Boxes
-    row={[
-      { title: "(1, 1, 2026-09) 또", tone: "red", lines: ["세 열이 모두 같아요", "`enrollments_pkey` 위반"] },
-      { title: "(1, 1, 2026-10)", tone: "ok", lines: ["월이 달라요", "들어가요"] },
-    ]}
-  />
-</Figure>
-
 <Note title="`PRIMARY KEY`는 표에 한 번만">
 
 열마다 `PRIMARY KEY`를 붙이면 `multiple primary keys for table "enrollments" are not allowed`가 나요. 여러 열을 묶을 때는 맨 아래에 `PRIMARY KEY (a, b, c)` 한 번만 써요. 월을 `'2026-9-1'`처럼 적으면 `value too long for type character(7)`이에요.
@@ -718,7 +675,7 @@ DETAIL:  Key (member_id)=(1) is still referenced from table "enrollments".
   />
 </Figure>
 
-오류가 나면 **문장 전체가 취소**되니 사물함 101번 배정도 그대로 남아요. ERD로 읽으면 `enrollments`와 `members` 사이 선에서 `members` 쪽은 "정확히 1"(수강 기록에는 반드시 회원 한 명), `enrollments` 쪽은 "0개 이상"(회원은 수강 기록이 없을 수도, 여러 개일 수도 있어요)이에요.
+오류가 나면 **문장 전체가 취소**되니 사물함 101번 배정도 그대로 남아요. ERD 선으로 읽으면 `members` 쪽은 "정확히 1", `enrollments` 쪽은 "0개 이상"이에요.
 
 ## 13. 구조를 바꾸면 DDL, 행을 바꾸면 DML
 
@@ -817,8 +774,6 @@ VALUES ('한지수', 1, '010-3101-2201', '2021-03-02'),
 INSERT 0 2
 ```
 
-`INSERT 0 2`: 한 문장으로 2행이 들어갔어요.
-
 ### 잘못된 값을 넣으면
 
 규칙에 맞지 않는 값을 하나씩 넣어 보고 오류를 읽어요.
@@ -830,7 +785,7 @@ INSERT 0 2
 | 입사일을 빼고 넣기 | `null value in column "hire_date" ... violates not-null constraint` |
 | 열 두 개에 값 세 개 | `INSERT has more expressions than target columns` |
 
-세 번 모두 거부되었고 강사는 여전히 2명이에요. 타입과 제약 조건이 입력 단계에서 데이터를 지켜요.
+모두 거부되고 강사는 여전히 2명이에요.
 
 <Hint>
 
@@ -1053,15 +1008,12 @@ CREATE TABLE carts (
 
 ## 오늘 꼭 기억할 주의점
 
-- **표는 지금 접속한 DB에 만들어져요.** `CREATE DATABASE` 다음에 `\c 이름`, 다음부터는 `-d 이름`으로 들어가요. compose에서는 서비스 이름(`db`)으로 불러요.
-- PostgreSQL 18의 볼륨 자리는 `/var/lib/postgresql`이에요. `down -v`는 DB까지 지우니 쓰지 않아요.
-- `;`가 나올 때까지 한 문장이에요. 프롬프트가 `postgres-#`면 `;`가 빠진 거예요.
-- 적는 순서와 실행 순서가 달라요. `WHERE`가 `SELECT`보다 먼저라 별칭을 못 써요.
-- 타입은 "**계산할 값인가**"로 골라요. 전화번호는 문자열이에요. 없을 수 있는 열만 `NOT NULL`을 빼요.
-- PK는 중복과 NULL을 막고, `SERIAL` 번호는 되돌아가지 않아요. 회원 3번을 지워도 다음은 4번이에요.
-- **외래 키는 "가리키는 값이 실제로 있어야 한다"는 약속이에요.** 없는 번호로 넣는 것도, 누가 가리키는 행을 지우는 것도 막아요.
+- **표는 지금 접속한 DB에 만들어져요.** `CREATE DATABASE` 다음에 `\c 이름`, 다음부터는 `-d 이름`으로 들어가요.
+- PostgreSQL 18의 볼륨 자리는 `/var/lib/postgresql`이에요. `down -v`는 DB까지 지워요.
+- `;`가 나올 때까지 한 문장이에요. `WHERE`가 `SELECT`보다 먼저 돌아서 별칭을 못 써요.
+- 타입은 "**계산할 값인가**"로 골라요. 전화번호는 문자열이에요.
+- PK는 중복과 NULL을 막고, `SERIAL` 번호는 되돌아가지 않아요.
+- 외래 키는 없는 번호로 넣는 것도, 누가 가리키는 행을 지우는 것도 막아요. 막을지 같이 지울지(`ON DELETE CASCADE`)는 표마다 정해요.
 - FK만 있으면 1:N, **FK + `UNIQUE`면 1:1**, N:M은 가운데 표와 복합 키로 이어요.
-- 같은 FK라도 지울 때 막을지(기본), 같이 지울지(`ON DELETE CASCADE`)를 표마다 정해요. 오류가 나면 문장 전체가 취소돼요.
-- 가리킬 표를 **먼저** 만들어요. 순서가 바뀌면 `relation ... does not exist`예요.
+- 가리킬 표를 **먼저** 만들어요. `DROP TABLE`은 되돌릴 수 없어요.
 - 오류의 제약 이름(`_pkey`, `_key`, `_fkey`)으로 어느 규칙인지, `DETAIL:`로 어떤 값인지 읽어요.
-- `DROP TABLE`은 되돌릴 수 없고, 누가 가리키는 표는 지워지지 않아요.
