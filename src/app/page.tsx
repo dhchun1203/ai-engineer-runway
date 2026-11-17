@@ -16,7 +16,7 @@ import { latestClassLesson } from "@/content/class-lesson-helpers";
 import { getClassSession } from "@/content/class-sessions";
 import { computeDueClassSessions } from "@/lib/class-review";
 import { getOrderedPracticeUnits, practiceProgressId } from "@/content/practice-helpers";
-import { getRoadmapSessionNotes } from "@/content/roadmap-lesson-helpers";
+import { getRoadmapAxNotes, getRoadmapSessionNotes } from "@/content/roadmap-lesson-helpers";
 import { roadmapStages } from "@/content/channeltalk-roadmap";
 
 // 홈은 수업 복습, TIL 현황, 파이썬 손풀기, 로드맵 네 칸이다(2026-10-31 사용자 결정).
@@ -68,6 +68,7 @@ export default async function Home() {
   const practiceNext = practiceUnits.find((u) => !doneIds.has(practiceProgressId(u.slug)));
 
   const roadmapNotes = getRoadmapSessionNotes();
+  const roadmapAxNotes = getRoadmapAxNotes();
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
@@ -156,7 +157,7 @@ export default async function Home() {
             icon="roadmap"
             label="로드맵"
             title="채널톡 AI Engineer 진입 로드맵"
-            detail={`${roadmapStages.length}단계, 특강 노트 ${roadmapNotes.length}개`}
+            detail={`${roadmapStages.length}단계, 특강 노트 ${roadmapNotes.length}개, AX 트랙 ${roadmapAxNotes.length}편`}
             cta="로드맵으로 가기"
           />
         ) : null}

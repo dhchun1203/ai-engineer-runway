@@ -384,7 +384,9 @@ export default defineConfig({
           stageId: s.string(), // 로드맵 단계 id(예: "evals") — 단계와 잇는 열쇠
           // 종류: lesson(별도 심화 레슨) / session(튜터링 같은 세션의 사전 노트, 2026-10-15).
           // session은 단계에 매이지 않고 로드맵 첫 화면의 "세션 노트" 칸에 따로 모인다.
-          kind: s.enum(["lesson", "session"]).default("lesson"),
+          // ax(2026-11-17): 채널톡 AX Consultant 맞춤 트랙의 편. stageId "ax", order 작은 것부터
+          // 로드맵 첫 화면 "AX Consultant 트랙" 칸에 모인다.
+          kind: s.enum(["lesson", "session", "ax"]).default("lesson"),
           order: s.number(), // 트랙 내 순서
           summary: s.string(), // 로드맵/헤더용 한 줄 훅
           // 하단 메모장 안에 팁으로 보여 줄 "채울 칸"(세션 노트의 세션 뒤 정리 항목 등).

@@ -7,7 +7,7 @@ import { DocStrategy } from "@/components/roadmap/doc-strategy";
 import { StageAccordionControls } from "@/components/roadmap/stage-accordion-controls";
 import { RoadmapStageList, coverageBadgeClass } from "@/components/roadmap/roadmap-stage-list";
 import { isRoadmapViewer } from "@/lib/roadmap-access";
-import { getRoadmapSessionNotes } from "@/content/roadmap-lesson-helpers";
+import { getRoadmapAxNotes, getRoadmapSessionNotes } from "@/content/roadmap-lesson-helpers";
 import {
   talentTraits,
   roadmapSources,
@@ -34,6 +34,7 @@ export default async function RoadmapPage() {
   }
 
   const sessionNotes = getRoadmapSessionNotes();
+  const axNotes = getRoadmapAxNotes();
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-14 px-4 py-12 sm:px-6 lg:px-8">
@@ -50,6 +51,40 @@ export default async function RoadmapPage() {
           앞으로 스스로 채워나가는 살아있는 문서입니다.
         </p>
       </header>
+
+      {/* AX Consultant 트랙(2026-11-17) — Applied AI Engineer 로드맵과 다른 직무 갈래. 교육과정과 별개로
+          함께 채워 나가는 편들을 읽을 순서대로 보여 준다. roadmapLessons 중 kind가 ax인 것. */}
+      {axNotes.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <h2 className="text-heading font-extrabold break-keep">AX Consultant 트랙</h2>
+            <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+              채널톡 AX Consultant 공고에 맞춘 갈래예요. 가상 고객사 하나에 채널톡을 직접
+              세팅하며, 도입 케이스 하나를 완성해 가요.
+            </p>
+          </div>
+          <ol className="flex flex-col gap-3">
+            {axNotes.map((note, i) => (
+              <li key={note.slug}>
+                <Link
+                  href={note.permalink}
+                  className="card-interactive panel flex min-h-11 items-start gap-4 p-5"
+                >
+                  <span className="shrink-0 pt-0.5 font-mono text-label font-bold text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                    {String(i).padStart(2, "0")}
+                  </span>
+                  <span className="flex flex-col gap-1.5">
+                    <span className="text-body font-extrabold break-keep">{note.title}</span>
+                    <span className="text-label leading-relaxed break-keep text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                      {note.summary}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
 
       {/* 특강 노트(옛 이름 세션 노트, 2026-10-23 변경) — 튜터링 같은 특강을 미리 숙지하고, 끝난 뒤 들은 것을 채워 두는 노트
           (2026-10-15). roadmapLessons 중 kind가 session인 것만 최신순으로 모은다. */}

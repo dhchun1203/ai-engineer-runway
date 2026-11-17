@@ -26,3 +26,8 @@ export function getRoadmapSessionNotes(): RoadmapLesson[] {
     .filter((l) => l.kind === "session")
     .sort((a, b) => b.order - a.order);
 }
+
+/** AX Consultant 트랙 편(kind: ax)만, 읽을 순서(order 작은 것)부터. 로드맵 첫 화면의 "AX Consultant 트랙" 칸이 쓴다. */
+export function getRoadmapAxNotes(): RoadmapLesson[] {
+  return getOrderedRoadmapLessons().filter((l) => l.kind === "ax");
+}
