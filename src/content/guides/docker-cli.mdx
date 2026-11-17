@@ -421,16 +421,22 @@ Error response from daemon: No such container: my-pg
 
 ### 수업 흐름 그대로: 켜고, 넣고, 실행하고, 확인한다
 
-<Figure label="docker run으로 할 때">
-  <Seq
-    steps={[
-      { title: "켜기", body: "`docker run -d --name my-pg -e POSTGRES_PASSWORD=admin -p 5432:5432 postgres:18`" },
-      { title: "넣기", body: "`docker cp my_shop.sql my-pg:/tmp/my_shop.sql`" },
-      { title: "실행하기", body: "`docker exec -it my-pg psql -U postgres -f /tmp/my_shop.sql`" },
-      { title: "확인하기", body: "`docker exec -it my-pg psql -U postgres -d my_shop -c \"SELECT * FROM product\"`가 `(5 rows)`로 끝나요" },
-    ]}
-  />
-</Figure>
+```bash
+# 1. 켜기
+docker run -d --name my-pg \
+  -e POSTGRES_PASSWORD=admin \
+  -p 5432:5432 postgres:18
+
+# 2. 넣기
+docker cp my_shop.sql my-pg:/tmp/my_shop.sql
+
+# 3. 실행하기
+docker exec -it my-pg psql -U postgres -f /tmp/my_shop.sql
+
+# 4. 확인하기: (5 rows)로 끝나요
+docker exec -it my-pg psql -U postgres -d my_shop \
+  -c "SELECT * FROM product"
+```
 
 2, 3단계는 `docker exec -i my-pg psql -U postgres < my_shop.sql` 한 줄로 바꿔도 돼요.
 
