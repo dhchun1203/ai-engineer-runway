@@ -535,7 +535,7 @@ export default defineConfig({
           };
         }),
     },
-    // 수업 실습 환경 안내(2026-11-17 신설, 첫 문서는 맥 셋업). 회차가 아니라서 퀴즈, 진도,
+    // 수업 실습 안내(2026-11-17 신설: 맥 셋업, Docker 명령 한눈에 보기). 회차가 아니라서 퀴즈, 진도,
     // 명령어 모음 어디에도 집계되지 않는다. 주소는 /class/<slug>의 정적 경로가 맡는다.
     guides: {
       name: "Guide",
@@ -544,6 +544,7 @@ export default defineConfig({
         .object({
           title: s.string(),
           summary: s.string(),
+          badge: s.string().default("실습 안내"), // 제목 아래 칩 글자
           updated: s.string().regex(ISO_DAY), // 마지막으로 손본 날
           slug: s.slug("guides"),
           code: s.mdx(),

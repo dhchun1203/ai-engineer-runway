@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpen, ChevronDown, ClipboardCheck, Laptop, Terminal } from "lucide-react";
+import { ArrowRight, BookOpen, ChevronDown, ClipboardCheck, Container, Laptop, Terminal } from "lucide-react";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readQuizAttempts } from "@/lib/quiz-attempt-store";
 import { readReviewStates } from "@/lib/review-store";
@@ -75,6 +75,7 @@ const TOOLS = [
   { href: "/class/quiz", label: "종합 퀴즈", desc: "여러 회차를 섞어 풀기", Icon: ClipboardCheck },
   { href: "/class/commands", label: "명령어 모음", desc: "배운 명령어 찾기", Icon: Terminal },
   { href: "/glossary", label: "용어집", desc: "수업 용어도 함께", Icon: BookOpen },
+  { href: "/class/docker-cli", label: "Docker 명령 한눈에", desc: "치트시트 두 장", Icon: Container },
   { href: "/class/mac-setup", label: "맥 실습 환경", desc: "맥으로 옮길 때 셋업", Icon: Laptop },
 ] as const;
 
@@ -138,8 +139,13 @@ export default async function ClassHubPage({
       </header>
 
       <nav aria-label="수업 복습 도구" className="grid gap-3 sm:grid-cols-2">
-        {TOOLS.map(({ href, label, desc, Icon }) => (
-          <Link key={href} href={href} className="card-interactive panel flex min-h-11 items-center gap-3 p-4">
+        {TOOLS.map(({ href, label, desc, Icon }, i) => (
+          <Link
+            key={href}
+            href={href}
+            // 두 칸 격자에서 마지막 카드가 혼자 남으면 한 줄을 다 쓴다.
+            className={`card-interactive panel flex min-h-11 items-center gap-3 p-4${i === TOOLS.length - 1 && TOOLS.length % 2 === 1 ? " sm:col-span-2" : ""}`}
+          >
             <Icon className="h-5 w-5 shrink-0 text-accent dark:text-accent-dark" aria-hidden="true" />
             <span className="flex min-w-0 flex-col">
               <span className="text-body font-bold break-keep">{label}</span>
