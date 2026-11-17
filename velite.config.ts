@@ -535,6 +535,24 @@ export default defineConfig({
           };
         }),
     },
+    // 수업 실습 환경 안내(2026-11-17 신설, 첫 문서는 맥 셋업). 회차가 아니라서 퀴즈, 진도,
+    // 명령어 모음 어디에도 집계되지 않는다. 주소는 /class/<slug>의 정적 경로가 맡는다.
+    guides: {
+      name: "Guide",
+      pattern: "src/content/guides/*.mdx",
+      schema: s
+        .object({
+          title: s.string(),
+          summary: s.string(),
+          updated: s.string().regex(ISO_DAY), // 마지막으로 손본 날
+          slug: s.slug("guides"),
+          code: s.mdx(),
+        })
+        .transform((data, { meta }) => ({
+          ...data,
+          readingMinutes: estimateBookMinutes(meta.content ?? ""),
+        })),
+    },
     // /about (Making-of) 소개 페이지 소스 — docs/making-of.md 단일 파일만 대상으로 한다.
     // 글로브를 넓혀 GSD 계획 산출물 디렉터리를 빨아들이지 않는다 (PLAT-03 threat T-01-14).
     pages: {

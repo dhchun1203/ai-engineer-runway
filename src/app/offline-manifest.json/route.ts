@@ -56,6 +56,7 @@ export async function GET() {
         items: [
           ...getOrderedClassLessons().map((lesson) => item(`/class/${seg(lesson.slug)}`, lesson.title)),
           item("/class/commands", "명령어 모음"),
+          item("/class/mac-setup", "맥 실습 환경"),
         ],
       },
       {

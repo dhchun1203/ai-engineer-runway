@@ -1,0 +1,366 @@
+---
+title: "맥에서 수업 이어 가기: 1~16회차 실습 환경 한 번에 맞추기"
+summary: "윈도우에서 하던 수업을 맥으로 옮겨요. Homebrew로 Git, uv, VS Code, Docker Desktop, DBeaver를 깔고, GitHub 로그인과 Git 설정을 다시 하고, 윈도우에서만 필요했던 설정은 버려요."
+updated: "2026-11-17"
+slug: "mac-setup"
+---
+
+지금까지 1~16회차를 윈도우의 Git Bash에서 따라왔어요. 맥으로 옮겨도 **명령은 거의 그대로**예요. `git`, `uv`, `docker`, `psql`, SQL은 글자 하나 안 바뀌어요.
+
+바뀌는 건 프로그램을 까는 방법, 터미널 이름, 그리고 몇몇 키예요. 위에서부터 차례로 한 번만 따라 하면 내일 수업을 맥에서 바로 이어 갈 수 있어요.
+
+이 페이지에서 `Ctrl`은 맥 키보드의 **control** 키, `Cmd`는 **command** 키, `Option`은 **option** 키예요.
+
+## 1. 바뀌는 것은 생각보다 적다
+
+| 하는 일 | 윈도우에서 | 맥에서 |
+| --- | --- | --- |
+| 프로그램 설치 | `winget` | `brew` (Homebrew) |
+| 터미널 | Git Bash (bash) | 터미널 앱 (zsh) |
+| 터미널 설정 파일 | `~/.bashrc` | `~/.zshrc` |
+| GitHub 로그인 | 첫 push 때 뜨는 로그인 창 | `gh auth login` 한 번 |
+| 가상환경 활성화 | `source .venv/Scripts/activate` | `source .venv/bin/activate` |
+| 경로 변환 막기 | `MSYS_NO_PATHCONV=1`, `//tmp` | **필요 없음** (`/tmp` 그대로) |
+| Docker 밑바탕 | Docker Desktop + WSL 2 | Docker Desktop만 |
+| 내 폴더 | `/c/Users/<이름>` | `/Users/<이름>` (`~`) |
+| 주피터, VS Code 키 | `Alt` | `Option` |
+
+15회차에서 `~/.bashrc`에 넣은 경로 변환 줄은 Git Bash만의 문제를 막던 거예요. 맥 터미널은 `/`로 시작하는 글자를 몰래 바꾸지 않아서 아무것도 넣지 않아도 돼요.
+
+## 2. 터미널 열기와 맥 키보드 길들이기
+
+`Cmd + Space`로 Spotlight를 열고 "터미널"을 쳐서 열어요. 1회차에서 배운 `echo $SHELL`을 치면 맥은 `/bin/zsh`가 나와요. 셸 이름만 다를 뿐 `ls -al`, `cd -`, `mkdir`, `rm -r`, `chmod +x`, `>`, `>>`는 똑같이 동작해요.
+
+터미널 단축키도 그대로예요. `Ctrl + c`(멈추기), `Ctrl + u`, `Ctrl + w`, `Ctrl + a / Ctrl + e`, `Ctrl + l`, `Ctrl + r` 모두 **control** 키로 눌러요. command 키로 바뀌는 건 복사(`Cmd + C`)와 붙여넣기(`Cmd + V`)뿐이에요.
+
+<Figure label="맥에서 손이 헷갈리는 세 키">
+  <Boxes
+    row={[
+      { title: "control", tone: "blue", lines: ["터미널 단축키 전부", "`Ctrl + c`는 여전히 멈추기", "VS Code 셀 실행 `Ctrl + Enter`"] },
+      { title: "command", tone: "rust", lines: ["복사 `Cmd + C`, 붙여넣기 `Cmd + V`", "저장 `Cmd + S`", "명령 팔레트 `Cmd + Shift + P`"] },
+      { title: "option", tone: "amber", lines: ["윈도우의 `Alt` 자리", "셀 옮기기 `Option + ↑ / ↓`", "셀 실행 후 추가 `Option + Enter`"] },
+    ]}
+  />
+</Figure>
+
+### 한영 전환은 Caps Lock으로
+
+시스템 설정 > 키보드 > 텍스트 입력의 **편집**을 누르고, Caps Lock으로 ABC(영문) 입력 소스를 전환하는 옵션을 켜요. 짧게 누르면 한영이 바뀌고, 길게 누르면 대문자 고정이에요.
+
+### 한글 상태에서 백틱이 ₩로 나온다
+
+맥의 한글 입력기는 숫자 1 왼쪽 키를 누르면 `₩`를 넣어요. 코드 블록, 마크다운, 셸에서 백틱이 자주 필요하니 아래를 한 번 실행해 두면 한글 상태에서도 백틱이 나와요.
+
+```bash
+mkdir -p ~/Library/KeyBindings
+cat > ~/Library/KeyBindings/DefaultKeyBinding.dict <<'EOF'
+{
+    "₩" = ("insertText:", "`");
+}
+EOF
+```
+
+이미 열려 있던 앱은 껐다 켜야 바뀌어요. 원래대로 돌리려면 그 파일을 지우면 돼요.
+
+### 숨김 파일과 명령 기록
+
+- **Finder에서 숨김 파일 보기:** `Cmd + Shift + .`을 누르면 `.git`, `.venv`, `.gitignore`가 보여요. 한 번 더 누르면 다시 숨어요.
+- **`history`는 최근 16개만:** zsh의 `history`는 마지막 16줄만 보여 줘요. 전부 보려면 `history 1`을 쳐요. `!번호`, `!!`는 그대로 돼요.
+
+## 3. Homebrew: 맥의 winget
+
+1회차의 winget이 맥에서는 **Homebrew**(명령 이름 `brew`)예요. 먼저 Homebrew 자체를 깔아요.
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+중간에 맥 로그인 비밀번호를 물어요. 쳐도 화면에 글자가 안 보이는 게 정상이니 그대로 치고 `Enter`를 눌러요. Git이 들어 있는 Xcode Command Line Tools도 이때 함께 깔려요.
+
+<Note title="끝에 나오는 Next steps를 꼭 실행해요">
+
+설치가 끝나면 화면 아래에 **Next steps**와 함께 명령 두세 줄이 나와요. 그 줄을 그대로 복사해 실행해야 `brew` 명령이 잡혀요. 애플 칩 맥에서는 보통 이런 모양이에요.
+
+```bash
+echo >> ~/.zprofile
+echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv)"
+```
+
+그다음 `brew --version`이 나오면 성공이에요. 안 나오면 터미널을 새로 열어 다시 확인해요.
+
+</Note>
+
+winget에서 쓰던 명령은 이렇게 바뀌어요.
+
+| winget | brew | 하는 일 |
+| --- | --- | --- |
+| `winget search <검색어>` | `brew search <검색어>` | 패키지 검색 |
+| `winget show <ID>` | `brew info <이름>` | 상세 정보 |
+| `winget install <ID>` | `brew install <이름>` | 설치 |
+| `winget list` | `brew list` | 설치된 목록 |
+| `winget upgrade` | `brew outdated` | 업그레이드할 수 있는 목록 |
+| `winget upgrade <ID>` | `brew upgrade <이름>` | 업그레이드 |
+| `winget uninstall <ID>` | `brew uninstall <이름>` | 삭제 |
+
+창이 뜨는 앱(VS Code, Docker Desktop 같은 것)은 `--cask`를 붙여 깔아요. 터미널에서만 쓰는 도구는 그냥 `brew install`이에요.
+
+## 4. 수업 도구 한 번에 깔기
+
+지금까지 수업에서 쓴 도구를 두 줄로 깔아요.
+
+```bash
+brew install git gh uv
+brew install --cask visual-studio-code docker-desktop dbeaver-community
+```
+
+| 이름 | 무엇 | 몇 회차 |
+| --- | --- | --- |
+| `git` | Git 최신 버전 | 1~4회차 |
+| `gh` | GitHub 로그인 도우미 (7절) | 1, 2회차 push |
+| `uv` | 파이썬 버전, 패키지, 가상환경 관리 | 5회차부터 |
+| `visual-studio-code` | VS Code, `code` 명령도 함께 | 전체 |
+| `docker-desktop` | Docker 엔진과 `docker compose` | 14회차부터 |
+| `dbeaver-community` | DB 화면 도구 | 16회차 |
+
+다 깔렸는지 확인해요. 넷 다 버전이 나오면 돼요.
+
+```bash
+git --version
+gh --version
+uv --version
+code --version
+```
+
+<Hint>
+
+`code --version`이 안 나오면 VS Code를 열고 `Cmd + Shift + P`에서 **Shell Command: Install 'code' command in PATH**를 실행해요.
+
+</Hint>
+
+## 5. 터미널 설정: 꼭 할 것과 해 두면 편한 것
+
+맥 터미널은 처음엔 거의 빈 상태예요. Git Bash가 기본으로 해 주던 몇 가지를 `~/.zshrc`에 직접 적어 줘야 해요. 15회차에서 `~/.bashrc`를 고치던 것과 같은 일이에요.
+
+```bash
+code ~/.zshrc
+```
+
+파일이 없으면 VS Code가 새로 만들어요. 아래 내용을 붙여 넣고 저장한 뒤 `source ~/.zshrc`로 지금 터미널에 바로 반영해요. 새로 여는 터미널은 알아서 읽어요.
+
+### 꼭 할 것: 브랜치 표시, 자동 완성, 넉넉한 기록
+
+```bash
+# 1. 프롬프트에 지금 브랜치 보이기: Git Bash의 (main) 표시와 같은 것
+autoload -Uz vcs_info
+precmd() { vcs_info }
+zstyle ':vcs_info:git:*' formats ' (%b)'
+setopt PROMPT_SUBST
+PROMPT='%F{blue}%~%f%F{green}${vcs_info_msg_0_}%f %# '
+
+# 2. Tab 자동 완성: git, gh, docker, uv의 하위 명령과 옵션까지
+if type brew &>/dev/null; then
+  FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
+  autoload -Uz compinit
+  compinit
+fi
+
+# 3. 명령 기록 넉넉하게, 탭끼리 같이 쓰기, 중복은 한 번만
+HISTSIZE=10000
+SAVEHIST=10000
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_ALL_DUPS
+```
+
+- **브랜치 표시가 꼭 필요한 이유:** Git Bash는 프롬프트 끝에 `(main)`을 늘 보여 줬어요. 맥 기본 프롬프트에는 이게 없어서 3회차처럼 브랜치를 오갈 때 지금 어디 있는지 놓치기 쉬워요. 붙여 넣으면 `~/dev/my-project (main) %`처럼 보여요.
+- **자동 완성:** `git sw`까지 치고 `Tab`을 누르면 `git switch`로, `git switch `에서 `Tab`을 누르면 브랜치 이름이 나와요.
+- **기록:** 2절에서 본 `history`가 짧은 문제를 덜고, 탭 여러 개에서 친 명령을 `Ctrl + r`로 함께 찾아요.
+
+<Hint>
+
+`compinit`이 `insecure directories`라고 경고하면 `compaudit | xargs chmod g-w`를 한 번 실행하고 터미널을 새로 열어요.
+
+</Hint>
+
+### 해 두면 편한 것: 줄임말
+
+자주 치는 긴 명령에 짧은 이름을 붙여요. 같은 `~/.zshrc` 아래에 이어 붙여요.
+
+```bash
+alias ll='ls -alh'                              # 1회차 ls -al, 크기를 KB, MB로
+alias gs='git status'
+alias glog='git log --oneline --graph --all'    # 2회차의 브랜치 그래프
+alias dps='docker ps -a'
+```
+
+다만 수업 중에는 **원래 명령을 손으로 치는 게 먼저**예요. 줄임말은 원래 명령이 손에 붙은 뒤에 하나씩 늘려요. 시험이나 다른 컴퓨터에서는 줄임말이 없어요.
+
+### 터미널 앱 설정 (터미널 > 설정)
+
+- **프로파일 > 텍스트:** 글자 크기를 키우고 마음에 드는 테마를 고른 뒤 **기본값**을 눌러요. 기본값으로 정하지 않으면 새 창은 예전 모양으로 열려요.
+- **프로파일 > 키보드:** **Option 키를 Meta 키로 사용**을 켜요. 그러면 `Option + b`, `Option + f`로 단어 단위로 커서를 옮겨요. `Ctrl + a / Ctrl + e`와 함께 쓰면 긴 명령 고치기가 빨라요.
+- **프로파일 > 셸:** 셸이 종료될 때 창을 닫도록 고르면 `exit`로 창까지 정리돼요.
+- **일반 > 새 탭 열기:** 같은 작업 디렉터리로 열게 하면 `Cmd + T`로 연 새 탭이 지금 폴더에서 시작해요. 한 탭은 `docker compose logs -f`, 다른 탭은 `psql`처럼 나눠 쓸 때 편해요.
+
+### 키보드: vim 쓸 때 꼭 바꿔요
+
+맥은 키를 꾹 누르면 반복 대신 악센트 글자 고르는 창이 떠요. 2회차의 `vim`에서 `j`를 꾹 눌러 내려가려면 이게 막혀요.
+
+```bash
+defaults write -g ApplePressAndHoldEnabled -bool false
+```
+
+실행한 뒤 로그아웃했다가 다시 들어오면 적용돼요. 시스템 설정 > 키보드에서 **키 반복 속도**를 빠르게, **반복 지연 시간**을 짧게 해 두면 더 좋아요. 되돌리려면 위 명령의 `false`를 `true`로 바꿔 실행해요.
+
+<Note title="VS Code 안의 터미널도 같은 설정을 써요" tone="info">
+
+VS Code의 `` Ctrl + ` `` 터미널도 zsh라서 `~/.zshrc`를 그대로 읽어요. 여기서 한 설정이 양쪽에 똑같이 적용돼요.
+
+</Note>
+
+## 6. Git 설정: 윈도우 설치 화면에서 고른 것을 명령으로
+
+1회차에 `winget install -i Git.Git`의 설치 화면에서 기본 에디터와 기본 브랜치 이름을 골랐어요. 맥에는 그 화면이 없어서 명령으로 정해요. 2회차의 사용자 정보도 새 컴퓨터라 다시 넣어요.
+
+```bash
+git config --global user.name "내 이름"
+git config --global user.email "GitHub 계정 이메일"
+git config --global init.defaultBranch main
+git config --global core.editor "code --wait"
+git config --global --list
+```
+
+- **`user.email`:** 2회차에서 본 대로 **GitHub 계정에 등록한 이메일**과 같아야 커밋이 내 계정으로 잡혀요.
+- **`init.defaultBranch main`:** `git init`할 때 첫 브랜치 이름이 `main`이 돼요.
+- **`core.editor "code --wait"`:** 커밋 메시지나 병합 메시지를 VS Code에서 써요. `--wait`가 있어야 탭을 닫을 때까지 Git이 기다려요. 2회차처럼 `vim`이 편하면 이 줄은 빼도 돼요(맥 Git의 기본이 `vim`이에요).
+
+윈도우 Git은 줄 끝 문자(CRLF, LF)를 알아서 바꿔 주는 설정이 켜져 있었어요. 맥과 리눅스는 원래 LF라서 따로 켤 필요가 없어요.
+
+## 7. GitHub 로그인: gh auth login 한 번
+
+윈도우에서는 Git에 딸려 온 로그인 도우미가 첫 `git push` 때 브라우저 로그인 창을 띄워 줬어요. 맥에서는 `gh`가 그 일을 해요. GitHub 비밀번호는 push에 쓸 수 없으니 이 단계를 꼭 해 둬요.
+
+```bash
+gh auth login
+```
+
+<Figure label="질문이 나오는 순서대로 고르기">
+  <Seq
+    steps={[
+      { title: "Where do you use GitHub?", body: "**GitHub.com**" },
+      { title: "Preferred protocol for Git operations?", body: "**HTTPS**. 2회차에 `https://github.com/...` 주소로 연결했으니 그대로 가요." },
+      { title: "Authenticate Git with your GitHub credentials?", body: "**Yes**. 이걸 골라야 `git push`도 로그인된 상태로 돼요." },
+      { title: "How would you like to authenticate?", body: "**Login with a web browser**. 터미널에 나온 8자리 코드를 브라우저 창에 넣고 승인해요." },
+    ]}
+  />
+</Figure>
+
+`gh auth status`에 `Logged in to github.com`이 나오면 끝이에요. 이제 `git push`, `git pull`, `git clone`이 비밀번호 없이 돼요.
+
+## 8. 윈도우에서 하던 프로젝트 옮기기
+
+옮기는 길은 **GitHub를 거치는 것**이에요. 폴더를 USB로 통째로 복사하지 않아요.
+
+1. **윈도우에서 마지막으로:** 각 저장소에서 `git status`로 남은 변경이 없는지 보고, 아직 안 올린 커밋은 `git push`해 둬요.
+2. **맥에서 받기:**
+
+```bash
+mkdir -p ~/dev && cd ~/dev
+git clone https://github.com/my-id/my-project.git
+cd my-project
+uv sync
+```
+
+<Note title="따라오지 않는 세 가지">
+
+- **`.venv`:** `.gitignore`에 들어 있어서 저장소에 없어요. 5회차에 본 대로 `uv sync` 한 번이면 맥용으로 새로 만들어져요. 윈도우의 `.venv`를 복사하면 안에 윈도우용 `python.exe`가 들어 있어서 맥에서 돌지 않아요.
+- **`.git/hooks`의 훅:** 2회차에서 본 대로 훅은 내 컴퓨터에만 있어요. 맥에서 다시 만들고 `chmod +x .git/hooks/<훅 이름>`으로 실행 권한을 줘요.
+- **Docker 볼륨의 데이터:** 볼륨은 윈도우 Docker Desktop 안에 남아요. compose 파일과 SQL 파일만 저장소로 옮기고, 맥에서 다시 띄워 SQL을 다시 실행해요(11절).
+
+</Note>
+
+## 9. 파이썬과 uv: Scripts 대신 bin
+
+5회차의 uv 명령은 하나도 안 바뀌어요. `uv init --no-package`, `uv python pin 3.12`, `uv python install`, `uv add`, `uv sync`, `uv run main.py` 그대로 쳐요.
+
+바뀌는 건 두 가지예요.
+
+- **활성화 경로:** 맥의 `.venv` 안에는 `Scripts` 폴더가 없고 `bin` 폴더가 있어요.
+
+```bash
+source .venv/bin/activate
+which python      # /Users/<이름>/.../my-project/.venv/bin/python
+deactivate
+```
+
+- **맥에는 `python` 명령이 없어요.** 시스템에는 오래된 `python3`만 있어요. 그래서 가상환경 밖에서 `python`을 치면 `command not found`가 나와요. 5회차의 `python -c "import dis; dis.dis('...')"` 같은 건 `uv run python -c "..."`로 치거나, 위처럼 활성화한 뒤에 쳐요.
+
+## 10. VS Code와 주피터
+
+1. `Cmd + Shift + X`로 확장 탭을 열고 **Python**, **Jupyter** 확장을 깔아요.
+2. 프로젝트에 커널을 넣어요: `uv add --dev ipykernel`
+3. 노트북 오른쪽 위 **Select Kernel**에서 `.venv`를 골라요.
+
+수업 레슨에서 내려받은 `.ipynb` 실습 파일도 VS Code로 그대로 열려요. 4회차의 충돌 버튼(Accept Current, Incoming, Both, Compare)도 이름과 위치가 같아요.
+
+| 하는 일 | 윈도우 | 맥 |
+| --- | --- | --- |
+| 터미널 열고 닫기 | `` Ctrl + ` `` | `` Ctrl + ` `` (그대로) |
+| 셀 실행 | `Ctrl + Enter` | `Ctrl + Enter` (command 아님) |
+| 셀 실행 후 다음 셀로 | `Shift + Enter` | `Shift + Enter` |
+| 셀 실행 후 아래에 새 셀 | `Alt + Enter` | `Option + Enter` |
+| 셀 위아래로 옮기기 | `Alt + ↑ / ↓` | `Option + ↑ / ↓` |
+| 명령 모드 키 | `A`, `B`, `M`, `Y`, `D D`, `Z`, `L` | 그대로 |
+| 명령 팔레트 | `Ctrl + Shift + P` | `Cmd + Shift + P` |
+
+## 11. Docker Desktop: WSL 없이 바로
+
+응용 프로그램 폴더에서 Docker를 처음 열면 약관 동의와 권한 허용을 물어요. 권장 설정으로 진행하고 왼쪽 아래에 **Engine running**이 뜰 때까지 기다려요. 14회차에서 본 대로 맥의 Docker Desktop도 안에 작은 리눅스 VM을 띄워요. 윈도우처럼 WSL을 따로 깔 일은 없어요.
+
+```bash
+docker info
+docker run hello-world
+docker compose version
+```
+
+`Hello from Docker!`가 나오면 준비 끝이에요.
+
+- **수업 이미지는 다 맥용이 있어요.** `nginx`, `ubuntu:24.04`, `mysql:8.4`, `redis`, `postgres:18` 모두 애플 칩용 이미지가 있어서 받는 명령도 그대로예요.
+- **Git Bash 우회는 전부 버려요.** 15회차의 `//tmp`는 `/tmp`로 쓰면 되고, `MSYS_NO_PATHCONV` 줄은 넣지 않아요. 14회차의 `docker exec -i my-pg psql -U postgres < products.sql`도 맥 터미널에서 그대로 돼요.
+- **데이터는 다시 넣어요.** 16회차 `SportsCenter` 폴더를 받아 `docker compose up -d`로 띄우고, SQL 파일을 다시 실행하면 표와 데이터가 돌아와요.
+
+<Hint>
+
+Docker Desktop의 Settings > General에서 **Start Docker Desktop when you sign in**을 켜 두면 `Cannot connect to the Docker daemon` 오류를 덜 보게 돼요.
+
+</Hint>
+
+## 12. DBeaver: 접속 정보는 같고 실행 키만 다르다
+
+16회차와 똑같이 Host `localhost`, Port `5432`, Database `sportscenter`, Username `postgres`, Password는 compose 파일의 값으로 연결해요.
+
+커서가 있는 SQL 문장을 실행하는 키는 맥에서 `Cmd + Enter`예요. 안 되면 예전 버전이라서 `Ctrl + Enter`예요.
+
+## 13. 다 됐는지 한 번에 확인
+
+아래가 모두 에러 없이 나오면 1~16회차 실습을 맥에서 그대로 이어 갈 수 있어요.
+
+```bash
+git config --global --list   # user.name, user.email, init.defaultbranch, core.editor
+gh auth status               # Logged in to github.com
+uv --version
+code --version
+docker run --rm hello-world  # Hello from Docker!
+docker compose version
+```
+
+## 맥으로 옮길 때 꼭 기억할 주의점
+
+- 명령은 그대로예요. 바뀌는 건 설치 도구 `brew`, 셸 `zsh`, 설정 파일 `~/.zshrc`예요.
+- `~/.zshrc`에 브랜치 표시를 넣어 두면 Git Bash처럼 프롬프트에 `(main)`이 보여요. `vim`을 쓰려면 키 꾹 누르기 설정도 바꿔 둬요.
+- 프로젝트는 GitHub로 옮기고 `uv sync`로 `.venv`를 새로 만들어요. `.venv`, 훅, Docker 볼륨은 따라오지 않아요.
+- 가상환경 활성화는 `source .venv/bin/activate`, 맥에는 `python` 명령이 없으니 `uv run python`을 써요.
+- 터미널 단축키는 control, 복사와 붙여넣기는 command, 윈도우의 `Alt`는 option이에요.
+- 15회차의 경로 변환 설정(`MSYS_NO_PATHCONV`, `//tmp`)은 Git Bash 전용이라 맥에서는 넣지 않아요.
+- 인터넷에서 찾은 `sed -i` 명령은 맥에서 `sed -i ''`처럼 빈 따옴표를 하나 더 넣어야 돼요. 맥의 `sed`는 리눅스 것과 조금 달라요.
+- `Cannot connect to the Docker daemon`이 나오면 Docker Desktop을 먼저 켜요.
