@@ -206,10 +206,6 @@ export function TilEditor(props: Props) {
 
   async function handleSave(publish: boolean) {
     if (pending) return;
-    if (publish && !selfCheck.trim()) {
-      setError('발행하려면 셀프 체크 질문을 채워주세요.');
-      return;
-    }
     setPending(true);
     setError(null);
     const res = await savePostAction(buildInput(), publish);
@@ -342,7 +338,7 @@ export function TilEditor(props: Props) {
         <section className="panel flex min-w-0 flex-col gap-5 p-5 sm:p-6">
           <h2 className={groupTitle}>되짚어보기</h2>
 
-          <Field label="셀프 체크 질문" note="발행 시 필수" htmlFor="til-self-check">
+          <Field label="셀프 체크 질문" note="선택" htmlFor="til-self-check">
             <input
               id="til-self-check"
               value={selfCheck}

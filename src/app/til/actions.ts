@@ -39,11 +39,8 @@ export async function savePostAction(input: TilPostInput, publish: boolean): Pro
   const title = input.title.trim();
   if (!title) return { ok: false, error: '제목을 입력하세요' };
 
-  // 발행 필수 검증: 셀프 체크 질문. 초고 저장은 통과.
+  // 셀프 체크 질문은 선택(2026-11-17). 비어 있으면 null로 저장하고 글에서도 숨긴다.
   const selfCheck = input.selfCheck.trim();
-  if (publish && !selfCheck) {
-    return { ok: false, error: '발행하려면 셀프 체크 질문을 채워야 합니다' };
-  }
 
   // 컴파일 온 세이브.
   let bodyCode = '';

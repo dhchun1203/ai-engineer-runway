@@ -18,6 +18,7 @@ if (/create policy/i.test(mig)) fail('til 테이블에 정책이 있음 — defa
 // G3: 액션 게이트.
 const actions = read('src/app/til/actions.ts');
 if (!actions.includes('hasUnlockCookie')) fail('actions가 hasUnlockCookie 게이트를 안 씀');
-if (!/셀프 체크|self_check|selfCheck/.test(actions)) fail('발행 필수 검증(셀프체크) 흔적 없음');
+// 셀프 체크 질문은 2026-11-17부터 선택이다. 발행을 막는 검사가 되살아나면 실패시킨다.
+if (/publish && !selfCheck/.test(actions)) fail('셀프 체크 질문이 다시 발행 필수가 됨(선택이어야 함)');
 
 console.log('check-til: OK (admin 규율·RLS default-deny·게이트 확인)');
