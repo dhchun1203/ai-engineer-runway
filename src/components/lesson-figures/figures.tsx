@@ -121,7 +121,7 @@ function Connector({ label, dir }: { label: string; dir: "left" | "right" }) {
   const Wide = dir === "left" ? ArrowLeft : ArrowRight;
   const Narrow = dir === "left" ? ArrowUp : ArrowDown;
   return (
-    <div className={`flex shrink-0 flex-row items-center justify-center gap-2 text-center text-label leading-snug sm:w-28 sm:flex-col sm:gap-1 ${MUTED}`}>
+    <div className={`flex shrink-0 flex-row items-center justify-center gap-2 text-center text-label leading-snug sm:w-28 sm:flex-col sm:self-center sm:gap-1 ${MUTED}`}>
       <Wide className="hidden h-5 w-5 text-foreground sm:block dark:text-foreground-dark" aria-hidden="true" />
       <Narrow className="h-5 w-5 text-foreground sm:hidden dark:text-foreground-dark" aria-hidden="true" />
       <span className="break-keep">{rich(label)}</span>
@@ -132,10 +132,11 @@ function Connector({ label, dir }: { label: string; dir: "left" | "right" }) {
 export type BoxItem = BoxData | { arrow: string; dir?: "left" | "right" };
 
 // 누가 누구를 쓰나: 상자 사이에 화살표. below의 상자들은 줄 아래에 폭 전체로 놓인다.
+// 한 줄의 상자는 키를 맞춘다(2026-11-17). 화살표만 세로 가운데(Connector의 sm:self-center).
 export function Boxes({ row, below = [] }: { row: BoxItem[]; below?: BoxData[] }) {
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+      <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-stretch">
         {row.map((item, i) =>
           "arrow" in item ? (
             <Connector key={i} label={item.arrow} dir={item.dir ?? "right"} />
