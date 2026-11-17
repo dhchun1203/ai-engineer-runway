@@ -75,7 +75,7 @@ const TOOLS = [
   { href: "/class/quiz", label: "종합 퀴즈", desc: "여러 회차를 섞어 풀기", Icon: ClipboardCheck },
   { href: "/class/commands", label: "명령어 모음", desc: "배운 명령어 찾기", Icon: Terminal },
   { href: "/glossary", label: "용어집", desc: "수업 용어도 함께", Icon: BookOpen },
-  { href: "/class/docker-cli", label: "Docker 명령 한눈에", desc: "치트시트 두 장", Icon: Container },
+  { href: "/class/docker-cli", label: "Docker 명령 지도", desc: "하고 싶은 일로 명령 찾기", Icon: Container },
   { href: "/class/mac-setup", label: "맥 실습 환경", desc: "맥으로 옮길 때 셋업", Icon: Laptop },
 ] as const;
 

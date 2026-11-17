@@ -1,6 +1,6 @@
 import { GuideReader, guideMetadata } from "@/components/class/guide-reader";
 
-// Docker 명령 한눈에 보기(2026-11-17, 교안 35장 정리) — 완전 정적. 본문은 src/content/guides/docker-cli.mdx.
+// Docker 명령 지도(2026-11-17, 14~16회차 명령을 하고 싶은 일로 묶음) — 완전 정적. 본문은 src/content/guides/docker-cli.mdx.
 export const metadata = guideMetadata("docker-cli");
 
 export default function DockerCliPage() {

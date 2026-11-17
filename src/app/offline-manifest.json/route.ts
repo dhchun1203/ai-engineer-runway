@@ -56,7 +56,7 @@ export async function GET() {
         items: [
           ...getOrderedClassLessons().map((lesson) => item(`/class/${seg(lesson.slug)}`, lesson.title)),
           item("/class/commands", "명령어 모음"),
-          item("/class/docker-cli", "Docker 명령 한눈에 보기"),
+          item("/class/docker-cli", "Docker 명령 지도"),
           item("/class/mac-setup", "맥 실습 환경"),
         ],
       },
