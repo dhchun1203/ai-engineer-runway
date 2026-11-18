@@ -12,6 +12,7 @@ import {
 import { ArrowRight, X } from "lucide-react";
 import Link from "next/link";
 import { terms, type TermEntry } from "@/content/terms";
+import { TermText } from "@/components/roadmap/term-text";
 
 // 로드맵 심화 레슨의 용어 설명 패널. 본문의 <Term id="...">단어</Term>를 누르면
 // 우측에서 패널이 미끄러져 나와 해당 용어를 설명한다. 진도·저장 같은 것과 무관한
@@ -134,7 +135,7 @@ export function TermPanelProvider({ children }: { children: ReactNode }) {
                   key={index}
                   className="break-keep text-body font-normal leading-relaxed"
                 >
-                  {paragraph}
+                  <TermText text={paragraph} />
                 </p>
               ))}
             </div>

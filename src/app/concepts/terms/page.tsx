@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getSortedTerms } from "@/content/term-helpers";
 import { SpotIllustration } from "@/components/illustrations/spot-illustration";
+import { TermText } from "@/components/roadmap/term-text";
 
 export const metadata: Metadata = {
   title: "용어 사전 · AI 뜯어보기",
@@ -44,7 +45,7 @@ export default function TermsIndexPage() {
             >
               <span className="text-body font-extrabold break-keep">{term.title}</span>
               <span className="line-clamp-2 text-label font-normal leading-relaxed break-keep text-badge-neutral-text dark:text-badge-neutral-text-dark">
-                {term.body.split("\n\n")[0]}
+                <TermText text={term.body.split("\n\n")[0]} />
               </span>
             </Link>
           </li>

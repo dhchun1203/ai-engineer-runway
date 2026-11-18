@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { getConceptBySlug } from "@/content/concept-helpers";
 import { getSortedTerms, getTerm, getTermUsages } from "@/content/term-helpers";
+import { TermText, termPlainText } from "@/components/roadmap/term-text";
 
 // 용어 카드 — 완전 정적. 설명, 같은 개념의 깊은 편(있을 때만), 이 용어가 나온
 // 기사와 로드맵 레슨(빌드 시 <Term id>에서 계산)을 보여 준다.
@@ -20,7 +21,7 @@ export async function generateMetadata({
   const { id } = await params;
   const term = getTerm(id);
   if (!term) return {};
-  return { title: `${term.title} · 용어 사전`, description: term.body.split("\n\n")[0] };
+  return { title: `${term.title} · 용어 사전`, description: termPlainText(term.body.split("\n\n")[0]) };
 }
 
 export default async function TermPage({ params }: { params: Promise<{ id: string }> }) {
@@ -48,7 +49,7 @@ export default async function TermPage({ params }: { params: Promise<{ id: strin
       <div className="flex flex-col gap-4">
         {term.body.split("\n\n").map((paragraph, index) => (
           <p key={index} className="break-keep text-body font-normal leading-relaxed">
-            {paragraph}
+            <TermText text={paragraph} />
           </p>
         ))}
       </div>
