@@ -309,14 +309,14 @@ function GroupGrid({ withNull, judged }: { withNull: boolean; judged: boolean | 
       {SPORTS.map((s) => (
         <div key={s.id} className="qr-enter grid grid-cols-1 items-start gap-1.5 @md:grid-cols-[5.5rem_minmax(0,1fr)] @md:gap-2.5">
           <span className={`${sportChip} w-[5.5rem] @md:w-auto`}>{s.name}</span>
-          <div className="grid grid-cols-2 gap-2 @md:grid-cols-[repeat(auto-fill,minmax(7.25rem,1fr))]">
+          <div className="grid grid-cols-3 gap-1.5 @md:gap-2 @md:grid-cols-[repeat(auto-fill,minmax(7.25rem,1fr))]">
             {GROUPS.filter((g) => g[0] === s.id && (withNull || g[1] !== null)).map(([sid, m, cnt, sum]) => {
               const ok = sum !== null && sum >= 1000000;
               const state = judged ? (ok ? "pass" : "fail") : "idle";
               return (
                 <div
                   key={`${sid}-${m}`}
-                  className={`relative rounded-lg border border-t-4 px-2.5 py-2 transition-[opacity,background-color,border-color] duration-500 motion-reduce:transition-none ${
+                  className={`relative rounded-lg border border-t-4 px-1.5 py-2 @md:px-2.5 transition-[opacity,background-color,border-color] duration-500 motion-reduce:transition-none ${
                     m ? MONTH_TOP[m] : `border-dashed border-t-current ${muted}`
                   } ${
                     state === "pass"
@@ -325,16 +325,16 @@ function GroupGrid({ withNull, judged }: { withNull: boolean; judged: boolean | 
                   } ${state === "fail" ? "opacity-30" : ""}`}
                 >
                   <span
-                    className={`absolute top-1.5 right-2 text-[0.7rem] font-bold text-ok transition-opacity duration-300 dark:text-ok-dark ${
+                    className={`absolute top-1.5 right-1.5 @md:right-2 text-[0.7rem] font-bold text-ok transition-opacity duration-300 dark:text-ok-dark ${
                       state === "pass" ? "opacity-100" : "opacity-0"
                     }`}
                   >
                     통과
                   </span>
-                  <div className="font-mono text-[0.8rem] font-semibold text-foreground dark:text-foreground-dark">{m ?? "월 NULL"}</div>
+                  <div className="font-mono text-[0.75rem] font-semibold @md:text-[0.8rem] text-foreground dark:text-foreground-dark">{m ?? "월 NULL"}</div>
                   <div className={`text-[0.8rem] ${muted}`}>COUNT(*) {cnt}</div>
                   <div
-                    className={`font-mono text-[0.88rem] font-semibold tabular-nums text-foreground dark:text-foreground-dark ${
+                    className={`font-mono text-[0.78rem] @md:text-[0.88rem] font-semibold tabular-nums text-foreground dark:text-foreground-dark ${
                       state === "fail" ? "line-through" : ""
                     }`}
                   >
