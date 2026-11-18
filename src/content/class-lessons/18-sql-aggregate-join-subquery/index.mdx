@@ -382,9 +382,7 @@ ORDER BY 누적신청 DESC, course_id;
   <Boxes
     row={[
       { title: "WHERE", note: "담기 전, 행 하나씩", tone: "amber", lines: ["`status <> '취소'`", "200행에서 취소 12행을 뺌"] },
-      { arrow: "GROUP BY course_id" },
-      { title: "강좌별 바구니", tone: "neutral", lines: ["바구니마다 `COUNT(*)`"] },
-      { arrow: "그다음" },
+      { arrow: "강좌별로 묶고 바구니마다 세기" },
       { title: "HAVING", note: "담은 뒤, 바구니 하나씩", tone: "blue", lines: ["`COUNT(*) >= 18`", "13번, 8번, 11번만 남음"] },
     ]}
   />
