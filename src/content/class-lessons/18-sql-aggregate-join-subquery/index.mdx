@@ -1,1005 +1,249 @@
 ---
-title: "집계, JOIN, 서브쿼리: 묶어서 세고, 옆으로 잇고, 안에서 먼저 구한다"
+title: "월 매출 쿼리 하나를 한 절씩 돌려 본다: 잇고, 묶고, 거르고, 정렬한다"
 session: 18
 date: "2026-11-18"
-summary: "행을 고르는 데서 나아가 숫자로 요약하고 표를 이어요. 집계 함수와 COUNT(*), COUNT(열)의 차이, GROUP BY와 HAVING, UNION, 네 가지 JOIN, WHERE와 FROM과 SELECT 자리의 서브쿼리까지 시드 데이터의 실제 출력으로 확인해요."
+summary: "종목별로 월 매출이 100만 원을 넘은 달을 찾는 쿼리 하나로 오늘을 정리해요. JOIN과 LEFT JOIN, ON과 WHERE, GROUP BY와 COUNT(*), SUM, HAVING, ORDER BY가 실제로 도는 순서대로 한 단계씩 움직이는 걸 봐요."
 slug: "18-sql-aggregate-join-subquery"
 module: "1-4"
 topic: "SQL"
 preStudy: ["1-4-sql-queries-and-joins"]
 ---
 
-어제는 `SELECT`로 열을, `WHERE`로 행을 골랐어요. 그런데 "이번 달 매출이 얼마지?", "강사가 없는 강좌는 어디지?" 같은 질문은 행을 하나씩 들여다봐서는 답이 안 나와요.
+어제는 표 하나에서 열과 행을 골랐어요. 오늘은 표 세 개를 이어 붙이고, 행을 묶어 숫자로 요약하고, 그 숫자로 다시 걸렀어요.
 
-오늘은 세 가지를 배워요. 여러 행을 **묶어서 숫자로 요약하고**, 여러 표를 **옆으로 이어** 번호 대신 이름을 보고, 먼저 구해야 하는 값은 **쿼리 안의 쿼리**로 구해요. 오늘 정리의 질문 하나를 끝까지 들고 가요. **이 JOIN은 어느 표를 다 살리려는 쿼리인가?**
+이걸 따로따로 외우는 것보다 쿼리 하나가 도는 모습을 끝까지 따라가는 게 빨라요. 이 레슨은 "종목별로 월 매출이 100만 원을 넘은 달은?"이라는 문제 하나로 오늘 배운 문법을 모두 돌려 봐요.
 
-출력은 모두 시드 데이터(회원 60명, 강좌 14개, 수강 기록 200건)를 넣은 `sportscenter`에서 실제로 실행한 결과예요. 끝까지 읽고 아래 복습 퀴즈 10문항을 풀어 보세요.
+끝까지 읽고 아래 복습 퀴즈 10문항을 풀어 보세요.
 
-## 1. 오늘의 지도: 고르고, 묶고, 잇고, 안에서 먼저 구한다
+## 1. 오늘의 문제: 종목별로 월 매출이 100만 원을 넘은 달은?
 
-오늘 배운 문법은 하고 싶은 일에 따라 네 묶음으로 나뉘어요. 위에서 아래로 갈수록 질문이 커져요.
+매출은 `enrollments`에 있고, 종목 이름은 `sports`에 있어요. 둘 사이를 `courses`가 이어 줘요. 수강 기록은 강좌 번호를, 강좌는 종목 번호를 들고 있거든요.
 
-<Figure label="하고 싶은 것과 문법">
+<Figure label="표 세 개가 이어지는 길">
   <Layers
     layers={[
-      [{ title: "행 고르기, 꾸미기, 정렬", note: "어제 배운 것", tone: "neutral", lines: ["`WHERE` `AND` `OR` `<>` `IS NOT NULL`", "`CASE WHEN`, `ORDER BY 열 DESC`"] }],
-      [{ title: "묶어서 세기", note: "집계", tone: "blue", via: "여러 행을 숫자 하나로", lines: ["`COUNT` `SUM` `AVG` `MIN` `MAX`", "`GROUP BY`로 묶고 `HAVING`으로 거르기"] }],
-      [
-        { title: "위아래로 쌓기", note: "UNION", tone: "amber", via: "결과 두 개를 합치기", lines: ["`UNION ALL`은 그대로", "`UNION`은 중복을 빼고"] },
-        { title: "옆으로 잇기", note: "JOIN", tone: "rust", via: "표 두 개를 합치기", lines: ["`ON`에 짝 짓는 열", "`LEFT` `RIGHT` `FULL OUTER`"] },
-      ],
-      [{ title: "쿼리 안의 쿼리", note: "서브쿼리", tone: "ok", via: "먼저 구한 값을 바깥이 써요", lines: ["`WHERE` 자리: 값과 비교", "`FROM` 자리: 결과를 표처럼, `SELECT` 자리: 모든 행에 값 하나"] }],
+      [{ title: "sports", note: "4행", tone: "blue", lines: ["`sport_id`, `sport_name`", "수영, 헬스, 골프연습, 스포츠댄스"] }],
+      [{ title: "courses", note: "14행", tone: "amber", via: "`c.sport_id = s.sport_id`", lines: ["`course_id`, `course_name`, `sport_id`", "14번 수영 마스터즈반은 수강 기록이 하나도 없어요"] }],
+      [{ title: "enrollments", note: "200행", tone: "rust", via: "`e.course_id = c.course_id`", lines: ["`course_id`, `enroll_month`, `status`, `pay_amount`", "그중 12건은 `status`가 '취소'예요"] }],
     ]}
   />
 </Figure>
 
-이걸 다 섞어 쓸 수 있는 건 `SELECT` 문이 정해진 순서로 돌기 때문이에요. 쓰는 순서와 도는 순서가 달라요.
+취소된 기록은 매출이 아니니 빼고 세요. 그래서 할 일은 네 가지예요. 세 표를 잇고, 취소를 빼고, 종목과 월로 묶어 더하고, 100만 원 이상만 남겨요.
+
+```sql
+SELECT
+    s.sport_name AS 종목,
+    e.enroll_month AS 수강월,
+    COUNT(*) AS 수강인원,
+    SUM(e.pay_amount) AS 매출
+FROM sports s
+LEFT JOIN courses c ON (c.sport_id = s.sport_id)
+LEFT JOIN enrollments e ON (e.course_id = c.course_id
+                            AND e.status <> '취소')
+GROUP BY s.sport_id, e.enroll_month
+HAVING SUM(e.pay_amount) >= 1000000
+ORDER BY s.sport_name COLLATE "ko-x-icu", 수강월;
+```
+
+```text
+   종목   | 수강월  | 수강인원 |    매출
+----------+---------+----------+------------
+ 골프연습 | 2026-08 |       12 | 1264000.00
+ 골프연습 | 2026-09 |       10 | 1018000.00
+ 골프연습 | 2026-11 |       12 | 1384000.00
+ 수영     | 2026-11 |       15 | 1092500.00
+(4 rows)
+```
+
+`pay_amount`는 `NUMERIC(10,2)`라서 합계도 `.00`까지 나와요. 이 결과가 어떻게 나오는지 다음 절에서 한 단계씩 돌려 봐요.
+
+## 2. 쿼리 리플레이: 한 절씩 돌려 보기
+
+다음을 누르면 지금 실행 중인 절에 노란 줄이 쳐지고, 아래에 그 절을 거친 뒤의 행이 나타나요. 자동 재생을 누르면 끝까지 알아서 넘어가요.
+
+<QueryReplaySimulator />
+
+<Hint>
+위쪽 버튼으로 INNER JOIN 풀이로 바꿔 보세요. 출발하는 표와 취소를 거르는 자리가 다른데, 최종 4행은 똑같아요. 10절에서 두 풀이를 나란히 비교해요.
+</Hint>
+
+## 3. 쓰는 순서와 도는 순서가 다르다
+
+리플레이에서 노란 줄이 위에서 아래로 내려가지 않았죠. `SELECT`를 맨 위에 쓰지만, 실제로는 표를 준비하는 `FROM`부터 돌아요.
 
 <Figure label="SELECT 문이 실제로 도는 순서">
   <Seq
     steps={[
-      { title: "`FROM` / `JOIN`", body: "표를 준비해요. JOIN이 있으면 여기서 이어 붙여요." },
+      { title: "`FROM` / `JOIN`", body: "표를 준비해요. JOIN이 있으면 여기서 옆으로 이어 붙여요." },
       { title: "`WHERE`", body: "묶기 전에 행을 걸러요." },
-      { title: "`GROUP BY`", body: "같은 값끼리 묶어요." },
-      { title: "`HAVING`", body: "묶은 그룹을 걸러요." },
-      { title: "`SELECT`", body: "보여 줄 열을 고르고 별칭(`AS`)을 붙여요." },
-      { title: "`ORDER BY`", body: "정렬해요. 별칭을 쓸 수 있는 건 여기부터예요." },
+      { title: "`GROUP BY`", body: "같은 값끼리 바구니에 담아요." },
+      { title: "`HAVING`", body: "바구니를 걸러요." },
+      { title: "`SELECT`", body: "보여 줄 열을 만들고 별칭(`AS`)을 붙여요." },
+      { title: "`ORDER BY`", body: "정렬해요. 별칭은 여기서부터 쓸 수 있어요." },
       { title: "`LIMIT`", body: "개수를 잘라요." },
     ]}
   />
 </Figure>
 
-어제 `WHERE`에 별칭을 쓰면 오류가 났던 것도 이 순서 때문이에요. `WHERE`가 돌 때는 아직 `SELECT`가 별칭을 만들기 전이거든요. 오늘은 `HAVING`도 같은 처지라는 걸 6절에서 봐요.
+이 순서 하나로 오늘 만난 오류 두 개가 설명돼요. `HAVING`에서 별칭 `매출`을 쓰면 아직 별칭이 없어서 오류예요. `ORDER BY`에서 `수강월`을 쓰는 건 `SELECT` 다음이라 괜찮아요.
 
-## 2. 어제 배운 고르기, 꾸미기, 정렬을 한 번 더
+## 4. `JOIN`은 `ON`의 짝 규칙으로 표를 옆으로 잇는다
 
-수업은 어제 배운 세 가지를 시드 데이터로 다시 돌려 보는 데서 시작했어요. 자세한 설명은 17회차에 있으니 여기서는 결과만 확인해요.
+`FROM sports s`의 `s`는 표 별칭이에요. 세 표를 함께 쓰면 `sport_id`처럼 같은 이름의 열이 여러 표에 있어서, `s.sport_id`, `c.sport_id`처럼 어느 표의 열인지 밝혀 줘요.
 
-`AND`가 `OR`보다 먼저 묶이니, 섞을 때는 괄호로 뜻을 정해요. "수영 강좌 중에서 초급이거나 9시 전에 시작하는 것"이에요.
+`ON`에는 짝을 짓는 규칙을 써요. 보통 한쪽의 외래 키와 다른 쪽의 기본 키가 같다는 조건이에요. 짝이 맞는 행끼리 옆으로 붙어 한 행이 돼요.
 
-```sql
-SELECT course_name, level, start_time
-FROM courses
-WHERE sport_id = 1
-  AND (level = '초급' OR start_time < '09:00');
-```
-
-```text
-   course_name    | level | start_time
-------------------+-------+------------
- 수영 초급 새벽반 | 초급  | 06:00:00
- 아쿠아로빅       | 초급  | 10:00:00
- 수영 마스터즈반  | 상급  | 07:00:00
-(3 rows)
-```
-
-`CASE WHEN`은 위에서부터 처음 맞는 조건의 값을 줘요. 1960년 이하는 첫 줄에서 멈추니 둘째 줄까지 내려가지 않아요.
-
-```sql
-SELECT name, birth_year,
-       CASE WHEN birth_year <= 1960 THEN '할인'
-            WHEN birth_year <= 2000 THEN '청소년'
-            ELSE '일반'
-       END AS 요금구분
-FROM members
-ORDER BY birth_year, name
-LIMIT 10;
-```
-
-```text
-  name  | birth_year | 요금구분
---------+------------+----------
- 권서현 |       1955 | 할인
- 황다은 |       1955 | 할인
- 권준서 |       1958 | 할인
-...
- 정유진 |       1960 | 할인
- 신지아 |       1962 | 청소년
- 황은지 |       1962 | 청소년
-(10 rows)
-```
-
-`ORDER BY`에 열을 둘 쓰면 앞 열이 같을 때만 뒤 열로 줄을 세워요. 1955년생 두 명은 이름 가나다순으로 섰어요. 수강료 순으로 세울 때도 같아요.
-
-```sql
-SELECT course_name, fee
-FROM courses
-WHERE fee >= 80000
-ORDER BY fee DESC, course_name
-LIMIT 5;
-```
-
-```text
-    course_name     |  fee
---------------------+--------
- 헬스 PT 그룹반     | 150000
- 골프 중급반        | 130000
- 골프 입문반        | 120000
- 골프 타석 자유이용 |  90000
- 수영 마스터즈반    |  90000
-(5 rows)
-```
-
-9만 원짜리 두 강좌는 수강료가 같아서 강좌명 가나다순(`골` 다음 `수`)으로 섰어요. `IS NOT NULL`과 내림차순도 함께 써 봤어요.
-
-```sql
-SELECT name, email
-FROM members
-WHERE email IS NOT NULL
-ORDER BY email DESC, name
-LIMIT 10;
-```
-
-```text
-  name  |  email
---------+----------
- 조수아 | sua@
- 박서윤 | seoyun@
- 최민준 | minjun@
- 오혜원 | member60@
-...
- 권은지 | member53@
-(10 rows)
-```
-
-출력의 이메일은 `@` 뒤를 줄여 적었어요. 글자 정렬은 사전 순서라 `s`로 시작하는 주소가 맨 위, `m`이 그다음이에요. 이메일이 빈 15명은 `WHERE`에서 이미 빠졌어요.
-
-## 3. 집계 함수는 여러 행을 숫자 하나로 줄인다
-
-**집계 함수**는 여러 행을 받아 값 하나를 돌려줘요. 강좌 14개를 한 줄로 요약해 볼게요.
-
-```sql
-SELECT COUNT(*)           AS 강좌수,
-       MIN(fee)           AS 최저수강료,
-       MAX(fee)           AS 최고수강료,
-       SUM(capacity)      AS 전체정원,
-       ROUND(AVG(fee), 2) AS 평균수강료
-FROM courses;
-```
-
-```text
- 강좌수 | 최저수강료 | 최고수강료 | 전체정원 | 평균수강료
---------+------------+------------+----------+------------
-     14 |      40000 |     150000 |      266 |   81785.71
-(1 row)
-```
-
-<Figure label="14행이 들어가서 1행이 나온다">
-  <Boxes
-    row={[
-      { title: "courses 14행", tone: "neutral", lines: ["`fee` 70000, 50000, 75000 ...", "`capacity` 20, 30, 20 ..."] },
-      { arrow: "집계 함수" },
-      { title: "결과 1행", tone: "blue", lines: ["`COUNT(*)` 14, `MIN` 40000", "`MAX` 150000, `SUM` 266", "`AVG` 81785.71"] },
+<Figure label="잇기 한 번마다 행 수가 바뀌어요">
+  <Seq
+    steps={[
+      { title: "`FROM sports s`", body: "종목 4행에서 시작해요." },
+      { title: "`LEFT JOIN courses c`", body: "종목 하나에 강좌가 여러 개라 14행으로 늘어나요." },
+      { title: "`LEFT JOIN enrollments e`", body: "강좌마다 수강 기록이 붙어 189행이 돼요. 취소 아닌 기록 188행과 짝 없는 마스터즈반 1행이에요." },
     ]}
   />
 </Figure>
 
-`AVG`는 정수 열이어도 소수로 계산해서 `81785.714285714286`처럼 길게 나와요. `ROUND(값, 자릿수)`로 반올림해요. 자릿수를 빼면 정수로 반올림해요.
+별칭 없이 `SELECT sport_id`라고만 쓰면 `column reference "sport_id" is ambiguous` 오류가 나요. `sports`와 `courses` 둘 다에 있어서 어느 쪽인지 모르는 거예요.
 
-```sql
-SELECT ROUND(AVG(fee))    AS 평균수강료,
-       ROUND(AVG(fee), 2) AS 소수둘째자리
-FROM courses;
-```
+## 5. `LEFT JOIN`은 왼쪽을 다 살리고, 짝 없는 칸은 NULL로 채운다
 
-```text
- 평균수강료 | 소수둘째자리
-------------+--------------
-      81786 |     81785.71
-(1 row)
-```
+그냥 `JOIN`(`INNER JOIN`과 같아요)은 양쪽에 짝이 있는 행만 남겨요. `LEFT JOIN`은 왼쪽 표의 행을 짝이 없어도 버리지 않아요.
 
-수강 기록에도 써 봐요. 이번 달(2026-11) 신청 건수, 매출, 가장 큰 결제 금액이에요.
+수영 마스터즈반은 붙을 수강 기록이 없어요. `LEFT JOIN`이라 이 강좌는 살아남고, `enrollments`에서 와야 할 칸은 전부 NULL인 행 1개가 돼요.
 
-```sql
-SELECT COUNT(*)        AS 신청건수,
-       SUM(pay_amount) AS 매출,
-       MAX(pay_amount) AS 최고매출
-FROM enrollments
-WHERE enroll_month = '2026-11';
-```
-
-```text
- 신청건수 |    매출    | 최고매출
-----------+------------+-----------
-       56 | 4286500.00 | 150000.00
-(1 row)
-```
-
-`WHERE`가 먼저 11월 행 56개만 남기고, 집계 함수는 그 56행을 요약해요. 1절의 순서 그대로예요. 금액이 `.00`으로 끝나는 건 어제 본 `NUMERIC(10,2)` 열이라서예요.
-
-## 4. `COUNT(*)`는 행을, `COUNT(열)`은 값이 있는 칸을 센다
-
-`COUNT`는 무엇을 넣느냐에 따라 세는 대상이 달라요. 회원 표로 비교해요.
-
-```sql
-SELECT COUNT(*)               AS 회원수,
-       COUNT(email)           AS 이메일있음,
-       COUNT(phone)           AS 전화번호있음,
-       COUNT(DISTINCT region) AS 거주지
-FROM members;
-```
-
-```text
- 회원수 | 이메일있음 | 전화번호있음 | 거주지
---------+------------+--------------+--------
-     60 |         45 |           57 |      5
-(1 row)
-```
-
-<Figure label="같은 60행을 세는 세 가지 방법">
+<Figure label="수영 마스터즈반은 어떻게 되나">
   <Boxes
     row={[
-      { title: "COUNT(*)", tone: "blue", lines: ["행이 몇 개인지", "빈 칸이 있어도 셈", "결과 **60**"] },
-      { title: "COUNT(email)", tone: "amber", lines: ["그 칸에 값이 있는 행만", "NULL 15개는 뺌", "결과 **45**"] },
-      { title: "COUNT(DISTINCT region)", tone: "ok", lines: ["겹치는 값을 하나로", "마포구 17명도 1로", "결과 **5**"] },
+      { title: "JOIN이면", tone: "neutral", lines: ["짝이 없어서 빠져요", "결과에 흔적이 없어요"] },
+      { title: "LEFT JOIN이면", tone: "blue", lines: ["왼쪽 행이라 살아남아요", "`e.enroll_month`, `e.pay_amount`가 NULL"] },
     ]}
   />
 </Figure>
 
-`SUM`, `AVG`, `MIN`, `MAX`도 NULL을 건너뛰어요. 시드 데이터에서 취소된 수강 기록은 결제 금액이 비어 있어서, 매출 합계에서 저절로 빠져요. 9월 기록을 두 가지로 세면 차이가 보여요.
+같은 원리로 `RIGHT JOIN`은 오른쪽 표를, `FULL OUTER JOIN`은 양쪽 표를 짝이 없어도 다 살려요. JOIN 종류는 "어느 표를 다 살릴까"로 골라요.
 
-```sql
-SELECT COUNT(*)          AS 전체기록,
-       COUNT(pay_amount) AS 결제기록
-FROM enrollments
-WHERE enroll_month = '2026-09';
-```
+## 6. 취소를 거르는 조건: `LEFT JOIN`이면 `ON`에 쓴다
 
-```text
- 전체기록 | 결제기록
-----------+----------
-       48 |       43
-(1 row)
-```
+이 쿼리는 `e.status <> '취소'`를 `WHERE`가 아니라 `ON` 안에 `AND`로 붙였어요. 그래서 취소 기록은 짝짓기 단계에서 짝이 되지 못하고, 마스터즈반의 NULL 행은 그대로 남아요.
 
-48건 중 5건이 금액이 빈 취소 기록이에요. "몇 명이 신청했나"는 `COUNT(*)`, "몇 건이 결제됐나"는 `COUNT(pay_amount)`로 물어요.
+같은 조건을 `WHERE`로 옮기면 이야기가 달라져요. 다 이은 뒤에 거르는데, NULL 행의 `status`는 NULL이라 `NULL <> '취소'`가 참이 되지 않아요. 어제 `= NULL`이 0행이던 것과 같은 이유예요.
 
-<Hint>
-`COUNT(열)` 결과가 생각보다 작다면 그 열에 NULL이 섞였다는 뜻이에요. 행 수를 세려면 `COUNT(*)`를 써요.
-</Hint>
-
-## 5. `GROUP BY`는 같은 값끼리 바구니에 담는다
-
-3절의 집계는 표 전체를 한 줄로 줄였어요. `GROUP BY`를 쓰면 같은 값끼리 바구니에 담고, 바구니마다 한 줄씩 요약해요. 월별 신청 건수와 매출이에요.
-
-```sql
-SELECT enroll_month    AS 신청월,
-       COUNT(*)        AS 신청건수,
-       SUM(pay_amount) AS 매출
-FROM enrollments
-GROUP BY enroll_month
-ORDER BY enroll_month;
-```
-
-```text
- 신청월  | 신청건수 |    매출
----------+----------+------------
- 2026-08 |       46 | 3123500.00
- 2026-09 |       48 | 3117000.00
- 2026-10 |       50 | 3376500.00
- 2026-11 |       56 | 4286500.00
-(4 rows)
-```
-
-<Figure label="200행이 달마다 바구니에 담겨 4행이 된다">
+<Figure label="같은 조건, 다른 자리">
   <Boxes
     row={[
-      { title: "enrollments 200행", tone: "neutral", lines: ["`2026-08` 행, `2026-11` 행,", "`2026-09` 행 ... 섞여 있음"] },
-      { arrow: "GROUP BY enroll_month" },
-      { title: "바구니 4개", tone: "blue", lines: ["08월 46행, 09월 48행", "10월 50행, 11월 56행"] },
-      { arrow: "바구니마다 집계" },
-      { title: "결과 4행", tone: "ok", lines: ["바구니 하나가 한 줄", "46 + 48 + 50 + 56 = 200"] },
+      { title: "ON에 쓰면", tone: "ok", lines: ["짝을 지을 때만 쓰는 조건", "취소 기록만 짝에서 빠져요", "NULL 행은 남아요(189행)"] },
+      { title: "WHERE에 쓰면", tone: "red", lines: ["다 이은 뒤 거르는 조건", "NULL 행까지 빠져요(188행)", "`INNER JOIN`과 같아져요"] },
     ]}
   />
 </Figure>
 
-### `SELECT`에는 묶은 열과 집계 함수만 올 수 있다
+이번 문제는 NULL 행이 어차피 `HAVING`에서 빠지니 결과가 같아요. 그래도 `LEFT JOIN`에서 오른쪽 표의 조건은 `ON`에 쓴다고 기억해요. `WHERE`에 쓰면 애써 살린 행이 조용히 사라져요.
 
-바구니 하나는 결과에서 한 줄이 돼요. 그래서 바구니 안에 값이 여럿인 열은 `SELECT`에 그냥 쓸 수 없어요. 구(region)로 묶고 회원 이름을 같이 보려고 하면 막혀요.
+## 7. `GROUP BY`는 바구니를 만들고, 집계 함수는 바구니마다 센다
 
-```sql
-SELECT region, name, COUNT(*)
-FROM members
-GROUP BY region;
-```
+`GROUP BY s.sport_id, e.enroll_month`는 종목과 수강월 조합이 같은 행끼리 한 바구니에 담아요. 바구니 하나가 결과의 한 줄이 돼요. 4종목에 4개월이라 16바구니에, 수강월이 NULL인 마스터즈반 바구니가 하나 더 생겨 17바구니예요.
 
-```text
-ERROR:  column "members.name" must appear in the GROUP BY clause or be used in an aggregate function
-```
+`COUNT`와 `SUM`은 여러 행을 숫자 하나로 줄이는 집계 함수예요. `GROUP BY`가 있으면 바구니마다 따로 계산해요.
 
-마포구 바구니에는 이름이 17개 있는데, 한 줄에는 하나만 적을 수 있으니 무엇을 고를지 몰라요. 그 열을 `GROUP BY`에 더하거나, `COUNT(name)`처럼 집계 함수로 감싸요.
-
-### 기준을 둘 쓰면 두 값의 조합으로 묶인다
-
-`GROUP BY` 뒤에 열을 둘 쓰면 (월, 상태) 조합마다 바구니가 생겨요.
-
-```sql
-SELECT enroll_month, status, COUNT(*) AS 건수
-FROM enrollments
-GROUP BY enroll_month, status
-ORDER BY enroll_month, status;
-```
-
-```text
- enroll_month | status | 건수
---------------+--------+------
- 2026-08      | 수료   |   42
- 2026-08      | 취소   |    4
- 2026-09      | 수료   |   43
- 2026-09      | 취소   |    5
- 2026-10      | 수료   |   47
- 2026-10      | 취소   |    3
- 2026-11      | 수강중 |   56
-(7 rows)
-```
-
-9월 취소가 5건이라 4절의 48과 43의 차이와 맞아요. 11월은 아직 진행 중이라 상태가 하나뿐이에요.
-
-## 6. `WHERE`는 담기 전에, `HAVING`은 담은 뒤에 거른다
-
-"누적 신청이 18건 이상인 인기 강좌"는 바구니에 담고 세어 봐야 알 수 있어요. 바구니를 거르는 자리가 `HAVING`이에요.
-
-```sql
-SELECT course_id, COUNT(*) AS 누적신청
-FROM enrollments
-GROUP BY course_id
-HAVING COUNT(*) >= 18
-ORDER BY 누적신청 DESC, course_id;
-```
-
-```text
- course_id | 누적신청
------------+----------
-        13 |       24
-         8 |       23
-         7 |       18
-        11 |       18
-(4 rows)
-```
-
-취소 기록은 빼고 세고 싶다면, 바구니에 담기 전에 행을 거르는 `WHERE`를 더해요.
-
-```sql
-SELECT course_id, COUNT(*) AS 누적신청
-FROM enrollments
-WHERE status <> '취소'
-GROUP BY course_id
-HAVING COUNT(*) >= 18
-ORDER BY 누적신청 DESC, course_id;
-```
-
-```text
- course_id | 누적신청
------------+----------
-        13 |       23
-         8 |       21
-        11 |       18
-(3 rows)
-```
-
-<Figure label="거르는 자리가 두 군데다">
+<Figure label="수강월이 NULL인 바구니">
   <Boxes
     row={[
-      { title: "WHERE", note: "담기 전, 행 하나씩", tone: "amber", lines: ["`status <> '취소'`", "200행에서 취소 12행을 뺌"] },
-      { arrow: "강좌별로 묶고 바구니마다 세기" },
-      { title: "HAVING", note: "담은 뒤, 바구니 하나씩", tone: "blue", lines: ["`COUNT(*) >= 18`", "13번, 8번, 11번만 남음"] },
+      { title: "`COUNT(*)`", tone: "amber", lines: ["행 자체를 세요", "NULL 행도 한 행이라 1"] },
+      { title: "`SUM(e.pay_amount)`", tone: "blue", lines: ["NULL은 건너뛰어요", "더할 금액이 없어서 NULL"] },
     ]}
   />
 </Figure>
 
-취소 12행은 5절 표의 4 + 5 + 3이에요. 7번 강좌는 취소가 섞여 있어서, 취소를 빼니 18건 아래로 내려가 빠졌어요.
+`COUNT(e.course_id)`처럼 오른쪽 표의 열을 세면 NULL을 건너뛰어 0이 나와요. `LEFT JOIN` 뒤에 "몇 건인지" 셀 때는 `COUNT(*)` 대신 `COUNT(오른쪽 열)`을 써요.
 
-### 집계 조건을 `WHERE`에 쓰면 오류
+### `SELECT`에는 묶은 열과 집계 함수만 온다
 
-```sql
-SELECT course_id, COUNT(*)
-FROM enrollments
-WHERE COUNT(*) >= 18
-GROUP BY course_id;
+바구니 하나는 한 줄이라, 바구니 안에서 값이 여러 개인 열은 `SELECT`에 쓸 수 없어요. 강좌 이름 `c.course_name`을 같이 보려고 하면 이렇게 멈춰요.
+
+```text
+ERROR:  column "c.course_name" must appear in the GROUP BY clause or be used in an aggregate function
 ```
+
+그런데 `s.sport_name`은 `GROUP BY`에 없는데도 돼요. `s.sport_id`가 `sports`의 기본 키라서, 번호로 묶으면 이름도 하나로 정해지기 때문이에요. INNER JOIN 풀이처럼 `GROUP BY s.sport_name`으로 이름 자체를 묶어도 돼요.
+
+## 8. `HAVING`은 바구니를 거른다
+
+행을 거르는 `WHERE`는 바구니를 만들기 전에 돌아요. 그래서 `WHERE SUM(e.pay_amount) >= 1000000`처럼 집계 조건을 쓰면 오류예요. 아직 더할 바구니가 없거든요.
 
 ```text
 ERROR:  aggregate functions are not allowed in WHERE
 ```
 
-`WHERE`가 돌 때는 아직 바구니가 없어서 셀 것이 없어요. 행 조건은 **`WHERE`**, 바구니 조건은 **`HAVING`** 자리예요.
+바구니를 만든 뒤의 조건은 `HAVING`에 써요. 17바구니 중 합계가 100만 원 이상인 4개만 통과해요. NULL 바구니는 `NULL >= 1000000`이 참이 아니라서 여기서 빠져요.
 
-### `HAVING`에는 별칭을 못 쓴다
-
-위 쿼리에서 `ORDER BY 누적신청`은 됐어요. 그런데 `HAVING 누적신청 >= 18`로 줄여 쓰면 막혀요.
-
-```text
-ERROR:  column "누적신청" does not exist
-```
-
-1절 순서에서 `HAVING`은 `SELECT`보다 먼저라 별칭이 아직 없어요. 그래서 `HAVING`에는 `COUNT(*)`를 한 번 더 써요. 별칭은 `SELECT` 다음에 도는 `ORDER BY`에서만 써요.
-
-### 연습: 회원이 10명 이상 사는 구
-
-```sql
-SELECT region, COUNT(*) AS 회원수
-FROM members
-GROUP BY region
-HAVING COUNT(*) >= 10
-ORDER BY 회원수 DESC;
-```
-
-```text
-  region  | 회원수
-----------+--------
- 서대문구 |     22
- 마포구   |     17
- 은평구   |     10
-(3 rows)
-```
-
-거주지가 5곳(4절)인데 3곳만 남았어요. 나머지 두 곳(용산구, 영등포구)은 합쳐서 11명이에요.
-
-## 7. `UNION`은 결과를 위아래로 쌓는다
-
-여기부터는 결과나 표를 합쳐요. `UNION`은 두 `SELECT`의 결과를 아래로 이어 붙여요. 수업에서는 같은 쿼리를 세 번 쌓아서 차이를 봤어요. 9월 수영 상급 저녁반(4번) 수강생은 4명이에요.
-
-```sql
-SELECT member_id FROM enrollments WHERE course_id = 4 AND enroll_month = '2026-09'
-UNION ALL
-SELECT member_id FROM enrollments WHERE course_id = 4 AND enroll_month = '2026-09'
-UNION ALL
-SELECT member_id FROM enrollments WHERE course_id = 4 AND enroll_month = '2026-09'
-ORDER BY member_id;
-```
-
-```text
- member_id
------------
-        10
-        10
-        10
-        11
-...
-        46
-(12 rows)
-```
-
-<Figure label="4행짜리 결과를 세 번 쌓으면">
+<Figure label="거르는 자리가 두 곳이에요">
   <Boxes
     row={[
-      { title: "UNION ALL", tone: "amber", lines: ["쌓은 그대로 둬요", "4 + 4 + 4 = **12행**", "10번이 세 번 나옴"] },
-      { title: "UNION", tone: "blue", lines: ["겹치는 행을 하나로", "4명이 한 번씩, **4행**", "중복을 찾느라 일이 더 많음"] },
+      { title: "WHERE", tone: "neutral", lines: ["묶기 전, 행 하나씩", "집계 함수는 못 써요"] },
+      { arrow: "바구니에 담고 합계 내기" },
+      { title: "HAVING", tone: "ok", lines: ["묶은 뒤, 바구니 하나씩", "합계, 개수로 걸러요"] },
     ]}
   />
 </Figure>
 
-실제로 쓰는 모양은 "9월이나 10월에 4번 강좌를 들은 회원"처럼 서로 다른 조건을 합칠 때예요. 9월 4명, 10월 4명이라 `UNION ALL`은 8행이고, 두 달 다 들은 3명(10번, 11번, 46번)이 한 번씩 줄어 `UNION`은 5행이에요. `ORDER BY`는 맨 끝에 한 번만 쓰고, 쌓은 결과 전체에 적용돼요.
+`HAVING 매출 >= 1000000`처럼 별칭을 쓰면 `column "매출" does not exist` 오류가 나요. `HAVING`은 `SELECT`보다 먼저라 별칭이 아직 없어요. 식 `SUM(e.pay_amount)`를 그대로 다시 써요.
 
-### 회원과 강사를 한 연락처 목록으로
+## 9. `ORDER BY`에서는 별칭을 쓸 수 있다
 
-구분 열을 글자로 직접 만들어 붙이면, 서로 다른 표의 사람을 한 목록으로 볼 수 있어요.
+`SELECT`까지 끝난 결과는 순서가 정해져 있지 않아요. 리플레이에서도 정렬 전에는 수영 2026-11 행이 맨 위에 있었어요. 원하는 순서가 있으면 꼭 `ORDER BY`를 써요.
 
-```sql
-SELECT '강사' AS 구분, name, phone FROM instructors WHERE sport_id = 4
-UNION ALL
-SELECT '회원' AS 구분, name, phone FROM members WHERE region = '영등포구';
-```
+`ORDER BY`는 `SELECT` 다음이라 별칭 `수강월`을 쓸 수 있어요. 앞 열이 같을 때 다음 열로 정렬해서, 같은 골프연습끼리는 수강월 순으로 놓여요.
 
-```text
- 구분 |  name  |     phone
-------+--------+---------------
- 강사 | 배수민 | 010-3101-2207
- 강사 | 차예린 |
- 회원 | 홍혜원 | 010-4895-6934
- 회원 | 정서현 | 010-2479-2442
- 회원 | 오예린 | 010-8384-9593
- 회원 | 장은지 | 010-7121-3363
-(6 rows)
-```
+`COLLATE "ko-x-icu"`는 이 열을 한국어 규칙으로 정렬하라고 정해 주는 말이에요. 그래서 골프연습이 수영보다 앞에 와요.
 
-위아래 `SELECT`는 열 개수가 같아야 해요. 결과의 열 이름은 첫 번째 `SELECT`를 따라서, 아래쪽 `AS 구분`은 빼도 돼요.
+## 10. INNER JOIN 풀이와 비교하기
+
+같은 문제를 수강 기록에서 출발해 풀 수도 있어요.
 
 ```sql
-SELECT name, phone FROM instructors
-UNION ALL
-SELECT name FROM members;
-```
-
-```text
-ERROR:  each UNION query must have the same number of columns
-```
-
-## 8. `JOIN`은 표를 옆으로 잇는다: `ON`이 짝 짓는 규칙이다
-
-수강 기록 `enrollments`에는 회원 번호와 강좌 번호만 있어요. 이름과 강좌명을 보려면 다른 표의 열을 **옆에** 붙여야 해요. 이게 `JOIN`이에요. `UNION`이 행을 늘린다면 `JOIN`은 열을 늘려요.
-
-이번 달 헬스 PT 그룹반(6번) 신청 기록에 회원 이름을 붙여요.
-
-```sql
-SELECT e.enroll_month, e.course_id, m.name, e.status
+SELECT
+    s.sport_name        AS 종목,
+    e.enroll_month      AS 수강월,
+    COUNT(*)            AS 수강인원,
+    SUM(e.pay_amount)   AS 매출
 FROM enrollments e
-INNER JOIN members m ON e.member_id = m.member_id
-WHERE e.course_id = 6 AND e.enroll_month = '2026-11'
-ORDER BY m.name;
-```
-
-```text
- enroll_month | course_id |  name  | status
---------------+-----------+--------+--------
- 2026-11      |         6 | 류우진 | 수강중
- 2026-11      |         6 | 류은찬 | 수강중
- 2026-11      |         6 | 신민재 | 수강중
- 2026-11      |         6 | 신우진 | 수강중
-(4 rows)
-```
-
-<Figure label="ON이 두 표의 행을 짝짓는다">
-  <Boxes
-    row={[
-      { title: "enrollments e", tone: "neutral", lines: ["`member_id` 21, `course_id` 6", "번호만 있어요"] },
-      { arrow: "`member_id`로 짝짓기" },
-      { title: "members m", tone: "blue", lines: ["`member_id` 21", "`name` 신우진"] },
-    ]}
-    below={[{ title: "결과 한 행", tone: "ok", lines: ["두 표의 열이 옆으로 붙어요: `2026-11`, `6`, `신우진`, `수강중`"] }]}
-  />
-</Figure>
-
-`FROM enrollments e`의 `e`는 **표 별칭**이에요. 긴 표 이름 대신 `e.member_id`처럼 어느 표의 열인지 짧게 밝혀요. `INNER`는 빼도 돼요. `JOIN`만 쓰면 `INNER JOIN`이에요.
-
-두 표에 같은 이름의 열이 있는데 별칭을 안 붙이면, 어느 쪽 열인지 몰라서 멈춰요.
-
-```sql
-SELECT member_id, name
-FROM enrollments e
-JOIN members m ON e.member_id = m.member_id;
-```
-
-```text
-ERROR:  column reference "member_id" is ambiguous
-```
-
-`e.member_id`처럼 별칭을 붙이면 풀려요. 반대로 `FROM`에서 정하지 않은 별칭을 쓰면 `missing FROM-clause entry for table "m"`이 나와요.
-
-## 9. 어느 표를 다 살릴지가 JOIN 종류를 정한다
-
-`INNER JOIN`은 양쪽에 짝이 있는 행만 남겨요. 그런데 "강좌 목록"을 보는데 강사가 없다고 강좌가 사라지면 곤란하죠. 자유이용 강좌(2번, 10번)는 강사가 없어서 `instructor_id`가 NULL이에요. 그리고 차예린 강사는 맡은 강좌가 없어요.
-
-이럴 때 **어느 쪽 표를 짝이 없어도 다 살릴지** 정하는 게 JOIN 종류예요. 아래에서 네 가지를 눌러 비교해 보세요.
-
-<JoinTypeSimulator />
-
-| JOIN (`courses` ←→ `instructors`) | 남는 행 | 결과 |
-| --- | --- | --- |
-| `JOIN` | 양쪽에 짝이 있는 행만 | 12행 |
-| `LEFT JOIN` | 왼쪽(강좌) 전부, 강사 없는 강좌는 NULL | 14행 |
-| `RIGHT JOIN` | 오른쪽(강사) 전부, 강좌 없는 강사는 NULL | 13행 |
-| `FULL OUTER JOIN` | 양쪽 전부 | 15행 |
-
-`LEFT`와 `RIGHT`는 `FROM`에 먼저 쓴 표가 왼쪽이에요. 그래서 `A RIGHT JOIN B`는 `B LEFT JOIN A`와 같아요. 현업에서는 보통 다 살릴 표를 `FROM`에 두고 `LEFT JOIN`으로 써요.
-
-`FULL OUTER JOIN`은 양쪽의 짝 없는 행을 한 번에 점검할 때 좋아요. 짝 없는 행만 남기면 이렇게 나와요.
-
-```sql
-SELECT c.course_name, i.name AS 강사
-FROM courses c
-FULL OUTER JOIN instructors i ON c.instructor_id = i.instructor_id
-WHERE c.course_id IS NULL OR i.instructor_id IS NULL
-ORDER BY c.course_id, i.instructor_id;
-```
-
-```text
-    course_name     |  강사
---------------------+--------
- 헬스 자유이용      |
- 골프 타석 자유이용 |
-                    | 차예린
-(3 rows)
-```
-
-## 10. 짝 없는 행 찾기: `LEFT JOIN` 다음 `IS NULL`
-
-"신청 기록이 한 번도 없는 강좌"는 `GROUP BY`로는 못 찾아요. `GROUP BY`는 `enrollments`에 있는 행만 묶으니, 기록이 없는 강좌는 바구니 자체가 생기지 않거든요.
-
-이럴 때는 다 살릴 `courses`를 왼쪽에 두고 `LEFT JOIN`한 뒤, 짝이 없어 오른쪽이 NULL인 행만 남겨요.
-
-```sql
-SELECT c.course_id, c.course_name
-FROM courses c
-LEFT JOIN enrollments e ON c.course_id = e.course_id
-WHERE e.course_id IS NULL;
-```
-
-```text
- course_id |   course_name
------------+-----------------
-        14 | 수영 마스터즈반
-(1 row)
-```
-
-<Figure label="LEFT JOIN 결과에서 짝 없는 행만 고른다">
-  <Boxes
-    row={[
-      { title: "courses c (왼쪽)", tone: "blue", lines: ["14개 전부 남아요"] },
-      { arrow: "LEFT JOIN enrollments e" },
-      { title: "짝이 있는 강좌", tone: "neutral", lines: ["신청 기록마다 한 행씩", "`e.course_id`에 번호가 있음"] },
-      { title: "짝이 없는 강좌", tone: "rust", lines: ["14번 수영 마스터즈반", "`e.course_id`가 NULL"] },
-    ]}
-    below={[{ title: "WHERE e.course_id IS NULL", tone: "ok", lines: ["짝 없는 행만 남아요: 이번 달 새로 연 14번 강좌"] }]}
-  />
-</Figure>
-
-## 11. 오른쪽 표의 조건은 `ON`에 쓴다
-
-이번 달(2026-11) 수강 신청을 하지 않은 회원을 찾아요. 조건 `e.enroll_month = '2026-11'`을 어디에 쓰느냐에 따라 결과가 완전히 달라져요.
-
-```sql
-SELECT m.member_id, m.name
-FROM members m
-LEFT JOIN enrollments e
-       ON m.member_id = e.member_id
-      AND e.enroll_month = '2026-11'
-WHERE e.member_id IS NULL
-ORDER BY m.member_id
-LIMIT 5;
-```
-
-```text
- member_id |  name
------------+--------
-         4 | 최민준
-        13 | 서승현
-        23 | 류민재
-        24 | 오은찬
-        27 | 권우진
-(5 rows)
-```
-
-`LIMIT` 없이 세면 15명이에요. 월 조건을 `ON`에 넣으면 "이번 달 기록하고만 짝짓기"가 돼요. 다른 달 기록만 있는 회원도 이번 달 짝이 없으니 NULL로 남아서 찾을 수 있어요.
-
-<Figure label="같은 조건, 다른 자리">
-  <Boxes
-    row={[
-      { title: "ON에 쓰면", tone: "ok", lines: ["짝을 지을 때만 쓰는 조건", "짝 없는 회원은 NULL로 **남아요**", "LEFT JOIN 그대로"] },
-      { title: "WHERE에 쓰면", tone: "red", lines: ["다 이은 다음 거르는 조건", "NULL 행은 `= '2026-11'`이 참이 안 돼 **빠져요**", "INNER JOIN과 같아져요"] },
-    ]}
-  />
-</Figure>
-
-LEFT JOIN으로 살린 NULL 행은 `WHERE e.enroll_month = '2026-11'`을 통과하지 못해요. 어제 본 `= NULL`이 0행이던 것과 같은 이유예요. **오른쪽 표의 조건은 `ON`에** 쓴다고 기억해요.
-
-### LEFT JOIN 다음에는 `COUNT(*)` 대신 `COUNT(오른쪽 열)`
-
-종목별 이번 달 신청 인원을 세는데, 신청이 없는 강좌도 0으로 나와야 해요.
-
-```sql
-SELECT s.sport_name, COUNT(e.member_id) AS 이번달신청
-FROM sports s
-JOIN courses c ON s.sport_id = c.sport_id
-LEFT JOIN enrollments e ON c.course_id = e.course_id AND e.enroll_month = '2026-11'
-GROUP BY s.sport_name
-ORDER BY 이번달신청 DESC;
-```
-
-```text
- sport_name | 이번달신청
-------------+------------
- 스포츠댄스 |         16
- 수영       |         15
- 헬스       |         13
- 골프연습   |         12
-(4 rows)
-```
-
-신청이 없는 14번 강좌도 `LEFT JOIN` 덕분에 한 행으로 남는데, 그 행의 `e.member_id`는 NULL이에요. `COUNT(*)`는 그 행도 1로 세고, `COUNT(e.member_id)`는 NULL이라 0으로 세요. 4절의 차이가 여기서 쓰여요.
-
-## 12. `JOIN`은 이어서 여러 번 쓸 수 있다
-
-`JOIN`을 줄줄이 이으면 표 셋, 넷도 붙일 수 있어요. 이번 달 수영 초급 새벽반(1번) 수강생에게 회원 이름과 강좌명을 함께 붙여요.
-
-```sql
-SELECT e.member_id,
-       c.course_name,
-       m.name,
-       e.enroll_month,
-       e.status
-FROM enrollments e
-LEFT JOIN members m ON e.member_id = m.member_id
-LEFT JOIN courses c ON e.course_id = c.course_id
-WHERE e.course_id = 1 AND e.enroll_month = '2026-11'
-ORDER BY m.name;
-```
-
-```text
- member_id |   course_name    |  name  | enroll_month | status
------------+------------------+--------+--------------+--------
-         1 | 수영 초급 새벽반 | 김하늘 | 2026-11      | 수강중
-        34 | 수영 초급 새벽반 | 송우진 | 2026-11      | 수강중
-         7 | 수영 초급 새벽반 | 조수아 | 2026-11      | 수강중
-(3 rows)
-```
-
-수강 기록의 번호는 외래 키라 회원과 강좌가 늘 있으니, 여기서는 `LEFT JOIN`과 `JOIN`의 결과가 같아요. 종목 이름까지 보려면 `sports`를 하나 더 이어요. 회원 김하늘의 수강 이력이에요.
-
-```sql
-SELECT e.enroll_month, s.sport_name, c.course_name, e.status
-FROM enrollments e
-JOIN members m ON e.member_id = m.member_id
 JOIN courses c ON e.course_id = c.course_id
-JOIN sports  s ON c.sport_id = s.sport_id
-WHERE m.name = '김하늘'
-ORDER BY e.enroll_month;
+JOIN sports  s ON c.sport_id  = s.sport_id
+WHERE e.status <> '취소'
+GROUP BY s.sport_name, e.enroll_month
+HAVING SUM(e.pay_amount) >= 1000000
+ORDER BY 종목, 수강월;
 ```
 
-```text
- enroll_month | sport_name |   course_name    | status
---------------+------------+------------------+--------
- 2026-09      | 수영       | 수영 초급 새벽반 | 수료
- 2026-10      | 수영       | 수영 초급 새벽반 | 수료
- 2026-11      | 수영       | 수영 초급 새벽반 | 수강중
-(3 rows)
-```
-
-<Figure label="표 네 개가 외래 키를 따라 이어진다">
-  <Relay
-    tone="rust"
-    legs={[
-      { fn: "enrollments e", desc: "출발점: 수강 기록", ex: "member_id, course_id", value: "기록" },
-      { fn: "members m", desc: "`e.member_id`로 회원 찾기", ex: "name", value: "김하늘" },
-      { fn: "courses c", desc: "`e.course_id`로 강좌 찾기", ex: "course_name, sport_id", value: "새벽반" },
-      { fn: "sports s", desc: "`c.sport_id`로 종목 찾기", ex: "sport_name", value: "수영" },
-    ]}
-  />
-</Figure>
-
-`ON`을 빠뜨리거나 엉뚱한 열끼리 짝지으면 결과가 폭발적으로 많아져요. 외래 키 = 기본 키로 짝짓는지 확인해요.
-
-## 13. 서브쿼리: 안쪽이 먼저 돌고, 바깥이 그 값을 쓴다
-
-"평균보다 비싼 강좌"를 구하려면 평균부터 알아야 해요. 숫자 81785.71을 손으로 옮겨 적는 대신, 평균을 구하는 쿼리를 괄호로 감싸 그대로 넣어요. 이게 **서브쿼리**(쿼리 안의 쿼리)예요.
-
-먼저 안쪽에 들어갈 쿼리를 혼자 실행해 봐요. 서브쿼리를 쓸 때 이 습관이 오류를 크게 줄여요.
-
-```sql
-SELECT AVG(fee) FROM courses;
-```
-
-```text
-        avg
---------------------
- 81785.714285714286
-(1 row)
-```
-
-```sql
-SELECT course_name, fee
-FROM courses
-WHERE fee > (SELECT AVG(fee) FROM courses)
-ORDER BY fee DESC, course_name;
-```
-
-```text
-    course_name     |  fee
---------------------+--------
- 헬스 PT 그룹반     | 150000
- 골프 중급반        | 130000
- 골프 입문반        | 120000
- 골프 타석 자유이용 |  90000
- 수영 마스터즈반    |  90000
-(5 rows)
-```
-
-<Figure label="WHERE 자리 서브쿼리: 값 하나를 먼저 구해 비교한다">
-  <Relay
-    tone="ok"
-    legs={[
-      { fn: "(SELECT AVG(fee) FROM courses)", desc: "안쪽이 먼저 한 번 돌아요", value: "81785.71..." },
-      { fn: "WHERE fee > 그 값", desc: "바깥이 14개 강좌를 하나씩 비교", value: "5행" },
-    ]}
-  />
-</Figure>
-
-수강료가 바뀌거나 강좌가 늘어도 쿼리를 고칠 필요가 없어요. 평균은 실행할 때마다 다시 계산돼요. 가장 비싼 강좌도 같은 방법으로 구해요.
-
-```sql
-SELECT course_id, course_name, fee
-FROM courses
-WHERE fee = (SELECT MAX(fee) FROM courses);
-```
-
-```text
- course_id |  course_name   |  fee
------------+----------------+--------
-         6 | 헬스 PT 그룹반 | 150000
-(1 row)
-```
-
-`ORDER BY fee DESC LIMIT 1`과 달리, 최고 수강료가 같은 강좌가 둘이면 둘 다 나와요.
-
-### 여러 값과 비교할 때는 `=` 대신 `IN`
-
-`=`와 `>`는 값 하나와만 비교할 수 있어요. 서브쿼리가 여러 행을 돌려주면 멈춰요. 송유나 회원(38번)이 들은 강좌를 `=`로 찾아볼게요.
-
-```sql
-SELECT course_name
-FROM courses
-WHERE course_id = (SELECT course_id FROM enrollments WHERE member_id = 38);
-```
-
-```text
-ERROR:  more than one row returned by a subquery used as an expression
-```
-
-안쪽이 강좌 번호를 6행 돌려주는데 `=`는 하나만 받을 수 있어요. "목록 중에 있는가"는 어제 배운 `IN`으로 물어요.
-
-```sql
-SELECT course_name
-FROM courses
-WHERE course_id IN (SELECT course_id FROM enrollments WHERE member_id = 38);
-```
-
-```text
-  course_name
----------------
- 아쿠아로빅
- 볼룸댄스 중급
-(2 rows)
-```
-
-기록은 6건이지만 `IN`은 목록에 있는지만 보니 강좌가 한 번씩 나와요. `IN`의 서브쿼리는 비교할 열 하나만 돌려줘야 해요. 열을 둘 고르면 `subquery has too many columns`가 나와요.
-
-## 14. `FROM` 자리 서브쿼리는 임시 표가 된다: 인라인 뷰
-
-"누적 결제액이 40만 원 이상인 회원"을 구하려면 먼저 회원별 합계를 만들고, 그 결과를 다시 걸러야 해요. `FROM` 자리에 집계 쿼리를 넣고 이름(`AS paid`)을 붙이면 표처럼 쓸 수 있어요. 이걸 **인라인 뷰**라고 해요. 이름을 붙였으니 다른 표와 `JOIN`도 돼요.
-
-```sql
-SELECT paid.member_id, m.name, paid.total_payment
-FROM (
-    SELECT member_id, SUM(pay_amount) AS total_payment
-    FROM enrollments
-    GROUP BY member_id
-) AS paid
-LEFT JOIN members m ON paid.member_id = m.member_id
-WHERE paid.total_payment >= 400000
-ORDER BY paid.total_payment DESC, paid.member_id;
-```
-
-```text
- member_id |  name  | total_payment
------------+--------+---------------
-        21 | 신우진 |     670000.00
-        42 | 강나연 |     630000.00
-         9 | 김정우 |     480000.00
-        28 | 조동현 |     480000.00
-        54 | 조지아 |     480000.00
-        11 | 류은찬 |     470000.00
-        50 | 류우진 |     450000.00
-         8 | 윤동현 |     445000.00
-(8 rows)
-```
-
-<Figure label="인라인 뷰: 안에서 만든 결과가 바깥의 표가 된다">
-  <Relay
-    tone="blue"
-    legs={[
-      { fn: "enrollments", desc: "수강 기록 전부", value: "200행" },
-      { fn: "GROUP BY member_id", desc: "안쪽에서 회원별 합계, 이름은 `paid`", value: "54행" },
-      { fn: "JOIN members + WHERE", desc: "바깥에서 이름을 붙이고 40만 원 이상만", value: "8행" },
-    ]}
-  />
-</Figure>
-
-기록이 있는 회원은 54명이라 `paid`는 54행이에요. 6절의 `HAVING SUM(pay_amount) >= 400000`으로도 같은 회원을 고를 수 있어요. 인라인 뷰는 안에서 만든 열 이름(`total_payment`)을 바깥의 `WHERE`, `JOIN`, 다시 집계 어디에나 쓸 수 있다는 점이 달라요.
-
-<Hint>
-인라인 뷰에는 늘 `AS 이름`을 붙여요. PostgreSQL 16부터는 이름 없이도 돌지만, 15 이하나 MySQL 같은 다른 DB에서는 `subquery in FROM must have an alias` 오류가 나요. 안쪽 집계에도 `AS total_payment`처럼 열 이름을 붙여야 바깥에서 부를 수 있어요.
-</Hint>
-
-## 15. `SELECT` 자리 서브쿼리는 모든 행에 값 하나를 붙인다
-
-`SELECT` 목록에 값 하나를 돌려주는 서브쿼리를 넣으면, 모든 행에 그 값이 붙어요. 강좌마다 전체 평균과의 차이를 계산해요.
-
-```sql
-SELECT course_name,
-       fee,
-       (SELECT ROUND(AVG(fee), 2) FROM courses)  AS 전체평균,
-       fee - ROUND((SELECT AVG(fee) FROM courses), 2) AS 평균과차이
-FROM courses;
-```
-
-```text
-    course_name     |  fee   | 전체평균 | 평균과차이
---------------------+--------+----------+------------
- 수영 초급 새벽반   |  70000 | 81785.71 |  -11785.71
- 헬스 자유이용      |  50000 | 81785.71 |  -31785.71
- 수영 중급 저녁반   |  75000 | 81785.71 |   -6785.71
-...
- 수영 마스터즈반    |  90000 | 81785.71 |    8214.29
-(14 rows)
-```
-
-이 서브쿼리는 바깥 행과 상관이 없어서 한 번만 계산되고, 14행 모두에 같은 값이 붙어요. 서브쿼리 없이 `SELECT course_name, AVG(fee) FROM courses`로 쓰면 5절의 `must appear in the GROUP BY clause` 오류가 나요. 집계 함수는 행을 하나로 줄이려 하거든요. 서브쿼리로 감싸면 행은 14개 그대로 두고 평균만 옆에 붙일 수 있어요.
-
-<Figure label="서브쿼리가 놓이는 세 자리">
+<Figure label="두 풀이의 차이">
   <Boxes
     row={[
-      { title: "WHERE 자리", tone: "ok", lines: ["값과 비교해요", "`fee > (SELECT ...)`", "값 하나면 `=` `>`, 여럿이면 `IN`"] },
-      { title: "FROM 자리", tone: "blue", lines: ["결과를 표처럼 써요", "`FROM (...) AS paid`", "이름을 꼭 붙여요"] },
-      { title: "SELECT 자리", tone: "amber", lines: ["모든 행에 값 하나", "`(SELECT AVG ...)`", "두 행 이상이면 오류"] },
+      { title: "LEFT JOIN 풀이", tone: "blue", lines: ["`sports`에서 출발", "취소 조건은 `ON`에", "189행, 17바구니", "기록 없는 강좌도 한 행으로 남아요"] },
+      { title: "INNER JOIN 풀이", tone: "amber", lines: ["`enrollments`에서 출발", "취소 조건은 `ON`이든 `WHERE`든 같아요", "200행에서 188행, 16바구니", "기록 없는 강좌는 처음부터 없어요"] },
     ]}
   />
 </Figure>
 
-`SELECT` 자리 서브쿼리도 값 하나만 돌려줘야 해요. 여러 행을 돌려주면 13절과 같은 `more than one row returned by a subquery used as an expression`이 나와요.
+`HAVING`이 100만 원 미만을 다 버리는 이 문제에서는 두 풀이의 결과가 같아요. 매출이 0인 종목이나 강좌까지 보여 줘야 하는 문제라면 `LEFT JOIN` 풀이가 필요해요.
 
-## 16. 미션: 월별 수료 요약과 이번 달 한산한 강좌
-
-**기본**: 수료 기록만 대상으로, 월별 수료 인원과 평균 결제 금액(원 단위 반올림)을 월 순서로 조회해요.
-
-**도전**: 이번 달(2026-11)에 2명 이하가 신청한 강좌 번호와 신청 인원을 조회해요. 신청이 0명인 강좌는 이 쿼리에 안 나와요. 왜 그런지, 0명인 강좌를 보려면 어떻게 하는지도 설명해 봐요.
-
-### 정답
-
-```sql
-SELECT enroll_month, COUNT(*) AS 수료인원, ROUND(AVG(pay_amount)) AS 평균결제
-FROM enrollments
-WHERE status = '수료'
-GROUP BY enroll_month
-ORDER BY enroll_month;
-```
-
-```text
- enroll_month | 수료인원 | 평균결제
---------------+----------+----------
- 2026-08      |       42 |    74369
- 2026-09      |       43 |    72488
- 2026-10      |       47 |    71840
-(3 rows)
-```
-
-`status = '수료'`는 행 조건이라 `WHERE`에 써요. 11월은 수료 기록이 없어서 바구니가 생기지 않았어요.
-
-```sql
-SELECT course_id, COUNT(*) AS 신청인원
-FROM enrollments
-WHERE enroll_month = '2026-11'
-GROUP BY course_id
-HAVING COUNT(*) <= 2
-ORDER BY course_id;
-```
-
-```text
- course_id | 신청인원
------------+----------
-         5 |        2
-        10 |        2
-(2 rows)
-```
-
-`GROUP BY`는 `enrollments`에 있는 행만 묶으니, 기록이 하나도 없는 강좌는 바구니가 없어요. 0명인 강좌는 14번 수영 마스터즈반이고, 10절처럼 `courses`를 왼쪽에 두고 `LEFT JOIN`해야 보여요.
-
-## 17. 오늘 만난 오류
+## 11. 오늘 만난 오류
 
 | 메시지 | 원인 | 해결 |
 | --- | --- | --- |
 | `aggregate functions are not allowed in WHERE` | 집계 조건을 `WHERE`에 씀 | `HAVING`으로 옮김 |
-| `column "members.name" must appear in the GROUP BY clause or be used in an aggregate function` | 묶지 않은 열을 `SELECT`에 넣음 | `GROUP BY`에 더하거나 집계 함수로 감쌈 |
-| `column "누적신청" does not exist` | `HAVING`에 별칭을 씀 | `HAVING COUNT(*)`처럼 식을 다시 씀 |
-| `each UNION query must have the same number of columns` | 위아래 열 개수가 다름 | 열 개수를 맞춤 |
-| `column reference "member_id" is ambiguous` | 두 표에 같은 이름의 열 | `e.member_id`처럼 별칭을 붙임 |
-| `missing FROM-clause entry for table "m"` | 정하지 않은 별칭을 씀 | `FROM`, `JOIN`의 별칭과 맞춤 |
-| `more than one row returned by a subquery used as an expression` | 여러 행을 `=`, `>`로 비교하거나 `SELECT` 자리에 넣음 | `IN`을 쓰거나 한 행만 돌려주게 함 |
-| `subquery has too many columns` | `IN` 서브쿼리가 열을 둘 이상 돌려줌 | 비교할 열 하나만 `SELECT` |
-| `subquery in FROM must have an alias` | 인라인 뷰에 이름이 없음(15 이하, 다른 DB) | `) AS 이름`을 붙임 |
-| LEFT JOIN인데 NULL 행이 사라짐 | 오른쪽 표 조건을 `WHERE`에 씀 | 그 조건을 `ON`으로 옮김 |
-| 결과 행이 폭발적으로 많음 | `ON` 조건을 빠뜨리거나 엉뚱한 열로 짝지음 | 외래 키 = 기본 키로 짝짓는지 확인 |
-| 평균이 `81785.714285714286`처럼 김 | 정수 평균도 소수로 계산됨 | `ROUND(AVG(...), 2)` |
+| `column "c.course_name" must appear in the GROUP BY clause or be used in an aggregate function` | 묶지 않은 열을 `SELECT`에 넣음 | `GROUP BY`에 더하거나 집계 함수로 감쌈 |
+| `column "매출" does not exist` | `HAVING`에 별칭을 씀 | `HAVING SUM(e.pay_amount)`처럼 식을 다시 씀 |
+| `column reference "sport_id" is ambiguous` | 두 표에 같은 이름의 열 | `s.sport_id`처럼 표 별칭을 붙임 |
+| `LEFT JOIN`인데 NULL 행이 사라짐 | 오른쪽 표 조건을 `WHERE`에 씀 | 그 조건을 `ON`으로 옮김 |
 
 ## 오늘 꼭 기억할 주의점
 
-- `SELECT` 문은 `FROM` → `WHERE` → `GROUP BY` → `HAVING` → `SELECT` → `ORDER BY` → `LIMIT` 순서로 돌아요. 별칭은 `ORDER BY`에서만 써요.
-- `COUNT(*)`는 행 수, `COUNT(열)`은 NULL을 뺀 수, `COUNT(DISTINCT 열)`은 겹침을 뺀 수예요. `SUM`, `AVG`도 NULL을 건너뛰어요.
+- `SELECT` 문은 `FROM`/`JOIN`, `WHERE`, `GROUP BY`, `HAVING`, `SELECT`, `ORDER BY`, `LIMIT` 순서로 돌아요. 별칭은 `ORDER BY`에서만 써요.
+- `JOIN`은 `ON`의 규칙으로 짝을 지어요. 표가 여럿이면 `s.sport_id`처럼 표 별칭을 붙여요.
+- JOIN 종류는 "어느 표를 짝이 없어도 다 살리나"로 골라요. `LEFT JOIN`은 왼쪽을 살리고 짝 없는 칸을 NULL로 채워요.
+- `LEFT JOIN`에서 오른쪽 표의 조건은 `ON`에 써요. `WHERE`에 쓰면 NULL 행이 빠져 `INNER JOIN`이 돼요.
 - `GROUP BY`를 쓰면 `SELECT`에는 묶은 열과 집계 함수만 와요.
-- 행 조건은 `WHERE`(묶기 전), 바구니 조건은 `HAVING`(묶은 뒤)이에요.
-- `UNION ALL`은 그대로, `UNION`은 중복을 빼고 쌓아요. 위아래 열 개수가 같아야 해요.
-- JOIN 종류는 "어느 표를 짝이 없어도 다 살리나"로 골라요. 짝 없는 칸은 NULL이 돼요.
-- `LEFT JOIN`에서 오른쪽 표의 조건은 `ON`에 써요. `WHERE`에 쓰면 `INNER JOIN`이 돼요.
-- `LEFT JOIN` 뒤에 세면 `COUNT(*)` 대신 `COUNT(오른쪽 열)`을 써요.
-- 서브쿼리는 안쪽을 먼저 혼자 실행해 확인해요. 값 하나면 `=` `>`, 여럿이면 `IN`이에요.
-- 인라인 뷰에는 늘 `AS 이름`을 붙여요.
+- `COUNT(*)`는 행을 세고, `COUNT(열)`과 `SUM`은 NULL을 건너뛰어요.
+- 행 조건은 `WHERE`(묶기 전), 바구니 조건은 `HAVING`(묶은 뒤)이에요. NULL과 비교한 조건은 참이 되지 않아 걸러져요.
+- 순서가 필요하면 `ORDER BY`를 꼭 써요. 쓰지 않으면 순서는 정해져 있지 않아요.

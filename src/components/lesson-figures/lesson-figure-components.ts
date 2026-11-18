@@ -29,7 +29,7 @@ import { PetSimulator } from "@/components/lesson-figures/pet-simulator";
 import { SerialSimulator } from "@/components/lesson-figures/serial-simulator";
 import { LockerCascadeSimulator } from "@/components/lesson-figures/locker-cascade-simulator";
 import { WhereFilterSimulator } from "@/components/lesson-figures/where-filter-simulator";
-import { JoinTypeSimulator } from "@/components/lesson-figures/join-type-simulator";
+import { QueryReplaySimulator } from "@/components/lesson-figures/query-replay-simulator";
 
 // 레슨 본문 그림 부품 맵. 리더 페이지가 <MDXContent components={lessonFigureComponents} />로
 // 넘긴다. MDX에서 부르는 이름과 키가 정확히 같아야 한다. 레슨 전용 시뮬레이터(CartSimulator
@@ -63,5 +63,5 @@ export const lessonFigureComponents: Record<string, ComponentType> = {
   SerialSimulator: SerialSimulator as ComponentType,
   LockerCascadeSimulator: LockerCascadeSimulator as ComponentType,
   WhereFilterSimulator: WhereFilterSimulator as ComponentType,
-  JoinTypeSimulator: JoinTypeSimulator as ComponentType,
+  QueryReplaySimulator: QueryReplaySimulator as ComponentType,
 };
