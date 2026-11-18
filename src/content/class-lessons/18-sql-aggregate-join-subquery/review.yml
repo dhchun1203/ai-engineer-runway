@@ -1,0 +1,230 @@
+# 18-sql-aggregate-join-subquery 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
+# SQL 문항의 결과와 오류 글자는 모두 PostgreSQL 엔진(PGlite)으로 직접 실행해 확인했다.
+slug: 18-sql-aggregate-join-subquery
+quiz:
+  - id: count-star-vs-count-column
+    q: "members 는 60행이고, 그중 email 이 비어 있는(NULL) 회원이 15명이에요. 결과는?"
+    code: |-
+      SELECT COUNT(*) AS 회원수, COUNT(email) AS 이메일있음
+      FROM members;
+    options:
+      - "60 | 60"
+      - "60 | 45"
+      - "45 | 45"
+      - "60 | 15"
+    answer: 1
+    explain: "COUNT(*)는 행 수라 빈 칸이 있어도 60이에요. COUNT(email)은 그 칸에 값이 있는 행만 세서 NULL 15개를 빼고 45예요. SUM, AVG 같은 다른 집계 함수도 NULL을 건너뛰어요."
+  - id: aggregate-in-where-error
+    q: "누적 신청이 18건 이상인 강좌를 찾으려고 이렇게 썼어요. 결과는?"
+    code: |-
+      SELECT course_id, COUNT(*)
+      FROM enrollments
+      WHERE COUNT(*) >= 18
+      GROUP BY course_id;
+    options:
+      - "18건 이상인 강좌가 나온다"
+      - "모든 강좌가 나온다"
+      - "ERROR: aggregate functions are not allowed in WHERE"
+      - "오류 없이 0행이 나온다"
+    answer: 2
+    explain: "WHERE 는 GROUP BY 보다 먼저 돌아서, 그때는 아직 묶음이 없어 셀 수가 없어요. 묶은 뒤의 조건은 HAVING COUNT(*) >= 18 로 써요. 행 조건은 WHERE, 묶음 조건은 HAVING 이에요."
+  - id: group-by-unlisted-column
+    q: "구별 회원 수를 보면서 이름도 같이 보려고 했어요. 결과는?"
+    code: |-
+      SELECT region, name, COUNT(*)
+      FROM members
+      GROUP BY region;
+    options:
+      - "구마다 첫 번째 회원 이름이 나온다"
+      - "ERROR: column \"members.name\" must appear in the GROUP BY clause or be used in an aggregate function"
+      - "회원마다 한 줄씩 60행이 나온다"
+      - "name 칸이 NULL 로 나온다"
+    answer: 1
+    explain: "묶음 하나는 결과에서 한 줄이에요. 마포구 묶음에는 이름이 여러 개라 한 줄에 무엇을 적을지 정할 수 없어 멈춰요. GROUP BY 를 쓰면 SELECT 에는 묶은 열과 집계 함수만 올 수 있어요."
+  - id: having-cannot-use-alias
+    q: "두 문장 중 오류가 나는 것은?"
+    code: |-
+      -- (가)
+      SELECT course_id, COUNT(*) AS 누적신청
+      FROM enrollments
+      GROUP BY course_id
+      ORDER BY 누적신청 DESC;
+      -- (나)
+      SELECT course_id, COUNT(*) AS 누적신청
+      FROM enrollments
+      GROUP BY course_id
+      HAVING 누적신청 >= 18;
+    options:
+      - "(가)만"
+      - "(나)만"
+      - "둘 다"
+      - "둘 다 아니다"
+    answer: 1
+    explain: "별칭은 SELECT 가 돌 때 생겨요. ORDER BY 는 SELECT 다음이라 (가)는 돼요. HAVING 은 SELECT 보다 먼저라 (나)는 ERROR: column \"누적신청\" does not exist 예요. HAVING COUNT(*) >= 18 처럼 식을 다시 써요."
+  - id: union-all-vs-union-rows
+    q: "아래 SELECT 하나는 서로 다른 회원 번호 4행을 돌려줘요. 같은 SELECT 를 UNION ALL 로 세 번 쌓으면 12행이에요. UNION ALL 을 모두 UNION 으로 바꾸면 몇 행일까요?"
+    code: |-
+      SELECT member_id FROM enrollments WHERE course_id = 4 AND enroll_month = '2026-09'
+      UNION
+      SELECT member_id FROM enrollments WHERE course_id = 4 AND enroll_month = '2026-09'
+      UNION
+      SELECT member_id FROM enrollments WHERE course_id = 4 AND enroll_month = '2026-09';
+    options:
+      - "12행"
+      - "8행"
+      - "4행"
+      - "1행"
+    answer: 2
+    explain: "UNION ALL 은 쌓은 그대로 두고, UNION 은 겹치는 행을 하나로 줄여요. 세 번 쌓아도 서로 다른 회원은 4명이라 4행이에요. 위아래 SELECT 의 열 개수는 같아야 해요."
+  - id: left-join-keeps-left-rows
+    q: "강좌 14개 중 자유이용 강좌 2개는 instructor_id 가 NULL 이에요. 강사는 8명이고 그중 1명은 맡은 강좌가 없어요. 결과는 몇 행일까요?"
+    code: |-
+      SELECT c.course_id, c.course_name, i.name AS 강사
+      FROM courses c
+      LEFT JOIN instructors i ON c.instructor_id = i.instructor_id;
+    options:
+      - "12행"
+      - "13행"
+      - "14행"
+      - "15행"
+    answer: 2
+    explain: "LEFT JOIN 은 왼쪽 courses 를 전부 살려요. 짝 없는 강좌 2개는 강사 칸이 NULL 로 남아 14행이에요. JOIN 이면 12행, RIGHT JOIN 이면 강좌 없는 강사 1명이 더해져 13행, FULL OUTER JOIN 이면 15행이에요."
+  - id: right-table-condition-in-on
+    q: "이번 달(2026-11) 수강 신청을 하지 않은 회원을 찾는 문장은?"
+    code: |-
+      -- (가)
+      SELECT m.member_id, m.name
+      FROM members m
+      LEFT JOIN enrollments e
+             ON m.member_id = e.member_id AND e.enroll_month = '2026-11'
+      WHERE e.member_id IS NULL;
+      -- (나)
+      SELECT m.member_id, m.name
+      FROM members m
+      LEFT JOIN enrollments e ON m.member_id = e.member_id
+      WHERE e.enroll_month = '2026-11';
+    options:
+      - "(가)"
+      - "(나)"
+      - "둘 다 같은 결과"
+      - "둘 다 오류"
+    answer: 0
+    explain: "(가)는 월 조건이 ON 에 있어 이번 달 기록하고만 짝지어요. 짝이 없는 회원은 NULL 로 남고 IS NULL 로 골라져요. (나)는 다 이은 뒤 WHERE 로 걸러서 NULL 행이 빠지고, 오히려 이번 달 신청한 회원이 나와요. INNER JOIN 과 같아진 거예요."
+  - id: count-after-left-join
+    q: "2번 강좌는 수강 기록이 하나도 없어요. 2번 강좌 줄의 두 숫자는?"
+    code: |-
+      SELECT c.course_id,
+             COUNT(*)           AS 행수,
+             COUNT(e.member_id) AS 신청수
+      FROM courses c
+      LEFT JOIN enrollments e ON c.course_id = e.course_id
+      GROUP BY c.course_id;
+    options:
+      - "0 | 0"
+      - "1 | 1"
+      - "1 | 0"
+      - "2번 강좌 줄은 나오지 않는다"
+    answer: 2
+    explain: "LEFT JOIN 은 짝 없는 2번 강좌도 한 행으로 살리고, 그 행의 e.member_id 는 NULL 이에요. COUNT(*)는 그 행도 1로 세고, COUNT(e.member_id)는 NULL 이라 0으로 세요. 신청 수는 COUNT(오른쪽 열)로 세요."
+  - id: subquery-equals-many-rows
+    q: "38번 회원은 수강 기록이 6건(강좌 2개)이에요. 결과는?"
+    code: |-
+      SELECT course_name
+      FROM courses
+      WHERE course_id = (SELECT course_id FROM enrollments WHERE member_id = 38);
+    options:
+      - "강좌 2개가 나온다"
+      - "강좌 이름이 6번 나온다"
+      - "첫 번째 강좌 하나만 나온다"
+      - "ERROR: more than one row returned by a subquery used as an expression"
+    answer: 3
+    explain: "= 는 값 하나와만 비교할 수 있는데 서브쿼리가 6행을 돌려줘서 멈춰요. 여러 값과 비교할 때는 WHERE course_id IN (SELECT ...) 로 써요. IN 은 목록에 있는지만 봐서 강좌 2개가 한 번씩 나와요."
+  - id: scalar-subquery-in-select
+    q: "courses 는 14행이에요. 결과는?"
+    code: |-
+      SELECT course_name,
+             (SELECT ROUND(AVG(fee), 2) FROM courses) AS 전체평균
+      FROM courses;
+    options:
+      - "14행, 모든 행의 전체평균이 같다"
+      - "1행, 전체 평균만 나온다"
+      - "14행, 행마다 전체평균이 다르다"
+      - "ERROR: must appear in the GROUP BY clause"
+    answer: 0
+    explain: "SELECT 자리의 서브쿼리는 바깥 행과 상관이 없어 한 번만 계산되고, 14행 모두에 같은 값이 붙어요. 서브쿼리 없이 SELECT course_name, AVG(fee) 로 쓰면 GROUP BY 오류가 나요. 서브쿼리는 행을 그대로 두고 값만 옆에 붙이는 방법이에요."
+commands:
+  - cmd: "COUNT(*) / COUNT(열) / COUNT(DISTINCT 열)"
+    desc: "행 수 / NULL 을 뺀 수 / 겹침을 뺀 수 세기"
+    group: SQL
+  - cmd: "SUM(열), AVG(열), MIN(열), MAX(열)"
+    desc: "합계, 평균, 최솟값, 최댓값(NULL 은 건너뜀)"
+    group: SQL
+  - cmd: "ROUND(값, 2) / ROUND(값)"
+    desc: "소수 둘째 자리로 / 정수로 반올림"
+    group: SQL
+  - cmd: "GROUP BY 열1, 열2"
+    desc: "같은 값(조합)끼리 묶어 묶음마다 한 줄로 집계"
+    group: SQL
+  - cmd: "HAVING COUNT(*) >= 18"
+    desc: "묶은 뒤 그룹 거르기(별칭은 못 씀)"
+    group: SQL
+  - cmd: "SELECT ... UNION ALL SELECT ..."
+    desc: "결과를 위아래로 그대로 쌓기(열 개수가 같아야 함)"
+    group: SQL
+  - cmd: "SELECT ... UNION SELECT ..."
+    desc: "결과를 쌓되 겹치는 행은 하나로"
+    group: SQL
+  - cmd: "SELECT '강사' AS 구분, name FROM ..."
+    desc: "글자 값으로 구분 열을 직접 만들어 붙이기"
+    group: SQL
+  - cmd: "FROM 표A a JOIN 표B b ON a.키 = b.키"
+    desc: "양쪽에 짝이 있는 행만 옆으로 잇기(INNER JOIN 과 같음)"
+    group: SQL
+  - cmd: "LEFT JOIN 표B b ON ..."
+    desc: "왼쪽 표는 전부 살리고 짝 없는 칸은 NULL"
+    group: SQL
+  - cmd: "RIGHT JOIN 표B b ON ..."
+    desc: "오른쪽 표는 전부 살리기(A RIGHT JOIN B = B LEFT JOIN A)"
+    group: SQL
+  - cmd: "FULL OUTER JOIN 표B b ON ..."
+    desc: "양쪽 표를 전부 살리기"
+    group: SQL
+  - cmd: "LEFT JOIN 표B b ON ... WHERE b.키 IS NULL"
+    desc: "짝 없는 행만 찾기(예: 신청 기록이 없는 강좌)"
+    group: SQL
+  - cmd: "LEFT JOIN 표B b ON a.키 = b.키 AND b.열 = 값"
+    desc: "오른쪽 표 조건은 ON 에 쓰기(WHERE 에 쓰면 INNER JOIN 이 됨)"
+    group: SQL
+  - cmd: "WHERE 열 > (SELECT AVG(열) FROM 표)"
+    desc: "서브쿼리로 먼저 구한 값 하나와 비교"
+    group: SQL
+  - cmd: "WHERE 열 IN (SELECT 열 FROM 표 WHERE ...)"
+    desc: "서브쿼리가 돌려준 여러 값 중에 있는지 보기"
+    group: SQL
+  - cmd: "FROM (SELECT ... GROUP BY ...) AS 이름"
+    desc: "인라인 뷰: 서브쿼리 결과를 표처럼 쓰기(이름을 꼭 붙임)"
+    group: SQL
+  - cmd: "SELECT 열, (SELECT AVG(열) FROM 표) AS 별칭"
+    desc: "모든 행에 서브쿼리 값 하나를 붙이기"
+    group: SQL
+terms:
+  - word: "집계 함수 (Aggregate Function)"
+    definition: "여러 행을 받아 값 하나를 돌려주는 함수. COUNT, SUM, AVG, MIN, MAX 가 있고 NULL 은 건너뛴다(COUNT(*) 는 행 자체를 센다)."
+  - word: "GROUP BY"
+    definition: "같은 값끼리 묶어 묶음마다 한 줄로 집계한다. SELECT 에는 묶은 열과 집계 함수만 올 수 있다."
+  - word: "HAVING"
+    definition: "GROUP BY 로 묶은 뒤 그룹을 거르는 자리. 묶기 전 행을 거르는 WHERE 와 달리 집계 조건을 쓸 수 있다."
+  - word: "실행 순서 (Logical Query Order)"
+    definition: "FROM/JOIN, WHERE, GROUP BY, HAVING, SELECT, ORDER BY, LIMIT 순서로 돈다. 그래서 별칭은 ORDER BY 에서만 쓸 수 있다."
+  - word: "UNION / UNION ALL"
+    definition: "두 SELECT 결과를 위아래로 쌓는다. UNION ALL 은 그대로, UNION 은 겹치는 행을 하나로 줄인다. 열 개수가 같아야 한다."
+  - word: "JOIN"
+    definition: "ON 에 적은 열끼리 짝지어 두 표를 옆으로 잇는다. INNER 는 짝 있는 행만, LEFT/RIGHT/FULL OUTER 는 한쪽이나 양쪽을 전부 살리고 짝 없는 칸을 NULL 로 채운다."
+  - word: "표 별칭 (Table Alias)"
+    definition: "FROM courses c 처럼 표에 붙이는 짧은 이름. c.course_name 처럼 어느 표의 열인지 밝혀 ambiguous 오류를 막는다."
+  - word: "서브쿼리 (Subquery)"
+    definition: "괄호로 감싼 쿼리 안의 쿼리. 안쪽이 먼저 돌고 바깥이 그 결과를 쓴다. WHERE, FROM, SELECT 자리에 놓을 수 있다."
+  - word: "인라인 뷰 (Inline View)"
+    definition: "FROM 자리에 놓인 서브쿼리. 결과가 임시 표가 되어 바깥에서 WHERE, JOIN, 다시 집계에 쓸 수 있다. AS 이름을 붙인다."
+  - word: "스칼라 서브쿼리 (Scalar Subquery)"
+    definition: "값 하나만 돌려주는 서브쿼리. SELECT 자리에 두면 모든 행에 그 값이 붙고, 두 행 이상을 돌려주면 오류가 난다."
