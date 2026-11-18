@@ -82,12 +82,16 @@ const MODES: Record<"left" | "inner", Mode> = {
       { t: "    COUNT(*) AS 수강인원,", s: 6 },
       { t: "    SUM(e.pay_amount) AS 매출", s: 6 },
       { t: "FROM sports s", s: 1 },
-      { t: "LEFT JOIN courses c ON (c.sport_id = s.sport_id)", s: 2 },
-      { t: "LEFT JOIN enrollments e ON (e.course_id = c.course_id", s: 3 },
-      { t: "                            AND e.status <> '취소')", s: 3 },
+      { t: "LEFT JOIN courses c", s: 2 },
+      { t: "    ON (c.sport_id = s.sport_id)", s: 2 },
+      { t: "LEFT JOIN enrollments e", s: 3 },
+      { t: "    ON (e.course_id = c.course_id", s: 3 },
+      { t: "        AND e.status <> '취소')", s: 3 },
       { t: "GROUP BY s.sport_id, e.enroll_month", s: 4 },
       { t: "HAVING SUM(e.pay_amount) >= 1000000", s: 5 },
-      { t: 'ORDER BY s.sport_name COLLATE "ko-x-icu", 수강월;', s: 7 },
+      { t: "ORDER BY s.sport_name", s: 7 },
+      { t: '         COLLATE "ko-x-icu",', s: 7 },
+      { t: "         수강월;", s: 7 },
     ],
     stages: [
       { k: "sports", title: "1. FROM sports", badge: "4행", text: "`sports`에서 시작해요. 종목 4개가 출발점이에요." },
@@ -121,13 +125,15 @@ const MODES: Record<"left" | "inner", Mode> = {
     label: "INNER JOIN 풀이",
     sql: [
       { t: "SELECT", s: 7 },
-      { t: "    s.sport_name        AS 종목,", s: 7 },
-      { t: "    e.enroll_month      AS 수강월,", s: 7 },
-      { t: "    COUNT(*)            AS 수강인원,", s: 7 },
-      { t: "    SUM(e.pay_amount)   AS 매출", s: 7 },
+      { t: "    s.sport_name AS 종목,", s: 7 },
+      { t: "    e.enroll_month AS 수강월,", s: 7 },
+      { t: "    COUNT(*) AS 수강인원,", s: 7 },
+      { t: "    SUM(e.pay_amount) AS 매출", s: 7 },
       { t: "FROM enrollments e", s: 1 },
-      { t: "JOIN courses c ON e.course_id = c.course_id", s: 2 },
-      { t: "JOIN sports  s ON c.sport_id  = s.sport_id", s: 3 },
+      { t: "JOIN courses c", s: 2 },
+      { t: "    ON e.course_id = c.course_id", s: 2 },
+      { t: "JOIN sports s", s: 3 },
+      { t: "    ON c.sport_id = s.sport_id", s: 3 },
       { t: "WHERE e.status <> '취소'", s: 4 },
       { t: "GROUP BY s.sport_name, e.enroll_month", s: 5 },
       { t: "HAVING SUM(e.pay_amount) >= 1000000", s: 6 },
@@ -201,14 +207,14 @@ function CancelMark({ gone }: { gone: boolean }) {
   );
 }
 
-function RecordDots({ mo, cancelGone }: { mo: Course[3]; cancelGone: boolean }) {
+function RecordDots({ mo, cancelGone, className = "" }: { mo: Course[3]; cancelGone: boolean; className?: string }) {
   const out: ReactNode[] = [];
   for (const m of MONTHS) {
     const [ok, x] = mo[m] ?? [0, 0];
-    for (let i = 0; i < ok; i++) out.push(<i key={`${m}-o${i}`} className={`h-2.5 w-2.5 shrink-0 rounded-full ${MONTH_BG[m]}`} />);
+    for (let i = 0; i < ok; i++) out.push(<i key={`${m}-o${i}`} className={`h-2 w-2 shrink-0 rounded-full @md:h-2.5 @md:w-2.5 ${MONTH_BG[m]}`} />);
     for (let i = 0; i < x; i++) out.push(<CancelMark key={`${m}-x${i}`} gone={cancelGone} />);
   }
-  return <span className="flex min-h-3.5 flex-wrap items-center gap-[3px]">{out}</span>;
+  return <span className={`flex min-h-3.5 flex-wrap items-center gap-[2px] @md:gap-[3px] ${className}`}>{out}</span>;
 }
 
 function NullChip({ children }: { children: ReactNode }) {
@@ -242,7 +248,9 @@ function Legend({ withNull }: { withNull: boolean }) {
 }
 
 const sportChip = "chip justify-center whitespace-nowrap px-2 py-0.5 text-[0.8rem] font-bold";
-const rowBox = "qr-enter grid min-h-[2.125rem] grid-cols-[5.5rem_minmax(0,9.5rem)_minmax(0,1fr)] items-center gap-2.5 rounded-lg bg-background px-2 py-1 dark:bg-background-dark";
+// 좁은 화면(폰)에서는 종목과 강좌 이름을 한 줄에, 기록 점을 아래 줄에 둔다. 넓으면 세 칸 한 줄.
+const rowBox = "qr-enter grid min-h-[2.125rem] grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-x-2.5 gap-y-1 rounded-lg bg-background px-2 py-1 dark:bg-background-dark @md:grid-cols-[5.5rem_minmax(0,9.5rem)_minmax(0,1fr)]";
+const dotsCell = "col-span-2 @md:col-span-1";
 
 function SportRows({ withDots, cancelGone }: { withDots: boolean; cancelGone: boolean }) {
   return (
@@ -257,12 +265,12 @@ function SportRows({ withDots, cancelGone }: { withDots: boolean; cancelGone: bo
           <span className="truncate text-[0.85rem]">{name}</span>
           {withDots ? (
             id === 14 ? (
-              <span className="qr-enter"><NullChip>enrollments 칸 전부 NULL</NullChip></span>
+              <span className={`qr-enter ${dotsCell}`}><NullChip>enrollments 칸 전부 NULL</NullChip></span>
             ) : (
-              <RecordDots mo={mo} cancelGone={cancelGone} />
+              <RecordDots mo={mo} cancelGone={cancelGone} className={dotsCell} />
             )
           ) : (
-            <span />
+            <span className="hidden @md:block" />
           )}
         </div>
       ))}
@@ -286,7 +294,7 @@ function EnrollRows({ level, cancelGone }: { level: 1 | 2 | 3; cancelGone: boole
           ) : (
             <span className={`truncate font-mono text-[0.85rem] ${muted}`}>course_id {id}</span>
           )}
-          <RecordDots mo={mo} cancelGone={cancelGone} />
+          <RecordDots mo={mo} cancelGone={cancelGone} className={dotsCell} />
         </div>
       ))}
     </div>
@@ -299,9 +307,9 @@ function GroupGrid({ withNull, judged }: { withNull: boolean; judged: boolean | 
   return (
     <div className="flex flex-col gap-2.5">
       {SPORTS.map((s) => (
-        <div key={s.id} className="qr-enter grid grid-cols-[5.5rem_minmax(0,1fr)] items-start gap-2.5">
-          <span className={sportChip}>{s.name}</span>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(7.25rem,1fr))] gap-2">
+        <div key={s.id} className="qr-enter grid grid-cols-1 items-start gap-1.5 @md:grid-cols-[5.5rem_minmax(0,1fr)] @md:gap-2.5">
+          <span className={`${sportChip} w-[5.5rem] @md:w-auto`}>{s.name}</span>
+          <div className="grid grid-cols-2 gap-2 @md:grid-cols-[repeat(auto-fill,minmax(7.25rem,1fr))]">
             {GROUPS.filter((g) => g[0] === s.id && (withNull || g[1] !== null)).map(([sid, m, cnt, sum]) => {
               const ok = sum !== null && sum >= 1000000;
               const state = judged ? (ok ? "pass" : "fail") : "idle";
@@ -356,9 +364,9 @@ const ROW_H = 2.625; // rem, 결과 행 높이. 정렬 애니메이션이 이 �
 function ResultTable({ sorted }: { sorted: boolean }) {
   const order = sorted ? SORTED : PASSING;
   const pos = new Map(order.map((g, i) => [`${g[0]}-${g[1]}`, i]));
-  const cols = "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_4.5rem_minmax(0,7rem)] items-center gap-3 px-3";
+  const cols = "grid grid-cols-[minmax(0,1fr)_4rem_3.5rem_5.25rem] items-center gap-2 px-2 @md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_4.5rem_minmax(0,7rem)] @md:gap-3 @md:px-3";
   return (
-    <div className="qr-enter max-w-xl font-mono text-[0.9rem] tabular-nums">
+    <div className="qr-enter max-w-xl font-mono text-[0.8rem] tabular-nums @md:text-[0.9rem]">
       <div className={`${cols} border-b border-line py-2 font-sans text-[0.8rem] font-semibold dark:border-line-dark ${muted}`}>
         <span>종목</span>
         <span>수강월</span>
@@ -389,30 +397,31 @@ function ResultTable({ sorted }: { sorted: boolean }) {
 export function QueryReplaySimulator() {
   const [modeKey, setModeKey] = useState<"left" | "inner">("left");
   const [cur, setCur] = useState(0);
-  const [after, setAfter] = useState(false);
+  // 움직임이 끝난 단계의 열쇠. 단계가 바뀌면 열쇠가 달라져 저절로 처음 상태로 돌아간다.
+  const [afterKey, setAfterKey] = useState("");
   const [playing, setPlaying] = useState(false);
 
   const mode = MODES[modeKey];
   const stages = mode.stages;
   const st = stages[cur];
   const last = stages.length - 1;
+  const stageKey = `${modeKey}-${cur}`;
+  const after = afterKey === stageKey;
 
-  // 단계가 바뀌면 움직임을 처음 상태로 돌리고, 잠시 뒤 다음 상태로 넘긴다.
+  // 단계가 바뀌고 잠시 뒤 움직임(점 사라짐, 통과 판정, 정렬)을 시작한다.
   useEffect(() => {
-    setAfter(false);
     const ms = AFTER_MS[st.k];
     if (ms === undefined) return;
-    const t = setTimeout(() => setAfter(true), ms);
+    const t = setTimeout(() => setAfterKey(stageKey), ms);
     return () => clearTimeout(t);
-  }, [modeKey, cur, st.k]);
+  }, [stageKey, st.k]);
 
   useEffect(() => {
-    if (!playing) return;
-    if (cur >= last) {
-      setPlaying(false);
-      return;
-    }
-    const t = setTimeout(() => setCur((c) => Math.min(c + 1, last)), 4200);
+    if (!playing || cur >= last) return;
+    const t = setTimeout(() => {
+      setCur(cur + 1);
+      if (cur + 1 >= last) setPlaying(false);
+    }, 4200);
     return () => clearTimeout(t);
   }, [playing, cur, last]);
 
@@ -515,7 +524,7 @@ export function QueryReplaySimulator() {
         ))}
       </div>
 
-      <div className="overflow-x-auto bg-surface-2 py-2.5 font-mono text-[0.8rem] leading-relaxed dark:bg-surface-2-dark">
+      <div className="overflow-x-auto bg-surface-2 py-2.5 font-mono text-[0.75rem] leading-relaxed dark:bg-surface-2-dark @md:text-[0.8rem]">
         {mode.sql.map((l, i) => {
           const on = l.s === cur + 1;
           const done = l.s < cur + 1;
@@ -534,7 +543,8 @@ export function QueryReplaySimulator() {
         })}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-2 @md:flex-row @md:flex-wrap @md:items-center">
+        <div className="flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => go(cur - 1)}
@@ -561,7 +571,12 @@ export function QueryReplaySimulator() {
           {playing ? <Pause className="h-4 w-4" aria-hidden="true" /> : <Play className="h-4 w-4" aria-hidden="true" />}
           {playing ? "멈춤" : "자동 재생"}
         </button>
-        <div className="flex flex-wrap gap-1" aria-label="단계">
+        </div>
+        <div
+          className="grid gap-1 @md:flex @md:flex-wrap"
+          style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}
+          aria-label="단계"
+        >
           {stages.map((s, i) => (
             <button
               key={s.title}
@@ -569,7 +584,7 @@ export function QueryReplaySimulator() {
               onClick={() => go(i)}
               aria-label={s.title}
               aria-current={i === cur ? "step" : undefined}
-              className={`tap-feedback min-h-11 min-w-11 font-mono text-label font-semibold ${i === cur ? "btn-action" : "btn"}`}
+              className={`tap-feedback min-h-11 font-mono text-label font-semibold @md:min-w-11 ${i === cur ? "btn-action" : "btn"}`}
             >
               {i + 1}
             </button>
