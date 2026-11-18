@@ -1,0 +1,688 @@
+---
+title: "타입 힌트는 실행 전에 버그를 잡는 계약서입니다"
+stageId: "python-eng"
+order: 21
+summary: "파이썬은 타입 힌트를 실행할 때 전혀 보지 않습니다. 그런데도 AI 팀이 힌트를 고집하는 이유를, None 버그와 메시지 형식 오타와 가짜 LLM 클라이언트로 직접 돌려 보며 익힙니다."
+slug: "python-type-hints"
+---
+
+## 이 레슨의 목표와 눈높이
+
+교육과정에서는 변수, 함수, 클래스, 상속까지 배웠습니다. 그 코드에는 타입 힌트가 거의 없었고, 그래도 잘 돌았습니다. 혼자 쓰는 짧은 스크립트라면 그걸로 충분합니다.
+
+채널톡 같은 회사의 AI 코드는 사정이 다릅니다. 여러 사람이 같은 모듈을 고치고, LLM 응답이라는 모양이 불확실한 데이터가 코드 한가운데를 흐르고, 상담 하나가 잘못 처리되면 고객사 매출에 바로 닿습니다. 이런 코드에서 타입 힌트는 장식이 아니라 함수와 함수 사이의 계약서입니다.
+
+이 레슨의 모든 출력은 Python 3.12, mypy 2.4.1, pyright 1.1.414로 직접 돌린 결과입니다. 이 레슨을 끝내면 다음을 직접 할 수 있습니다.
+
+1. 함수와 변수에 타입 힌트를 달고, `mypy`나 `pyright`를 돌려 에러 메시지를 읽고 고치기
+2. `X | None`, `Literal`, `TypedDict`, `dataclass`로 상담 메시지와 AI 답변의 모양을 못박기
+3. `Protocol`과 제네릭으로, 진짜 LLM 클라이언트와 테스트용 가짜를 갈아 끼울 수 있는 코드 짜기
+4. 힌트 없는 기존 코드베이스에 새 모듈부터 엄격하게, 점진적으로 타입 검사를 들이기
+
+## 파이썬은 힌트를 보지 않습니다
+
+먼저 가장 중요한 사실부터 확인합니다. 타입 힌트는 실행에 아무 영향을 주지 않습니다. 힌트를 정면으로 어기는 코드를 돌려 보겠습니다.
+
+```python
+# ignored.py
+def count_chars(message: str) -> int:
+    return len(message)
+
+
+def add_tokens(prompt_tokens: int, output_tokens: int) -> int:
+    return prompt_tokens + output_tokens
+
+
+print(count_chars(["환불", "문의"]))
+print(add_tokens("120", "80"))
+```
+
+```bash
+$ uv run --python 3.12 python ignored.py
+2
+12080
+```
+
+에러 없이 돌았습니다. `count_chars`는 글자 수 대신 리스트 길이 2를 돌려줬고, `add_tokens`는 토큰 200개 대신 문자열 `"12080"`을 만들었습니다. 둘 다 조용히 틀린 값이라, 비용 집계나 길이 제한 같은 곳으로 흘러가 한참 뒤에야 터집니다.
+
+같은 파일을 <Term id="static-type-check">정적 타입 검사</Term>기에 넣어 봅니다. 정적이라는 말은 코드를 실행하지 않고 읽기만 해서 검사한다는 뜻입니다.
+
+```bash
+$ uv run --python 3.12 --with mypy mypy ignored.py
+ignored.py:9: error: Argument 1 to "count_chars" has incompatible type "list[str]"; expected "str"  [arg-type]
+ignored.py:10: error: Argument 1 to "add_tokens" has incompatible type "str"; expected "int"  [arg-type]
+ignored.py:10: error: Argument 2 to "add_tokens" has incompatible type "str"; expected "int"  [arg-type]
+Found 3 errors in 1 file (checked 1 source file)
+```
+
+에러 한 줄은 늘 같은 모양입니다. `파일:줄: error: 설명  [에러 코드]`입니다. 맨 끝 대괄호 안의 코드(`arg-type`)는 뒤에서 특정 에러만 골라 끌 때 쓰니 눈여겨 두세요.
+
+정리하면 역할이 나뉩니다. 파이썬 인터프리터는 힌트를 무시하고, 검사기는 힌트만 봅니다. 힌트는 실행 전에, 편집기와 CI에서 버그를 잡는 장치입니다. 실제 들어온 데이터를 실행 중에 검사하는 일은 다음 레슨의 Pydantic이 맡습니다.
+
+## 기본 문법과 컬렉션 타입
+
+문법은 세 자리뿐입니다. 매개변수 뒤 `: 타입`, 화살표 뒤 반환 타입 `-> 타입`, 그리고 변수 뒤 `: 타입`입니다. 컬렉션은 대괄호 안에 내용물의 타입을 적습니다.
+
+```python
+# basics.py
+inquiry_ids: list[str] = ["inq-101", "inq-102"]
+intent_counts: dict[str, int] = {"refund": 12, "shipping": 7}
+latencies_ms: tuple[int, ...] = (820, 1430, 990)
+pair: tuple[str, float] = ("refund", 0.92)
+
+intent_counts["bug"] = "3"
+latencies_ms = (820, "fast")
+```
+
+```bash
+$ uv run --python 3.12 --with mypy mypy basics.py
+basics.py:6: error: Incompatible types in assignment (expression has type "str", target has type "int")  [assignment]
+basics.py:7: error: Incompatible types in assignment (expression has type "tuple[int, str]", variable has type "tuple[int, ...]")  [assignment]
+Found 2 errors in 1 file (checked 1 source file)
+```
+
+`tuple`은 두 가지로 씁니다. `tuple[int, ...]`은 "정수가 몇 개든"이고, `tuple[str, float]`은 "정확히 두 칸, 첫 칸은 문자열, 둘째 칸은 실수"입니다. 옛 코드에서 보이는 `List[str]`, `Dict[str, int]`(`typing`에서 import)는 Python 3.9 이후 소문자 `list[str]`로 바뀌었으니 새 코드에는 소문자를 쓰세요.
+
+## `X | None`: 가장 흔한 버그를 막는 힌트
+
+실무에서 타입 힌트가 가장 많이 잡아 주는 버그는 `None`입니다. 고객 조회, 캐시 조회, 검색 결과 첫 건처럼 "없을 수도 있는" 값은 어디에나 있습니다.
+
+```python
+# customer.py
+from dataclasses import dataclass
+
+
+@dataclass
+class Customer:
+    id: str
+    name: str
+    tier: str
+
+
+CUSTOMERS = {"c-1": Customer(id="c-1", name="김민지", tier="vip")}
+
+
+def find_customer(customer_id: str) -> Customer | None:
+    return CUSTOMERS.get(customer_id)
+
+
+def greeting(customer_id: str) -> str:
+    customer = find_customer(customer_id)
+    return f"{customer.name}님, 안녕하세요"
+
+
+print(greeting("c-1"))
+print(greeting("c-999"))
+```
+
+실행하면 첫 고객은 잘 되고, 없는 고객에서 터집니다.
+
+```bash
+$ uv run --python 3.12 python customer.py
+김민지님, 안녕하세요
+Traceback (most recent call last):
+  ...
+AttributeError: 'NoneType' object has no attribute 'name'
+```
+
+테스트에서 존재하는 고객만 써 봤다면 이 버그는 프로덕션에서 처음 만납니다. 그런데 검사기는 실행 없이 바로 짚습니다.
+
+```bash
+$ uv run --python 3.12 --with mypy mypy customer.py
+customer.py:20: error: Item "None" of "Customer | None" has no attribute "name"  [union-attr]
+Found 1 error in 1 file (checked 1 source file)
+```
+
+반환 타입에 `| None`을 적는 순간, 이 함수를 부르는 모든 사람이 "없을 때"를 처리하도록 강제됩니다. 처리 방법은 <Term id="type-narrowing">타입 좁히기</Term>입니다. `if customer is None:`으로 먼저 걸러 내면, 그 아래에서 검사기는 `customer`를 `Customer`로 확정해 봅니다.
+
+```python
+# customer_fixed.py (greeting만 바꿈)
+def greeting(customer_id: str) -> str:
+    customer = find_customer(customer_id)
+    reveal_type(customer)
+    if customer is None:
+        return "안녕하세요, 무엇을 도와드릴까요?"
+    reveal_type(customer)
+    return f"{customer.name}님, 안녕하세요"
+```
+
+```bash
+$ uv run --python 3.12 --with mypy mypy customer_fixed.py
+customer_fixed.py:20: note: Revealed type is "customer_fixed.Customer | None"
+customer_fixed.py:23: note: Revealed type is "customer_fixed.Customer"
+Success: no issues found in 1 source file
+```
+
+`reveal_type`은 검사기에게 "이 자리에서 타입이 뭐로 보이나요?"라고 묻는 표시입니다. 확인이 끝나면 지웁니다. 같은 `customer`가 `if` 위에서는 `Customer | None`, 아래에서는 `Customer`로 바뀐 것이 좁히기입니다. `isinstance(x, str)`, `if not x: return`, `match` 문도 같은 방식으로 타입을 좁혀 줍니다.
+
+옛 코드의 `Optional[Customer]`는 `Customer | None`과 같은 뜻입니다. 이름이 "선택적"이라 매개변수 기본값과 헷갈리기 쉬워서, 요즘은 `| None`으로 쓰는 편이 읽기 쉽습니다.
+
+## `Literal`과 `TypedDict`: 메시지의 모양을 못박기
+
+LLM API에 보내는 대화 기록은 보통 `{"role": "user", "content": "..."}` 모양의 dict 리스트입니다. 그냥 `dict[str, str]`로 두면 `role`에 아무 문자열이나 들어가고, 키 이름 오타도 못 잡습니다.
+
+`Literal`은 "이 값들 중 하나만"을 뜻하고, `TypedDict`는 "이 키들이 이 타입으로 있는 dict"를 뜻합니다. 둘을 합치면 메시지 형식이 계약이 됩니다.
+
+```python
+# messages.py
+from typing import Literal, NotRequired, TypedDict
+
+Role = Literal["system", "user", "assistant"]
+
+
+class ChatMessage(TypedDict):
+    role: Role
+    content: str
+    name: NotRequired[str]
+
+
+def build_messages(system_prompt: str, question: str) -> list[ChatMessage]:
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": question},
+    ]
+
+
+history: list[ChatMessage] = build_messages("너는 쇼핑몰 상담원이다.", "환불 되나요?")
+history.append({"role": "admin", "content": "관리자 메모"})
+history.append({"role": "assistant", "contnet": "네, 가능합니다."})
+history.append({"role": "user"})
+print(type(history[0]))
+```
+
+```bash
+$ uv run --python 3.12 --with mypy mypy messages.py
+messages.py:20: error: Incompatible types (expression has type "Literal['admin']", TypedDict item "role" has type "Literal['system', 'user', 'assistant']")  [typeddict-item]
+messages.py:21: error: Missing key "content" for TypedDict "ChatMessage"  [typeddict-item]
+messages.py:21: error: Extra key "contnet" for TypedDict "ChatMessage"  [typeddict-unknown-key]
+messages.py:22: error: Missing key "content" for TypedDict "ChatMessage"  [typeddict-item]
+Found 4 errors in 1 file (checked 1 source file)
+
+$ uv run --python 3.12 python messages.py
+<class 'dict'>
+```
+
+검사기는 허용되지 않은 역할, 키 오타, 빠진 키를 모두 잡았습니다. 반면 실행은 아무 불평 없이 끝났고, 만들어진 값도 그냥 `dict`입니다. `TypedDict`는 실행 중에는 평범한 dict라서, JSON으로 그대로 보내기 좋다는 장점과 실행 중 검증이 없다는 한계를 함께 가집니다.
+
+`NotRequired[str]`는 "있어도 되고 없어도 되는 키"입니다. 키가 아예 없을 수 있다는 뜻이라, 키는 있지만 값이 `None`일 수 있다는 `str | None`과는 다릅니다.
+
+## `dataclass`: 우리 코드 안에서 도는 객체
+
+`TypedDict`가 바깥(API, JSON)과 주고받는 dict 모양이라면, 우리 코드 안에서 돌릴 객체에는 `dataclass`가 어울립니다. 교육과정에서 배운 클래스의 `__init__`을, 타입 힌트만 적으면 자동으로 만들어 줍니다. ALF 같은 AI 상담원이 돌려줄 답변 객체를 만들어 보겠습니다.
+
+```python
+# answer.py
+from dataclasses import dataclass, field
+from typing import Literal
+
+Resolution = Literal["resolved", "handoff", "unanswerable"]
+
+
+@dataclass(frozen=True)
+class AlfAnswer:
+    text: str
+    resolution: Resolution
+    confidence: float
+    sources: list[str] = field(default_factory=list)
+
+
+answer = AlfAnswer(
+    text="미개봉 상품은 7일 이내 환불됩니다.",
+    resolution="resolved",
+    confidence=0.91,
+    sources=["refund-policy.md"],
+)
+print(answer)
+
+answer.confidence = 0.5
+bad = AlfAnswer(text="확인 중입니다", resolution="pending", confidence="high")
+```
+
+```bash
+$ uv run --python 3.12 --with mypy mypy answer.py
+answer.py:23: error: Property "confidence" defined in "AlfAnswer" is read-only  [misc]
+answer.py:24: error: Argument "resolution" to "AlfAnswer" has incompatible type "Literal['pending']"; expected "Literal['resolved', 'handoff', 'unanswerable']"  [arg-type]
+answer.py:24: error: Argument "confidence" to "AlfAnswer" has incompatible type "str"; expected "float"  [arg-type]
+Found 3 errors in 1 file (checked 1 source file)
+```
+
+`frozen=True`는 만든 뒤 값을 못 바꾸게 막습니다. 답변이 여러 단계(가드레일, 로깅, 전송)를 거치는 동안 누가 몰래 `confidence`를 고치는 일을 막아 줍니다. `sources`의 기본값을 `[]`가 아니라 `field(default_factory=list)`로 둔 이유는, 모든 객체가 리스트 하나를 몰래 공유하는 사고를 막기 위해서입니다.
+
+여기서도 런타임의 한계를 확인해 둡니다. `AlfAnswer`를 `alf.py`로 옮긴 뒤 틀린 값만 넣어 실행해 봤습니다.
+
+```python
+# answer_runtime.py
+from alf import AlfAnswer
+
+bad = AlfAnswer(text="확인 중입니다", resolution="pending", confidence="high")
+print(bad)
+```
+
+```bash
+$ uv run --python 3.12 python answer_runtime.py
+AlfAnswer(text='확인 중입니다', resolution='pending', confidence='high', sources=[])
+```
+
+그대로 만들어집니다. `frozen`은 실행 중에도 막아 주지만(`FrozenInstanceError`), 타입 자체는 실행 중에 검사하지 않습니다. 이 빈틈이 다음 레슨의 주제입니다.
+
+## `Callable`: 함수를 받는 함수
+
+LLM 호출을 감싸는 코드는 함수를 인자로 자주 받습니다. 재시도, 대체 응답, 로깅 데코레이터가 그렇습니다. `Callable[[인자 타입들], 반환 타입]`으로 "이런 모양의 함수"를 적습니다.
+
+```python
+# retry.py
+from collections.abc import Callable
+
+
+def with_fallback(
+    call: Callable[[str], str],
+    fallback: Callable[[str], str],
+) -> Callable[[str], str]:
+    def wrapped(question: str) -> str:
+        try:
+            return call(question)
+        except TimeoutError:
+            return fallback(question)
+
+    return wrapped
+
+
+def slow_model(question: str) -> str:
+    raise TimeoutError("응답 시간 초과")
+
+
+def canned_reply(question: str) -> str:
+    return "잠시 후 상담원이 연결됩니다."
+
+
+def count_words(question: str) -> int:
+    return len(question.split())
+
+
+answer = with_fallback(slow_model, canned_reply)
+print(answer("배송 언제 와요?"))
+
+broken = with_fallback(slow_model, count_words)
+```
+
+```bash
+$ uv run --python 3.12 --with mypy mypy retry.py
+retry.py:32: error: Argument 2 to "with_fallback" has incompatible type "Callable[[str], int]"; expected "Callable[[str], str]"  [arg-type]
+Found 1 error in 1 file (checked 1 source file)
+```
+
+마지막 줄을 뺀 실행 결과는 `잠시 후 상담원이 연결됩니다.`였습니다. 타임아웃이 나면 <Term id="fallback">폴백</Term> 응답으로 넘어가는 구조이고, 폴백 자리에 숫자를 돌려주는 함수를 넣으면 고객에게 숫자가 나갈 뻔했다는 것을 검사기가 미리 알려 줍니다.
+
+## `Protocol`: 가짜 LLM 클라이언트로 갈아 끼우기
+
+이제 이 레슨에서 가장 실무다운 도구입니다. 상담 답변 함수는 LLM 클라이언트가 필요합니다. 그런데 테스트에서는 진짜 API를 부르면 안 되고(앞 레슨의 <Term id="mocking">모킹</Term>), 모델 공급사를 바꿀 수도 있습니다.
+
+`Protocol`은 "이런 메서드를 가진 것이면 무엇이든 된다"는 약속입니다. 상속 관계는 묻지 않고 모양만 봅니다. 이것을 <Term id="structural-typing">구조적 타이핑</Term>이라고 합니다. 오리처럼 걷고 꽥꽥거리면 오리로 치는 파이썬의 습관을, 검사기가 확인할 수 있게 적어 둔 것입니다. 앞의 `ChatMessage`는 `chat_types.py`로 옮겨 두었습니다.
+
+```python
+# llm.py
+from typing import Protocol
+
+from chat_types import ChatMessage
+
+
+class LLMClient(Protocol):
+    def complete(self, messages: list[ChatMessage], *, max_tokens: int) -> str: ...
+
+
+def answer_inquiry(client: LLMClient, question: str) -> str:
+    messages: list[ChatMessage] = [
+        {"role": "system", "content": "너는 쇼핑몰 상담원이다. 정책 문서에 있는 내용만 답한다."},
+        {"role": "user", "content": question},
+    ]
+    reply = client.complete(messages, max_tokens=512)
+    return reply.strip()
+
+
+class FakeClient:
+    """테스트용 가짜. LLMClient를 상속하지 않는다."""
+
+    def __init__(self, reply: str) -> None:
+        self.reply = reply
+        self.calls: list[list[ChatMessage]] = []
+
+    def complete(self, messages: list[ChatMessage], *, max_tokens: int) -> str:
+        self.calls.append(messages)
+        return self.reply
+
+
+class OldClient:
+    def complete(self, prompt: str) -> str:
+        return "옛날 방식 응답"
+
+
+fake = FakeClient("  미개봉이면 7일 이내 환불됩니다.  ")
+print(answer_inquiry(fake, "환불 되나요?"))
+print(len(fake.calls), fake.calls[0][1]["content"])
+
+answer_inquiry(OldClient(), "환불 되나요?")
+```
+
+`FakeClient`는 `LLMClient`를 상속하지 않았는데도 통과합니다. `complete`의 모양이 같기 때문입니다. 마지막 줄을 뺀 실행 결과입니다.
+
+```bash
+$ uv run --python 3.12 python llm_ok.py
+미개봉이면 7일 이내 환불됩니다.
+1 환불 되나요?
+```
+
+모양이 다른 `OldClient`를 넣으면, 검사기가 어디가 어긋났는지 나란히 보여 줍니다.
+
+```bash
+$ uv run --python 3.12 --with mypy mypy llm.py
+llm.py:40: error: Argument 1 to "answer_inquiry" has incompatible type "OldClient"; expected "LLMClient"  [arg-type]
+llm.py:40: note: Following member(s) of "OldClient" have conflicts:
+llm.py:40: note:     Expected:
+llm.py:40: note:         def complete(self, messages: list[ChatMessage], *, max_tokens: int) -> str
+llm.py:40: note:     Got:
+llm.py:40: note:         def complete(self, prompt: str) -> str
+Found 1 error in 1 file (checked 1 source file)
+```
+
+같은 파일을 pyright로 돌리면 더 잘게 쪼개 설명합니다. VS Code의 Pylance가 쓰는 엔진이 pyright라서, 편집기에 빨간 밑줄로 뜨는 메시지가 바로 이것입니다.
+
+```bash
+$ uv run --python 3.12 --with pyright pyright llm.py
+llm.py
+  llm.py:40:16 - error: Argument of type "OldClient" cannot be assigned to parameter "client" of type "LLMClient" in function "answer_inquiry"
+    "OldClient" is incompatible with protocol "LLMClient"
+      "complete" is an incompatible type
+        Type "(prompt: str) -> str" is not assignable to type "(messages: list[ChatMessage], *, max_tokens: int) -> str"
+          Parameter name mismatch: "messages" versus "prompt"
+          Parameter 1: type "list[ChatMessage]" is incompatible with type "str"
+            "list[ChatMessage]" is not assignable to "str"
+          Missing keyword parameter "max_tokens" (reportArgumentType)
+1 error, 0 warnings, 0 informations
+```
+
+이 구조가 앞 레슨의 `monkeypatch`보다 나은 점은, 가짜가 진짜와 모양이 어긋나는 순간 검사기가 알려 준다는 것입니다. 진짜 클라이언트의 메서드 이름이 바뀌었는데 가짜는 옛 이름 그대로라면, 테스트는 초록불인데 프로덕션이 깨지는 사고가 납니다. `Protocol`은 그 어긋남을 테스트 전에 잡습니다. 모델 공급사를 감싸는 <Term id="abstraction-layer">추상화 계층</Term>의 경계를 적는 도구이기도 합니다.
+
+## 제네릭: 타입을 잃지 않는 범용 함수
+
+"리스트에서 첫 번째를 꺼내기", "점수가 가장 높은 후보 고르기" 같은 함수는 내용물이 무엇이든 똑같이 동작합니다. 그렇다고 `list[Any]`로 받으면 꺼낸 값의 타입을 잃습니다. <Term id="generic">제네릭</Term>은 "들어온 타입 그대로 나간다"를 적는 방법입니다.
+
+```python
+# generics.py
+from collections.abc import Callable
+from typing import TypeVar
+
+from alf import AlfAnswer
+
+T = TypeVar("T")
+
+
+def first_old(items: list[T]) -> T:
+    return items[0]
+
+
+def first[T](items: list[T]) -> T:
+    return items[0]
+
+
+def best_by[T](items: list[T], score: Callable[[T], float]) -> T:
+    return max(items, key=score)
+
+
+candidates = [
+    AlfAnswer(text="7일 이내 환불됩니다.", resolution="resolved", confidence=0.91),
+    AlfAnswer(text="상담원을 연결해 드릴게요.", resolution="handoff", confidence=0.55),
+]
+
+reveal_type(first_old(["inq-101", "inq-102"]))
+reveal_type(first([820, 1430]))
+best = best_by(candidates, lambda a: a.confidence)
+reveal_type(best)
+print(best.text)
+best.confidense
+```
+
+```bash
+$ uv run --python 3.12 --with mypy mypy generics.py
+generics.py:26: note: Revealed type is "str"
+generics.py:27: note: Revealed type is "int"
+generics.py:29: note: Revealed type is "alf.AlfAnswer"
+generics.py:31: error: "AlfAnswer" has no attribute "confidense"; maybe "confidence"?  [attr-defined]
+Found 1 error in 1 file (checked 1 source file)
+```
+
+`first_old`는 `TypeVar`를 따로 선언하는 옛 방식이고, `first[T]`는 Python 3.12에서 생긴 새 문법입니다. 뜻은 같으니 3.12 이상 프로젝트라면 새 문법이 짧고 읽기 좋습니다. `best_by`가 `AlfAnswer`를 돌려준다는 것을 검사기가 알기 때문에, 그 다음 줄의 오타까지 잡아 줍니다.
+
+## `Any`와 `object`: 같아 보이지만 정반대
+
+둘 다 "아무 값이나 받는다"로 보이지만 검사기의 태도가 정반대입니다. `Any`는 "검사하지 마"이고, `object`는 "뭔지 모르니 확인하고 써"입니다.
+
+```python
+# any_vs_object.py
+import json
+from typing import Any
+
+
+def log_any(payload: Any) -> None:
+    print(payload.upper())
+
+
+def log_object(payload: object) -> None:
+    print(payload.upper())
+
+
+def log_object_safe(payload: object) -> None:
+    if isinstance(payload, str):
+        print(payload.upper())
+    else:
+        print(repr(payload))
+
+
+raw = json.loads('{"intent": "refund", "confidence": "0.9"}')
+reveal_type(raw)
+score: float = raw["confidence"]
+print(score + 0.1)
+```
+
+```bash
+$ uv run --python 3.12 --with mypy mypy any_vs_object.py
+any_vs_object.py:10: error: "object" has no attribute "upper"  [attr-defined]
+any_vs_object.py:21: note: Revealed type is "Any"
+Found 1 error in 1 file (checked 1 source file)
+```
+
+`log_any`의 `payload.upper()`는 숫자가 들어오면 터질 코드인데 검사기가 말이 없습니다. `log_object`는 같은 코드를 막고, `isinstance`로 좁힌 `log_object_safe`만 통과시킵니다.
+
+더 무서운 건 아래쪽입니다. `json.loads`는 `Any`를 돌려줍니다. 그래서 문자열 `"0.9"`를 `float` 변수에 넣어도 검사기가 통과시키고, 실행하면 그제야 터집니다(`reveal_type` 줄을 빼고 돌렸습니다).
+
+```bash
+TypeError: can only concatenate str (not "float") to str
+```
+
+`Any`는 한 번 들어오면 닿는 곳마다 검사를 꺼 버립니다. LLM 응답의 JSON, HTTP 요청 본문, DB 행처럼 바깥에서 들어오는 데이터는 거의 다 `Any`로 시작합니다. 그래서 바깥 데이터가 들어오는 경계에서 진짜 타입으로 바꿔 주는 단계가 반드시 필요하고, 그 일이 다음 레슨입니다.
+
+## 기존 코드베이스에 점진적으로 들이기
+
+현실의 코드베이스에는 힌트 없는 옛 코드가 많습니다. 하루에 전부 고칠 수는 없으니 <Term id="gradual-typing">점진적 타이핑</Term>으로 들입니다. 원칙은 "새로 만드는 모듈은 엄격하게, 옛 모듈은 건드릴 때마다 조금씩"입니다.
+
+`mypy`는 힌트가 없는 함수 안쪽은 기본적으로 검사하지 않습니다. 그래서 옛 코드에 돌려도 처음엔 조용하고, 새 모듈에만 엄격한 규칙을 켤 수 있습니다. 예시 구조는 `app/legacy/crm.py`(힌트 없음)와 `app/alf/router.py`(새 모듈)입니다.
+
+```toml
+# pyproject.toml
+[tool.mypy]
+python_version = "3.12"
+warn_unused_ignores = true
+enable_error_code = ["ignore-without-code"]
+
+[[tool.mypy.overrides]]
+module = "app.alf.*"
+disallow_untyped_defs = true
+disallow_untyped_calls = true
+warn_return_any = true
+```
+
+```python
+# app/legacy/crm.py (옛 코드, 힌트 없음)
+def fetch_customer(customer_id):
+    return {"id": customer_id, "tier": "vip"}
+
+
+def format_tier(customer):
+    return customer["tier"].upper()
+```
+
+```python
+# app/alf/router.py (새 모듈, 첫 버전)
+from app.legacy.crm import fetch_customer
+
+
+def route(confidence, needs_human: bool) -> str:
+    if needs_human or confidence < 0.6:
+        return "human"
+    return "auto"
+
+
+def tier_of(customer_id: str) -> str:
+    customer = fetch_customer(customer_id)
+    return customer["tier"]
+```
+
+```bash
+$ uv run --with mypy mypy app
+app/alf/router.py:4: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+app/alf/router.py:11: error: Call to untyped function "fetch_customer" in typed context  [no-untyped-call]
+app/alf/router.py:12: error: Returning Any from function declared to return "str"  [no-any-return]
+Found 3 errors in 1 file (checked 5 source files)
+```
+
+옛 모듈 `crm.py`는 조용하고, 새 모듈만 엄격하게 검사됐습니다. 직접 돌려 보니 이 버전의 mypy에서는 `overrides`에 `strict = true` 한 줄을 넣었더니 옛 모듈까지 같은 에러가 번졌습니다. 그래서 위처럼 필요한 플래그를 하나씩 적었습니다.
+
+옛 코드를 당장 못 고칠 때는 `# type: ignore`로 그 줄만 끕니다. 이때 두 가지를 지킵니다. 대괄호에 에러 코드를 적어 그 에러만 끄고, 주석에 이유와 지울 시점을 남깁니다. 고친 버전에서는 `route`의 `confidence`에도 `float`를 달았고, 실험용으로 잘못된 `ignore` 두 개를 일부러 넣었습니다.
+
+```python
+# app/alf/router.py (고친 버전, 일부)
+def tier_of(customer_id: str) -> str:
+    # crm 모듈은 아직 타입이 없다. 타입 작업 티켓 ALF-231 끝나면 지운다.
+    customer = fetch_customer(customer_id)  # type: ignore[no-untyped-call]
+    tier = customer["tier"]
+    if not isinstance(tier, str):
+        raise TypeError(f"tier가 문자열이 아닙니다: {tier!r}")
+    return tier
+
+
+def label(raw_confidence: str) -> str:
+    return route(raw_confidence, False)  # type: ignore
+
+
+def label_v2(confidence: float) -> str:
+    return route(confidence, False)  # type: ignore[arg-type]
+```
+
+```bash
+$ uv run --with mypy mypy app
+app/alf/router.py:20: error: "type: ignore" comment without error code (consider "type: ignore[arg-type]" instead)  [ignore-without-code]
+app/alf/router.py:24: error: Unused "type: ignore" comment  [unused-ignore]
+Found 2 errors in 1 file (checked 5 source files)
+```
+
+설정에 켜 둔 두 규칙이 일을 했습니다. 코드 없는 `# type: ignore`는 그 줄의 모든 에러를 덮어서, 나중에 생긴 다른 버그까지 숨깁니다. 쓸모가 없어진 `ignore`는 고친 뒤 남은 찌꺼기라서 지우라고 알려 줍니다. `ignore`가 쌓이기만 하고 줄지 않는 코드베이스를 막는 장치입니다.
+
+## 채널톡 코드에서는
+
+ALF 같은 AI 상담 서비스의 코드를 떠올려 보면, 타입 힌트가 일하는 자리가 분명합니다.
+
+첫째는 모델 응답을 받는 경계입니다. <Term id="structured-output">구조화 출력</Term>으로 받은 도구 호출 인자도 SDK에서는 대개 `dict[str, Any]`처럼 느슨한 타입으로 옵니다. 이 값을 그대로 안쪽으로 흘리면 위에서 본 `Any` 전염이 시작됩니다. 경계에서 한 번 `AlfAnswer` 같은 확정된 타입으로 바꾸고, 그 안쪽은 전부 힌트로 지킵니다.
+
+둘째는 상태 분기입니다. 답변 결과를 `Literal["resolved", "handoff", "unanswerable"]`로 두면, 새 상태가 추가됐을 때 처리 안 한 분기를 검사기가 찾아 줍니다.
+
+```python
+# exhaustive.py
+from typing import Literal, assert_never
+
+Resolution = Literal["resolved", "handoff", "unanswerable"]
+
+
+def next_action(resolution: Resolution) -> str:
+    match resolution:
+        case "resolved":
+            return "send_answer"
+        case "handoff":
+            return "assign_to_agent"
+        case _:
+            assert_never(resolution)
+```
+
+```bash
+$ uv run --python 3.12 --with mypy mypy exhaustive.py
+exhaustive.py:13: error: Argument 1 to "assert_never" has incompatible type "Literal['unanswerable']"; expected "Never"  [arg-type]
+Found 1 error in 1 file (checked 1 source file)
+```
+
+`"unanswerable"` 분기를 빠뜨렸다는 사실을 실행 전에 알려 줍니다. 상담이 어디로도 안 가고 사라지는 버그를 미리 막는 셈입니다.
+
+셋째는 공급사 교체와 테스트입니다. 모델 호출을 `LLMClient` 같은 `Protocol` 뒤에 두면, 테스트에서는 가짜를, 운영에서는 진짜를, 실험에서는 다른 공급사를 같은 함수에 꽂습니다. 넷째로 이 모두를 <Term id="ci">CI</Term>에서 pytest 옆에 `mypy`를 함께 돌려, 타입이 깨진 변경은 합쳐지지 못하게 합니다.
+
+## 흔한 함정
+
+`list`는 서로 바꿔 넣을 수 없다는 점에 자주 걸립니다. `int`는 `float` 자리에 들어가지만, `list[int]`는 `list[float]` 자리에 못 들어갑니다. 받은 쪽이 `0.5`를 추가하면 정수 리스트가 오염되기 때문입니다.
+
+```python
+# traps.py
+from collections.abc import Sequence
+from typing import cast
+
+
+def add_default(scores: list[float]) -> None:
+    scores.append(0.5)
+
+
+def average(scores: Sequence[float]) -> float:
+    return sum(scores) / len(scores)
+
+
+votes: list[int] = [1, 0, 1]
+add_default(votes)
+print(average(votes))
+
+
+def parse_confidence(raw: object) -> float:
+    return cast(float, raw)
+
+
+c = parse_confidence("0.9")
+print(c > 0.5)
+```
+
+```bash
+$ uv run --python 3.12 --with mypy mypy traps.py
+traps.py:14: error: Argument 1 to "add_default" has incompatible type "list[int]"; expected "list[float]"  [arg-type]
+traps.py:14: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+traps.py:14: note: Consider using "Sequence" instead, which is covariant
+Found 1 error in 1 file (checked 1 source file)
+```
+
+읽기만 하는 함수라면 `list` 대신 `Sequence`로 받으세요. 같은 `votes`를 넣은 `average(votes)`가 통과한 이유입니다.
+
+`None` 기본값에 `| None`을 빼먹는 것도 흔합니다. `def ask(question: str, channel_id: str = None)`은 이제 에러입니다.
+
+```bash
+implicit_opt.py:1: error: Incompatible default for parameter "channel_id" (default has type "None", parameter has type "str")  [assignment]
+```
+
+`channel_id: str | None = None`으로 적어야 하고, 그래야 함수 안에서 `None` 처리를 잊지 않습니다.
+
+`cast`로 검사기를 속이는 것도 위험합니다. 위 파일 아래쪽의 `cast(float, raw)`는 아무것도 변환하지 않고 검사기에게 "믿어"라고 말할 뿐입니다. 문자열 `"0.9"`를 넣었더니 검사는 조용히 통과하고, 실행에서 `TypeError: '>' not supported between instances of 'str' and 'float'`가 났습니다. 실제 변환과 검증이 필요한 자리에 `cast`를 쓰면 안 됩니다.
+
+마지막으로, 힌트를 달고 검사기를 안 돌리는 경우입니다. 검사기를 돌리지 않는 힌트는 주석과 다를 바 없고, 시간이 지나면 코드와 어긋난 거짓 주석이 됩니다. 편집기와 CI 둘 다에 검사기를 거세요.
+
+## 직접 해보기
+
+1. 교육과정에서 만든 장바구니 미니 프로젝트에 타입 힌트를 달고 `mypy`를 돌려 보세요. 상품 조회 함수의 반환 타입을 `Product | None`으로 바꾸고, 검사기가 짚는 모든 자리를 `if ... is None`으로 좁혀 고치는 것이 목표입니다.
+2. 상담 메시지 `ChatMessage`에 `tool` 역할과 `NotRequired` 키 `tool_call_id`를 추가해 보세요. 그 다음 일부러 키 오타와 없는 역할을 넣고, mypy와 pyright의 에러 메시지가 어떻게 다른지 비교하세요.
+3. `LLMClient` `Protocol`을 만족하는 가짜 클라이언트 두 개를 만드세요. 하나는 항상 같은 답을, 하나는 `TimeoutError`를 냅니다. `with_fallback`과 엮어 앞 레슨 방식의 pytest 테스트를 쓰고, 테스트 파일까지 `mypy`로 검사하세요.
+4. `pyproject.toml`에 이 레슨의 점진적 설정을 넣고, 한 모듈만 엄격하게 검사되도록 해 보세요. 코드 없는 `# type: ignore`를 하나 넣어 `ignore-without-code`가 잡는지 확인하세요.
+
+## 더 깊이 파고들 것
+
+세 방향이 이 레슨의 자연스러운 확장입니다. 첫째, `ParamSpec`으로 데코레이터가 감싼 함수의 매개변수 타입까지 보존하는 법입니다. 재시도나 로깅 데코레이터를 쓰면 반드시 만나게 됩니다. 둘째, `TypeGuard`와 `TypeIs`로 "이 함수가 참이면 이 타입이다"를 직접 정의하는 좁히기 함수입니다.
+
+셋째이자 가장 중요한 것은, 실행 중의 진짜 데이터를 검증하는 일입니다. 이 레슨에서 계속 확인했듯 타입 힌트는 편집할 때만 일하고, `json.loads`나 LLM 응답처럼 바깥에서 들어오는 값 앞에서는 `Any`가 되어 무력해집니다. 다음 레슨 `/roadmap/python-pydantic-boundaries`에서는 같은 타입 힌트 문법을 그대로 써서, 실행 중에 들어온 데이터를 경계에서 검증하고 변환하는 Pydantic을 다룹니다.

@@ -32,6 +32,11 @@ export type RoadmapSkill = {
   where: string;
   /** 이 역량을 다루는 별도 심화 레슨의 slug(roadmapLessons). 있으면 로드맵에서 링크한다. */
   lessonSlug?: string;
+  /**
+   * 한 역량을 여러 편으로 나눈 묶음의 slug들(읽을 순서대로). 있으면 로드맵에서 편마다 링크하고,
+   * 각 레슨 아래에 묶음 안 이동 막대를 붙인다. lessonSlug와 함께 쓰지 않는다.
+   */
+  lessonSlugs?: string[];
   /** 사용자가 나중에 자료 링크나 메모를 붙일 자리(선택) */
   note?: string;
 };
@@ -173,6 +178,13 @@ export const roadmapStages: readonly RoadmapStage[] = [
         title: "Python 실무 (타입 힌트, 비동기, 패키지와 가상환경)",
         coverage: "reinforce",
         where: "Step 1 Python 프로그래밍 기초 (타입 힌트와 비동기는 심화가 필요)",
+        lessonSlugs: [
+          "python-type-hints",
+          "python-pydantic-boundaries",
+          "python-asyncio-basics",
+          "python-asyncio-production",
+          "python-packaging-uv",
+        ],
       },
       {
         title: "Git 협업 흐름과 작은 단위 커밋",

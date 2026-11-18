@@ -1,0 +1,631 @@
+---
+title: "밖에서 들어온 데이터는 경계에서 검증한다"
+stageId: "python-eng"
+order: 22
+summary: "타입 힌트는 실행 중에 아무것도 막지 않습니다. 요청 본문, 웹훅, 환경 변수, 그리고 LLM 출력을 Pydantic v2로 경계에서 검증하고, 깨진 JSON은 에러를 되먹여 재시도하고, 끝내 실패하면 사람에게 넘기는 실무 패턴까지."
+slug: "python-pydantic-boundaries"
+---
+
+## 이 레슨의 목표와 눈높이
+
+[앞 레슨](/roadmap/python-type-hints)에서 타입 힌트를 깊게 다뤘습니다. 그런데 타입 힌트에는 결정적인 한계가 있습니다. 실행 중에는 아무것도 검사하지 않습니다.
+
+`mypy` 같은 정적 검사기는 내 코드끼리 주고받는 값만 봅니다. HTTP 요청 본문, 웹훅 JSON, 환경 변수, 그리고 무엇보다 LLM이 뱉은 문자열은 실행해 봐야 내용이 정해지므로 정적 검사기가 손댈 수 없습니다. 그래서 바깥 데이터가 안으로 들어오는 자리, 곧 경계에서 실행 중에 직접 검사해야 하고, 파이썬에서 그 표준 도구가 Pydantic입니다.
+
+이 레슨의 모든 출력은 Python 3.12, Pydantic 2.14.3, `pydantic-settings` 2.16.3에서 실제로 돌린 결과입니다. 끝내면 다음을 할 수 있습니다.
+
+1. `BaseModel`로 바깥 데이터의 모양을 선언하고, `ValidationError`를 읽어 무엇이 어디서 틀렸는지 짚기
+2. 느슨한 변환과 `strict` 모드, `Field` 제약, `Literal`과 `Enum`, 검증 함수를 상황에 맞게 고르기
+3. `model_json_schema()`로 만든 스키마를 LLM에게 주고, 답을 `model_validate_json`으로 검증하고, 실패하면 에러를 되먹여 재시도한 뒤 끝내 사람에게 넘기는 루프 짜기
+4. 웹훅 페이로드와 환경 변수를 같은 방식으로 지키고, 검증 비용을 어디에 쓸지 판단하기
+
+## 타입 힌트는 문 앞을 지키지 않는다
+
+타입 힌트를 단 `dataclass`에 엉뚱한 값을 넣어 봅니다.
+
+```python
+# ex1.py
+from dataclasses import dataclass
+
+@dataclass
+class Inquiry:
+    user_id: str
+    text: str
+    priority: int
+
+print(Inquiry(user_id=123, text=None, priority="높음"))
+```
+
+```text
+Inquiry(user_id=123, text=None, priority='높음')
+```
+
+에러 없이 만들어집니다. 문제는 한참 뒤 누군가 `text.strip()`을 부르는 순간 터진다는 것입니다. 그때 에러 위치는 데이터가 들어온 곳이 아니라 쓴 곳이라, 원인을 거꾸로 추적해야 합니다.
+
+건물 출입구를 떠올리면 쉽습니다. 출입증 검사는 로비에서 한 번 하고, 로비를 통과한 사람은 사무실마다 다시 검사하지 않습니다. 이 로비가 <Term id="trust-boundary">신뢰 경계</Term>이고, AI 서비스의 로비는 HTTP 요청, <Term id="webhook">웹훅</Term> 페이로드, 환경 변수, 그리고 LLM 출력입니다.
+
+LLM 출력이 가장 위험한 이유는 겉보기에 그럴듯하다는 점입니다. 대부분은 멀쩡한 JSON을 주지만, 가끔 허용하지 않은 카테고리를 지어내고, 필드를 빼먹고, JSON 앞뒤에 설명을 붙입니다. 그대로 믿고 라우팅하면 사고가 됩니다.
+
+## `BaseModel` 첫걸음과 `ValidationError` 읽는 법
+
+같은 모양을 `BaseModel`로 선언하면, 이번에는 힌트가 실제로 검사를 합니다.
+
+```python
+# ex2.py
+from pydantic import BaseModel, ValidationError
+
+class Inquiry(BaseModel):
+    user_id: str
+    text: str
+    priority: int
+
+print(Inquiry(user_id="u-42", text="환불 되나요?", priority="3"))
+try:
+    Inquiry(user_id=123, text=None, priority="높음")
+except ValidationError as e:
+    print(e)
+    for err in e.errors():
+        print(err["loc"], err["type"], err["msg"])
+```
+
+```text
+user_id='u-42' text='환불 되나요?' priority=3
+3 validation errors for Inquiry
+user_id
+  Input should be a valid string [type=string_type, input_value=123, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.14/v/string_type
+text
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.14/v/string_type
+priority
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='높음', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.14/v/int_parsing
+('user_id',) string_type Input should be a valid string
+('text',) string_type Input should be a valid string
+('priority',) int_parsing Input should be a valid integer, unable to parse string as an integer
+```
+
+틀린 곳이 세 군데면 세 개를 한꺼번에 알려 줍니다. 첫 에러에서 멈추지 않으니 고칠 목록을 한 번에 받습니다. `"3"`이 정수 `3`으로 바뀐 것은 다음 절에서 다룹니다.
+
+에러 한 덩어리는 위치(`priority`), 사람용 문장, 대괄호 안의 에러 종류(`type=int_parsing`), 문서 주소로 읽습니다. 코드에서는 이 문자열을 파싱하지 말고 `e.errors()`를 쓰세요. 항목마다 `loc`(어디), `type`(무슨 종류), `msg`(사람용 문장), `input`(실제 값)이 들어 있습니다. 분기는 `msg`가 아니라 `type`으로 합니다. 문구는 버전마다 바뀔 수 있지만 `type`은 안정적인 식별자입니다.
+
+## 느슨한 변환과 `strict` 모드
+
+Pydantic의 기본은 lax(느슨한) 모드입니다. 뜻이 분명하면 <Term id="type-coercion">타입 변환</Term>을 해 줘서 `"0.82"`는 `0.82`가, `"yes"`는 `True`가 됩니다. strict 모드는 타입이 정확히 맞아야만 통과시킵니다.
+
+```python
+# ex3.py
+from pydantic import BaseModel, ConfigDict, ValidationError
+
+class LaxScore(BaseModel):
+    confidence: float
+    needs_human: bool
+
+class StrictScore(BaseModel):
+    model_config = ConfigDict(strict=True)
+    confidence: float
+    needs_human: bool
+
+print(LaxScore(confidence="0.82", needs_human="yes"))
+print(StrictScore(confidence=1, needs_human=False))  # int -> float 는 strict에서도 허용
+try:
+    StrictScore(confidence="0.82", needs_human="yes")
+except ValidationError as e:
+    print(e)
+# JSON 입력에서는 strict여도 JSON 타입 기준으로 판단
+print(StrictScore.model_validate_json('{"confidence": 0.82, "needs_human": true}'))
+```
+
+```text
+confidence=0.82 needs_human=True
+confidence=1.0 needs_human=False
+2 validation errors for StrictScore
+confidence
+  Input should be a valid number [type=float_type, input_value='0.82', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.14/v/float_type
+needs_human
+  Input should be a valid boolean [type=bool_type, input_value='yes', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.14/v/bool_type
+confidence=0.82 needs_human=True
+```
+
+어느 쪽이 옳은지는 데이터가 지나온 통로가 정합니다. 모델 전체가 아니라 필드 하나만 엄격하게 하려면 `Field(strict=True)`를 씁니다.
+
+| 상황 | 권장 | 이유 |
+|---|---|---|
+| 쿼리 파라미터, 폼, 환경 변수 | lax | 통로가 문자열만 나른다. `"10"`을 `10`으로 바꾸는 게 정상 |
+| 내부 서비스끼리의 JSON | `strict` | 보내는 쪽이 타입을 틀렸다면 버그다. 조용히 고치면 버그가 숨는다 |
+| LLM 출력 | 필드별 판단 | 사소한 실수는 받아 주되, 돈이나 권한이 걸린 필드는 `Field(strict=True)` |
+
+## `Field` 제약, `Literal`, `Enum`, 중첩 모델
+
+타입만으로는 부족한 규칙(길이, 범위, 형식, 허용 목록)은 `Field`로 겁니다. 카테고리처럼 정해진 값 중 하나여야 하면 `Literal`이나 `Enum`을 쓰고, 모델 안에 모델이나 `list`를 넣는 것도 그대로 됩니다. ALF 답변 같은 객체를 떠올리며 짜 봅니다.
+
+```python
+# ex4.py
+from enum import Enum
+from typing import Literal
+from pydantic import BaseModel, Field, ValidationError
+
+class Urgency(str, Enum):
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+
+class Source(BaseModel):
+    doc_id: str = Field(pattern=r"^doc-\d+$")
+    title: str = Field(min_length=1, max_length=100)
+    score: float = Field(ge=0, le=1)
+
+class AlfAnswer(BaseModel):
+    answer: str = Field(min_length=1, max_length=2000)
+    category: Literal["refund", "shipping", "account", "bug", "other"]
+    urgency: Urgency
+    sources: list[Source] = Field(max_length=5)
+
+bad = {
+    "answer": "",
+    "category": "complaint",
+    "urgency": "urgent",
+    "sources": [{"doc_id": "12", "title": "환불 정책", "score": 1.3}],
+}
+try:
+    AlfAnswer.model_validate(bad)
+except ValidationError as e:
+    print(e)
+```
+
+```text
+5 validation errors for AlfAnswer
+answer
+  String should have at least 1 character [type=string_too_short, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.14/v/string_too_short
+category
+  Input should be 'refund', 'shipping', 'account', 'bug' or 'other' [type=literal_error, input_value='complaint', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.14/v/literal_error
+urgency
+  Input should be 'low', 'normal' or 'high' [type=enum, input_value='urgent', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.14/v/enum
+sources.0.doc_id
+  String should match pattern '^doc-\d+$' [type=string_pattern_mismatch, input_value='12', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+sources.0.score
+  Input should be less than or equal to 1 [type=less_than_equal, input_value=1.3, input_type=float]
+    For further information visit https://errors.pydantic.dev/2.14/v/less_than_equal
+```
+
+중첩된 곳의 에러는 위치가 경로가 됩니다. `sources.0.score`는 "`sources`의 0번째 항목의 `score`"이고, `e.errors()`에서는 `('sources', 0, 'score')` 튜플로 나옵니다. 근거 문서가 다섯 개 달려 있어도 몇 번째의 어느 필드가 틀렸는지 바로 짚습니다.
+
+`Literal`과 `Enum`은 이렇게 고릅니다. 그 모델 안에서만 쓰는 작은 목록이면 `Literal`이 가볍습니다. 여러 모듈이 값을 공유하고 `Urgency.HIGH`처럼 이름으로 불러 오타를 막고 싶으면 `Enum`이 낫습니다. 둘 다 JSON Schema의 `enum`으로 나가므로 LLM에게 줄 때는 차이가 없습니다.
+
+## 필드 하나로 안 되는 규칙: `field_validator`와 `model_validator`
+
+선언만으로 표현이 안 되는 규칙은 함수로 씁니다. 필드 하나를 다듬거나 검사할 때는 `field_validator`, 여러 필드의 조합을 볼 때는 `model_validator`입니다.
+
+```python
+# ex5.py
+from typing import Literal
+from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
+
+class Classification(BaseModel):
+    category: Literal["refund", "shipping", "account", "bug", "other"]
+    urgency: Literal["low", "normal", "high"]
+    needs_human: bool
+    confidence: float = Field(ge=0, le=1)
+    reason: str
+
+    @field_validator("category", "urgency", mode="before")
+    @classmethod
+    def normalize(cls, v):
+        # 모델이 "Refund ", "HIGH"처럼 대소문자, 공백을 섞어 보내도 받아 준다
+        return v.strip().lower() if isinstance(v, str) else v
+
+    @field_validator("reason")
+    @classmethod
+    def reason_not_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("reason은 비어 있으면 안 됩니다")
+        return v.strip()
+
+    @model_validator(mode="after")
+    def high_urgency_low_confidence_goes_human(self):
+        if self.urgency == "high" and self.confidence < 0.7 and not self.needs_human:
+            raise ValueError("긴급인데 확신이 낮으면 needs_human은 true여야 합니다")
+        return self
+
+print(Classification(category=" Refund ", urgency="HIGH", needs_human=False, confidence=0.9, reason=" 환불 요청 "))
+try:
+    Classification(category="bug", urgency="high", needs_human=False, confidence=0.4, reason="결제 오류")
+except ValidationError as e:
+    print(e)
+    print(e.errors()[0]["loc"])
+```
+
+```text
+category='refund' urgency='high' needs_human=False confidence=0.9 reason='환불 요청'
+1 validation error for Classification
+  Value error, 긴급인데 확신이 낮으면 needs_human은 true여야 합니다 [type=value_error, input_value={'category': 'bug', 'urge...eason': '결제 오류'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+()
+```
+
+`mode="before"`는 타입 검사 전의 원본 값을 받으므로, `" Refund "`를 다듬어 `Literal` 검사를 통과하게 만들 수 있습니다. 기본인 `mode="after"`는 검사를 통과한 값을 받으니 `reason_not_blank`는 `v`가 이미 문자열이라고 믿습니다. 검증 함수에서 `ValueError`를 던지면 Pydantic이 `ValidationError`로 묶어 주고, `model_validator`의 에러는 특정 필드가 아니라 모델 전체의 문제라서 `loc`이 빈 튜플 `()`입니다.
+
+판단할 것이 하나 있습니다. "긴급하고 불확실하면 사람에게"는 사실 라우팅 정책입니다. 정책이 자주 바뀐다면 데이터 모델이 아니라 라우팅 함수에 두는 편이 낫습니다. 모델에는 "이 모양이 아니면 아예 말이 안 된다"는 규칙만 두는 것이 오래 버팁니다.
+
+## 들여오기와 내보내기: `model_validate_json`, `model_dump`
+
+딕셔너리는 `model_validate`로, JSON 문자열은 `model_validate_json`으로 넣습니다. 바깥에서 문자열이 오는 경계에서는 `json.loads`를 거치지 말고 `model_validate_json`을 쓰세요.
+
+```python
+# ex6.py
+from datetime import datetime
+from typing import Literal
+from pydantic import BaseModel, Field, ValidationError
+
+class Message(BaseModel):
+    role: Literal["user", "manager", "bot"]
+    text: str
+    sent_at: datetime
+
+class Chat(BaseModel):
+    chat_id: str
+    tags: list[str] = Field(default_factory=list)
+    messages: list[Message]
+
+body = '{"chat_id": "c-9", "messages": [{"role": "user", "text": "배송 언제 와요?", "sent_at": "2026-11-18T09:30:00+09:00"}]}'
+chat = Chat.model_validate_json(body)
+print(type(chat.messages[0].sent_at).__name__)
+try:
+    Chat.model_validate_json('{"chat_id": "c-9", "messages": [')
+except ValidationError as e:
+    print(e)
+print(chat.model_dump())
+print(chat.model_dump(mode="json"))
+print(chat.model_dump_json(exclude={"tags"}))
+```
+
+```text
+datetime
+1 validation error for Chat
+  Invalid JSON: EOF while parsing a list at line 1 column 32 [type=json_invalid, input_value='{"chat_id": "c-9", "messages": [', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.14/v/json_invalid
+{'chat_id': 'c-9', 'tags': [], 'messages': [{'role': 'user', 'text': '배송 언제 와요?', 'sent_at': datetime.datetime(2026, 11, 18, 9, 30, tzinfo=TzInfo(32400))}]}
+{'chat_id': 'c-9', 'tags': [], 'messages': [{'role': 'user', 'text': '배송 언제 와요?', 'sent_at': '2026-11-18T09:30:00+09:00'}]}
+{"chat_id":"c-9","messages":[{"role":"user","text":"배송 언제 와요?","sent_at":"2026-11-18T09:30:00+09:00"}]}
+```
+
+`model_validate_json`이 나은 이유는 둘입니다. 하나는 속도로, Rust로 짠 내부 엔진이 파싱과 검증을 한 번에 해서 중간 딕셔너리를 만들지 않습니다. 다른 하나는 에러가 한 종류라는 점입니다. 깨진 JSON도 `json.JSONDecodeError`가 아니라 `ValidationError`(`type=json_invalid`)로 나오므로, `except` 한 곳에서 "JSON이 깨졌다"와 "내용이 틀렸다"를 함께 처리합니다. 이 성질이 뒤의 재시도 루프를 단순하게 만듭니다.
+
+내보낼 때는 <Term id="serialization">직렬화</Term> 방식을 고릅니다. `model_dump()`는 `datetime`을 객체로 남기고, `mode="json"`은 JSON에 담을 수 있는 값으로 바꾸고, `model_dump_json()`은 곧바로 문자열을 냅니다. `include`, `exclude`로 필드를 골라, 로그에 고객 원문을 남기지 않는 처리를 여기서 합니다.
+
+## 기본값과 가변 기본값 문제
+
+파이썬 함수의 기본값으로 `[]`를 쓰면 그 리스트 하나를 모든 호출이 나눠 쓰는 유명한 함정이 있습니다. Pydantic 모델은 어떨까요.
+
+```python
+# ex7.py
+from pydantic import BaseModel, Field
+
+def add_tag(tag, tags=[]):
+    tags.append(tag)
+    return tags
+
+print(add_tag("vip"))
+print(add_tag("refund"))
+
+class Ticket(BaseModel):
+    tags: list[str] = []
+    meta: dict[str, str] = Field(default_factory=dict)
+
+a, b = Ticket(), Ticket()
+a.tags.append("vip")
+print(a.tags, b.tags)
+```
+
+```text
+['vip']
+['vip', 'refund']
+['vip'] []
+```
+
+함수는 두 번째 호출에 앞의 `"vip"`가 섞였지만, Pydantic 모델은 인스턴스마다 기본값을 복사해 줍니다. 그래서 `= []`도 안전합니다. 그래도 `Field(default_factory=list)`를 권합니다. "매번 새로 만든다"는 의도가 바로 읽히고, 코드를 일반 클래스로 옮겨도 함정이 되살아나지 않습니다.
+
+## 웹훅 페이로드와 모르는 필드: `extra`
+
+선언하지 않은 필드가 들어오면 기본값 `"ignore"`는 조용히 버리고, `"forbid"`는 에러를 내고, `"allow"`는 받아서 `model_extra`에 보관합니다.
+
+```python
+# ex8.py
+from pydantic import BaseModel, ConfigDict, ValidationError
+
+payload = {"event": "message.created", "chat_id": "c-9", "text": "안녕하세요", "mood": "angry"}
+
+class Ignore(BaseModel):  # 기본값: extra="ignore"
+    event: str
+    chat_id: str
+    text: str
+
+class Forbid(Ignore):
+    model_config = ConfigDict(extra="forbid")
+
+print(Ignore.model_validate(payload))
+try:
+    Forbid.model_validate(payload)
+except ValidationError as e:
+    print(e)
+```
+
+```text
+event='message.created' chat_id='c-9' text='안녕하세요'
+1 validation error for Forbid
+mood
+  Extra inputs are not permitted [type=extra_forbidden, input_value='angry', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden
+```
+
+정답은 누가 보냈느냐에 따라 반대로 갈립니다.
+
+| 출처 | 권장 | 이유 |
+|---|---|---|
+| 외부 서비스의 웹훅 | `"ignore"` | 보내는 쪽은 예고 없이 필드를 늘린다. `"forbid"`면 그날 수신이 전부 멈춘다 |
+| LLM 출력 | `"forbid"` | 스키마에 없는 필드는 지시를 안 따랐다는 신호다. 숨기지 말고 재시도 대상으로 |
+| 우리 API의 요청 본문 | `"forbid"` | 클라이언트 오타(`need_human`)를 조용히 버리면 "왜 반영이 안 되죠"가 된다 |
+
+웹훅을 `"ignore"`로 받더라도 꼭 필요한 필드는 필수로 선언하세요. 모르는 필드는 너그럽게, 아는 필드는 엄격하게가 오래 버티는 수신부의 원칙입니다.
+
+## `model_json_schema()`: 모델이 곧 LLM에게 주는 계약서
+
+이제 방향을 뒤집어, 같은 모델로 LLM에게 "이 모양으로 답하라"고 요구합니다. `model_json_schema()`는 모델을 <Term id="json-schema">JSON Schema</Term>로 바꿔 줍니다. 문의 분류 결과 모델을 파일로 따로 둡니다.
+
+```python
+# schemas.py
+from typing import Literal
+from pydantic import BaseModel, ConfigDict, Field
+
+class InquiryRouting(BaseModel):
+    """고객 문의 한 건을 분류한 결과."""
+    model_config = ConfigDict(extra="forbid")
+
+    category: Literal["refund", "shipping", "account", "bug", "other"] = Field(description="문의 유형")
+    urgency: Literal["low", "normal", "high"] = Field(description="처리 긴급도")
+    needs_human: bool = Field(description="상담원 연결이 필요하면 true")
+    reason: str = Field(min_length=1, max_length=200, description="판단 근거 한 문장")
+```
+
+```python
+# ex9.py
+import json
+from schemas import InquiryRouting
+
+schema = InquiryRouting.model_json_schema()
+print("required:", schema["required"])
+print("additionalProperties:", schema["additionalProperties"])
+for name, prop in schema["properties"].items():
+    print(name, json.dumps(prop, ensure_ascii=False))
+```
+
+```text
+required: ['category', 'urgency', 'needs_human', 'reason']
+additionalProperties: False
+category {"description": "문의 유형", "enum": ["refund", "shipping", "account", "bug", "other"], "title": "Category", "type": "string"}
+urgency {"description": "처리 긴급도", "enum": ["low", "normal", "high"], "title": "Urgency", "type": "string"}
+needs_human {"description": "상담원 연결이 필요하면 true", "title": "Needs Human", "type": "boolean"}
+reason {"description": "판단 근거 한 문장", "maxLength": 200, "minLength": 1, "title": "Reason", "type": "string"}
+```
+
+`Literal`은 `enum`으로, `Field` 제약은 `minLength`, `maxLength`로, `extra="forbid"`는 `additionalProperties`로 나갔습니다. `description`은 사람용 주석이 아니라 모델이 읽는 지시문이 되므로 판단 기준을 짧고 구체적으로 적으세요.
+
+이 스키마는 프롬프트에 붙이거나, LLM API의 <Term id="structured-output">구조화 출력</Term> 기능(도구의 `input_schema`, 응답 형식 지정)에 넘깁니다. 핵심은 계약이 한 곳에만 있다는 점입니다. 클래스를 고치면 LLM에게 주는 스키마와 답을 검사하는 규칙이 함께 바뀌어 어긋날 일이 없습니다.
+
+구조화 출력을 켰다고 검증을 생략하면 안 됩니다. 제공사마다 지원하는 스키마 키워드가 달라 일부 제약은 빠지기도 하고, `model_validator` 같은 업무 규칙은 애초에 스키마로 표현되지 않습니다. API가 형식을 지켜 줘도 들어오는 문에서는 우리 모델로 한 번 더 검사합니다.
+
+## 핵심 패턴: 요청하고, 검증하고, 되먹이고, 넘긴다
+
+이 레슨의 중심입니다. 실무의 LLM 분류 코드는 거의 같은 뼈대를 가집니다. 스키마를 주고 요청하고, 답에서 JSON을 꺼내 검증하고, 실패하면 무엇이 틀렸는지 알려 주며 다시 묻고, 정해진 횟수를 넘기면 <Term id="fallback">폴백</Term>으로 사람에게 넘깁니다. 진짜 API 대신 정해 둔 답을 차례로 돌려주는 가짜 LLM으로 짭니다.
+
+```python
+# routing_llm.py
+import json
+import re
+from pydantic import ValidationError
+from schemas import InquiryRouting
+
+FENCE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
+
+def extract_json(text: str) -> str:
+    """모델 응답에서 JSON 본문만 꺼낸다. 코드 펜스, 앞뒤 잡담을 걷어 낸다."""
+    m = FENCE.search(text)
+    if m:
+        return m.group(1)
+    start, end = text.find("{"), text.rfind("}")
+    if start != -1 and end > start:
+        return text[start : end + 1]
+    return text  # 그대로 넘겨 검증기가 json_invalid로 잡게 한다
+
+def format_errors(e: ValidationError) -> str:
+    lines = []
+    for err in e.errors(include_url=False):
+        where = ".".join(str(p) for p in err["loc"]) or "(전체)"
+        lines.append(f"- {where}: {err['msg']}")
+    return "\n".join(lines)
+
+def make_fake_llm(replies: list[str]):
+    """진짜 API 대신, 정해 둔 답을 차례로 돌려주는 가짜 LLM."""
+    it = iter(replies)
+    return lambda messages: next(it)
+
+def classify(text: str, llm, max_attempts: int = 3) -> InquiryRouting | None:
+    schema = json.dumps(InquiryRouting.model_json_schema(), ensure_ascii=False)
+    messages = [
+        {"role": "system", "content": f"다음 JSON Schema를 지키는 JSON만 답하세요.\n{schema}"},
+        {"role": "user", "content": text},
+    ]
+    for attempt in range(1, max_attempts + 1):
+        raw = llm(messages)
+        try:
+            result = InquiryRouting.model_validate_json(extract_json(raw))
+            print(f"[시도 {attempt}] 통과")
+            return result
+        except ValidationError as e:
+            feedback = format_errors(e)
+            print(f"[시도 {attempt}] 실패\n{feedback}")
+            messages.append({"role": "assistant", "content": raw})
+            messages.append({"role": "user", "content": f"JSON이 스키마를 어겼습니다. 고쳐서 JSON만 다시 답하세요.\n{feedback}"})
+    return None  # 정해진 횟수를 다 썼다
+
+def route(text: str, llm) -> dict:
+    result = classify(text, llm)
+    if result is None:
+        return {"route": "human", "why": "분류 실패, 상담원에게 넘김"}
+    if result.needs_human:
+        return {"route": "human", "why": result.reason}
+    return {"route": "alf", "category": result.category}
+```
+
+두 사례를 돌립니다. 하나는 코드 펜스에 싸인 깨진 답이 먼저 오고 두 번째에 고쳐지는 경우, 다른 하나는 세 번 모두 다른 이유로 깨지는 경우입니다.
+
+```python
+# ex10.py
+from routing_llm import make_fake_llm, route
+
+print("== 사례 1: 첫 답이 깨지고 두 번째에 고침")
+llm = make_fake_llm([
+    '```json\n{"category": "complaint", "urgency": "high", "needs_human": "maybe"}\n```',
+    '{"category": "bug", "urgency": "high", "needs_human": true, "reason": "결제 후 화면이 멈췄다는 신고"}',
+])
+print(route("결제하자마자 앱이 멈췄어요", llm))
+
+print("== 사례 2: 세 번 다 깨짐")
+llm = make_fake_llm([
+    "죄송하지만 분류할 수 없습니다.",
+    '{"category": "refund", "urgency": "normal", "needs_human": false, "reason": "환불", "note": "추가"}',
+    '{"category": "refund", "urgency": "normal", "needs_human": false, "reason": ""}',
+])
+print(route("환불이요", llm))
+```
+
+```text
+== 사례 1: 첫 답이 깨지고 두 번째에 고침
+[시도 1] 실패
+- category: Input should be 'refund', 'shipping', 'account', 'bug' or 'other'
+- needs_human: Input should be a valid boolean, unable to interpret input
+- reason: Field required
+[시도 2] 통과
+{'route': 'human', 'why': '결제 후 화면이 멈췄다는 신고'}
+== 사례 2: 세 번 다 깨짐
+[시도 1] 실패
+- (전체): Invalid JSON: expected value at line 1 column 1
+[시도 2] 실패
+- note: Extra inputs are not permitted
+[시도 3] 실패
+- reason: String should have at least 1 character
+{'route': 'human', 'why': '분류 실패, 상담원에게 넘김'}
+```
+
+실무 판단이 담긴 자리를 짚어 봅니다.
+
+첫째, `extract_json`입니다. 모델은 지시를 받아도 JSON을 백틱 세 개짜리 코드 펜스로 감싸거나 "네, 결과입니다" 같은 말을 붙이곤 합니다. 펜스를 먼저 찾고, 없으면 첫 `{`부터 마지막 `}`까지 자르고, 그래도 없으면 원문을 넘겨 검증기가 `json_invalid`로 판정하게 둡니다. 꺼내는 함수가 실패를 따로 판단하지 않으니 에러 경로가 하나로 모입니다.
+
+둘째, 되먹임입니다. `e.errors(include_url=False)`로 문서 주소를 빼고 어느 필드가 왜 틀렸는지만 정리했습니다. "다시 해 주세요"만으로는 같은 실수를 반복하기 쉽지만, 위치와 이유를 받으면 대개 다음 시도에 고칩니다. 사례 1에서는 `"maybe"`가 lax 모드에서도 `bool`로 해석되지 않아 걸린 것도 보입니다.
+
+셋째, 횟수 제한입니다. 재시도는 한 번마다 토큰 비용과 수 초의 지연을 더합니다. 고객이 채팅창에서 기다리는 동안 무한히 되물을 수 없으니 보통 2회에서 3회로 묶고, 실패 사유를 로그로 모아 프롬프트나 스키마를 고칠 단서로 씁니다.
+
+넷째, 끝내 실패했을 때입니다. 예외를 고객 응답까지 올려 보내지 않고 사람에게 넘깁니다. 고객에게 중요한 것은 문의가 처리되는 것이지 AI의 실패 사유가 아닙니다. 사람을 흐름 안에 두는 <Term id="human-in-the-loop">휴먼 인 더 루프</Term> 설계가, 틀린 답을 자신 있게 내보내는 것보다 언제나 안전합니다.
+
+## 설정도 경계다: `pydantic-settings`
+
+환경 변수도 바깥에서 들어오는 문자열입니다. API 키를 빼먹고 배포하면 서버는 뜨지만 첫 요청에서 터집니다. `pydantic-settings`의 `BaseSettings`는 환경 변수를 모델처럼 검증해서, 이런 실수를 서버가 뜨는 순간 잡아 줍니다.
+
+```python
+# ex11.py
+import os
+from pydantic import Field, SecretStr, ValidationError
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="ALF_", env_file=".env")
+    llm_api_key: SecretStr
+    llm_model: str = "small-fast-model"
+    llm_timeout_s: float = Field(default=10.0, gt=0, le=60)
+    max_retries: int = Field(default=3, ge=0, le=5)
+
+try:
+    Settings()
+except ValidationError as e:
+    print(e)
+
+os.environ["ALF_LLM_API_KEY"] = "sk-test-not-real"
+os.environ["ALF_LLM_TIMEOUT_S"] = "7.5"
+os.environ["ALF_MAX_RETRIES"] = "2"
+s = Settings()
+print(s)
+print(type(s.max_retries).__name__, s.llm_api_key.get_secret_value()[:3] + "...")
+```
+
+```text
+1 validation error for Settings
+llm_api_key
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.14/v/missing
+llm_api_key=SecretStr('**********') llm_model='small-fast-model' llm_timeout_s=7.5 max_retries=2
+int sk-...
+```
+
+환경 변수는 문자열만 나르는 통로라 여기서는 lax 변환이 정확히 필요한 동작입니다. `"7.5"`는 `float`, `"2"`는 `int`가 됩니다. `SecretStr`로 선언한 키는 `print`나 로그에 찍혀도 별표로 가려지고, 진짜 값은 `get_secret_value()`를 명시적으로 불러야만 꺼낼 수 있습니다.
+
+## 검증은 경계에서 한 번
+
+검증은 공짜가 아닙니다. 앞의 `Source` 모델로 근거 문서 1만 건을 세 방식으로 처리한 시간을 재 봤습니다(같은 노트북, 10회 실행 평균을 3번 재고 가장 빠른 값).
+
+```python
+# ex12.py (측정 부분)
+rows = [{"doc_id": f"doc-{i}", "title": "환불 정책", "score": 0.5} for i in range(10_000)]
+adapter = TypeAdapter(list[Source])
+
+def plain():         return [r["score"] for r in rows]
+def validate_each(): return [Source.model_validate(r).score for r in rows]
+def validate_once(): return [s.score for s in adapter.validate_python(rows)]
+```
+
+```text
+plain dict: 0.18 ms
+model_validate x 10000: 9.83 ms
+TypeAdapter 한 번: 6.48 ms
+```
+
+한 건에 1마이크로초 남짓이니, 수 초가 걸리는 LLM 호출 옆에서는 티도 나지 않습니다. 경계에서 검증하는 것을 아낄 이유가 없고, 목록은 `TypeAdapter`로 한 번에 넘기면 조금 더 빠릅니다.
+
+다만 딕셔너리를 그냥 읽는 것보다 50배쯤 느립니다. 문제는 같은 데이터를 안쪽 루프에서 반복해 검증할 때입니다. 재순위 점수를 매기는 루프 안에서 매번 모델을 새로 만들면 그 비용이 그대로 곱해집니다. 원칙은 로비 비유 그대로, 들어올 때 한 번 검증하고 안에서는 검증된 객체를 믿고 씁니다. 우리 코드가 직접 만든 데이터라면 검증을 건너뛰는 `model_construct()`도 있지만, 바깥 데이터에는 절대 쓰지 마세요.
+
+## 채널톡 코드에서는
+
+채널톡 같은 고객 메시징 서비스에서 이 조각들은 요청 하나의 흐름 위에 그대로 놓입니다. 고객 메시지가 웹훅이나 내부 이벤트로 들어오면 수신 모델이 필요한 필드만 엄격하게 받고 모르는 필드는 버립니다. 분류 단계에서는 `InquiryRouting` 같은 모델의 스키마를 LLM에게 주고, 답을 검증하고, 실패하면 되먹여 다시 묻고, 끝내 안 되면 상담원 큐로 보냅니다.
+
+ALF 같은 AI 에이전트의 답도 마찬가지입니다. 답변 문장, 근거 문서 목록, 사람에게 넘길지 여부를 `AlfAnswer` 같은 모델로 묶으면, 근거 문서 ID가 실제 형식을 따르는지, 허용하지 않은 카테고리를 지어냈는지를 경계에서 막습니다. 이것이 <Term id="guardrail">가드레일</Term>의 가장 아래층입니다. 내용이 맞는지는 평가가 보지만, 모양이 틀린 답이 고객에게 나가는 일은 여기서 막습니다.
+
+[자동 테스트 레슨](/roadmap/automated-testing)과도 이어집니다. 거기서 손으로 짠 계약 검사(`assert out["intent"] in VALID_INTENTS`)는 이제 `InquiryRouting.model_validate(out)` 한 줄이 됩니다. 계약이 클래스 한 곳에 있으니 프롬프트, 검증, 테스트가 같은 진실을 공유합니다.
+
+## 흔한 함정
+
+`json.loads` 결과를 딕셔너리 그대로 들고 다니는 것이 가장 흔합니다. `result["needs_human"]`이 문자열 `"false"`면 `if`에서 참이 되어, 사람이 필요 없는 문의가 상담원에게 몰리거나 그 반대가 됩니다. 경계에서 모델로 바꾸고 안에서는 모델만 쓰세요.
+
+LLM 출력 모델의 `extra`를 기본값(`"ignore"`)으로 두는 것도 흔합니다. 모델이 지시를 안 따랐다는 신호가 조용히 버려집니다. LLM 출력에는 `"forbid"`, 외부 웹훅에는 `"ignore"`입니다.
+
+재시도에 상한이 없거나, 실패 시 예외를 고객 응답까지 올려 보내는 것도 위험합니다. 횟수를 묶고, 마지막에는 반드시 사람에게 넘기는 길을 열어 두세요.
+
+`e.errors()`의 `msg` 문장으로 분기하거나, 자주 바뀌는 업무 정책을 `model_validator`에 넣는 것도 피하세요. 앞의 것은 버전이 오르면 깨지고, 뒤의 것은 정책이 바뀔 때마다 예전 로그를 다시 읽는 검증이 실패합니다.
+
+## 직접 해보기
+
+1. `schemas.py`의 `InquiryRouting`에 `confidence: float`(0에서 1 사이)를 추가하고, `needs_human`이 `false`인데 `confidence`가 0.5 미만이면 실패하는 `model_validator`를 넣으세요. 가짜 LLM 답에 이 규칙을 어기는 사례를 넣어, 되먹임에 `(전체)` 위치로 찍히는지 확인하세요.
+2. `extract_json`이 놓치는 응답을 찾아보세요. 예를 들어 JSON 객체 두 개가 이어 나오는 답, 펜스 안에 설명이 섞인 답입니다. 실패 사례를 `pytest` 파라미터화 테스트로 만들고 함수를 고쳐 초록불을 만드세요.
+3. 채널톡 이벤트처럼 생긴 웹훅 모델을 만들어 보세요. 상위에 `event`, `chat_id`가 있고 안에 `message`(`role`, `text`, `sent_at`)가 들어 있는 모양입니다. 모르는 필드가 늘어도 수신이 멈추지 않는지, 필수 필드가 빠지면 어느 `loc`이 찍히는지 확인하세요.
+
+여기까지 하면 면접에서 "LLM이 이상한 JSON을 주면 어떻게 하나요"라는 질문에, 스키마 하나로 요청과 검증을 묶고, 에러를 되먹여 제한된 횟수만 재시도하고, 끝내 사람에게 넘긴다고 코드로 답할 수 있습니다.
+
+## 더 깊이 파고들 것
+
+세 방향이 자연스러운 확장입니다. 첫째, `Annotated`와 `AfterValidator`로 검증 규칙을 재사용 가능한 타입으로 만드는 법(예: 어디서든 쓰는 `DocId` 타입)입니다. 둘째, `Field(discriminator=...)`로 이벤트 종류마다 모양이 다른 웹훅을 하나의 모델로 받는 판별 유니온입니다. 셋째, FastAPI가 요청 본문과 응답을 바로 이 `BaseModel`로 검증한다는 점입니다. 오늘 만든 모델이 그대로 API 서버의 입구가 됩니다.
+
+그런데 지금의 재시도 루프에는 숨은 병목이 있습니다. LLM 호출 하나가 수 초씩 걸리는 동안 서버는 다른 고객의 요청을 처리하지 못하고 기다립니다. 문의 열 건을 분류하려면 열 번 줄 서서 기다려야 합니다. 이 기다림을 겹쳐 동시에 처리하는 방법이 [다음 레슨](/roadmap/python-asyncio-basics)의 주제, 비동기입니다.

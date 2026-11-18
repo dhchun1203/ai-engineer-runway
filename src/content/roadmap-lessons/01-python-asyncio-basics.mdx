@@ -1,0 +1,511 @@
+---
+title: "LLM을 기다리는 동안 다른 일을 시키는 법, 비동기"
+stageId: "python-eng"
+order: 23
+summary: "LLM 호출 한 번은 대부분의 시간을 네트워크 대기로 보냅니다. 그 대기를 겹쳐서 3초 걸리던 일을 1초에 끝내는 asyncio의 원리를, 직접 잰 숫자로 따라갑니다."
+slug: "python-asyncio-basics"
+---
+
+## 이 레슨의 목표와 눈높이
+
+교육과정에서는 함수와 클래스까지 배웠지만 `async`와 `await`는 다루지 않았습니다. 그런데 LLM을 부르는 서버 코드를 열어 보면 거의 모든 함수 앞에 `async def`가 붙어 있습니다. 이 레슨은 그 이유와 원리를 채웁니다.
+
+여기 나오는 출력과 시간은 전부 파이썬 3.12에서 실제로 돌려 찍은 값입니다. 진짜 LLM이나 네트워크는 부르지 않고, `asyncio.sleep`과 `httpx.MockTransport`로 대기 시간만 흉내 냈습니다.
+
+이 레슨을 끝내면 다음을 직접 할 수 있습니다.
+
+1. 어떤 작업이 비동기로 빨라지고 어떤 작업은 안 빨라지는지 가려내기
+2. `async def`, `await`, `asyncio.run`이 각각 하는 일을 설명하고, `await`를 빠뜨렸을 때의 경고를 알아보기
+3. `asyncio.gather`, `asyncio.create_task`, `asyncio.as_completed`로 LLM 호출 여러 개를 겹쳐 돌리기
+4. `httpx.AsyncClient`로 비동기 HTTP 호출을 짜고, 네트워크 없이 돌려 보기
+5. 스레드, 프로세스, `asyncio` 중 상황에 맞는 것을 고르기
+
+## 왜 AI 서비스에 비동기가 필요한가
+
+LLM API 호출 한 번은 보통 1초에서 10초쯤 걸립니다. 그 시간 대부분은 우리 서버가 계산하는 시간이 아니라, 요청을 보내 놓고 답을 기다리는 시간입니다. 우리 CPU는 그동안 거의 놀고 있습니다.
+
+이 대기를 하나씩 차례로 하면 숫자가 금방 커집니다. 밤사이 쌓인 문의 1,000건을 한 건에 2초씩 분류하면, 순서대로는 2,000초(33분 남짓)가 걸립니다. 상담 서버도 고객 A의 답을 기다리는 2초 동안 고객 B, C가 줄 서 있다면, 열 명만 몰려도 마지막 손님의 <Term id="latency">지연시간</Term>은 20초가 됩니다.
+
+비동기는 이 기다리는 시간을 겹치게 해 줍니다. 요청을 거의 한꺼번에 보내 놓고, 답이 오는 대로 받습니다.
+
+## 기다리는 일과 계산하는 일
+
+먼저 비동기가 무엇을 빠르게 하고 무엇은 못 하는지 가르겠습니다. 이 구분을 놓치면 `async`를 붙여 놓고 왜 안 빨라지는지 한참 헤맵니다.
+
+<Term id="io-bound">I/O 바운드</Term> 작업은 시간 대부분을 바깥을 기다리며 보냅니다. LLM API 호출, DB 조회, 다른 서비스 HTTP 호출이 여기에 속하고, 비동기는 이 기다림을 겹쳐서 빨라지게 합니다.
+
+<Term id="cpu-bound">CPU 바운드</Term> 작업은 시간 대부분을 우리 CPU가 직접 계산하며 보냅니다. 긴 문서의 토큰 세기, 큰 JSON 파싱, 벡터 수만 개의 유사도 계산 같은 일입니다. 기다리는 시간이 없으니 겹칠 것도 없습니다. 직접 확인해 봅시다.
+
+```python
+# cpu_bound.py
+import asyncio
+import time
+
+
+def count_tokens_cpu(n: int) -> int:
+    return sum(i % 7 for i in range(n))  # CPU만 쓰는 계산(토큰 세기 흉내)
+
+
+async def count_async(n: int) -> int:
+    return count_tokens_cpu(n)  # 안에 await가 없다
+
+
+async def main() -> None:
+    n = 10_000_000
+    count_tokens_cpu(n)  # 예열(첫 실행의 흔들림 빼기)
+    for label, runs in [("한 번", 1), ("세 번 순서대로", 3)]:
+        start = time.perf_counter()
+        for _ in range(runs):
+            count_tokens_cpu(n)
+        print(f"{label}: {time.perf_counter() - start:.2f}초")
+
+    start = time.perf_counter()
+    await asyncio.gather(*(count_async(n) for _ in range(3)))
+    print(f"세 번 gather: {time.perf_counter() - start:.2f}초")
+
+
+asyncio.run(main())
+```
+
+```text
+한 번: 0.42초
+세 번 순서대로: 1.23초
+세 번 gather: 1.29초
+```
+
+`gather`로 묶어도 세 번 순서대로 돌린 것과 같은 1.2초대입니다. 비동기가 효과가 있었다면 한 번 걸리는 0.4초 안팎에 끝났어야 합니다. 여러 번 돌리면 0.1초에서 0.2초쯤 오르내리는데, 다른 프로그램이 CPU를 나눠 쓰는 탓이라 결론은 같습니다.
+
+요리사가 한 명뿐인 식당을 떠올리면 쉽습니다. 요리사는 오븐이 빵을 굽는 동안 다른 손님의 샐러드를 만들 수 있지만, 양파 열 개를 써는 일은 순서를 아무리 바꿔도 걸리는 시간이 같습니다. 오븐을 기다리는 일이 I/O 바운드, 양파 썰기가 CPU 바운드입니다.
+
+## 코루틴: `async def`와 `await`
+
+`async def`로 정의한 함수는 불러도 본문이 바로 실행되지 않습니다. 대신 나중에 실행할 수 있는 작업 묶음인 <Term id="coroutine">코루틴</Term> 객체를 돌려줍니다.
+
+```python
+# never_awaited.py
+import asyncio
+
+
+async def ask_llm(question: str) -> str:
+    await asyncio.sleep(1)  # 네트워크 대기를 흉내 낸다
+    return f"답변: {question}"
+
+
+result = ask_llm("환불 되나요?")  # await 없이 그냥 불렀다
+print(type(result))
+print(result)
+```
+
+```text
+<class 'coroutine'>
+<coroutine object ask_llm at 0x000002057F9CD780>
+sys:1: RuntimeWarning: coroutine 'ask_llm' was never awaited
+```
+
+답변 문자열이 아니라 코루틴 객체가 찍혔습니다. 본문은 한 줄도 돌지 않았고, 프로그램이 끝날 때 파이썬이 `RuntimeWarning`으로 "만들어 놓고 실행은 안 했다"고 알려 줍니다.
+
+코루틴을 실제로 돌리는 방법은 두 가지입니다.
+
+- `await 코루틴`은 "이 작업이 끝날 때까지 여기서 기다리겠다, 그동안 다른 작업을 돌려도 좋다"는 뜻입니다. 끝나면 결과값이 돌아옵니다. `async def` 함수 안에서만 쓸 수 있습니다.
+- `asyncio.run(main())`은 이벤트 루프를 만들고, `main()`을 끝까지 돌린 뒤, 루프를 닫습니다. 프로그램 입구에서 한 번만 씁니다.
+
+## 이벤트 루프: 한 스레드가 `await`에서 갈아탄다
+
+<Term id="event-loop">이벤트 루프</Term>는 해야 할 작업 목록을 들고, 돌릴 수 있는 작업 하나를 돌리다가, 그 작업이 `await`에서 멈추면 다음 작업으로 갈아탑니다. 기다리던 답이 도착한 작업은 다시 목록에 올라와 이어서 돕니다. 핵심은 이 모든 일이 스레드 하나에서 일어난다는 점입니다.
+
+```python
+# switch_trace.py
+import asyncio
+import threading
+import time
+
+START = time.perf_counter()
+
+
+def log(msg: str) -> None:
+    t = time.perf_counter() - START
+    print(f"{t:.2f}초 [{threading.current_thread().name}] {msg}")
+
+
+async def ask_llm(name: str, seconds: float) -> str:
+    log(f"{name}: 요청 보냄")
+    await asyncio.sleep(seconds)  # 여기서 루프에게 차례를 넘긴다
+    log(f"{name}: 응답 받음")
+    return name
+
+
+async def main() -> None:
+    await asyncio.gather(ask_llm("고객A", 1.0), ask_llm("고객B", 0.5))
+
+
+asyncio.run(main())
+```
+
+```text
+0.00초 [MainThread] 고객A: 요청 보냄
+0.00초 [MainThread] 고객B: 요청 보냄
+0.51초 [MainThread] 고객B: 응답 받음
+1.00초 [MainThread] 고객A: 응답 받음
+```
+
+모든 줄이 `MainThread`입니다. 고객A가 `await`에서 멈추자 루프가 곧바로 고객B를 시작했고, 먼저 답이 온 고객B가 먼저 끝났습니다. 여러 일을 정말 동시에 하는 병렬성이 아니라, 한 사람이 빠르게 번갈아 처리하는 <Term id="concurrency">동시성</Term>입니다.
+
+여기서 중요한 결론이 나옵니다. 루프는 `await`에서만 갈아탈 수 있습니다. 어떤 코루틴이 `await` 없이 오래 계산하거나 `time.sleep`처럼 스레드를 붙잡는 함수를 부르면, 그동안 다른 모든 요청이 멈춥니다. 이 블로킹 함정은 다음 레슨에서 재 봅니다.
+
+## 순서대로 `await` 대 `asyncio.gather`
+
+이제 본론입니다. 1초씩 걸리는 가짜 LLM 호출 세 개를 두 방식으로 돌리고, 마지막에는 1,000개를 한꺼번에 돌려 봅니다.
+
+```python
+# seq_vs_gather.py
+import asyncio
+import time
+
+
+async def ask_llm(question: str) -> str:
+    await asyncio.sleep(1)  # LLM이 답을 만드는 1초를 흉내 낸다
+    return f"[{question}] 분류 완료"
+
+
+async def main() -> None:
+    questions = ["환불 문의", "배송 문의", "버그 제보"]
+
+    start = time.perf_counter()
+    for q in questions:
+        await ask_llm(q)  # 하나가 끝나야 다음을 시작한다
+    print(f"순서대로 await: {time.perf_counter() - start:.2f}초")
+
+    start = time.perf_counter()
+    results = await asyncio.gather(*(ask_llm(q) for q in questions))
+    print(results)
+    print(f"gather로 동시에: {time.perf_counter() - start:.2f}초")
+
+    start = time.perf_counter()
+    await asyncio.gather(*(ask_llm(f"문의 {i}") for i in range(1000)))
+    print(f"1000건 gather: {time.perf_counter() - start:.2f}초")
+
+
+asyncio.run(main())
+```
+
+```text
+순서대로 await: 3.02초
+['[환불 문의] 분류 완료', '[배송 문의] 분류 완료', '[버그 제보] 분류 완료']
+gather로 동시에: 1.01초
+1000건 gather: 1.00초
+```
+
+순서대로 쓴 `await`는 `async` 코드인데도 3초가 걸렸습니다. 하나가 끝나야 다음을 시작하니 동기 코드와 다를 바가 없습니다. `async`를 붙였다고 저절로 겹치는 게 아니라, `gather`처럼 여러 작업을 한꺼번에 루프에 올려야 겹쳐집니다.
+
+3.00초가 아니라 3.02초인 이유는 `sleep`이 정확히 1초에 깨지 않고, 운영체제 타이머와 루프가 차례를 돌리는 비용만큼 몇 밀리초 늦게 깨기 때문입니다. 차례로 세 번 기다리면 그 늦음이 세 번 쌓입니다.
+
+1,000건도 1초에 끝났습니다. 순서대로였다면 1,000초가 걸렸을 일입니다. 다만 진짜 LLM API에 1,000개를 한 번에 쏘면 속도 제한에 걸려 대부분 거절당합니다. 동시에 몇 개까지 보낼지 정하는 `asyncio.Semaphore`는 다음 레슨의 첫 주제입니다.
+
+## `gather`의 결과는 넣은 순서대로
+
+`gather`는 결과를 인자로 넣은 순서대로 돌려줍니다. 끝난 순서와는 상관없습니다.
+
+```python
+# gather_order.py
+import asyncio
+import time
+
+
+async def ask_llm(name: str, seconds: float) -> str:
+    await asyncio.sleep(seconds)
+    print(f"  끝남: {name} ({seconds}초)")
+    return name
+
+
+async def main() -> None:
+    start = time.perf_counter()
+    results = await asyncio.gather(
+        ask_llm("느린 요약", 3),
+        ask_llm("보통 분류", 2),
+        ask_llm("빠른 감정분석", 1),
+    )
+    print("gather 결과:", results)
+    print(f"걸린 시간: {time.perf_counter() - start:.2f}초")
+
+
+asyncio.run(main())
+```
+
+```text
+  끝남: 빠른 감정분석 (1초)
+  끝남: 보통 분류 (2초)
+  끝남: 느린 요약 (3초)
+gather 결과: ['느린 요약', '보통 분류', '빠른 감정분석']
+걸린 시간: 3.01초
+```
+
+끝난 순서는 빠른 것부터인데, 결과 리스트는 넣은 순서 그대로입니다. 그래서 `zip(inquiries, results)`로 입력과 결과를 짝지어도 안전합니다. 전체 시간은 가장 느린 작업 하나(3초)에 맞춰집니다.
+
+## `asyncio.create_task`: 먼저 출발시켜 두기
+
+하나를 먼저 출발시켜 두고, 다른 일을 하다가, 나중에 결과를 받고 싶을 때는 `asyncio.create_task`를 씁니다. 고객이 "제 주문 어디쯤 왔나요?"라고 물으면, LLM에게 의도를 묻는 일과 주문 정보를 조회하는 일은 서로 기다릴 필요가 없습니다.
+
+```python
+# create_task.py
+import asyncio
+import time
+
+
+async def fetch_order(order_id: str) -> dict:
+    await asyncio.sleep(0.8)  # 주문 DB(또는 주문 API) 조회 흉내
+    return {"order_id": order_id, "status": "배송중"}
+
+
+async def ask_llm(message: str) -> str:
+    await asyncio.sleep(1.5)  # LLM에 의도 분류를 묻는 시간 흉내
+    return "shipping"
+
+
+async def handle(message: str, order_id: str) -> None:
+    start = time.perf_counter()
+    order_task = asyncio.create_task(fetch_order(order_id))  # 바로 출발
+    intent = await ask_llm(message)  # LLM을 기다리는 동안 주문 조회도 진행 중
+    order = await order_task  # 이미 끝나 있으니 거의 즉시 받는다
+    print(intent, order)
+    print(f"걸린 시간: {time.perf_counter() - start:.2f}초")
+
+
+asyncio.run(handle("제 주문 어디쯤 왔나요?", "A-1024"))
+```
+
+```text
+shipping {'order_id': 'A-1024', 'status': '배송중'}
+걸린 시간: 1.51초
+```
+
+순서대로라면 0.8초와 1.5초를 더한 2.3초였을 일이 1.5초에 끝났습니다. `create_task`는 코루틴을 <Term id="asyncio-task">태스크</Term>로 감싸 루프에 바로 올립니다. 그냥 코루틴은 `await`해야 돌기 시작하지만, 태스크는 지금 코루틴이 다음 `await`에서 차례를 넘기는 순간 돌기 시작합니다.
+
+태스크를 만들었으면 두 가지를 지킵니다. 첫째, 변수에 담아 참조를 남깁니다. 파이썬 공식 문서는 이벤트 루프가 태스크를 약한 참조로만 들고 있어서, 아무도 참조하지 않는 태스크는 실행 도중 사라질 수 있다고 경고합니다. 둘째, 언젠가 반드시 `await`합니다. 0.1초 뒤 "로그 저장"을 찍는 `save_log`를 `main()` 안에서 `asyncio.create_task(save_log("상담 종료"))`로 던져 놓고 바로 `print("main 끝")`으로 끝내 봤습니다(`task_lost.py`).
+
+```text
+main 끝
+```
+
+"로그 저장"은 끝내 찍히지 않았습니다. `main()`이 먼저 끝나자 `asyncio.run`이 남은 태스크를 취소하고 루프를 닫았기 때문입니다. 에러도 경고도 없이 사라지니, 상담 로그 같은 일을 이렇게 던져 두면 프로덕션에서 데이터가 비는 원인이 됩니다.
+
+## `asyncio.as_completed`: 끝나는 대로 처리하기
+
+`gather`는 전부 끝나야 결과를 한 번에 줍니다. 분류 결과를 끝난 것부터 DB에 저장하고 싶다면 가장 느린 하나를 기다릴 이유가 없습니다. `asyncio.as_completed`는 끝나는 순서대로 하나씩 내줍니다.
+
+```python
+# as_completed.py
+import asyncio
+import random
+import time
+
+
+async def classify(inquiry_id: int) -> tuple[int, str]:
+    await asyncio.sleep(random.uniform(0.2, 1.5))  # 응답 시간이 제각각
+    return inquiry_id, random.choice(["refund", "shipping", "bug"])
+
+
+async def main() -> None:
+    random.seed(7)
+    start = time.perf_counter()
+    coros = [classify(i) for i in range(1, 6)]
+    for next_done in asyncio.as_completed(coros):
+        inquiry_id, intent = await next_done
+        print(f"{time.perf_counter() - start:.2f}초  문의 {inquiry_id} -> {intent}")
+
+
+asyncio.run(main())
+```
+
+```text
+0.30초  문의 3 -> shipping
+0.40초  문의 2 -> bug
+0.63초  문의 4 -> refund
+0.89초  문의 1 -> bug
+1.06초  문의 5 -> refund
+```
+
+문의 번호가 뒤섞여 나오는 게 정상입니다. 끝난 순서로 오기 때문에, 어떤 입력의 결과인지는 이 예처럼 결과 안에 `inquiry_id`를 담아 짝지어야 합니다. 입력 순서가 중요하면 `gather`, 빨리 받는 게 중요하면 `as_completed`입니다.
+
+## `async with`와 `async for`: 스트리밍 준비
+
+`async with`는 `with open(...)`과 같은 일을 하는데, 여는 일과 닫는 일 자체에 기다림이 들 때 씁니다. HTTP 연결 풀이나 DB 커넥션이 그렇습니다. 클래스에 `__aenter__`와 `__aexit__`를 `async def`로 정의하면 됩니다.
+
+`async for`는 값을 하나씩 기다려 가며 받는 반복입니다. 함수 안에 `await`와 `yield`를 함께 쓰면 async 제너레이터가 되고, LLM 답변을 토큰 단위로 받아 흘려 보내는 스트리밍이 바로 이 모양입니다.
+
+```python
+# async_with_for.py
+import asyncio
+
+
+class FakeLLMSession:
+    """연결을 열고 닫는 데 시간이 드는 자원을 흉내 낸다."""
+
+    async def __aenter__(self) -> "FakeLLMSession":
+        await asyncio.sleep(0.1)
+        print("연결 열기")
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        await asyncio.sleep(0.1)
+        print("연결 닫기")
+
+
+async def stream_answer(question: str):
+    # async 제너레이터: await와 yield를 함께 쓴다
+    for token in ["주문하신 ", "상품은 ", "내일 ", "도착합니다."]:
+        await asyncio.sleep(0.2)  # 다음 토큰이 네트워크로 오길 기다림
+        yield token
+
+
+async def main() -> None:
+    async with FakeLLMSession():
+        async for token in stream_answer("배송 언제 와요?"):
+            print(token, end="", flush=True)
+        print()
+
+
+asyncio.run(main())
+```
+
+```text
+연결 열기
+주문하신 상품은 내일 도착합니다.
+연결 닫기
+```
+
+화면에서는 0.2초마다 한 덩어리씩 글자가 붙어 나옵니다. 토큰을 기다리는 그 0.2초마다 루프는 다른 고객의 요청을 돌릴 수 있습니다.
+
+## 진짜에 가까운 HTTP 호출: `httpx.AsyncClient`
+
+실제 코드에서는 비동기를 지원하는 HTTP 클라이언트가 필요하고, 파이썬에서는 `httpx`가 대표적입니다. 동기 라이브러리인 `requests`는 응답을 기다리는 동안 스레드를 붙잡아 루프 전체를 멈추므로 `async` 코드 안에서 쓰면 안 됩니다.
+
+`httpx.MockTransport`를 끼우면 네트워크 없이 우리가 짠 함수가 서버 역할을 합니다. 테스트 레슨의 <Term id="mocking">모킹</Term>을 HTTP 층에서 하는 셈입니다. 아래는 `httpx` 0.28.1에서 돌렸습니다.
+
+```python
+# httpx_mock.py
+import asyncio
+import json
+import time
+
+import httpx
+
+
+async def fake_server(request: httpx.Request) -> httpx.Response:
+    # 진짜 네트워크 대신 이 함수가 서버 역할을 한다
+    await asyncio.sleep(1)  # 모델이 답을 만드는 시간 흉내
+    body = json.loads(request.content)
+    text = body["messages"][0]["content"]
+    intent = "refund" if "환불" in text else "other"
+    return httpx.Response(200, json={"intent": intent})
+
+
+async def classify(client: httpx.AsyncClient, text: str) -> str:
+    resp = await client.post("/v1/classify", json={"messages": [{"content": text}]})
+    resp.raise_for_status()
+    return resp.json()["intent"]
+
+
+async def main() -> None:
+    inquiries = ["환불하고 싶어요", "로그인이 안 돼요", "환불 언제 되나요", "영수증 주세요"]
+    transport = httpx.MockTransport(fake_server)
+    async with httpx.AsyncClient(transport=transport, base_url="https://llm.example") as client:
+        start = time.perf_counter()
+        intents = await asyncio.gather(*(classify(client, t) for t in inquiries))
+        elapsed = time.perf_counter() - start
+    for text, intent in zip(inquiries, intents):
+        print(f"{intent:>7}  {text}")
+    print(f"{len(inquiries)}건, {elapsed:.2f}초")
+
+
+asyncio.run(main())
+```
+
+```text
+ refund  환불하고 싶어요
+  other  로그인이 안 돼요
+ refund  환불 언제 되나요
+  other  영수증 주세요
+4건, 1.01초
+```
+
+클라이언트는 `async with`로 한 번만 만들어 모든 요청이 함께 씁니다. 요청마다 새로 만들면 연결을 매번 새로 맺어 느려집니다. `classify`가 `client`를 인자로 받으니, 테스트에서는 `MockTransport`를 끼운 클라이언트를, 운영에서는 진짜 클라이언트를 넣으면 됩니다. Anthropic과 OpenAI 파이썬 SDK의 비동기 클라이언트(`AsyncAnthropic`, `AsyncOpenAI`)도 안에서 `httpx`를 씁니다.
+
+## 동기 코드와 비동기 코드 섞기
+
+`await`는 `async def` 안에서만 쓸 수 있습니다. `def handle(q)` 같은 일반 함수 안에 `return await ask_llm(q)`를 쓴 `await_in_def.py`를 돌리면, 실행 전에 문법 에러가 납니다(경로 앞부분은 줄였습니다).
+
+```text
+  File "...\await_in_def.py", line 10
+    return await ask_llm(q)  # 일반 함수 안에서 await
+           ^^^^^^^^^^^^^^^^
+SyntaxError: 'await' outside async function
+```
+
+그래서 비동기는 위로 번집니다. `ask_llm`을 기다리려면 `handle`도 `async def`가 되어야 하고, `handle`을 부르는 함수도 마찬가지입니다. 이 사슬 맨 꼭대기에서 딱 한 번 `asyncio.run(main())`을 부르는 게 정석입니다.
+
+중간에서 `asyncio.run`으로 감싸 동기 함수처럼 쓰려 하면, 이미 루프가 도는 안에서는 막힙니다. `main()` 안에서 `asyncio.run(ask_llm("환불 되나요?"))`를 부른 `run_inside.py`의 트레이스백 끝부분입니다.
+
+```text
+    raise RuntimeError(
+RuntimeError: asyncio.run() cannot be called from a running event loop
+sys:1: RuntimeWarning: coroutine 'ask_llm' was never awaited
+```
+
+FastAPI 같은 비동기 웹 프레임워크는 이미 루프를 돌리고 있어서, 우리는 `asyncio.run`을 부를 일 없이 `async def` 엔드포인트만 쓰면 됩니다. 반대로 `async` 코드 안에서 어쩔 수 없이 동기 라이브러리를 불러야 할 때 쓰는 `asyncio.to_thread`는 다음 레슨에서 다룹니다.
+
+## 스레드, 프로세스, `asyncio` 비교
+
+파이썬에서 여러 일을 겹치는 방법은 세 가지입니다. 고르는 기준은 CPython의 <Term id="gil">GIL</Term>에서 나옵니다. CPython 3.12에서는 한 프로세스 안에서 파이썬 코드를 실행하는 스레드가 한 번에 하나뿐입니다.
+
+| 방식 | 실제로 몇 개가 도나 | I/O 대기 작업 | CPU 계산 작업 | 비용과 주의점 |
+| --- | --- | --- | --- | --- |
+| 스레드 (`threading`, `ThreadPoolExecutor`) | OS 스레드 여러 개, 파이썬 코드는 GIL 때문에 한 번에 하나 | 빨라짐 (기다리는 동안 GIL을 놓음) | 순수 파이썬이면 거의 안 빨라짐 | 스레드마다 메모리가 들어 수천 개는 부담, 공유 데이터에 락 필요 |
+| 프로세스 (`multiprocessing`, `ProcessPoolExecutor`) | 프로세스마다 인터프리터와 GIL이 따로 | 되지만 과함 | 코어 수만큼 빨라짐 | 프로세스 띄우는 비용, 데이터를 `pickle`로 주고받는 비용, 메모리 |
+| `asyncio` | 스레드 하나, `await`에서 번갈아 실행 | 가장 가볍게 수천 개까지 | 안 빨라지고, 오히려 루프 전체를 멈춤 | 비동기 지원 라이브러리 필요, 블로킹 호출 하나가 모두를 멈춤 |
+
+예외도 있습니다. NumPy처럼 C로 짠 라이브러리 일부는 무거운 계산 중에 GIL을 놓아서 스레드로도 빨라질 수 있습니다. 파이썬 3.13부터 GIL을 끈 실험적 빌드가 따로 나왔지만, 보통 설치하는 기본 빌드에는 여전히 GIL이 있습니다.
+
+AI 서비스의 일상 작업은 대부분 LLM 호출, 벡터 DB 조회, 내부 API 호출 같은 I/O 대기라서 `asyncio`가 기본값입니다. 임베딩 계산이나 대용량 전처리처럼 진짜 CPU 일이 생기면 그 부분만 프로세스 풀이나 별도 워커로 떼어 냅니다.
+
+## 채널톡 코드에서는
+
+고객 메시지에 AI 에이전트가 답하는 서비스를 떠올려 봅시다. 요청 하나를 처리하는 동안 서버는 고객 정보, 주문, 상담 이력을 조회하고, 지식 문서를 검색하고, LLM을 부릅니다. 서로 기다릴 필요가 없는 조회들은 `create_task`나 `gather`로 겹치고, 그 결과가 모두 필요한 LLM 호출만 뒤에 둡니다. 각 시간의 합이 걸릴 일이 가장 느린 조회 하나와 LLM 호출 시간으로 줄어듭니다.
+
+서버 전체로 보면 효과가 더 큽니다. 한 요청이 LLM 답을 기다리는 몇 초 동안 같은 프로세스가 다른 고객 수십 명의 요청을 돌립니다. 그래서 비동기 웹 프레임워크에 `async def` 엔드포인트, 비동기 LLM 클라이언트, 비동기 DB 드라이버를 맞춰 쓰는 구성이 흔하고, 이 사슬에 동기 호출이 하나라도 끼면 이득이 사라집니다.
+
+하루 치 문의 수천 건 분류나 새 프롬프트로 골든셋 다시 돌리기 같은 배치 작업은 `gather`와 `as_completed`의 무대입니다. 결과가 당장 필요 없다면 동시 호출 대신 요금이 싼 <Term id="batch-api">배치 API</Term>도 함께 저울질합니다.
+
+## 흔한 함정
+
+`await`를 빠뜨리는 것이 가장 흔합니다. `async` 함수 안에서 `save_log("상담 종료")`처럼 부르면 아무 일도 일어나지 않고 경고 하나만 남습니다(경로 앞부분은 줄였습니다).
+
+```text
+...\forgot_await.py:10: RuntimeWarning: coroutine 'save_log' was never awaited
+  save_log("상담 종료")  # await를 빠뜨렸다
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+main 끝
+```
+
+에러가 아니라 경고라서 로그에 묻히기 쉽습니다. 앞 레슨의 `mypy`는 같은 줄을 실행 전에 `Value of type "Coroutine[Any, Any, None]" must be used`와 `Are you missing an await?`로 잡아 주니, 타입 검사를 CI에 걸어 두면 이 실수가 합쳐지기 전에 막힙니다.
+
+`async def`를 붙였으니 빨라졌다고 믿는 것도 흔합니다. 순서대로 `await`하면 동기 코드처럼 3초가 걸립니다. 겹치려면 `gather`, `create_task`, `as_completed`로 여러 작업을 한꺼번에 루프에 올려야 합니다.
+
+CPU 계산에 `asyncio`를 기대하는 것도 함정입니다. 하나도 안 빨라지고, 그 계산이 도는 동안 다른 요청이 전부 멈춥니다.
+
+`create_task`로 던져 놓고 잊는 것도 위험합니다. 참조를 남기지 않거나 끝까지 `await`하지 않으면 작업이 조용히 사라집니다.
+
+`async def` 안에서 `requests.get`이나 `time.sleep` 같은 동기 함수를 쓰는 것은 문법적으로 문제가 없어서 더 잘 숨습니다. 이 함정이 서버를 얼마나 느리게 만드는지는 다음 레슨에서 잽니다.
+
+## 직접 해보기
+
+1. `seq_vs_gather.py`를 돌려 3초와 1초를 확인한 뒤, `ask_llm`의 `asyncio.sleep(1)`을 `time.sleep(1)`로 바꿔 다시 돌려 보세요. `gather` 쪽 시간이 어떻게 변하는지 보고, 루프가 갈아타는 지점으로 이유를 설명해 보세요(1,000건 줄은 지우고 돌리세요).
+2. `create_task.py`에 상담 이력을 0.6초 걸려 가져오는 `fetch_history`를 붙이세요. 주문과 이력 조회는 동시에, LLM 호출은 두 결과를 받은 뒤 부르도록 바꾸고, 전체 시간을 먼저 계산한 다음 실제로 재서 맞춰 보세요.
+3. `httpx_mock.py`의 `fake_server`가 "로그인"이 든 문의에 `httpx.Response(500)`을 돌려주게 바꿔 보세요. `gather`가 어떻게 끝나는지, 나머지 문의의 결과는 어떻게 되는지 관찰하세요. 답은 다음 레슨의 `TaskGroup`과 에러 처리에서 이어집니다.
+
+여기까지 하면 면접에서 "LLM 호출이 느린데 처리량은 어떻게 올렸나요"라는 질문에, I/O 대기를 겹친 원리와 직접 잰 숫자로 답할 수 있습니다.
+
+## 더 깊이 파고들 것
+
+이 레슨은 "겹쳐서 빨라진다"까지였습니다. 운영 코드는 그다음 질문들로 채워집니다. 동시에 몇 개까지 보내야 속도 제한에 안 걸리는지, 응답이 안 오면 언제 포기할지, 실패하면 어떤 간격으로 다시 시도할지, 고객이 창을 닫으면 진행 중인 호출을 어떻게 취소할지, 스트리밍 응답을 어떻게 받아 넘길지입니다.
+
+이 질문들은 다음 레슨 [비동기 실전](/roadmap/python-asyncio-production)에서 `Semaphore`, 타임아웃, 재시도와 백오프, `TaskGroup`, 취소, 블로킹 함정, 스트리밍 순서로 다룹니다. 그 전에 파이썬 공식 문서 `asyncio`의 "Coroutines and Tasks" 페이지를 한 번 훑어 두면, 이 레슨에서 본 함수 대부분을 한자리에서 다시 만날 수 있습니다.

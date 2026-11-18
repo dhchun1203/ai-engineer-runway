@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { ComponentType } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { isRoadmapViewer } from "@/lib/roadmap-access";
 import { MDXContent } from "@/components/mdx-content";
 import { TermPanelProvider, Term } from "@/components/roadmap/term-panel";
@@ -10,7 +10,7 @@ import { StageChips } from "@/components/stage-chips";
 import { PageBookmark } from "@/components/page-bookmark";
 import { ReadingAssistant } from "@/components/reading-assistant/reading-assistant";
 import { RoadmapNote } from "@/components/roadmap-note";
-import { getRoadmapLessonBySlug } from "@/content/roadmap-lesson-helpers";
+import { getRoadmapLessonBySlug, getRoadmapLessonSeries } from "@/content/roadmap-lesson-helpers";
 import { roadmapStages } from "@/content/channeltalk-roadmap";
 
 // 채널톡 로드맵 별도 심화 레슨 리더 — 소유자 개인용. 허용 계정(소유자 + 테스터)만
@@ -49,6 +49,9 @@ export default async function RoadmapLessonPage(
 
   // 이 레슨이 어느 로드맵 단계에 속하는지 — 헤더에 단계 이름을 보여 준다.
   const stage = roadmapStages.find((s) => s.id === lesson.stageId);
+  // 여러 편 묶음의 한 편이면 아래에 묶음 안 이동(전체 편 목록, 다음 편)을 붙인다.
+  const series = getRoadmapLessonSeries(lesson.slug);
+  const nextLesson = series ? series.lessons[series.index + 1] : undefined;
 
   return (
     <main className="relative mx-auto flex w-full max-w-3xl min-[1800px]:max-w-4xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
@@ -91,6 +94,52 @@ export default async function RoadmapLessonPage(
             />
           </div>
         </TermPanelProvider>
+
+        {series ? (
+          <nav aria-label="이 묶음의 다른 편" className="hairline flex flex-col gap-3 pt-6">
+            <p className="text-label font-bold">
+              <span className="break-keep">{series.skillTitle}</span>{" "}
+              <span className="font-normal text-badge-neutral-text dark:text-badge-neutral-text-dark">
+                {series.lessons.length}편 중 {series.index + 1}편
+              </span>
+            </p>
+            <ol className="flex flex-col border-l-2 border-accent dark:border-accent-dark">
+              {series.lessons.map((l, i) => (
+                <li key={l.slug}>
+                  {i === series.index ? (
+                    <span
+                      aria-current="page"
+                      className="flex min-h-11 items-center gap-2.5 bg-accent/10 py-1.5 pl-3 text-label font-bold dark:bg-accent-dark/15"
+                    >
+                      <span className="shrink-0 font-black tabular-nums text-accent dark:text-accent-dark">{i + 1}</span>
+                      <span className="break-keep">{l.title}</span>
+                    </span>
+                  ) : (
+                    <Link
+                      href={`/roadmap/${l.slug}`}
+                      className="nav-link tap-feedback flex min-h-11 items-center gap-2.5 py-1.5 pl-3 text-label font-semibold"
+                    >
+                      <span className="shrink-0 font-black tabular-nums text-accent dark:text-accent-dark">{i + 1}</span>
+                      <span className="break-keep">{l.title}</span>
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ol>
+            {nextLesson ? (
+              <Link
+                href={`/roadmap/${nextLesson.slug}`}
+                className="card-interactive panel flex min-h-11 items-center gap-2 p-4 text-body font-bold"
+              >
+                <span className="min-w-0 flex-1 break-keep">
+                  <span className="block text-label font-semibold text-badge-neutral-text dark:text-badge-neutral-text-dark">다음 편</span>
+                  {nextLesson.title}
+                </span>
+                <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+              </Link>
+            ) : null}
+          </nav>
+        ) : null}
 
         <nav aria-label="로드맵으로 돌아가기" className="hairline pt-6">
           <Link

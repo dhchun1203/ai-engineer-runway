@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { roadmapStages, type SkillCoverage } from "@/content/channeltalk-roadmap";
+import { getRoadmapLessonBySlug } from "@/content/roadmap-lesson-helpers";
 
 // 진입 로드맵 단계 목록. 단계마다 접히는 카드(details)이고, 머리(번호, 제목, 부제,
 // 강화/별도 개수)만 기본으로 보인다. 펼치면 채널톡의 말, 이유, 익힐 역량이 나온다.
@@ -116,6 +117,35 @@ export function RoadmapStageList() {
                         심화 레슨 열기
                         <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
                       </Link>
+                    ) : null}
+                    {skill.lessonSlugs ? (
+                      <div className="mt-1 flex flex-col gap-1">
+                        <span className="text-label font-bold">
+                          심화 레슨 {skill.lessonSlugs.length}편
+                        </span>
+                        <ol className="flex flex-col border-l-2 border-accent dark:border-accent-dark">
+                          {skill.lessonSlugs.map((slug, i) => {
+                            const lesson = getRoadmapLessonBySlug(slug);
+                            if (!lesson) return null;
+                            return (
+                              <li key={slug}>
+                                <Link
+                                  href={`/roadmap/${slug}`}
+                                  className="nav-link tap-feedback flex min-h-11 items-center gap-2.5 py-1.5 pl-3 text-label font-semibold"
+                                >
+                                  <span
+                                    className="shrink-0 font-black tabular-nums text-accent dark:text-accent-dark"
+                                    aria-hidden="true"
+                                  >
+                                    {i + 1}
+                                  </span>
+                                  <span className="break-keep">{lesson.title}</span>
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ol>
+                      </div>
                     ) : null}
                   </div>
                 </li>

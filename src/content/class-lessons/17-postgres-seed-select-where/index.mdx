@@ -117,10 +117,10 @@ DETAIL:  Failing row contains (1, 2, 2026-11, 수강중, -1000.00).
 <Figure label="enrollments 앞의 문지기들 (먼저 확인하는 순서, PostgreSQL에서 직접 확인)">
   <GateFlow
     gates={[
-      { q: "비어 있는 필수 칸이 있나?", code: "NOT NULL", out: "`null value in column \"pay_amount\" ... violates not-null constraint`" },
-      { q: "`CHECK` 조건이 거짓인가?", code: "CHECK (pay_amount >= 0)", out: "`violates check constraint \"enrollments_pay_amount_check\"`" },
-      { q: "같은 (회원, 강좌, 월)이 이미 있나?", code: "PRIMARY KEY (member_id, course_id, enroll_month)", out: "`duplicate key value violates unique constraint \"enrollments_pkey\"`" },
-      { q: "없는 회원이나 강좌를 가리키나?", code: "REFERENCES", out: "`violates foreign key constraint \"enrollments_member_id_fkey\"`" },
+      { q: "비어 있는 필수 칸이 있나?", code: "NOT NULL", out: "`violates not-null constraint`" },
+      { q: "`CHECK` 조건이 거짓인가?", code: "CHECK (pay_amount >= 0)", out: "`violates check constraint`" },
+      { q: "같은 (회원, 강좌, 월)이 이미 있나?", code: "PRIMARY KEY (member_id, course_id, enroll_month)", out: "`duplicate key value`" },
+      { q: "없는 회원이나 강좌를 가리키나?", code: "REFERENCES", out: "`violates foreign key constraint`" },
     ]}
     pass={{ text: "통과: 행이 들어가요", code: "INSERT 0 1" }}
   />
@@ -353,7 +353,7 @@ LIMIT 5;
       { arrow: "WHERE" },
       { title: "행 고르기 (가로)", tone: "blue", lines: ["조건이 참인 행만 남아요", "`region = '마포구'` → 17행"] },
       { arrow: "SELECT" },
-      { title: "열 고르기 (세로)", tone: "rust", lines: ["적은 열만 남아요", "`name, birth_year, region`"] },
+      { title: "열 고르기 (세로)", tone: "rust", lines: ["적은 열만 남아요", "`name`, `birth_year`, `region`"] },
     ]}
   />
 </Figure>
@@ -542,7 +542,7 @@ SELECT member_id, name FROM members WHERE email = NULL;
 
 오류는 아닌데 **0행**이에요. 직접 세어 보면 `email = NULL`은 0건, `email IS NULL`은 15건이었어요.
 
-NULL은 "값이 0"이나 "빈 글자"가 아니라 **"모르는 값"**이에요. 모르는 값이 무엇과 같은지 물으면 답도 "모른다"가 되고, `WHERE`는 참인 행만 남기니 아무것도 남지 않아요. 그래서 빈 칸은 `IS NULL`, 값이 있는 칸은 `IS NOT NULL`로 물어요.
+NULL은 "값이 0"이나 "빈 글자"가 아니라 "**모르는 값**"이에요. 모르는 값이 무엇과 같은지 물으면 답도 "모른다"가 되고, `WHERE`는 참인 행만 남기니 아무것도 남지 않아요. 그래서 빈 칸은 `IS NULL`, 값이 있는 칸은 `IS NOT NULL`로 물어요.
 
 <Figure>
   <Boxes

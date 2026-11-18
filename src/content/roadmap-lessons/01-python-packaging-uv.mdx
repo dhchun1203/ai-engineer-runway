@@ -1,0 +1,530 @@
+---
+title: "\"내 컴퓨터에서는 되는데\"를 없애는 패키지와 가상환경"
+stageId: "python-eng"
+order: 25
+summary: "가상환경이 실제로 무엇인지, import가 모듈을 어디서 찾는지부터 pyproject.toml, uv.lock, CI의 --locked, src 레이아웃, 진입점, Docker 이미지까지. 노트북과 CI와 서버가 똑같은 환경을 갖게 만드는 법을 실제 출력으로 따라갑니다."
+slug: "python-packaging-uv"
+---
+
+## 이 레슨의 목표와 눈높이
+
+Python 실무 시리즈의 마지막 편입니다. 수업 5회차 [Python 시작하기](/class/05-python-setup-uv)에서 `uv init`, `uv add`, `uv sync`, `uv run`으로 프로젝트를 만드는 법은 이미 익혔습니다. 이 레슨은 그 명령들이 속에서 무엇을 하는지, 그리고 팀 저장소와 CI와 서버에서 어떻게 쓰는지를 다룹니다.
+
+AI 서비스 팀에서 "내 컴퓨터에서는 되는데"는 꽤 비싼 말입니다. 내 Mac에서 통과한 분류기가 CI에서 `ModuleNotFoundError`로 죽고, 서버에서는 `pydantic`의 다른 버전이 깔려 응답 검증이 미묘하게 달라집니다. 목표는 노트북, 동료의 노트북, CI, Docker 이미지가 모두 똑같은 환경을 갖는 <Term id="reproducible-build">재현 가능한 빌드</Term>입니다.
+
+이 레슨을 끝내면 다음을 직접 할 수 있습니다.
+
+1. <Term id="virtual-env">가상환경</Term>이 물리적으로 무엇인지 설명하고, "설치했는데 import가 안 된다"를 인터프리터 확인으로 1분 안에 진단하기
+2. `pyproject.toml`과 <Term id="lockfile">락파일</Term>을 읽고, 버전 범위와 고정을 의도대로 쓰고, CI에서 어긋남을 자동으로 잡기
+3. `src` 레이아웃과 <Term id="entry-point">진입점</Term>을 갖춘 작은 패키지를 만들어, Docker 이미지로 굽는 데까지 가져가기
+
+실습은 상담 문의를 의도별로 나누는 작은 패키지 `inquiry-classifier`로 합니다. 의존성은 `httpx`와 `pydantic`입니다.
+
+이 레슨의 명령 출력은 모두 실제로 돌린 결과입니다. 다만 실습은 Windows PC에서 돌렸기 때문에, 출력 속 경로는 Mac 기준으로 바꿔 적었습니다.
+
+## 가상환경은 폴더 하나다
+
+가상환경을 "격리된 공간"이라고만 알면 문제가 났을 때 손을 못 댑니다. 실체는 평범한 폴더 하나입니다. Mac 기준으로 `.venv/bin/python`(Windows는 `.venv\Scripts\python.exe`)과 패키지가 깔리는 `.venv/lib/python3.12/site-packages/`, 그리고 설정 파일 `pyvenv.cfg`가 들어 있습니다.
+
+`pyvenv.cfg`를 열어 보면 정체가 바로 보입니다.
+
+```text
+home = <기본 파이썬의 bin 폴더>
+implementation = CPython
+uv = 0.13.6
+version_info = 3.12.10
+include-system-site-packages = false
+prompt = inquiry-classifier
+```
+
+`home`은 이 가상환경이 빌려 쓰는 진짜 파이썬의 위치입니다. 표준 라이브러리(`json`, `asyncio` 같은 것)는 복사하지 않고 거기서 빌려 쓰고, 외부 패키지만 이 폴더의 `site-packages`에 따로 깝니다. `include-system-site-packages = false`는 기본 파이썬에 깔린 외부 패키지는 보지 않겠다는 뜻입니다.
+
+파이썬이 실행 중에 자기 위치를 어떻게 알고 있는지 직접 찍어 봅시다.
+
+```python
+# where.py
+import sys
+
+print("executable :", sys.executable)
+print("prefix     :", sys.prefix)
+print("base_prefix:", sys.base_prefix)
+print("in venv?   :", sys.prefix != sys.base_prefix)
+print("sys.path   :")
+for p in sys.path:
+    print("   ", p)
+```
+
+가상환경 밖(기본 파이썬)과 안(`uv run python`)에서 돌린 결과입니다. 경로는 Mac 기준으로 바꿔 적었고, 긴 앞부분은 `<기본 파이썬>`으로 줄였습니다. 양쪽이 똑같은 표준 라이브러리 줄과 Windows에만 생기는 항목은 뺐습니다.
+
+```text
+# 밖: <기본 파이썬>/bin/python3.12 where.py
+executable : <기본 파이썬>/bin/python3.12
+prefix     : <기본 파이썬>
+in venv?   : False
+sys.path   : ~/dev/inquiry-classifier
+             (표준 라이브러리 줄들)
+             <기본 파이썬>/lib/python3.12/site-packages
+
+# 안: uv run python where.py
+executable : ~/dev/inquiry-classifier/.venv/bin/python
+prefix     : ~/dev/inquiry-classifier/.venv
+in venv?   : True
+sys.path   : ~/dev/inquiry-classifier
+             (표준 라이브러리 줄들)
+             ~/dev/inquiry-classifier/.venv/lib/python3.12/site-packages
+             ~/dev/inquiry-classifier/src
+```
+
+차이는 딱 두 군데입니다. `sys.prefix`가 `.venv`로 바뀌었고, `sys.path`의 `site-packages`가 기본 파이썬 것에서 `.venv` 것으로 바뀌었습니다(표준 라이브러리 줄은 그대로). 가상환경이란 결국 "어느 `site-packages`를 볼지"를 바꾸는 장치입니다.
+
+맨 끝의 `src` 줄은 우리 패키지가 <Term id="editable-install">편집 가능 설치</Term>로 깔렸기 때문에 생겼습니다. `site-packages` 안의 `inquiry_classifier.pth`라는 한 줄짜리 파일이 "`src` 폴더도 찾아봐"라고 경로를 덧붙입니다. 그래서 코드를 고치면 다시 설치하지 않아도 바로 반영됩니다.
+
+`import httpx`를 만나면 파이썬은 이 `sys.path` 목록을 위에서부터 뒤져, `httpx`라는 폴더나 파일이 처음 나오는 곳에서 멈춥니다. 도서관 서가를 1번부터 훑다가 제목이 맞는 첫 책을 집는 것과 같습니다. 첫 줄이 실행한 스크립트의 폴더라는 점이 뒤에 나올 함정 두 개의 뿌리입니다.
+
+## "설치했는데 `ModuleNotFoundError`"의 정체
+
+가장 흔한 질문입니다. 거의 언제나 원인은 하나입니다.
+
+패키지를 깐 파이썬과 코드를 돌린 파이썬이 서로 다른 것입니다. 파이썬은 컴퓨터에 여러 개 있을 수 있고, 각자 자기 `site-packages`만 봅니다.
+
+실습 PC에서 프로젝트에 `httpx`와 `pydantic`을 `uv add`한 뒤, 가상환경이 아닌 기본 파이썬으로 import해 봤습니다.
+
+```bash
+<기본 파이썬>/bin/python3.12 -c "import httpx; print(httpx.__version__)"
+# 0.28.1
+<기본 파이썬>/bin/python3.12 -c "import pydantic"
+# ModuleNotFoundError: No module named 'pydantic'
+```
+
+`httpx`는 되고 `pydantic`은 안 됩니다. 예전에 기본 파이썬에도 `httpx`를 따로 깔아 둔 적이 있어서, 우연히 이름이 같은 다른 복사본이 잡힌 것입니다.
+
+이런 "절반만 되는" 상태가 제일 위험합니다. 오늘은 버전이 같아서 넘어가도, 언젠가 버전이 갈리면 원인을 찾기 아주 어렵습니다.
+
+진단은 "지금 이 `python`이 누구인가"를 묻는 것에서 시작합니다. Mac zsh에서는 이렇게 확인합니다.
+
+```bash
+which python3                                  # PATH에서 먼저 잡히는 python3의 위치
+python3 -c "import sys; print(sys.executable)" # 실제로 실행된 인터프리터
+uv run python -c "import sys; print(sys.executable)"   # 프로젝트 .venv의 인터프리터
+```
+
+Mac에서 `which python3`는 보통 macOS가 제공하는 `/usr/bin/python3`나 Homebrew 쪽 경로를 가리킵니다. 프로젝트 `.venv`의 파이썬이 아닙니다. 그래서 이 프로젝트의 코드는 언제나 `uv run`으로 돌리는 습관이 중요합니다.
+
+`pip install`과 `python -m pip install`의 차이도 같은 원리입니다. `pip`은 PATH에서 먼저 잡히는 아무 `pip` 실행 파일이고, 그 `pip`이 어느 파이썬에 딸린 것인지는 보장이 없습니다.
+
+`python -m pip`은 "바로 이 `python`에 딸린 pip"이라 설치 위치가 분명합니다. uv 프로젝트에서는 한 가지가 더 있습니다.
+
+```bash
+uv run python -m pip --version
+# .venv/bin/python: No module named pip
+
+uv run pip --version
+# pip 25.0.1 from <기본 파이썬>/lib/python3.12/site-packages/pip (python 3.12)
+```
+
+uv가 만든 가상환경에는 기본적으로 pip이 없습니다. 그래서 `uv run pip install ...`을 치면 `.venv`가 아니라 PATH에서 찾은 기본 파이썬의 pip이 돌고, 패키지는 엉뚱한 곳에 깔립니다. uv 프로젝트에서 패키지는 `uv add`로만 넣는다고 정해 두면 이 함정이 통째로 사라집니다.
+
+## `pyproject.toml` 해부
+
+수업에서는 `uv init --no-package`로 스크립트용 구조를 만들었습니다. 서비스 코드처럼 여러 모듈로 된 패키지는 `uv init --package --python 3.12 inquiry-classifier`로 만들고, `uv add httpx pydantic`과 `uv add --dev pytest ruff`로 의존성을 넣었습니다. 그다음 진입점과 설명을 손보고, `uv init`이 Git 설정에서 가져와 넣는 `authors` 항목은 지웠습니다.
+
+```toml
+[project]
+name = "inquiry-classifier"
+version = "0.1.0"
+description = "상담 문의 의도 분류기"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28.1",
+    "pydantic>=2.14.3",
+]
+
+[project.scripts]
+classify-inquiry = "inquiry_classifier.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.13.6,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.5",
+]
+```
+
+| 구역 | 무엇을 적나 | 실무 포인트 |
+| --- | --- | --- |
+| `[project]` | 이름, 버전, 설명 | 표준(PEP 621) 형식이라 uv가 아닌 도구도 읽습니다 |
+| `requires-python` | 지원하는 파이썬 범위 | uv는 이 범위의 모든 버전에서 통하는 조합으로 lock을 풉니다 |
+| `dependencies` | 서비스가 돌아가는 데 필요한 것 | Docker 이미지에 들어가는 목록입니다 |
+| `[dependency-groups]` | `dev` 같은 개발용 묶음 | 테스트, 린터만 넣고 이미지에서는 `--no-dev`로 뺍니다 |
+| `[project.scripts]` | 명령 이름과 실행할 함수 | 설치하면 `.venv/bin`에 그 이름의 명령이 생깁니다 |
+| `[build-system]` | 패키지를 만드는 도구 | `--package`일 때만 생기고, 이게 있어야 우리 코드가 설치됩니다 |
+
+`uv add`가 적은 `>=0.28.1`은 "지금 고른 버전 이상"이라는 하한선입니다. 정확히 무엇이 깔렸는지는 여기가 아니라 `uv.lock`이 기억합니다. 이 역할 분담이 다음 절의 핵심입니다.
+
+## 버전 지정자와 고정 전략
+
+버전 범위를 쓰는 문법은 몇 가지뿐입니다. 말로 외우기보다 결과를 보는 편이 빠릅니다. pip과 uv가 따르는 규칙을 구현한 `packaging` 라이브러리의 `SpecifierSet`으로, 버전 다섯 개(`2.9.2`, `2.10.0`, `2.10.6`, `2.14.3`, `3.0.0`)가 각 범위에 드는지 찍어 봤습니다.
+
+```text
+>=2.10       -> 2.10.0, 2.10.6, 2.14.3, 3.0.0
+>=2.10,<3    -> 2.10.0, 2.10.6, 2.14.3
+~=2.10       -> 2.10.0, 2.10.6, 2.14.3
+~=2.10.0     -> 2.10.0, 2.10.6
+==2.14.3     -> 2.14.3
+==2.14.*     -> 2.14.3
+```
+
+`~=`는 "호환 릴리스"입니다. `~=2.10`은 마지막 자리만 올라가도 된다는 뜻이라 2.x 안에서 움직이고, `~=2.10.0`은 2.10.x 안에서만 움직입니다. 자릿수 하나로 범위가 크게 달라지니 조심해야 합니다.
+
+이 범위들은 <Term id="semver">시맨틱 버저닝</Term>을 전제로 합니다. 주 버전이 바뀌면 호환이 깨질 수 있다는 약속입니다. `pydantic`이 1에서 2로 넘어갈 때 API가 크게 바뀐 것이 대표적인 예입니다.
+
+다만 모든 패키지가 이 약속을 따르지는 않습니다. 실습에서 깔린 `certifi`의 버전은 `2026.10.23`처럼 날짜 형식입니다.
+
+그럼 어떻게 적어야 할까요. 답은 이 코드가 라이브러리인지 애플리케이션인지에 따라 갈립니다.
+
+- 라이브러리(남이 설치해서 쓰는 SDK, 사내 공용 패키지): 하한선만 넉넉하게(`>=`) 둡니다. 쓰는 쪽 프로젝트가 다른 라이브러리와 함께 버전을 풀어야 하므로, 내가 `==`로 묶으면 그 프로젝트에서 충돌이 납니다. 상한선(`<3`)도 정말 깨진다는 걸 알 때만 답니다.
+- 애플리케이션(배포되는 서비스, 이번 `inquiry-classifier`): `pyproject.toml`의 범위는 똑같이 넉넉하게 두고, 정확한 고정은 `uv.lock`에 맡깁니다. `pyproject.toml`에 `==`를 줄줄이 쓰면 업그레이드할 때마다 손으로 고쳐야 하고, 그래도 딸려 오는 패키지는 고정되지 않습니다.
+
+정리하면 "범위는 `pyproject.toml`에, 고정은 lock에"입니다. 상한선은 주 버전 변경이 실제로 예고됐거나 이미 깨진 것을 확인했을 때 `>=2.10,<3`처럼 답니다.
+
+## uv 명령을 실무 순서로
+
+수업에서 본 명령들을 팀 작업의 흐름 순서로 다시 놓으면 이렇습니다.
+
+| 하고 싶은 일 | 명령 | 바뀌는 것 |
+| --- | --- | --- |
+| 서비스 의존성 추가 | `uv add httpx` | `pyproject.toml`, `uv.lock`, `.venv` |
+| 개발용 도구 추가 | `uv add --dev pytest` | `[dependency-groups]`의 `dev` |
+| 의존성 제거 | `uv remove tenacity` | 세 곳 모두에서 지움 |
+| lock만 다시 풀기 | `uv lock` | `uv.lock`만 |
+| lock대로 환경 맞추기 | `uv sync` | `.venv`만 (lock이 낡았으면 lock도) |
+| 환경 안에서 실행 | `uv run pytest` | 실행 전에 lock과 `.venv`를 맞춤 |
+| 의존성 줄기 보기 | `uv tree` | 아무것도 안 바뀜 |
+| 한 패키지만 올리기 | `uv lock --upgrade-package anyio` | lock의 그 패키지만 |
+
+`uv add --dev pytest ruff`를 돌리면 `pytest==9.2.0`, `ruff==0.17.5`와 함께 딸린 패키지들이 깔립니다. 그중 `colorama==0.4.6`이 끼어 있는 이유가 재미있습니다.
+
+`pytest`는 Windows에서만 `colorama`를 필요로 하는데, 실습을 Windows에서 돌려서 깔렸습니다. Mac에서 같은 lock으로 `uv sync`하면 `colorama`는 깔리지 않습니다.
+
+`uv tree --no-dev`는 누가 누구를 끌고 왔는지 나무 모양으로 보여 줍니다. 실습에서는 `httpx v0.28.1` 아래에 `anyio v4.16.0`, `certifi`, `httpcore v1.0.9`, `idna v3.20`이, `pydantic v2.14.3` 아래에 `pydantic-core v2.50.4` 등이 달렸습니다. 원래 출력은 선 문자로 그린 나무라서 여기서는 문장으로 옮겼습니다.
+
+보안 공지가 뜬 패키지가 어디서 왔는지 찾을 때는 거꾸로 봅니다. `uv tree --invert --package idna`는 `idna`를 `anyio`와 `httpx`가 끌고 왔다고 알려 줍니다. `uv tree --outdated`는 새 버전이 나온 패키지에 표시를 붙이는데, 아래 실험으로 `certifi`를 내려 둔 상태에서 돌리니 `certifi v2026.1.4 (latest: v2026.10.23)`가 나왔습니다.
+
+마지막 줄의 `--upgrade-package`가 실무에서 가장 쓸모 있습니다. 실험을 위해 `anyio`와 `certifi`를 일부러 옛 버전으로 내려 둔 뒤, `anyio` 하나만 올려 봤습니다.
+
+```bash
+uv lock --upgrade-package anyio
+# Resolved 19 packages in 100ms
+# Updated anyio v4.9.0 -> v4.16.0
+# Removed sniffio v1.3.1
+```
+
+`anyio`만 올라갔고 `certifi`는 옛 버전 그대로 남았습니다. 옛 `anyio`가 필요로 하던 `sniffio`는 새 버전에서 필요 없어져 함께 빠졌습니다.
+
+그냥 `uv lock --upgrade`는 모든 패키지를 한꺼번에 올리기 때문에, 무엇이 문제를 일으켰는지 가려내기 어렵습니다. 한 번에 하나씩 올리고, 테스트하고, 커밋하는 것이 안전합니다.
+
+## `uv.lock`에 실제로 적히는 것
+
+수업에서 `uv.lock`을 영수증에 비유했습니다. 실제 영수증에는 생각보다 많은 것이 적혀 있습니다.
+
+`pytest` 항목의 일부입니다. 긴 URL과 해시는 `...`로 줄였습니다.
+
+```toml
+[[package]]
+name = "pytest"
+version = "9.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "iniconfig" },
+    # (packaging, pluggy, pygments 생략)
+]
+sdist = { url = "https://files.pythonhosted.org/.../pytest-9.2.0.tar.gz", hash = "sha256:97c4f3b1...", size = 1797555, upload-time = "2026-10-27T21:30:20.728Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/.../pytest-9.2.0-py3-none-any.whl", hash = "sha256:07acdcf8...", size = 411776, upload-time = "2026-10-27T21:30:19.131Z" },
+]
+```
+
+세 가지를 읽을 수 있습니다.
+
+- 정확한 버전과 내려받을 곳입니다.
+- `marker`로 적힌 플랫폼 조건입니다. `colorama`는 Windows에서만 깔린다고 lock 자체에 적혀 있어서, 파일 하나로 Mac, Linux, Windows를 모두 다룹니다.
+- 파일마다 붙은 `sha256` 해시입니다. 내려받은 파일이 lock을 만들 때의 파일과 한 바이트라도 다르면 설치가 실패하므로, 중간에 바꿔치기된 파일을 막습니다.
+
+플랫폼별 파일도 전부 적힙니다. `pydantic-core`는 Rust로 컴파일된 패키지라 운영체제와 CPU마다 다른 <Term id="wheel">휠</Term> 파일이 있습니다. 이 lock에는 `pydantic-core` 하나에만 휠 98개가 적혀 있었습니다.
+
+`macosx_11_0_arm64`(Apple Silicon Mac), `manylinux2014_x86_64`(일반 Linux 서버), `manylinux2014_aarch64`(ARM Linux), `win_amd64` 같은 것들입니다. 실습 lock 전체로는 패키지 19개에 해시 149개였습니다.
+
+그래서 `uv.lock`은 반드시 커밋합니다. 내 Mac에서 만든 lock 하나로 Linux CI와 Linux 서버가 같은 버전, 같은 파일을 설치합니다. 손으로 고치는 파일이 아니므로, 리뷰할 때는 diff에서 어떤 패키지의 `version`이 바뀌었는지만 확인하면 됩니다.
+
+## CI에서는 `--locked`, 배포에서는 `--frozen`
+
+수업에서 `--locked`와 `--frozen`이 어긋남에 어떻게 반응하는지 봤습니다. 실무에서 중요한 것은 이 둘을 어디에 두느냐입니다.
+
+흔한 사고를 재현해 봤습니다. 동료가 `pyproject.toml`에 `tenacity`를 손으로 추가하고, `uv lock`을 깜빡한 채 푸시한 상황입니다.
+
+```bash
+uv lock --check; echo "exit=$?"
+# Resolved 20 packages in 117ms
+# error: The lockfile at `uv.lock` needs to be updated, but `--check` was provided.
+#
+# hint: To update the lockfile, run `uv lock`.
+# exit=1
+
+uv sync --locked; echo "exit=$?"    # 같은 에러 (줄 생략), exit=1
+uv sync --frozen; echo "exit=$?"    # 조용히 통과, exit=0
+uv run --frozen python -c "import tenacity"
+# ModuleNotFoundError: No module named 'tenacity'
+```
+
+`--locked`와 `uv lock --check`는 종료 코드 1로 멈춥니다. CI가 빨간불을 켜고, 리뷰어는 "lock을 같이 커밋해 주세요"라고 말하면 됩니다.
+
+반면 `--frozen`은 종료 코드 0으로 조용히 통과하고, 실행하는 순간에야 터집니다. CI의 첫 관문에 `--frozen`을 두면 이 실수를 그대로 흘려보냅니다.
+
+그래서 역할을 나눕니다. CI 첫 단계는 `--locked`로 "lock이 최신인가"를 검사하는 <Term id="ci">CI</Term> 게이트로 씁니다.
+
+이 게이트를 통과한 커밋만 이미지로 굽기 때문에, Docker 빌드에서는 `--frozen`으로 lock을 그대로 믿고 해석 단계를 건너뜁니다. 빠른 테스트를 커밋마다 돌리는 [자동 테스트 레슨](/roadmap/automated-testing)의 워크플로를 uv로 바꾸면 이렇습니다.
+
+```yaml
+# .github/workflows/test.yml
+name: test
+on: [push, pull_request]
+
+jobs:
+  fast-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6   # 최신 주 버전은 저장소 README에서 확인
+        with:
+          version: "0.13.6"           # 팀이 쓰는 uv 버전으로 고정
+      - run: uv sync --locked         # lock이 낡았으면 여기서 실패
+      - run: uv run --frozen ruff check
+      - run: uv run --frozen pytest -q -m "not eval"
+```
+
+`setup-python`이 없는 것을 눈여겨보세요. uv가 `.python-version`을 읽고 필요한 파이썬을 알아서 준비합니다. 실습 PC에서 `.venv`를 지우고 같은 순서로 돌리니 `uv sync --locked`가 19개 패키지를 깔고, `ruff check`는 `All checks passed!`, `pytest`는 `2 passed`로 끝났습니다.
+
+파이썬 버전도 같은 방식으로 고정합니다. `.python-version`이 이 프로젝트가 쓸 버전을, `requires-python`이 지원 범위를 정하고, 둘이 어긋나면 uv가 막습니다. `.python-version`은 커밋하고, 패치 버전까지 맞출 일은 드물어 보통 `3.12`처럼 두 자리로 둡니다.
+
+```bash
+uv python pin 3.11
+# error: The requested Python version `3.11` is incompatible with the project `requires-python` value of `>=3.12`.
+uv python pin 3.12
+# Pinned `.python-version` to `3.12`
+```
+
+## 프로젝트 구조: flat과 `src` 레이아웃
+
+패키지 폴더를 어디에 두는지에 따라 두 가지 구조가 있습니다.
+
+```text
+flat 레이아웃                    src 레이아웃 (uv init --package)
+inquiry-classifier/              inquiry-classifier/
+  inquiry_classifier/              src/inquiry_classifier/
+    __init__.py, rules.py ...        __init__.py, __main__.py, cli.py ...
+  tests/                           tests/
+  pyproject.toml                   pyproject.toml
+```
+
+차이는 사소해 보이지만, 앞에서 본 "`sys.path` 첫 줄은 현재 폴더"와 만나면 커집니다. 설치하지 않은 상태에서 두 구조의 프로젝트 맨 위 폴더에서 기본 파이썬으로 import해 봤습니다.
+
+```bash
+# flat 레이아웃, 설치 안 함
+python3 -c "import inquiry_classifier as m; print(m.__file__)"
+# ~/dev/flat-demo/inquiry_classifier/__init__.py
+
+# src 레이아웃, 설치 안 함
+python3 -c "import inquiry_classifier as m; print(m.__file__)"
+# ModuleNotFoundError: No module named 'inquiry_classifier'
+
+# src 레이아웃, uv run (설치된 환경)
+uv run python -c "import inquiry_classifier as m; print(m.__file__)"
+# ~/dev/inquiry-classifier/src/inquiry_classifier/__init__.py
+```
+
+flat 레이아웃은 설치하지 않아도 "그냥 됩니다". 이게 함정입니다.
+
+테스트가 설치된 패키지가 아니라 현재 폴더의 소스를 집어 들기 때문에, 패키징 설정이 틀려 배포 파일에 모듈 하나가 빠지거나 의존성 선언이 빠져도 내 자리에서는 테스트가 초록불입니다. 문제는 이미지나 다른 서비스에서 설치했을 때 처음 드러납니다.
+
+<Term id="src-layout">`src` 레이아웃</Term>은 소스를 한 단계 안에 넣어 이 우연을 막습니다. 설치해야만 import되니, 테스트는 언제나 실제로 설치된 모습의 패키지를 검사합니다. 서비스로 배포하거나 다른 팀이 가져다 쓸 코드라면 `src` 레이아웃이 기본값입니다.
+
+`__init__.py`는 이 폴더가 패키지라는 표시이자, `import inquiry_classifier` 했을 때 실행되는 파일입니다. 여기에 무거운 import를 넣으면 패키지를 쓰는 모든 곳이 느려지므로, 실습에서는 패키지 설명 한 줄과 `__version__ = "0.1.0"`만 두었습니다.
+
+## 진입점: 작은 CLI 만들기
+
+분류기를 터미널 명령으로 쓸 수 있게 만들어 봅시다. `models.py`에는 [Pydantic 레슨](/roadmap/python-pydantic-boundaries)에서 본 방식으로 `Classification` 모델(`intent`, `needs_human`, `confidence`)을 두었습니다.
+
+`rules.py`의 `classify`는 LLM을 부르기 전 값싼 1차 분류로, "환불", "배송", "오류" 같은 키워드를 보고 그 모델을 돌려줍니다. 진입점이 될 `cli.py`는 이렇습니다.
+
+```python
+# src/inquiry_classifier/cli.py
+import argparse
+
+from inquiry_classifier import __version__
+from inquiry_classifier.rules import classify
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(prog="classify-inquiry")
+    parser.add_argument("message", help="분류할 고객 문의 문장")
+    parser.add_argument("--version", action="version", version=__version__)
+    args = parser.parse_args()
+    print(classify(args.message).model_dump_json())
+```
+
+`pyproject.toml`의 `[project.scripts]`에 적은 `classify-inquiry = "inquiry_classifier.cli:main"`이 연결 고리입니다. "`classify-inquiry`라는 명령을 치면 `inquiry_classifier.cli` 모듈의 `main` 함수를 불러라"라는 뜻입니다. `uv sync`가 패키지를 설치하면서 `.venv/bin/classify-inquiry`(Windows는 `.venv\Scripts\classify-inquiry.exe`)라는 실행 파일을 만듭니다.
+
+```bash
+uv run classify-inquiry "어제 주문했는데 환불 되나요?"
+# {"intent":"refund","needs_human":false,"confidence":0.7}
+uv run classify-inquiry --version
+# 0.1.0
+```
+
+`python -m 패키지` 형태로도 돌게 하려면 `src/inquiry_classifier/__main__.py`에 `from inquiry_classifier.cli import main`과 `main()` 두 줄을 둡니다. `-m`은 앞에서 본 `python -m pip`과 같은 원리로, 지금 이 인터프리터의 `sys.path`에서 모듈을 찾아 실행합니다.
+
+```bash
+uv run python -m inquiry_classifier "배송이 아직 안 왔어요"
+# {"intent":"shipping","needs_human":false,"confidence":0.7}
+```
+
+진입점이 실제로 어디에 기록되는지는 `uv build`로 만든 휠을 열어 보면 압니다. 휠은 설치할 파일을 담은 zip입니다. 파일 목록을 폴더별로 한 줄씩 묶어 적었습니다.
+
+```text
+inquiry_classifier/__init__.py, __main__.py, cli.py, models.py, rules.py
+inquiry_classifier-0.1.0.dist-info/WHEEL, entry_points.txt, METADATA, RECORD
+```
+
+`src/`는 휠 안에서 사라지고, `tests/`는 아예 들어가지 않습니다. `entry_points.txt`를 열면 `[console_scripts]` 아래에 `classify-inquiry = inquiry_classifier.cli:main` 한 줄이 있습니다. pip이든 uv든 이 휠을 설치하는 도구는 이 줄을 보고 명령을 만듭니다.
+
+## Docker 이미지로 굽기
+
+서버에 배포할 때는 보통 이 환경을 Docker 이미지로 굽습니다. 핵심은 두 가지입니다. 자주 바뀌지 않는 의존성을 먼저 깔아 <Term id="cache">캐시</Term>를 살리는 것, 그리고 내 Mac의 `.venv`를 절대 이미지에 넣지 않는 것입니다.
+
+이 PC에는 Docker가 없어서 아래 파일은 빌드해 보지 않았습니다. 안에 쓴 `uv` 명령과 옵션은 로컬에서 따로 돌려 확인했습니다.
+
+```dockerfile
+# Dockerfile
+FROM python:3.12-slim AS builder
+COPY --from=ghcr.io/astral-sh/uv:0.13.6 /uv /bin/uv
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=0
+
+WORKDIR /app
+
+# 1단계: 의존성만. pyproject.toml과 uv.lock이 그대로면 이 층은 캐시에서 재사용된다.
+COPY pyproject.toml uv.lock .python-version ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
+
+# 2단계: 우리 코드. 자주 바뀌는 것은 뒤에 둔다.
+COPY README.md ./
+COPY src ./src
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-editable
+
+# 실행용 이미지: 빌드 도구 없이 .venv만 옮긴다. 기반 이미지는 builder와 같아야 한다.
+FROM python:3.12-slim
+RUN useradd --create-home --uid 1000 app
+COPY --from=builder --chown=app:app /app/.venv /app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
+USER app
+WORKDIR /app
+CMD ["classify-inquiry", "--help"]
+```
+
+Docker는 명령 한 줄마다 층을 쌓고, 입력이 그대로인 층은 다시 만들지 않습니다. 코드를 고쳐도 `pyproject.toml`과 `uv.lock`이 그대로면 1단계 층은 캐시에서 나오고 2단계만 다시 돕니다. `COPY . .`부터 하면 코드를 고칠 때마다 모든 패키지를 새로 깝니다.
+
+로컬에서 확인한 옵션의 효과는 이렇습니다. `--no-install-project`는 우리 패키지만 빼고 의존성만 깔았고(`Uninstalled 1 package`), `--no-dev`는 `pytest`, `ruff`와 딸린 것까지 7개를 뺐습니다. `--no-editable`은 `.pth`로 `src`를 가리키는 대신 코드를 `site-packages`에 복사해 넣어, 실행용 이미지에 `src` 폴더가 없어도 됩니다.
+
+`useradd`와 `USER app`은 컨테이너를 root가 아닌 사용자로 돌려, 코드에 구멍이 나도 할 수 있는 일을 줄입니다. 그리고 `.dockerignore`에 최소한 `.venv`, `.git`, `.env`, `__pycache__/`, `dist/`를 적어 이미지에 들어가지 않게 합니다.
+
+`.venv`를 빼는 이유는 용량만이 아닙니다. Apple Silicon Mac의 `.venv`에는 `pydantic-core`의 macOS용 컴파일 파일이 들어 있고, 이건 Linux 컨테이너에서 돌지 않습니다. 이미지 안에서 `uv sync`가 lock에 적힌 Linux용 휠을 새로 받아야 맞습니다.
+
+하나 더 있습니다. M 시리즈 Mac에서 그냥 빌드하면 ARM용(`linux/arm64`) 이미지가 나오는데, 배포할 서버가 x86이면 `docker build --platform linux/amd64 .`처럼 플랫폼을 맞춰야 합니다.
+
+## 비밀 설정은 `.env`로, 커밋은 하지 않는다
+
+LLM API 키 같은 비밀 값은 코드에도, `pyproject.toml`에도 적지 않습니다. 개발할 때는 `.env` 파일에 두고 환경변수로 읽습니다. uv는 `--env-file`로 이 파일을 읽어 줍니다.
+
+```bash
+echo 'LLM_API_KEY=sk-test-not-real' > .env
+uv run --env-file .env python -c "import os; print('key loaded:', os.environ['LLM_API_KEY'][:7] + '...')"
+# key loaded: sk-test...
+uv run python -c "import os; print(os.environ.get('LLM_API_KEY'))"
+# None
+```
+
+조심할 점이 있습니다. `uv init`이 만든 `.gitignore`에는 `.venv`, `__pycache__/`, `dist/`는 있지만 `.env`는 없습니다. 실습에서 `git check-ignore .env`를 돌리니 무시 목록에 걸리지 않았습니다.
+
+프로젝트를 만들자마자 `.gitignore`에 `.env`를 한 줄 추가하고, 어떤 키가 필요한지는 값을 비운 `.env.example`로 커밋해 알려 줍니다. 서버에서는 `.env` 파일 대신 배포 플랫폼의 비밀 설정 기능으로 환경변수를 넣습니다.
+
+## 도구 비교: pip+venv, pip-tools, Poetry, uv
+
+uv만 있는 것은 아닙니다. 이직할 팀이 다른 도구를 쓰고 있을 수 있으니, 무엇이 같고 다른지 알아 두면 좋습니다.
+
+| | `pip` + `venv` | `pip-tools` | Poetry | uv |
+| --- | --- | --- | --- | --- |
+| 의존성 선언 | `requirements.txt` 등 | `requirements.in` 또는 `pyproject.toml` | `pyproject.toml` | `pyproject.toml` |
+| 정확한 고정 | 기본 기능으로는 `pip freeze`를 직접 | `pip-compile`이 고정된 `requirements.txt` 생성 | `poetry.lock` | `uv.lock` |
+| 해시 검증 | `--require-hashes`로 가능 | `--generate-hashes`로 가능 | lock에 포함 | lock에 포함 |
+| 가상환경 | `python -m venv` 직접 | 직접 | 자동 관리 | 자동 관리 |
+| 파이썬 버전 설치 | 하지 않음 | 하지 않음 | 주로 설치된 파이썬을 골라 씀 | `uv python install`, `uv python pin` |
+| 특징 | 어디에나 있는 표준 | 기존 pip 흐름에 고정만 더함 | 오래 쓰인 통합 도구 | Rust로 만든 빠른 통합 도구, 2024년 공개 |
+
+어떤 도구든 원리는 같습니다. 범위 선언과 정확한 고정을 나누고, 고정 파일을 커밋하고, CI에서 고정대로 설치합니다. uv 프로젝트를 pip만 쓰는 환경에 넘겨야 하면 `uv export --no-dev --format requirements-txt`로 고정된 `requirements.txt`를 뽑을 수 있습니다.
+
+## 채널톡 코드에서는
+
+채널톡 같은 AI 서비스 팀을 떠올려 보면, 한 저장소에 모든 것이 들어 있지 않습니다. 문의 분류기, RAG 검색기, 평가 스크립트, 상담 요약 배치가 각자 저장소나 패키지로 나뉘고, 공용 코드(예: LLM 호출 래퍼, 응답 스키마)는 사내 패키지로 묶여 여러 서비스가 가져다 씁니다. 개발자는 Apple Silicon Mac에서 일하고, 서비스는 Linux 컨테이너에서 돕니다.
+
+이 구조에서 이 레슨의 조각들은 이렇게 맞물립니다.
+
+- 공용 스키마 패키지는 라이브러리이므로 `pydantic>=2.10`처럼 넉넉한 하한선만 둡니다. 서비스마다 lock이 따로 있으니, 서비스 쪽에서 버전을 정확히 고정합니다.
+- 각 서비스 저장소는 `uv.lock`과 `.python-version`을 커밋하고, CI 첫 단계는 `uv sync --locked`입니다. lock을 빠뜨린 PR은 리뷰 전에 걸러집니다.
+- Docker 이미지는 lock을 먼저 복사해 의존성 층을 캐시하고, `--frozen --no-dev`로 테스트 도구 없이 굽고, root가 아닌 사용자로 돌립니다.
+- 보안 공지가 뜨면 `uv tree --invert --package 이름`으로 어느 서비스의 어떤 의존성이 끌고 왔는지 찾고, `uv lock --upgrade-package 이름`으로 그 패키지만 올려 PR 하나로 배포합니다.
+
+면접에서 "로컬과 운영 환경 차이로 생긴 버그를 어떻게 막았나요"라는 질문이 나오면, 이 네 줄이 그대로 답이 됩니다.
+
+## 흔한 함정
+
+`.venv`를 커밋하는 것이 첫째입니다. 수십 MB(실습 프로젝트는 약 45MB)가 저장소에 들어가고, 그 안의 컴파일 파일은 내 운영체제에서만 돕니다. `.venv`는 언제든 `uv sync`로 다시 만드는 결과물이지 원본이 아닙니다.
+
+uv 프로젝트에 `pip install`을 섞는 것도 흔합니다. 앞에서 봤듯 `uv run pip`은 엉뚱한 파이썬에 깝니다. `uv pip install tenacity`로 `.venv`에 직접 넣으면 깔리긴 하지만 `pyproject.toml`과 lock에는 남지 않습니다.
+
+실습에서 그 다음 `uv sync`를 돌리니 `- tenacity==9.2.1`로 바로 지워졌습니다. `uv sync`는 lock에 없는 것을 치우기 때문입니다. 패키지는 언제나 `uv add`로 넣으세요.
+
+lock 드리프트도 조심해야 합니다. `pyproject.toml`만 고치고 `uv.lock`을 커밋하지 않으면, 내 자리에서는 `uv run`이 lock을 알아서 고쳐 주니 아무 문제가 없어 보입니다. CI에 `--locked` 게이트가 없으면 이 어긋남이 그대로 배포까지 갑니다.
+
+내 파일이 라이브러리를 가리는 것도 있습니다. `sys.path` 첫 줄이 스크립트 폴더라서, 거기 실험용 `httpx.py`를 두고 `import httpx`를 하니 `AttributeError: module 'httpx' has no attribute 'AsyncClient'`가 났습니다. 라이브러리 버그처럼 보이지만 내 파일이 먼저 잡혔을 뿐이니, `json.py`, `pydantic.py`, `openai.py` 같은 이름은 피하세요.
+
+Apple Silicon과 Linux의 차이를 잊는 것도 함정입니다. `.dockerignore`에서 `.venv`를 빼먹어 Mac용 바이너리가 이미지에 들어가거나, ARM 이미지를 x86 서버에 올리면 컨테이너가 뜨자마자 죽습니다. 이미지 안에서 lock으로 새로 설치하고, 빌드 플랫폼을 배포 대상에 맞추세요.
+
+## 직접 해보기
+
+1. 빈 폴더에서 `uv init --package --python 3.12 inquiry-classifier`로 시작해 `httpx`, `pydantic`, 개발용 `pytest`를 넣으세요. 이 레슨의 `where.py`를 기본 파이썬과 `uv run python`으로 각각 돌려, `sys.prefix`와 `site-packages` 줄이 어떻게 다른지 직접 확인하세요.
+2. 본문 설명대로 `models.py`와 `rules.py`를 직접 짜고, 위의 `cli.py`와 `__main__.py`를 더한 뒤 `[project.scripts]`에 `classify-inquiry`를 등록하세요. `uv run classify-inquiry "환불 되나요?"`와 `uv run python -m inquiry_classifier "환불 되나요?"`가 같은 JSON을 내는지 보고, `uv build`로 만든 휠 안에 `entry_points.txt`가 있는지 확인하세요.
+3. `pyproject.toml`에 의존성 한 줄을 손으로 추가한 뒤 `uv lock --check`와 `uv sync --locked`의 종료 코드를 확인하세요. 그다음 이 레슨의 GitHub Actions 워크플로를 저장소에 넣고, lock을 빠뜨린 커밋을 일부러 푸시해 CI가 빨간불이 되는지 보세요.
+4. Docker가 있다면 본문의 Dockerfile과 `.dockerignore`를 만들고 이미지를 두 번 빌드하세요. 두 번째 빌드 전에 `rules.py`만 고치면 의존성 층이 캐시에서 나오는지(`CACHED` 표시) 확인하세요.
+
+## 더 깊이 파고들 것
+
+세 가지가 이 레슨의 자연스러운 확장입니다.
+
+- uv의 workspace 기능: 공용 스키마 패키지와 여러 서비스를 한 저장소에 두고 lock 하나로 묶는 방식입니다. 사내 패키지가 많아지면 검토할 만합니다.
+- 사내 패키지 저장소(private index): `[[tool.uv.index]]`로 PyPI 말고 회사 저장소에서 패키지를 받게 하고, 인증 정보는 환경변수로 넘기는 법을 익혀 두세요.
+- 의존성 자동 업데이트: Dependabot이나 Renovate 같은 봇이 `uv.lock` 업데이트 PR을 열고 이 레슨의 CI 게이트가 검증하게 하면, "한 번에 하나씩 올리기"가 자동으로 돌아갑니다.
+
+## Python 실무 시리즈를 마치며
+
+다섯 편을 돌아보면 하나의 흐름입니다. [타입 힌트](/roadmap/python-type-hints)로 코드 안의 약속을 적고, [Pydantic](/roadmap/python-pydantic-boundaries)으로 바깥에서 들어오는 데이터를 경계에서 검증했습니다. [asyncio 기초](/roadmap/python-asyncio-basics)로 LLM과 API 호출을 동시에 기다리는 법을 익히고, [asyncio 실전](/roadmap/python-asyncio-production)으로 그 코드를 운영에서 버티는 서비스 코드로 다듬었습니다.
+
+이번 편은 그 코드를 감싸는 껍데기입니다. 아무리 잘 짠 코드도 다른 컴퓨터에서 같은 모습으로 돌지 않으면 서비스가 될 수 없습니다. 타입과 검증과 비동기와 재현 가능한 환경, 이 네 가지가 갖춰지면 Applied AI Engineer로서 "돌아가는 데모"가 아니라 "운영되는 서비스"를 말할 수 있습니다.

@@ -1,0 +1,567 @@
+---
+title: "동시에 많이 부르되 무너지지 않게 짠다"
+stageId: "python-eng"
+order: 24
+summary: "한도 20인 가짜 LLM API에 1,000건을 한꺼번에 던지면 98%가 429로 튕깁니다. Semaphore, 타임아웃, 백오프 재시도, TaskGroup, 취소, 스트리밍까지, 무너지지 않는 비동기 코드를 실측 숫자로."
+slug: "python-asyncio-production"
+---
+
+## 이 레슨의 목표와 눈높이
+
+앞 레슨에서 `async def`와 `await`, 이벤트 루프, `gather`와 `create_task`로 동시에 부르기를 익혔습니다. 순서대로 기다리던 호출을 동시에 보내 시간을 크게 줄이는 것도 직접 봤습니다.
+
+이번 레슨은 그 뒷면입니다. 실제 LLM API에는 <Term id="rate-limit">레이트 리밋</Term>이 있고, 가끔 500을 돌려주고, 가끔은 아예 답을 안 합니다. 채널톡 Applied AI Engineer가 짜는 코드는 이런 API를 수천 번 부르면서도 결과를 잃지 않아야 합니다.
+
+이 레슨을 끝내면 다음을 직접 할 수 있습니다.
+
+1. `asyncio.Semaphore`와 `asyncio.Queue`로 동시에 날아가는 요청 수를 묶어, 429 폭탄과 메모리 폭발을 막기
+2. `asyncio.timeout()`으로 마감을 걸고, 다시 해도 되는 실패만 지수 백오프와 지터로 재시도하기
+3. `TaskGroup`, `ExceptionGroup`, `except*`로 실패를 다루고, 취소가 안전하게 흐르도록 `finally`와 `CancelledError`를 바르게 쓰기
+4. 이벤트 루프를 멈추는 동기 코드를 찾아 `asyncio.to_thread`로 빼고, 토큰 스트리밍을 `async for`와 SSE로 흘려보내기
+5. 위 전부를 묶은 `classify_all()`로 문의 1,000건을 분류하고 성공과 실패를 따로 집계하기
+
+모든 출력과 시간은 Python 3.12에서 직접 돌린 값입니다. 진짜 네트워크나 LLM은 부르지 않고 가짜 서버로 상황을 재현했습니다. 시간은 기계마다 다르니 숫자 사이의 비율을 보세요.
+
+## 오늘의 상황: 문의 1,000건과 깐깐한 API
+
+고객사 하나가 어제 들어온 상담 1,000건을 의도별로 태깅해 달라고 합니다. 분류 API는 동시에 20개까지만 받고, 그 이상은 즉시 429 Too Many Requests로 거절합니다. 이 API를 흉내 내는 가짜입니다.
+
+```python
+# fake_llm.py (핵심 부분)
+class FakeLLM:
+    """동시 처리 한도가 있는 가짜 LLM API. 한도를 넘으면 429."""
+
+    async def classify(self, text: str) -> str:
+        if self.in_flight >= self.max_concurrent:
+            self.rejected += 1
+            raise RateLimited(retry_after=1.0)
+        self.in_flight += 1
+        self.peak = max(self.peak, self.in_flight)
+        try:
+            await asyncio.sleep(self.latency)  # 0.05초
+            return "refund" if "환불" in text else "other"
+        finally:
+            self.in_flight -= 1
+```
+
+앞 레슨의 습관대로 1,000개를 `gather`에 통째로 넣어 봅니다.
+
+```python
+results = await asyncio.gather(
+    *(llm.classify(q) for q in inquiries), return_exceptions=True
+)
+```
+
+```text
+요청 1000개, 성공 20개, 429 980개
+서버가 받아 준 최대 동시 요청: 20
+걸린 시간: 0.04s
+```
+
+0.04초 만에 끝났지만 98%가 거절당했습니다. 빨리 끝난 게 아니라 빨리 망한 것입니다.
+
+실제 서비스에서는 문제가 더 있습니다. 429가 쏟아지면 제공자가 계정을 더 오래 막기도 하고, 1,000개의 요청과 응답 버퍼가 한꺼번에 메모리에 올라가고, HTTP 클라이언트의 <Term id="connection-pool">커넥션 풀</Term>이 바닥나 요청들이 풀 앞에서 엉켜 기다리다 타임아웃이 납니다. 해법은 동시에 날아가는 수를 우리가 정하는 것입니다.
+
+## `Semaphore`로 동시 수를 묶는다
+
+<Term id="semaphore">세마포어</Term>는 번호표가 정해진 수만큼만 있는 대기실입니다. 번호표를 받은 요청만 들어가고, 나머지는 `async with sem:` 앞에서 기다립니다. 기다리는 동안 이벤트 루프는 다른 일을 하므로 낭비가 없습니다.
+
+```python
+# semaphore_demo.py (핵심 부분)
+sem = asyncio.Semaphore(limit)
+
+async def classify_one(text: str):
+    async with sem:  # 빈자리가 날 때까지 여기서 기다린다
+        return await llm.classify(text)
+
+results = await asyncio.gather(
+    *(classify_one(q) for q in inquiries), return_exceptions=True
+)
+```
+
+`limit`을 바꿔 가며 같은 1,000건을 돌렸습니다.
+
+```text
+limit= 5: 성공 1000, 429   0, 최대 동시  5, 12.19s
+limit=10: 성공 1000, 429   0, 최대 동시 10, 6.10s
+limit=20: 성공 1000, 429   0, 최대 동시 20, 3.05s
+limit=40: 성공   20, 429 980, 최대 동시 20, 0.06s
+```
+
+한도 안에서는 동시 수를 두 배로 올리면 시간이 정확히 반으로 줄어듭니다. 그런데 한도를 넘긴 40에서는 절반이 실패하는 게 아니라 98%가 실패합니다. 거절은 즉시 돌아오므로 번호표가 곧바로 반납되고, 다음 요청도 아직 꽉 찬 서버에 부딪혀 튕기는 연쇄가 일어나기 때문입니다.
+
+그래서 동시 수는 서버 한도보다 조금 아래로 잡고, 그래도 오는 429는 아래의 재시도로 받아냅니다.
+
+## 아주 많을 때는 `Queue`와 일꾼으로
+
+세마포어는 "동시에 몇 개가 날아가나"만 묶습니다. `gather`에 넘긴 코루틴은 처음부터 전부 태스크로 만들어져 줄을 섭니다. 1,000건이면 괜찮지만 밤마다 도는 배치가 10만 건이면 다릅니다.
+
+이럴 때는 크기가 정해진 `asyncio.Queue`에 일꾼 몇 명을 붙입니다. 큐가 꽉 차면 넣는 쪽이 기다리므로, 읽어 오는 속도가 처리 속도에 저절로 맞춰집니다. 이것이 <Term id="backpressure">백프레셔</Term>입니다.
+
+```python
+# queue_pool.py (핵심 부분)
+queue = asyncio.Queue(maxsize=100)  # 꽉 차면 생산자가 기다린다 (backpressure)
+
+async def producer():
+    for t in inquiries(n):
+        await queue.put(t)
+    for _ in range(workers):
+        await queue.put(None)  # 일꾼에게 퇴근 신호
+
+async def worker():
+    nonlocal done
+    while (t := await queue.get()) is not None:
+        await classify(t)
+        done += 1
+```
+
+10만 건을 `gather` + `Semaphore(16)`과 비교해 `tracemalloc`으로 잰 결과입니다(측정 도구 때문에 시간은 평소보다 느립니다).
+
+```text
+gather + Semaphore 최대 메모리  174.0MB, 4.07s
+Queue + 16 workers 최대 메모리    0.1MB, 0.99s
+```
+
+몇천 건이면 `Semaphore`가 간단하고 충분합니다. 끝이 없는 스트림이나 수십만 건이면 `Queue`와 일꾼 패턴으로 갑니다.
+
+## 타임아웃: 기다림에 마감을 건다
+
+API가 답을 안 하면 마감 없는 `await`는 영원히 기다립니다. 번호표를 쥔 채 멈춰 있으니 다른 요청까지 막힙니다. 10초 동안 답이 없는 호출에 두 방식으로 0.3초 마감을 걸었습니다.
+
+```python
+async with asyncio.timeout(0.3):  # 블록 전체에 마감 (3.11+)
+    await hanging_call()
+
+await asyncio.wait_for(hanging_call(), timeout=0.3)  # 코루틴 하나에 마감
+```
+
+```text
+timeout(): TimeoutError TimeoutError(), 0.30s
+wait_for(): TimeoutError TimeoutError(), 0.30s
+asyncio.TimeoutError is TimeoutError: True
+```
+
+3.11부터 `asyncio.TimeoutError`는 내장 `TimeoutError`와 같은 것이라 `except TimeoutError`로 잡습니다. 메시지가 비어 있으므로(`TimeoutError()`) 로그에는 어떤 문의를 몇 초 기다렸는지 우리가 붙여야 합니다.
+
+잡지 않은 traceback을 보면 순서가 흥미롭습니다. 먼저 `asyncio.exceptions.CancelledError`가 찍히고, "The above exception was the direct cause of the following exception:" 뒤에 `timeouts.py`의 `raise TimeoutError from exc_val`과 `TimeoutError`가 나옵니다.
+
+먼저 찍힌 `CancelledError`가 핵심입니다. 타임아웃은 안쪽 작업을 **취소**해서 멈추고, 그 취소를 바깥에서 `TimeoutError`로 바꿔 줍니다. 그래서 뒤에서 볼 "취소를 삼키지 말라"는 규칙이 타임아웃에도 그대로 걸립니다.
+
+## 재시도: 다시 해도 되는 실패만, 간격을 벌리며
+
+429, 500, 503, 타임아웃은 잠시 뒤 다시 하면 성공할 수 있습니다. 400(잘못된 요청)이나 우리 코드의 버그는 백 번 다시 해도 똑같이 실패하므로, 재시도는 돈과 시간만 버립니다.
+
+간격은 <Term id="exponential-backoff">지수 백오프</Term>로 벌립니다. 0.1초, 0.2초, 0.4초처럼 두 배씩 늘리되 상한에서 자릅니다. 여기에 <Term id="jitter">지터</Term>를 섞어 모두가 같은 순간에 다시 몰려오지 않게 하고, 서버가 `Retry-After` 헤더로 기다릴 시간을 알려 주면 그보다 일찍 가지 않습니다.
+
+```python
+# retry.py
+RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
+
+
+def is_retryable(exc: BaseException) -> bool:
+    if isinstance(exc, TimeoutError):
+        return True
+    if isinstance(exc, APIError):
+        return exc.status in RETRYABLE_STATUS
+    return False  # 400, 버그 같은 나머지는 다시 해도 똑같이 실패한다
+
+
+def backoff_delay(attempt: int, base: float, cap: float, rng: random.Random) -> float:
+    """attempt번째 재시도 전 대기 시간. 지수로 늘리되 cap에서 자르고,
+    0부터 그 값 사이에서 무작위로 고른다(full jitter)."""
+    exp = min(cap, base * 2 ** attempt)
+    return rng.uniform(0, exp)
+
+
+async def with_retry(call, *, max_attempts=4, base=0.1, cap=2.0,
+                     timeout=1.0, rng=None, on_retry=None):
+    rng = rng or random.Random()
+    for attempt in range(max_attempts):
+        try:
+            async with asyncio.timeout(timeout):  # timeout=None이면 마감 없음
+                return await call()
+        except Exception as exc:  # CancelledError는 Exception이 아니라 여기 안 걸린다
+            last = attempt == max_attempts - 1
+            if not is_retryable(exc) or last:
+                raise
+            delay = backoff_delay(attempt, base, cap, rng)
+            retry_after = getattr(exc, "retry_after", None)
+            if retry_after is not None:
+                delay = max(delay, retry_after)  # 서버가 정한 시간보다 일찍 오지 않는다
+            if on_retry:
+                on_retry(attempt, exc, delay)
+            await asyncio.sleep(delay)
+```
+
+`APIError`는 `status`와 `retry_after`를 담는 작은 예외 클래스입니다. `call`에는 코루틴이 아니라 "코루틴을 만드는 함수"를 넘깁니다. 코루틴은 한 번만 `await`할 수 있어서 시도마다 새로 만들어야 하기 때문입니다.
+
+지터가 왜 필요한지는 숫자로 보면 분명합니다. 클라이언트 100개가 동시에 실패해 세 번째 시도 전(상한 0.4초)에 기다릴 때, 언제 다시 오는지 0.1초 구간으로 셌습니다(`random.Random(0)`).
+
+```text
+구간(초)      0.0-0.1 0.1-0.2 0.2-0.3 0.3-0.4
+jitter 없음          0       0       0     100
+full jitter         12      25      28      35
+```
+
+지터가 없으면 100개가 정확히 0.4초에 한꺼번에 몰려와 또 429를 맞습니다. 지터를 넣으면 같은 부하가 구간 전체로 퍼집니다.
+
+미리 정한 순서대로 실패하는 가짜 호출로 세 경우를 돌렸습니다. [A]는 503, 응답 없음, 429(`Retry-After` 0.5초), 성공 순서이고 시도당 마감은 0.3초입니다. [B]는 400, [C]는 끝없는 503입니다.
+
+```text
+[A] 503, 타임아웃, 429(Retry-After 0.5) 뒤 성공
+  시도 1 실패: APIError('HTTP 503') -> 0.03s 뒤 재시도
+  시도 2 실패: TimeoutError() -> 0.03s 뒤 재시도
+  시도 3 실패: APIError('HTTP 429') -> 0.50s 뒤 재시도
+  결과: refund, 0.90s
+
+[B] 400은 재시도하지 않는다
+  바로 포기: APIError('HTTP 400')
+
+[C] 계속 503이면 4번에서 멈춘다
+  시도 1 실패: APIError('HTTP 503') -> 0.03s 뒤 재시도
+  시도 2 실패: APIError('HTTP 503') -> 0.03s 뒤 재시도
+  시도 3 실패: APIError('HTTP 503') -> 0.26s 뒤 재시도
+  최종 실패: APIError('HTTP 503'), 0.37s
+```
+
+[A]의 세 번째 대기는 백오프 계산값이 작았지만 `Retry-After` 0.5초를 지켰습니다. [B]는 한 번도 재시도하지 않았고, [C]는 4번에서 멈췄습니다. 횟수에 끝이 없으면 장애 난 서버를 우리가 계속 두들겨 회복을 늦춥니다.
+
+이 헬퍼를 직접 짜는 대신 `tenacity` 라이브러리를 쓰기도 합니다. 데코레이터로 시도 횟수, 대기 전략, 재시도할 예외 조건을 선언하는 방식이고 `async def`도 지원합니다. 어떤 도구를 쓰든 재시도할 실패만 고르기, 지수 간격, 지터, 횟수 상한의 네 가지를 갖췄는지가 핵심입니다. 공식 LLM SDK들도 자체 재시도 옵션이 있으니, 우리 재시도와 겹쳐 시도 횟수가 곱으로 불어나지 않게 한쪽은 꺼 두세요.
+
+## 실패를 다루는 세 가지 방법
+
+1,000건 중 1건이 실패했다고 999건을 잃으면 안 됩니다. 6개 작업 중 2번은 0.2초에 잘못된 JSON으로, 4번은 0.1초에 타임아웃으로 실패하게 하고 세 방식으로 돌렸습니다.
+
+```python
+# 1) 기본 gather
+await asyncio.gather(*(classify(i) for i in range(6)))
+# 2) 예외도 결과 자리에 값으로 담기
+await asyncio.gather(*(classify(i) for i in range(6)), return_exceptions=True)
+# 3) TaskGroup: 하나라도 실패하면 나머지를 취소하고 ExceptionGroup으로 묶는다
+try:
+    async with asyncio.TaskGroup() as tg:
+        tasks = [tg.create_task(classify(i)) for i in range(6)]
+except* ValueError as eg:
+    print("[TaskGroup] ValueError 묶음:", [repr(e) for e in eg.exceptions])
+except* TimeoutError as eg:
+    print("[TaskGroup] TimeoutError 묶음:", [repr(e) for e in eg.exceptions])
+```
+
+```text
+[gather 기본] 예외: TimeoutError()
+[return_exceptions=True]
+  0: '문의 0: refund'
+  1: '문의 1: refund'
+  2: ValueError('문의 2: 모델 응답이 JSON이 아님')
+  3: '문의 3: refund'
+  4: TimeoutError()
+  5: '문의 5: refund'
+[TaskGroup] TimeoutError 묶음: ['TimeoutError()']
+[TaskGroup] 각 태스크 상태: ['ok', 'ok', 'cancelled', 'ok', 'error', 'cancelled']
+```
+
+기본 `gather`는 가장 먼저 난 예외 하나만 던지고 결과는 하나도 돌려주지 않습니다. 더 고약한 점은 나머지 작업을 취소하지도 않는다는 것입니다. 별도 실험에서 예외를 받은 순간과 0.5초 뒤에 끝난 작업을 찍었습니다.
+
+```text
+gather가 예외를 던진 순간 끝난 작업: []
+0.5초 뒤 끝난 작업: [2, 4, 1, 3]
+```
+
+호출한 쪽은 이미 실패로 처리하고 떠났는데, 뒤에서는 API 호출이 계속 돌며 토큰 비용을 씁니다.
+
+`return_exceptions=True`는 배치 분류처럼 각자 독립적이고 실패한 것만 따로 모으면 되는 일에 맞습니다. `TaskGroup`은 하나라도 실패하면 전체가 의미 없는 일에 맞습니다. 답변 하나를 만들려고 검색, 고객 정보 조회, 정책 조회를 동시에 했는데 하나가 실패했다면 나머지를 기다릴 이유가 없으니 즉시 취소해 비용을 아낍니다.
+
+여러 작업이 함께 실패하면 `TaskGroup`은 예외들을 `ExceptionGroup` 하나로 묶습니다. 잡지 않았을 때의 출력입니다(경로와 중간 프레임은 줄였습니다).
+
+```text
+  + Exception Group Traceback (most recent call last):
+  |   ...
+  | ExceptionGroup: unhandled errors in a TaskGroup (2 sub-exceptions)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "group_fail.py", line 6, in bad_json
+    |     raise ValueError("모델 응답이 JSON이 아님")
+    | ValueError: 모델 응답이 JSON이 아님
+    +---------------- 2 ----------------
+    | Traceback (most recent call last):
+    |   File "group_fail.py", line 11, in rate_limited
+    |     raise ConnectionError("429 Too Many Requests")
+    | ConnectionError: 429 Too Many Requests
+    +------------------------------------
+```
+
+그래서 `except ValueError`로는 안 잡히고 `except* ValueError`를 씁니다. `except*`는 묶음 안에서 해당 타입만 골라 처리하고, 나머지는 다음 `except*`나 바깥으로 넘깁니다.
+
+## 취소: 형제 태스크와 `finally`
+
+`TaskGroup` 안에서 0.1초에 하나가 실패할 때, 1초짜리 형제 A와 B에게 무슨 일이 일어나는지 봅니다.
+
+```python
+async def worker(name: str, seconds: float):
+    print(f"  {name}: 시작 (연결을 잡음)")
+    try:
+        await asyncio.sleep(seconds)
+        print(f"  {name}: 완료")
+    except asyncio.CancelledError:
+        print(f"  {name}: 취소됨")
+        raise  # 반드시 다시 던진다
+    finally:
+        print(f"  {name}: finally에서 연결 반납")
+```
+
+```text
+  A: 시작 (연결을 잡음)
+  B: 시작 (연결을 잡음)
+  B: 취소됨
+  B: finally에서 연결 반납
+  A: 취소됨
+  A: finally에서 연결 반납
+잡힌 예외: ValueError('문의 7: 스키마 불일치'), 0.11s
+```
+
+형제들은 0.11초에 정리되었습니다. 취소는 형제가 멈춰 있던 `await` 자리에 `CancelledError`를 던지는 방식이므로, `finally`의 정리 코드(연결 반납, 임시 파일 삭제, 진행 상황 기록)가 반드시 실행됩니다.
+
+절대 하면 안 되는 일은 `CancelledError`를 잡고 다시 던지지 않는 것입니다. 0.2초 마감 안에서 비교했습니다. `good_call`은 같은 코드에 `raise`만 있습니다.
+
+```python
+async def bad_call():
+    try:
+        await asyncio.sleep(1.0)
+    except asyncio.CancelledError:
+        print("  CancelledError를 삼킴 (나쁜 예)")
+    await asyncio.sleep(1.0)  # 취소됐는데도 계속 일한다
+    return "결과"
+```
+
+```text
+[bad_call, timeout 0.2s]
+  CancelledError를 삼킴 (나쁜 예)
+  타임아웃 없이 반환: '결과', 1.21s
+[good_call, timeout 0.2s]
+  정리만 하고 다시 던짐
+  TimeoutError, 0.21s
+```
+
+취소를 삼키면 0.2초 마감이 조용히 무시되고, 1.21초 뒤에 아무 일 없었다는 듯 결과가 나옵니다. 에러도 로그도 없어서 찾기 가장 어려운 버그입니다. `except Exception`은 `CancelledError`를 잡지 않아 안전하지만, `except BaseException`이나 맨 `except:`는 잡아 버립니다.
+
+## 이벤트 루프를 멈추는 동기 코드
+
+이벤트 루프는 한 스레드에서 돕니다. 어떤 코루틴이 `await` 없이 오래 붙잡고 있으면 다른 모든 코루틴이 멈춥니다. 0.05초마다 깨어나는 심장박동 태스크를 옆에 띄워 두고, 박동 간격이 얼마나 벌어지는지 쟀습니다.
+
+```python
+async def heartbeat(stop: asyncio.Event, gaps: list[float]):
+    """0.05초마다 깨어나는 작업. 이벤트 루프가 막히면 간격이 벌어진다."""
+    last = time.perf_counter()
+    while not stop.is_set():
+        await asyncio.sleep(0.05)
+        now = time.perf_counter()
+        gaps.append(now - last)
+        last = now
+
+
+def cpu_heavy() -> int:
+    return sum(i * i for i in range(3_000_000))
+```
+
+```text
+time.sleep(0.5)              작업 0.50s, 심장박동 최대 간격 0.55s
+await asyncio.sleep(0.5)     작업 0.52s, 심장박동 최대 간격 0.06s
+to_thread(time.sleep, 0.5)   작업 0.51s, 심장박동 최대 간격 0.06s
+cpu_heavy() inline           작업 0.21s, 심장박동 최대 간격 0.26s
+to_thread(cpu_heavy)         작업 0.24s, 심장박동 최대 간격 0.08s
+```
+
+`async def` 안의 `time.sleep(0.5)` 한 줄이 0.55초 동안 서버 전체를 얼렸습니다. 채팅 서버라면 그 사이 들어온 모든 고객의 응답이 함께 멈추고, 이것이 <Term id="tail-latency">꼬리 지연</Term>으로 나타납니다. `requests.get()` 같은 동기 HTTP 호출, 동기 DB 드라이버, 큰 파일 읽기도 같은 함정입니다.
+
+고치는 길은 둘입니다. 비동기 버전이 있으면 그걸 씁니다(`requests` 대신 `httpx.AsyncClient`). 없으면 `asyncio.to_thread()`로 다른 스레드에 넘깁니다. CPU 계산은 스레드로 넘겨도 GIL 때문에 루프가 조금 끌리고(0.08초) 빨라지지도 않으니, 무거운 계산은 `ProcessPoolExecutor`나 별도 워커로 보냅니다.
+
+## 스트리밍: 토큰을 흘려보낸다
+
+답 전체를 다 만든 뒤 보내면 고객은 몇 초간 빈 화면을 봅니다. LLM이 토큰을 만드는 대로 흘려보내면 첫 글자가 훨씬 빨리 뜹니다. 파이썬에서는 비동기 제너레이터(`async def` 안의 `yield`)로 만들고 `async for`로 받습니다.
+
+```python
+async def fake_llm_stream(prompt: str) -> AsyncIterator[str]:
+    """LLM이 토큰을 하나씩 흘려 보내는 것을 흉내 낸다."""
+    for token in ["미개봉", " 상품은", " 7일", " 이내", " 환불", " 가능합니다."]:
+        await asyncio.sleep(0.1)
+        yield token
+
+
+async for token in fake_llm_stream("환불 되나요?"):
+    print(f"{time.perf_counter() - start:.2f}s  {token!r}")
+```
+
+```text
+0.11s  '미개봉'
+0.22s  ' 상품은'
+0.33s  ' 7일'
+0.43s  ' 이내'
+0.54s  ' 환불'
+0.64s  ' 가능합니다.'
+첫 토큰까지 0.11s, 전체 0.64s
+```
+
+전체 시간은 같아도 고객이 느끼는 <Term id="latency">지연</Term>은 첫 토큰 시간입니다. 고객이 중간에 창을 닫으면 상류 LLM 스트림도 닫아야 토큰 비용이 새지 않습니다. 비동기 제너레이터 안에 `try/finally`를 두고 두 번째 토큰에서 `break`한 뒤 `await stream.aclose()`를 부르면, 세 번째 토큰을 만들지 않고 곧바로 `finally`의 정리 코드가 실행되는 것을 확인했습니다.
+
+서버에서 브라우저로 흘려보낼 때는 흔히 <Term id="sse">SSE</Term>를 씁니다. 응답을 닫지 않은 채 `data: ...` 줄과 빈 줄을 한 건씩 계속 써 보내는 단순한 형식입니다. FastAPI에서는 비동기 제너레이터를 `StreamingResponse`에 넘깁니다. `uv run --with fastapi --with httpx`로 FastAPI 0.163.2를 받아 `TestClient`로 실제로 돌렸습니다.
+
+```python
+async def sse_events(prompt: str) -> AsyncIterator[str]:
+    try:
+        async for token in fake_llm_stream(prompt):
+            # SSE 한 건 = "data: ...\n\n"
+            yield f"data: {json.dumps({'token': token}, ensure_ascii=False)}\n\n"
+        yield "data: [DONE]\n\n"
+    finally:
+        print("  (서버) 스트림 정리")  # 다 보냈든 중간에 닫혔든 실행된다
+
+
+@app.get("/chat")
+async def chat(q: str):
+    return StreamingResponse(sse_events(q), media_type="text/event-stream")
+```
+
+`client.stream("GET", "/chat", ...)`으로 받으며 줄마다 도착 시각을 찍었습니다.
+
+```text
+content-type: text/event-stream; charset=utf-8
+0.16s  data: {"token": "미개봉"}
+0.26s  data: {"token": " 상품은"}
+0.37s  data: {"token": " 7일"}
+0.48s  data: {"token": " 이내"}
+0.58s  data: {"token": " 환불"}
+0.69s  data: {"token": " 가능합니다."}
+  (서버) 스트림 정리
+0.69s  data: [DONE]
+```
+
+줄이 0.1초 간격으로 도착하니, 서버가 모아 두지 않고 만드는 대로 흘려보낸 것입니다. 실제 서버에서는 토큰 사이 간격에도 마감을 걸어, 상류가 멈추면 사과 문구나 상담원 연결로 <Term id="fallback">폴백</Term>합니다.
+
+## `httpx.AsyncClient`는 하나만 만들어 같이 쓴다
+
+요청마다 `async with httpx.AsyncClient() as c:`를 새로 여는 코드가 흔합니다. 이러면 매번 TCP 연결과 TLS 핸드셰이크를 새로 해, 한 번 연 연결을 재사용하는 커넥션 풀의 이점이 사라집니다. 네트워크 없이 클라이언트를 만드는 비용만 이 실습 노트북(Windows)에서 10번 쟀습니다.
+
+```text
+AsyncClient() 생성 1회 중앙값: 255ms (최소 243ms)
+요청 1,000개마다 새로 만들면 생성에만 약 255s
+```
+
+값은 환경마다 크게 다르지만, 0이 아니고 이 준비(인증서 묶음 로딩)가 동기 코드라 그동안 이벤트 루프까지 멈춘다는 점이 중요합니다. 클라이언트는 앱이 시작될 때 하나 만들어 모든 요청이 같이 쓰고 끝날 때 닫습니다(FastAPI라면 `lifespan`에서). 풀 크기는 `httpx.Limits(max_connections=...)`로 정하고 세마포어 수와 맞춰 둡니다.
+
+테스트에서는 `httpx.MockTransport`에 함수를 꽂아 진짜 네트워크 대신 그 함수가 응답하게 합니다. 핸들러를 `async def`로 쓰면 느린 응답도 흉내 낼 수 있어, <Term id="mocking">모킹</Term>의 HTTP 판으로 쓰기 좋습니다. 마지막 조립에 쓸 가짜 서버 `FakeLLMServer`는 이렇게 응답합니다.
+
+- 동시 요청이 20을 넘으면 429와 `Retry-After: 1`
+- 빈 메시지면 400, id를 250으로 나눈 나머지가 13이면 늘 500(고칠 수 없는 실패)
+- 그 밖에는 2% 확률로 429(`Retry-After: 0.2`), 2%는 503, 2%는 5초 동안 무응답, 나머지는 0.03초에서 0.06초 뒤 200
+- 확률은 `random.Random(f"{item_id}-{시도 번호}")`로 시드를 고정해, 돌릴 때마다 같은 상황이 재현됩니다
+
+## 모두 합친 `classify_all()`
+
+이제 세마포어, 타임아웃, 재시도, 건별 오류 수집, 공유 클라이언트를 한 함수로 묶습니다. 문의 1,000건 중 3건은 빈 메시지(400이 나야 정상)이고, 4건은 서버가 늘 500을 냅니다.
+
+```python
+# classify_all.py (핵심 부분)
+@dataclass
+class Result:
+    id: int
+    intent: str | None = None
+    error: str | None = None
+
+
+async def post_classify(client: httpx.AsyncClient, item: dict) -> str:
+    resp = await client.post("/v1/classify", json=item)
+    if resp.status_code >= 400:
+        ra = resp.headers.get("Retry-After")
+        raise APIError(resp.status_code, retry_after=float(ra) if ra else None)
+    return resp.json()["intent"]
+
+
+async def classify_all(client, items, *, concurrency=16, timeout=0.5, max_attempts=4):
+    sem = asyncio.Semaphore(concurrency)
+    retry_reasons = Counter()
+
+    async def attempt(item):
+        async with sem:                           # 1) 자리부터 잡고
+            async with asyncio.timeout(timeout):  # 2) 실제 호출에만 마감을 건다
+                return await post_classify(client, item)
+
+    async def classify_one(item) -> Result:
+        try:
+            intent = await with_retry(
+                lambda: attempt(item),
+                max_attempts=max_attempts,
+                timeout=None,  # 마감은 attempt 안에서 이미 걸었다
+                rng=random.Random(item["id"]),
+                on_retry=lambda n, exc, delay: retry_reasons.update([repr(exc)]),
+            )
+            return Result(item["id"], intent=intent)
+        except (APIError, TimeoutError) as e:  # 예상한 실패만 결과로 담는다
+            return Result(item["id"], error=repr(e))
+
+    results = await asyncio.gather(*(classify_one(it) for it in items))
+    return results, retry_reasons
+```
+
+`main()`에서는 `httpx.AsyncClient(transport=httpx.MockTransport(server.handler), base_url="https://llm.test")`를 `async with`로 딱 하나 열고, 그 클라이언트로 `classify_all()`을 한 번 부른 뒤 요약을 찍습니다.
+
+```text
+처리 1000건: 성공 993, 실패 7, 3.88s
+재시도 사유: {"APIError('HTTP 500')": 12, "APIError('HTTP 429')": 16, "APIError('HTTP 503')": 22, 'TimeoutError()': 21}
+실패 사유: {"APIError('HTTP 500')": 4, "APIError('HTTP 400')": 3}
+실패한 id: [13, 100, 263, 500, 513, 763, 900]
+서버 응답 코드: {200: 993, 400: 3, 429: 16, 500: 16, 503: 22}
+서버가 본 최대 동시 요청: 16
+```
+
+일시적 실패(429, 503, 타임아웃) 59번은 전부 재시도로 회복되었습니다. 남은 7건은 정확히 우리가 심어 둔 것들입니다. 400인 3건은 한 번만 시도하고 바로 포기했고, 늘 500인 4건은 4번씩 시도(서버 500 응답 16번)한 뒤 포기했습니다.
+
+7건이 실패해도 993건의 결과는 그대로 손에 남았습니다. 실패한 id 목록을 들고 나중에 다시 돌리거나 사람에게 넘기면 됩니다. `except`가 `APIError`와 `TimeoutError`만 잡는 것도 의도입니다. 예상 못 한 버그는 결과에 묻히지 않고 크게 터져야 고칠 수 있습니다.
+
+`attempt` 안의 순서가 중요합니다. 처음에는 마감을 `with_retry(timeout=0.5)`에 맡기고 `attempt`에는 세마포어만 두었습니다. 그러면 마감 시계가 번호표를 기다리는 동안에도 돌아갑니다. 그 버전의 실측입니다(대기 순서에 따라 실행마다 조금씩 다릅니다).
+
+```text
+처리 1000건: 성공 587, 실패 413, 2.69s
+재시도 사유: {"APIError('HTTP 500')": 4, "APIError('HTTP 429')": 8, "APIError('HTTP 503')": 13, 'TimeoutError()': 2080}
+실패 사유: {"APIError('HTTP 500')": 4, 'TimeoutError()': 398, "APIError('HTTP 400')": 2, "APIError('HTTP 503')": 7, "APIError('HTTP 429')": 2}
+서버 응답 코드: {200: 587, 400: 2, 429: 10, 500: 8, 503: 20}
+서버가 본 최대 동시 요청: 16
+```
+
+서버는 멀쩡한데 398건이 타임아웃으로 실패했습니다. 줄 뒤쪽 요청들이 서버에 닿기도 전에 0.5초를 다 써 버렸기 때문입니다. 400이 2건뿐인 것도 빈 메시지 하나가 서버에 아예 못 닿았다는 뜻입니다. 시도당 마감은 서버를 기다리는 시간에만 겁니다.
+
+## 채널톡 코드에서는
+
+채널톡에서는 수많은 고객사가 한 플랫폼 위에서 LLM 호출 한도를 나눠 씁니다. 한 고객사의 대량 태깅 배치가 동시 수를 무제한으로 쓰면 다른 고객사의 실시간 ALF 응답이 429를 맞습니다. 그래서 배치 경로와 실시간 경로의 세마포어나 큐를 따로 두고 배치 쪽을 낮게 잡는 설계가 들어갑니다. 급하지 않은 대량 작업은 아예 <Term id="batch-api">배치 API</Term>로 돌리는 선택지도 있습니다.
+
+ALF가 답을 만들 때는 검색, 고객 정보 조회, 정책 조회를 동시에 하고 하나라도 실패하면 접는 `TaskGroup` 구조가 자연스럽습니다. 답변은 SSE처럼 토큰 단위로 흘려보내고, 상류가 멈추면 마감 뒤 상담원 연결로 폴백합니다.
+
+재시도에는 꼭 짚을 점이 있습니다. 분류나 요약은 다시 해도 결과만 바뀔 뿐이지만, 고객에게 메시지 보내기나 환불 접수처럼 바깥에 흔적을 남기는 호출은 다시 하면 두 번 일어납니다. 타임아웃이 났다고 요청이 처리되지 않았다는 보장이 없기 때문입니다. 이런 호출은 <Term id="idempotency">멱등성</Term> 키를 붙여 서버가 중복을 걸러 내게 만든 뒤에만 재시도합니다.
+
+면접에서 "LLM API를 대량으로 부를 때 무엇을 신경 쓰나요"라는 질문을 받으면, 이 레슨의 두 장면을 숫자로 들 수 있습니다. 한도를 넘기면 98%가 실패한 장면, 마감을 줄 서기까지 걸었더니 약 40%가 실패한 장면입니다.
+
+## 흔한 함정
+
+`gather`에 전부 넣고 끝내는 것이 가장 흔합니다. 동시 수에 상한이 없으면 서버 한도를 넘는 순간 성공률이 비례해서가 아니라 절벽처럼 떨어집니다. 세마포어나 큐로 묶으세요.
+
+모든 예외를 재시도하는 것도 흔합니다. 400과 버그를 재시도하면 실패가 몇 배 느려질 뿐입니다. `is_retryable` 같은 분류를 반드시 거치세요.
+
+`CancelledError`를 삼키는 것은 가장 찾기 어렵습니다. 맨 `except:`나 `except BaseException:`이 범인입니다. 정리는 `finally`에서 하고, 꼭 잡아야 하면 다시 `raise`하세요.
+
+`async def` 안의 동기 호출도 자주 숨어 있습니다. `time.sleep`, `requests`, 동기 SDK 클라이언트, 무거운 파싱이 루프 전체를 멈춥니다. 의심되면 위의 심장박동 측정을 붙여 보세요.
+
+마감을 너무 바깥에 거는 것도 함정입니다. 세마포어 대기와 재시도 대기까지 포함한 마감은 의도와 다르게 동작합니다. 호출 한 번의 마감과 전체 작업의 마감을 따로 생각하세요.
+
+요청마다 새 HTTP 클라이언트를 만드는 것도 흔합니다. 연결 재사용이 사라지고 생성 비용이 루프까지 멈춥니다.
+
+## 직접 해보기
+
+1. `semaphore_demo.py`의 `classify_one`에 "429를 받으면 `retry_after`만큼 기다렸다 다시 시도"를 붙이고 `limit=40`으로 돌려 보세요. 성공률이 어디까지 돌아오는지, 시간이 `limit=20`보다 짧은지 긴지 재 보세요.
+2. `classify_all()` 전체에 2초 마감을 `asyncio.timeout()`으로 하나 더 걸어 보세요. 마감에 걸렸을 때 이미 끝난 결과를 잃지 않으려면 무엇을 바꿔야 하는지 고민해 보세요(힌트: `asyncio.as_completed`로 끝나는 대로 모으기).
+3. `fake_llm_stream`이 세 번째 토큰 뒤에 10초 멈추게 바꾸고, 토큰 사이 간격에 0.5초 마감을 걸어 마감에 걸리면 `data: {"error": "timeout"}`을 보내고 끝내도록 `sse_events`를 고쳐 보세요.
+4. `classify_all()`의 동시 수를 8, 16, 32로 바꿔 가며 걸린 시간과 서버의 429 수를 표로 만들어 보세요. 가짜 서버 한도 20 근처에서 무슨 일이 일어나는지 설명할 수 있으면 이 레슨을 이해한 것입니다.
+
+## 더 깊이 파고들 것
+
+세 가지가 자연스러운 다음 걸음입니다. 첫째, 동시 수 대신 초당 요청 수나 분당 토큰 수로 한도를 거는 토큰 버킷 방식입니다. 실제 LLM API의 한도는 대개 이 형태라 세마포어 위에 한 겹 더 얹게 됩니다. 둘째, 같은 API가 연속으로 실패하면 한동안 호출을 아예 끊는 서킷 브레이커입니다. 장애 난 서버를 재시도로 두들기는 일을 막습니다. 셋째, `anyio`와 구조적 동시성의 아이디어입니다. `TaskGroup`이 왜 이런 모양인지 이해하는 데 도움이 됩니다.
+
+다음 레슨 [패키지와 가상환경](/roadmap/python-packaging-uv)에서는 이 코드들을 `uv`로 재현 가능한 프로젝트로 묶어, 어느 기계에서나 같은 버전으로 돌게 만듭니다.
