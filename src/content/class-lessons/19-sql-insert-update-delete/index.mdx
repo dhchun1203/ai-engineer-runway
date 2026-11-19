@@ -71,11 +71,16 @@ ERROR:  invalid input syntax for type integer: "필라테스"
 <Figure label="SERIAL 열을 비워 두는 두 방법">
   <Boxes
     row={[
-      { title: "열 목록에서 빼기", tone: "ok", lines: ["`INSERT INTO sports (sport_name) VALUES ('필라테스');`", "늘 권장해요. 표에 열이 늘어도 그대로 돌아요"] },
-      { title: "DEFAULT 쓰기", tone: "neutral", lines: ["`INSERT INTO sports VALUES (DEFAULT, '필라테스');`", "열 순서를 외워야 해서 틀리기 쉬워요"] },
+      { title: "열 목록에서 빼기", tone: "ok", lines: ["`(sport_name)`처럼 넣을 열만 적어요", "늘 권장해요. 표에 열이 늘어도 그대로 돌아요"] },
+      { title: "DEFAULT 쓰기", tone: "neutral", lines: ["번호 자리에 `DEFAULT`를 적어요", "열 순서를 외워야 해서 틀리기 쉬워요"] },
     ]}
   />
 </Figure>
+
+```sql
+INSERT INTO sports (sport_name) VALUES ('필라테스');   -- 열 목록에서 빼기
+INSERT INTO sports VALUES (DEFAULT, '필라테스');       -- DEFAULT 쓰기
+```
 
 ## 3. `INSERT ... SELECT`: 조회 결과를 통째로 옮겨 담는다
 
@@ -419,12 +424,20 @@ uv run main.py
 <Figure label="psycopg로 SQL을 보내는 법">
   <Boxes
     row={[
-      { title: "접속", tone: "blue", lines: ["`psycopg.connect(DSN, row_factory=dict_row)`", "행을 `row['member_id']`처럼 열 이름으로 꺼내요"] },
+      { title: "접속", tone: "blue", lines: ["`row_factory=dict_row`를 붙여 접속해요", "행을 `row['member_id']`처럼 열 이름으로 꺼내요"] },
       { title: "값 넣기", tone: "ok", lines: ["SQL 안에는 `%s` 자리표시자만", "값은 튜플로 따로: `(m_name,)`"] },
-      { title: "와일드카드", tone: "amber", lines: ["`%`는 SQL이 아니라 값 쪽에", "`LIKE %s` + `f\"%{c_name}%\"`"] },
+      { title: "와일드카드", tone: "amber", lines: ["`%`는 SQL이 아니라 값 쪽에", "SQL은 `LIKE %s`, 값은 `f\"%{c_name}%\"`"] },
     ]}
   />
 </Figure>
+
+```python
+with psycopg.connect(DSN, row_factory=dict_row) as conn:
+    rows = conn.execute(
+        "select course_id, course_name from courses where course_name like %s",
+        (f"%{c_name}%",),
+    ).fetchall()
+```
 
 값을 문자열로 직접 이어 붙이지 않는 게 중요해요. 따옴표 처리를 드라이버가 맡아서 안전해요. 이름에 따옴표가 든 `O'Neil`을 f-string으로 SQL에 끼우면 `syntax error at or near "Neil"`이 나지만, `%s`로 넘기면 그대로 찾아요.
 
