@@ -424,7 +424,7 @@ uv run main.py
 <Figure label="psycopg로 SQL을 보내는 법">
   <Boxes
     row={[
-      { title: "접속", tone: "blue", lines: ["`row_factory=dict_row`를 붙여 접속해요", "행을 `row['member_id']`처럼 열 이름으로 꺼내요"] },
+      { title: "접속", tone: "blue", lines: ["접속할 때 `dict_row`를 넘기면", "행을 `row['member_id']`처럼 열 이름으로 꺼내요"] },
       { title: "값 넣기", tone: "ok", lines: ["SQL 안에는 `%s` 자리표시자만", "값은 튜플로 따로: `(m_name,)`"] },
       { title: "와일드카드", tone: "amber", lines: ["`%`는 SQL이 아니라 값 쪽에", "SQL은 `LIKE %s`, 값은 `f\"%{c_name}%\"`"] },
     ]}
