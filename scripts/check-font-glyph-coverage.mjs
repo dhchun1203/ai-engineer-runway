@@ -138,6 +138,8 @@ const contentFiles = [
   ...walkFiles(path.join(ROOT, 'src', 'content', 'articles'), /\.mdx$/),
   // 수업 복습 회차(본문과 복습 데이터). 2026-10-27부터 매일 쌓인다.
   ...walkFiles(path.join(ROOT, 'src', 'content', 'class-lessons'), /\.(mdx|yml)$/),
+  // 수업 안내 페이지(맥 실습 환경, Docker 명령 모음).
+  ...walkFiles(path.join(ROOT, 'src', 'content', 'guides'), /\.mdx$/),
   ...walkFiles(path.join(ROOT, 'src', 'content', 'build-replays'), /\.ts$/),
   path.join(ROOT, 'src', 'content', 'modules.ts'),
   path.join(ROOT, 'src', 'content', 'terms.ts'),
