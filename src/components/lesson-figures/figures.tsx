@@ -100,10 +100,11 @@ export function Hint({ children }: { children: ReactNode }) {
 
 type BoxData = { title: string; lines?: string[]; tone?: Tone; dashed?: boolean; note?: string };
 
+// 제목은 이미 고정폭 글꼴이라 본문용 백틱(`)은 떼고 보여 준다.
 function Box({ title, lines = [], tone = "neutral", dashed = false, note }: BoxData) {
   return (
     <div className={`min-w-0 flex-1 border-2 px-4 py-3 ${TONE[tone].box} ${dashed ? "border-dashed" : ""}`}>
-      <p className={`font-mono text-body font-semibold ${TONE[tone].title}`}>{title}</p>
+      <p className={`font-mono text-body font-semibold ${TONE[tone].title}`}>{title.replaceAll("`", "")}</p>
       {note ? <p className={`text-label ${MUTED}`}>{rich(note)}</p> : null}
       {lines.length > 0 ? (
         <ul className={`mt-1.5 flex list-disc flex-col gap-0.5 pl-4 text-label leading-relaxed ${MUTED}`}>

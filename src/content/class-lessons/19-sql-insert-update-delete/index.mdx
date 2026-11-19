@@ -1,0 +1,551 @@
+---
+title: "데이터를 넣고, 고치고, 지운다: 바꾸기 전에 같은 WHERE로 먼저 본다"
+session: 19
+date: "2026-11-19"
+summary: "INSERT, UPDATE, DELETE, TRUNCATE로 sportscenter 데이터를 직접 바꿔요. RETURNING으로 바뀐 행을 바로 보고, 서브쿼리와 NOT EXISTS로 대상을 고르고, 마지막에는 파이썬 psycopg로 수강 신청 프로그램을 만들어요."
+slug: "19-sql-insert-update-delete"
+module: "1-4"
+topic: "SQL"
+preStudy: ["1-4-relational-db-basics"]
+---
+
+어제까지는 데이터를 꺼내 보기만 했어요. 오늘은 체육관 운영자가 되어 데이터를 직접 넣고, 고치고, 지웠어요.
+
+바꾸는 명령은 Enter를 누르는 순간 확정돼요. 그래서 오늘 익힌 습관은 하나예요. 바꾸기 전에 같은 `WHERE`로 `SELECT`해서 대상을 먼저 보고, 바꾼 결과는 `RETURNING`으로 바로 확인해요.
+
+마지막에는 파이썬에서 `psycopg`로 같은 데이터베이스에 접속해 수강 신청을 받는 프로그램을 만들어요. 끝까지 읽고 아래 복습 퀴즈 10문항을 풀어 보세요.
+
+## 1. 오늘의 지도: 넣고, 고치고, 지우고, 비운다
+
+데이터를 바꾸는 명령은 네 개예요. 앞의 셋은 `WHERE`나 값으로 대상을 고르고, `TRUNCATE`는 표 전체를 한 번에 비워요.
+
+<Figure label="데이터를 바꾸는 네 명령">
+  <Boxes
+    row={[
+      { title: "INSERT", tone: "ok", lines: ["새 행을 넣어요", "`VALUES`로 직접, 또는 `SELECT` 결과를 통째로"] },
+      { title: "UPDATE", tone: "blue", lines: ["값을 바꿔요", "`SET 열 = 새 값`, `WHERE`로 대상"] },
+      { title: "DELETE", tone: "amber", lines: ["행을 지워요", "`WHERE`로 대상"] },
+      { title: "TRUNCATE", tone: "red", lines: ["모든 행을 비워요", "표는 남고 내용만 사라져요"] },
+    ]}
+  />
+</Figure>
+
+네 명령 모두 끝에 `RETURNING 열`을 붙이면 방금 바꾼 행을 바로 보여 줘요(`TRUNCATE`는 빼고요). `SELECT`를 다시 칠 필요가 없어요.
+
+`RETURNING`은 PostgreSQL에만 있는 문법이에요. MySQL에는 없어서 `LAST_INSERT_ID()`로 마지막 번호를 따로 조회해요.
+
+| 명령 | 대상 | `WHERE`를 빼면 |
+| --- | --- | --- |
+| `INSERT` | 새 행 | 해당 없음 |
+| `UPDATE` | `WHERE`에 맞는 행 | 모든 행이 바뀐다 |
+| `DELETE` | `WHERE`에 맞는 행 | 모든 행이 지워진다 |
+| `TRUNCATE` | 표 전체 | `WHERE`를 쓸 수 없다 |
+
+## 2. `INSERT ... RETURNING`: 넣자마자 새 번호를 받는다
+
+체육관이 필라테스를 새로 열어요. `sports`의 `sport_id`는 `SERIAL`이라 번호는 비워 두고 이름만 넣어요.
+
+```sql
+INSERT INTO sports (sport_name) VALUES ('필라테스') RETURNING *;
+```
+
+```text
+ sport_id | sport_name
+----------+------------
+        5 | 필라테스
+(1 row)
+
+INSERT 0 1
+```
+
+`RETURNING`이 자동으로 매겨진 번호 5를 바로 돌려줬어요. 이 번호로 필라테스 강사와 강좌를 이어서 등록할 수 있어요. 백엔드에서 "회원 가입 뒤 새 회원 번호로 응답하기"가 바로 이 기능이에요.
+
+### 열 목록은 빼지 않는다
+
+`INSERT INTO sports VALUES ('필라테스');`처럼 열 목록을 빼면 값이 표의 열 순서대로 들어가요. 첫 열 `sport_id`는 정수라서 글자를 숫자로 바꾸려다 실패해요.
+
+```text
+ERROR:  invalid input syntax for type integer: "필라테스"
+```
+
+<Figure label="SERIAL 열을 비워 두는 두 방법">
+  <Boxes
+    row={[
+      { title: "열 목록에서 빼기", tone: "ok", lines: ["`INSERT INTO sports (sport_name) VALUES ('필라테스');`", "늘 권장해요. 표에 열이 늘어도 그대로 돌아요"] },
+      { title: "DEFAULT 쓰기", tone: "neutral", lines: ["`INSERT INTO sports VALUES (DEFAULT, '필라테스');`", "열 순서를 외워야 해서 틀리기 쉬워요"] },
+    ]}
+  />
+</Figure>
+
+## 3. `INSERT ... SELECT`: 조회 결과를 통째로 옮겨 담는다
+
+상담팀이 "이메일이나 휴대폰이 등록 안 된 회원에게 연락하겠다"고 해요. 연락 목록을 담을 표 `contact_lists`를 먼저 만들어요.
+
+```sql
+CREATE TABLE contact_lists (
+    request_id SERIAL PRIMARY KEY,
+    member_id INT NOT NULL,
+    name VARCHAR(20) NOT NULL,
+    reason VARCHAR(50) NOT NULL,
+    request_date DATE NOT NULL
+);
+```
+
+이제 `VALUES` 대신 `SELECT` 결과를 그대로 넣어요. 넣을 열 목록과 `SELECT` 열은 **개수와 순서가 맞아야** 해요. 이름이 아니라 위치로 짝을 짓거든요.
+
+```sql
+INSERT INTO contact_lists (name, member_id, reason, request_date)
+SELECT name, member_id, '이메일 미등록' AS reason, CAST('2026-11-19' AS DATE) AS request_date
+FROM members WHERE email IS NULL
+UNION
+SELECT name, member_id, '휴대폰 미등록', CAST('2026-11-19' AS DATE)
+FROM members WHERE phone IS NULL
+RETURNING *;
+```
+
+<Figure label="SELECT 열이 INSERT 열에 자리 순서대로 들어가요">
+  <Seq
+    steps={[
+      { title: "`name` → `name`", body: "첫째 자리끼리 짝이에요." },
+      { title: "`member_id` → `member_id`", body: "둘째 자리끼리. 순서를 바꿔 쓰면 정수 칸에 이름이 들어가려다 오류예요." },
+      { title: "`'이메일 미등록'` → `reason`", body: "고정값도 열 하나예요. 모든 행에 같은 값이 들어가요." },
+      { title: "`CAST('2026-11-19' AS DATE)` → `request_date`", body: "글자를 날짜 타입으로 바꿔 넣어요." },
+      { title: "`request_id`는 없음", body: "`SERIAL`이라 목록에서 빼면 1번부터 알아서 매겨져요." },
+    ]}
+  />
+</Figure>
+
+```text
+ request_id | member_id |  name  |    reason     | request_date
+------------+-----------+--------+---------------+--------------
+          1 |        42 | 강나연 | 이메일 미등록 | 2026-11-19
+          2 |         6 | 강도윤 | 휴대폰 미등록 | 2026-11-19
+          3 |        27 | 권우진 | 이메일 미등록 | 2026-11-19
+...
+         17 |        15 | 황은지 | 이메일 미등록 | 2026-11-19
+         18 |        58 | 황은찬 | 이메일 미등록 | 2026-11-19
+(18 rows)
+
+INSERT 0 18
+```
+
+`UNION`이 두 조회 결과를 위아래로 합쳤어요. 이메일 미등록 15명과 휴대폰 미등록 3명이라 18행이에요.
+
+<Hint>
+이메일과 휴대폰이 둘 다 없는 회원이 있다면 사유가 달라서 두 줄로 들어가요. `UNION`은 모든 열이 같은 줄만 하나로 합치거든요. 이런 중복을 막고 싶으면 `(member_id, reason)`에 `UNIQUE`를 걸어요.
+</Hint>
+
+열 개수가 어긋나면 넣기 전에 멈춰요. `SELECT` 쪽이 모자라면 `INSERT has more target columns than expressions`, 넘치면 `INSERT has more expressions than target columns`예요.
+
+## 4. `UPDATE`: 확인하고, 바꾸고, 다시 확인한다
+
+2번 회원 이준호가 이메일을 알려 줬어요. 바꾸기 전에 같은 `WHERE`로 대상부터 봐요. `SELECT`해 보면 이준호의 `email` 칸이 비어 있어요.
+
+```sql
+SELECT * FROM members WHERE member_id = 2;
+UPDATE members SET email = '받은 이메일 주소' WHERE member_id = 2 RETURNING *;
+```
+
+`RETURNING *`이 이준호의 행 전체를 보여 주는데, `email` 칸에 새 주소가 들어가 있고 마지막 줄에 `UPDATE 1`이 나와요. `UPDATE 1`은 "1행을 바꿨다"는 뜻이에요. 이 숫자가 예상한 행 수와 같은지 꼭 봐요.
+
+### 여러 열은 쉼표로, 계산은 지금 값으로
+
+골프 중급반(9번)이 월수금 20시로 옮겨요. `SET` 뒤에 쉼표로 여러 열을 쓰고, `RETURNING`에는 보고 싶은 열만 적어요.
+
+```sql
+UPDATE courses
+SET class_days = '월수금', start_time = '20:00:00'
+WHERE course_id = 9
+RETURNING course_id, course_name, class_days, start_time;
+```
+
+```text
+ course_id | course_name | class_days | start_time
+-----------+-------------+------------+------------
+         9 | 골프 중급반 | 월수금     | 20:00:00
+(1 row)
+
+UPDATE 1
+```
+
+수영 강좌(종목 1) 수강료를 5% 올려요. `SET` 오른쪽의 `fee`는 바꾸기 전 값이에요.
+
+```sql
+UPDATE courses SET fee = fee * 1.05 WHERE sport_id = 1 RETURNING fee;
+```
+
+<Figure label="수영 강좌 다섯 개의 수강료">
+  <Relay
+    legs={[
+      { fn: "수영 초급 새벽반", desc: "70000원에서", ex: "70000 * 1.05", value: "73500" },
+      { fn: "수영 중급 저녁반", desc: "75000원에서", ex: "75000 * 1.05", value: "78750" },
+      { fn: "수영 상급 저녁반", desc: "80000원에서", ex: "80000 * 1.05", value: "84000" },
+      { fn: "아쿠아로빅", desc: "65000원에서", ex: "65000 * 1.05", value: "68250" },
+      { fn: "수영 마스터즈반", desc: "90000원에서", ex: "90000 * 1.05", value: "94500" },
+    ]}
+  />
+</Figure>
+
+`UPDATE 5`가 나와요. 계산식 `UPDATE`는 실행할 때마다 또 바뀌어서, 두 번 실행하면 5%가 두 번 올라요. 다시 하려면 시드 파일(`\i /tmp/sportscenter_seed.sql`)로 처음 상태를 만든 뒤 한 번만 실행해요.
+
+<Hint>
+교안은 78750원처럼 끝자리가 지저분한 값을 `ROUND(fee * 1.05, -2)`로 100원 단위 반올림해요(-1이면 10원, -3이면 1000원 단위). 수준마다 인상률이 다르면 `SET fee = CASE WHEN level = '초급' THEN ... ELSE fee END`처럼 `CASE`를 써요. `ELSE fee`를 빼면 나머지 행이 NULL이 되려다 NOT NULL에 걸려 문장 전체가 실패해요.
+</Hint>
+
+## 5. `WHERE`가 바꿀 행을 정한다. 빼면 전부다
+
+`UPDATE`와 `DELETE`의 대상은 오직 `WHERE`가 정해요. 빼먹으면 오류 없이 표의 모든 행이 바뀌거나 지워져요.
+
+<Figure label="같은 문장, WHERE 하나 차이">
+  <Boxes
+    row={[
+      { title: "WHERE sport_id = 1", tone: "ok", lines: ["수영 강좌 5개만 올라요", "`UPDATE 5`"] },
+      { title: "WHERE 없음", tone: "red", lines: ["14개 강좌가 전부 올라요", "`UPDATE 14`, 경고도 없어요"] },
+    ]}
+  />
+</Figure>
+
+그래서 순서를 정해 두고 지켜요. 같은 `WHERE`로 `SELECT`해서 대상을 보고, 바꾸고, `RETURNING`이나 `SELECT`로 결과를 다시 봐요. `UPDATE 0`이 나오면 `WHERE`에 맞는 행이 없다는 뜻이니 번호나 값에 오타가 없는지 봐요.
+
+## 6. 서브쿼리로 바꿀 대상을 고른다
+
+11월 신청이 5건 이상인 인기 강좌의 정원을 5명 늘려요. 어떤 강좌인지는 어제 배운 `GROUP BY`와 `HAVING`이 골라 줘요.
+
+```sql
+UPDATE courses
+SET capacity = capacity + 5
+WHERE course_id IN (
+    SELECT course_id FROM enrollments
+    WHERE enroll_month = '2026-11'
+    GROUP BY course_id
+    HAVING COUNT(*) >= 5
+)
+RETURNING course_id, course_name, capacity;
+```
+
+<Figure label="안쪽이 번호 목록을 만들고, 바깥이 그 번호만 바꿔요">
+  <Boxes
+    row={[
+      { title: "서브쿼리", tone: "amber", lines: ["11월 신청을 강좌별로 묶어 5건 이상만", "번호 목록 (2, 3, 4, 8, 11, 13)"] },
+      { arrow: "`IN`으로 넘겨요" },
+      { title: "UPDATE courses", tone: "blue", lines: ["목록에 있는 강좌만 `capacity + 5`", "`UPDATE 6`"] },
+    ]}
+  />
+</Figure>
+
+```text
+ course_id |   course_name    | capacity
+-----------+------------------+----------
+         2 | 헬스 자유이용    |       55
+         3 | 수영 중급 저녁반 |       25
+         4 | 수영 상급 저녁반 |       20
+         8 | 골프 입문반      |       15
+        11 | 라틴댄스 초급    |       25
+        13 | 실버 스포츠댄스  |       25
+(6 rows)
+
+UPDATE 6
+```
+
+`RETURNING`에는 `ORDER BY`를 쓸 수 없어서 행 순서가 정해져 있지 않아요. 순서가 필요하면 바꾼 뒤 `SELECT ... ORDER BY`로 따로 조회해요.
+
+## 7. `DELETE`: 지울 행도 `WHERE`가 고른다
+
+38번 회원 송유나가 사물함을 반납했어요. 먼저 `SELECT * FROM lockers;`로 표를 보고, 같은 조건으로 지워요.
+
+```sql
+DELETE FROM lockers WHERE member_id = 38 RETURNING *;
+```
+
+```text
+ locker_no | member_id | assign_date
+-----------+-----------+-------------
+       110 |        38 | 2025-08-01
+(1 row)
+
+DELETE 1
+```
+
+`RETURNING *`이 무엇을 지웠는지 남겨 줘요. 지운 행은 되돌릴 수 없으니 이 기록이 마지막 확인이에요.
+
+### 짝이 없는 행만 고르는 `NOT EXISTS`
+
+이번에는 가입만 하고 한 번도 수강하지 않은 회원을 정리해요. `NOT EXISTS`는 바깥 회원 한 명마다 안쪽 `enrollments`에 짝이 있는지 보고, 한 행도 없으면 참이에요.
+
+```sql
+SELECT m.member_id, m.name, m.join_date
+FROM members m
+WHERE NOT EXISTS (
+    SELECT 1 FROM enrollments e WHERE e.member_id = m.member_id
+);
+```
+
+<Figure label="회원 한 명마다 묻는 질문">
+  <Boxes
+    row={[
+      { title: "1번 김하늘", tone: "neutral", lines: ["수강 기록이 있어요", "`NOT EXISTS`는 거짓, 남겨요"] },
+      { title: "47번 박민재", tone: "red", lines: ["수강 기록이 한 행도 없어요", "`NOT EXISTS`는 참, 대상이에요"] },
+    ]}
+  />
+</Figure>
+
+`SELECT 1`의 1에는 뜻이 없어요. `EXISTS`는 값이 아니라 "한 행이라도 있느냐"만 보니 아무 값이나 써도 돼요.
+
+`SELECT`로 6명(박민재, 서승현, 서성민, 홍정우, 류민재, 황은찬)을 먼저 확인하고, 같은 조건으로 지웠어요.
+
+```sql
+DELETE FROM members m
+WHERE NOT EXISTS (
+    SELECT 1 FROM enrollments e WHERE e.member_id = m.member_id
+)
+RETURNING m.member_id, m.name;
+```
+
+```text
+ member_id |  name
+-----------+--------
+        47 | 박민재
+        13 | 서승현
+        55 | 서성민
+        48 | 홍정우
+        23 | 류민재
+        58 | 황은찬
+(6 rows)
+
+DELETE 6
+```
+
+수강 기록이 있는 회원은 이렇게 지울 수 없어요. `enrollments`가 그 회원을 가리키고 있어서 16회차에 본 FK 오류가 나요.
+
+```text
+ERROR:  update or delete on table "members" violates foreign key constraint "enrollments_member_id_fkey" on table "enrollments"
+DETAIL:  Key (member_id)=(38) is still referenced from table "enrollments".
+```
+
+<Hint>
+수강 이력과 매출은 회원이 탈퇴해도 남겨야 하는 기록이에요. 그래서 실무에서는 회원 행을 실제로 지우지 않고 탈퇴 여부 열만 `UPDATE`하는 방식(soft delete)을 많이 써요.
+</Hint>
+
+## 8. `DELETE`, `TRUNCATE`, `DROP`: 무엇이 남는가
+
+셋 다 지우는 명령이지만 지우는 범위가 달라요.
+
+<Figure label="지우는 범위">
+  <Boxes
+    row={[
+      { title: "DELETE", tone: "amber", lines: ["`WHERE`로 고른 행", "지운 행 수를 알려 주고 `RETURNING`도 돼요", "표는 남아요"] },
+      { title: "TRUNCATE", tone: "red", lines: ["모든 행을 한 번에", "`WHERE`를 쓸 수 없어요", "표 구조는 남아요"] },
+      { title: "DROP TABLE", tone: "neutral", dashed: true, lines: ["표 자체", "구조와 데이터가 함께 사라져요"] },
+    ]}
+  />
+</Figure>
+
+### `TRUNCATE`는 번호를 되돌리지 않는다
+
+수업에서 직접 해 보고 알게 된 점이 있어요. `contact_lists`에 18행을 넣고 `TRUNCATE`로 비운 뒤 다시 넣으면 번호가 1이 아니라 19부터 나와요. 표는 비워도 `SERIAL`의 번호표 기계는 그대로거든요.
+
+번호까지 1부터 다시 쓰려면 `TRUNCATE contact_lists RESTART IDENTITY;`로 비워요. 아래에서 직접 눌러 보세요.
+
+<TruncateSerialSimulator />
+
+`DELETE`로 마지막 행을 지워도 그 번호는 다시 쓰지 않아요. `RESTART IDENTITY`만 번호를 1로 되돌려요.
+
+<Hint>
+다른 표가 FK로 가리키는 표는 그냥 비울 수 없어요. `TRUNCATE members;`는 `cannot truncate a table referenced in a foreign key constraint` 오류예요. 시드 파일처럼 참조하는 표를 함께 적어야 해요.
+</Hint>
+
+## 9. `BEGIN`과 `ROLLBACK`: 확정 전에 되돌릴 수 있는 실험대
+
+교안 4장은 `UPDATE`와 `DELETE`를 안전하게 연습하는 방법으로 트랜잭션도 다뤄요. `BEGIN`을 입력하면 그 뒤의 변경은 확정 전 상태로 남아요. `ROLLBACK`으로 통째로 되돌리거나 `COMMIT`으로 확정해요.
+
+```sql
+BEGIN;
+UPDATE courses SET fee = 0;
+SELECT course_id, course_name, fee FROM courses ORDER BY course_id LIMIT 4;
+ROLLBACK;
+```
+
+<Figure label="WHERE를 빠뜨려도 BEGIN 안이라면">
+  <Seq
+    steps={[
+      { title: "`BEGIN;`", body: "프롬프트가 `sportscenter=*#`로 바뀌어요. `*`는 확정 안 된 변경이 있다는 표시예요." },
+      { title: "`UPDATE courses SET fee = 0;`", body: "`UPDATE 14`. 14개 강좌가 모두 0원이 됐어요." },
+      { title: "`ROLLBACK;`", body: "`BEGIN` 이전 값으로 돌아와요." },
+    ]}
+  />
+</Figure>
+
+`BEGIN` 없이 실행한 변경은 Enter를 누르는 순간 확정돼요. `COMMIT` 뒤에도 되돌릴 수 없어요.
+
+트랜잭션 안에서 한 문장이 실패하면 그 뒤 명령은 `current transaction is aborted, commands ignored until end of transaction block`으로 거부돼요. `ROLLBACK;`으로 끝내고 처음부터 다시 해요. "전부 성공하거나 전부 취소된다"가 트랜잭션의 핵심이에요.
+
+<Note title="ROLLBACK은 행을 되돌리지만 번호는 아니에요">
+`BEGIN` 안에서 `INSERT`한 뒤 `ROLLBACK`하면 행은 사라지지만, 그 행이 쓴 `SERIAL` 번호는 돌아오지 않아요. 다음 `INSERT`는 그다음 번호를 받아요. 위 시뮬레이터에서 `BEGIN`, 넣기, `ROLLBACK` 순서로 눌러 보세요.
+</Note>
+
+## 10. 챌린지: 파이썬으로 수강 신청 받기
+
+`psycopg`로 `sportscenter`에 접속해 터미널에서 수강 신청을 받는 프로그램이에요. 회원 이름으로 회원 번호를 찾고, 강좌 이름으로 검색해 고른 뒤, `enrollments`에 신청을 넣어요.
+
+<Figure label="프로그램이 도는 순서">
+  <Seq
+    steps={[
+      { title: "`list_courses`", body: "신청할 수 있는 강좌 목록을 보여 줘요." },
+      { title: "`ask_member`", body: "이름을 받아 `member_id`를 찾아요." },
+      { title: "`ask_course`", body: "검색어를 받아 `LIKE`로 비슷한 강좌를 보여 주고 번호를 골라요." },
+      { title: "`enroll`", body: "이미 신청했는지 확인하고, 아니면 `INSERT`해요." },
+    ]}
+  />
+</Figure>
+
+맥 터미널에서 프로젝트 폴더에 들어가 패키지를 받고 실행해요. 데이터베이스 컨테이너는 켜져 있어야 해요.
+
+```bash
+uv add "psycopg[binary]"
+uv run main.py
+```
+
+### 핵심 다섯 가지
+
+<Figure label="psycopg로 SQL을 보내는 법">
+  <Boxes
+    row={[
+      { title: "접속", tone: "blue", lines: ["`psycopg.connect(DSN, row_factory=dict_row)`", "행을 `row['member_id']`처럼 열 이름으로 꺼내요"] },
+      { title: "값 넣기", tone: "ok", lines: ["SQL 안에는 `%s` 자리표시자만", "값은 튜플로 따로: `(m_name,)`"] },
+      { title: "와일드카드", tone: "amber", lines: ["`%`는 SQL이 아니라 값 쪽에", "`LIKE %s` + `f\"%{c_name}%\"`"] },
+    ]}
+  />
+</Figure>
+
+값을 문자열로 직접 이어 붙이지 않는 게 중요해요. 따옴표 처리를 드라이버가 맡아서 안전해요. 이름에 따옴표가 든 `O'Neil`을 f-string으로 SQL에 끼우면 `syntax error at or near "Neil"`이 나지만, `%s`로 넘기면 그대로 찾아요.
+
+결과는 `fetchone()`이면 한 행 또는 `None`, `fetchall()`이면 행 목록으로 받아요. `with psycopg.connect(...) as conn:` 블록이 오류 없이 끝나면 변경이 commit돼요. 블록 안에서 오류가 나면 저장되지 않아요.
+
+<Hint>
+자리표시자가 하나여도 값은 꼭 튜플로 넘겨요. 쉼표를 빠뜨린 `(m_name)`은 그냥 문자열이라 `TypeError: query parameters should be a sequence or a mapping, got str`가 나요.
+</Hint>
+
+### 코드
+
+수업에서 낸 파일은 목록을 출력하는 데까지만 TIL에 남아 있어서, 위 핵심대로 다시 짰어요. 수강료는 `VALUES` 안의 서브쿼리 `(SELECT fee FROM courses WHERE course_id = %s)`로 가져와서, 조회와 신청을 한 문장으로 끝내요. 도전 과제였던 중복 신청 막기도 넣었어요.
+
+```python
+import psycopg
+from psycopg.rows import dict_row
+
+DSN = "host=localhost port=5432 dbname=sportscenter user=postgres password=admin"
+MONTH = "2026-11"
+
+LIST_SQL = """
+SELECT c.course_id, s.sport_name, c.course_name, c.fee
+FROM courses c
+JOIN sports s ON s.sport_id = c.sport_id
+ORDER BY c.course_id
+"""
+
+
+def list_courses(conn):
+    for c in conn.execute(LIST_SQL):
+        print(f"{c['course_id']:>3} | {c['sport_name']} | {c['course_name']} | {c['fee']}원")
+
+
+def ask_member(conn):
+    m_name = input("회원 이름: ")
+    row = conn.execute(
+        "SELECT member_id FROM members WHERE name = %s", (m_name,)
+    ).fetchone()
+    if row is None:
+        print("없는 회원이에요.")
+        return None
+    return row["member_id"]
+
+
+def ask_course(conn):
+    c_name = input("강좌 검색어: ")
+    rows = conn.execute(
+        "SELECT course_id, course_name FROM courses WHERE course_name LIKE %s ORDER BY course_id",
+        (f"%{c_name}%",),
+    ).fetchall()
+    if not rows:
+        print("맞는 강좌가 없어요.")
+        return None
+    for r in rows:
+        print(f"{r['course_id']:>3} | {r['course_name']}")
+    return int(input("강좌 번호: "))
+
+
+def enroll(conn, member_id, course_id):
+    dup = conn.execute(
+        "SELECT 1 FROM enrollments WHERE member_id = %s AND course_id = %s AND enroll_month = %s",
+        (member_id, course_id, MONTH),
+    ).fetchone()
+    if dup:
+        print("이미 이번 달에 신청한 강좌예요.")
+        return
+    row = conn.execute(
+        """
+        INSERT INTO enrollments (member_id, course_id, enroll_month, status, pay_amount)
+        VALUES (%s, %s, %s, '수강중', (SELECT fee FROM courses WHERE course_id = %s))
+        RETURNING pay_amount
+        """,
+        (member_id, course_id, MONTH, course_id),
+    ).fetchone()
+    print(f"신청 완료: 수강료 {row['pay_amount']}원")
+
+
+def main():
+    with psycopg.connect(DSN, row_factory=dict_row) as conn:
+        list_courses(conn)
+        member_id = ask_member(conn)
+        if member_id is None:
+            return
+        course_id = ask_course(conn)
+        if course_id is None:
+            return
+        enroll(conn, member_id, course_id)
+
+
+main()
+```
+
+강좌 14개가 든 연습용 데이터베이스에서 이준호로 "수영"을 검색해 3번을 신청하면 이렇게 나와요(목록 앞부분은 줄였어요).
+
+```text
+  1 | 수영 | 수영 초급 새벽반 | 70000원
+  2 | 헬스 | 헬스 자유이용 | 50000원
+...
+ 14 | 수영 | 수영 마스터즈반 | 90000원
+회원 이름: 이준호
+강좌 검색어: 수영
+  1 | 수영 초급 새벽반
+  3 | 수영 중급 저녁반
+  4 | 수영 상급 저녁반
+ 14 | 수영 마스터즈반
+강좌 번호: 3
+신청 완료: 수강료 75000원
+```
+
+같은 신청을 한 번 더 하면 마지막 줄이 `이미 이번 달에 신청한 강좌예요.`로 바뀌어요. `enrollments`의 기본 키가 (회원, 강좌, 월)이라 확인 없이 넣으면 `duplicate key` 오류로 멈췄을 거예요.
+
+## 11. 오늘 만난 오류
+
+| 메시지 | 원인 | 해결 |
+| --- | --- | --- |
+| `invalid input syntax for type integer: "필라테스"` | 열 목록 없이 넣어 값이 첫 열(번호)로 감 | 열 목록을 씀 |
+| `INSERT has more target columns than expressions` | 넣을 열보다 값(`SELECT` 열)이 적음 | 개수와 순서를 맞춤 |
+| `update or delete on table "members" violates foreign key constraint` | 다른 표의 행이 이 회원을 가리킴 | 자식 행부터 정리하거나 삭제 대신 상태 변경 |
+| `cannot truncate a table referenced in a foreign key constraint` | FK로 참조되는 표만 비움 | 참조하는 표를 함께 적음 |
+| `current transaction is aborted, commands ignored until end of transaction block` | 트랜잭션 안에서 오류가 남 | `ROLLBACK;` 후 다시 |
+| `UPDATE 0`, `DELETE 0` | `WHERE`에 맞는 행이 없음 | 같은 `WHERE`로 `SELECT`해 확인 |
+| `query parameters should be a sequence or a mapping, got str` | `(m_name)`처럼 쉼표 없는 괄호 | `(m_name,)` 튜플로 넘김 |
+
+## 오늘 꼭 기억할 주의점
+
+- `UPDATE`와 `DELETE`는 같은 `WHERE`로 먼저 `SELECT`해서 대상을 확인한 뒤 실행해요. `WHERE`를 빼면 모든 행이 바뀌거나 지워져요.
+- `RETURNING`은 바꾼 행을 바로 보여 줘요. `INSERT`에 붙이면 새 `SERIAL` 번호를 받아요. PostgreSQL에만 있는 문법이에요.
+- `INSERT`에는 열 목록을 꼭 써요. `INSERT ... SELECT`는 열 목록과 `SELECT` 열의 개수와 순서를 맞춰요.
+- 계산식 `UPDATE`(`fee = fee * 1.05`)는 실행할 때마다 또 바뀌어요. 한 번만 실행해요.
+- `WHERE 키 IN (서브쿼리)`는 서브쿼리가 돌려준 목록이 대상이에요. `NOT EXISTS`는 짝이 한 행도 없을 때 참이에요.
+- `DELETE`는 고른 행, `TRUNCATE`는 모든 행, `DROP TABLE`은 표 자체를 지워요. `TRUNCATE`는 번호를 되돌리지 않아서, 1부터 다시 쓰려면 `RESTART IDENTITY`를 붙여요.
+- `BEGIN` 안의 변경은 `ROLLBACK`으로 되돌릴 수 있어요. 그 밖의 변경은 Enter를 누르면 확정돼요.
+- 파이썬에서는 SQL에 `%s`를 두고 값은 튜플로 따로 넘겨요. 문자열로 이어 붙이지 않아요.
