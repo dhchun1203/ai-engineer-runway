@@ -139,7 +139,7 @@ content-type: application/json
   <Boxes
     row={[
       { title: "상태 줄", tone: "ok", lines: ["`200 OK`", "잘 됐는지 숫자로 먼저 알려 줘요"] },
-      { title: "헤더", tone: "neutral", lines: ["`content-type: application/json`", "본문이 어떤 글자인지 적어요"] },
+      { title: "헤더", tone: "neutral", lines: ["`content-type`에 본문 종류를 적어요", "여기서는 `application/json`"] },
       { title: "본문", tone: "blue", lines: ["빈 줄 다음의 JSON", "DB 한 행이 `{ }` 하나예요"] },
     ]}
   />
@@ -473,7 +473,7 @@ Name: ordered_at, dtype: int32
 <Figure label="DB 값이 JSON을 거쳐 pandas 값이 되는 길">
   <Boxes
     row={[
-      { title: "TIMESTAMP", tone: "blue", lines: ["JSON에서는 `\"2026-11-02T08:19:00\"` 글자", "`pd.to_datetime`으로 `datetime64[us]`"] },
+      { title: "TIMESTAMP", tone: "blue", lines: ["JSON에서는 2026-11-02T08:19:00 같은 글자", "`pd.to_datetime`으로 바꾸면 `datetime64[us]`"] },
       { title: "NULL", tone: "amber", lines: ["JSON `null`, 파이썬 `None`", "pandas에서 `NaN`이라 `member_id`가 `float64`"] },
       { title: "INTEGER, VARCHAR", tone: "rust", lines: ["JSON 숫자는 `int64`", "JSON 글자는 `str`"] },
     ]}
