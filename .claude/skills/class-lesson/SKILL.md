@@ -22,6 +22,7 @@ src/content/class-lessons/NN-<주제 영문 kebab>/
 - 가운데점(·), 긴 하이픈(—), ─ 글리프, 이모지 금지. 한국어는 2~3문장마다 문단을 끊는다.
 - **명령 출력은 직접 실행해 본 값만 쓴다.** 세션 scratchpad에 임시 저장소를 만들어 돌린다. git 설정은 `GIT_CONFIG_GLOBAL=<scratchpad>/gitconfig`로 임시 파일을 써서 사용자의 실제 설정을 건드리지 않는다.
 - 이미 쓴 퀴즈 문항 id는 바꾸지 않는다(오답 기록 키 `cl:<slug>:<id>`).
+- **모든 회차는 맥(macOS, zsh) 기준으로 쓴다**(2026-11-21 사용자 지시, 1~19회차도 맥 기준으로 고쳐 둠). 설치는 `brew`, 가상환경은 `source .venv/bin/activate`, 파이썬 실행은 `uv run`(맥에는 `python` 명령이 없다), Docker 엔진은 Colima(`colima start`), 키는 `Cmd`/`Option`(터미널 단축키와 VS Code 셀 실행 `Ctrl + Enter`는 그대로 control), 대괄호 든 패키지는 `uv add "psycopg[binary]"`처럼 따옴표. `winget`, Git Bash, `MSYS_NO_PATHCONV`, `//tmp`, Docker Desktop, PowerShell 안내는 쓰지 않는다. 교안이 윈도우 기준이면 맥 명령으로 바꿔 쓰고, 교안과 달라진 점은 한 줄(또는 짧은 TwistBox)로만 알린다. 맥 전용 출력은 우분투 컨테이너에 zsh, uv를 깔아 돌려 확인하고, 맥에서만 나오는 값(경로 `/opt/homebrew` 등)은 공식 문서로 확인한다. 맥 셋업 안내는 `/class/mac-setup`(src/content/guides/mac-setup.mdx).
 
 ## 절차
 

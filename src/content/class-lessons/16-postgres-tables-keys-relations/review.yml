@@ -214,8 +214,8 @@ commands:
   - cmd: "SELECT version();"
     desc: "PostgreSQL 버전 보기"
     group: SQL
-  - cmd: "Ctrl + Enter"
-    desc: "DBeaver 에서 커서가 있는 SQL 문장 실행"
+  - cmd: "Cmd + Enter"
+    desc: "DBeaver 에서 커서가 있는 SQL 문장 실행(맥, 윈도우는 Ctrl + Enter)"
     group: 단축키
 terms:
   - word: "기본 키 (Primary Key, PK)"

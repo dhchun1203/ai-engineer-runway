@@ -77,23 +77,23 @@ quiz:
     q: "가상환경을 활성화한 터미널에서 which python 과 echo $VIRTUAL_ENV 가 보여 주는 것은?"
     options:
       - "둘 다 시스템 파이썬 경로"
-      - "which python 은 실행될 python 파일 경로(.venv/Scripts/python), $VIRTUAL_ENV 는 가상환경 폴더 경로(.venv)"
+      - "which python 은 실행될 python 파일 경로(.venv/bin/python), $VIRTUAL_ENV 는 가상환경 폴더 경로(.venv)"
       - "which python 은 파이썬 버전, $VIRTUAL_ENV 는 패키지 목록"
       - "둘 다 빈 줄"
     answer: 1
-    explain: "which python 은 python 을 쳤을 때 실행될 파일의 경로예요. 가상환경 폴더 자체는 $VIRTUAL_ENV 로 봐요. deactivate 하면 which python 은 시스템 경로로 돌아가고 $VIRTUAL_ENV 는 빈 줄이 돼요."
+    explain: "which python 은 python 을 쳤을 때 실행될 파일의 경로예요. 가상환경 폴더 자체는 $VIRTUAL_ENV 로 봐요. deactivate 하면 맥에서는 which python 이 다시 python not found 가 되고 $VIRTUAL_ENV 는 빈 줄이 돼요."
   - id: uv-run-no-activate
     q: "가상환경을 활성화하지 않은 터미널에서 다음을 실행하면?"
     code: |-
       $ uv add fastapi
-      $ python main.py     # main.py 첫 줄: import fastapi
+      $ python3 main.py    # main.py 첫 줄: import fastapi
     options:
       - "항상 잘 실행된다"
-      - "시스템 파이썬으로 돌아 ModuleNotFoundError 가 날 수 있다. uv run main.py 로 실행하면 된다"
+      - "맥 시스템 파이썬으로 돌아 ModuleNotFoundError 가 난다. uv run main.py 로 실행하면 된다"
       - "uv 가 자동으로 활성화해 준다"
       - "main.py 가 지워진다"
     answer: 1
-    explain: "fastapi 는 .venv 에만 설치됐어요. 활성화 안 한 python 은 시스템 파이썬이라 직접 해 보니 No module named 'fastapi' 가 났어요. uv run 은 활성화 없이 .venv 에서 실행해 줘요."
+    explain: "fastapi 는 .venv 에만 설치됐어요. 맥의 python3 는 시스템 파이썬이라 No module named 'fastapi' 가 나요. python 으로 치면 아예 command not found 예요. uv run 은 활성화 없이 .venv 에서 실행해 줘요."
   - id: jupyter-kernel
     q: "VS Code 노트북에서 uv add 로 설치한 패키지를 import 하려면 무엇을 해야 하나요?"
     options:
@@ -105,20 +105,20 @@ quiz:
     explain: "ipykernel 은 노트북이 코드를 실행하는 엔진(커널)이에요. 커널을 .venv 로 골라야 그 환경에 설치한 패키지를 쓸 수 있어요. 개발할 때만 쓰니 uv add --dev ipykernel 로 나눠 둘 수도 있어요."
 commands:
   - cmd: python
-    desc: 파이썬 REPL(>>>) 열기
+    desc: 가상환경을 켠 뒤 파이썬 REPL(>>>) 열기(맥은 켜기 전엔 python 이 없음)
     group: Python
   - cmd: exit()
     desc: REPL 나가기
     group: Python
-  - cmd: python -c "import dis; dis.dis('...')"
+  - cmd: uv run python -c "import dis; dis.dis('...')"
     desc: 코드가 바뀐 바이트코드 들여다보기
     group: Python
-  - cmd: winget search uv
-    desc: uv 패키지 찾기
-    group: winget
-  - cmd: winget install --id=astral-sh.uv -e
-    desc: ID 정확히 일치로 uv 설치
-    group: winget
+  - cmd: brew info uv
+    desc: 설치 전에 uv 패키지 설명 확인
+    group: brew
+  - cmd: brew install uv
+    desc: Homebrew로 uv 설치
+    group: brew
   - cmd: uv --version
     desc: uv 설치 확인(안 나오면 터미널 새로 열기)
     group: uv
@@ -158,8 +158,8 @@ commands:
   - cmd: uv pip install <패키지>
     desc: pip 와 비슷한 방식으로 설치
     group: uv
-  - cmd: source .venv/Scripts/activate
-    desc: Git Bash 에서 가상환경 활성화(프롬프트 앞에 프로젝트 이름)
+  - cmd: source .venv/bin/activate
+    desc: 맥 터미널에서 가상환경 활성화(프롬프트 앞에 프로젝트 이름)
     group: 터미널
   - cmd: deactivate
     desc: 가상환경 비활성화
@@ -188,16 +188,16 @@ commands:
   - cmd: L
     desc: 줄 번호 켜기/끄기(명령 모드)
     group: 주피터
-  - cmd: Alt + ↑ / Alt + ↓
+  - cmd: Option + ↑ / Option + ↓
     desc: 셀 위아래로 옮기기(명령 모드)
     group: 주피터
   - cmd: Ctrl + Enter
-    desc: 셀 실행
+    desc: 셀 실행(맥도 command 아니고 control)
     group: 주피터
   - cmd: Shift + Enter
     desc: 셀 실행 후 다음 셀로 이동
     group: 주피터
-  - cmd: Alt + Enter
+  - cmd: Option + Enter
     desc: 셀 실행 후 아래에 새 셀 추가
     group: 주피터
 terms:

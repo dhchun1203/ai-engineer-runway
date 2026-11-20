@@ -105,24 +105,27 @@ quiz:
     answer: 0
     explain: 브랜치는 커밋을 가리키는 책갈피 같은 포인터예요. 새 커밋을 만들면 책갈피가 자동으로 그 커밋으로 옮겨가요. 폴더를 복사하지 않으니 가볍게 만들고 지울 수 있어요.
 commands:
-  - cmd: winget search <검색어>
-    desc: 설치할 패키지의 이름과 ID 찾기
-    group: winget
-  - cmd: winget show <ID>
-    desc: 패키지 상세 정보(버전, 설명) 보기
-    group: winget
-  - cmd: winget install <ID>
-    desc: ID로 프로그램 설치
-    group: winget
-  - cmd: winget list
+  - cmd: brew search <검색어>
+    desc: 설치할 패키지의 정확한 이름 찾기
+    group: brew
+  - cmd: brew info <이름>
+    desc: 패키지 상세 정보(버전, 설명, 설치 여부) 보기
+    group: brew
+  - cmd: brew install <이름>
+    desc: 이름으로 프로그램 설치(창이 뜨는 앱은 --cask)
+    group: brew
+  - cmd: brew list
     desc: 설치된 프로그램 목록
-    group: winget
-  - cmd: winget upgrade
+    group: brew
+  - cmd: brew outdated
     desc: 업그레이드할 수 있는 프로그램 목록
-    group: winget
-  - cmd: winget uninstall <ID>
+    group: brew
+  - cmd: brew upgrade <이름>
+    desc: 특정 프로그램 업그레이드
+    group: brew
+  - cmd: brew uninstall <이름>
     desc: 프로그램 삭제
-    group: winget
+    group: brew
   - cmd: ls -al
     desc: 숨김 파일까지 자세히 보기(권한, 크기, 날짜)
     group: 터미널
@@ -269,8 +272,8 @@ terms:
     definition: 커밋 하나를 가리키는 움직이는 책갈피. 새 커밋을 만들면 따라서 앞으로 간다.
   - word: GitFlow
     definition: main, develop, feature 같은 브랜치 역할을 팀이 정해 두고 나눠 쓰는 약속.
-  - word: winget
-    definition: 윈도우에서 명령어로 프로그램을 검색하고 설치하는 패키지 관리자.
+  - word: Homebrew (brew)
+    definition: 맥에서 명령어로 프로그램을 검색하고 설치하는 패키지 관리자. 윈도우의 winget에 해당한다.
   - word: 리다이렉션 (redirection)
     definition: 화면에 나올 출력을 파일로 보내는 것. > 는 덮어쓰기, >> 는 이어 쓰기.
   - word: .gitignore

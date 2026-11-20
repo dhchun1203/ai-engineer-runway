@@ -265,7 +265,7 @@ INSERT INTO order_items (order_id, menu_id, qty) VALUES
 
 ## 6. 시드 넣기: 파일 하나를 psql에 흘려 넣는다
 
-이번엔 `-it` 대신 `-i`만 써요. 키보드가 아니라 파일을 `<`로 흘려 넣기 때문이에요. 맥은 경로 변환 문제가 없어서 윈도우 때처럼 `docker cp`를 거치지 않아도 돼요.
+이번엔 `-it` 대신 `-i`만 써요. 키보드가 아니라 파일을 `<`로 흘려 넣기 때문이에요. 내 폴더의 파일을 바로 입력으로 넘기니 `docker cp`로 먼저 복사해 둘 필요가 없어요(15회차 방법 2).
 
 ```bash
 docker exec -i cafe-pg psql -U postgres -d cafe_db < cafe-seed.sql

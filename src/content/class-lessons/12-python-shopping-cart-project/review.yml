@@ -194,7 +194,7 @@ quiz:
     explain: "while 안에서 menu_choice 가 바뀌지 않아서 조건이 계속 참이에요. 여기서는 count 가 3일 때 break 로 빠져나와 3이 찍혀요. break 도 input() 도 없으면 영원히 반복해요. 반복 안에서 input() 을 다시 받아야 해요."
 commands:
   - cmd: "uv run main.py"
-    desc: "완성한 장바구니 프로그램 실행(uv 없이 python main.py 도 돼요)"
+    desc: "완성한 장바구니 프로그램 실행(가상환경을 켰다면 python main.py 도 돼요)"
     group: 터미널
   - cmd: "uv run product.py"
     desc: "파일 하나만 실행해 그 파일의 테스트 코드 돌려 보기"

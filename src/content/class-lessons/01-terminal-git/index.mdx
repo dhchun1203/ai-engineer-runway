@@ -2,7 +2,7 @@
 title: "터미널로 Git 다루기: 개념부터 첫 커밋까지"
 session: 1
 date: "2026-10-26"
-summary: "앞으로 Git은 마우스 대신 터미널에서 씁니다. Git과 GitHub의 차이, 세 가지 영역, reset과 revert, winget 설치, ls -al 읽는 법과 터미널 단축키, 첫 커밋과 push까지 그림과 시뮬레이터로 정리해요."
+summary: "앞으로 Git은 마우스 대신 터미널에서 씁니다. Git과 GitHub의 차이, 세 가지 영역, reset과 revert, Homebrew(brew) 설치, ls -al 읽는 법과 터미널 단축키, 첫 커밋과 push까지 그림과 시뮬레이터로 정리해요."
 slug: "01-terminal-git"
 module: "1-2"
 topic: "Git"
@@ -214,19 +214,23 @@ git checkout -b feature/jump   # 같은 일, 더 오래된 명령어(현업에�
 
 브랜치를 만들고 PR까지 가는 흐름은 [Git 브랜치와 PR 협업 흐름](/lesson/1-2-git-branch-and-pr) 레슨에서 한 바퀴 돌아볼 수 있어요.
 
-## 6. winget: 앱스토어를 명령어로 쓴다
+## 6. Homebrew: 앱스토어를 명령어로 쓴다
 
-winget은 Windows의 **패키지 매니저**예요. 앱스토어를 명령어로 쓰는 거라고 생각하면 돼요. 사이트에 들어가 설치 파일을 받고 "다음"을 누르는 대신, 한 줄로 설치해요.
+Homebrew(명령 이름 `brew`)는 맥의 **패키지 매니저**예요. 앱스토어를 명령어로 쓰는 거라고 생각하면 돼요. 사이트에 들어가 설치 파일을 받고 "다음"을 누르는 대신, 한 줄로 설치해요.
+
+Homebrew 자체는 처음 한 번 이 줄로 깔아요.
 
 ```bash
-winget install -i Git.Git
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-`-i`(`--interactive`)는 설치 옵션을 고르는 화면을 띄워 줘요. 설치 중에 이 세 가지를 확인해요.
+중간에 맥 로그인 비밀번호를 물어요. 쳐도 화면에 글자가 안 보이는 게 정상이에요. 끝나면 화면 아래 **Next steps**에 나온 명령 두세 줄을 그대로 실행해야 `brew` 명령이 잡혀요. 자세한 순서는 [맥 실습 환경](/class/mac-setup) 4절에 있어요.
 
-- 기본 에디터: VS Code 등 평소 쓰는 편집기
-- 기본 브랜치 이름: `main`
-- PATH 설정: "Git from the command line..." (어느 폴더에서든 `git` 명령이 되게)
+그다음 Git을 깔아요.
+
+```bash
+brew install git
+```
 
 설치가 끝나면 터미널을 새로 열고 확인해요.
 
@@ -234,54 +238,48 @@ winget install -i Git.Git
 git --version
 ```
 
-설치하기 전에는 패키지 이름과 **ID**를 검색해서 확인해요.
+수업 교안은 윈도우의 winget(`winget install -i Git.Git`)으로 깔면서 설치 화면에서 기본 에디터, 기본 브랜치 이름(`main`), PATH를 골랐어요. 맥에는 그 화면이 없어요. 기본 브랜치 이름은 9절의 `git config --global init.defaultBranch main`으로 정하고, PATH는 Homebrew가 알아서 잡아 줘요.
+
+설치하기 전에는 패키지 이름을 검색해서 확인해요.
 
 ```bash
-winget search git                     # 이름, ID, 태그에 git이 들어간 패키지 검색
-winget search --id Git.Git            # ID로 검색
-winget search git --source winget     # 검색할 저장소 지정 (winget 또는 msstore)
-winget search git --count 5           # 결과를 5개까지만
+brew search git     # 이름에 git이 들어간 패키지 검색
+brew info git       # 버전, 설명, 설치 여부 같은 상세 정보
 ```
 
-검색 결과는 이런 열로 나와요.
+검색 결과는 두 묶음으로 나와요.
 
-| 열 | 의미 |
+| 묶음 | 의미 |
 | --- | --- |
-| 이름 (Name) | 패키지 표시 이름 |
-| ID | 패키지 고유 식별자(예: `Git.Git`), 설치할 때 이걸 써요 |
-| 버전 (Version) | 최신 버전 |
-| 일치 (Match) | 검색어와 일치한 부분 |
-| 원본 (Source) | 패키지 출처(winget, msstore) |
+| Formulae | 터미널에서 쓰는 도구(`git`, `uv`, `docker`) |
+| Casks | 창이 뜨는 앱(VS Code, DBeaver). 설치할 때 `--cask`를 붙여요 |
 
 <Figure label="설치 흐름">
   <Seq
     steps={[
-      { title: "검색해서 ID 확인.", body: "`winget search git`. 이름이 비슷한 패키지가 정말 많아서, 설치는 **ID 기준**으로 하는 게 안전해요." },
-      { title: "ID로 설치.", body: "`winget install --id Git.Git -e`. `-e`(`--exact`)를 붙이면 ID가 정확히 일치하는 것만 골라요." },
+      { title: "검색해서 이름 확인.", body: "`brew search git`. 비슷한 이름이 여럿 나오니 `brew info`로 설명을 보고 정확한 이름을 골라요." },
+      { title: "이름으로 설치.", body: "`brew install git`. 창이 뜨는 앱이면 `brew install --cask visual-studio-code`처럼 `--cask`를 붙여요." },
       { title: "터미널을 새로 열고 확인.", body: "`git --version`" },
     ]}
   />
 </Figure>
 
-```bash
-winget install --id Git.Git -e
-```
-
 자주 쓰는 명령어는 이 정도예요.
 
 | 명령어 | 하는 일 |
 | --- | --- |
-| `winget search <검색어>` | 패키지 검색 |
-| `winget show <ID>` | 상세 정보(버전, 설명, 설치 옵션) |
-| `winget install <ID>` | 설치 |
-| `winget list` | 설치된 프로그램 목록 |
-| `winget upgrade` | 업그레이드할 수 있는 프로그램 목록 |
-| `winget upgrade <ID>` | 특정 프로그램 업그레이드 |
-| `winget uninstall <ID>` | 삭제 |
+| `brew search <검색어>` | 패키지 검색 |
+| `brew info <이름>` | 상세 정보(버전, 설명, 설치 여부) |
+| `brew install <이름>` | 설치 |
+| `brew install --cask <이름>` | 창이 뜨는 앱 설치 |
+| `brew list` | 설치된 프로그램 목록 |
+| `brew outdated` | 업그레이드할 수 있는 프로그램 목록 |
+| `brew upgrade <이름>` | 특정 프로그램 업그레이드 |
+| `brew uninstall <이름>` | 삭제 |
 
 ## 7. 터미널 기본 명령어: 보고, 옮기고, 만들고, 지운다
 
-아래 명령어는 Git을 설치하면 함께 깔리는 **Git Bash**, macOS 터미널, 리눅스에서 똑같이 동작해요. 리눅스 서버에서도 그대로 쓰니까 지금 손에 익혀 둬요.
+아래 명령어는 맥의 **터미널 앱**(`Cmd + Space`로 Spotlight를 열고 "터미널")에서 쳐요. 리눅스 서버에서도 똑같이 동작하니까 지금 손에 익혀 둬요.
 
 ### 7-1. 파일 목록 보기: ls
 
@@ -361,7 +359,7 @@ rm -r <폴더>        # 폴더 삭제 (안의 내용까지)
 
 <TwistBox title="rm에는 휴지통이 없어요">
 
-윈도우에서 파일을 지우면 휴지통으로 가지만, `rm`은 그 자리에서 바로 지워요. 되살릴 방법이 없어요.
+Finder에서 파일을 지우면 휴지통으로 가지만, `rm`은 그 자리에서 바로 지워요. 되살릴 방법이 없어요.
 
 지우기 전에 `ls`로 대상을 꼭 확인하는 습관을 들여요.
 
@@ -376,7 +374,7 @@ echo "Hello World" > README.md   # 출력을 README.md에 저장 (덮어쓰기)
 echo "Second line" >> README.md  # README.md 끝에 이어 쓰기
 ```
 
-`echo $SHELL`을 치면 지금 쓰는 셸(명령을 받아 주는 프로그램)이 나와요. Git Bash라면 `/usr/bin/bash` 같은 bash 경로가, 요즘 macOS라면 `/bin/zsh`가 나와요.
+`echo $SHELL`을 치면 지금 쓰는 셸(명령을 받아 주는 프로그램)이 나와요. 맥은 `/bin/zsh`(zsh)가 나와요. 리눅스 서버는 보통 `/bin/bash`(bash)인데, 오늘 배우는 명령은 둘 다 똑같이 받아 줘요.
 
 `$`는 **변수를 꺼내 쓴다**는 표시예요. `SHELL`처럼 대문자로 된 것은 대부분 시스템이 미리 정해 둔 환경 변수예요.
 
@@ -415,9 +413,13 @@ history       # 실행했던 명령어 목록 (번호와 함께)
 
 긴 명령어를 다시 칠 필요가 없어요. `history`로 번호를 찾고 `!번호`로 다시 실행해요.
 
+맥의 zsh에서 `history`는 최근 16개만 보여 줘요. 처음부터 전부 보려면 `history 1`을 쳐요.
+
 ## 8. 단축키: 마우스 없는 터미널의 지름길
 
 터미널은 마우스로 커서를 옮길 수 없어서, 단축키를 알면 속도가 확 달라져요.
+
+맥에서도 아래 단축키는 command가 아니라 **control** 키로 눌러요. command 키는 복사(`Cmd + C`)와 붙여넣기(`Cmd + V`)예요.
 
 | 단축키 | 하는 일 |
 | --- | --- |

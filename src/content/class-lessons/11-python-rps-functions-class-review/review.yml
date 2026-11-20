@@ -89,7 +89,7 @@ quiz:
     answer: 1
     explain: "조건 표현식은 조건이 참일 때만 print() 를 실행해요. 0 일 때는 빈 문자열 \"\" 이 만들어졌다가 버려질 뿐 아무것도 찍히지 않아요. 동작만 할 때는 평범한 if 가 더 읽기 쉬워요."
   - id: name-when-imported
-    q: "greet.py 에 아래 한 줄이 있어요. 같은 폴더의 main.py 에 import greet 만 쓰고 python main.py 로 실행하면 출력은?"
+    q: "greet.py 에 아래 한 줄이 있어요. 같은 폴더의 main.py 에 import greet 만 쓰고 uv run main.py 로 실행하면 출력은?"
     code: |-
       # greet.py
       print(__name__)
@@ -99,7 +99,7 @@ quiz:
       - "main"
       - "아무것도 출력되지 않는다"
     answer: 1
-    explain: "import 는 그 파일을 한 번 실행해서 print 가 돌아요. 직접 실행한 파일이 아니라 불러온 파일이라 __name__ 은 파일 이름 greet 예요. python greet.py 로 직접 실행하면 __main__ 이에요. 그래서 if __name__ == \"__main__\": 으로 감싸면 import 할 때는 게임이 시작되지 않아요."
+    explain: "import 는 그 파일을 한 번 실행해서 print 가 돌아요. 직접 실행한 파일이 아니라 불러온 파일이라 __name__ 은 파일 이름 greet 예요. uv run greet.py 로 직접 실행하면 __main__ 이에요. 그래서 if __name__ == \"__main__\": 으로 감싸면 import 할 때는 게임이 시작되지 않아요."
   - id: return-comparison-bool
     q: "다음 코드의 출력은?"
     code: |-

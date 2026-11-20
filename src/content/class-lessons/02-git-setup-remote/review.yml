@@ -151,6 +151,9 @@ commands:
   - cmd: git push -u origin main
     desc: 원격에 올리고 짝(upstream)을 기억시키기
     group: Git
+  - cmd: gh auth login
+    desc: 맥에서 첫 push 전에 GitHub에 한 번 로그인하기
+    group: Git
   - cmd: git remote remove origin
     desc: 원격 저장소 연결 끊기
     group: Git

@@ -623,7 +623,7 @@ if co_wins > 0:
 main()
 ```
 
-`python rps_game.py`로 실행할 때는 이게 맞아요. 그런데 다른 파일에서 `import rps_game`으로 이 파일의 함수만 빌려 쓰려고 하면 문제가 생겨요. **불러오기만 했는데 게임이 시작돼요.**
+`uv run rps_game.py`로 실행할 때는 이게 맞아요. 그런데 다른 파일에서 `import rps_game`으로 이 파일의 함수만 빌려 쓰려고 하면 문제가 생겨요. **불러오기만 했는데 게임이 시작돼요.**
 
 `import`는 그 파일을 위에서 아래로 한 번 실행해요. 함수 정의(`def`)는 함수를 만들기만 하지만, 맨 아래 `main()`은 진짜로 실행되니까요. 직접 `import rps_game`을 해 보니 제목이 찍히고 이름을 묻는 데서 멈췄어요.
 
@@ -651,7 +651,7 @@ if __name__ == "__main__":
   <FanOut
     call="print(__name__)"
     targets={[
-      { title: "`python greet.py`로 직접 실행", result: "__main__", why: "그 파일을 **직접 실행**하면 이 값이에요" },
+      { title: "`uv run greet.py`로 직접 실행", result: "__main__", why: "그 파일을 **직접 실행**하면 이 값이에요" },
       { title: "`main.py`에서 `import greet`", result: "greet", why: "다른 파일이 **import**하면 파일 이름이에요" },
     ]}
   />

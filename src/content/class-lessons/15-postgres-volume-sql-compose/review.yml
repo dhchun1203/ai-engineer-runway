@@ -49,7 +49,7 @@ quiz:
   - id: f-path-inside-container
     q: "my_shop.sql 은 내 PC의 pg_lab 폴더에만 있어요. docker cp 없이 바로 다음을 치면?"
     code: |-
-      docker exec -it my-pg psql -U postgres -f //tmp/my_shop.sql
+      docker exec -it my-pg psql -U postgres -f /tmp/my_shop.sql
     options:
       - "내 PC의 pg_lab/my_shop.sql 을 찾아 실행한다"
       - "파일이 없다는 오류가 난다. -f 뒤 경로는 컨테이너 안 경로라서"
@@ -58,7 +58,7 @@ quiz:
     answer: 1
     explain: "-f 뒤 경로는 psql 이 도는 컨테이너 안의 경로예요. 컨테이너 안 /tmp 에는 아직 파일이 없으니 못 찾아요. docker cp my_shop.sql my-pg:/tmp/my_shop.sql 로 먼저 넣거나, 복사 없이 < 로 흘려 보내요."
   - id: redirect-needs-i-only
-    q: "Git Bash 에서 다음을 쳤더니 오류가 났어요. 어떻게 고칠까?"
+    q: "맥 터미널에서 다음을 쳤더니 오류가 났어요. 어떻게 고칠까?"
     code: |-
       docker exec -it my-pg psql -U postgres < my_shop.sql
       # cannot attach stdin to a TTY-enabled container because stdin is not a terminal
@@ -66,21 +66,21 @@ quiz:
       - "-it 를 -i 로 바꾼다"
       - "< 를 > 로 바꾼다"
       - "-U postgres 를 뺀다"
-      - "my_shop.sql 을 //my_shop.sql 로 쓴다"
+      - "my_shop.sql 앞에 ./ 를 붙인다"
     answer: 0
     explain: "-t 는 키보드로 치는 터미널 화면을 붙이는 옵션이에요. < 로 파일을 흘려 보내면 입력이 키보드가 아니라 파일이라 -t 와 맞지 않아요. 입력만 보내는 -i 만 써요."
-  - id: gitbash-tmp-conversion
-    q: "Git Bash(UCRT64)에서 다음을 쳤더니 오류가 났어요. 원인은?"
+  - id: mac-tmp-no-conversion
+    q: "윈도우 Git Bash 기준 교안에 다음 명령이 있어요. 맥 터미널에서는 어떻게 칠까?"
     code: |-
-      docker exec -it my-pg psql -U postgres -f /tmp/my_shop.sql
-      # psql: error: C:/Users/.../Temp/my_shop.sql: No such file or directory
+      docker cp my_shop.sql my-pg:/tmp/my_shop.sql
+      docker exec -it my-pg psql -U postgres -f //tmp/my_shop.sql
     options:
-      - "docker cp 를 안 해서 컨테이너 안에 파일이 없다"
-      - "Git Bash 가 / 로 시작하는 인자 /tmp 를 Windows 경로로 바꿔서 넘겼다"
-      - "psql 이 Windows 경로만 읽는다"
-      - "파일 이름에 _ 가 들어가서다"
-    answer: 1
-    explain: "오류 속 경로가 C:/Users/.../Temp 로 바뀌어 있는 게 단서예요. Git Bash 는 / 로 시작하는 인자를 Windows 경로로 바꿔요. //tmp 처럼 슬래시를 두 번 쓰거나, ~/.bashrc 에 export MSYS_NO_PATHCONV=1 을 넣어 변환을 꺼요. 파일이 아예 없었다면 경로가 /tmp/my_shop.sql 그대로 찍혔을 거예요."
+      - "-f /tmp/my_shop.sql 처럼 슬래시 하나로 친다. 맥 터미널은 / 로 시작하는 인자를 바꾸지 않고 넘긴다"
+      - "~/.zshrc 에 export MSYS_NO_PATHCONV=1 을 먼저 넣어야 /tmp 가 통한다"
+      - "맥에서는 /tmp 대신 /Users/<이름>/tmp 로 써야 한다"
+      - "맥에서는 -f 를 못 쓰고 < 로만 넘길 수 있다"
+    answer: 0
+    explain: "//tmp 는 Git Bash 가 / 로 시작하는 인자를 C:/Users/.../Temp 같은 윈도우 경로로 바꾸는 걸 막는 우회예요. 맥의 zsh 는 그런 변환을 하지 않아서 /tmp 그대로 컨테이너까지 가요. MSYS_NO_PATHCONV 는 Git Bash(MSYS)만 읽는 변수라 맥에서는 아무 효과가 없어요. -f 뒤 경로는 컨테이너 안 기준이라 맥의 폴더 이름을 쓸 일도 없어요."
   - id: serial-gap-after-failed-insert
     q: "product 에 상품 5개(id 1~5)가 들어 있어요. 다음을 차례로 실행하면 마지막 SELECT 의 결과는?"
     code: |-
@@ -167,8 +167,8 @@ commands:
   - cmd: "docker start my-pg"
     desc: "이미 있는 컨테이너를 다시 켜기(이름 겹침 오류가 날 때)"
     group: Docker
-  - cmd: "docker exec -it my-pg psql -U postgres -f //tmp/my_shop.sql"
-    desc: "컨테이너 안의 SQL 파일 실행(Git Bash 는 //tmp 로)"
+  - cmd: "docker exec -it my-pg psql -U postgres -f /tmp/my_shop.sql"
+    desc: "컨테이너 안의 SQL 파일 실행(경로는 컨테이너 안 기준)"
     group: psql
   - cmd: "docker exec -i my-pg psql -U postgres < my_shop.sql"
     desc: "내 PC 파일을 복사 없이 입력으로 흘려 보내 실행(-i 만)"
@@ -194,18 +194,6 @@ commands:
   - cmd: "docker compose down -v"
     desc: "볼륨까지 지우기(external 볼륨은 남음)"
     group: Docker Compose
-  - cmd: "sed -i '/PATHCONV\\|CONV_EXCL/d' ~/.bashrc"
-    desc: ".bashrc 에서 예전 경로 변환 설정 줄 지우기"
-    group: 터미널
-  - cmd: "echo 'export MSYS_NO_PATHCONV=1' >> ~/.bashrc"
-    desc: "Git Bash 경로 변환 끄는 줄을 .bashrc 에 넣기"
-    group: 터미널
-  - cmd: "echo 'export MSYS2_ARG_CONV_EXCL=\"*\"' >> ~/.bashrc"
-    desc: "MSYS2 경로 변환에서 모든 인자 빼기"
-    group: 터미널
-  - cmd: "source ~/.bashrc"
-    desc: "바꾼 .bashrc 를 지금 터미널에 바로 반영"
-    group: 터미널
   - cmd: "ls *.sql"
     desc: "폴더의 .sql 파일 이름 확인(오타 찾기)"
     group: 터미널
@@ -220,8 +208,6 @@ terms:
     definition: "SERIAL 열에 다음 번호를 내주는 장치. 실패한 INSERT 도 번호를 하나 써 버려서, 번호는 겹치지 않을 뿐 빈틈이 생길 수 있다."
   - word: "NOT NULL 제약 (Constraint)"
     definition: "그 열을 비워 둘 수 없게 DB가 지키는 규칙. 값을 빼고 넣으면 violates not-null constraint 오류로 거절된다."
-  - word: "경로 변환 (Path Conversion)"
-    definition: "Git Bash(MSYS)가 / 로 시작하는 인자를 Windows 경로로 바꿔 넘기는 동작. //tmp 로 쓰거나 MSYS_NO_PATHCONV=1 로 끈다."
   - word: "외부 볼륨 (External Volume)"
     definition: "compose.yaml 에서 external: true 로 선언한, 이미 밖에 있는 볼륨. compose 가 새로 만들지 않고 없으면 오류를 내며, down -v 로도 지우지 않는다."
   - word: "입력 리다이렉션 (Input Redirection)"
