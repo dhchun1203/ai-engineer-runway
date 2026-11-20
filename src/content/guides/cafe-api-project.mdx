@@ -1,0 +1,605 @@
+---
+title: "미니 프로젝트 2부: 카페 주문 API를 만들고 호출해서 분석하기"
+summary: "1부의 cafe_db 앞에 FastAPI로 작은 API 서버를 세워요. 주소마다 함수 하나가 SQL을 보내 JSON으로 돌려주고, 노트북은 requests로 호출해 pandas 표로 만들어요. 상태 코드, 경로와 쿼리 파라미터, 오류 다루기까지 맥 기준으로 따라가요."
+badge: "미니 프로젝트"
+updated: "2026-11-20"
+slug: "cafe-api-project"
+---
+
+[1부](/class/cafe-mini-project)에서는 파이썬이 DB에 직접 접속해서 데이터를 꺼냈어요. 그런데 실제 서비스에서는 앱이나 웹 화면이 DB에 직접 붙지 않아요. 가운데에 **API 서버**를 두고, "판교점 주문 보여 줘" 같은 부탁을 HTTP로 보내요.
+
+2부에서는 그 창구를 직접 만들어요. FastAPI로 카페 주문 API를 세우고, 노트북에서는 `requests`로 그 API를 호출해 받은 JSON을 pandas 표로 바꿔요. 같은 질문의 답이 1부와 똑같이 나오는지도 맞춰 봐요.
+
+1부의 2~7절(컨테이너, `cafe_db`, 시드, uv 프로젝트)을 마친 `~/dev/cafe-analysis` 폴더에서 이어 가요. 아래 코드와 출력은 FastAPI 0.165.0, uvicorn 0.54.0, requests 2.34.2, psycopg 3.3.9, pandas 3.1.1로 직접 실행해 확인했어요.
+
+## 1. 오늘 만들 것: DB 앞에 창구 하나를 세운다
+
+데이터가 지나가는 길이 한 칸 늘어요. 아래로 내려가는 순서가 이 레슨의 절 순서예요.
+
+<Figure label="DB, API 서버, 노트북이 이어지는 길">
+  <Layers
+    layers={[
+      [{ title: "cafe_db", tone: "blue", lines: ["1부에서 만든 표 5개, 주문 714건"] }],
+      [{ via: "`psycopg`", title: "API 서버 server.py", tone: "amber", lines: ["FastAPI로 주소마다 함수 하나를 걸어요 (2~8절)", "함수가 SQL을 보내고 결과를 JSON으로 돌려줘요"] }],
+      [{ via: "HTTP 요청, JSON 응답", title: "노트북 api.ipynb", tone: "rust", lines: ["`requests`로 주소를 호출해요 (9~10절)", "받은 JSON을 DataFrame으로 바꿔 분석해요 (11~12절)"] }],
+    ]}
+  />
+</Figure>
+
+창구를 두면 무엇이 달라지는지 1부와 나란히 놓아 봐요.
+
+<Figure label="DB에 직접 붙을 때와 창구를 거칠 때">
+  <Boxes
+    row={[
+      { title: "1부: 직접 접속", tone: "neutral", lines: ["노트북이 DB 비밀번호(`DSN`)를 알아야 해요", "아무 SQL이나 보낼 수 있어요. 실수로 지우는 것도요"] },
+      { title: "2부: API 창구", tone: "ok", lines: ["노트북은 주소만 알아요. 비밀번호는 서버만 알아요", "서버가 열어 둔 창구만 쓸 수 있어요", "브라우저, 앱, 다른 언어도 HTTP로 똑같이 불러요"] },
+    ]}
+  />
+</Figure>
+
+## 2. 설치: FastAPI와 requests를 더한다
+
+1부의 프로젝트 폴더에 두 가지를 더해요.
+
+```bash
+cd ~/dev/cafe-analysis
+uv add "fastapi[standard]" requests
+```
+
+```text
+...
+ + fastapi==0.165.0
+ + fastapi-cli==0.0.34
+ + requests==2.34.2
+ + uvicorn==0.54.0
+...
+```
+
+- `fastapi[standard]`: API를 만드는 도구에 서버 프로그램 `uvicorn`과 `fastapi` 명령을 같이 넣어 줘요. 대괄호가 있으니 zsh에서는 따옴표로 감싸요.
+- `requests`: 파이썬에서 HTTP 요청을 보내는 도구예요. 노트북에서 API를 부를 때 써요.
+
+**여기까지 되면:** `pyproject.toml`의 `dependencies`에 `fastapi[standard]`와 `requests`가 보여요.
+
+## 3. 첫 창구: GET /stores에 함수 하나를 건다
+
+VS Code에서 새 파일 `server.py`를 만들어요. 먼저 지점 목록을 돌려주는 창구 하나만 열어요.
+
+```python
+import psycopg
+from fastapi import FastAPI
+from psycopg.rows import dict_row
+
+DSN = "host=localhost port=5433 dbname=cafe_db user=postgres password=admin"
+
+app = FastAPI(title="카페 주문 API")
+
+
+def fetch_all(sql, params=None):
+    """SQL을 보내고 행마다 딕셔너리 하나인 리스트를 돌려준다."""
+    with psycopg.connect(DSN, row_factory=dict_row) as conn:
+        return conn.execute(sql, params).fetchall()
+
+
+@app.get("/stores")
+def list_stores():
+    return fetch_all("SELECT store_id, name, region, opened_on FROM stores ORDER BY store_id")
+```
+
+새로 나온 것은 세 가지예요.
+
+- `app = FastAPI(...)`: API 서버 한 개예요. 창구를 이 `app`에 하나씩 달아요.
+- `@app.get("/stores")`: 바로 아래 함수에 붙는 표시(데코레이터)예요. "`GET /stores` 요청이 오면 이 함수를 불러"라는 뜻이에요.
+- `row_factory=dict_row`: 1부에서는 행이 튜플 `(1, '성수점', ...)`이었어요. 이렇게 열면 행이 `{"store_id": 1, "name": "성수점", ...}` 딕셔너리로 와요. 열 이름이 붙어 있어서 FastAPI가 그대로 JSON으로 바꿀 수 있어요.
+
+<Figure label="요청 한 번이 응답이 되기까지">
+  <Relay
+    legs={[
+      { fn: "GET /stores", desc: "브라우저나 노트북이 주소로 부탁해요", value: "요청" },
+      { fn: "list_stores()", desc: "`@app.get`으로 이어 둔 함수가 불려요", value: "함수 실행" },
+      { fn: "fetch_all(SQL)", desc: "psycopg가 SQL을 보내고 딕셔너리 리스트를 받아요", value: "[{...}, {...}, {...}]" },
+      { fn: "FastAPI", desc: "리스트를 JSON 글자로 바꿔 돌려줘요", value: "200 OK, JSON" },
+    ]}
+  />
+</Figure>
+
+저장하고 터미널에서 서버를 켜요. `fastapi dev`는 개발용 실행이에요. 파일을 고쳐 저장하면 서버가 저절로 다시 켜져요.
+
+```bash
+uv run fastapi dev server.py
+```
+
+```text
+Starting FastAPI in development mode
+Using import string: server:app
+Server started at http://127.0.0.1:8000
+Documentation at http://127.0.0.1:8000/docs
+...
+INFO:     Application startup complete.
+```
+
+(줄 앞의 작은 그림 글자는 빼고 옮겼어요.) 서버는 이 터미널을 붙잡고 계속 돌아요. 다른 명령은 VS Code 터미널 오른쪽 위 `+`로 새 터미널을 하나 더 열어서 쳐요.
+
+브라우저 주소창에 `http://127.0.0.1:8000/stores`를 넣으면 JSON이 보여요. 새 터미널에서 `curl -i`로 받으면 응답의 머리 부분까지 보여요.
+
+```bash
+curl -i http://127.0.0.1:8000/stores
+```
+
+```text
+HTTP/1.1 200 OK
+date: Fri, 20 Nov 2026 09:54:36 GMT
+server: uvicorn
+content-length: 262
+content-type: application/json
+
+[{"store_id":1,"name":"성수점","region":"서울 성동구","opened_on":"2023-04-01"},{"store_id":2,"name":"연남점","region":"서울 마포구","opened_on":"2024-09-14"},{"store_id":3,"name":"판교점","region":"성남 분당구","opened_on":"2025-03-03"}]
+```
+
+<Figure label="HTTP 응답 한 통의 세 부분">
+  <Boxes
+    row={[
+      { title: "상태 줄", tone: "ok", lines: ["`200 OK`", "잘 됐는지 숫자로 먼저 알려 줘요"] },
+      { title: "헤더", tone: "neutral", lines: ["`content-type: application/json`", "본문이 어떤 글자인지 적어요"] },
+      { title: "본문", tone: "blue", lines: ["빈 줄 다음의 JSON", "DB 한 행이 `{ }` 하나예요"] },
+    ]}
+  />
+</Figure>
+
+서버 터미널에도 요청 한 줄이 찍혀요. 요청이 오갈 때마다 이 줄이 늘어요.
+
+```text
+INFO:     127.0.0.1:9764 - "GET /stores HTTP/1.1" 200 OK
+```
+
+(콜론 뒤 숫자는 요청마다 달라요.)
+
+**여기까지 되면:** 브라우저와 `curl` 양쪽에서 지점 세 개가 JSON으로 보여요.
+
+<Hint>
+`Address already in use`가 나오면 8000번을 이미 다른 서버가 쓰고 있어요. 앞에 켜 둔 서버 터미널에서 `Ctrl + C`로 끄거나 `uv run fastapi dev server.py --port 8001`처럼 다른 번호로 켜요. 그때는 주소의 8000도 8001로 바꿔요.
+</Hint>
+
+## 4. /docs: 창구 목록과 시험 버튼이 저절로 생긴다
+
+브라우저에서 `http://127.0.0.1:8000/docs`를 열어요. 코드에 적은 창구가 목록으로 보이고, 거기서 바로 요청을 보내 볼 수 있어요. FastAPI가 함수와 인자를 읽어서 만들어 주는 화면이에요.
+
+<Figure label="/docs에서 요청 한 번 보내기">
+  <Seq
+    steps={[
+      { title: "카페 주문 API", body: "맨 위 제목은 FastAPI(title=...)에 적은 이름이에요." },
+      { title: "GET /stores", body: "창구 줄을 눌러 펼쳐요." },
+      { title: "Try it out", body: "시험 모드로 바꿔요. 인자가 있는 창구면 여기서 값을 넣어요." },
+      { title: "Execute", body: "요청을 보내요. 아래 Responses에 상태 코드와 JSON 본문이 나와요." },
+    ]}
+  />
+</Figure>
+
+창구를 더할 때마다 이 목록도 같이 늘어요. 다음 절부터 하나씩 늘려 가며 여기서 눌러 봐요.
+
+## 5. 경로 파라미터와 404: /stores/3, /stores/9
+
+지점 하나만 받는 창구를 더해요. 주소 안의 `{store_id}` 자리가 함수 인자로 들어와요. 이것을 **경로 파라미터**라고 해요. `server.py` 첫 줄의 `import`도 고쳐요.
+
+```python
+from fastapi import FastAPI, HTTPException
+```
+
+```python
+@app.get("/stores/{store_id}")
+def get_store(store_id: int):
+    rows = fetch_all(
+        "SELECT store_id, name, region, opened_on FROM stores WHERE store_id = %s",
+        (store_id,),
+    )
+    if not rows:
+        raise HTTPException(status_code=404, detail="그런 지점이 없어요")
+    return rows[0]
+```
+
+저장하면 서버가 다시 켜져요. 있는 지점과 없는 지점을 불러 봐요.
+
+```bash
+curl -i http://127.0.0.1:8000/stores/9
+```
+
+```text
+HTTP/1.1 404 Not Found
+date: Fri, 20 Nov 2026 09:51:04 GMT
+server: uvicorn
+content-length: 39
+content-type: application/json
+
+{"detail":"그런 지점이 없어요"}
+```
+
+`rows`가 빈 리스트면 `raise HTTPException(...)`으로 함수를 멈추고 404를 돌려줘요. 그냥 `None`을 돌려주면 FastAPI는 `200 OK`에 본문 `null`을 보내요. 부른 쪽은 성공인 줄 알게 돼요.
+
+이번엔 숫자 자리에 글자를 넣어요.
+
+```bash
+curl -i http://127.0.0.1:8000/stores/abc
+```
+
+```text
+HTTP/1.1 422 Unprocessable Content
+...
+{"detail":[{"type":"int_parsing","loc":["path","store_id"],"msg":"Input should be a valid integer, unable to parse string as an integer","input":"abc"}]}
+```
+
+`store_id: int`라고 타입을 적어 두어서 FastAPI가 함수를 부르기도 전에 막았어요. `loc`은 어느 칸이 틀렸는지(`path`의 `store_id`), `msg`는 왜 틀렸는지예요.
+
+상태 코드는 첫 숫자만 봐도 누구 잘못인지 알 수 있어요.
+
+| 코드 | 뜻 | 이 프로젝트에서 언제 |
+| --- | --- | --- |
+| `200 OK` | 잘 됐어요 | 창구가 있고 함수가 끝까지 돌았을 때. 결과가 빈 배열이어도 200이에요 |
+| `404 Not Found` | 찾는 것이 없어요 | 없는 지점 번호(`/stores/9`), 없는 창구 주소(`/nothing`) |
+| `422 Unprocessable Content` | 보낸 값의 모양이 틀렸어요 | 숫자 자리에 글자(`/stores/abc`) |
+| `500 Internal Server Error` | 서버 안에서 터졌어요 | 서버가 켜진 채 DB 컨테이너가 꺼졌을 때 |
+
+4로 시작하면 부른 쪽이 고칠 일, 5로 시작하면 서버 쪽이 고칠 일이에요.
+
+<Hint>
+`500`이 나오면 본문에는 `Internal Server Error` 한 줄뿐이에요. 진짜 이유는 서버 터미널에 길게 찍혀요. DB 컨테이너가 꺼져 있으면 맨 아래에 `psycopg.OperationalError: connection failed: ...`가 보여요. `docker compose up -d`로 켜면 다시 200이 와요.
+</Hint>
+
+<Hint>
+고친 창구가 `/docs`에 안 보이거나 `{"detail":"Not Found"}`가 나오면, 서버가 다시 켜지지 않았거나 저장(`Cmd + S`)을 안 한 거예요. 서버 터미널에서 `Ctrl + C`로 끄고 `uv run fastapi dev server.py`로 다시 켜요.
+</Hint>
+
+## 6. 쿼리 파라미터: /order-lines?store=판교점
+
+분석 재료인 주문 상세 창구를 열어요. 주소 `?` 뒤에 `이름=값`으로 붙이는 것이 **쿼리 파라미터**예요. 함수 인자 중 주소 안에 자리가 없는 인자는 FastAPI가 쿼리 파라미터로 받아요.
+
+```python
+ORDER_LINES_SQL = """
+    SELECT o.order_id, o.ordered_at, o.store_id, s.name AS store, o.member_id,
+           m.name AS menu, m.category, oi.qty, m.price, m.cost
+    FROM order_items oi
+    JOIN orders o ON o.order_id = oi.order_id
+    JOIN stores s ON s.store_id = o.store_id
+    JOIN menus  m ON m.menu_id  = oi.menu_id
+"""
+
+
+@app.get("/order-lines")
+def list_order_lines(store: str | None = None):
+    if store is None:
+        return fetch_all(ORDER_LINES_SQL + " ORDER BY oi.order_id, oi.menu_id")
+    return fetch_all(
+        ORDER_LINES_SQL + " WHERE s.name = %s ORDER BY oi.order_id, oi.menu_id",
+        (store,),
+    )
+```
+
+SQL은 1부 9절의 `JOIN`과 같아요. `store: str | None = None`은 "글자를 받을 수 있지만, 안 줘도 돼"라는 뜻이에요. 안 주면 `store`가 `None`이라 전체 1,104줄, 주면 그 지점만 돌려줘요.
+
+브라우저에서 `http://127.0.0.1:8000/order-lines?store=판교점`을 열면 판교점 주문 상세만 와요. 없는 지점(`?store=강남점`)은 404가 아니라 `200 OK`에 빈 배열 `[]`이에요. 창구는 있고, 찾아본 결과가 없을 뿐이니까요.
+
+<Figure label="같은 함수, 두 가지 부름">
+  <Boxes
+    row={[
+      { title: "/order-lines", tone: "blue", lines: ["`store`가 `None`이에요", "`WHERE` 없이 1,104줄"] },
+      { title: "/order-lines?store=판교점", tone: "rust", lines: ["`store`가 `\"판교점\"`이에요", "`WHERE s.name = %s`로 386줄"] },
+    ]}
+  />
+</Figure>
+
+<Hint>
+SQL에 값을 넣을 때는 19회차처럼 `%s` 자리 채우기만 써요. `f"... WHERE s.name = '{store}'"`처럼 글자를 이어 붙이면, 누군가 `?store=판교점' OR '1'='1`을 보냈을 때 그 글자가 SQL 문법이 되어 버려요. `%s`로 넘기면 그 글자 전체를 지점 이름 하나로 다뤄서, 실제로 보내 보면 빈 배열이 돌아와요.
+</Hint>
+
+## 7. 서버에서 계산하는 창구: /reports/stores
+
+창구가 꼭 표를 통째로 줄 필요는 없어요. 서버가 SQL로 계산까지 해서 답만 돌려줄 수도 있어요. 1부 12절의 지점 성적표를 창구로 만들어요.
+
+```python
+@app.get("/reports/stores")
+def store_report():
+    return fetch_all("""
+        SELECT s.name AS store,
+               SUM(oi.qty * m.price) AS revenue,
+               COUNT(DISTINCT o.order_id) AS orders
+        FROM order_items oi
+        JOIN orders o ON o.order_id = oi.order_id
+        JOIN stores s ON s.store_id = o.store_id
+        JOIN menus  m ON m.menu_id  = oi.menu_id
+        GROUP BY s.name
+        ORDER BY revenue DESC
+    """)
+```
+
+```bash
+curl http://127.0.0.1:8000/reports/stores
+```
+
+```text
+[{"store":"판교점","revenue":2305700,"orders":249},{"store":"성수점","revenue":2200000,"orders":253},{"store":"연남점","revenue":2009700,"orders":212}]
+```
+
+`COUNT(DISTINCT o.order_id)`는 1부에서 pandas로 쓴 `nunique`와 같은 일이에요. 상세 줄이 아니라 주문 번호를 겹치지 않게 세요.
+
+**여기까지 되면:** `/docs`에 창구 네 개(`/stores`, `/stores/{store_id}`, `/order-lines`, `/reports/stores`)가 보여요.
+
+## 8. 요청 놀이터: 주소를 바꾸면 응답이 이렇게 달라진다
+
+지금까지 만든 창구에 여러 요청을 보내 본 결과예요. 버튼을 눌러 상태 코드와 본문이 어떻게 바뀌는지 비교해 봐요. 모두 실제 서버가 돌려준 글자 그대로예요.
+
+<CafeApiPlayground />
+
+## 9. 노트북에서 호출: requests.get 한 번
+
+이제 부르는 쪽이에요. 서버 터미널은 켜 둔 채로 VS Code에서 새 노트북 `api.ipynb`를 `cafe-analysis` 폴더에 만들고, 1부처럼 커널을 `.venv`로 골라요.
+
+```python
+import pandas as pd
+import requests
+
+BASE = "http://127.0.0.1:8000"
+
+r = requests.get(f"{BASE}/stores")
+print(r.status_code)
+print(r.headers["content-type"])
+r.json()[0]
+```
+
+```text
+200
+application/json
+{'store_id': 1, 'name': '성수점', 'region': '서울 성동구', 'opened_on': '2023-04-01'}
+```
+
+`requests.get()`은 응답 한 통(`r`)을 돌려줘요. `r.status_code`는 상태 줄의 숫자, `r.headers`는 헤더, `r.json()`은 JSON 본문을 파이썬 값으로 바꾼 것이에요. JSON 배열은 리스트, `{ }`는 딕셔너리가 돼요.
+
+딕셔너리 리스트는 20회차에서 본 대로 바로 DataFrame이 돼요. 딕셔너리의 키가 열 이름이에요.
+
+```python
+pd.DataFrame(r.json())
+```
+
+```text
+   store_id name  region   opened_on
+0         1  성수점  서울 성동구  2023-04-01
+1         2  연남점  서울 마포구  2024-09-14
+2         3  판교점  성남 분당구  2025-03-03
+```
+
+1부 맨 처음에 DB에서 바로 꺼낸 지점 표와 같은 모양이에요. 이번에는 노트북 어디에도 DB 비밀번호가 없어요.
+
+## 10. 실패를 먼저 잡는다: raise_for_status와 get_json()
+
+요청이 늘 성공하지는 않아요. 없는 지점을 불러 봐요.
+
+```python
+r = requests.get(f"{BASE}/stores/9")
+print(r.status_code)
+r.json()
+```
+
+```text
+404
+{'detail': '그런 지점이 없어요'}
+```
+
+`requests`는 404가 와도 오류를 내지 않아요. 응답을 받는 데는 성공했으니까요. 이 본문을 모르고 표로 바꾸면 엉뚱한 곳에서 터져요.
+
+```python
+pd.DataFrame(r.json())
+```
+
+```text
+ValueError: If using all scalar values, you must pass an index
+```
+
+진짜 원인(404)과 상관없어 보이는 오류예요. 그래서 본문을 쓰기 전에 `raise_for_status()`로 상태부터 확인해요. 4나 5로 시작하는 코드면 그 자리에서 이유가 분명한 오류를 내요.
+
+```python
+r.raise_for_status()
+```
+
+```text
+HTTPError: 404 Client Error: Not Found for url: http://127.0.0.1:8000/stores/9
+```
+
+앞으로는 부를 때마다 이 확인을 하도록 함수 하나에 담아요. 1부의 `export_csv()`처럼 반복되는 일을 묶는 거예요.
+
+```python
+def get_json(path, params=None):
+    """API를 호출해 JSON을 돌려준다. 실패하면 그 자리에서 오류를 낸다."""
+    r = requests.get(f"{BASE}{path}", params=params, timeout=5)
+    r.raise_for_status()
+    return r.json()
+```
+
+<Figure label="get_json() 한 번에 일어나는 일">
+  <Seq
+    steps={[
+      { title: "requests.get(..., params=params)", body: "params 딕셔너리를 주소 ? 뒤에 붙여 보내요. 한글도 알아서 %ED%8C%90 같은 꼴로 바꿔요." },
+      { title: "timeout=5", body: "5초 안에 답이 없으면 기다리지 않고 오류를 내요. 이게 없으면 서버가 멈췄을 때 셀도 끝없이 멈춰 있어요." },
+      { title: "raise_for_status()", body: "4xx, 5xx면 HTTPError로 멈춰요. 서버 터미널에서 이유를 찾으면 돼요." },
+      { title: "return r.json()", body: "성공한 응답만 파이썬 리스트나 딕셔너리로 돌려줘요." },
+    ]}
+  />
+</Figure>
+
+<Hint>
+`ConnectionError: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded ...`가 나오면 서버가 꺼져 있는 거예요. 응답 자체를 못 받았다는 뜻이라 상태 코드도 없어요. 서버 터미널이 살아 있는지 보고 `uv run fastapi dev server.py`로 켜요.
+</Hint>
+
+## 11. JSON을 분석 재료로: 날짜는 다시 글자로 온다
+
+판교점만 불러 봐요. `params`로 넘기면 주소를 직접 만들지 않아도 돼요.
+
+```python
+pangyo = get_json("/order-lines", params={"store": "판교점"})
+print(len(pangyo))
+pangyo[1]
+```
+
+```text
+386
+{'order_id': 2, 'ordered_at': '2026-11-02T08:19:00', 'store_id': 3, 'store': '판교점', 'member_id': None, 'menu': '아메리카노', 'category': '커피', 'qty': 1, 'price': 4500, 'cost': 900}
+```
+
+이제 전체를 받아 표로 만들고 열 종류를 봐요.
+
+```python
+lines = pd.DataFrame(get_json("/order-lines"))
+print(lines.shape)
+lines[["ordered_at", "member_id"]].dtypes
+```
+
+```text
+(1104, 10)
+ordered_at        str
+member_id     float64
+dtype: object
+```
+
+1부 CSV 때와 같은 일이 생겼어요. JSON에도 날짜 타입이 없어서 FastAPI가 날짜시간을 `"2026-11-02T08:19:00"` 같은 글자로 보내요. `pd.to_datetime`으로 바꿔 주면 `.dt`를 쓸 수 있어요.
+
+```python
+lines["ordered_at"] = pd.to_datetime(lines["ordered_at"])
+lines["ordered_at"].dt.hour.head(3)
+```
+
+```text
+0    8
+1    8
+2    8
+Name: ordered_at, dtype: int32
+```
+
+<Figure label="DB 값이 JSON을 거쳐 pandas 값이 되는 길">
+  <Boxes
+    row={[
+      { title: "TIMESTAMP", tone: "blue", lines: ["JSON에서는 `\"2026-11-02T08:19:00\"` 글자", "`pd.to_datetime`으로 `datetime64[us]`"] },
+      { title: "NULL", tone: "amber", lines: ["JSON `null`, 파이썬 `None`", "pandas에서 `NaN`이라 `member_id`가 `float64`"] },
+      { title: "INTEGER, VARCHAR", tone: "rust", lines: ["JSON 숫자는 `int64`", "JSON 글자는 `str`"] },
+    ]}
+  />
+</Figure>
+
+이제 `lines`는 1부 10절의 `lines`와 같은 표예요(1,104줄, 10열, `ordered_at`은 `datetime64[us]`, `member_id`는 `float64`). 1부의 미션 1~7을 이 표로 그대로 다시 풀 수 있어요.
+
+## 12. 같은 질문, 두 길: 노트북에서 셀까, 서버에서 셀까
+
+지점 성적표를 두 길로 구해요. 먼저 받은 상세 표로 노트북에서 계산해요.
+
+```python
+lines["amount"] = lines["qty"] * lines["price"]
+lines.groupby("store").agg(
+    revenue=("amount", "sum"),
+    orders=("order_id", "nunique"),
+).sort_values("revenue", ascending=False)
+```
+
+```text
+       revenue  orders
+store                 
+판교점    2305700     249
+성수점    2200000     253
+연남점    2009700     212
+```
+
+이번엔 서버가 계산한 답을 받아요.
+
+```python
+pd.DataFrame(get_json("/reports/stores"))
+```
+
+```text
+  store  revenue  orders
+0   판교점  2305700     249
+1   성수점  2200000     253
+2   연남점  2009700     212
+```
+
+답은 같아요. 다른 것은 주고받은 양이에요. `len(requests.get(...).content)`로 본문 글자 수(바이트)를 재 보면 이래요.
+
+```python
+print(len(requests.get(f"{BASE}/order-lines").content))
+print(len(requests.get(f"{BASE}/reports/stores").content))
+```
+
+```text
+196156
+160
+```
+
+<Figure label="어디서 계산할지 고르는 기준">
+  <Boxes
+    row={[
+      { title: "노트북에서 계산", tone: "rust", lines: ["상세 표 196,156바이트를 받아요", "질문을 바꿔 가며 마음껏 다시 셀 수 있어요", "탐색하는 단계에 맞아요"] },
+      { title: "서버에서 계산", tone: "amber", lines: ["답 160바이트만 받아요", "누가 불러도 같은 계산, 같은 답이에요", "자주 묻는 질문이 정해졌을 때 맞아요"] },
+    ]}
+  />
+</Figure>
+
+1부의 분석처럼 이것저것 바꿔 보는 동안은 노트북에서, "매일 아침 지점 성적표"처럼 굳은 질문은 서버 창구로 옮기는 게 보통이에요.
+
+## 13. 연습: /menus 창구를 직접 열어 보기
+
+혼자 창구 하나를 더해 봐요.
+
+- `GET /menus`: 메뉴 10개의 `name`, `category`, `price`, `cost`를 `menu_id` 순서로 돌려줘요.
+- 쿼리 파라미터 `category`를 주면 그 분류만 돌려줘요. 예: `/menus?category=디저트`
+
+다 만들었으면 노트북에서 확인해요.
+
+```python
+pd.DataFrame(get_json("/menus", params={"category": "디저트"}))
+```
+
+```text
+       name category  price  cost
+0      크루아상      디저트   4000  1600
+1       소금빵      디저트   3500  1200
+2  바스크치즈케이크      디저트   6500  2600
+```
+
+<Hint>
+막히면 6절의 `/order-lines`를 본떠요. 바로 아래가 확인용 답이니, 먼저 혼자 해 보고 내려가요.
+</Hint>
+
+```python
+@app.get("/menus")
+def list_menus(category: str | None = None):
+    if category is None:
+        return fetch_all("SELECT name, category, price, cost FROM menus ORDER BY menu_id")
+    return fetch_all(
+        "SELECT name, category, price, cost FROM menus WHERE category = %s ORDER BY menu_id",
+        (category,),
+    )
+```
+
+**여기까지 되면:** 디저트 세 개가 나오고, `category` 없이 부르면 10개가 와요. `/docs`에도 `/menus`가 생겨요.
+
+## 14. 정리: 서버 끄고, 다음에 다시 켜기
+
+서버 터미널에서 `Ctrl + C`를 누르면 API 서버가 꺼져요. 그다음은 1부 21절과 같아요.
+
+```bash
+docker compose down
+colima stop
+```
+
+다음에 이어서 할 때는 네 줄이에요. 마지막 줄은 서버용 터미널에서 켜 두고, 노트북은 그대로 열어요.
+
+```bash
+colima start
+cd ~/dev/cafe-analysis
+docker compose up -d
+uv run fastapi dev server.py
+```
+
+## 꼭 기억할 주의점
+
+- `@app.get("/주소")` 아래 함수 하나가 창구 하나예요. 주소 안의 `{store_id}`는 경로 파라미터, 주소에 없는 함수 인자는 쿼리 파라미터가 돼요.
+- 인자에 타입(`store_id: int`)을 적으면 FastAPI가 값을 검사해서 틀리면 함수를 부르기 전에 `422`를 돌려줘요.
+- 찾는 것이 없으면 `raise HTTPException(status_code=404, ...)`로 알려요. `None`을 돌려주면 `200`에 `null`이 가요.
+- 결과가 비었다는 것(`200`, `[]`)과 창구나 대상이 없다는 것(`404`)은 달라요.
+- SQL에 값을 넣을 때는 늘 `%s` 자리 채우기예요. f-string으로 이어 붙이지 않아요.
+- `requests`는 404, 500이 와도 오류를 내지 않아요. `raise_for_status()`로 먼저 확인하고, `timeout`을 꼭 줘요.
+- JSON에는 날짜 타입이 없어요. 받은 날짜 열은 `pd.to_datetime`으로 바꿔야 `.dt`를 쓸 수 있어요. `null`은 `NaN`이 돼요.
+- `fastapi dev`는 서버가 터미널을 붙잡고 있어요. 다른 명령은 새 터미널에서 쳐요. `500`의 진짜 이유는 서버 터미널에 찍혀요.

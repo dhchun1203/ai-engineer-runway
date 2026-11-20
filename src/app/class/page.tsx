@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpen, ChevronDown, ClipboardCheck, Coffee, Container, Laptop, Terminal } from "lucide-react";
+import { ArrowRight, BookOpen, ChevronDown, ClipboardCheck, Coffee, Container, Laptop, Network, Terminal } from "lucide-react";
 import { hasUnlockCookie } from "@/lib/auth";
 import { readQuizAttempts } from "@/lib/quiz-attempt-store";
 import { readReviewStates } from "@/lib/review-store";
@@ -78,6 +78,7 @@ const TOOLS = [
   { href: "/class/docker-cli", label: "Docker 명령 지도", desc: "하고 싶은 일로 명령 찾기", Icon: Container },
   { href: "/class/mac-setup", label: "맥 실습 환경", desc: "맥으로 옮길 때 셋업", Icon: Laptop },
   { href: "/class/cafe-mini-project", label: "미니 프로젝트", desc: "DB에서 pandas까지 따라 만들기", Icon: Coffee },
+  { href: "/class/cafe-api-project", label: "미니 프로젝트 2부", desc: "FastAPI 창구 만들고 requests로 호출하기", Icon: Network },
 ] as const;
 
 export default async function ClassHubPage({

@@ -1273,6 +1273,8 @@ docker compose up -d
 DBeaver로 보고 싶으면 Host `localhost`, Port `5433`, Database `cafe_db`, Username `postgres`, Password `admin`으로 연결해요. 수업용 DB(5432)와 포트만 달라요.
 </Hint>
 
+다음 단계는 [2부: 카페 주문 API](/class/cafe-api-project)예요. 같은 `cafe_db` 앞에 FastAPI로 창구를 세우고, 노트북에서는 DB 대신 그 API를 호출해 분석해요.
+
 ## 꼭 기억할 주의점
 
 - `compose.yaml`의 `ports:`는 **내 맥:컨테이너** 순서예요. 파이썬 `DSN`과 DBeaver는 왼쪽 숫자(5433)로 접속해요.
