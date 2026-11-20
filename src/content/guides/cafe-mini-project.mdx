@@ -385,7 +385,7 @@ print(row)
 ('cafe_db', 714)
 ```
 
-`DSN`은 "어디의 어떤 DB에 누구로 들어갈지"를 적은 주소예요. `compose.yaml`의 값과 한 자리씩 맞아요.
+`DSN`은 "어디의 어떤 DB에 누구로 들어갈지"를 적은 주소예요. `compose.yaml`의 값과 한 자리씩 맞아요. `host=localhost`는 내 맥이에요. 컨테이너가 `ports:`로 맥의 5433을 열어 두어서 맥에서 접속할 수 있어요. 비밀번호는 `POSTGRES_PASSWORD`에 적은 값이에요.
 
 <Figure label="DSN의 칸마다 어디서 온 값인지">
   <DictView
@@ -393,11 +393,11 @@ print(row)
     keyLabel="칸"
     valueLabel="어디서 왔나"
     pairs={[
-      ["host=localhost", "내 맥 (컨테이너가 포트를 열어 둠)"],
-      ["port=5433", "`ports:`의 왼쪽 숫자"],
-      ["dbname=cafe_db", "4절에서 만든 데이터베이스"],
-      ["user=postgres", "이미지가 만들어 둔 기본 계정"],
-      ["password=admin", "`POSTGRES_PASSWORD` 값"],
+      ["host=localhost", "내 맥"],
+      ["port=5433", "ports 왼쪽 숫자"],
+      ["dbname=cafe_db", "4절에서 만든 DB"],
+      ["user=postgres", "기본 계정"],
+      ["password=admin", "compose의 비밀번호"],
     ]}
   />
 </Figure>

@@ -3,7 +3,7 @@
 // 미니 프로젝트(카페 세 지점 2주 주문 분석) 그림 두 개. 숫자는 public/downloads/cafe-seed.sql을
 // postgres:18 + pandas 3.1.1로 실제 실행한 결과를 그대로 옮겼다(by_hour, 단체 주문 뺀 지점 합계).
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 const MUTED = "text-badge-neutral-text dark:text-badge-neutral-text-dark";
 
@@ -14,10 +14,15 @@ const BY_HOUR: Record<string, number[]> = {
   연남점: [0, 0, 1, 9, 19, 26, 26, 29, 20, 23, 20, 12, 16, 11],
   판교점: [43, 43, 16, 16, 39, 31, 18, 16, 15, 9, 3, 0, 0, 0],
 };
-const HOUR_NOTE: Record<string, string> = {
+const HOUR_NOTE: Record<string, ReactNode> = {
   성수점: "점심부터 늘어 오후 4시(16시)에 가장 붐벼요. 아침과 밤은 한산해요.",
   연남점: "낮 12시 전에는 거의 없고, 오후 내내 고르게 들어와요. 밤 8, 9시에도 주문이 이어져요.",
-  판교점: "출근 시간 8, 9시와 점심 12시에 몰리고, 저녁 7시 뒤로는 0건이에요. 8시와 9시가 43건으로 같아서 idxmax()는 먼저 나온 8시를 골라요.",
+  판교점: (
+    <>
+      출근 시간 8, 9시와 점심 12시에 몰리고, 저녁 7시 뒤로는 0건이에요. 8시와 9시가 43건으로 같아서{" "}
+      <code className="font-mono">idxmax()</code>는 먼저 나온 8시를 골라요.
+    </>
+  ),
 };
 
 export function CafeHourChart() {
