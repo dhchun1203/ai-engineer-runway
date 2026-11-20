@@ -1,8 +1,8 @@
 ---
 title: "맥에서 수업 이어 가기: 초기 세팅부터 실습 환경까지 한 번에"
-summary: "새 맥을 받으면 처음 한 번 해 둘 설정, 개발자들이 많이 쓰는 터미널 설정, 그리고 Homebrew로 Git, uv, VS Code, Docker Desktop, DBeaver를 깔아 윈도우에서 하던 수업을 그대로 이어 가요."
+summary: "새 맥을 받으면 처음 한 번 해 둘 설정, 개발자들이 많이 쓰는 터미널 설정, 그리고 Homebrew로 Git, uv, VS Code, Colima(Docker), DBeaver를 깔아 윈도우에서 하던 수업을 그대로 이어 가요."
 badge: "실습 환경"
-updated: "2026-11-19"
+updated: "2026-11-20"
 slug: "mac-setup"
 ---
 
@@ -22,7 +22,7 @@ slug: "mac-setup"
 | GitHub 로그인 | 첫 push 때 뜨는 로그인 창 | `gh auth login` 한 번 |
 | 가상환경 활성화 | `source .venv/Scripts/activate` | `source .venv/bin/activate` |
 | 경로 변환 막기 | `MSYS_NO_PATHCONV=1`, `//tmp` | **필요 없음** (`/tmp` 그대로) |
-| Docker 밑바탕 | Docker Desktop + WSL 2 | Docker Desktop만 |
+| Docker 밑바탕 | Docker Desktop + WSL 2 | Colima (터미널로 켜는 작은 리눅스 VM, 12절) |
 | 내 폴더 | `/c/Users/<이름>` | `/Users/<이름>` (`~`) |
 | 탐색기로 열기 | `explorer .` | `open .` |
 | 주피터, VS Code 키 | `Alt` | `Option` |
@@ -77,7 +77,7 @@ EOF
 
 | 할 일 | 어디서 | 왜 |
 | --- | --- | --- |
-| 최신 macOS로 업데이트 | 일반 > 소프트웨어 업데이트 | 4절 Homebrew와 Docker Desktop이 최신 macOS 기준이에요 |
+| 최신 macOS로 업데이트 | 일반 > 소프트웨어 업데이트 | 4절 Homebrew와 12절 Colima가 최신 macOS 기준이에요 |
 | Touch ID 손가락 등록 | Touch ID 및 암호 | 잠금 해제, 아래 `sudo` 지문 허용에 써요 |
 | FileVault 켜기 | 개인정보 보호 및 보안 > FileVault | 맥을 잃어버려도 디스크를 못 읽어요. 새 맥은 보통 이미 켜져 있어요 |
 | 탭하여 클릭하기 | 트랙패드 > 포인트 및 클릭 | 꾹 누르지 않고 톡 쳐서 클릭해요 |
@@ -180,15 +180,15 @@ winget에서 쓰던 명령은 이렇게 바뀌어요.
 | `winget upgrade <ID>` | `brew upgrade <이름>` | 업그레이드 |
 | `winget uninstall <ID>` | `brew uninstall <이름>` | 삭제 |
 
-창이 뜨는 앱(VS Code, Docker Desktop 같은 것)은 `--cask`를 붙여 깔아요. 터미널에서만 쓰는 도구는 그냥 `brew install`이에요.
+창이 뜨는 앱(VS Code, DBeaver 같은 것)은 `--cask`를 붙여 깔아요. 터미널에서만 쓰는 도구는 그냥 `brew install`이에요.
 
 ## 5. 수업 도구 한 번에 깔기
 
 지금까지 수업에서 쓴 도구를 두 줄로 깔아요. 터미널을 편하게 해 주는 도구는 6절에서 따로 깔아요.
 
 ```bash
-brew install git gh uv
-brew install --cask visual-studio-code docker-desktop dbeaver-community
+brew install git gh uv colima docker docker-compose
+brew install --cask visual-studio-code dbeaver-community
 ```
 
 | 이름 | 무엇 | 몇 회차 |
@@ -197,7 +197,9 @@ brew install --cask visual-studio-code docker-desktop dbeaver-community
 | `gh` | GitHub 로그인 도우미 (8절) | 1, 2회차 push |
 | `uv` | 파이썬 버전, 패키지, 가상환경 관리 | 5회차부터 |
 | `visual-studio-code` | VS Code, `code` 명령도 함께 | 전체 |
-| `docker-desktop` | Docker 엔진과 `docker compose` | 14회차부터 |
+| `colima` | Docker 엔진(작은 리눅스 VM)을 켜고 끄는 도구 (12절) | 14회차부터 |
+| `docker` | `docker` 명령 (엔진에 일을 시키는 쪽) | 14회차부터 |
+| `docker-compose` | `docker compose` 명령 (12절에서 한 번 연결) | 15회차부터 |
 | `dbeaver-community` | DB 화면 도구 | 16회차 |
 
 다 깔렸는지 확인해요. 넷 다 버전이 나오면 돼요.
@@ -464,26 +466,90 @@ deactivate
 | 명령 모드 키 | `A`, `B`, `M`, `Y`, `D D`, `Z`, `L` | 그대로 |
 | 명령 팔레트 | `Ctrl + Shift + P` | `Cmd + Shift + P` |
 
-## 12. Docker Desktop: WSL 없이 바로
+## 12. Colima: Docker Desktop 없이 터미널로 켜는 Docker
 
-응용 프로그램 폴더에서 Docker를 처음 열면 약관 동의와 권한 허용을 물어요. 권장 설정으로 진행하고 왼쪽 아래에 **Engine running**이 뜰 때까지 기다려요. 14회차에서 본 대로 맥의 Docker Desktop도 안에 작은 리눅스 VM을 띄워요. 윈도우처럼 WSL을 따로 깔 일은 없어요.
+수업에서 맥은 Docker Desktop 대신 **Colima**로 Docker를 켜요. 윈도우에서는 Docker Desktop 앱 하나가 엔진과 `docker` 명령을 함께 줬어요. 맥에서는 이 일을 셋으로 나눠 brew로 깔아요(5절에서 이미 깔았어요).
+
+<Figure label="Docker Desktop 하나가 하던 일을 셋이 나눠 맡아요">
+  <Boxes
+    row={[
+      { title: "윈도우: Docker Desktop", tone: "neutral", lines: ["창이 뜨는 앱 하나", "엔진(WSL 2 위 리눅스 VM), `docker` 명령, `compose`가 한 묶음"] },
+      { arrow: "맥에서는" },
+      { title: "맥: brew 셋", tone: "blue", lines: ["`colima`: 엔진이 도는 작은 리눅스 VM을 켜고 꺼요", "`docker`: 엔진에 일을 시키는 명령", "`docker-compose`: `docker compose` 부품"] },
+    ]}
+  />
+</Figure>
+
+창이 없으니 켜고 끄는 것도 터미널 명령이에요. 대신 가볍고, 개인과 회사 모두 무료(오픈소스)예요. 켠 뒤의 `docker` 명령은 지금까지와 글자 하나 다르지 않아요.
+
+<Hint>
+예전 안내대로 Docker Desktop을 이미 깔았다면 먼저 지워요. 둘 다 `docker` 명령을 깔려고 해서 부딪혀요. `brew uninstall --cask docker-desktop`으로 지운 뒤 5절의 `brew install ... colima docker docker-compose`를 다시 쳐요.
+</Hint>
+
+### `docker compose` 연결하기 (처음 한 번만)
+
+brew로 깐 `docker-compose`는 `docker` 명령이 바로 찾지 못해요. `docker`는 `~/.docker/cli-plugins` 폴더에 있는 부품만 `docker 부품이름`으로 불러 주거든요. 그 폴더에 바로가기(심볼릭 링크)를 하나 넣어요.
 
 ```bash
-docker info
-docker run hello-world
+mkdir -p ~/.docker/cli-plugins
+ln -sfn "$(brew --prefix)/opt/docker-compose/bin/docker-compose" ~/.docker/cli-plugins/docker-compose
 docker compose version
 ```
 
-`Hello from Docker!`가 나오면 준비 끝이에요.
+`Docker Compose version v2...`처럼 버전이 나오면 연결된 거예요. Colima 공식 문서가 같은 방식으로 `buildx` 부품을 연결해요.
 
+- `ln -sfn 원본 바로가기`: 원본 파일을 가리키는 바로가기를 만들어요. `-f`는 이미 있으면 바꿔 끼우기, `-s`는 심볼릭 링크예요.
+- `"$(brew --prefix)/opt/..."`: `brew --prefix`가 brew 설치 폴더(애플 칩 맥은 `/opt/homebrew`)로 바뀌어 들어가요. 그 아래가 brew가 깐 `docker-compose`의 자리예요.
+
+### 켜기: colima start
+
+```bash
+colima start
+```
+
+처음 한 번은 리눅스 VM을 내려받아 만드느라 1~2분 걸려요. 다음부터는 금방 켜져요. 켜졌는지 확인해요.
+
+```bash
+colima status          # colima is running 이 보이면 켜진 거예요
+docker context ls      # colima 줄 옆에 * 가 붙어 있어요
+docker run --rm hello-world
+```
+
+`Hello from Docker!`가 나오면 준비 끝이에요. `docker context`는 "`docker` 명령이 어느 엔진에 말을 걸지"를 정하는 설정이에요. `colima start`가 스스로 `colima`를 기본으로 정해 줘서 따로 할 일은 없어요.
+
+Colima는 처음에 CPU 2개, 메모리 2GiB, 디스크 100GiB로 VM을 만들어요. 수업 실습(PostgreSQL, nginx, Redis)에는 충분해요. 컨테이너를 여러 개 띄워 느려지면 끄고 크기를 바꿔 다시 켜요.
+
+```bash
+colima stop
+colima start --cpu 4 --memory 4   # CPU 4개, 메모리 4GiB
+```
+
+### 켜고 끄는 명령
+
+| 명령 | 하는 일 | 컨테이너, 이미지, 볼륨 |
+| --- | --- | --- |
+| `colima start` | 엔진 켜기 | 지난번 그대로 돌아와요 |
+| `colima status` | 켜졌는지 보기 | |
+| `colima stop` | 엔진 끄기. 맥 메모리를 돌려받아요 | 남아요 |
+| `colima restart` | 껐다 켜기. 엔진이 이상할 때 | 남아요 |
+| `colima delete` | VM 지우기 | 최근 버전(0.9.0부터)은 데이터를 남기고, `--data`를 붙이면 다 지워요 |
+
+맥을 다시 켜면 Colima는 꺼져 있어요. 실습 전에 `colima start`부터 쳐요. 맥에 로그인할 때 저절로 켜지게 하려면 한 번만 이렇게 해 둬요.
+
+```bash
+brew services start colima   # 로그인할 때마다 자동으로 켜기
+brew services stop colima    # 자동 켜기 그만
+```
+
+### 맥에서 달라지는 것과 그대로인 것
+
+- **포트는 그대로 `localhost`예요.** 컨테이너에서 `-p 8080:80`이나 compose의 `ports:`로 연 포트를 Colima가 맥의 `localhost`로 이어 줘요. 브라우저, DBeaver, 파이썬 모두 `localhost`로 접속해요.
 - **수업 이미지는 다 맥용이 있어요.** `nginx`, `ubuntu:24.04`, `mysql:8.4`, `redis`, `postgres:18` 모두 애플 칩용 이미지가 있어서 받는 명령도 그대로예요.
 - **Git Bash 우회는 전부 버려요.** 15회차의 `//tmp`는 `/tmp`로 쓰면 되고, `MSYS_NO_PATHCONV` 줄은 넣지 않아요. 14회차의 `docker exec -i my-pg psql -U postgres < products.sql`도 맥 터미널에서 그대로 돼요.
 - **데이터는 다시 넣어요.** 16회차 `SportsCenter` 폴더를 받아 `docker compose up -d`로 띄우고, SQL 파일을 다시 실행하면 표와 데이터가 돌아와요.
 
 <Hint>
-
-Docker Desktop의 Settings > General에서 **Start Docker Desktop when you sign in**을 켜 두면 `Cannot connect to the Docker daemon` 오류를 덜 보게 돼요.
-
+`Cannot connect to the Docker daemon`이 나오면 Colima가 꺼져 있는 거예요. `colima start` 뒤에 다시 쳐요. `docker compose`가 "그런 명령이 없다"고 나오면 위의 연결하기를 빠뜨린 거예요. 이미지를 받을 때 `docker-credential-desktop`을 찾을 수 없다고 나오면 Docker Desktop이 남긴 설정 때문이에요. `code ~/.docker/config.json`으로 열어 `"credsStore": "desktop"` 줄을 지우고 저장해요.
 </Hint>
 
 ## 13. DBeaver: 접속 정보는 같고 실행 키만 다르다
@@ -502,6 +568,7 @@ gh auth status               # Logged in to github.com
 uv --version
 code --version
 fzf --version
+colima status                # colima is running
 docker run --rm hello-world  # Hello from Docker!
 docker compose version
 ```
@@ -521,4 +588,5 @@ docker compose version
 - 터미널 단축키는 control, 복사와 붙여넣기는 command, 윈도우의 `Alt`는 option이에요.
 - 15회차의 경로 변환 설정(`MSYS_NO_PATHCONV`, `//tmp`)은 Git Bash 전용이라 맥에서는 넣지 않아요.
 - 인터넷에서 찾은 `sed -i` 명령은 맥에서 `sed -i ''`처럼 빈 따옴표를 하나 더 넣어야 돼요. 맥의 `sed`는 리눅스 것과 조금 달라요.
-- `Cannot connect to the Docker daemon`이 나오면 Docker Desktop을 먼저 켜요.
+- 맥의 Docker 엔진은 Colima예요. 맥을 다시 켠 뒤에는 `colima start`부터, 다 쓰면 `colima stop`이에요. `Cannot connect to the Docker daemon`은 Colima가 꺼져 있다는 뜻이에요.
+- brew로 깐 `docker compose`는 `~/.docker/cli-plugins`에 바로가기를 한 번 넣어야 불려요(12절).

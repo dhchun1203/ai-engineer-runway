@@ -10,7 +10,7 @@ slug: "cafe-mini-project"
 
 재료는 동네 카페 세 지점(성수점, 연남점, 판교점)의 2주 치 주문이에요. 사장님이 "다음 주에 어느 지점, 어느 시간에 사람을 더 넣을까?"를 묻는다고 생각하고 숫자로 답을 찾아요.
 
-이 레슨은 맥 터미널(zsh) 기준이에요. 맥 준비가 아직이라면 [맥 실습 환경](/class/mac-setup)을 먼저 끝내고 오세요. Docker Desktop, `uv`, VS Code가 깔려 있으면 돼요.
+이 레슨은 맥 터미널(zsh) 기준이에요. 맥 준비가 아직이라면 [맥 실습 환경](/class/mac-setup)을 먼저 끝내고 오세요. Colima(맥의 Docker 엔진), `uv`, VS Code가 깔려 있으면 돼요.
 
 아래 명령과 출력은 모두 `postgres:18`, Python 3.14, pandas 3.1.1, NumPy 2.5.5, psycopg 3.3.9에서 직접 실행해 확인했어요. 노트북에서는 DataFrame이 예쁜 표로 보이지만, 여기서는 같은 내용을 글자로 옮겼어요.
 
@@ -33,11 +33,12 @@ slug: "cafe-mini-project"
 
 ## 2. 프로젝트 폴더와 compose.yaml: 켜는 법을 파일 한 장에 적는다
 
-Docker Desktop부터 켜요. 메뉴 막대에 고래 아이콘이 생기고 멈춰 있으면 준비된 거예요.
+Docker 엔진부터 켜요. 맥에서는 Colima가 엔진이에요.
 
 ```bash
-open -a Docker          # Docker Desktop 켜기 (처음엔 10초쯤 걸려요)
-docker compose version  # 버전이 나오면 준비 완료
+colima start            # Docker 엔진 켜기 (이미 켜져 있다고 나와도 괜찮아요)
+colima status           # colima is running 이면 준비 완료
+docker compose version  # 버전이 나오면 compose도 준비 완료
 ```
 
 프로젝트 폴더를 만들고 VS Code로 열어요. 이 폴더 하나에 DB 설정, 시드 파일, 파이썬 코드가 모두 들어가요.
@@ -106,7 +107,7 @@ cafe-pg   postgres:18   "docker-entrypoint.s…"   db        6 seconds ago   Up 
 **여기까지 되면:** `STATUS`가 `Up`이고 `PORTS`에 `5433->5432`가 보여요.
 
 <Hint>
-`Cannot connect to the Docker daemon`이 나오면 Docker Desktop이 아직 안 켜진 거예요. 고래 아이콘이 멈출 때까지 기다렸다가 다시 쳐요. `port is already allocated`가 나오면 맥의 5433을 다른 프로그램이 쓰는 중이에요. `compose.yaml`의 왼쪽 숫자를 `"5434:5432"`처럼 바꾸고, 뒤에 나오는 접속 주소의 포트도 같이 바꿔요.
+`Cannot connect to the Docker daemon`이 나오면 Colima가 꺼져 있는 거예요. `colima start` 뒤에 다시 쳐요. `docker compose`가 없는 명령이라고 나오면 [맥 실습 환경](/class/mac-setup) 12절의 compose 연결을 먼저 해요. `port is already allocated`가 나오면 맥의 5433을 다른 프로그램이 쓰는 중이에요. `compose.yaml`의 왼쪽 숫자를 `"5434:5432"`처럼 바꾸고, 뒤에 나오는 접속 주소의 포트도 같이 바꿔요.
 </Hint>
 
 ## 4. 데이터베이스 만들기: 빈 서버에 cafe_db 하나
@@ -1109,10 +1110,16 @@ docker compose down
  Network cafe-analysis_default Removed
 ```
 
+Colima까지 끄면 VM이 쓰던 메모리도 맥에 돌아와요. 볼륨은 Colima 안에 그대로 남아요.
+
+```bash
+colima stop
+```
+
 다음에 이어서 할 때는 세 줄이면 돼요.
 
 ```bash
-open -a Docker
+colima start
 cd ~/dev/cafe-analysis
 docker compose up -d
 ```
