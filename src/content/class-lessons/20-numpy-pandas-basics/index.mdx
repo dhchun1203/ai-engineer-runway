@@ -1,0 +1,764 @@
+---
+title: "숫자 묶음은 NumPy, 이름표 붙은 표는 pandas: 반복문 대신 한 줄로"
+session: 20
+date: "2026-11-20"
+summary: "한 달 지출 12건을 리스트에서 NumPy 배열, pandas DataFrame 순서로 옮겨요. 배열 전체를 한 번에 계산하고, 표에서 열을 꺼내고, 조건으로 행을 거르고, 정렬하고, 새 열을 만들고, groupby로 묶어 세요."
+slug: "20-numpy-pandas-basics"
+module: "1-5"
+topic: "pandas"
+preStudy: []
+---
+
+어제까지는 SQL로 데이터베이스 안의 표를 다뤘어요. 오늘은 파이썬 안에서 표를 다루는 도구 두 개를 배웠어요. 숫자 묶음을 한 번에 계산하는 NumPy와, 그 위에 이름표를 붙여 엑셀 같은 표로 다루는 pandas예요.
+
+재료는 한 달 동안 체크카드로 쓴 지출 12건이에요. 반복문으로 하나씩 하던 합계, 거르기, 분류별 집계가 한 줄로 끝나는 모습을 차례로 봐요. 어제 배운 `WHERE`, `ORDER BY`, `GROUP BY`가 pandas에서 어떤 모양인지도 맞춰 봐요.
+
+코드와 출력은 모두 수업과 같은 Python 3.14, NumPy 2.5.5, pandas 3.1.1에서 직접 실행해 확인했어요. 끝까지 읽고 아래 복습 퀴즈 10문항을 풀어 보세요.
+
+## 1. 오늘의 지도: 리스트에서 배열로, 배열에서 표로
+
+같은 지출 12건이 세 가지 모양으로 바뀌어요. 아래로 내려갈수록 한 줄로 할 수 있는 일이 늘어나요.
+
+<Figure label="같은 데이터가 세 번 모양을 바꿔요">
+  <Layers
+    layers={[
+      [{ title: "list (리스트)", tone: "neutral", lines: ["`[3200, 1500, ...]`", "계산은 `for`문으로 한 칸씩 해요"] }],
+      [{ via: "`np.array(리스트)`", title: "ndarray (NumPy 배열)", tone: "blue", lines: ["`arr * 2`, `arr.sum()`, `arr[arr >= 10000]`", "모든 칸에 한 번에 계산해요. 대신 한 가지 종류만 담아요"] }],
+      [{ via: "`pd.DataFrame({...})`", title: "DataFrame (pandas 표)", tone: "rust", lines: ["열 이름이 붙은 표예요. 열마다 종류가 달라도 돼요", "열 하나를 꺼내면 `Series`예요"] }],
+    ]}
+  />
+</Figure>
+
+마지막에 만들 표 `spend`의 열은 네 개예요. 엑셀 표나 어제까지 쓴 데이터베이스 테이블과 같은 모양이에요.
+
+| 열 | 담은 것 | dtype |
+| --- | --- | --- |
+| `day` | 날짜(일) | `int64` |
+| `shop` | 가게 | `str` |
+| `category` | 분류(식비, 교통, 문화, 쇼핑) | `str` |
+| `amount` | 금액 | `int64` |
+
+## 2. 준비: uv 프로젝트에 두 도구를 넣고 노트북을 연다
+
+5회차에 배운 `uv`가 여기서 다시 쓰여요. 맥 터미널에서 실습 프로젝트를 만들고 NumPy와 pandas를 넣어요.
+
+```bash
+mkdir -p ~/dev && cd ~/dev
+uv init --no-package --python 3.14 my-pandas   # 프로젝트 폴더 만들기
+cd my-pandas
+rm main.py                                      # 예제 파일은 오늘 쓰지 않아요
+ls -a
+```
+
+```text
+.  ..  .git  .gitignore  .python-version  README.md  pyproject.toml
+```
+
+`uv init`은 프로젝트 설명서 `pyproject.toml`과 파이썬 버전 메모 `.python-version`을 만들어요. `--no-package`는 "배포할 패키지가 아니라 실습용 프로젝트"라는 뜻이라 빌드 설정이 붙지 않아요. 점(.)으로 시작하는 숨김 파일은 `ls -a`로만 보여요.
+
+```bash
+uv add "numpy==2.5.5" "pandas==3.1.1"   # 숫자 배열 도구, 표 계산 도구
+uv add --dev ipykernel                 # VS Code 노트북과 .venv 를 이어 주는 부품
+code .
+```
+
+첫 `uv add`가 가상환경 `.venv`를 만들고 그 안에 설치해요. 기록은 `pyproject.toml`과 `uv.lock`에 남아서, 다른 컴퓨터에서도 `uv sync` 한 번이면 같은 환경이 돼요. `--dev`는 "코드가 직접 쓰지는 않지만 개발할 때 필요한 도구"라는 표시예요.
+
+<Figure label="VS Code에서 노트북을 열고 .venv 커널에 잇기">
+  <Seq
+    steps={[
+      { title: "`Cmd + Shift + P`", body: "명령 창에서 Create: New Jupyter Notebook 을 골라 새 노트북을 만들어요." },
+      { title: "`Cmd + S`", body: "my_first_pandas.ipynb 이름으로 저장해요." },
+      { title: "Select Kernel", body: "오른쪽 위에서 Python Environments 를 누르고 프로젝트의 .venv 를 골라요. .venv (Python 3.14) 처럼 보이면 성공이에요." },
+      { title: "`Shift + Enter`", body: "셀을 실행하고 아래 셀로 넘어가요. 셀 옆의 [1] 은 실행한 순서예요." },
+    ]}
+  />
+</Figure>
+
+첫 셀에서 두 도구를 불러오고 버전을 확인해요. NumPy는 `np`, pandas는 `pd`라는 짧은 이름으로 부르는 것이 전 세계 공통 약속이에요.
+
+```python
+import numpy as np
+import pandas as pd
+
+print("numpy ", np.__version__)
+print("pandas", pd.__version__)
+```
+
+```text
+numpy  2.5.5
+pandas 3.1.1
+```
+
+<Hint>
+커널 목록에 `.venv`가 없으면 VS Code로 연 폴더가 `my-pandas`가 맞는지 확인해요. 운영체제의 파이썬을 커널로 고르면 `ModuleNotFoundError: No module named 'numpy'`가 나요. "ipykernel이 필요하다"는 안내 창이 뜨면 `uv add --dev ipykernel`을 빠뜨린 거예요.
+</Hint>
+
+## 3. NumPy 배열: 곱하기 한 번이 모든 칸에 들어간다
+
+먼저 지출 12건을 리스트에 적어요. 파이썬에서 배운 리스트 그대로예요.
+
+```python
+amounts = [3200, 1500, 15000, 6500, 32000, 4800,
+           10900, 1500, 2700, 3000, 18500, 7000]
+
+print(amounts)
+print("합계", sum(amounts))
+```
+
+```text
+[3200, 1500, 15000, 6500, 32000, 4800, 10900, 1500, 2700, 3000, 18500, 7000]
+합계 106600
+```
+
+리스트는 "값 묶음"이지 "숫자 묶음"이 아니에요. 그래서 곱하기가 안의 숫자에 들어가지 않아요. 같은 곱하기를 배열에 하면 칸마다 들어가요.
+
+<Figure label="같은 * 2, 다른 결과">
+  <Boxes
+    row={[
+      { title: "amounts * 2 (리스트)", tone: "amber", lines: ["리스트를 두 번 이어 붙여요", "12개가 24개가 돼요", "`amounts * 1.1`은 `TypeError`예요"] },
+      { title: "arr * 2 (배열)", tone: "blue", lines: ["칸마다 2를 곱해요", "`3200`이 `6400`이 돼요", "`arr * 1.1`도 칸마다 곱해져요"] },
+    ]}
+  />
+</Figure>
+
+```python
+amounts * 1.1      # 다음 달 물가가 10% 오른다면?
+```
+
+```text
+TypeError: can't multiply sequence by non-int of type 'float'
+```
+
+`np.array(리스트)`가 리스트를 배열로 바꿔요. 이제 반복문 없이 12칸 모두에 한 번에 계산돼요.
+
+```python
+import numpy as np
+
+arr = np.array(amounts)
+print(arr * 2)
+```
+
+```text
+[ 6400  3000 30000 13000 64000  9600 21800  3000  5400  6000 37000 14000]
+```
+
+`arr * 1.1`도 해 보면 `array([ 3520.,  1650., 16500., ...])`처럼 나와요. 숫자 끝의 점은 소수(float)라는 표시예요.
+
+## 4. 통계와 모양: `sum`, `mean`, `shape`, `dtype`
+
+계산 이름을 점(.) 뒤에 붙이면 통계가 바로 나와요. 평균은 소수점이 길어서 `round()`로 반올림했어요.
+
+```python
+print("합계:", arr.sum())
+print("평균:", round(arr.mean()))
+print("최소:", arr.min())
+print("최대:", arr.max())
+
+print("모양: ", arr.shape, " 데이터 타입: ", arr.dtype)
+```
+
+```text
+합계: 106600
+평균: 8883
+최소: 1500
+최대: 32000
+모양:  (12,)  데이터 타입:  int64
+```
+
+<Figure label="shape와 dtype이 알려 주는 것">
+  <Boxes
+    row={[
+      { title: "shape (12,)", tone: "blue", lines: ["12칸짜리 한 줄(1차원)이에요", "표가 되면 `(12, 4)`처럼 행과 열 두 숫자가 나와요"] },
+      { title: "dtype int64", tone: "neutral", lines: ["칸에 든 값의 종류예요", "64비트 정수라는 뜻이에요. pandas에서도 같은 이름이 나와요"] },
+    ]}
+  />
+</Figure>
+
+## 5. 조건으로 고르기: True/False 줄을 대괄호에 넣으면 True 칸만 남는다
+
+"만 원 이상인 지출은 어느 칸일까?"를 배열에 물으면 칸마다 답한 True/False 12개가 나와요. 그 줄을 대괄호 안에 넣으면 True인 칸만 남아요. 이것을 불리언 인덱싱(Boolean indexing)이라고 해요.
+
+<Figure label="물어보고, 거르기">
+  <Seq
+    steps={[
+      { title: "`arr >= 10000`", body: "12칸 각각에 물어서 True/False 12개를 돌려줘요. 3, 5, 7, 11번째 칸이 True예요." },
+      { title: "`arr[arr >= 10000]`", body: "그 True/False 줄을 대괄호에 넣으면 True 칸만 남아요." },
+      { title: "결과", body: "15000, 32000, 10900, 18500 네 칸이에요." },
+    ]}
+  />
+</Figure>
+
+```python
+print(arr >= 10000)
+arr[arr >= 10000]
+```
+
+```text
+[False False  True False  True False  True False False False  True False]
+array([15000, 32000, 10900, 18500])
+```
+
+이 방식이 10절의 pandas 거르기에서 그대로 다시 나와요.
+
+## 6. 배열의 한계: 한 가지 종류만 담고, 이름표가 없다
+
+가게 이름도 같이 넣고 싶어요. 그런데 배열은 한 가지 종류만 담을 수 있어서, 글자가 하나라도 섞이면 숫자까지 전부 글자로 바뀌어요.
+
+```python
+mixed = np.array([["편의점", 3200],
+                  ["버스",   1500]])
+print(mixed)
+print("값의 종류:", mixed.dtype)
+```
+
+```text
+[['편의점' '3200']
+ ['버스' '1500']]
+값의 종류: <U21
+```
+
+`3200`이 `'3200'`이라는 글자가 됐어요. `<U21`은 "최대 21글자짜리 문자열"이에요. 이제 금액을 더할 수 없고, 어느 칸이 가게이고 어느 칸이 금액인지 이름표도 없어요.
+
+그래서 일단 리스트 세 개로 따로 두고 식비 합계를 반복문으로 구해 봤어요.
+
+```python
+shops = ["편의점", "버스", "영화관", "분식집", "온라인쇼핑", "카페",
+         "음원앱", "버스", "편의점", "웹툰", "온라인쇼핑", "분식집"]
+
+categories = ["식비", "교통", "문화", "식비", "쇼핑", "식비",
+              "문화", "교통", "식비", "문화", "쇼핑", "식비"]
+
+food = 0
+for c, a in zip(categories, amounts):
+    if c == '식비':
+        food += a
+
+print(food)
+```
+
+```text
+24200
+```
+
+식비 하나에 반복문 다섯 줄이에요. 교통, 문화, 쇼핑까지 하려면 네 번 써야 하고, 리스트 순서가 하나만 어긋나도 엉뚱한 답이 나와요.
+
+<Figure label="배열의 불편함을 pandas 표가 풀어 줘요">
+  <Boxes
+    row={[
+      { title: "NumPy 배열", tone: "amber", lines: ["한 가지 종류만 담아요", "글자가 섞이면 전부 글자(`<U21`)가 돼요", "칸에 이름표가 없어요"] },
+      { arrow: "표로 옮기기" },
+      { title: "pandas DataFrame", tone: "ok", lines: ["열마다 종류가 따로예요(`int64`, `str`)", "열 이름으로 꺼내요"] },
+    ]}
+  />
+</Figure>
+
+## 7. DataFrame 만들기: 딕셔너리의 키가 열 이름, 리스트가 열 내용
+
+`{열 이름: 리스트}` 딕셔너리를 `pd.DataFrame`에 넘기면 표가 돼요. 리스트 하나가 열 하나예요. 이름은 `spend`(지출)로 지었어요.
+
+<Figure label="딕셔너리 한 쌍이 열 하나가 돼요">
+  <DictView
+    name="spend"
+    pairs={[
+      ['"day"', "[2, 3, 4, ...]"],
+      ['"shop"', "shops"],
+      ['"category"', "categories"],
+      ['"amount"', "amounts"],
+    ]}
+    keyLabel="열 이름"
+    valueLabel="그 열의 내용(길이 12인 리스트)"
+  />
+</Figure>
+
+```python
+import pandas as pd
+
+spend = pd.DataFrame({
+    "day": [2, 3, 4, 5, 7, 9, 12, 14, 16, 19, 20, 25],
+    "shop": shops,
+    "category": categories,
+    "amount": amounts
+})
+
+spend
+```
+
+```text
+    day   shop category  amount
+0     2    편의점       식비    3200
+1     3     버스       교통    1500
+2     4    영화관       문화   15000
+3     5    분식집       식비    6500
+4     7  온라인쇼핑       쇼핑   32000
+5     9     카페       식비    4800
+6    12    음원앱       문화   10900
+7    14     버스       교통    1500
+8    16    편의점       식비    2700
+9    19     웹툰       문화    3000
+10   20  온라인쇼핑       쇼핑   18500
+11   25    분식집       식비    7000
+```
+
+왼쪽의 0부터 11은 pandas가 자동으로 붙인 행 번호(index)예요. 노트북에서는 이 표가 칸이 그어진 모양으로 보여요.
+
+<Hint>
+리스트 길이가 다르면 표를 못 만들어요. `ValueError: All arrays must be of the same length`가 나요. 수업 노트북의 `pd.DataFrame(amounts)`처럼 리스트 하나만 넣으면 열 이름이 `0`인 한 열짜리 표가 돼요. 열 이름을 붙이려면 딕셔너리로 넘겨요.
+</Hint>
+
+### 크기, 앞부분, 칸의 종류 보기
+
+실제 거래 내역은 수천 줄이라 한 번에 다 볼 수 없어요. `shape`로 크기를, `head(n)`으로 앞 n줄을, `info()`로 열마다 빈칸과 종류를 봐요.
+
+```python
+print(spend.shape)
+spend.head(3)
+```
+
+```text
+(12, 4)
+   day shop category  amount
+0    2  편의점       식비    3200
+1    3   버스       교통    1500
+2    4  영화관       문화   15000
+```
+
+`(12, 4)`는 12행 4열이에요. `head()`의 괄호를 비우면 5줄을 보여 주고, 뒤쪽은 `tail(3)`으로 봐요. `shape`는 괄호 없이, `head()`는 괄호와 함께 써요.
+
+```python
+spend.info()
+```
+
+```text
+<class 'pandas.DataFrame'>
+RangeIndex: 12 entries, 0 to 11
+Data columns (total 4 columns):
+ #   Column    Non-Null Count  Dtype
+---  ------    --------------  -----
+ 0   day       12 non-null     int64
+ 1   shop      12 non-null     str  
+ 2   category  12 non-null     str  
+ 3   amount    12 non-null     int64
+dtypes: int64(2), str(2)
+memory usage: 516.0 bytes
+```
+
+숫자 열은 `int64`, 글자 열은 `str`이에요. 배열과 달리 열마다 종류가 따로라서 글자 열이 있어도 금액은 숫자 그대로예요. `12 non-null`은 빈칸이 없다는 뜻이에요.
+
+<Note title="pandas 3에서 달라진 두 가지">
+- 글자 열의 종류가 `object` 대신 `str`로 나와요. 인터넷의 옛 자료(pandas 2)에는 `object`로 보여요.
+- `spend["amount"][2] = 값`처럼 이어 붙인 대입은 원래 표를 바꾸지 못해요. 12절에서 `loc`로 고쳐요.
+</Note>
+
+## 8. 노트북 셀은 마지막 줄의 결과만 보여 준다
+
+수업 노트북에서 `spend.head(5)` 바로 아래에 `spend.info()`를 둔 셀은 `head(5)`의 표가 안 보였어요. 노트북은 셀의 **마지막 줄** 결과만 자동으로 화면에 보여 주기 때문이에요.
+
+<Figure label="한 셀에 두 줄을 쓰면">
+  <Boxes
+    row={[
+      { title: "spend.head(5)", tone: "neutral", dashed: true, lines: ["계산은 하지만 화면에 안 나와요", "마지막 줄이 아니라서요"] },
+      { title: "spend.info()", tone: "blue", lines: ["마지막 줄이라 나와요", "`info()`는 스스로 출력하는 함수라 어디 있어도 나와요"] },
+    ]}
+  />
+</Figure>
+
+마지막 셀의 `spend['category'].value_counts()`도 아래에 `spend['category']`가 있어서 보이지 않았어요. 중간 결과도 보고 싶으면 `print()`로 감싸요. `print()`로 찍은 표는 칸 없는 글자 모양으로 나와요.
+
+## 9. 열 꺼내기: 대괄호 한 겹은 한 줄, 두 겹은 표
+
+표에서 열 하나를 꺼내면 `Series`(한 줄)가 돼요. 행 번호가 따라오고, 맨 아래에 열 이름과 종류가 붙어요.
+
+```python
+print(spend['amount'])
+
+print('합계:', spend['amount'].sum())
+print('평균:', round(spend['amount'].mean(), 2))
+```
+
+```text
+0      3200
+1      1500
+2     15000
+3      6500
+4     32000
+5      4800
+6     10900
+7      1500
+8      2700
+9      3000
+10    18500
+11     7000
+Name: amount, dtype: int64
+합계: 106600
+평균: 8883.33
+```
+
+꺼낸 열은 이름표가 붙은 NumPy 배열이라 계산 방법이 4절과 같아요. `round(값, 2)`는 소수 둘째 자리까지 남겨요.
+
+여러 열을 꺼낼 때는 열 이름들을 **리스트로** 넘겨요. 그래서 대괄호가 두 겹이에요. 한 겹에 이름 두 개를 넣으면 pandas가 "shop, amount"라는 이름의 열 하나를 찾다가 없다고 해요.
+
+<Figure label="대괄호 한 겹과 두 겹">
+  <Boxes
+    row={[
+      { title: 'spend["amount"]', tone: "blue", lines: ["`Series`, 한 줄(1차원)", "shape `(12,)`"] },
+      { title: 'spend[["amount"]]', tone: "rust", lines: ["`DataFrame`, 작은 표(2차원)", "shape `(12, 1)`. 열이 하나여도 표예요"] },
+    ]}
+    below={[
+      { title: 'spend["shop", "amount"]', tone: "red", lines: ["`KeyError: ('shop', 'amount')`", "바깥 대괄호는 꺼내 줘, 안쪽 대괄호는 이름 목록이에요. 안쪽이 빠졌어요"] },
+    ]}
+  />
+</Figure>
+
+```python
+spend[['shop', 'amount']]
+```
+
+```text
+     shop  amount
+0     편의점    3200
+1      버스    1500
+2     영화관   15000
+3     분식집    6500
+4   온라인쇼핑   32000
+5      카페    4800
+6     음원앱   10900
+7      버스    1500
+8     편의점    2700
+9      웹툰    3000
+10  온라인쇼핑   18500
+11    분식집    7000
+```
+
+```python
+print(spend["amount"].shape)     # 대괄호 한 겹: 한 줄
+print(spend[["amount"]].shape)   # 대괄호 두 겹: 표
+```
+
+```text
+(12,)
+(12, 1)
+```
+
+<Hint>
+열 이름을 잘못 쓰면(`spend["Amount"]`) `KeyError: 'Amount'`가 나요. 대소문자와 띄어쓰기를 확인하고, 실제 열 이름은 `spend.columns`로 볼 수 있어요. 다음 머신러닝 시간에 문제 X는 두 겹, 정답 y는 한 겹으로 꺼내요.
+</Hint>
+
+## 10. 행 거르기: 조건이 True인 행만 남는다
+
+5절의 배열 거르기와 똑같아요. 조건을 물으면 행마다 True/False가 든 `Series`가 나오고, 그 줄을 `spend[...]`에 넣으면 True인 행만 남아요. 어제 배운 SQL의 `WHERE`가 여기서 이 모양으로 쓰여요.
+
+```python
+spend["category"] == "문화"
+```
+
+```text
+0     False
+1     False
+2      True
+3     False
+4     False
+5     False
+6      True
+7     False
+8     False
+9      True
+10    False
+11    False
+Name: category, dtype: bool
+```
+
+```python
+spend[spend["category"] == "문화"]
+```
+
+```text
+   day shop category  amount
+2    4  영화관       문화   15000
+6   12  음원앱       문화   10900
+9   19   웹툰       문화    3000
+```
+
+결과의 행 번호가 2, 6, 9로 원래 번호 그대로예요. 숫자 조건도 똑같이 써요. `>=`, `<`, `!=` 모두 같아요.
+
+```python
+spend[spend['amount'] >= 10000]
+```
+
+```text
+    day   shop category  amount
+2     4    영화관       문화   15000
+4     7  온라인쇼핑       쇼핑   32000
+6    12    음원앱       문화   10900
+10   20  온라인쇼핑       쇼핑   18500
+```
+
+조건 두 개는 `&`(그리고), `|`(또는)로 잇고 **조건마다 괄호로** 감싸요. "식비이면서 5000원 이상"은 이렇게 써요.
+
+```python
+spend[(spend["category"] == '식비') & (spend["amount"] >= 5000)]
+```
+
+```text
+    day shop category  amount
+3     5  분식집       식비    6500
+11   25  분식집       식비    7000
+```
+
+카페 4800원은 식비지만 5000원이 안 돼서 빠졌어요. 아래에서 조건을 바꿔 가며 거름망이 어떻게 생기는지 눌러 보세요. 마지막 두 버튼은 수업에서 만난 두 오류예요.
+
+<PandasMaskSimulator />
+
+### 오늘 만난 두 오류
+
+**`and`를 쓴 경우.** 파이썬의 `and`는 양쪽을 True 하나, False 하나로 보려고 해요. 그런데 조건의 결과는 12칸짜리 줄이라 하나로 정할 수 없어요.
+
+```python
+spend[(spend["category"] == '식비') and (spend["amount"] >= 5000)]
+```
+
+```text
+ValueError: The truth value of a Series is ambiguous. Use a.empty, a.item(), a.any() or a.all().
+```
+
+**괄호를 뺀 경우.** 파이썬은 `&`를 `==`, `>=`보다 먼저 계산해요. 그래서 `'식비' & spend["amount"]`부터 하려다 막혀요.
+
+```python
+spend[spend["category"] == '식비' & spend["amount"] >= 5000]
+```
+
+```text
+TypeError: Cannot perform 'rand_' with a dtyped [int64] array and scalar of type [bool]
+```
+
+두 경우 모두 `&`와 괄호로 고치면 위의 분식집 두 행이 나와요. 오류 문장은 어렵지만 마지막 줄부터 읽는 습관을 들이면 돼요.
+
+<Hint>
+`=`(넣기)와 `==`(같은가?)를 헷갈려 `spend[spend["category"] = "문화"]`로 쓰면 `SyntaxError`가 나요. 숫자를 따옴표로 감싸 `spend["amount"] >= "10000"`처럼 글자와 비교하면 `TypeError: Invalid comparison between dtype=int64 and str`이 나요.
+</Hint>
+
+## 11. 정렬: `sort_values`는 행을 통째로 옮기고 번호도 들고 간다
+
+`sort_values('열')`은 작은 것부터, `ascending=False`를 붙이면 큰 것부터 정렬해요. 상위 3건만 보려면 `.head(3)`을 이어 붙여요. 점으로 이으면 왼쪽부터 차례로 실행돼요.
+
+```python
+spend.sort_values('amount', ascending=False).head(3)
+```
+
+```text
+    day   shop category  amount
+4     7  온라인쇼핑       쇼핑   32000
+10   20  온라인쇼핑       쇼핑   18500
+2     4    영화관       문화   15000
+```
+
+<Figure label="정렬하면 바뀌는 것과 안 바뀌는 것">
+  <Boxes
+    row={[
+      { title: "행 번호", tone: "blue", lines: ["행이 통째로 옮겨지고 번호도 따라가요", "그래서 4, 10, 2처럼 뒤섞여 보여요"] },
+      { title: "같은 값", tone: "neutral", lines: ["버스 1500원 두 건(1번, 7번)은", "원래 순서 그대로 1번이 앞이에요"] },
+      { title: "원래 spend", tone: "amber", lines: ["정렬 결과는 새 표예요", "`spend`의 순서는 그대로예요"] },
+    ]}
+  />
+</Figure>
+
+정렬 결과를 남기려면 변수에 담아요. 수업에서는 `top3 = spend.sort_values('amount', ascending=False)`로 담았는데, `.head(3)`이 빠져서 `top3`에 12행이 다 들어갔어요. 이름대로 3건만 담으려면 끝에 `.head(3)`까지 붙여요.
+
+## 12. 새 열과 한 칸 고치기: `loc[행, 열]`로 주소를 한 번에 짚는다
+
+없는 열 이름에 대입하면 새 열이 생겨요. 체크카드가 100원마다 1포인트를 준다면 이렇게 써요. `//`는 나눗셈의 몫이라 3200원은 32포인트예요.
+
+```python
+spend['point'] = spend['amount'] // 100   # 100원마다 1포인트
+print(spend['point'].sum())
+spend.head(3)
+```
+
+```text
+1066
+   day shop category  amount  point
+0    2  편의점       식비    3200     32
+1    3   버스       교통    1500     15
+2    4  영화관       문화   15000    150
+```
+
+12행 전부에 한 번에 계산됐어요. 만든 열을 지우려면 `del spend['point']`를 써요.
+
+영화관에서 할인을 받아 실제로는 14000원이었어요. 2번 행의 금액을 고쳐요. `spend["amount"][2] = 14000`처럼 꺼낸 열에 다시 대괄호를 붙이면 pandas 3에서는 경고만 나오고 표는 그대로예요.
+
+```text
+ChainedAssignmentError: A value is being set on a copy of a DataFrame or Series through chained assignment.
+Such chained assignment never works to update the original DataFrame or Series, because the intermediate object on which we are setting values always behaves as a copy (due to Copy-on-Write).
+```
+
+꺼낸 열이 복사본처럼 동작해서 복사본의 칸만 바뀌었기 때문이에요. 한 칸은 `loc[행 번호, 열 이름]`으로 주소를 한 번에 짚어 고쳐요.
+
+```python
+spend.loc[2, 'amount'] = 14000
+spend['point'] = spend['amount'] // 100
+spend.head(3)
+```
+
+```text
+   day shop category  amount  point
+0    2  편의점       식비    3200     32
+1    3   버스       교통    1500     15
+2    4  영화관       문화   14000    140
+```
+
+<Figure label="2번 행 point는 저절로 바뀌지 않아요">
+  <Trail label="point" values={["150 (처음 계산)", "150 (loc로 금액만 고친 뒤)", "140 (다시 계산)"]} />
+</Figure>
+
+`point`는 계산해 둔 값이라 `amount`를 바꿔도 따라 바뀌지 않아요. 엑셀 수식과 다른 점이에요. 그래서 금액을 고친 뒤 포인트 계산 줄을 한 번 더 실행했어요. 포인트 합계도 1066에서 1056으로 줄어요.
+
+## 13. 묶어서 세기: `groupby`는 나누고, 계산하고, 합친다
+
+6절에서 반복문 다섯 줄로 식비 하나만 구했던 것을, 네 분류 모두 한 줄로 구해요. 어제 배운 `GROUP BY`가 여기서 이 모양으로 쓰여요.
+
+<Figure label="groupby('category')['amount'].sum() 이 하는 일">
+  <Seq
+    steps={[
+      { title: "나누기", body: "category 가 같은 행끼리 네 묶음으로 나눠요(교통, 문화, 쇼핑, 식비)." },
+      { title: "계산하기", body: "묶음마다 amount 를 더해요. 문화는 할인이 반영돼 15000 대신 14000으로 더해져 27900이에요." },
+      { title: "합치기", body: "분류 이름을 행 번호로 삼은 Series 하나로 모아요. 기본은 가나다순이에요." },
+    ]}
+  />
+</Figure>
+
+```python
+spend.groupby('category')['amount'].sum()
+```
+
+```text
+category
+교통     3000
+문화    27900
+쇼핑    50500
+식비    24200
+Name: amount, dtype: int64
+```
+
+결과도 `Series`라서 `sort_values`를 이어 붙일 수 있어요.
+
+```python
+spend.groupby('category')['amount'].sum().sort_values(ascending=False)
+```
+
+```text
+category
+쇼핑    50500
+문화    27900
+식비    24200
+교통     3000
+Name: amount, dtype: int64
+```
+
+`value_counts()`는 값마다 몇 번 나왔는지 많은 순으로 세요. 결과 이름은 `count`예요.
+
+```python
+spend['category'].value_counts()
+```
+
+```text
+category
+식비    5
+문화    3
+교통    2
+쇼핑    2
+Name: count, dtype: int64
+```
+
+식비는 합계로는 3위지만 횟수로는 5번으로 1위예요. 작은 돈을 자주 쓰는 분류라는 뜻이에요.
+
+## 14. 어제 배운 SQL과 나란히 놓기
+
+하고 싶은 일은 같고 쓰는 모양만 달라요.
+
+| 하고 싶은 것 | SQL | pandas |
+| --- | --- | --- |
+| 열 고르기 | `SELECT shop, amount` | `spend[['shop', 'amount']]` |
+| 행 거르기 | `WHERE amount >= 10000` | `spend[spend['amount'] >= 10000]` |
+| 두 조건 | `WHERE a AND b` | `spend[(a) & (b)]` |
+| 정렬 | `ORDER BY amount DESC` | `sort_values('amount', ascending=False)` |
+| 개수 제한 | `LIMIT 3` | `.head(3)` |
+| 그룹별 합계 | `GROUP BY category`와 `SUM(amount)` | `groupby('category')['amount'].sum()` |
+| 값 하나 고치기 | `UPDATE ... SET amount = 14000 WHERE ...` | `spend.loc[2, 'amount'] = 14000` |
+
+## 15. 미션: 내 플레이리스트를 혼자 분석하기
+
+교안의 마지막 미션이에요. 새 데이터에 오늘 배운 순서(표 만들기, 계산, 거르기, 정렬, 묶기)를 혼자 적용해요. 노래 제목과 장르는 가상이에요.
+
+1. 노래 8곡으로 `playlist` 표 만들기
+2. 이번 달 총 재생 수
+3. 재생 수 20 이상인 곡
+4. 가장 많이 들은 Top 3
+5. 장르별 재생 수 합계(큰 순)
+6. 보너스: 발라드이면서 10번 이상 들은 곡
+
+먼저 직접 풀어 본 뒤 아래와 비교해 보세요.
+
+```python
+playlist = pd.DataFrame({
+    "title": ["봄바람", "Run Up", "새벽 감성", "Neon City", "첫눈", "Jump!", "바다 소리", "Fire Dance"],
+    "genre": ["발라드", "댄스", "발라드", "힙합", "발라드", "댄스", "인디", "댄스"],
+    "plays": [12, 35, 8, 22, 15, 28, 5, 19],
+})
+
+print("이번 달 총 재생 수:", playlist["plays"].sum())
+print(playlist[playlist["plays"] >= 20])
+print(playlist.sort_values("plays", ascending=False).head(3))
+print(playlist.groupby("genre")["plays"].sum().sort_values(ascending=False))
+print(playlist[(playlist["genre"] == "발라드") & (playlist["plays"] >= 10)])
+```
+
+```text
+이번 달 총 재생 수: 144
+       title genre  plays
+1     Run Up    댄스     35
+3  Neon City    힙합     22
+5      Jump!    댄스     28
+       title genre  plays
+1     Run Up    댄스     35
+5      Jump!    댄스     28
+3  Neon City    힙합     22
+genre
+댄스     82
+발라드    35
+힙합     22
+인디      5
+Name: plays, dtype: int64
+  title genre  plays
+0   봄바람   발라드     12
+4    첫눈   발라드     15
+```
+
+3번과 4번은 같은 세 곡이지만 4번은 재생 수 순서예요. 한 셀에 여러 결과를 보려고 `print()`로 감쌌어요(8절).
+
+## 16. 다음 시간과 이어지는 곳
+
+오늘 쓴 코드는 다음 머신러닝 첫걸음에서 대부분 그대로 다시 나와요.
+
+<Figure label="오늘 배운 것이 머신러닝 시간에 나오는 곳">
+  <Boxes
+    row={[
+      { title: "NumPy 배열", tone: "blue", lines: ["모델의 예측 결과 `model.predict(...)`가 배열로 나와요"] },
+      { title: "대괄호 두 겹과 한 겹", tone: "rust", lines: ["문제 `X = phones[[\"months\"]]`", "정답 `y = phones[\"price\"]`"] },
+    ]}
+    below={[
+      { title: "df[조건], 새 열, groupby", tone: "neutral", lines: ["장르별로 골라 색칠하고, 그룹 번호 열을 붙여 그룹별 평균(`groupby(...).mean()`)을 봐요"] },
+    ]}
+  />
+</Figure>
+
+## 오늘 꼭 기억할 주의점
+
+- 리스트에 `* 2`를 하면 이어 붙고 `* 1.1`은 `TypeError`예요. 칸마다 계산하려면 `np.array`로 바꿔요.
+- NumPy 배열은 한 가지 종류만 담아요. 글자가 섞이면 숫자도 글자가 돼요. 열마다 종류가 다른 표는 pandas로 만들어요.
+- `pd.DataFrame({열 이름: 리스트})`의 리스트들은 길이가 같아야 해요.
+- 열 하나는 `spend["열"]`(Series), 여러 개는 `spend[["열1", "열2"]]`(표, 대괄호 두 겹)로 꺼내요.
+- 조건 두 개는 `and`가 아니라 `&`, `|`로 잇고 조건마다 괄호로 감싸요.
+- 정렬과 거르기의 결과는 새 표예요. 행 번호는 원래 번호를 들고 가고, 남기려면 변수에 담아요.
+- 한 칸은 `spend.loc[행, 열] = 값`으로 고쳐요. `spend["열"][행] = 값`은 pandas 3에서 원래 표를 바꾸지 못해요.
+- 계산해 둔 열은 원래 열을 고쳐도 저절로 바뀌지 않아요. 계산 줄을 다시 실행해요.
+- 노트북은 셀의 마지막 줄 결과만 보여 줘요. 중간 결과는 `print()`로 감싸요.
