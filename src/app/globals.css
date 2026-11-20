@@ -2106,6 +2106,80 @@ code[data-theme*=" "] span {
   backdrop-filter: blur(22px) saturate(1.6);
 }
 
+/* 펼침과 접힘: 막대 밑에서 아래로 커튼처럼 내려온다. 바깥 .stage-index에 opacity, clip-path를 걸면
+   그 안의 유리(::before backdrop-filter)가 뒤 본문을 못 보고 꺼지므로, 유리(::before)와 목록
+   (.stage-index-scroll)을 같은 시간으로 따로 잘라 펼친다. 유리는 위로 --glass-reach만큼 숨은 부분이
+   있어서 시작 값을 그만큼 빼야 목록과 아래 끝이 같이 내려온다. 접힘이 끝나면 stage-chips.tsx가
+   stage-index-fold의 animationend를 듣고 목록을 뗀다(forwards로 마지막 접힌 모양을 붙든다). */
+@keyframes stage-index-unfold {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(-6px);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes stage-index-fold {
+  from {
+    clip-path: inset(0 0 0 0);
+    transform: translateY(0);
+  }
+  to {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes stage-index-glass-unfold {
+  from {
+    clip-path: inset(0 0 calc(100% - var(--glass-reach)) 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes stage-index-glass-fold {
+  from {
+    clip-path: inset(0 0 0 0);
+  }
+  to {
+    clip-path: inset(0 0 calc(100% - var(--glass-reach)) 0);
+  }
+}
+
+.stage-index[data-state="open"] > .stage-index-scroll {
+  animation: stage-index-unfold 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.stage-index[data-state="open"]::before {
+  animation: stage-index-glass-unfold 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.stage-index[data-state="closed"] {
+  pointer-events: none;
+}
+
+.stage-index[data-state="closed"] > .stage-index-scroll {
+  animation: stage-index-fold 170ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.stage-index[data-state="closed"]::before {
+  animation: stage-index-glass-fold 170ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-index[data-state="open"] > .stage-index-scroll,
+  .stage-index[data-state="open"]::before,
+  .stage-index[data-state="closed"] > .stage-index-scroll,
+  .stage-index[data-state="closed"]::before {
+    animation: none;
+  }
+}
+
 /* 읽은 만큼 자라는 선. 아래 선 1px와 막대 바닥 1px에 걸쳐 2px로 선다. 스크롤을 그대로 따라가므로
    트랜지션을 걸지 않는다. 시작 값 scaleX(0)은 첫 계산 전 잠깐 길게 보이지 않게 하려는 것이다. */
 .stage-rail {

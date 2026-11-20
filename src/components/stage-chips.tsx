@@ -28,6 +28,8 @@ export function StageChips({ contentId, compact = false }: { contentId: string; 
   const [stages, setStages] = useState<Stage[]>([]);
   const [activeId, setActiveId] = useState("");
   const [open, setOpen] = useState(false);
+  // 접히는 중(닫는 애니메이션이 끝날 때까지 목록을 잠깐 더 붙들어 둔다).
+  const [closing, setClosing] = useState(false);
   const [panelBox, setPanelBox] = useState<{ top: number; left: number; width: number } | null>(null);
   const navRef = useRef<HTMLElement>(null);
   const railRef = useRef<HTMLSpanElement>(null);
@@ -37,6 +39,17 @@ export function StageChips({ contentId, compact = false }: { contentId: string; 
   const activeIndex = useRef(0);
   const stageCount = useRef(0);
   const panelId = useId();
+
+  // 펼침과 접힘. 접을 때는 애니메이션이 끝난 뒤(onAnimationEnd) 목록을 뗀다.
+  // 움직임 줄이기 설정이면 애니메이션이 없으니 바로 뗀다.
+  const openIndex = () => {
+    setClosing(false);
+    setOpen(true);
+  };
+  const closeIndex = () => {
+    setOpen(false);
+    setClosing(!window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  };
 
   // 기본: 선 길이 = 지금 칸의 왼쪽 + 칸 폭 x 그 단계에서 읽은 비율.
   // compact: 선 길이 = (지금 절 순서 + 그 절에서 읽은 비율) / 절 수.
@@ -124,11 +137,11 @@ export function StageChips({ contentId, compact = false }: { contentId: string; 
     const onPointer = (e: PointerEvent) => {
       const t = e.target as Node;
       if (panelRef.current?.contains(t) || toggleRef.current?.contains(t)) return;
-      setOpen(false);
+      closeIndex();
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setOpen(false);
+        closeIndex();
         toggleRef.current?.focus();
       }
     };
@@ -183,7 +196,7 @@ export function StageChips({ contentId, compact = false }: { contentId: string; 
             <button
               ref={toggleRef}
               type="button"
-              onClick={() => setOpen((v) => !v)}
+              onClick={() => (open ? closeIndex() : openIndex())}
               aria-expanded={open}
               aria-controls={panelId}
               className="stage-cell tap-feedback flex w-full min-w-0 items-center gap-1.5 text-label font-semibold text-foreground dark:text-foreground-dark"
@@ -204,11 +217,15 @@ export function StageChips({ contentId, compact = false }: { contentId: string; 
           ) : null}
           <span ref={railRef} className="stage-rail" aria-hidden="true" />
         </nav>
-        {open && panelBox ? (
+        {(open || closing) && panelBox ? (
           <div
             ref={panelRef}
             id={panelId}
             data-print-hide
+            data-state={open ? "open" : "closed"}
+            onAnimationEnd={(e) => {
+              if (e.animationName === "stage-index-fold") setClosing(false);
+            }}
             className="stage-index fixed z-11"
             style={{ top: panelBox.top, left: panelBox.left, width: panelBox.width }}
           >
@@ -225,7 +242,7 @@ export function StageChips({ contentId, compact = false }: { contentId: string; 
                         href={`#${stage.id}`}
                         onClick={(e) => {
                           e.preventDefault();
-                          setOpen(false);
+                          closeIndex();
                           goTo(stage.id);
                         }}
                         aria-current={active ? "location" : undefined}
