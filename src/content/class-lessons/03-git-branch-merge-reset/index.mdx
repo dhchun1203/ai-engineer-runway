@@ -232,13 +232,11 @@ git log --oneline
 맨 앞 7자리는 **커밋 해시(ID)를 줄인 것**이에요. 커밋마다 붙는 고유 번호예요. 괄호 안은 그 커밋을 가리키는 책갈피예요.
 
 <Figure>
-  <Boxes
-    row={[
-      { title: "4bb7219", note: "docs: `README.md` 추가" },
-      { arrow: "다음 커밋" },
-      { title: "f99921f", note: "feat: .gitignore 파일 생성", tone: "amber", lines: ["`origin/main`: 원격 main이 가리키는 곳", "마지막으로 원격과 주고받았을 때의 위치"] },
-      { arrow: "내가 하나 더 커밋" },
-      { title: "fe2a9e6", note: "docs: Logs 폴더 제외", tone: "blue", lines: ["`HEAD -> main`: 지금 내가 있는 곳", "내 컴퓨터 main의 최신 커밋"] },
+  <Layers
+    layers={[
+      [{ title: "4bb7219", note: "docs: `README.md` 추가" }],
+      [{ title: "f99921f", note: "feat: .gitignore 파일 생성", tone: "amber", via: "다음 커밋", lines: ["`origin/main`: 원격 main이 가리키는 곳", "마지막으로 원격과 주고받았을 때의 위치"] }],
+      [{ title: "fe2a9e6", note: "docs: Logs 폴더 제외", tone: "blue", via: "내가 하나 더 커밋", lines: ["`HEAD -> main`: 지금 내가 있는 곳", "내 컴퓨터 main의 최신 커밋"] }],
     ]}
   />
 </Figure>
