@@ -331,12 +331,12 @@ INSERT 0 1
 <Figure>
   <Boxes
     row={[
-      { title: "열을 골라서", tone: "ok", lines: ["`INSERT INTO members (열1, 열2) VALUES (값1, 값2);`", "가장 안전해요. 빠진 열은 기본값이나 NULL"] },
-      { title: "모든 열을 순서대로", tone: "amber", lines: ["`INSERT INTO members VALUES (...);`", "열 순서를 다 맞춰야 해요. `SERIAL` 자리는 `DEFAULT`"] },
+      { title: "열을 골라서", tone: "ok", lines: ["`INSERT INTO members (열1, 열2)`", "`VALUES (값1, 값2);`", "가장 안전해요. 빠진 열은 기본값이나 NULL"] },
+      { title: "모든 열을 순서대로", tone: "amber", lines: ["`INSERT INTO members`", "`VALUES (...);`", "열 순서를 다 맞춰야 해요. `SERIAL` 자리는 `DEFAULT`"] },
     ]}
     below={[
       { title: "여러 행을 한 번에", tone: "blue", lines: ["`VALUES (...), (...), (...);` 괄호를 쉼표로 이어요 (14절)"] },
-      { title: "다른 표에서 골라 담기", tone: "neutral", lines: ["`INSERT INTO 표 SELECT ... FROM ... WHERE ...;`"] },
+      { title: "다른 표에서 골라 담기", tone: "neutral", lines: ["`INSERT INTO 표`", "`SELECT ... FROM ... WHERE ...;`"] },
     ]}
   />
 </Figure>
