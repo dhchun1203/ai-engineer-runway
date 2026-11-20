@@ -1,6 +1,6 @@
 ---
 title: "미니 프로젝트: 카페 세 지점 2주 주문으로 다음 주 운영 계획 세우기"
-summary: "compose로 PostgreSQL을 켜고, cafe_db를 만들고, 시드 SQL로 주문 714건을 넣어요. 파이썬 psycopg로 접속해 pandas와 NumPy로 미션 7개를 풀고, 결과를 다시 DB 표에 저장해요. 맥 기준으로 한 줄씩 따라가요."
+summary: "compose로 PostgreSQL을 켜고, cafe_db를 만들고, 시드 SQL로 주문 714건을 넣어요. 파이썬 psycopg로 쿼리한 결과를 CSV로 저장하고, pandas로 읽어 NumPy와 함께 미션 7개를 풀고, 결과를 다시 DB 표에 저장해요. 맥 기준으로 한 줄씩 따라가요."
 badge: "미니 프로젝트"
 updated: "2026-11-20"
 slug: "cafe-mini-project"
@@ -14,7 +14,7 @@ slug: "cafe-mini-project"
 
 아래 명령과 출력은 모두 `postgres:18`, Python 3.14, pandas 3.1.1, NumPy 2.5.5, psycopg 3.3.9에서 직접 실행해 확인했어요. 노트북에서는 DataFrame이 예쁜 표로 보이지만, 여기서는 같은 내용을 글자로 옮겼어요.
 
-## 1. 오늘 만들 것: DB에서 꺼내 pandas로 읽고 다시 DB에 넣는다
+## 1. 오늘 만들 것: DB에서 CSV로 꺼내 pandas로 읽고 다시 DB에 넣는다
 
 데이터가 한 바퀴 돌아요. 아래로 내려가는 순서가 이 레슨의 절 순서예요.
 
@@ -23,7 +23,8 @@ slug: "cafe-mini-project"
     layers={[
       [{ title: "Docker 컨테이너 cafe-pg", tone: "neutral", lines: ["`compose.yaml` 한 장으로 켜요 (2~3절)", "안에서 PostgreSQL 18이 돌아요"] }],
       [{ via: "`CREATE DATABASE`, 시드 SQL", title: "cafe_db", tone: "blue", lines: ["표 5개, 주문 714건, 주문 상세 1,104줄 (4~6절)"] }],
-      [{ via: "`psycopg` 드라이버", title: "파이썬 노트북", tone: "rust", lines: ["SQL 결과를 DataFrame으로 받아요 (7~10절)", "pandas, NumPy로 미션 7개 (11~17절)"] }],
+      [{ via: "`psycopg`, `execute`", title: "data 폴더의 CSV 3개", tone: "ok", lines: ["`export.py`가 쿼리 결과를 파일로 저장해요 (7~9절)"] }],
+      [{ via: "`pd.read_csv`", title: "파이썬 노트북", tone: "rust", lines: ["CSV를 DataFrame으로 읽어요 (10절)", "pandas, NumPy로 미션 7개 (11~17절)"] }],
       [{ via: "`executemany`", title: "store_daily_sales 표", tone: "amber", lines: ["지점별 하루 매출 42행을 다시 DB에 저장해요 (19절)"] }],
     ]}
   />
@@ -348,43 +349,59 @@ Initialized project `cafe-analysis`
 
 `psycopg[binary]`는 19회차에 쓴 PostgreSQL 드라이버예요. 대괄호 안의 `binary`는 "맥에 PostgreSQL 프로그램이 없어도 되게 접속 부품을 같이 넣어 줘"라는 뜻이에요. zsh는 대괄호를 특별한 글자로 읽어서 따옴표로 감싸야 해요.
 
-<Figure label="VS Code에서 노트북 만들고 .venv에 잇기">
-  <Seq
-    steps={[
-      { title: "`Cmd + Shift + P`", body: "Create: New Jupyter Notebook 을 골라요." },
-      { title: "`Cmd + S`", body: "analysis.ipynb 이름으로 cafe-analysis 폴더에 저장해요." },
-      { title: "Select Kernel", body: "오른쪽 위에서 Python Environments 를 누르고 .venv (Python 3.14) 를 골라요." },
-      { title: "`Shift + Enter`", body: "셀을 실행하고 다음 셀로 넘어가요. 아래 코드 블록 하나가 셀 하나예요." },
+**여기까지 되면:** 폴더에 `compose.yaml`, `cafe-seed.sql`, `pyproject.toml`, `uv.lock`이 있어요. 숨은 폴더 `.venv`는 `ls -a`로 보여요.
+
+<Hint>
+`zsh: no matches found: psycopg[binary]`가 나오면 따옴표를 빠뜨린 거예요. `"psycopg[binary]"`처럼 감싸서 다시 쳐요.
+</Hint>
+
+이제 일을 둘로 나눠요. DB에서 꺼내 CSV 파일로 저장하는 일은 파이썬 파일 `export.py`가 맡아요. 그 CSV를 읽어 분석하는 일은 노트북 `analysis.ipynb`가 맡아요.
+
+<Figure label="꺼내는 쪽과 분석하는 쪽을 CSV 파일이 이어 줘요">
+  <Boxes
+    row={[
+      { title: "export.py (8~9절)", tone: "blue", lines: ["`psycopg`로 접속하고 `execute`로 쿼리해요", "결과를 data 폴더에 CSV로 저장해요"] },
+      { arrow: "CSV 3개" },
+      { title: "analysis.ipynb (10절부터)", tone: "rust", lines: ["`pd.read_csv`로 CSV를 읽어요", "DB가 꺼져 있어도 분석을 다시 돌릴 수 있어요"] },
     ]}
   />
 </Figure>
 
-**여기까지 되면:** 폴더에 `compose.yaml`, `cafe-seed.sql`, `pyproject.toml`, `uv.lock`, `analysis.ipynb`가 있고, 노트북 오른쪽 위에 `.venv`가 보여요.
+## 8. 드라이버로 접속: psycopg로 연결하고 execute로 묻는다
 
-<Hint>
-`zsh: no matches found: psycopg[binary]`가 나오면 따옴표를 빠뜨린 거예요. `"psycopg[binary]"`처럼 감싸서 다시 쳐요. 커널 목록에 `.venv`가 없으면 VS Code로 연 폴더가 `cafe-analysis`인지 확인해요.
-</Hint>
-
-## 8. 드라이버로 접속: psycopg가 SQL을 실어 나른다
-
-첫 셀이에요. 세 도구를 불러오고, 접속 정보 한 줄을 적고, 주문 수를 세어 봐요.
+VS Code 탐색기에서 새 파일 `export.py`를 만들어요. 먼저 접속만 되는지 확인하는 짧은 코드예요.
 
 ```python
-import numpy as np
-import pandas as pd
 import psycopg
 
 DSN = "host=localhost port=5433 dbname=cafe_db user=postgres password=admin"
 
 with psycopg.connect(DSN) as conn:
-    row = conn.execute("SELECT current_database(), COUNT(*) FROM orders").fetchone()
+    cur = conn.execute("SELECT current_database(), COUNT(*) FROM orders")
+    print(cur.fetchone())
+```
 
-print(row)
+저장(`Cmd + S`)하고 터미널에서 실행해요. `uv run`은 이 프로젝트의 `.venv` 파이썬으로 파일을 돌려 줘요.
+
+```bash
+uv run export.py
 ```
 
 ```text
 ('cafe_db', 714)
 ```
+
+**여기까지 되면:** `cafe_db`의 주문 714건이 보여요. 파이썬이 DB와 말이 통한 거예요.
+
+<Figure label="쿼리 한 번이 오가는 길">
+  <Relay
+    legs={[
+      { fn: "psycopg.connect(DSN)", desc: "DB에 접속해 연결을 받아요", value: "conn" },
+      { fn: "conn.execute(SQL)", desc: "SQL을 보내고 결과를 가리키는 커서를 받아요", value: "cur" },
+      { fn: "cur.fetchone()", desc: "결과에서 한 행을 튜플로 꺼내요. 전부 꺼내려면 `fetchall()`", value: "('cafe_db', 714)" },
+    ]}
+  />
+</Figure>
 
 `DSN`은 "어디의 어떤 DB에 누구로 들어갈지"를 적은 주소예요. `compose.yaml`의 값과 한 자리씩 맞아요. `host=localhost`는 내 맥이에요. 컨테이너가 `ports:`로 맥의 5433을 열어 두어서 맥에서 접속할 수 있어요. 비밀번호는 `POSTGRES_PASSWORD`에 적은 값이에요.
 
@@ -409,54 +426,168 @@ print(row)
 `Connection refused`가 나오면 컨테이너가 꺼져 있거나 포트가 달라요. `docker compose ps`로 `Up`과 `5433`을 확인해요. `database "cafe" does not exist`처럼 나오면 `dbname` 글자가 틀린 거예요. `password authentication failed`면 비밀번호가 `compose.yaml`과 다른 거예요.
 </Hint>
 
-## 9. query() 함수: 결과를 DataFrame으로 받는 통로 하나
+## 9. CSV로 저장: 쿼리 결과를 data 폴더에 파일로 남긴다
 
-SQL을 보낼 때마다 연결하고, 열 이름 챙기고, 표로 바꾸는 일을 함수 하나에 담아요. 앞으로 모든 데이터는 이 통로로 들어와요.
+분석에 쓸 표 세 개를 CSV 파일로 꺼내 둬요. 한 번 꺼내 두면 분석할 때마다 DB에 쿼리를 보내지 않아도 돼요. DB가 꺼져 있어도 분석을 다시 돌릴 수 있고, 파일이라 열어 보거나 다른 사람에게 건네기도 쉬워요.
+
+`export.py`를 아래 코드로 통째로 바꿔요.
 
 ```python
-def query(sql, params=None):
-    """SQL을 보내고 결과를 DataFrame으로 돌려준다."""
-    with psycopg.connect(DSN) as conn:
-        cur = conn.execute(sql, params)
-        columns = [col.name for col in cur.description]
-        return pd.DataFrame(cur.fetchall(), columns=columns)
+import csv
+from pathlib import Path
 
-query("SELECT * FROM stores")
+import psycopg
+
+DSN = "host=localhost port=5433 dbname=cafe_db user=postgres password=admin"
+DATA = Path("data")
+
+QUERIES = {
+    "order_lines": """
+        SELECT o.order_id, o.ordered_at, o.store_id, s.name AS store, o.member_id,
+               m.name AS menu, m.category, oi.qty, m.price, m.cost
+        FROM order_items oi
+        JOIN orders o ON o.order_id = oi.order_id
+        JOIN stores s ON s.store_id = o.store_id
+        JOIN menus  m ON m.menu_id  = oi.menu_id
+        ORDER BY oi.order_id, oi.menu_id
+    """,
+    "menus": "SELECT name, category, price, cost FROM menus ORDER BY menu_id",
+    "members": "SELECT member_id, nickname FROM members ORDER BY member_id",
+}
+
+
+def export_csv(conn, sql, path):
+    """SQL 결과를 CSV 파일 하나로 저장하고 행 수를 돌려준다."""
+    cur = conn.execute(sql)
+    columns = [col.name for col in cur.description]
+    rows = cur.fetchall()
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(columns)
+        writer.writerows(rows)
+    return len(rows)
+
+
+DATA.mkdir(exist_ok=True)
+with psycopg.connect(DSN) as conn:
+    for name, sql in QUERIES.items():
+        path = DATA / f"{name}.csv"
+        count = export_csv(conn, sql, path)
+        print(f"{path}  {count}행")
+```
+
+```bash
+uv run export.py
 ```
 
 ```text
-   store_id name  region   opened_on
-0         1  성수점  서울 성동구  2023-04-01
-1         2  연남점  서울 마포구  2024-09-14
-2         3  판교점  성남 분당구  2025-03-03
+data/order_lines.csv  1104행
+data/menus.csv  10행
+data/members.csv  20행
 ```
 
-<Figure label="커서 결과가 DataFrame이 되기까지">
+코드를 위에서부터 읽어요.
+
+- `QUERIES`: 파일 이름과 SQL을 짝지은 딕셔너리예요. 첫 번째 SQL은 18회차에 배운 `JOIN`으로 네 표를 한 장으로 붙여요. 주문 상세 한 줄이 한 행이에요. 꺼낼 표가 늘면 여기에 한 줄만 보태면 돼요.
+- `export_csv()`: 쿼리 하나를 CSV 파일 하나로 저장해요. 연결은 밖에서 한 번만 열고 세 쿼리가 같이 써요.
+- `Path("data")`: `pathlib`의 경로예요. `DATA / "menus.csv"`처럼 `/`로 폴더와 파일 이름을 이어요. `mkdir(exist_ok=True)`는 폴더가 이미 있어도 오류 없이 넘어가요.
+
+<Figure label="커서 결과가 CSV 파일이 되기까지">
   <Relay
     legs={[
-      { fn: "cur.fetchall()", desc: "행마다 튜플 하나인 리스트", ex: "[(1, '성수점', ...), ...]", value: "값" },
-      { fn: "cur.description", desc: "열 정보 목록. `.name`이 열 이름", ex: "store_id, name, ...", value: "열 이름" },
-      { fn: "pd.DataFrame(값, columns=열 이름)", desc: "20회차에 배운 표 만들기", value: "DataFrame" },
+      { fn: "cur.description", desc: "열 정보 목록. `.name`이 열 이름", ex: "order_id, ordered_at, ...", value: "머리 줄" },
+      { fn: "cur.fetchall()", desc: "행마다 튜플 하나인 리스트", ex: "[(1, datetime(...), 3, ...), ...]", value: "행 1,104개" },
+      { fn: "writerow, writerows", desc: "머리 줄 한 번, 이어서 행 전부를 쉼표로 이어 한 줄씩 써요", value: "order_lines.csv" },
     ]}
   />
 </Figure>
 
-`pd.read_sql(sql, conn)`이라는 지름길도 있어요. 하지만 psycopg 연결을 그대로 넘기면 pandas가 `UserWarning: pandas only supports SQLAlchemy connectable ...` 경고를 띄워요. pandas가 공식으로 시험하는 연결은 SQLAlchemy라는 다른 도구라서예요. 이 프로젝트는 경고 없이 원리가 보이는 `query()`를 써요.
+<Hint>
+`open()`의 `newline=""`은 줄 끝을 `csv`가 직접 쓰게 맡기는 설정이에요. `csv` 공식 문서가 늘 이렇게 열라고 권해요. 빠뜨리면 윈도우에서는 줄 사이에 빈 줄이 끼어요. `encoding="utf-8"`은 한글 지점 이름과 메뉴 이름을 그대로 저장해요.
+</Hint>
 
-## 10. 분석 재료 한 장: JOIN 결과 1,104줄
+만든 파일을 터미널에서 들여다봐요. `head -4`는 앞 네 줄만 보여 줘요.
 
-18회차에 배운 `JOIN`으로 네 표를 한 장으로 붙여서 가져와요. 주문 상세 한 줄이 한 행이에요.
+```bash
+head -4 data/order_lines.csv
+```
+
+```text
+order_id,ordered_at,store_id,store,member_id,menu,category,qty,price,cost
+1,2026-11-02 08:14:00,3,판교점,1,레몬티,음료,1,5000,1300
+2,2026-11-02 08:19:00,3,판교점,,아메리카노,커피,1,4500,900
+2,2026-11-02 08:19:00,3,판교점,,크루아상,디저트,1,4000,1600
+```
+
+CSV는 쉼표로 칸을 나눈 글자 파일이에요. 세 가지를 눈여겨봐요.
+
+<Figure label="DB 값이 CSV 글자가 되는 모습">
+  <Boxes
+    row={[
+      { title: "첫 줄은 머리 줄", tone: "blue", lines: ["`writerow(columns)`가 쓴 열 이름이에요", "그래서 파일은 1,105줄이에요 (머리 1 + 행 1,104)"] },
+      { title: "NULL은 빈칸", tone: "amber", lines: ["비회원 주문은 `판교점,,아메리카노`처럼 쉼표 사이가 비어요", "파이썬의 `None`을 `csv`가 빈 글자로 써요"] },
+    ]}
+    below={[
+      { title: "날짜시간도 그냥 글자", tone: "rust", lines: ["`ordered_at`은 2026-11-02 08:14:00 이라는 글자로 저장돼요", "CSV에는 \"이 칸은 날짜\"라는 정보가 없어요. 10절에서 pandas에 직접 알려 줘요"] },
+    ]}
+  />
+</Figure>
+
+**여기까지 되면:** `data` 폴더에 CSV 세 개가 있고, 맨 위 줄이 열 이름이에요. DB 데이터가 바뀌어 새로 분석하고 싶으면 `uv run export.py`만 다시 돌리면 돼요.
+
+## 10. pandas로 읽기: read_csv에 날짜 열을 알려 준다
+
+이제 분석용 노트북을 만들어요.
+
+<Figure label="VS Code에서 노트북 만들고 .venv에 잇기">
+  <Seq
+    steps={[
+      { title: "`Cmd + Shift + P`", body: "Create: New Jupyter Notebook 을 골라요." },
+      { title: "`Cmd + S`", body: "analysis.ipynb 이름으로 cafe-analysis 폴더에 저장해요. export.py, data 폴더와 같은 곳이에요." },
+      { title: "Select Kernel", body: "오른쪽 위에서 Python Environments 를 누르고 .venv (Python 3.14) 를 골라요." },
+      { title: "`Shift + Enter`", body: "셀을 실행하고 다음 셀로 넘어가요. 아래 코드 블록 하나가 셀 하나예요." },
+    ]}
+  />
+</Figure>
+
+첫 셀에서 CSV를 그냥 읽고 열 종류(`dtypes`)를 봐요.
 
 ```python
-lines = query("""
-    SELECT o.order_id, o.ordered_at, o.store_id, s.name AS store, o.member_id,
-           m.name AS menu, m.category, oi.qty, m.price, m.cost
-    FROM order_items oi
-    JOIN orders o ON o.order_id = oi.order_id
-    JOIN stores s ON s.store_id = o.store_id
-    JOIN menus  m ON m.menu_id  = oi.menu_id
-    ORDER BY oi.order_id, oi.menu_id
-""")
+import numpy as np
+import pandas as pd
+
+raw = pd.read_csv("data/order_lines.csv")
+raw.dtypes
+```
+
+```text
+order_id        int64
+ordered_at        str
+store_id        int64
+store             str
+member_id     float64
+menu              str
+category          str
+qty             int64
+price           int64
+cost            int64
+dtype: object
+```
+
+`read_csv`는 칸의 글자를 보고 종류를 짐작해요. 숫자만 있으면 `int64`, 빈칸이 섞인 숫자는 `float64`, 나머지는 `str`이에요. 그래서 `ordered_at`이 날짜가 아니라 `str`이 됐어요. 이대로 시간을 꺼내려 하면 막혀요.
+
+```python
+raw["ordered_at"].dt.hour
+```
+
+```text
+AttributeError: Can only use .dt accessor with datetimelike values
+```
+
+`.dt`는 날짜시간 열에만 붙는 도구라서예요. `parse_dates`에 날짜 열 이름을 알려 주면 읽으면서 바꿔 줘요. 앞으로 쓸 표는 이렇게 읽어요.
+
+```python
+lines = pd.read_csv("data/order_lines.csv", parse_dates=["ordered_at"])
 print(lines.shape)
 lines.head()
 ```
@@ -471,7 +602,7 @@ lines.head()
 4         3 2026-11-02 08:22:00         1   성수점        NaN   말차라테       음료    1   5800  1900
 ```
 
-2번 주문은 아메리카노와 크루아상 두 줄이라 `order_id`가 두 번 나와요. 열 종류도 확인해요.
+2번 주문은 아메리카노와 크루아상 두 줄이라 `order_id`가 두 번 나와요. 열 종류를 다시 확인해요.
 
 ```python
 lines.info()
@@ -497,19 +628,23 @@ dtypes: datetime64[us](1), float64(1), int64(5), str(3)
 memory usage: 86.4 KB
 ```
 
-DB 타입이 pandas 타입으로 이렇게 옮겨졌어요.
+이제 `ordered_at`이 날짜시간 `datetime64[us]`예요. 값이 DB에서 CSV를 거쳐 pandas까지 이렇게 옮겨졌어요.
 
-<Figure label="DB 열 타입이 pandas dtype이 되는 길">
+<Figure label="DB 열 타입이 CSV를 거쳐 pandas dtype이 되는 길">
   <Boxes
     row={[
-      { title: "INTEGER, TIMESTAMP, VARCHAR", tone: "blue", lines: ["`qty`, `price`는 `int64`", "`ordered_at`은 날짜시간 `datetime64[us]`", "글자는 `str`"] },
-      { arrow: "NULL이 섞이면" },
-      { title: "member_id: float64", tone: "amber", lines: ["DB의 `NULL`이 pandas에서는 `NaN`이 돼요", "`NaN`은 소수 자리에만 들어가서 열 전체가 `float64`로 바뀌어요", "그래서 회원 번호가 `1.0`처럼 보여요"] },
+      { title: "INTEGER, TIMESTAMP, VARCHAR", tone: "blue", lines: ["`qty`, `price`는 `int64`", "`ordered_at`은 `parse_dates`로 `datetime64[us]`", "글자는 `str`"] },
+      { arrow: "빈칸이 섞이면" },
+      { title: "member_id: float64", tone: "amber", lines: ["DB의 `NULL`이 CSV 빈칸을 거쳐 `NaN`이 돼요", "`NaN`은 소수 자리에만 들어가서 열 전체가 `float64`로 바뀌어요", "그래서 회원 번호가 `1.0`처럼 보여요"] },
     ]}
   />
 </Figure>
 
 `member_id`는 1,104줄 중 493줄만 값이 있어요. 나머지는 비회원 주문이에요. 16절에서 이 열을 정수로 되돌려요.
+
+<Hint>
+`FileNotFoundError`가 나오면 두 가지를 봐요. 9절의 `uv run export.py`를 돌렸는지, 노트북을 `export.py`와 같은 `cafe-analysis` 폴더에 저장했는지예요. 노트북은 자기 파일이 있는 폴더를 기준으로 `data/...`를 찾아요. 커널 목록에 `.venv`가 없으면 VS Code로 연 폴더가 `cafe-analysis`인지 확인해요.
+</Hint>
 
 ## 11. 미션 1. 금액과 이익: 열끼리 곱하면 1,104칸이 한 번에
 
@@ -628,10 +763,10 @@ menu
 콜드브루   108   540000   421200
 ```
 
-판매량 3, 4위였던 소금빵과 크루아상이 이익 5위 안에서 빠졌어요. 이유는 마진율(판매가 중 남는 비율)이에요. 메뉴 표를 가져와 NumPy로 계산해요.
+판매량 3, 4위였던 소금빵과 크루아상이 이익 5위 안에서 빠졌어요. 이유는 마진율(판매가 중 남는 비율)이에요. 9절에서 저장한 메뉴 CSV를 읽어 NumPy로 계산해요.
 
 ```python
-menus = query("SELECT name, category, price, cost FROM menus")
+menus = pd.read_csv("data/menus.csv")
 menus["margin_pct"] = np.round((menus["price"] - menus["cost"]) / menus["price"] * 100, 1)
 menus.sort_values("margin_pct", ascending=False)
 ```
@@ -835,10 +970,10 @@ orders["member_id"].head()
 Name: member_id, dtype: Int64
 ```
 
-단골 세 명을 세고, 회원 표와 붙여 닉네임을 달아요. `merge`는 pandas의 `JOIN`이에요. `on`에 적은 열이 같은 행끼리 붙어요.
+단골 세 명을 세고, 9절에서 저장한 회원 CSV와 붙여 닉네임을 달아요. `merge`는 pandas의 `JOIN`이에요. `on`에 적은 열이 같은 행끼리 붙어요.
 
 ```python
-members = query("SELECT member_id, nickname FROM members")
+members = pd.read_csv("data/members.csv")
 regulars = orders["member_id"].value_counts().head(3).reset_index()
 regulars.merge(members, on="member_id")
 ```
@@ -988,7 +1123,13 @@ daily.head(3)
 
 표를 만들고 42행을 한 번에 넣어요. 19회차의 `INSERT`와 `%s` 자리 채우기를 행 여러 개에 반복하는 것이 `executemany`예요.
 
+노트북은 지금까지 CSV만 읽어서 아직 DB에 접속한 적이 없어요. 이 셀에서 `psycopg`를 불러오고 8절과 같은 `DSN`을 적어요.
+
 ```python
+import psycopg
+
+DSN = "host=localhost port=5433 dbname=cafe_db user=postgres password=admin"
+
 with psycopg.connect(DSN) as conn:
     conn.execute("""
         CREATE TABLE IF NOT EXISTS store_daily_sales (
@@ -1026,12 +1167,12 @@ with psycopg.connect(DSN) as conn:
 저장됐는지 노트북과 `psql` 양쪽에서 확인해요.
 
 ```python
-query("SELECT COUNT(*) AS days, SUM(revenue) AS revenue FROM store_daily_sales")
+with psycopg.connect(DSN) as conn:
+    print(conn.execute("SELECT COUNT(*), SUM(revenue) FROM store_daily_sales").fetchone())
 ```
 
 ```text
-   days  revenue
-0    42  6515400
+(42, 6515400)
 ```
 
 ```sql
@@ -1050,7 +1191,7 @@ SELECT * FROM store_daily_sales ORDER BY sales_date, store_id LIMIT 6;
 (6 rows)
 ```
 
-**여기까지 되면:** 합계가 11절의 총매출 6,515,400원과 같아요. 데이터가 DB에서 나와 pandas를 거쳐 DB로 한 바퀴 돌아왔어요.
+**여기까지 되면:** 합계가 11절의 총매출 6,515,400원과 같아요. 데이터가 DB에서 CSV로 나와 pandas를 거쳐 다시 DB로 한 바퀴 돌아왔어요.
 
 ## 20. 다음 주 운영 계획: 숫자를 문장으로
 
@@ -1124,7 +1265,9 @@ cd ~/dev/cafe-analysis
 docker compose up -d
 ```
 
-볼륨이 남아 있어서 `cafe_db`와 714건, 저장한 `store_daily_sales`까지 그대로예요. 노트북을 열고 위에서부터 셀을 다시 실행하면 돼요. 데이터를 처음 상태로 돌리고 싶으면 6절의 시드 넣기만 다시 해요.
+볼륨이 남아 있어서 `cafe_db`와 714건, 저장한 `store_daily_sales`까지 그대로예요. 노트북을 열고 위에서부터 셀을 다시 실행하면 돼요.
+
+`data` 폴더의 CSV는 맥에 있는 파일이라 컨테이너를 꺼도 남아요. 그래서 10~17절의 분석은 Colima를 켜지 않아도 다시 돌릴 수 있어요. DB가 필요한 것은 CSV를 새로 만드는 `uv run export.py`와 19절의 저장뿐이에요. 데이터를 처음 상태로 돌리고 싶으면 6절의 시드 넣기를 다시 하고 `export.py`를 다시 돌려요.
 
 <Hint>
 DBeaver로 보고 싶으면 Host `localhost`, Port `5433`, Database `cafe_db`, Username `postgres`, Password `admin`으로 연결해요. 수업용 DB(5432)와 포트만 달라요.
@@ -1135,7 +1278,9 @@ DBeaver로 보고 싶으면 Host `localhost`, Port `5433`, Database `cafe_db`, U
 - `compose.yaml`의 `ports:`는 **내 맥:컨테이너** 순서예요. 파이썬 `DSN`과 DBeaver는 왼쪽 숫자(5433)로 접속해요.
 - 키보드로 대화할 때는 `docker exec -it`, 파일을 `<`로 흘려 넣을 때는 `docker exec -i`예요. 시드를 넣을 때 `-d cafe_db`를 빠뜨리면 다른 데이터베이스에 들어가요.
 - zsh에서는 `uv add "psycopg[binary]"`처럼 대괄호를 따옴표로 감싸요.
-- DB의 `NULL`은 pandas에서 `NaN`이 되고, 정수 열이 `float64`로 바뀌어요. 빈칸을 품는 정수가 필요하면 `astype("Int64")`예요.
+- 쿼리 결과를 CSV로 쓸 때는 `open(path, "w", newline="", encoding="utf-8")`로 열고 `csv.writer`로 머리 줄과 행을 써요. DB 데이터가 바뀌면 `uv run export.py`를 다시 돌려 CSV를 새로 만들어요.
+- CSV에는 열 타입 정보가 없어요. 날짜 열은 `pd.read_csv(..., parse_dates=["ordered_at"])`처럼 알려 줘야 `.dt`를 쓸 수 있어요.
+- DB의 `NULL`은 CSV에서 빈칸, pandas에서 `NaN`이 되고, 정수 열이 `float64`로 바뀌어요. 빈칸을 품는 정수가 필요하면 `astype("Int64")`예요.
 - JOIN한 상세 표에서 주문 수를 셀 때는 `count`가 아니라 `nunique`예요. 주문 단위 질문(시간대, 객단가)은 주문 하나가 한 행인 표로 접은 뒤에 세요.
 - `idxmax()`는 같은 최댓값이 여럿이어도 첫 번째 하나만 돌려줘요. 표를 직접 보고 확인해요.
 - 평균은 튀는 값에 끌려가요. 결론을 내기 전에 중앙값과 가장 큰 값들을 같이 봐요.
