@@ -1,0 +1,1137 @@
+---
+title: "미니 프로젝트: 카페 세 지점 2주 주문으로 다음 주 운영 계획 세우기"
+summary: "compose로 PostgreSQL을 켜고, cafe_db를 만들고, 시드 SQL로 주문 714건을 넣어요. 파이썬 psycopg로 접속해 pandas와 NumPy로 미션 7개를 풀고, 결과를 다시 DB 표에 저장해요. 맥 기준으로 한 줄씩 따라가요."
+badge: "미니 프로젝트"
+updated: "2026-11-20"
+slug: "cafe-mini-project"
+---
+
+지금까지 배운 것을 한 줄로 잇는 작은 프로젝트예요. Docker로 데이터베이스를 켜고, SQL로 표와 데이터를 넣고, 파이썬으로 꺼내서 pandas와 NumPy로 분석해요. 마지막에는 분석 결과를 다시 데이터베이스에 저장해요.
+
+재료는 동네 카페 세 지점(성수점, 연남점, 판교점)의 2주 치 주문이에요. 사장님이 "다음 주에 어느 지점, 어느 시간에 사람을 더 넣을까?"를 묻는다고 생각하고 숫자로 답을 찾아요.
+
+이 레슨은 맥 터미널(zsh) 기준이에요. 맥 준비가 아직이라면 [맥 실습 환경](/class/mac-setup)을 먼저 끝내고 오세요. Docker Desktop, `uv`, VS Code가 깔려 있으면 돼요.
+
+아래 명령과 출력은 모두 `postgres:18`, Python 3.14, pandas 3.1.1, NumPy 2.5.5, psycopg 3.3.9에서 직접 실행해 확인했어요. 노트북에서는 DataFrame이 예쁜 표로 보이지만, 여기서는 같은 내용을 글자로 옮겼어요.
+
+## 1. 오늘 만들 것: DB에서 꺼내 pandas로 읽고 다시 DB에 넣는다
+
+데이터가 한 바퀴 돌아요. 아래로 내려가는 순서가 이 레슨의 절 순서예요.
+
+<Figure label="데이터가 한 바퀴 도는 길">
+  <Layers
+    layers={[
+      [{ title: "Docker 컨테이너 cafe-pg", tone: "neutral", lines: ["`compose.yaml` 한 장으로 켜요 (2~3절)", "안에서 PostgreSQL 18이 돌아요"] }],
+      [{ via: "`CREATE DATABASE`, 시드 SQL", title: "cafe_db", tone: "blue", lines: ["표 5개, 주문 714건, 주문 상세 1,104줄 (4~6절)"] }],
+      [{ via: "`psycopg` 드라이버", title: "파이썬 노트북", tone: "rust", lines: ["SQL 결과를 DataFrame으로 받아요 (7~10절)", "pandas, NumPy로 미션 7개 (11~17절)"] }],
+      [{ via: "`executemany`", title: "store_daily_sales 표", tone: "amber", lines: ["지점별 하루 매출 42행을 다시 DB에 저장해요 (19절)"] }],
+    ]}
+  />
+</Figure>
+
+절마다 "여기까지 되면 이렇게 보여요"를 붙여 두었어요. 출력이 같으면 다음 절로, 다르면 그 절의 도움말 상자를 먼저 봐요.
+
+## 2. 프로젝트 폴더와 compose.yaml: 켜는 법을 파일 한 장에 적는다
+
+Docker Desktop부터 켜요. 메뉴 막대에 고래 아이콘이 생기고 멈춰 있으면 준비된 거예요.
+
+```bash
+open -a Docker          # Docker Desktop 켜기 (처음엔 10초쯤 걸려요)
+docker compose version  # 버전이 나오면 준비 완료
+```
+
+프로젝트 폴더를 만들고 VS Code로 열어요. 이 폴더 하나에 DB 설정, 시드 파일, 파이썬 코드가 모두 들어가요.
+
+```bash
+mkdir -p ~/dev/cafe-analysis
+cd ~/dev/cafe-analysis
+code .
+```
+
+VS Code 왼쪽 탐색기에서 새 파일 `compose.yaml`을 만들고 아래를 적어요. 15회차에 배운 `docker run` 옵션이 한 자리씩 옮겨진 모양이에요.
+
+```yaml
+services:
+  db:
+    image: postgres:18          # 사용할 이미지
+    container_name: cafe-pg     # docker ps 에 보일 이름
+    environment:
+      POSTGRES_PASSWORD: admin  # postgres 계정 비밀번호
+    ports:
+      - "5433:5432"             # 내 맥 5433 -> 컨테이너 5432
+    volumes:
+      - cafe-data:/var/lib/postgresql   # 데이터를 볼륨에 보관
+
+volumes:
+  cafe-data:                    # 이 프로젝트 전용 볼륨
+```
+
+<Figure label="compose.yaml에서 눈여겨볼 두 자리">
+  <Boxes
+    row={[
+      { title: "ports: 5433:5432", tone: "blue", lines: ["왼쪽이 내 맥, 오른쪽이 컨테이너 안이에요", "수업용 DB가 맥의 5432를 쓰고 있어도 부딪히지 않게 5433으로 비켜요", "파이썬과 DBeaver는 5433으로 접속해요"] },
+      { title: "volumes: cafe-data", tone: "amber", lines: ["`external`이 없으니 compose가 새로 만들어요", "실제 이름은 폴더 이름이 붙은 `cafe-analysis_cafe-data`예요", "컨테이너를 지워도 데이터는 여기 남아요"] },
+    ]}
+  />
+</Figure>
+
+`POSTGRES_DB`는 일부러 적지 않았어요. 데이터베이스는 4절에서 우리 손으로 만들어요.
+
+## 3. 컨테이너 켜기: docker compose up -d 한 줄
+
+`compose.yaml`이 있는 폴더에서 켜요. `-d`는 "뒤에서 돌려 두고 터미널은 돌려줘"라는 뜻이에요.
+
+```bash
+docker compose up -d
+```
+
+```text
+ Network cafe-analysis_default Created
+ Volume cafe-analysis_cafe-data Created
+ Container cafe-pg Created
+ Container cafe-pg Started
+```
+
+맥에서 `postgres:18`을 처음 쓰면 이미지를 내려받는 줄(`Pulling`)이 먼저 지나가요. 한 번 받아 두면 다음부터는 바로 켜져요.
+
+```bash
+docker compose ps
+```
+
+```text
+NAME      IMAGE         COMMAND                   SERVICE   CREATED         STATUS         PORTS
+cafe-pg   postgres:18   "docker-entrypoint.s…"   db        6 seconds ago   Up 5 seconds   0.0.0.0:5433->5432/tcp, [::]:5433->5432/tcp
+```
+
+**여기까지 되면:** `STATUS`가 `Up`이고 `PORTS`에 `5433->5432`가 보여요.
+
+<Hint>
+`Cannot connect to the Docker daemon`이 나오면 Docker Desktop이 아직 안 켜진 거예요. 고래 아이콘이 멈출 때까지 기다렸다가 다시 쳐요. `port is already allocated`가 나오면 맥의 5433을 다른 프로그램이 쓰는 중이에요. `compose.yaml`의 왼쪽 숫자를 `"5434:5432"`처럼 바꾸고, 뒤에 나오는 접속 주소의 포트도 같이 바꿔요.
+</Hint>
+
+## 4. 데이터베이스 만들기: 빈 서버에 cafe_db 하나
+
+컨테이너 안의 `psql`로 들어가요. `-it`는 "내 키보드로 대화하겠다"는 뜻이에요.
+
+```bash
+docker exec -it cafe-pg psql -U postgres
+```
+
+프롬프트가 `postgres=#`로 바뀌면 SQL을 칠 수 있어요. 데이터베이스를 만들고 목록에서 확인해요.
+
+```sql
+CREATE DATABASE cafe_db;
+\l
+```
+
+```text
+CREATE DATABASE
+                                                    List of databases
+   Name    |  Owner   | Encoding | Locale Provider |  Collate   |   Ctype    | Locale | ICU Rules |   Access privileges
+-----------+----------+----------+-----------------+------------+------------+--------+-----------+-----------------------
+ cafe_db   | postgres | UTF8     | libc            | en_US.utf8 | en_US.utf8 |        |           |
+ postgres  | postgres | UTF8     | libc            | en_US.utf8 | en_US.utf8 |        |           |
+ template0 | postgres | UTF8     | libc            | en_US.utf8 | en_US.utf8 |        |           | =c/postgres          +
+ ...
+```
+
+**여기까지 되면:** 목록 맨 위에 `cafe_db`가 있어요. `\q`로 나와요. 목록이 길어 `:`에서 멈추면 `q`를 누르면 돼요.
+
+<Hint>
+`CREATE DATABASE`의 세미콜론(`;`)을 빠뜨리면 프롬프트가 `postgres-#`로 바뀌고 아무 일도 안 일어나요. 문장이 안 끝났다는 표시예요. `;`만 치고 Enter를 누르면 실행돼요.
+</Hint>
+
+## 5. 시드 파일 읽기: 표 다섯 개와 그 사이의 줄
+
+시드 파일을 내려받아요.
+
+> **시드 파일:** <a href="/downloads/cafe-seed.sql" download>cafe-seed.sql 내려받기</a> (약 46KB, 1,911줄)
+
+브라우저가 `~/Downloads`(다운로드 폴더)에 저장해요. 프로젝트 폴더로 옮겨요.
+
+```bash
+mv ~/Downloads/cafe-seed.sql ~/dev/cafe-analysis/
+ls
+```
+
+```text
+cafe-seed.sql	compose.yaml
+```
+
+넣기 전에 VS Code에서 열어 읽어 봐요. 위에서부터 **지우기, DDL(표 만들기), DML(행 넣기)** 순서예요. 16회차와 17회차에 배운 것이 그대로 들어 있어요.
+
+<Figure label="표 다섯 개가 번호로 이어져요">
+  <Boxes
+    row={[
+      { title: "stores (지점 3)", tone: "blue", lines: ["`store_id` PK", "`name` UNIQUE"] },
+      { arrow: "`store_id`로 참조" , dir: "left" },
+      { title: "orders (주문 714)", tone: "rust", lines: ["`order_id` PK", "`store_id` FK, `member_id` FK", "`ordered_at` 주문 시각"] },
+    ]}
+    below={[
+      { title: "members (회원 20)", tone: "blue", lines: ["`orders.member_id`가 가리켜요", "비회원 주문은 `member_id`가 `NULL`이에요"] },
+      { title: "order_items (주문 상세 1,104)", tone: "amber", lines: ["주문 하나에 메뉴 여러 줄: `orders`와 `menus`를 잇는 중간 표예요 (N:M)", "PK는 (`order_id`, `menu_id`) 두 열을 합친 복합 키예요"] },
+      { title: "menus (메뉴 10)", tone: "blue", lines: ["`price` 판매가, `cost` 원가", "`CHECK`로 원가가 판매가보다 작은지 문 앞에서 검사해요"] },
+    ]}
+  />
+</Figure>
+
+DDL 부분은 이래요. 열 하나하나가 왜 그 타입과 제약 조건인지 읽어 보세요.
+
+```sql
+CREATE TABLE stores (
+    store_id  SERIAL PRIMARY KEY,
+    name      VARCHAR(20) NOT NULL UNIQUE,
+    region    VARCHAR(30) NOT NULL,
+    opened_on DATE NOT NULL
+);
+
+CREATE TABLE menus (
+    menu_id  SERIAL PRIMARY KEY,
+    name     VARCHAR(30) NOT NULL UNIQUE,
+    category VARCHAR(10) NOT NULL CHECK (category IN ('커피', '음료', '디저트')),
+    price    INTEGER NOT NULL CHECK (price > 0),
+    cost     INTEGER NOT NULL CHECK (cost > 0 AND cost < price)
+);
+
+CREATE TABLE members (
+    member_id SERIAL PRIMARY KEY,
+    nickname  VARCHAR(20) NOT NULL,
+    joined_on DATE NOT NULL
+);
+
+CREATE TABLE orders (
+    order_id   SERIAL PRIMARY KEY,
+    store_id   INTEGER NOT NULL REFERENCES stores (store_id),
+    member_id  INTEGER REFERENCES members (member_id),  -- 비회원 주문은 NULL
+    ordered_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE order_items (
+    order_id INTEGER NOT NULL REFERENCES orders (order_id),
+    menu_id  INTEGER NOT NULL REFERENCES menus (menu_id),
+    qty      INTEGER NOT NULL CHECK (qty > 0),
+    PRIMARY KEY (order_id, menu_id)
+);
+```
+
+`orders.member_id`에만 `NOT NULL`이 없어요. 비회원 주문을 받아야 해서예요. 이 빈칸이 10절에서 pandas의 `NaN`으로 다시 나타나요.
+
+돈은 `NUMERIC`이 아니라 `INTEGER`(원 단위)로 두었어요. 원화는 소수점이 없고, 파이썬으로 꺼냈을 때 그냥 정수로 받아져서 pandas 계산이 쉬워요.
+
+DML 부분은 기준 데이터(지점, 메뉴, 회원)를 먼저 넣고, 그걸 참조하는 주문과 주문 상세를 나중에 넣어요.
+
+```sql
+INSERT INTO stores (name, region, opened_on) VALUES
+    ('성수점', '서울 성동구', '2023-04-01'),
+    ('연남점', '서울 마포구', '2024-09-14'),
+    ('판교점', '성남 분당구', '2025-03-03');
+
+INSERT INTO menus (name, category, price, cost) VALUES
+    ('아메리카노', '커피', 4500, 900),
+    ('카페라테', '커피', 5000, 1400),
+    ('바닐라라테', '커피', 5500, 1700),
+    ('콜드브루', '커피', 5000, 1100),
+    ('자몽에이드', '음료', 6000, 2100),
+    ('말차라테', '음료', 5800, 1900),
+    ('레몬티', '음료', 5000, 1300),
+    ('크루아상', '디저트', 4000, 1600),
+    ('소금빵', '디저트', 3500, 1200),
+    ('바스크치즈케이크', '디저트', 6500, 2600);
+
+-- members 20명 (하늘, 바다, 우주, ...)
+
+-- 4. DML: 주문 714건. 시간 순서대로 넣어서 order_id 1번이 가장 이른 주문이다.
+INSERT INTO orders (store_id, member_id, ordered_at) VALUES
+    (3, 1, '2026-11-02 08:14'),
+    (3, NULL, '2026-11-02 08:19'),
+    (1, NULL, '2026-11-02 08:22'),
+    ...
+
+-- 5. DML: 주문 상세 1104줄. (주문 번호, 메뉴 번호, 수량)
+INSERT INTO order_items (order_id, menu_id, qty) VALUES
+    (1, 7, 1),
+    (2, 8, 1),
+    (2, 1, 1),
+    ...
+```
+
+`orders`에는 `order_id`를 적지 않았어요. `SERIAL`이 넣는 순서대로 1, 2, 3을 매겨요. 그래서 `order_items`의 `(2, 8, 1)`은 "두 번째로 넣은 주문에 메뉴 8번(크루아상) 1개"예요.
+
+<Hint>
+파일 맨 위의 `DROP TABLE IF EXISTS`는 "있으면 지우고, 없으면 넘어가라"예요. 참조하는 표(`order_items`)부터 지워야 참조받는 표(`stores`)를 지울 수 있어요. 이 줄들 덕분에 시드를 몇 번 다시 넣어도 늘 같은 714건으로 돌아가요.
+</Hint>
+
+## 6. 시드 넣기: 파일 하나를 psql에 흘려 넣는다
+
+이번엔 `-it` 대신 `-i`만 써요. 키보드가 아니라 파일을 `<`로 흘려 넣기 때문이에요. 맥은 경로 변환 문제가 없어서 윈도우 때처럼 `docker cp`를 거치지 않아도 돼요.
+
+```bash
+docker exec -i cafe-pg psql -U postgres -d cafe_db < cafe-seed.sql
+```
+
+```text
+NOTICE:  table "store_daily_sales" does not exist, skipping
+DROP TABLE
+NOTICE:  table "order_items" does not exist, skipping
+DROP TABLE
+...
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+INSERT 0 3
+INSERT 0 10
+INSERT 0 20
+INSERT 0 714
+INSERT 0 1104
+```
+
+처음 넣을 때는 지울 표가 없어서 `NOTICE`가 나와요. 오류가 아니라 안내예요. `-d cafe_db`를 빠뜨리면 표가 `postgres` 데이터베이스에 들어가니 꼭 붙여요.
+
+다시 `psql`로 들어가서 표와 행 수를 확인해요. 이번엔 처음부터 `cafe_db`로 들어가요.
+
+```bash
+docker exec -it cafe-pg psql -U postgres -d cafe_db
+```
+
+```sql
+\dt
+SELECT (SELECT COUNT(*) FROM stores)      AS stores,
+       (SELECT COUNT(*) FROM menus)       AS menus,
+       (SELECT COUNT(*) FROM members)     AS members,
+       (SELECT COUNT(*) FROM orders)      AS orders,
+       (SELECT COUNT(*) FROM order_items) AS order_items;
+```
+
+```text
+             List of tables
+ Schema |    Name     | Type  |  Owner
+--------+-------------+-------+----------
+ public | members     | table | postgres
+ public | menus       | table | postgres
+ public | order_items | table | postgres
+ public | orders      | table | postgres
+ public | stores      | table | postgres
+(5 rows)
+
+ stores | menus | members | orders | order_items
+--------+-------+---------+--------+-------------
+      3 |    10 |      20 |    714 |        1104
+(1 row)
+```
+
+**여기까지 되면:** 표 5개, 숫자 `3 | 10 | 20 | 714 | 1104`가 똑같이 나와요. `\q`로 나와요. 이제 DB 쪽 준비는 끝났어요.
+
+## 7. 파이썬 준비: 같은 폴더를 uv 프로젝트로
+
+같은 `cafe-analysis` 폴더를 파이썬 프로젝트로 만들어요. 이미 폴더 안에 있으니 `uv init` 뒤에 이름을 붙이지 않아요. 폴더 이름이 곧 프로젝트 이름이 돼요.
+
+```bash
+cd ~/dev/cafe-analysis
+uv init --no-package --python 3.14
+rm main.py
+uv add pandas numpy "psycopg[binary]"
+uv add --dev ipykernel
+```
+
+```text
+Initialized project `cafe-analysis`
+...
+ + numpy==2.5.5
+ + pandas==3.1.1
+ + psycopg==3.3.9
+ + psycopg-binary==3.3.9
+...
+```
+
+`psycopg[binary]`는 19회차에 쓴 PostgreSQL 드라이버예요. 대괄호 안의 `binary`는 "맥에 PostgreSQL 프로그램이 없어도 되게 접속 부품을 같이 넣어 줘"라는 뜻이에요. zsh는 대괄호를 특별한 글자로 읽어서 따옴표로 감싸야 해요.
+
+<Figure label="VS Code에서 노트북 만들고 .venv에 잇기">
+  <Seq
+    steps={[
+      { title: "`Cmd + Shift + P`", body: "Create: New Jupyter Notebook 을 골라요." },
+      { title: "`Cmd + S`", body: "analysis.ipynb 이름으로 cafe-analysis 폴더에 저장해요." },
+      { title: "Select Kernel", body: "오른쪽 위에서 Python Environments 를 누르고 .venv (Python 3.14) 를 골라요." },
+      { title: "`Shift + Enter`", body: "셀을 실행하고 다음 셀로 넘어가요. 아래 코드 블록 하나가 셀 하나예요." },
+    ]}
+  />
+</Figure>
+
+**여기까지 되면:** 폴더에 `compose.yaml`, `cafe-seed.sql`, `pyproject.toml`, `uv.lock`, `analysis.ipynb`가 있고, 노트북 오른쪽 위에 `.venv`가 보여요.
+
+<Hint>
+`zsh: no matches found: psycopg[binary]`가 나오면 따옴표를 빠뜨린 거예요. `"psycopg[binary]"`처럼 감싸서 다시 쳐요. 커널 목록에 `.venv`가 없으면 VS Code로 연 폴더가 `cafe-analysis`인지 확인해요.
+</Hint>
+
+## 8. 드라이버로 접속: psycopg가 SQL을 실어 나른다
+
+첫 셀이에요. 세 도구를 불러오고, 접속 정보 한 줄을 적고, 주문 수를 세어 봐요.
+
+```python
+import numpy as np
+import pandas as pd
+import psycopg
+
+DSN = "host=localhost port=5433 dbname=cafe_db user=postgres password=admin"
+
+with psycopg.connect(DSN) as conn:
+    row = conn.execute("SELECT current_database(), COUNT(*) FROM orders").fetchone()
+
+print(row)
+```
+
+```text
+('cafe_db', 714)
+```
+
+`DSN`은 "어디의 어떤 DB에 누구로 들어갈지"를 적은 주소예요. `compose.yaml`의 값과 한 자리씩 맞아요.
+
+<Figure label="DSN의 칸마다 어디서 온 값인지">
+  <DictView
+    name="DSN"
+    keyLabel="칸"
+    valueLabel="어디서 왔나"
+    pairs={[
+      ["host=localhost", "내 맥 (컨테이너가 포트를 열어 둠)"],
+      ["port=5433", "`ports:`의 왼쪽 숫자"],
+      ["dbname=cafe_db", "4절에서 만든 데이터베이스"],
+      ["user=postgres", "이미지가 만들어 둔 기본 계정"],
+      ["password=admin", "`POSTGRES_PASSWORD` 값"],
+    ]}
+  />
+</Figure>
+
+`with ... as conn:` 블록이 끝나면 연결이 저절로 닫혀요. 19회차에서 본 것처럼 블록이 오류 없이 끝나면 변경도 그때 저장(commit)돼요.
+
+<Hint>
+`Connection refused`가 나오면 컨테이너가 꺼져 있거나 포트가 달라요. `docker compose ps`로 `Up`과 `5433`을 확인해요. `database "cafe" does not exist`처럼 나오면 `dbname` 글자가 틀린 거예요. `password authentication failed`면 비밀번호가 `compose.yaml`과 다른 거예요.
+</Hint>
+
+## 9. query() 함수: 결과를 DataFrame으로 받는 통로 하나
+
+SQL을 보낼 때마다 연결하고, 열 이름 챙기고, 표로 바꾸는 일을 함수 하나에 담아요. 앞으로 모든 데이터는 이 통로로 들어와요.
+
+```python
+def query(sql, params=None):
+    """SQL을 보내고 결과를 DataFrame으로 돌려준다."""
+    with psycopg.connect(DSN) as conn:
+        cur = conn.execute(sql, params)
+        columns = [col.name for col in cur.description]
+        return pd.DataFrame(cur.fetchall(), columns=columns)
+
+query("SELECT * FROM stores")
+```
+
+```text
+   store_id name  region   opened_on
+0         1  성수점  서울 성동구  2023-04-01
+1         2  연남점  서울 마포구  2024-09-14
+2         3  판교점  성남 분당구  2025-03-03
+```
+
+<Figure label="커서 결과가 DataFrame이 되기까지">
+  <Relay
+    legs={[
+      { fn: "cur.fetchall()", desc: "행마다 튜플 하나인 리스트", ex: "[(1, '성수점', ...), ...]", value: "값" },
+      { fn: "cur.description", desc: "열 정보 목록. `.name`이 열 이름", ex: "store_id, name, ...", value: "열 이름" },
+      { fn: "pd.DataFrame(값, columns=열 이름)", desc: "20회차에 배운 표 만들기", value: "DataFrame" },
+    ]}
+  />
+</Figure>
+
+`pd.read_sql(sql, conn)`이라는 지름길도 있어요. 하지만 psycopg 연결을 그대로 넘기면 pandas가 `UserWarning: pandas only supports SQLAlchemy connectable ...` 경고를 띄워요. pandas가 공식으로 시험하는 연결은 SQLAlchemy라는 다른 도구라서예요. 이 프로젝트는 경고 없이 원리가 보이는 `query()`를 써요.
+
+## 10. 분석 재료 한 장: JOIN 결과 1,104줄
+
+18회차에 배운 `JOIN`으로 네 표를 한 장으로 붙여서 가져와요. 주문 상세 한 줄이 한 행이에요.
+
+```python
+lines = query("""
+    SELECT o.order_id, o.ordered_at, o.store_id, s.name AS store, o.member_id,
+           m.name AS menu, m.category, oi.qty, m.price, m.cost
+    FROM order_items oi
+    JOIN orders o ON o.order_id = oi.order_id
+    JOIN stores s ON s.store_id = o.store_id
+    JOIN menus  m ON m.menu_id  = oi.menu_id
+    ORDER BY oi.order_id, oi.menu_id
+""")
+print(lines.shape)
+lines.head()
+```
+
+```text
+(1104, 10)
+   order_id          ordered_at  store_id store  member_id   menu category  qty  price  cost
+0         1 2026-11-02 08:14:00         3   판교점        1.0    레몬티       음료    1   5000  1300
+1         2 2026-11-02 08:19:00         3   판교점        NaN  아메리카노       커피    1   4500   900
+2         2 2026-11-02 08:19:00         3   판교점        NaN   크루아상      디저트    1   4000  1600
+3         3 2026-11-02 08:22:00         1   성수점        NaN  아메리카노       커피    1   4500   900
+4         3 2026-11-02 08:22:00         1   성수점        NaN   말차라테       음료    1   5800  1900
+```
+
+2번 주문은 아메리카노와 크루아상 두 줄이라 `order_id`가 두 번 나와요. 열 종류도 확인해요.
+
+```python
+lines.info()
+```
+
+```text
+<class 'pandas.DataFrame'>
+RangeIndex: 1104 entries, 0 to 1103
+Data columns (total 10 columns):
+ #   Column      Non-Null Count  Dtype
+---  ------      --------------  -----
+ 0   order_id    1104 non-null   int64
+ 1   ordered_at  1104 non-null   datetime64[us]
+ 2   store_id    1104 non-null   int64
+ 3   store       1104 non-null   str
+ 4   member_id   493 non-null    float64
+ 5   menu        1104 non-null   str
+ 6   category    1104 non-null   str
+ 7   qty         1104 non-null   int64
+ 8   price       1104 non-null   int64
+ 9   cost        1104 non-null   int64
+dtypes: datetime64[us](1), float64(1), int64(5), str(3)
+memory usage: 86.4 KB
+```
+
+DB 타입이 pandas 타입으로 이렇게 옮겨졌어요.
+
+<Figure label="DB 열 타입이 pandas dtype이 되는 길">
+  <Boxes
+    row={[
+      { title: "INTEGER, TIMESTAMP, VARCHAR", tone: "blue", lines: ["`qty`, `price`는 `int64`", "`ordered_at`은 날짜시간 `datetime64[us]`", "글자는 `str`"] },
+      { arrow: "NULL이 섞이면" },
+      { title: "member_id: float64", tone: "amber", lines: ["DB의 `NULL`이 pandas에서는 `NaN`이 돼요", "`NaN`은 소수 자리에만 들어가서 열 전체가 `float64`로 바뀌어요", "그래서 회원 번호가 `1.0`처럼 보여요"] },
+    ]}
+  />
+</Figure>
+
+`member_id`는 1,104줄 중 493줄만 값이 있어요. 나머지는 비회원 주문이에요. 16절에서 이 열을 정수로 되돌려요.
+
+## 11. 미션 1. 금액과 이익: 열끼리 곱하면 1,104칸이 한 번에
+
+**질문:** 2주 동안 얼마를 팔았고 얼마가 남았나?
+
+줄마다 금액(수량 × 판매가)과 이익(수량 × (판매가 - 원가))을 새 열로 만들어요. 반복문 없이 열끼리 곱하면 1,104칸이 한 번에 계산돼요.
+
+```python
+lines["amount"] = lines["qty"] * lines["price"]
+lines["profit"] = lines["qty"] * (lines["price"] - lines["cost"])
+lines[["menu", "qty", "price", "cost", "amount", "profit"]].head()
+```
+
+```text
+    menu  qty  price  cost  amount  profit
+0    레몬티    1   5000  1300    5000    3700
+1  아메리카노    1   4500   900    4500    3600
+2   크루아상    1   4000  1600    4000    2400
+3  아메리카노    1   4500   900    4500    3600
+4   말차라테    1   5800  1900    5800    3900
+```
+
+열 안쪽은 NumPy 배열이에요. `.to_numpy()`로 꺼내서 NumPy 함수로 합계를 내요.
+
+```python
+amount = lines["amount"].to_numpy()
+profit = lines["profit"].to_numpy()
+print(type(amount), amount.dtype, amount.shape)
+print("총매출", np.sum(amount))
+print("총이익", np.sum(profit))
+print("이익률", np.round(np.sum(profit) / np.sum(amount) * 100, 1))
+```
+
+```text
+<class 'numpy.ndarray'> int64 (1104,)
+총매출 6515400
+총이익 4589000
+이익률 70.4
+```
+
+**답:** 2주 매출 651만 5,400원, 원가를 뺀 이익 458만 9,000원, 이익률 70.4%예요. (임대료와 인건비는 빼지 않은 숫자예요.)
+
+## 12. 미션 2. 지점 성적표: agg로 여러 집계를 한 번에
+
+**질문:** 지점마다 매출, 이익, 주문 수, 객단가(주문 한 건 평균 금액)는?
+
+20회차에서는 `groupby(...)["열"].sum()`으로 하나씩 셌어요. `agg`를 쓰면 **새 열 이름=(어느 열, 어떤 계산)** 꼴로 여러 집계를 한 표에 담아요.
+
+```python
+by_store = lines.groupby("store").agg(
+    revenue=("amount", "sum"),
+    profit=("profit", "sum"),
+    orders=("order_id", "nunique"),
+)
+by_store["avg_ticket"] = (by_store["revenue"] / by_store["orders"]).round()
+by_store.sort_values("revenue", ascending=False)
+```
+
+```text
+       revenue   profit  orders  avg_ticket
+store
+판교점    2305700  1692600     249      9260.0
+성수점    2200000  1547900     253      8696.0
+연남점    2009700  1348500     212      9480.0
+```
+
+주문 수는 `count`가 아니라 `nunique`(서로 다른 값의 개수)예요. `lines`는 주문 상세 한 줄이 한 행이라, `count`로 세면 메뉴 두 개짜리 주문이 두 번 세져요.
+
+<Figure label="같은 order_id 열, 두 가지 세기">
+  <Boxes
+    row={[
+      { title: "count", tone: "amber", lines: ["값이 있는 칸 수를 세요", "2번 주문(두 줄)은 2로 세져요", "주문 상세 줄 수가 나와요"] },
+      { title: "nunique", tone: "blue", lines: ["겹치지 않는 값의 수를 세요", "2번 주문은 1로 세져요", "진짜 주문 건수가 나와요"] },
+    ]}
+  />
+</Figure>
+
+**답:** 매출은 판교점이 1위, 주문 수는 성수점이 1위, 객단가는 연남점이 1위예요. 판교점 1위에는 비밀이 있는데, 17절에서 밝혀져요.
+
+## 13. 미션 3. 메뉴 순위: 많이 팔린 것과 많이 남긴 것은 다르다
+
+**질문:** 무엇이 가장 많이 팔렸고, 무엇이 가장 많이 남겼나?
+
+```python
+by_menu = lines.groupby("menu").agg(
+    qty=("qty", "sum"),
+    revenue=("amount", "sum"),
+    profit=("profit", "sum"),
+)
+by_menu.sort_values("qty", ascending=False).head(5)
+```
+
+```text
+       qty  revenue   profit
+menu
+아메리카노  294  1323000  1058400
+카페라테   173   865000   622800
+소금빵    129   451500   296700
+크루아상   119   476000   285600
+말차라테   118   684400   460200
+```
+
+같은 표를 이익 순으로 세우면 순위가 달라져요.
+
+```python
+by_menu.sort_values("profit", ascending=False).head(5)
+```
+
+```text
+       qty  revenue   profit
+menu
+아메리카노  294  1323000  1058400
+카페라테   173   865000   622800
+말차라테   118   684400   460200
+바닐라라테  114   627000   433200
+콜드브루   108   540000   421200
+```
+
+판매량 3, 4위였던 소금빵과 크루아상이 이익 5위 안에서 빠졌어요. 이유는 마진율(판매가 중 남는 비율)이에요. 메뉴 표를 가져와 NumPy로 계산해요.
+
+```python
+menus = query("SELECT name, category, price, cost FROM menus")
+menus["margin_pct"] = np.round((menus["price"] - menus["cost"]) / menus["price"] * 100, 1)
+menus.sort_values("margin_pct", ascending=False)
+```
+
+```text
+       name category  price  cost  margin_pct
+0     아메리카노       커피   4500   900        80.0
+3      콜드브루       커피   5000  1100        78.0
+6       레몬티       음료   5000  1300        74.0
+1      카페라테       커피   5000  1400        72.0
+2     바닐라라테       커피   5500  1700        69.1
+5      말차라테       음료   5800  1900        67.2
+8       소금빵      디저트   3500  1200        65.7
+4     자몽에이드       음료   6000  2100        65.0
+7      크루아상      디저트   4000  1600        60.0
+9  바스크치즈케이크      디저트   6500  2600        60.0
+```
+
+디저트는 마진율이 60%대로 맨 아래예요. 많이 팔려도 남는 돈은 커피보다 적어요.
+
+지점마다 어떤 분류를 많이 파는지도 봐요. `groupby`에 열 두 개를 주면 묶음이 두 단계가 되고, `unstack()`이 안쪽 묶음(분류)을 열로 펼쳐요.
+
+```python
+mix = lines.groupby(["store", "category"])["amount"].sum().unstack()
+(mix.div(mix.sum(axis=1), axis=0) * 100).round(1)
+```
+
+```text
+category   디저트    음료    커피
+store
+성수점       22.9  24.8  52.3
+연남점       33.3  40.7  25.9
+판교점       14.4  12.6  73.0
+```
+
+`mix.sum(axis=1)`은 행마다(지점마다) 가로로 더한 합계예요. `div(..., axis=0)`은 각 행을 그 행의 합계로 나눠요. 그래서 한 행을 더하면 100이 돼요.
+
+**답:** 아메리카노가 판매량, 이익, 마진율 모두 1위예요. 판교점은 매출의 73%가 커피이고, 연남점은 음료와 디저트가 74%예요.
+
+## 14. 미션 4. 바쁜 시간: 주문 단위 표로 바꿔 시간대를 센다
+
+**질문:** 지점마다 언제 가장 바쁜가?
+
+시간대는 줄이 아니라 **주문** 단위로 세야 해요. 메뉴 세 개짜리 주문을 세 번 세면 안 되니까요. `lines`를 주문 하나가 한 행인 표 `orders`로 접어요.
+
+```python
+orders = lines.groupby("order_id").agg(
+    ordered_at=("ordered_at", "first"),
+    store_id=("store_id", "first"),
+    store=("store", "first"),
+    member_id=("member_id", "first"),
+    total=("amount", "sum"),
+).reset_index()
+print(orders.shape)
+orders.head()
+```
+
+```text
+(714, 6)
+   order_id          ordered_at  store_id store  member_id  total
+0         1 2026-11-02 08:14:00         3   판교점        1.0   5000
+1         2 2026-11-02 08:19:00         3   판교점        NaN   8500
+2         3 2026-11-02 08:22:00         1   성수점        NaN  10300
+3         4 2026-11-02 08:25:00         3   판교점        3.0  16000
+4         5 2026-11-02 08:26:00         3   판교점        2.0  24000
+```
+
+같은 주문의 줄들은 시각, 지점, 회원이 모두 같으니 `first`(첫 값)를 가져오면 돼요. 금액만 `sum`으로 더해요. 714행, 시드의 주문 수와 같아요.
+
+날짜시간 열에는 `.dt` 뒤에 꺼낼 조각을 붙여요. `.dt.hour`는 시(0~23)예요.
+
+```python
+orders["hour"] = orders["ordered_at"].dt.hour
+by_hour = orders.groupby(["hour", "store"]).size().unstack(fill_value=0)
+by_hour
+```
+
+```text
+store  성수점  연남점  판교점
+hour
+8        2    0   43
+9        7    0   43
+10      13    1   16
+11      22    9   16
+12      30   19   39
+13      26   26   31
+14      28   26   18
+15      30   29   16
+16      38   20   15
+17      22   23    9
+18      20   20    3
+19      11   12    0
+20       3   16    0
+21       1   11    0
+```
+
+`size()`는 묶음마다 행 수를 세요. 연남점 8시처럼 주문이 하나도 없는 칸은 원래 비어(`NaN`) 나오는데, `fill_value=0`이 0으로 채워요.
+
+```python
+by_hour.idxmax()
+```
+
+```text
+store
+성수점    16
+연남점    15
+판교점     8
+dtype: int32
+```
+
+`idxmax()`는 열마다 가장 큰 값이 있는 행 이름(여기서는 시)을 돌려줘요. 아래에서 지점을 바꿔 가며 모양을 봐요.
+
+<CafeHourChart />
+
+**답:** 판교점은 출근 시간과 점심, 성수점은 오후 4시, 연남점은 오후 내내 바빠요. 판교점은 8시와 9시가 43건으로 같아요. 이럴 때 `idxmax()`는 먼저 나온 8시 하나만 알려 줘요. 같은 값이 있는지는 표를 직접 봐야 알아요.
+
+## 15. 미션 5. 평일과 주말: 판교점은 주말에 4분의 1
+
+**질문:** 평일과 주말 중 언제 손님이 많은가?
+
+`.dt.day_of_week`는 요일을 숫자로 줘요. 월요일이 0, 일요일이 6이에요. 20회차의 불리언 조건을 `np.where(조건, 참일 때, 거짓일 때)`에 넣으면 칸마다 글자를 골라 붙여요.
+
+```python
+orders["day_type"] = np.where(orders["ordered_at"].dt.day_of_week >= 5, "주말", "평일")
+orders["day_type"].value_counts()
+```
+
+```text
+day_type
+평일    497
+주말    217
+Name: count, dtype: int64
+```
+
+전체 건수로 비교하면 불공평해요. 2주에 평일은 10일, 주말은 4일뿐이니까요. 하루 평균으로 바꿔요.
+
+```python
+counts = orders.groupby(["store", "day_type"]).size().unstack()
+days = pd.Series({"주말": 4, "평일": 10})
+(counts / days).round(1)
+```
+
+```text
+day_type    주말    평일
+store
+성수점       27.0  14.5
+연남점       21.5  12.6
+판교점        5.8  22.6
+```
+
+`counts / days`는 열 이름이 같은 칸끼리 나눠요. "주말" 열은 4로, "평일" 열은 10으로 나뉘어요.
+
+<Figure label="같은 지점, 다른 요일">
+  <Boxes
+    row={[
+      { title: "성수점, 연남점", tone: "blue", lines: ["주말 하루 주문이 평일의 1.7~1.9배", "놀러 오는 동네예요"] },
+      { title: "판교점", tone: "rust", lines: ["주말 하루 5.8건, 평일 22.6건", "주말 손님이 평일의 4분의 1 정도예요", "회사 동네예요"] },
+    ]}
+  />
+</Figure>
+
+<Hint>
+예전 자료의 `.dt.dayofweek`(밑줄 없음)도 같은 값을 주지만, pandas 3.1.1에서는 `Pandas4Warning: Series.dt.dayofweek is deprecated ...` 경고가 나와요. 다음 큰 버전에서 없어질 이름이라는 뜻이에요. 밑줄 있는 `day_of_week`를 써요.
+</Hint>
+
+## 16. 미션 6. 회원과 단골: 평균과 중앙값을 같이 본다
+
+**질문:** 회원이 비회원보다 많이 쓰나? 단골은 누구인가?
+
+`isna()`는 칸마다 "비었나?"를 True/False로 답해요. True는 1로 세지니 `sum()`이 빈칸 수예요.
+
+```python
+print(orders["member_id"].isna().sum())
+orders["who"] = np.where(orders["member_id"].isna(), "비회원", "회원")
+orders.groupby("who")["total"].agg(["count", "mean", "median"]).round()
+```
+
+```text
+398
+     count    mean  median
+who
+비회원    398  8931.0  7500.0
+회원     316  9369.0  8500.0
+```
+
+`agg`에 이름 목록을 주면 계산마다 열이 하나씩 생겨요. 평균(`mean`)은 아주 큰 값 하나에도 끌려가요. 중앙값(`median`)은 금액 순으로 세웠을 때 한가운데 값이라 덜 흔들려요. 둘 다 회원이 1,000원쯤 높아요.
+
+이제 `member_id`를 정수로 되돌려요. 대문자로 시작하는 `"Int64"`는 빈칸을 품을 수 있는 정수 타입이에요. 빈칸은 `<NA>`로 보여요.
+
+```python
+orders["member_id"] = orders["member_id"].astype("Int64")
+orders["member_id"].head()
+```
+
+```text
+0       1
+1    <NA>
+2    <NA>
+3       3
+4       2
+Name: member_id, dtype: Int64
+```
+
+단골 세 명을 세고, 회원 표와 붙여 닉네임을 달아요. `merge`는 pandas의 `JOIN`이에요. `on`에 적은 열이 같은 행끼리 붙어요.
+
+```python
+members = query("SELECT member_id, nickname FROM members")
+regulars = orders["member_id"].value_counts().head(3).reset_index()
+regulars.merge(members, on="member_id")
+```
+
+```text
+   member_id  count nickname
+0          1     58       하늘
+1          2     50       바다
+2          3     37       우주
+```
+
+**답:** 회원 주문은 316건(44%)이고 한 번에 조금 더 써요. 단골 1위 하늘 님은 2주에 58번, 하루 4번꼴로 왔어요.
+
+## 17. 미션 7. 튀는 주문: 세 건이 1위를 바꾼다
+
+**질문:** 평소와 다른 주문이 있나? 있다면 지점 순위에 영향을 주나?
+
+주문 금액의 모양을 NumPy로 봐요.
+
+```python
+totals = orders["total"].to_numpy()
+print("평균", np.mean(totals).round(), "중앙값", np.median(totals), "최대", np.max(totals))
+print("95% 지점", np.percentile(totals, 95).round())
+print(np.sort(totals)[-6:])
+```
+
+```text
+평균 9125.0 중앙값 8000.0 최대 92500
+95% 지점 19605.0
+[27800 28600 30600 60000 74000 92500]
+```
+
+`np.percentile(totals, 95)`는 714건을 금액 순으로 세웠을 때 95%가 그 아래에 있는 값이에요. 주문 대부분은 2만 원 아래예요. 그런데 가장 큰 값 여섯 개를 보면 3만 원 언저리에서 갑자기 6만 원으로 뛰어요.
+
+기준을 "95% 지점의 2배(약 3만 9천 원)보다 큰 주문"으로 잡고 걸러요.
+
+```python
+limit = np.percentile(totals, 95) * 2
+big = orders[orders["total"] > limit]
+big[["order_id", "ordered_at", "store", "member_id", "total"]]
+```
+
+```text
+     order_id          ordered_at store  member_id  total
+110       111 2026-11-04 10:05:00   판교점          7  74000
+438       439 2026-11-10 14:20:00   판교점       <NA>  92500
+510       511 2026-11-12 09:40:00   판교점          2  60000
+```
+
+세 건 모두 판교점 평일이에요. 무엇을 샀는지 `lines`에서 그 주문만 꺼내요. `isin(목록)`은 칸마다 "목록 안에 있나?"를 물어요.
+
+```python
+lines[lines["order_id"].isin(big["order_id"])][["order_id", "menu", "qty", "amount"]]
+```
+
+```text
+     order_id   menu  qty  amount
+173       111  아메리카노   12   54000
+174       111   카페라테    4   20000
+681       439  아메리카노   15   67500
+682       439   카페라테    5   25000
+791       511  아메리카노   10   45000
+792       511   카페라테    3   15000
+```
+
+아메리카노 10~15잔에 카페라테 몇 잔, 회의용 단체 주문이에요. 이 세 건을 빼고 지점 매출을 다시 세요. `~`는 True와 False를 뒤집어요. "목록 안에 없는 주문"이 돼요.
+
+```python
+normal = orders[~orders["order_id"].isin(big["order_id"])]
+normal.groupby("store")["total"].agg(["sum", "mean"]).round().sort_values("sum", ascending=False)
+```
+
+```text
+           sum    mean
+store
+성수점    2200000  8696.0
+판교점    2079200  8452.0
+연남점    2009700  9480.0
+```
+
+<CafeBulkToggle />
+
+**답:** 판교점 매출 1위는 단체 주문 세 건(22만 6,500원) 덕분이었어요. 평소 장사만 보면 성수점이 1위예요. 숫자 하나로 결론 내리기 전에 튀는 값을 먼저 찾아보는 습관이 이 미션의 핵심이에요.
+
+## 18. SQL로 맞춰 보기: 같은 질문, 같은 답
+
+pandas로 낸 지점 성적표가 맞는지, 같은 질문을 SQL로 DB에 직접 물어봐요. 터미널에서 `psql`로 들어가요.
+
+```bash
+docker exec -it cafe-pg psql -U postgres -d cafe_db
+```
+
+```sql
+SELECT s.name AS store, SUM(oi.qty * m.price) AS revenue, COUNT(DISTINCT o.order_id) AS orders
+FROM order_items oi
+JOIN orders o ON o.order_id = oi.order_id
+JOIN stores s ON s.store_id = o.store_id
+JOIN menus  m ON m.menu_id  = oi.menu_id
+GROUP BY s.name
+ORDER BY revenue DESC;
+```
+
+```text
+ store  | revenue | orders
+--------+---------+--------
+ 판교점 | 2305700 |    249
+ 성수점 | 2200000 |    253
+ 연남점 | 2009700 |    212
+(3 rows)
+```
+
+12절의 `by_store`와 숫자가 똑같아요. 두 도구가 이렇게 짝을 이뤄요.
+
+| 하는 일 | SQL | pandas |
+| --- | --- | --- |
+| 묶기 | `GROUP BY s.name` | `groupby("store")` |
+| 합계 | `SUM(oi.qty * m.price)` | `("amount", "sum")` |
+| 서로 다른 값 세기 | `COUNT(DISTINCT o.order_id)` | `("order_id", "nunique")` |
+| 정렬 | `ORDER BY revenue DESC` | `sort_values("revenue", ascending=False)` |
+| 표 붙이기 | `JOIN ... ON` | `merge(..., on=...)` |
+
+원본 데이터를 많이 줄이는 집계는 SQL로, 여러 각도로 돌려 보는 분석은 pandas로 하면 편해요. 결과가 중요하면 이렇게 두 길로 한 번씩 맞춰 봐요.
+
+## 19. 결과를 DB에 저장: DataFrame을 표로 돌려보낸다
+
+마지막으로 "지점별 하루 매출" 표를 만들어 DB에 저장해요. 다른 사람이 분석을 다시 돌리지 않고도 SQL로 바로 꺼내 볼 수 있게요.
+
+```python
+orders["sales_date"] = orders["ordered_at"].dt.date
+daily = orders.groupby(["sales_date", "store_id"]).agg(
+    order_count=("order_id", "count"),
+    revenue=("total", "sum"),
+).reset_index()
+print(daily.shape)
+daily.head(3)
+```
+
+```text
+(42, 4)
+   sales_date  store_id  order_count  revenue
+0  2026-11-02         1           16   141000
+1  2026-11-02         2           11    87900
+2  2026-11-02         3           24   191800
+```
+
+14일 × 3지점 = 42행이에요. `orders`는 주문 하나가 한 행이라 이번엔 `count`가 주문 건수예요. `reset_index()`는 묶음 이름(날짜, 지점)을 다시 보통 열로 내려요. 저장할 표와 모양을 맞추는 거예요.
+
+표를 만들고 42행을 한 번에 넣어요. 19회차의 `INSERT`와 `%s` 자리 채우기를 행 여러 개에 반복하는 것이 `executemany`예요.
+
+```python
+with psycopg.connect(DSN) as conn:
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS store_daily_sales (
+            sales_date  DATE    NOT NULL,
+            store_id    INTEGER NOT NULL REFERENCES stores (store_id),
+            order_count INTEGER NOT NULL,
+            revenue     INTEGER NOT NULL,
+            PRIMARY KEY (sales_date, store_id)
+        )
+    """)
+    conn.execute("DELETE FROM store_daily_sales")
+    with conn.cursor() as cur:
+        cur.executemany(
+            "INSERT INTO store_daily_sales VALUES (%s, %s, %s, %s)",
+            daily.itertuples(index=False),
+        )
+        print(cur.rowcount, "행 저장")
+```
+
+```text
+42 행 저장
+```
+
+<Figure label="한 셀 안에서 일어나는 일">
+  <Seq
+    steps={[
+      { title: "CREATE TABLE IF NOT EXISTS", body: "표가 없을 때만 만들어요. 셀을 두 번 실행해도 오류가 안 나요." },
+      { title: "DELETE FROM", body: "이전에 저장한 행을 비워요. 이게 없으면 두 번째 실행에서 PK(날짜, 지점)가 겹쳐 오류가 나요." },
+      { title: "daily.itertuples(index=False)", body: "DataFrame을 한 행씩 튜플로 꺼내요. 날짜는 파이썬 date, 숫자는 파이썬 int로 나와서 psycopg가 그대로 받아요." },
+      { title: "with 블록이 끝나면", body: "세 문장이 한꺼번에 commit돼요. 중간에 오류가 나면 아무것도 저장되지 않아요." },
+    ]}
+  />
+</Figure>
+
+저장됐는지 노트북과 `psql` 양쪽에서 확인해요.
+
+```python
+query("SELECT COUNT(*) AS days, SUM(revenue) AS revenue FROM store_daily_sales")
+```
+
+```text
+   days  revenue
+0    42  6515400
+```
+
+```sql
+SELECT * FROM store_daily_sales ORDER BY sales_date, store_id LIMIT 6;
+```
+
+```text
+ sales_date | store_id | order_count | revenue
+------------+----------+-------------+---------
+ 2026-11-02 |        1 |          16 |  141000
+ 2026-11-02 |        2 |          11 |   87900
+ 2026-11-02 |        3 |          24 |  191800
+ 2026-11-03 |        1 |          14 |  163300
+ 2026-11-03 |        2 |          12 |  116400
+ 2026-11-03 |        3 |          23 |  195300
+(6 rows)
+```
+
+**여기까지 되면:** 합계가 11절의 총매출 6,515,400원과 같아요. 데이터가 DB에서 나와 pandas를 거쳐 DB로 한 바퀴 돌아왔어요.
+
+## 20. 다음 주 운영 계획: 숫자를 문장으로
+
+분석의 끝은 표가 아니라 문장이에요. 지금까지 만든 변수로 보고서 몇 줄을 찍어요. f-string의 `{값:,}`는 천 단위 쉼표를 붙여요.
+
+```python
+top_store = by_store["revenue"].idxmax()
+top_menu = by_menu["qty"].idxmax()
+print(f"2주 총매출 {np.sum(amount):,}원, 주문 {len(orders)}건")
+print(f"매출 1위 {top_store} {by_store.loc[top_store, 'revenue']:,}원")
+print(f"단체 주문 {len(big)}건을 빼면 1위 {normal.groupby('store')['total'].sum().idxmax()}")
+print(f"가장 많이 팔린 메뉴 {top_menu} {by_menu.loc[top_menu, 'qty']}잔")
+for store, hour in by_hour.idxmax().items():
+    print(f"{store} 가장 바쁜 시간 {hour}시")
+```
+
+```text
+2주 총매출 6,515,400원, 주문 714건
+매출 1위 판교점 2,305,700원
+단체 주문 3건을 빼면 1위 성수점
+가장 많이 팔린 메뉴 아메리카노 294잔
+성수점 가장 바쁜 시간 16시
+연남점 가장 바쁜 시간 15시
+판교점 가장 바쁜 시간 8시
+```
+
+사장님께 드릴 다음 주 계획이에요. 문장마다 근거가 된 미션을 괄호에 적었어요.
+
+| 지점 | 다음 주에 할 일 | 근거 |
+| --- | --- | --- |
+| 판교점 | 평일 아침 8~9시와 점심 12시에 사람을 더 넣어요 | 8, 9시 각 43건, 12시 39건 (미션 4) |
+| 판교점 | 주말은 하루 6건 남짓이라 문 여는 시간을 줄이는 것을 검토해요 | 주말 하루 5.8건 (미션 5) |
+| 판교점 | 단체 주문을 미리 받는 창구를 만들어요 | 단체 3건이 22만 6,500원 (미션 7) |
+| 성수점 | 주말에 사람을 더 넣고, 오후 4시 앞뒤를 챙겨요 | 주말 하루 27건, 16시 38건 (미션 4, 5) |
+| 연남점 | 음료와 디저트 재료를 넉넉히, 밤 9시까지 운영을 이어 가요 | 음료와 디저트가 매출의 74%, 20~21시에도 주문 (미션 3, 4) |
+| 전 지점 | 디저트는 마진이 낮으니 커피와 묶은 세트를 시험해 봐요 | 디저트 마진율 60%대, 아메리카노 80% (미션 3) |
+
+여기까지 오면 미니 프로젝트 완성이에요. 노트북을 `Cmd + S`로 저장해요.
+
+## 21. 정리: 끄고, 다음에 다시 켜기
+
+다 쓴 컨테이너는 꺼 둬요. 맥 메모리를 돌려받아요.
+
+| 명령 | 컨테이너 | 볼륨(데이터) | 언제 |
+| --- | --- | --- | --- |
+| `docker compose stop` | 멈춤 (남아 있음) | 남음 | 잠깐 쉴 때. `docker compose start`로 다시 켜요 |
+| `docker compose down` | 지움 | 남음 | 오늘 끝낼 때. 다음에 `up -d`로 다시 만들어도 데이터는 그대로예요 |
+| `docker compose down -v` | 지움 | **지움** | 처음부터 다시 할 때. 4절부터 다시 해야 해요 |
+
+```bash
+docker compose down
+```
+
+```text
+ Container cafe-pg Stopped
+ Container cafe-pg Removed
+ Network cafe-analysis_default Removed
+```
+
+다음에 이어서 할 때는 세 줄이면 돼요.
+
+```bash
+open -a Docker
+cd ~/dev/cafe-analysis
+docker compose up -d
+```
+
+볼륨이 남아 있어서 `cafe_db`와 714건, 저장한 `store_daily_sales`까지 그대로예요. 노트북을 열고 위에서부터 셀을 다시 실행하면 돼요. 데이터를 처음 상태로 돌리고 싶으면 6절의 시드 넣기만 다시 해요.
+
+<Hint>
+DBeaver로 보고 싶으면 Host `localhost`, Port `5433`, Database `cafe_db`, Username `postgres`, Password `admin`으로 연결해요. 수업용 DB(5432)와 포트만 달라요.
+</Hint>
+
+## 꼭 기억할 주의점
+
+- `compose.yaml`의 `ports:`는 **내 맥:컨테이너** 순서예요. 파이썬 `DSN`과 DBeaver는 왼쪽 숫자(5433)로 접속해요.
+- 키보드로 대화할 때는 `docker exec -it`, 파일을 `<`로 흘려 넣을 때는 `docker exec -i`예요. 시드를 넣을 때 `-d cafe_db`를 빠뜨리면 다른 데이터베이스에 들어가요.
+- zsh에서는 `uv add "psycopg[binary]"`처럼 대괄호를 따옴표로 감싸요.
+- DB의 `NULL`은 pandas에서 `NaN`이 되고, 정수 열이 `float64`로 바뀌어요. 빈칸을 품는 정수가 필요하면 `astype("Int64")`예요.
+- JOIN한 상세 표에서 주문 수를 셀 때는 `count`가 아니라 `nunique`예요. 주문 단위 질문(시간대, 객단가)은 주문 하나가 한 행인 표로 접은 뒤에 세요.
+- `idxmax()`는 같은 최댓값이 여럿이어도 첫 번째 하나만 돌려줘요. 표를 직접 보고 확인해요.
+- 평균은 튀는 값에 끌려가요. 결론을 내기 전에 중앙값과 가장 큰 값들을 같이 봐요.
+- 요일은 `.dt.day_of_week`(월요일 0)예요. 밑줄 없는 `dayofweek`는 pandas 3.1.1에서 경고가 나요.
+- DataFrame을 DB에 넣을 때는 `CREATE TABLE IF NOT EXISTS`, `DELETE`, `executemany`를 한 `with` 블록에 두면 몇 번을 다시 실행해도 같은 결과가 돼요.
+- 중요한 숫자는 SQL과 pandas 두 길로 한 번씩 맞춰 봐요.

@@ -58,6 +58,7 @@ export async function GET() {
           item("/class/commands", "명령어 모음"),
           item("/class/docker-cli", "Docker 명령 지도"),
           item("/class/mac-setup", "맥 실습 환경"),
+          item("/class/cafe-mini-project", "미니 프로젝트: 카페 주문 분석"),
         ],
       },
       {
