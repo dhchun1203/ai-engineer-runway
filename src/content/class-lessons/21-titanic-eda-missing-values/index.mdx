@@ -1,0 +1,632 @@
+---
+title: "모델에 넣기 전에 빈칸부터: 타이타닉 891명을 살피고 채우기"
+session: 21
+date: "2026-11-23"
+summary: "seaborn의 타이타닉 데이터 891행을 shape, info, describe로 살피고, 빈칸을 숫자는 평균, 글자는 최빈값, category는 'Unknown'으로 채워요. IQR로 튀는 요금을 찾고, 중복 행을 세고, 나이 히스토그램으로 평균 채우기의 부작용까지 봐요."
+slug: "21-titanic-eda-missing-values"
+module: "1-5"
+topic: "pandas"
+preStudy: []
+---
+
+지난 시간에 pandas 표를 만들고 거르고 묶었어요. 오늘은 그 표를 머신러닝에 넣기 전에 해야 하는 일을 배웠어요. 데이터를 먼저 살피고(EDA, 탐색적 데이터 분석), 빈칸을 채우는 일이에요.
+
+모델은 빈칸(NaN)을 그대로 받지 못해요. 그래서 열마다 성격에 맞는 값으로 채우는 것이 첫 단계예요. 재료는 seaborn에 들어 있는 타이타닉 승객 891명 데이터예요.
+
+코드와 출력은 모두 이 맥에서 Python 3.14, pandas 3.1.1, NumPy 2.5.5, seaborn 0.13.2로 직접 실행해 확인했어요. 끝까지 읽고 아래 복습 퀴즈 10문항을 풀어 보세요.
+
+## 1. 오늘의 지도: 불러오고, 살피고, 채우고, 다시 본다
+
+오늘 노트북 `01_ml.ipynb`는 아래 순서로 흘러가요. 채우기가 끝나면 빈칸이 정말 0개인지 꼭 다시 세요.
+
+<Figure label="EDA와 빈칸 채우기의 순서">
+  <Seq
+    steps={[
+      { title: "불러오기", body: "`sns.load_dataset('titanic')`으로 891행 15열 표를 받아요." },
+      { title: "살펴보기", body: "`shape`, `info()`, `describe()` 순서로 크기, 빈칸, 숫자 요약을 봐요." },
+      { title: "빈칸 찾기", body: "`df.isnull().sum()`으로 열마다 빈칸을 세요." },
+      { title: "채우기", body: "숫자는 평균, 글자는 최빈값, category는 `'Unknown'`으로 채워요." },
+      { title: "다시 확인", body: "`df.isnull().sum()`이 모두 0인지 봐요." },
+      { title: "튀는 값", body: "IQR로 상한선을 계산하고, 극단값(요금 512)을 지워요." },
+      { title: "중복 행", body: "`df.duplicated().sum()`으로 세어 보기만 해요." },
+      { title: "그림으로 보기", body: "`ax.hist(df['age'])`로 나이 분포를 그려요." },
+    ]}
+  />
+</Figure>
+
+빈칸이 있는 열은 네 개였어요. 열의 종류(dtype)에 따라 채우는 값이 달라요.
+
+| 빈칸 있는 열 | 빈칸 | dtype | 채운 값 |
+| --- | --- | --- | --- |
+| `age` | 177 | `float64` | 평균 29.7 |
+| `embark_town` | 2 | `str` | 최빈값 `Southampton` |
+| `embarked` | 2 | `str` | `embark_town`의 첫 글자 |
+| `deck` | 688 | `category` | `'Unknown'` |
+
+`deck`(객실 갑판)은 891행 중 688행, 77%가 비어 있어요. 평균이나 최빈값으로 채우면 없는 정보를 지어내게 돼요. 그래서 "모름"을 뜻하는 `'Unknown'`으로 채워요.
+
+## 2. 준비: 지난 프로젝트에 seaborn과 matplotlib을 더한다
+
+20회차에 만든 uv 프로젝트에 도구 두 개를 더 넣어요. seaborn은 파이썬 시각화 라이브러리이고, 연습용 데이터 몇 개를 함께 들고 있어요. matplotlib은 그래프를 그리는 바탕 도구예요.
+
+```bash
+uv add seaborn matplotlib
+```
+
+첫 셀에서 도구를 불러오고 버전을 찍어요. seaborn은 `sns`라는 짧은 이름으로 부르는 것이 관례예요.
+
+```python
+import pandas as pd
+import numpy as np
+import seaborn as sns
+# seaborn: 파이썬 시각화 라이브러리
+
+print("pandas:", pd.__version__, "numpy:", np.__version__, "seaborn:", sns.__version__)
+```
+
+```text
+pandas: 3.1.1 numpy: 2.5.5 seaborn: 0.13.2
+```
+
+`sns.load_dataset('titanic')`이 타이타닉 표를 DataFrame으로 돌려줘요. 데이터는 인터넷에서 받아 오니 처음 실행할 때는 인터넷이 연결돼 있어야 해요.
+
+```python
+df = sns.load_dataset('titanic')
+df.head(5)
+```
+
+```text
+   survived  pclass     sex   age  ... deck  embark_town alive  alone
+0         0       3    male  22.0  ...  NaN  Southampton    no  False
+1         1       1  female  38.0  ...    C    Cherbourg   yes  False
+2         1       3  female  26.0  ...  NaN  Southampton   yes   True
+3         1       1  female  35.0  ...    C  Southampton   yes  False
+4         0       3    male  35.0  ...  NaN  Southampton    no   True
+
+[5 rows x 15 columns]
+```
+
+열이 15개라 가운데가 `...`으로 접혔어요. 노트북 화면에서는 가로로 밀어 전부 볼 수 있어요. `NaN`(Not a Number)이 빈칸이에요.
+
+## 3. 첫인상: shape, info, describe 세 번이면 빈칸이 보인다
+
+데이터를 처음 받으면 세 가지를 차례로 봐요. 20회차에 쓴 `shape`, `info()`에 `describe()`가 더해졌어요.
+
+<Figure label="처음 받은 표를 보는 세 가지">
+  <Boxes
+    row={[
+      { title: "df.shape", tone: "neutral", lines: ["`(891, 15)`, 891행 15열이에요", "괄호 없이 써요"] },
+      { title: "df.info()", tone: "blue", lines: ["열마다 빈칸 아닌 개수(Non-Null Count)와 dtype", "891보다 작으면 그 열에 빈칸이 있어요"] },
+      { title: "df.describe()", tone: "rust", lines: ["숫자 열만 요약해요", "개수, 평균, 표준편차, 최소, 사분위수, 최대"] },
+    ]}
+  />
+</Figure>
+
+```python
+df.info()
+```
+
+```text
+<class 'pandas.DataFrame'>
+RangeIndex: 891 entries, 0 to 890
+Data columns (total 15 columns):
+ #   Column       Non-Null Count  Dtype   
+---  ------       --------------  -----   
+ 0   survived     891 non-null    int64   
+ 1   pclass       891 non-null    int64   
+ 2   sex          891 non-null    str     
+ 3   age          714 non-null    float64 
+ 4   sibsp        891 non-null    int64   
+ 5   parch        891 non-null    int64   
+ 6   fare         891 non-null    float64 
+ 7   embarked     889 non-null    str     
+ 8   class        891 non-null    category
+ 9   who          891 non-null    str     
+ 10  adult_male   891 non-null    bool    
+ 11  deck         203 non-null    category
+ 12  embark_town  889 non-null    str     
+ 13  alive        891 non-null    str     
+ 14  alone        891 non-null    bool    
+dtypes: bool(2), category(2), float64(2), int64(4), str(5)
+memory usage: 80.7 KB
+```
+
+`age`는 714, `embarked`와 `embark_town`은 889, `deck`은 203이에요. 891에서 빼면 빈칸 수가 나와요. dtype 열로 숫자(`int64`, `float64`), 글자(`str`), category를 구분해요.
+
+```python
+df.describe()
+```
+
+```text
+         survived      pclass         age       sibsp       parch        fare
+count  891.000000  891.000000  714.000000  891.000000  891.000000  891.000000
+mean     0.383838    2.308642   29.699118    0.523008    0.381594   32.204208
+std      0.486592    0.836071   14.526497    1.102743    0.806057   49.693429
+min      0.000000    1.000000    0.420000    0.000000    0.000000    0.000000
+25%      0.000000    2.000000   20.125000    0.000000    0.000000    7.910400
+50%      0.000000    3.000000   28.000000    0.000000    0.000000   14.454200
+75%      1.000000    3.000000   38.000000    1.000000    0.000000   31.000000
+max      1.000000    3.000000   80.000000    8.000000    6.000000  512.329200
+```
+
+글자 열은 빠지고 숫자 열 여섯 개만 나왔어요. `age`의 count가 714라서 여기서도 177개가 빈 것을 알 수 있어요. `fare`(요금)의 max 512.33이 75% 지점 31.00보다 훨씬 커요. 9절에서 다시 봐요.
+
+## 4. 빈칸 세기: isnull()이 칸마다 묻고, sum()이 True를 센다
+
+`df.isnull()`은 칸마다 "비었니?"를 물어 True/False 표를 돌려줘요. 거기에 `.sum()`을 붙이면 True를 1로 세어 열마다 빈칸 수가 나와요.
+
+<Figure label="isnull().sum()이 빈칸을 세는 방법">
+  <Relay
+    legs={[
+      { fn: "df.isnull()", desc: "칸마다 비었으면 True, 아니면 False", value: "891행 15열의 True/False 표" },
+      { fn: ".sum()", desc: "True는 1, False는 0으로 열마다 더하기", value: "age 177, embarked 2, deck 688, embark_town 2" },
+    ]}
+  />
+</Figure>
+
+```python
+df.isnull().sum()
+```
+
+```text
+survived         0
+pclass           0
+sex              0
+age            177
+sibsp            0
+parch            0
+fare             0
+embarked         2
+class            0
+who              0
+adult_male       0
+deck           688
+embark_town      2
+alive            0
+alone            0
+dtype: int64
+```
+
+열 하나의 True/False 줄은 20회차의 불리언 인덱싱에 그대로 쓸 수 있어요. 나이가 빈 승객만 골라 성별과 객실 등급을 봤어요.
+
+```python
+# 나이가 비어 있는 승객 수, 성별, 클래스
+empty_age = df['age'].isnull()
+print('나이 빈칸: ', empty_age.sum(), '명')
+df.loc[empty_age, ['sex', 'age', 'class']]
+```
+
+```text
+나이 빈칸:  177 명
+        sex  age   class
+5      male  NaN   Third
+17     male  NaN  Second
+19   female  NaN   Third
+26     male  NaN   Third
+28   female  NaN   Third
+..      ...  ...     ...
+859    male  NaN   Third
+863  female  NaN   Third
+868    male  NaN   Third
+878    male  NaN   Third
+888  female  NaN   Third
+
+[177 rows x 3 columns]
+```
+
+`df.loc[행 조건, 열 목록]`은 조건에 맞는 행에서 고른 열만 보여 줘요. `empty_age`는 다음 절에서 채운 결과를 확인할 때 다시 써요.
+
+## 5. 숫자 빈칸: 평균으로 채우고, 결과를 다시 넣는다
+
+숫자 열은 평균(`mean()`)이나 중앙값(`median()`)으로 채워요. 먼저 두 값을 봤어요.
+
+```python
+print("평균:", round(df['age'].mean()))
+print("중앙값:", round(df['age'].median()))
+```
+
+```text
+평균: 30
+중앙값: 28
+```
+
+`round()`가 정수로 반올림해서 평균 29.699가 30으로 찍혔어요. 수업에서는 평균 29.7로 채웠어요.
+
+`fillna(값)`은 빈칸(NaN)만 주어진 값으로 바꾼 **새 Series**를 돌려줘요. 원본은 그대로라서, 결과를 `df.loc[:, '열'] = ...`으로 다시 넣어야 해요. 20회차에 배운 `loc` 대입이 여기서 쓰여요.
+
+<Figure label="fillna는 채운 사본을 돌려준다">
+  <Boxes
+    row={[
+      { title: "df['age']", tone: "neutral", lines: ["22.0, 38.0, ..., `NaN` 177칸"] },
+      { arrow: "`.fillna(mean_age)`" },
+      { title: "새 Series", tone: "blue", lines: ["`NaN` 자리만 29.699118", "아직 df는 그대로예요"] },
+      { arrow: "`df.loc[:, 'age'] =`" },
+      { title: "df['age']", tone: "ok", lines: ["빈칸 0개"] },
+    ]}
+  />
+</Figure>
+
+```python
+mean_age = df['age'].mean()
+# fillna : 빈칸(NaN)만 주어진 값을 새로운 값으로 채우는 메소드 df['열'] = df['열'].fillna(새로운값)
+df.loc[:,'age'] = df['age'].fillna(mean_age)
+df.loc[empty_age, ['sex', 'age', 'class']].head()
+```
+
+```text
+       sex        age   class
+5     male  29.699118   Third
+17    male  29.699118  Second
+19   female  29.699118   Third
+26     male  29.699118   Third
+28   female  29.699118   Third
+```
+
+아까 `NaN`이던 5, 17, 19번 승객의 나이가 29.699118이 됐어요. 채우기 전에 만들어 둔 `empty_age`로 같은 승객들을 다시 고른 거예요.
+
+<Hint>
+채운 뒤에 평균과 중앙값 셀을 다시 실행하면 채운 값이 섞여요. 직접 해 보니 중앙값이 28에서 29.7로 바뀌었어요(`round`로 찍으면 30). 수업 노트북의 "중앙값: 30"은 셀을 다시 실행해서 나온 값이에요. 노트북은 셀을 실행한 순서대로 결과가 쌓인다는 것을 기억해요.
+</Hint>
+
+## 6. 글자 빈칸: 가장 많이 나온 값(최빈값)으로 채운다
+
+글자에는 평균이 없어요. 그래서 가장 많이 나온 값, 최빈값(mode)으로 채워요. 먼저 `value_counts(dropna=False)`로 값마다 몇 번 나왔는지 세요. `dropna=False`를 주면 `NaN`도 따로 세어서 채우기 전후를 비교할 수 있어요.
+
+```python
+# 탑승 항구 : 최빈값
+df['embark_town'].value_counts(dropna=False)
+```
+
+```text
+embark_town
+Southampton    644
+Cherbourg      168
+Queenstown      77
+NaN              2
+Name: count, dtype: int64
+```
+
+Southampton이 644명으로 가장 많아요. `mode()`로 최빈값을 꺼내 채웠어요.
+
+```python
+mode_town = df["embark_town"].mode()
+print('최빈값: ', mode_town)
+
+df.loc[:, "embark_town"] = df['embark_town'].fillna(mode_town)
+df['embark_town'].value_counts(dropna=False)
+```
+
+```text
+최빈값:  0    Southampton
+Name: embark_town, dtype: str
+embark_town
+Southampton    644
+Cherbourg      168
+Queenstown      77
+NaN              2
+```
+
+오류 메시지는 없는데 `NaN`이 그대로 2개예요. Southampton도 644 그대로예요. 다음 절에서 이유를 봐요.
+
+## 7. 조용한 버그: mode()는 값이 아니라 Series라서 짝을 못 찾는다
+
+`mode()`의 출력 맨 앞에 `0`이 붙어 있었어요. 최빈값이 여러 개일 수 있어서 `mode()`는 값 하나가 아니라 **인덱스 0 하나뿐인 Series**를 돌려줘요.
+
+`fillna`에 Series를 넘기면 같은 인덱스(행 번호)끼리 짝지어 채워요. 그런데 `embark_town`이 빈 행은 61번과 829번이에요. 넘긴 Series에는 0번밖에 없으니 짝이 없어서 아무것도 안 채워져요.
+
+<Figure label="fillna(Series)는 같은 행 번호끼리만 채운다">
+  <Boxes
+    row={[
+      { title: "mode_town", tone: "amber", lines: ["인덱스 `0`: Southampton", "이것 하나뿐이에요"] },
+      { arrow: "행 번호로 짝 찾기" },
+      { title: "빈칸 있는 행", tone: "red", dashed: true, lines: ["61번: 짝 없음, `NaN` 그대로", "829번: 짝 없음, `NaN` 그대로"] },
+    ]}
+  />
+</Figure>
+
+값 하나를 꺼내려면 `mode()[0]`이라고 써요. 그러면 `'Southampton'`이라는 글자 하나가 모든 빈칸에 들어가요.
+
+```python
+# 고친 코드: [0]으로 값 하나를 꺼낸다
+mode_town = df["embark_town"].mode()[0]          # 'Southampton'
+df.loc[:, "embark_town"] = df['embark_town'].fillna(mode_town)
+df['embark_town'].value_counts(dropna=False)
+```
+
+```text
+embark_town
+Southampton    646
+Cherbourg      168
+Queenstown      77
+Name: count, dtype: int64
+```
+
+빈칸 2개가 Southampton이 되어 644가 646이 됐어요. `NaN` 줄이 사라졌어요.
+
+## 8. 다른 열에서 만들기: str[0]이 글자마다 첫 글자를 꺼낸다
+
+`embarked`(탑승 항구 약자 S, C, Q)는 `embark_town`의 첫 글자예요. 그래서 따로 채우지 않고 `embark_town`에서 다시 만들었어요. `.str[0]`은 문자열마다 첫 글자를 꺼내요.
+
+```python
+# embarked town
+df.loc[:, 'embarked'] = df['embark_town'].str[0]
+df[['embarked', 'embark_town']].isnull().sum()
+```
+
+수업 노트북(`mode()` 그대로)에서는 이렇게 나왔어요.
+
+```text
+embarked       2
+embark_town    2
+dtype: int64
+```
+
+원본이 `NaN`이면 첫 글자도 `NaN`이에요. 7절의 버그로 `embark_town`이 안 채워져서 `embarked`도 2개가 남은 거예요. `mode()[0]`으로 고친 뒤에 실행하면 둘 다 0이 돼요.
+
+<Figure label="채우는 순서가 중요하다">
+  <Seq
+    steps={[
+      { title: "embark_town 먼저 채우기", body: "`fillna(mode()[0])`로 61번, 829번이 Southampton이 돼요." },
+      { title: "embarked 만들기", body: "`str[0]`이 Southampton에서 S를 꺼내요. 원본이 `NaN`이면 결과도 `NaN`이에요." },
+      { title: "다시 세기", body: "`isnull().sum()`이 `embarked` 0, `embark_town` 0이에요." },
+    ]}
+  />
+</Figure>
+
+## 9. category 열: 값 목록에 먼저 넣어야 채울 수 있다
+
+`deck`은 dtype이 `category`예요. category는 들어갈 수 있는 값 목록(`categories`)이 정해진 타입이에요. 객실 갑판은 A부터 G까지만 있어요.
+
+```python
+print(df['deck'].dtype)
+df['deck'].cat.categories
+```
+
+```text
+category
+Index(['A', 'B', 'C', 'D', 'E', 'F', 'G'], dtype='str')
+```
+
+목록에 없는 `'Unknown'`을 바로 채우면 거절돼요.
+
+```python
+df['deck'].fillna('Unknown')
+```
+
+```text
+TypeError: Cannot setitem on a Categorical with a new category (Unknown), set the categories first
+```
+
+메시지 끝의 "set the categories first"가 답이에요. `cat.add_categories('Unknown')`으로 목록부터 늘린 뒤 `fillna`해요.
+
+<Figure label="category는 명단에 있는 값만 들어간다">
+  <GateFlow
+    gates={[
+      { q: "'Unknown'이 명단(A~G)에 있나요?", yes: "있음", out: "있으면 바로 채워져요", outTone: "ok" },
+    ]}
+    pass={{ text: "없으면 TypeError, 먼저 명단에 추가해요", code: "df['deck'].cat.add_categories('Unknown').fillna('Unknown')", tone: "amber" }}
+    noLabel="없음"
+  />
+</Figure>
+
+```python
+df['deck'] = df['deck'].cat.add_categories('Unknown').fillna('Unknown')
+print(df['deck'].cat.categories.to_list())
+print(df['deck'].value_counts())
+```
+
+```text
+['A', 'B', 'C', 'D', 'E', 'F', 'G', 'Unknown']
+deck
+Unknown    688
+C           59
+B           47
+D           33
+E           32
+A           15
+F           13
+G            4
+Name: count, dtype: int64
+```
+
+수업 노트북에서는 `add_categories` 줄이 지금 주석 처리돼 있어요. 위 출력은 그 줄을 실행했을 때의 결과예요. 주석인 채로 다시 실행하면 목록에 `'Unknown'`이 없고 빈칸도 그대로예요.
+
+## 10. 다시 확인: isnull().sum()이 모두 0인지 본다
+
+채우기가 끝나면 처음에 쓴 `df.isnull().sum()`을 한 번 더 실행해요. 수업 노트북(7절 버그가 남은 상태)의 결과예요.
+
+```text
+survived       0
+pclass         0
+sex            0
+age            0
+sibsp          0
+parch          0
+fare           0
+embarked       2
+class          0
+who            0
+adult_male     0
+deck           0
+embark_town    2
+alive          0
+alone          0
+dtype: int64
+```
+
+`age`와 `deck`은 0이 됐지만 `embarked`, `embark_town`이 2로 남았어요. 이렇게 다시 세어 봐야 조용한 버그가 드러나요. `mode()[0]`으로 고치면 모두 0이에요.
+
+## 11. 튀는 값: 가운데 절반의 폭(IQR)으로 상한선을 긋는다
+
+요금(`fare`)의 최댓값 512.33은 다른 값보다 너무 커요. 이런 튀는 값(이상치)을 찾는 대표 방법이 IQR이에요.
+
+데이터를 크기 순으로 줄 세웠을 때 25% 지점이 Q1, 75% 지점이 Q3이에요. 그 사이 폭이 IQR(Q3 - Q1)이에요. Q3 + 1.5 × IQR을 넘으면 튀는 값으로 봐요.
+
+<Figure label="fare의 IQR과 상한선">
+  <Trail label="fare를 크기 순으로 세웠을 때" values={["Q1 7.91", "Q3 31.00", "IQR = 31.00 - 7.91 = 23.09", "상한선 = 31.00 + 1.5 × 23.09 = 65.63", "최댓값 512.33"]} />
+</Figure>
+
+`quantile(비율)`이 그 지점의 값을 구해요. `describe()`의 25%, 50%, 75%와 같은 값이에요.
+
+```python
+print(df['fare'].quantile([0.25,0.5,0.75]))
+df['fare'].describe()[["25%", "50%", "75%"]]
+```
+
+```text
+0.25     7.9104
+0.50    14.4542
+0.75    31.0000
+Name: fare, dtype: float64
+25%     7.9104
+50%    14.4542
+75%    31.0000
+Name: fare, dtype: float64
+```
+
+```python
+# IQR 계산 (Q3 - Q1)
+# 이상수치 Q3 + 1.5 * IQR
+
+q1 = df['fare'].quantile(0.25)
+q3 = df['fare'].quantile(0.75)
+iqr = q3 - q1
+upper = q3 + 1.5 * iqr
+
+print(f"Q1 = {q1:.2f}, Q3 = {q3:.2f} IQR = {iqr:.2f} UPPER = {upper:.2f}")
+print("이상 승선요금: ",(df["fare"] > upper).sum(), "명")
+```
+
+```text
+Q1 = 7.91, Q3 = 31.00 IQR = 23.09 UPPER = 65.63
+이상 승선요금:  116 명
+```
+
+`(df["fare"] > upper)`는 True/False 줄이라 `.sum()`이 상한선을 넘는 승객 수가 돼요. f-string의 `:.2f`는 소수 둘째 자리까지 찍어요.
+
+상한선을 넘는 116명을 다 지우지는 않았어요. 직접 세어 보니 116명 중 104명이 1등석이었어요. 1등석은 원래 요금이 비싸서, 다 지우면 1등석 승객 216명 중 절반 가까이가 사라져요. 그래서 최댓값 512.33만 따로 확인했어요.
+
+```python
+df[df['fare'] > 512]
+```
+
+```text
+     survived  pclass     sex   age  ...     deck embark_town alive  alone
+258         1       1  female  35.0  ...  Unknown   Cherbourg   yes   True
+679         1       1    male  36.0  ...        B   Cherbourg   yes  False
+737         1       1    male  35.0  ...        B   Cherbourg   yes   True
+
+[3 rows x 15 columns]
+```
+
+```python
+before = len(df)
+df = df[df['fare'] < 512].copy()
+print(before, "=>", len(df))
+```
+
+```text
+891 => 888
+```
+
+`df[조건]`은 조건에 맞는 행만 남긴 새 표예요. 그 표를 `df`에 다시 넣어야 지운 것이 돼요. `.copy()`는 원래 표와 끈이 끊긴 독립된 사본을 만들어, 나중에 이 표를 고칠 때 경고나 엉뚱한 결과가 나지 않게 해요.
+
+<Figure label="df = df[조건].copy()가 하는 일">
+  <Boxes
+    row={[
+      { title: "df (891행)", tone: "neutral", lines: ["요금 512.33인 세 행 포함"] },
+      { arrow: "`df['fare'] < 512`인 행만" },
+      { title: "새 표 (888행)", tone: "blue", lines: ["`.copy()`로 독립된 사본"] },
+      { arrow: "`df =`에 다시 넣기" },
+      { title: "df (888행)", tone: "ok", lines: ["이제부터 이 표를 써요"] },
+    ]}
+  />
+</Figure>
+
+## 12. 중복 행: 모든 열이 같아도 다른 사람일 수 있다
+
+`duplicated()`는 앞에 모든 열이 똑같은 행이 있으면 True예요. `.sum()`을 붙이면 그런 행의 수예요. `keep=False`를 주면 첫 행까지 포함해 중복 묶음 전부를 True로 보여 줘요.
+
+```python
+print("중복 행:", df.duplicated().sum(), '개')
+df[df.duplicated(keep=False)].sort_values(['fare', 'age']).head(5)
+```
+
+```text
+중복 행: 107 개
+     survived  pclass   sex        age  ...     deck  embark_town alive  alone
+277         0       2  male  29.699118  ...  Unknown  Southampton    no   True
+413         0       2  male  29.699118  ...  Unknown  Southampton    no   True
+466         0       2  male  29.699118  ...  Unknown  Southampton    no   True
+481         0       2  male  29.699118  ...  Unknown  Southampton    no   True
+674         0       2  male  29.699118  ...  Unknown  Southampton    no   True
+```
+
+<Figure label="duplicated()의 기본값과 keep=False">
+  <Boxes
+    row={[
+      { title: "duplicated()", tone: "neutral", lines: ["묶음의 첫 행은 False, 두 번째부터 True", "그래서 `.sum()`이 107이에요"] },
+      { title: "duplicated(keep=False)", tone: "blue", lines: ["묶음의 첫 행까지 모두 True", "중복된 행을 전부 눈으로 볼 때 써요"] },
+    ]}
+  />
+</Figure>
+
+107행이 중복으로 잡혔지만 지우지 않았어요. 이 데이터에는 이름이나 승객 번호 열이 없어서, 조건이 같은 다른 승객도 중복으로 잡혀요. 위 다섯 명도 나이를 같은 평균으로 채운 2등석 남자 승객들이라 같아 보이는 거예요. 그래서 확인만 했어요.
+
+## 13. 그림으로 보기: 히스토그램과 한글 글꼴
+
+히스토그램은 값을 구간(`bins`)으로 나눠 구간마다 몇 명인지 막대로 그려요. matplotlib은 기본 글꼴에 한글이 없어서 제목이 네모로 깨져요. 그래서 운영체제에 맞는 한글 글꼴을 먼저 정해요. 맥은 `AppleGothic`, 윈도우는 `Malgun Gothic`이에요.
+
+```python
+import platform
+import matplotlib.pyplot as plt
+
+os_name = platform.system()
+if os_name == "Windows":
+    plt.rcParams['font.family'] = "Malgun Gothic"
+elif os_name == "Darwin":
+    plt.rcParams["font.family"] = "AppleGothic"
+
+# 나이 분포 차트
+fig, ax = plt.subplots(figsize=(6,4))
+ax.hist(df["age"], bins = 20, color="blue", edgecolor="black")
+ax.set_title("나이분포")
+ax.set_xlabel("나이(세)")
+```
+
+```text
+Text(0.5, 0, '나이(세)')
+```
+
+`platform.system()`은 맥에서 `Darwin`을 돌려줘요. `plt.subplots(figsize=(6,4))`는 가로 6, 세로 4인치 그림판(`fig`)과 그 위의 그래프 한 칸(`ax`)을 만들어요. 셀 아래 `Text(...)` 줄은 마지막 줄 `set_xlabel`의 반환값이라 무시해도 돼요. 그 아래에 그래프가 나와요.
+
+<Figure label="그래프를 그리는 순서">
+  <Seq
+    steps={[
+      { title: "한글 글꼴 정하기", body: "`plt.rcParams['font.family'] = 'AppleGothic'`" },
+      { title: "그림판과 칸 만들기", body: "`fig, ax = plt.subplots(figsize=(6, 4))`" },
+      { title: "막대 그리기", body: "`ax.hist(df['age'], bins=20)`, 막대 색은 `color`, 테두리는 `edgecolor`" },
+      { title: "이름 붙이기", body: "`ax.set_title('나이분포')`, `ax.set_xlabel('나이(세)')`" },
+    ]}
+  />
+</Figure>
+
+그래프에는 막대 하나가 혼자 우뚝 솟아 있어요. 직접 세 보니 28.3~32.3세 구간이 261명이었어요. 다른 구간은 많아야 98명이에요. 빈 나이 177개를 모두 평균 29.7로 채워서 그 막대에 몰린 거예요. 아래에서 채우는 방법을 바꿔 보세요.
+
+<AgeFillHistogram />
+
+평균이든 중앙값이든 한 값으로 채우면 분포가 그 값 한 곳으로 쏠려요. 오늘은 가장 쉬운 방법으로 채웠고, 이런 부작용이 있다는 것을 그래프로 확인한 거예요.
+
+## 오늘 꼭 기억할 주의점
+
+- 처음 받은 데이터는 `shape`, `info()`, `describe()` 순서로 봐요. `info()`의 Non-Null Count가 행 수보다 작으면 빈칸이 있어요.
+- `fillna`는 채운 사본을 돌려줘요. `df.loc[:, '열'] = df['열'].fillna(값)`처럼 다시 넣어야 표가 바뀌어요.
+- `mode()`는 Series예요. `fillna(df['열'].mode())`는 오류 없이 빈칸을 그대로 둬요. 값 하나는 `mode()[0]`으로 꺼내요.
+- category 열은 목록에 없는 값을 못 넣어요. `cat.add_categories('Unknown')`으로 목록부터 늘려요.
+- `str[0]`은 원본이 `NaN`이면 결과도 `NaN`이에요. 바탕이 되는 열을 먼저 채워요.
+- 채운 뒤에 평균, 중앙값 셀을 다시 실행하면 채운 값이 섞인 결과가 나와요.
+- 채우기가 끝나면 `isnull().sum()`을 꼭 다시 세요. 조용한 버그는 다시 세어야 보여요.
+- IQR 상한선을 넘는 값을 무조건 지우지 않아요. 극단값만 확인하고, 지운 결과는 `df = df[조건].copy()`로 다시 넣어요.
+- 이름이나 승객 번호가 없는 표에서 `duplicated()`는 다른 사람도 중복으로 잡아요. 세어 보고 판단해요.
+- 한글 그래프는 글꼴부터 정해요. 맥은 `AppleGothic`이에요.
+- 한 값으로 빈칸을 채우면 히스토그램에 막대 하나가 솟아요. 평균 채우기는 분포를 가운데로 쏠리게 해요.

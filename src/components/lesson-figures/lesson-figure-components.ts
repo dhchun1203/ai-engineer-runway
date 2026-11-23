@@ -34,6 +34,7 @@ import { TruncateSerialSimulator } from "@/components/lesson-figures/truncate-se
 import { PandasMaskSimulator } from "@/components/lesson-figures/pandas-mask-simulator";
 import { CafeBulkToggle, CafeHourChart } from "@/components/lesson-figures/cafe-mini-charts";
 import { CafeApiPlayground } from "@/components/lesson-figures/cafe-api-playground";
+import { AgeFillHistogram } from "@/components/lesson-figures/age-fill-histogram";
 
 // 레슨 본문 그림 부품 맵. 리더 페이지가 <MDXContent components={lessonFigureComponents} />로
 // 넘긴다. MDX에서 부르는 이름과 키가 정확히 같아야 한다. 레슨 전용 시뮬레이터(CartSimulator
@@ -73,4 +74,5 @@ export const lessonFigureComponents: Record<string, ComponentType> = {
   CafeHourChart: CafeHourChart as ComponentType,
   CafeBulkToggle: CafeBulkToggle as ComponentType,
   CafeApiPlayground: CafeApiPlayground as ComponentType,
+  AgeFillHistogram: AgeFillHistogram as ComponentType,
 };
