@@ -1074,9 +1074,14 @@ print(w2.get_money())   # 2000
 
 ```python
 w4 = Wallet()   # 두 메서드로 고친 Wallet
-w4.set_money(2000); print(w4.get_money())   # 2000
-w4.add_money(500);  print(w4.get_money())   # 2500
-w4.add_money(0)                             # 잘못된 값입니다.
+
+w4.set_money(2000)
+print(w4.get_money())   # 2000
+
+w4.add_money(500)
+print(w4.get_money())   # 2500
+
+w4.add_money(0)         # 잘못된 값입니다.
 ```
 
 더하기는 0을 넣어도 의미가 없으니 `amount > 0`으로 막았어요. 함수 이름을 `ask_`, `show_`로 맞춘 것처럼, 메서드 이름도 하는 일과 맞춰 두는 게 좋아요.

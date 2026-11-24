@@ -26,6 +26,7 @@ src/content/class-lessons/NN-<주제 영문 kebab>/
 - **훑기 형태(2026-11-24 사용자 결정).** 다시 복습할 때 빠르게 훑으며 핵심만 떠올리도록, 핵심만 펼치고 나머지는 `<details>`로 접는다. 펼친 분량은 한 편 3~5분(읽기 시간은 접힌 칸을 빼고 잰다). 설계: `docs/superpowers/specs/2026-11-24-class-lessons-skim-design.md`.
 - **교육기관명 금지.** 원본 노트의 폴더, 저장소, 경로, 예시에 기관명이 있으면 `my-project`, `old-project`처럼 바꾼다. 항상 "AI Engineer 교육과정"으로 쓴다.
 - 가운데점(·), 긴 하이픈(—), ─ 글리프, 이모지 금지. 한국어는 2~3문장마다 문단을 끊는다.
+- **코드는 한 줄에 한 문장(2026-11-25 사용자 지시).** `;`로 여러 문장을 한 줄에 붙이지 않는다. 설명 주석은 코드 뒤에 길게 달지 말고 그 줄 위에 따로 쓴다(짧은 결과 주석 `# 2000` 정도만 뒤에 둔다). 인자가 많아 화면을 넘는 호출은 쉼표 뒤에서 줄을 바꾼다. 요약 블록에 서로 다른 일(글꼴 설정, 선 그래프, 박스플롯)을 몰아 넣지 말고 빈 줄과 위 주석으로 묶음을 나눈다. 검사: 코드 블록 줄 너비(한글 2칸) 72 이하.
 - **명령 출력은 직접 실행해 본 값만 쓴다.** 세션 scratchpad에 임시 저장소를 만들어 돌린다. git 설정은 `GIT_CONFIG_GLOBAL=<scratchpad>/gitconfig`로 임시 파일을 써서 사용자의 실제 설정을 건드리지 않는다.
 - 이미 쓴 퀴즈 문항 id는 바꾸지 않는다(오답 기록 키 `cl:<slug>:<id>`).
 - **모든 회차는 맥(macOS, zsh) 기준으로 쓴다**(2026-11-21 사용자 지시, 1~19회차도 맥 기준으로 고쳐 둠). 설치는 `brew`, 가상환경은 `source .venv/bin/activate`, 파이썬 실행은 `uv run`(맥에는 `python` 명령이 없다), Docker 엔진은 Colima(`colima start`), 키는 `Cmd`/`Option`(터미널 단축키와 VS Code 셀 실행 `Ctrl + Enter`는 그대로 control), 대괄호 든 패키지는 `uv add "psycopg[binary]"`처럼 따옴표. `winget`, Git Bash, `MSYS_NO_PATHCONV`, `//tmp`, Docker Desktop, PowerShell 안내는 쓰지 않는다. 교안이 윈도우 기준이면 맥 명령으로 바꿔 쓰고, 교안과 달라진 점은 한 줄(또는 짧은 TwistBox)로만 알린다. 작업 환경이 맥이므로 명령과 출력은 이 맥의 zsh에서 직접 실행해 확인한다(경로 `/opt/homebrew` 같은 맥 전용 값도 직접 확인한 값을 쓴다). 컨테이너가 필요한 실습은 Colima로 돌린다. 맥 셋업 안내는 `/class/mac-setup`(src/content/guides/mac-setup.mdx).

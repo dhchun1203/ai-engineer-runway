@@ -87,11 +87,20 @@ code .
 캔버스(Figure)와 그래프 칸(Axes)을 만들고, `ax`에 그린 뒤 제목과 축 이름을 붙여요. `label`을 준 뒤 `legend()`를 불러야 범례가 나와요.
 
 ```python
-plt.rcParams["font.family"] = "AppleGothic"   # 한글 글꼴(맥), 먼저 정한다
+# 한글 글꼴(맥)은 맨 먼저 정한다
+plt.rcParams["font.family"] = "AppleGothic"
+
+# 선 그래프 (산점도는 scatter, 히스토그램은 hist)
 fig, ax = plt.subplots(figsize=(6, 3))
-ax.plot(x, y, marker="o", label="매출")       # 선. scatter는 산점도, hist는 히스토그램
-ax.set_title("제목"); ax.legend(); plt.show()
-sns.boxplot(x="class", y="fare", data=df, ax=ax, hue="class", palette="Set2", legend=False)
+ax.plot(x, y, marker="o", label="매출")
+ax.set_title("제목")
+ax.legend()
+plt.show()
+
+# 박스플롯 (그룹별 분포)
+fig, ax = plt.subplots(figsize=(10, 3))
+sns.boxplot(x="class", y="fare", data=df, ax=ax,
+            hue="class", palette="Set2", legend=False)
 ```
 
 > **따라 하기:** 실습 노트북 2절의 두 칸을 실행해요. 꺾은선 하나(6월 192가 가장 높고 범례 `매출`)와 상자 세 개(First가 가장 넓고 위로 튀는 점이 많다)가 나오면 맞아요.
@@ -145,12 +154,25 @@ plt.show()                          # 차트 그리기
 ### 그래프 문법 모음
 
 ```python
-fig, ax = plt.subplots(figsize=(6, 3))       # 가로 6, 세로 3인치 캔버스와 그래프 칸
-ax.plot(x, y, marker="o", label="이름")      # 선
-ax.scatter(x, y, alpha=0.6)                  # 산점도 (alpha: 투명도, 0이면 투명 1이면 불투명)
-ax.hist(값, bins=20)                         # 히스토그램 (값을 20구간으로 나눠 센다)
-ax.set_title("제목"); ax.set_xlabel("x"); ax.set_ylabel("y")
-ax.legend()                                  # 범례 (label을 준 것만)
+# 가로 6, 세로 3인치 캔버스와 그래프 칸
+fig, ax = plt.subplots(figsize=(6, 3))
+
+# 선
+ax.plot(x, y, marker="o", label="이름")
+
+# 산점도 (alpha: 투명도, 0이면 투명 1이면 불투명)
+ax.scatter(x, y, alpha=0.6)
+
+# 히스토그램 (값을 20구간으로 나눠 센다)
+ax.hist(값, bins=20)
+
+# 제목과 축 이름
+ax.set_title("제목")
+ax.set_xlabel("x")
+ax.set_ylabel("y")
+
+# 범례 (label을 준 것만)
+ax.legend()
 plt.show()
 ```
 
@@ -168,7 +190,8 @@ import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots(figsize=(10, 3))
 
-sns.boxplot(x="class", y="fare", data=df, ax=ax, hue="class", palette="Set2", legend=False)
+sns.boxplot(x="class", y="fare", data=df, ax=ax,
+            hue="class", palette="Set2", legend=False)
 ```
 
 같은 데이터로 등급별 요금을 숫자로 찍어 보면 그림이 무엇을 보여 주는지 알 수 있어요.
@@ -194,9 +217,14 @@ Third   491.0  13.7  11.8  0.0   7.8   8.0  15.5   69.6
 `corr`은 1에 가까울수록 한쪽이 커질 때 다른 쪽도 커진다는 뜻이에요. 미국 주택 300채는 면적과 가격이 0.08이었는데, 조건으로 골라낸 10채만 보면 0.89였어요. 표본이 작거나 골라낸 데이터만 보면 관계가 강해 보일 수 있어요.
 
 ```python
-house["SquareFeet"].corr(house["Price"])   # 0.08 (300채)
-small["SquareFeet"].corr(small["Price"])   # 0.89 (2015년 이후, 범죄율 40 미만 10채)
-office["area"].corr(office["price"])       # 0.896 (오피스텔 200건, 면적으로 가격을 설명하기 좋다)
+# 미국 주택 300채: 0.08
+house["SquareFeet"].corr(house["Price"])
+
+# 2015년 이후, 범죄율 40 미만 10채: 0.89
+small["SquareFeet"].corr(small["Price"])
+
+# 오피스텔 200건: 0.896 (면적으로 가격을 설명하기 좋다)
+office["area"].corr(office["price"])
 ```
 
 > **따라 하기:** 실습 노트북 3절의 세 칸을 실행해요. `datasets/usa_housing.csv`(수업 자료)가 있어야 해요. 마지막 칸에서 `0.08`과 `0.89`가 나오면 맞아요. 파일이 없으면 이 절만 건너뛰어요.
@@ -228,7 +256,8 @@ import matplotlib.pyplot as plt
 
 plt.figure(figsize=(8,4))
 plt.scatter(house['SquareFeet'], house['Price'], alpha=0.4, label="전체 300채")
-plt.scatter(small["SquareFeet"], small['Price'], color="red", s=50, label="2015이후 건축")
+plt.scatter(small["SquareFeet"], small['Price'],
+            color="red", s=50, label="2015이후 건축")
 plt.xlabel("면적")
 plt.ylabel("가격")
 plt.legend()
@@ -268,10 +297,17 @@ print("10채의 상관계수:", round(small["SquareFeet"].corr(small["Price"]),2
 
 ```python
 rng = np.random.default_rng(40)
-area = rng.uniform(20, 85, 200)                                        # 20 이상 85 미만에서 고르게
-price = (area * 450 + 5000 + rng.normal(0, 2500, 200)).round(-1)       # 평균 0 근처에 몰린 잡음, 10원 단위
-special = rng.choice(200, 5, replace=False)                            # 0~199에서 중복 없이 5개
-price[special] += rng.uniform(15000, 25000, 5).round(-1)               # 특이매물은 더 비싸게
+
+# 면적: 20 이상 85 미만에서 고르게
+area = rng.uniform(20, 85, 200)
+
+# 가격: 평균 0 근처에 몰린 잡음을 더하고 10원 단위로
+noise = rng.normal(0, 2500, 200)
+price = (area * 450 + 5000 + noise).round(-1)
+
+# 특이매물: 0~199에서 중복 없이 5개를 골라 더 비싸게
+special = rng.choice(200, 5, replace=False)
+price[special] += rng.uniform(15000, 25000, 5).round(-1)
 ```
 
 > **따라 하기:** 실습 노트북 4절의 세 칸을 실행해요. `describe()`의 price 평균이 `29138.4`, 마지막 칸의 상관계수가 `0.896`이면 맞아요. `datasets` 폴더에 `office.csv`가 생겨요.
@@ -288,7 +324,8 @@ price[special] += rng.uniform(15000, 25000, 5).round(-1)               # 특이�
 rng = np.random.default_rng(40)
 
 n = 200
-area = rng.uniform(20, 85, n) # 20 이상 85 미만에서 균등하게 n개 만큼 난수 발생
+# 20 이상 85 미만에서 균등하게 n개 만큼 난수 발생
+area = rng.uniform(20, 85, n)
 
 # 선형회귀
 # y = wx + b
@@ -297,7 +334,8 @@ area = rng.uniform(20, 85, n) # 20 이상 85 미만에서 균등하게 n개 만�
 price = (area * 450 + 5000 + rng.normal(0, 2500, n)).round(-1)
 
 # 특이 매물 5건 생성
-special = rng.choice(n, 5, replace=False) # replace = False 같은 번호를 중복해서 뽑지 않는다.
+# replace = False 같은 번호를 중복해서 뽑지 않는다.
+special = rng.choice(n, 5, replace=False)
 price[special] += rng.uniform(15000, 25000, 5).round(-1)
 
 office = pd.DataFrame({'area':area, "price": price})
@@ -338,8 +376,11 @@ office.to_csv("./datasets/office.csv", index=False)
 seed가 같으면 처음부터 같은 순서로 같은 값이 나와요. 직접 두 번 만들어 보면 둘 다 같아요.
 
 ```python
-r = np.random.default_rng(40); print(r.uniform(20, 85, 3))
-r = np.random.default_rng(40); print(r.uniform(20, 85, 3))
+r = np.random.default_rng(40)
+print(r.uniform(20, 85, 3))
+
+r = np.random.default_rng(40)
+print(r.uniform(20, 85, 3))
 ```
 
 ```text
@@ -367,7 +408,8 @@ r = np.random.default_rng(40); print(r.uniform(20, 85, 3))
 # 캔버스(Figure) 생성
 plt.figure(figsize=(8,5))
 # 산점도 차트
-plt.scatter(office['area'], office["price"], alpha=0.6) # 알파는 점의 투명도
+# 알파는 점의 투명도
+plt.scatter(office['area'], office["price"], alpha=0.6)
 # 타이틀과 x, y 레이블
 plt.title("오피스텔 시세 200건")
 plt.xlabel("면적")
@@ -389,12 +431,23 @@ print("상관계수 : ", (office["area"].corr(office["price"])).round(3))
 
 ```python
 from sklearn.linear_model import LinearRegression
-X = office[["area"]]                    # 대괄호 두 겹: DataFrame (200, 1)
-y = office["price"]                     # 대괄호 한 겹: Series (200,)
+
+# 입력은 대괄호 두 겹: DataFrame (200, 1)
+X = office[["area"]]
+
+# 정답은 대괄호 한 겹: Series (200,)
+y = office["price"]
+
+# 학습
 model = LinearRegression()
-model.fit(X, y)                         # 학습
-model.coef_[0], model.intercept_        # 439.46, 5926.68
-model.predict(pd.DataFrame({"area": [33, 59]})).round(-1)   # [20430., 31850.]
+model.fit(X, y)
+
+# 기울기와 절편: 약 439.46, 약 5926.68
+print(model.coef_[0], model.intercept_)
+
+# 예측: [20430. 31850.]
+new = pd.DataFrame({"area": [33, 59]})
+print(model.predict(new).round(-1))
 ```
 
 > **따라 하기:** 실습 노트북 5절의 칸들을 실행해요. `기울기 w = 439.46`, `array([20430., 31850.])`, 점들을 가로지르는 빨간 직선이 나오면 맞아요. 중간의 주석 칸은 `#`을 지워 X를 한 겹으로 꺼냈을 때의 오류를 직접 봐요.
@@ -486,7 +539,8 @@ line_pred = model.predict(line)
 # 캔버스(Figure) 생성
 plt.figure(figsize=(8,5))
 # 산점도 차트
-plt.scatter(office['area'], office["price"], alpha=0.6, label="실제 시세") # 알파는 점의 투명도
+# 알파는 점의 투명도
+plt.scatter(office['area'], office["price"], alpha=0.6, label="실제 시세")
 # 모델의 직선
 plt.plot(line["area"], line_pred, color="red", label="모델의 직선")
 
@@ -527,7 +581,8 @@ R² 0.803은 가격 차이의 약 80%를 면적으로 설명한다는 뜻이에�
 ```python
 # [셀 11] 평가 지표
 # MAE, MSE, RMSE
-from sklearn.metrics import mean_absolute_error, mean_squared_error, root_mean_squared_error, r2_score
+from sklearn.metrics import (mean_absolute_error, mean_squared_error,
+                             root_mean_squared_error, r2_score)
 # MAE: 오차 절댓값의 평균 => 평균적으로 얼마만큼 틀리나?
 print(f"MAE = {mean_absolute_error(y,y_pred):,.0f}")
 # MSE: 오차 제곱의 평균 (단위 제곱)

@@ -32,7 +32,8 @@ quiz:
       import pandas as pd
       from sklearn.linear_model import LinearRegression
 
-      office = pd.DataFrame({"area": [20, 40, 60], "price": [14000, 23000, 32000]})
+      office = pd.DataFrame({"area": [20, 40, 60],
+                             "price": [14000, 23000, 32000]})
       model = LinearRegression()
       model.fit(office["area"], office["price"])
     options:
