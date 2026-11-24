@@ -1,0 +1,643 @@
+---
+title: "점 200개에 직선 하나 긋기: 그래프, 상관계수, 첫 선형회귀"
+session: 22
+date: "2026-11-24"
+summary: "matplotlib과 seaborn으로 선, 산점도, 박스플롯을 그리고, corr로 두 값의 관계를 숫자로 재요. seed를 고정해 만든 오피스텔 200건으로 첫 선형회귀를 학습해 가격을 예측하고, MAE, RMSE, R²로 얼마나 틀리는지 채점해요."
+slug: "22-matplotlib-corr-linear-regression"
+module: "1-5"
+topic: "머신러닝"
+preStudy: ["1-5-ml-model-types"]
+---
+
+데이터를 그림으로 보고, 두 값의 관계를 숫자(상관계수)로 잰 뒤, 첫 머신러닝 모델인 선형회귀로 오피스텔 가격을 예측한 날이에요. "면적이 넓으면 비싸다"를 직선 하나로 표현하고, 그 직선이 얼마나 틀리는지까지 쟀어요.
+
+각 절의 "자세히 보기"를 펼치면 전체 코드와 출력이 있어요(맥, Python 3.14, NumPy 2.5.5, pandas 3.1.1, scikit-learn 1.9.1로 직접 실행해 확인). 끝에 복습 퀴즈 5문항이 있어요.
+
+## 1. 오늘의 흐름: 그리고, 재고, 맞추고, 채점한다
+
+<Figure label="오늘 노트북의 순서">
+  <Seq
+    steps={[
+      { title: "그리기", body: "선, 히스토그램, 산점도, 박스플롯으로 데이터를 눈으로 봐요." },
+      { title: "관계 재기", body: "`corr`로 두 열이 함께 움직이는 정도를 -1~1로 재요." },
+      { title: "데이터 만들기", body: "`price = 450 × area + 5000 + 잡음`, 특이매물 5건은 더 비싸게." },
+      { title: "학습", body: "`model.fit(X, y)`가 기울기 w와 절편 b를 찾아요." },
+      { title: "예측", body: "`model.predict(새 면적)`이 가격을 돌려줘요." },
+      { title: "채점", body: "MAE, RMSE, R²로 예측이 실제와 얼마나 다른지 재요." },
+    ]}
+  />
+</Figure>
+
+<details>
+<summary>자세히 보기</summary>
+
+### 준비: 지난 프로젝트에 scikit-learn을 더한다
+
+21회차에 seaborn과 matplotlib을 넣은 uv 프로젝트를 그대로 써요. 선형회귀 모델은 scikit-learn(불러올 때 이름은 `sklearn`)에 들어 있어서 하나를 더 넣어요.
+
+```bash
+uv add scikit-learn
+```
+
+### 오늘의 지도
+
+| 단계 | 코드 | 하는 일 |
+| --- | --- | --- |
+| 데이터 만들기 | `price = 450 × area + 5000 + 잡음` | 특이매물 5건은 가격을 더 올려요 |
+| 학습 | `model.fit(X, y)` | 기울기 w, 절편 b를 찾아요 |
+| 예측 | `model.predict(새 면적)` | 가격을 돌려줘요 |
+| 평가 | MAE, RMSE, R² | 예측이 실제와 얼마나 다른지 재요 |
+
+노트북은 두 개예요. 21회차의 `01_ml.ipynb`에 박스플롯 셀을 하나 더하고, 새 노트북 `02_ml.ipynb`에서 나머지를 했어요.
+
+</details>
+
+## 2. 그래프는 질문으로 고른다: 흐름은 선, 분포는 히스토그램, 관계는 산점도, 그룹은 박스플롯
+
+캔버스(Figure)와 그래프 칸(Axes)을 만들고, `ax`에 그린 뒤 제목과 축 이름을 붙여요. `label`을 준 뒤 `legend()`를 불러야 범례가 나와요.
+
+```python
+plt.rcParams["font.family"] = "AppleGothic"   # 한글 글꼴(맥), 먼저 정한다
+fig, ax = plt.subplots(figsize=(6, 3))
+ax.plot(x, y, marker="o", label="매출")       # 선. scatter는 산점도, hist는 히스토그램
+ax.set_title("제목"); ax.legend(); plt.show()
+sns.boxplot(x="class", y="fare", data=df, ax=ax, hue="class", palette="Set2", legend=False)
+```
+
+<details>
+<summary>자세히 보기</summary>
+
+### 보고 싶은 것에 따라 그래프를 고른다
+
+<Figure label="질문에 맞는 그래프">
+  <Boxes
+    row={[
+      { title: "선 ax.plot", tone: "blue", lines: ["시간에 따라 어떻게 변하나", "월별 매출"] },
+      { title: "히스토그램 ax.hist", tone: "neutral", lines: ["한 값이 어디에 몰렸나", "21회차 나이 분포"] },
+      { title: "산점도 ax.scatter", tone: "rust", lines: ["두 값이 함께 움직이나", "면적과 가격"] },
+      { title: "박스플롯 sns.boxplot", tone: "neutral", lines: ["그룹마다 분포와 튀는 값", "객실 등급별 요금"] },
+    ]}
+  />
+</Figure>
+
+### 선 그래프: My Mall 월 매출 (`02_ml.ipynb` 셀 1)
+
+```python
+import numpy as np
+import pandas as pd
+import seaborn as sns # 통계 그래프 라이브러리
+import matplotlib.pyplot as plt
+
+# 한글 폰트 설정
+#plt.rcParams["font.family"] = "Malgun Gothic"   # Windows OS
+plt.rcParams["font.family"] = "AppleGothic"     # 맥 OS
+
+# Figure(캔버스), Axes(그래프)
+fig, ax = plt.subplots(figsize=(6, 3))
+# X축 데이터 (월)
+months = ["1월", "2월", "3월", "4월", "5월", "6월"]
+# Y축 데이터 (매출액, 만원)
+sales = [120, 135, 120, 160, 170, 192]
+
+# 선 그래프
+ax.plot(months, sales, marker="o", label="매출")
+ax.set_title("My Mall 월 매출")     # 그래프 제목
+ax.set_xlabel("월")
+ax.set_ylabel("매출(만원)")
+ax.legend()                         # 범례 표시
+plt.show()                          # 차트 그리기
+```
+
+`marker="o"`는 값마다 동그라미를 찍어요. `legend()`는 `label`을 준 것만 범례에 넣어요. 한글 글꼴을 정하지 않으면 제목과 축의 한글이 네모로 깨지니 첫 셀에서 정해요. 21회차에 본 것처럼 맥은 `AppleGothic`, 윈도우는 `Malgun Gothic`이에요.
+
+### 그래프 문법 모음
+
+```python
+fig, ax = plt.subplots(figsize=(6, 3))       # 가로 6, 세로 3인치 캔버스와 그래프 칸
+ax.plot(x, y, marker="o", label="이름")      # 선
+ax.scatter(x, y, alpha=0.6)                  # 산점도 (alpha: 투명도, 0이면 투명 1이면 불투명)
+ax.hist(값, bins=20)                         # 히스토그램 (값을 20구간으로 나눠 센다)
+ax.set_title("제목"); ax.set_xlabel("x"); ax.set_ylabel("y")
+ax.legend()                                  # 범례 (label을 준 것만)
+plt.show()
+```
+
+셀 4와 7처럼 `plt.figure(figsize=(8, 4))`로 캔버스를 만들고 `plt.scatter`, `plt.xlabel`처럼 `plt.`에 바로 그리는 방법도 있어요. 그래프가 하나뿐이면 둘 다 같은 그림이 나와요. 칸을 여러 개 나눌 때는 `ax`쪽이 헷갈리지 않아요.
+
+### 박스플롯: 객실 등급별 요금 (`01_ml.ipynb` 추가 셀)
+
+21회차의 타이타닉 `df`로 그렸어요. 상자는 25%~75% 구간, 가운데 선은 중앙값, 수염 밖의 점은 튀는 값이에요. 21회차에 IQR로 계산한 "튀는 값"을 그림으로 보는 거예요.
+
+```python
+import numpy as np
+import pandas as pd
+import seaborn as sns # 통계 그래프 라이브러리
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(10, 3))
+
+sns.boxplot(x="class", y="fare", data=df, ax=ax, hue="class", palette="Set2", legend=False)
+```
+
+같은 데이터로 등급별 요금을 숫자로 찍어 보면 그림이 무엇을 보여 주는지 알 수 있어요.
+
+```text
+        count  mean   std  min   25%   50%   75%    max
+class                                                  
+First   216.0  84.2  78.4  0.0  30.9  60.3  93.5  512.3
+Second  184.0  20.7  13.4  0.0  13.0  14.2  26.0   73.5
+Third   491.0  13.7  11.8  0.0   7.8   8.0  15.5   69.6
+```
+
+1등석은 상자가 넓고 위로 튀는 점이 많아요(최대 512.3). 2, 3등석은 상자가 낮고 좁아요.
+
+<Hint>
+`hue="class", legend=False`는 색을 칠하기 위한 거예요. `palette`만 주고 `hue`를 빼면 seaborn 0.13.2가 "앞으로 없어질 방식"이라는 FutureWarning을 띄워요. x와 같은 열을 `hue`로 주고 범례는 끄는 것이 지금 권하는 방법이에요. 실행하면 matplotlib 3.11의 `vert` 경고가 함께 나올 수 있는데, seaborn 안쪽 문제라 그림은 그대로 나와요.
+</Hint>
+
+</details>
+
+## 3. 상관계수: 함께 움직이는 정도를 -1~1로, 골라낸 10채는 믿지 않는다
+
+`corr`은 1에 가까울수록 한쪽이 커질 때 다른 쪽도 커진다는 뜻이에요. 미국 주택 300채는 면적과 가격이 0.08이었는데, 조건으로 골라낸 10채만 보면 0.89였어요. 표본이 작거나 골라낸 데이터만 보면 관계가 강해 보일 수 있어요.
+
+```python
+house["SquareFeet"].corr(house["Price"])   # 0.08 (300채)
+small["SquareFeet"].corr(small["Price"])   # 0.89 (2015년 이후, 범죄율 40 미만 10채)
+office["area"].corr(office["price"])       # 0.896 (오피스텔 200건, 면적으로 가격을 설명하기 좋다)
+```
+
+<details>
+<summary>자세히 보기</summary>
+
+### 미국 주택 300채 (`02_ml.ipynb` 셀 2~4)
+
+`usa_housing.csv`는 수업 자료라서 이 절의 숫자는 수업 노트북 출력 그대로예요.
+
+```python
+# [셀 2] 미국 주택 데이터
+house = pd.read_csv('./datasets/usa_housing.csv')
+print(house.shape)
+house.describe()
+
+# [셀 3] 조건으로 10채 고르기
+small = house[(house["YearBuilt"] > 2015) & (house["CrimeRate"] < 40)]
+small.shape
+small
+```
+
+조건 두 개는 20회차에 배운 대로 괄호로 묶고 `&`로 이어요. 셀 3처럼 한 셀에 `small.shape`와 `small`을 나란히 쓰면 노트북은 마지막 줄(`small`)만 보여 줘요. 둘 다 보려면 `print(small.shape)`로 찍어요.
+
+```python
+# [셀 4] 산점도와 상관계수
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(8,4))
+plt.scatter(house['SquareFeet'], house['Price'], alpha=0.4, label="전체 300채")
+plt.scatter(small["SquareFeet"], small['Price'], color="red", s=50, label="2015이후 건축")
+plt.xlabel("면적")
+plt.ylabel("가격")
+plt.legend()
+plt.show()
+
+
+print("전체 300채의 상관계수:", round(house["SquareFeet"].corr(house["Price"]),2))
+print("10채의 상관계수:", round(small["SquareFeet"].corr(small["Price"]),2))
+```
+
+```text
+전체 300채의 상관계수: 0.08
+10채의 상관계수: 0.89
+```
+
+`scatter`를 두 번 부르면 한 그래프에 겹쳐 그려져요. 10채는 `color="red"`, `s=50`(점 크기)으로 눈에 띄게 했어요.
+
+### 상관계수 읽는 법
+
+<Figure label="상관계수는 -1에서 1 사이">
+  <Boxes
+    row={[
+      { title: "1에 가깝다", tone: "blue", lines: ["한쪽이 커지면 다른 쪽도 커진다", "오피스텔 면적과 가격 0.896"] },
+      { title: "0에 가깝다", tone: "neutral", lines: ["함께 움직이지 않는다", "미국 주택 300채 0.08"] },
+      { title: "-1에 가깝다", tone: "rust", lines: ["한쪽이 커지면 다른 쪽은 작아진다"] },
+    ]}
+  />
+</Figure>
+
+0.08이던 300채에서 조건에 맞는 10채만 골랐더니 0.89가 됐어요. 10채만 보면 "면적이 넓으면 비싸다"가 아주 강해 보이지만 전체에서는 거의 관계가 없어요. 골라낸 작은 표본으로 결론을 내리면 안 되는 이유예요.
+
+</details>
+
+## 4. seed를 고정하면 누가 돌려도 같은 가짜 데이터가 나온다
+
+`default_rng(40)`처럼 seed를 고정하면 난수가 항상 같아서 결과를 비교할 수 있어요. 직접 같은 코드를 돌려 보니 수업에서 저장한 `office.csv`와 값이 완전히 같았고, 특이매물 번호도 `[53 13 2 92 71]`로 같았어요.
+
+```python
+rng = np.random.default_rng(40)
+area = rng.uniform(20, 85, 200)                                        # 20 이상 85 미만에서 고르게
+price = (area * 450 + 5000 + rng.normal(0, 2500, 200)).round(-1)       # 평균 0 근처에 몰린 잡음, 10원 단위
+special = rng.choice(200, 5, replace=False)                            # 0~199에서 중복 없이 5개
+price[special] += rng.uniform(15000, 25000, 5).round(-1)               # 특이매물은 더 비싸게
+```
+
+<details>
+<summary>자세히 보기</summary>
+
+### 가상 오피스텔 데이터 만들기 (`02_ml.ipynb` 셀 5, 6)
+
+```python
+# [셀 5] 가상 오피스텔 데이터 만들기
+# 시드(seed) : 난수 발생시 참고하는 데이터, 동일한 seed 값을 적용하는 
+# 항상 동일한 난수가 발생
+rng = np.random.default_rng(40)
+
+n = 200
+area = rng.uniform(20, 85, n) # 20 이상 85 미만에서 균등하게 n개 만큼 난수 발생
+
+# 선형회귀
+# y = wx + b
+# w: 기울기 450
+# b: 절편(편향) 5000
+price = (area * 450 + 5000 + rng.normal(0, 2500, n)).round(-1)
+
+# 특이 매물 5건 생성
+special = rng.choice(n, 5, replace=False) # replace = False 같은 번호를 중복해서 뽑지 않는다.
+price[special] += rng.uniform(15000, 25000, 5).round(-1)
+
+office = pd.DataFrame({'area':area, "price": price})
+office.describe().round(1)
+```
+
+```text
+        area    price
+count  200.0    200.0
+mean    52.8  29138.4
+std     18.6   9112.1
+min     22.0  11400.0
+25%     37.4  21615.0
+50%     52.0  28965.0
+75%     67.4  36377.5
+max     84.9  58460.0
+```
+
+```python
+# [셀 6] 파일 저장
+office.to_csv("./datasets/office.csv", index=False)
+```
+
+`index=False`는 행 번호(0, 1, 2...)를 파일에 쓰지 않아요. 빼지 않으면 다시 읽을 때 이름 없는 열이 하나 더 생겨요.
+
+### 난수 세 가지
+
+<Figure label="오늘 쓴 난수 만들기">
+  <Boxes
+    row={[
+      { title: "rng.uniform(20, 85, n)", tone: "blue", lines: ["구간 안에서 고르게", "면적 20~85"] },
+      { title: "rng.normal(0, 2500, n)", tone: "neutral", lines: ["평균 근처에 몰리게, 표준편차 2500", "가격의 잡음"] },
+      { title: "rng.choice(n, 5, replace=False)", tone: "rust", lines: ["0~n-1에서 중복 없이 5개", "특이매물 번호"] },
+    ]}
+  />
+</Figure>
+
+seed가 같으면 처음부터 같은 순서로 같은 값이 나와요. 직접 두 번 만들어 보면 둘 다 같아요.
+
+```python
+r = np.random.default_rng(40); print(r.uniform(20, 85, 3))
+r = np.random.default_rng(40); print(r.uniform(20, 85, 3))
+```
+
+```text
+[67.44340219 65.07197219 81.22486612]
+[67.44340219 65.07197219 81.22486612]
+```
+
+`.round(-1)`은 일의 자리에서 반올림해 10 단위로 만들어요. `12345.6`은 `12350.0`이 돼요.
+
+특이매물 5건은 이랬어요. 면적 22.8짜리(13번)가 37,970으로 면적 65짜리만큼 비싸요.
+
+```text
+         area    price
+53  28.761968  34730.0
+13  22.751367  37970.0
+2   81.224866  58460.0
+92  56.590053  48030.0
+71  40.434137  45270.0
+```
+
+### 산점도로 보기 (셀 7)
+
+```python
+# [셀 7] 산점도 차트
+# 캔버스(Figure) 생성
+plt.figure(figsize=(8,5))
+# 산점도 차트
+plt.scatter(office['area'], office["price"], alpha=0.6) # 알파는 점의 투명도
+# 타이틀과 x, y 레이블
+plt.title("오피스텔 시세 200건")
+plt.xlabel("면적")
+plt.ylabel("가격")
+plt.show()
+
+print("상관계수 : ", (office["area"].corr(office["price"])).round(3))
+```
+
+```text
+상관계수 :  0.896
+```
+
+</details>
+
+## 5. 선형회귀: 점들을 가장 잘 지나는 직선 y = wx + b를 찾는다
+
+입력 `X`는 표(2차원)라서 `office[["area"]]`, 정답 `y`는 열 하나라서 `office["price"]`예요. 학습한 w는 439.46, b는 5926.68로 만들 때 쓴 450, 5000과 가깝지만 같지 않아요. 잡음과 특이매물 때문이에요.
+
+```python
+from sklearn.linear_model import LinearRegression
+X = office[["area"]]                    # 대괄호 두 겹: DataFrame (200, 1)
+y = office["price"]                     # 대괄호 한 겹: Series (200,)
+model = LinearRegression()
+model.fit(X, y)                         # 학습
+model.coef_[0], model.intercept_        # 439.46, 5926.68
+model.predict(pd.DataFrame({"area": [33, 59]})).round(-1)   # [20430., 31850.]
+```
+
+아래에서 직선을 바꿔 보세요. 학습한 직선이 200건의 RMSE를 가장 작게 만들고, 특이매물을 빼고 다시 학습하면 450, 5000에 가까워져요.
+
+<OfficeRegressionSimulator />
+
+<details>
+<summary>자세히 보기</summary>
+
+### 학습과 예측 (`02_ml.ipynb` 셀 8, 9)
+
+```python
+# [셀 8] 선형회귀 학습
+from sklearn.linear_model import LinearRegression
+
+X = office[["area"]]
+y = office["price"]
+
+# 선형 회귀 모델 만들기
+model = LinearRegression()
+# 학습 : X(입력값), y(정답)
+model.fit(X, y)
+
+print(f"기울기 w = {model.coef_[0].round(2)} 정답: 450")
+print(f"절편 b = {model.intercept_.round(2)} 정답: 5000")
+```
+
+```text
+기울기 w = 439.46 정답: 450
+절편 b = 5926.68 정답: 5000
+```
+
+<Figure label="fit이 하는 일">
+  <Seq
+    steps={[
+      { title: "X 표 (200, 1)", body: "면적 열 하나짜리 DataFrame" },
+      { title: "y 열 (200,)", body: "정답 가격 Series" },
+      { title: "`model.fit(X, y)`", body: "오차 제곱의 합이 가장 작은 직선을 찾는다" },
+      { title: "`coef_`, `intercept_`", body: "기울기 w = 439.46, 절편 b = 5926.68" },
+    ]}
+  />
+</Figure>
+
+`coef_`는 기울기가 입력 열마다 하나씩 든 배열이라 `[0]`으로 꺼내요. 열이 하나뿐이라 값도 하나예요. `intercept_`는 값 하나예요. 둘 다 이름 끝에 `_`가 붙은 것은 "학습해서 얻은 값"이라는 scikit-learn의 약속이에요.
+
+```python
+# [셀 9] 예측
+# 33, 59 가격 예측
+new = pd.DataFrame({"area":[33, 59]})
+model.predict(new).round(-1)
+```
+
+```text
+array([20430., 31850.])
+```
+
+손으로 계산해도 같아요. 439.46 × 33 + 5926.68 = 20,428.9, 10 단위로 20,430이에요.
+
+<Hint>
+새 입력도 학습 때와 같은 열 이름(`area`)의 표로 만들어요. `model.predict([[33]])`처럼 이름 없는 리스트를 넣으면 값(20428.8)은 나오지만 `UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names` 경고가 떠요.
+</Hint>
+
+### X를 대괄호 한 겹으로 쓰면
+
+`office["area"]`(Series, 1차원)를 X로 넣으면 학습하지 못하고 멈춰요.
+
+```python
+LinearRegression().fit(office["area"], y)
+```
+
+```text
+ValueError: Expected a 2-dimensional container but got <class 'pandas.Series'> instead. Pass a DataFrame containing a single row (i.e. single sample) or a single column (i.e. single feature) instead.
+```
+
+모델은 입력이 "행마다 여러 특징(열)"인 표라고 생각해요. 지금은 특징이 면적 하나지만 나중에 방 수, 층수를 더할 수 있게 늘 표로 받아요.
+
+### 모델의 직선 그리기 (셀 10)
+
+```python
+# [셀 10] 모델의 직선 그리기
+# 학습한 모델로 예측하기
+y_pred = model.predict(X)
+
+line = X.sort_values("area")
+line_pred = model.predict(line)
+
+# 캔버스(Figure) 생성
+plt.figure(figsize=(8,5))
+# 산점도 차트
+plt.scatter(office['area'], office["price"], alpha=0.6, label="실제 시세") # 알파는 점의 투명도
+# 모델의 직선
+plt.plot(line["area"], line_pred, color="red", label="모델의 직선")
+
+# 타이틀과 x, y 레이블
+plt.title("오피스텔 시세 200건")
+plt.xlabel("면적")
+plt.ylabel("가격")
+plt.legend()
+plt.show()
+```
+
+`plot`은 점을 들어온 순서대로 이어요. 면적이 뒤섞인 채로 이으면 선이 이리저리 왔다 갔다 해서 `sort_values("area")`로 작은 면적부터 줄 세운 뒤 그려요. `y_pred`는 200건 모두의 예측 가격이고 다음 절의 채점에 써요.
+
+수업 노트북은 `label`을 주고 `plt.legend()`를 빼서 범례가 나오지 않았어요. 위 코드는 한 줄을 더했어요.
+
+</details>
+
+## 6. 채점: MAE는 평균적으로 얼마나 틀리나, RMSE는 크게 틀린 것에 더 민감하다
+
+넷 다 실제 가격 `y`와 예측 `y_pred`를 넣어요. 두 배열의 길이가 같아야 해요.
+
+| 지표 | 뜻 | 오늘 값 (200건) |
+| --- | --- | --- |
+| MAE | 오차 절댓값의 평균. 평균적으로 얼마나 틀리나 | 2,493 |
+| MSE | 오차 제곱의 평균. 단위도 제곱 | 16,240,971 |
+| RMSE | MSE의 제곱근. 원래 단위로 돌아옴 | 4,030 |
+| R² | 가격 차이를 모델이 얼마나 설명하나. 1에 가까울수록 좋다 | 0.803 |
+
+R² 0.803은 가격 차이의 약 80%를 면적으로 설명한다는 뜻이에요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### 평가 지표 (`02_ml.ipynb` 셀 11)
+
+```python
+# [셀 11] 평가 지표
+# MAE, MSE, RMSE
+from sklearn.metrics import mean_absolute_error, mean_squared_error, root_mean_squared_error, r2_score
+# MAE: 오차 절댓값의 평균 => 평균적으로 얼마만큼 틀리나?
+print(f"MAE = {mean_absolute_error(y,y_pred):,.0f}")
+# MSE: 오차 제곱의 평균 (단위 제곱)
+print(f"MSE = {mean_squared_error(y,y_pred):,.0f}")
+# RMSE: 오차 제곱 평균의 루트 (원래 단위)
+print(f"RMSE = {root_mean_squared_error(y,y_pred):,.0f}")
+# R SCORE: 0 ~ 1
+print(f"R_SCORE={r2_score(y, y_pred):,.3f}")
+```
+
+```text
+MAE = 2,493
+MSE = 16,240,971
+RMSE = 4,030
+R_SCORE=0.803
+```
+
+`:,.0f`는 천 단위 쉼표를 넣고 소수점은 버려 찍어요. `,.3f`는 소수 셋째 자리까지예요.
+
+<Figure label="오차 하나에서 네 지표까지">
+  <Seq
+    steps={[
+      { title: "오차", body: "실제 가격 - 예측 가격. 200건마다 하나씩" },
+      { title: "MAE", body: "오차의 절댓값을 평균 낸다. 2,493" },
+      { title: "MSE", body: "오차를 제곱해 평균 낸다. 16,240,971(가격의 제곱 단위)" },
+      { title: "RMSE", body: "MSE에 루트를 씌워 원래 단위로. 4,030" },
+      { title: "R²", body: "1 - (모델의 오차 제곱 합 / 평균으로만 찍었을 때의 오차 제곱 합). 0.803" },
+    ]}
+  />
+</Figure>
+
+### RMSE가 큰 오차에 더 민감한 이유
+
+오차가 1,000짜리 하나와 20,000짜리 하나를 생각해 봐요. 절댓값으로는 20배 차이지만, 제곱하면 1,000,000과 400,000,000으로 400배 차이가 나요. 그래서 크게 틀린 몇 건이 RMSE를 확 끌어 올려요. 오늘 특이매물 5건의 오차는 16,164~22,045로 다른 매물보다 훨씬 커요.
+
+<TwistBox title="R²가 0보다 작을 수도 있어요">
+
+수업 주석에는 "0 ~ 1"이라고 적었지만, R²는 1이 최고이고 아래로는 끝이 없어요. 0은 "모든 매물을 평균 가격 하나로 찍은 것"만큼이라는 뜻이고, 그보다 못하면 음수가 나와요. 모든 예측을 50,000으로 찍으면 `r2_score`가 -5.268이에요. 학습한 모델에 학습한 데이터로 재면 보통 0~1 사이라서 주석처럼 생각해도 오늘은 맞아요.
+
+</TwistBox>
+
+<TwistBox title="진짜 규칙 450, 5000이 MAE는 더 작다">
+
+위 그림에서 "만들 때 쓴 값"을 눌러 보면 200건의 MAE가 2,479로 학습한 직선(2,493)보다 작아요. 대신 RMSE는 4,052로 더 커요. `LinearRegression`은 오차 제곱의 합이 가장 작은 직선을 찾기 때문에 RMSE로는 이길 수 없지만, MAE로는 다른 직선이 더 작을 수 있어요. 모델이 무엇을 줄이도록 만들어졌는지에 따라 "가장 좋은 직선"이 달라져요.
+
+</TwistBox>
+
+</details>
+
+## 7. 특이매물 5건을 빼고 다시 재면 RMSE가 더 많이 줄어든다
+
+크게 틀린 5건이 빠지자 MAE는 2,493 → 2,075, RMSE는 4,030 → 2,732로 줄었어요. RMSE가 더 많이 줄었어요. 계산은 꼭 `for`문 안에 들여 쓰고, 골라낸 예측 `y_hat`을 넣어요.
+
+```python
+for name, mask in cases:
+    y_true = y[mask]        # 실제가격
+    y_hat = y_pred[mask]    # 예측가격
+
+    mae = mean_absolute_error(y_true, y_hat)
+    rmse = root_mean_squared_error(y_true, y_hat)
+    print(f"{name} MAE {mae:,.0f} | RMSE {rmse:,.0f}")
+# 전체 200건 MAE 2,493 | RMSE 4,030
+# 특이매물 제외한 195 MAE 2,075 | RMSE 2,732
+```
+
+<details>
+<summary>자세히 보기</summary>
+
+### 특이매물 표시 (`02_ml.ipynb` 셀 12)
+
+```python
+# [셀 12] 특이매물 표시
+normal = np.ones(len(office),dtype=bool)
+normal[special] = False
+print("특이매물", special)
+print("정상매물", normal.sum())
+```
+
+```text
+특이매물 [53 13  2 92 71]
+정상매물 195
+```
+
+`np.ones(200, dtype=bool)`은 `True` 200개짜리 배열이에요. 특이매물 번호 자리만 `False`로 바꾸면 "정상 매물만 True"인 마스크가 돼요. `True`는 1로 세어지니 `sum()`이 195예요. 20회차의 불리언 마스크와 같은 방식이에요.
+
+### 오늘 만난 오류: `for`문 밖에서 길이가 다른 배열을 비교했다 (셀 13)
+
+수업에서 처음 쓴 코드는 이랬어요.
+
+```python
+# [셀 13] 전체 vs 특이매물 제외 비교
+all_rows = np.ones(len(office), dtype=bool)
+cases = [("전체 200건", all_rows), ("특이매물 제외한 195", normal)]
+
+for name, mask in cases:
+    y_true = y[mask]        # 실제가격
+    y_hat = y_pred[mask]    # 예측가격
+
+# MAE : 오차 절댓값의 평균
+mae = mean_absolute_error(y_true, y_pred)
+# RMSE
+rmse = root_mean_squared_error(y_true, y_pred)
+print(f"{name} MAE {mae} | RMSE {rmse}")
+```
+
+```text
+ValueError: Found input variables with inconsistent numbers of samples: [195, 200]
+```
+
+"두 입력의 개수가 195와 200으로 다르다"는 뜻이에요. 원인은 두 가지예요.
+
+<Figure label="왜 195와 200이 됐나">
+  <Boxes
+    row={[
+      { title: "들여쓰기가 없다", tone: "rust", lines: ["`mae`, `rmse`, `print` 줄이 `for`문 밖", "반복이 끝난 뒤 한 번만 실행", "`y_true`에는 마지막 경우(195건)만 남는다"] },
+      { title: "y_pred를 넣었다", tone: "rust", lines: ["골라낸 `y_hat`(195건)이 아니라", "전체 `y_pred`(200건)", "길이가 195와 200으로 어긋난다"] },
+    ]}
+  />
+</Figure>
+
+고친 코드는 위에 펼친 쪽에 있어요. 계산 세 줄을 `for`문 안으로 들여 쓰고 `y_pred`를 `y_hat`으로 바꿨어요. 포맷 `:,.0f`를 빼면 `2492.5039488877233`처럼 소수점이 길게 찍혀요.
+
+### 정상 매물만으로 다시 학습하면
+
+채점만 195건으로 한 것이 위의 결과예요. 학습까지 195건으로 다시 하면 직선 자체가 바뀌어요.
+
+```python
+m2 = LinearRegression().fit(X[normal], y[normal])
+print(m2.coef_[0].round(2), m2.intercept_.round(2))
+```
+
+```text
+451.41 4811.98
+```
+
+만들 때 쓴 450, 5000에 훨씬 가까워졌어요. 특이매물 5건이 직선을 위로 끌어 올리고 있었던 거예요. 21회차에 "튀는 값은 확인하고 판단한다"고 한 것이 모델에서 이렇게 드러나요.
+
+</details>
+
+## 오늘 꼭 기억할 주의점
+
+- 한글 그래프는 글꼴부터 정해요. 맥은 `AppleGothic`, 윈도우는 `Malgun Gothic`이에요.
+- 범례는 `label`을 주고 `legend()`를 불러야 나와요. 둘 중 하나만 있으면 범례가 없어요.
+- 시간 흐름은 선, 한 값의 분포는 히스토그램, 두 값의 관계는 산점도, 그룹별 분포와 튀는 값은 박스플롯이에요.
+- `palette`를 쓸 때는 `hue`도 같이 주고 `legend=False`로 꺼요.
+- 상관계수는 -1~1이에요. 조건으로 골라낸 작은 표본은 관계가 강해 보일 수 있어요(300채 0.08, 10채 0.89).
+- seed를 고정하면(`default_rng(40)`) 누가 돌려도 같은 난수가 나와요. `choice(..., replace=False)`는 중복 없이 뽑아요.
+- 저장할 때는 `to_csv(경로, index=False)`로 행 번호를 빼요.
+- X는 표(`office[["area"]]`), y는 열 하나(`office["price"]`)예요. 예측할 새 입력도 같은 열 이름의 표로 만들어요.
+- 학습한 w, b는 데이터를 만든 값과 같지 않아요. 잡음과 튀는 값이 직선을 끌어당겨요.
+- 직선을 그릴 때는 입력을 `sort_values`로 줄 세운 뒤 `plot`해요.
+- MAE는 평균적으로 얼마나 틀리나, RMSE는 크게 틀린 것에 더 민감해요. R²는 1에 가까울수록 좋아요.
+- 평가 함수에 넣는 두 배열은 길이가 같아야 해요. 반복마다 계산하려면 `for`문 안으로 들여 써요.

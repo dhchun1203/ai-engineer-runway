@@ -1,0 +1,199 @@
+# 22-matplotlib-corr-linear-regression 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
+# 문항의 코드와 출력은 맥에서 Python 3.14, NumPy 2.5.5, pandas 3.1.1, scikit-learn 1.9.1로 실제 실행해 확인했다.
+slug: 22-matplotlib-corr-linear-regression
+quiz:
+  - id: corr-small-sample-looks-strong
+    q: "미국 주택 300채는 면적과 가격의 상관계수가 0.08인데, 2015년 이후에 지었고 범죄율이 40 미만인 10채만 고르면 0.89예요. 맞는 해석은?"
+    options:
+      - "전체로는 면적과 가격이 거의 함께 움직이지 않는다. 골라낸 작은 표본은 관계가 강해 보일 수 있다"
+      - "10채의 값이 더 정확하니 면적이 넓을수록 비싸다고 결론 내린다"
+      - "0.08과 0.89를 평균 낸 0.49가 진짜 상관계수다"
+      - "상관계수가 1에 가까우면 면적이 가격의 원인이라는 뜻이다"
+    answer: 0
+    explain: "상관계수는 -1~1로 두 값이 함께 움직이는 정도예요. 300채 전체에서 0.08이면 거의 관계가 없어요. 조건으로 골라낸 10채만 보면 우연히 강해 보일 수 있어서 그것만으로 결론을 내리면 안 돼요. 상관은 함께 움직인다는 뜻일 뿐 원인을 말해 주지 않아요."
+  - id: seed-same-random-numbers
+    q: "seed를 같게 두고 난수를 두 번 만들었어요. 출력은?"
+    code: |-
+      import numpy as np
+
+      a = np.random.default_rng(40).uniform(20, 85, 3)
+      b = np.random.default_rng(40).uniform(20, 85, 3)
+      print((a == b).all())
+    options:
+      - "True"
+      - "False"
+      - "실행할 때마다 True와 False가 바뀐다"
+      - "TypeError"
+    answer: 0
+    explain: "seed를 고정하면 처음부터 같은 순서로 같은 값이 나와요. 둘 다 [67.44 65.07 81.22]라서 True예요. 그래서 누가 같은 코드를 돌려도 오피스텔 200건과 특이매물 번호 [53 13 2 92 71]이 똑같이 나와요."
+  - id: fit-x-needs-2d
+    q: "X를 대괄호 한 겹으로 꺼내 학습했어요. 결과는?"
+    code: |-
+      import pandas as pd
+      from sklearn.linear_model import LinearRegression
+
+      office = pd.DataFrame({"area": [20, 40, 60], "price": [14000, 23000, 32000]})
+      model = LinearRegression()
+      model.fit(office["area"], office["price"])
+    options:
+      - "ValueError: Expected a 2-dimensional container but got <class 'pandas.Series'> instead."
+      - "학습이 끝나고 coef_[0]이 450.0이 된다"
+      - "경고만 뜨고 학습은 된다"
+      - "KeyError: 'area'"
+    answer: 0
+    explain: "office['area'] 는 1차원 Series 라서 모델이 입력으로 받지 않아요. 입력 X는 행마다 특징(열)이 있는 표여야 해서 office[['area']] 처럼 대괄호 두 겹으로 DataFrame 을 꺼내요. 그렇게 하면 이 데이터에서 w 450.0, b 5000.0이 나와요. 정답 y는 열 하나라 office['price'] 그대로 써요."
+  - id: rmse-punishes-big-error
+    q: "a는 네 건 모두 100씩, b는 한 건만 400 틀렸어요. 출력은?"
+    code: |-
+      from sklearn.metrics import mean_absolute_error, root_mean_squared_error
+
+      y = [100, 100, 100, 100]
+      a = [0, 0, 0, 0]
+      b = [100, 100, 100, -300]
+      print("MAE", mean_absolute_error(y, a), mean_absolute_error(y, b),
+            "RMSE", root_mean_squared_error(y, a), root_mean_squared_error(y, b))
+    options:
+      - "MAE 100.0 100.0 RMSE 100.0 200.0"
+      - "MAE 100.0 100.0 RMSE 100.0 100.0"
+      - "MAE 100.0 400.0 RMSE 100.0 400.0"
+      - "MAE 100.0 100.0 RMSE 200.0 100.0"
+    answer: 0
+    explain: "MAE는 오차 절댓값의 평균이라 둘 다 (100 × 4) / 4, (0 + 0 + 0 + 400) / 4 = 100이에요. RMSE는 제곱해서 평균 낸 뒤 루트를 씌워서, b는 400² / 4 = 40,000의 루트 200이 돼요. 크게 틀린 한 건에 RMSE가 더 민감해요. 그래서 특이매물 5건을 빼자 RMSE(4,030 → 2,732)가 MAE(2,493 → 2,075)보다 더 많이 줄었어요."
+  - id: metric-loop-length-mismatch
+    q: "경우마다 MAE를 재려고 했어요. 출력은?"
+    code: |-
+      import numpy as np
+      from sklearn.metrics import mean_absolute_error
+
+      y = np.array([10, 20, 30, 40])
+      y_pred = np.array([12, 18, 33, 39])
+      cases = [("전체", np.array([True, True, True, True])),
+               ("앞 3건", np.array([True, True, True, False]))]
+
+      for name, mask in cases:
+          y_true = y[mask]
+          y_hat = y_pred[mask]
+
+      print(name, mean_absolute_error(y_true, y_pred))
+    options:
+      - "ValueError: Found input variables with inconsistent numbers of samples: [3, 4]"
+      - "앞 3건 2.3333333333333335"
+      - "전체 2.25 와 앞 3건 2.3333333333333335 두 줄"
+      - "전체 2.25"
+    answer: 0
+    explain: "print 줄이 들여쓰기 없이 for문 밖에 있어 반복이 끝난 뒤 한 번만 실행돼요. 그때 y_true 에는 마지막 경우(3건)만 남아 있는데, 골라낸 y_hat 이 아니라 전체 y_pred(4건)를 넣어서 길이가 어긋나요. 계산을 for문 안으로 들여 쓰고 y_pred 를 y_hat 으로 바꿔야 경우마다 한 줄씩 찍혀요."
+commands:
+  - cmd: "uv add scikit-learn"
+    desc: "머신러닝 도구 scikit-learn 설치(불러올 때 이름은 sklearn)"
+    group: uv
+  - cmd: "plt.rcParams['font.family'] = 'AppleGothic'"
+    desc: "그래프 한글 글꼴 정하기(맥 AppleGothic, 윈도우 Malgun Gothic)"
+    group: matplotlib
+  - cmd: "fig, ax = plt.subplots(figsize=(6, 3))"
+    desc: "캔버스(Figure)와 그래프 칸(Axes) 하나 만들기"
+    group: matplotlib
+  - cmd: "ax.plot(x, y, marker='o', label='매출')"
+    desc: "선 그래프(값마다 동그라미, 범례 이름 매출)"
+    group: matplotlib
+  - cmd: "ax.scatter(x, y, alpha=0.6)"
+    desc: "산점도(alpha 는 점의 투명도)"
+    group: matplotlib
+  - cmd: "ax.hist(값, bins=20)"
+    desc: "값을 20구간으로 나눠 개수를 막대로 그리는 히스토그램"
+    group: matplotlib
+  - cmd: "ax.set_title('제목') / ax.set_xlabel('x') / ax.set_ylabel('y')"
+    desc: "그래프 제목과 가로, 세로축 이름 붙이기"
+    group: matplotlib
+  - cmd: "ax.legend()"
+    desc: "범례 보이기(label 을 준 것만 나온다)"
+    group: matplotlib
+  - cmd: "plt.show()"
+    desc: "그린 그래프를 화면에 내보내기"
+    group: matplotlib
+  - cmd: "plt.figure(figsize=(8, 5))"
+    desc: "캔버스를 만들고 plt.scatter, plt.plot 으로 바로 그리기"
+    group: matplotlib
+  - cmd: "plt.scatter(x, y, color='red', s=50, label='이름')"
+    desc: "빨간색, 크기 50인 점으로 산점도 겹쳐 그리기"
+    group: matplotlib
+  - cmd: "plt.plot(line['area'], line_pred, color='red')"
+    desc: "줄 세운 입력과 예측으로 모델의 직선 그리기"
+    group: matplotlib
+  - cmd: "sns.boxplot(x='class', y='fare', data=df, ax=ax, hue='class', palette='Set2', legend=False)"
+    desc: "그룹(객실 등급)별 요금 분포와 튀는 값을 박스플롯으로"
+    group: matplotlib
+  - cmd: "df['열1'].corr(df['열2'])"
+    desc: "두 열의 상관계수(-1~1)"
+    group: pandas
+  - cmd: "df.to_csv('./datasets/office.csv', index=False)"
+    desc: "행 번호는 빼고 CSV 파일로 저장"
+    group: pandas
+  - cmd: "X.sort_values('area')"
+    desc: "면적이 작은 것부터 줄 세우기(직선을 그리기 전에)"
+    group: pandas
+  - cmd: "rng = np.random.default_rng(40)"
+    desc: "seed 40으로 난수 생성기 만들기(누가 돌려도 같은 난수)"
+    group: NumPy
+  - cmd: "rng.uniform(20, 85, n)"
+    desc: "20 이상 85 미만에서 고르게 n개"
+    group: NumPy
+  - cmd: "rng.normal(0, 2500, n)"
+    desc: "평균 0, 표준편차 2500인 정규분포에서 n개(잡음)"
+    group: NumPy
+  - cmd: "rng.choice(n, 5, replace=False)"
+    desc: "0~n-1에서 중복 없이 5개 뽑기"
+    group: NumPy
+  - cmd: "배열.round(-1)"
+    desc: "일의 자리에서 반올림해 10 단위로"
+    group: NumPy
+  - cmd: "np.ones(len(office), dtype=bool)"
+    desc: "True 로 가득 찬 마스크 만들기(특정 번호만 False 로 바꿔 거른다)"
+    group: NumPy
+  - cmd: "from sklearn.linear_model import LinearRegression"
+    desc: "선형회귀 모델 불러오기"
+    group: scikit-learn
+  - cmd: "model.fit(X, y)"
+    desc: "학습(X 는 표 office[['area']], y 는 열 하나 office['price'])"
+    group: scikit-learn
+  - cmd: "model.coef_[0] / model.intercept_"
+    desc: "학습한 기울기 w 와 절편 b"
+    group: scikit-learn
+  - cmd: "model.predict(pd.DataFrame({'area': [33, 59]}))"
+    desc: "학습 때와 같은 열 이름의 표로 새 면적의 가격 예측"
+    group: scikit-learn
+  - cmd: "mean_absolute_error(y, y_pred)"
+    desc: "MAE, 오차 절댓값의 평균"
+    group: scikit-learn
+  - cmd: "mean_squared_error(y, y_pred)"
+    desc: "MSE, 오차 제곱의 평균(단위도 제곱)"
+    group: scikit-learn
+  - cmd: "root_mean_squared_error(y, y_pred)"
+    desc: "RMSE, MSE 의 제곱근(원래 단위)"
+    group: scikit-learn
+  - cmd: "r2_score(y, y_pred)"
+    desc: "R², 가격 차이를 모델이 얼마나 설명하나(1에 가까울수록 좋다)"
+    group: scikit-learn
+  - cmd: "f'{값:,.0f}'"
+    desc: "천 단위 쉼표를 넣고 소수점은 버려 찍기"
+    group: Python
+terms:
+  - word: "Figure와 Axes"
+    definition: "Figure 는 그림 전체 캔버스, Axes 는 그 안의 그래프 칸 하나. plt.subplots() 가 둘을 함께 돌려준다."
+  - word: "산점도 (Scatter plot)"
+    definition: "두 값을 가로, 세로로 놓고 행마다 점을 찍은 그래프. 두 값이 함께 움직이는지 보여 준다."
+  - word: "박스플롯 (Box plot)"
+    definition: "상자는 25%~75% 구간, 가운데 선은 중앙값, 수염 밖의 점은 튀는 값. 그룹별 분포를 나란히 비교한다."
+  - word: "상관계수 (Correlation)"
+    definition: "두 값이 함께 움직이는 정도를 -1~1로 나타낸 숫자. 1에 가까우면 한쪽이 커질 때 다른 쪽도 커진다. 원인을 말해 주지는 않는다."
+  - word: "시드 (Seed)"
+    definition: "난수를 만들 때 출발점이 되는 값. 같은 seed 면 항상 같은 난수가 나와 결과를 비교할 수 있다."
+  - word: "선형회귀 (Linear Regression)"
+    definition: "점들을 가장 잘 지나는 직선 y = wx + b 를 찾아 숫자를 예측하는 모델. 오차 제곱의 합이 가장 작은 직선을 고른다."
+  - word: "기울기와 절편 (coef_, intercept_)"
+    definition: "직선 y = wx + b 의 w(입력이 1 늘 때 예측이 얼마나 느나)와 b(입력이 0일 때의 값). 학습으로 찾은 값이라 이름 끝에 _ 가 붙는다."
+  - word: "MAE (Mean Absolute Error)"
+    definition: "오차 절댓값의 평균. 예측이 평균적으로 얼마나 틀리는지 원래 단위로 보여 준다."
+  - word: "RMSE (Root Mean Squared Error)"
+    definition: "오차 제곱 평균(MSE)의 제곱근. 원래 단위로 돌아오고, 제곱 때문에 크게 틀린 값에 더 민감하다."
+  - word: "결정계수 (R²)"
+    definition: "실제 값의 차이를 모델이 얼마나 설명하는지. 1이 최고이고, 평균 하나로 찍은 것보다 못하면 음수가 된다."
