@@ -11,9 +11,21 @@ preStudy: []
 
 머신러닝에 넣기 전에 데이터를 살피고(EDA), 빈칸(NaN)을 채우는 날이었어요. 재료는 seaborn의 타이타닉 승객 891명이에요.
 
-숫자는 평균, 글자는 최빈값, category는 `'Unknown'`으로 채우고, IQR로 튀는 요금, 중복 행, 나이 분포까지 봤어요. 각 절의 "자세히 보기"를 펼치면 전체 코드와 출력이 있어요(맥, Python 3.14, pandas 3.1.1, seaborn 0.13.2로 직접 실행해 확인). 끝에 복습 퀴즈 5문항이 있어요.
+숫자는 평균, 글자는 최빈값, category는 `'Unknown'`으로 채우고, IQR로 튀는 요금, 중복 행, 나이 분포까지 봤어요. 직접 따라 하려면 1절의 준비를 하고 실습 노트북을 내려받아요. 절마다 "따라 하기"에 실행할 칸과 나와야 하는 결과를 적어 뒀어요. 각 절의 "자세히 보기"를 펼치면 전체 코드와 출력이 있어요(맥, Python 3.14, pandas 3.1.1, seaborn 0.13.2로 직접 실행해 확인). 끝에 복습 퀴즈 5문항이 있어요.
 
 ## 1. 오늘의 흐름: 살피고, 채우고, 다시 센다
+
+20회차의 `~/dev/my-pandas` 프로젝트에 그래프 도구 두 개를 더해요. 프로젝트가 없다면 20회차 1절의 준비부터 해요.
+
+```bash
+cd ~/dev/my-pandas
+uv add seaborn matplotlib   # 그래프 도구
+code .
+```
+
+> **실습 노트북:** <a href="/downloads/class-21-titanic-eda-missing-values.ipynb" download>class-21-titanic-eda-missing-values.ipynb 내려받기</a> (약 18KB). `my-pandas` 폴더에 넣고 VS Code에서 열어요. **Select Kernel**에서 `.venv`를 골라 맨 위 칸부터 `Shift + Enter`로 실행해요. 칸마다 위에 **나와야 하는 것**이 적혀 있어요. 타이타닉 데이터는 인터넷에서 받아 오니 연결된 상태로 실행해요.
+
+첫 칸에서 `pandas: 3.1.1 numpy: 2.5.5 seaborn: 0.13.2`가 나오면 준비 끝이에요. 노트북은 아래 순서로 흘러가요.
 
 <Figure label="EDA와 빈칸 채우기의 순서">
   <Seq
@@ -95,6 +107,13 @@ df.head(5)
 
 열이 15개라 가운데가 `...`으로 접혔어요. 노트북 화면에서는 가로로 밀어 전부 볼 수 있어요. `NaN`(Not a Number)이 빈칸이에요.
 
+### 막히면
+
+- `ModuleNotFoundError: No module named 'seaborn'`: 터미널에서 `uv add seaborn matplotlib`을 하고, VS Code 위쪽 **Restart**로 커널을 다시 켜요.
+- `URLError`: `sns.load_dataset`은 데이터를 인터넷에서 받아 와요. 연결을 확인하고 다시 실행해요.
+- 다시 센 빈칸이 0이 아니다: 채우기 칸은 앞 칸의 결과 위에 쌓여요. 1절부터 순서대로 다시 실행해요.
+- 그래프의 한글이 네모로 나온다: 8절 칸의 글꼴 줄(`AppleGothic`)이 그래프보다 먼저 실행됐는지 봐요.
+
 </details>
 
 ## 2. 첫인상: shape, info, describe, isnull().sum()
@@ -107,6 +126,8 @@ df.info()           # 열마다 빈칸 아닌 개수와 dtype
 df.describe()       # 숫자 열만 요약(age의 count 714)
 df.isnull().sum()   # 열마다 빈칸 수: age 177, embarked 2, deck 688, embark_town 2
 ```
+
+> **따라 하기:** 실습 노트북 2절의 칸을 실행해요. `(891, 15)`와 빈칸 `age 177`, `embarked 2`, `deck 688`, `embark_town 2`가 나오면 맞아요.
 
 <details>
 <summary>자세히 보기</summary>
@@ -252,6 +273,8 @@ df.loc[:, 'age'] = df['age'].fillna(mean_age)
 
 채운 뒤에 중앙값을 다시 구하면 28이 아니라 29.7이 나와요. 채운 값이 섞이기 때문이에요.
 
+> **따라 하기:** 실습 노트북 3절의 칸을 실행해요. 채우기 전 `평균: 30`, `중앙값: 28`, 채운 뒤 5, 17, 19번 승객의 나이가 `29.699118`이면 맞아요.
+
 <details>
 <summary>자세히 보기</summary>
 
@@ -328,6 +351,8 @@ df.loc[:, 'embarked'] = df['embark_town'].str[0]   # 첫 글자 S, C, Q
 ```
 
 `str[0]`은 원본이 `NaN`이면 결과도 `NaN`이라, `embark_town`을 먼저 채워야 해요.
+
+> **따라 하기:** 실습 노트북 4절의 칸을 실행해요. 일부러 틀린 칸에서는 `NaN 2`가 그대로 남고, 고친 칸에서 `Southampton 646`, 마지막 칸에서 `embarked 0`, `embark_town 0`이면 맞아요.
 
 <details>
 <summary>자세히 보기</summary>
@@ -439,6 +464,8 @@ df['deck'] = df['deck'].cat.add_categories('Unknown').fillna('Unknown')
 
 채우기가 끝나면 `df.isnull().sum()`을 꼭 다시 세요. 4절 같은 조용한 버그는 다시 세어야 보여요.
 
+> **따라 하기:** 실습 노트북 5절의 칸을 실행해요. 주석 칸으로 `TypeError`를 먼저 보고, 고친 칸에서 `Unknown 688`, 다시 확인 칸에서 15열 모두 0이면 맞아요.
+
 <details>
 <summary>자세히 보기</summary>
 
@@ -541,6 +568,8 @@ df = df[df['fare'] < 512].copy()        # 극단값 3행만 지워 891 → 888
 
 116명 중 104명이 1등석이라 다 지우지 않았어요. `df[조건]`은 새 표라서 `df =`로 다시 넣어야 지워져요.
 
+> **따라 하기:** 실습 노트북 6절의 칸을 실행해요. `UPPER = 65.63`, `116 명`, 요금 512.3292인 3행, `891 => 888`이 나오면 맞아요.
+
 <details>
 <summary>자세히 보기</summary>
 
@@ -637,6 +666,8 @@ df.duplicated().sum()   # 107
 
 이 표에는 이름이나 승객 번호가 없어서 조건이 같은 다른 승객도 중복으로 잡혀요. 그래서 확인만 했어요.
 
+> **따라 하기:** 실습 노트북 7절의 칸을 실행해요. `중복 행: 107 개`와 모든 열이 똑같은 5행이 나오면 맞아요.
+
 <details>
 <summary>자세히 보기</summary>
 
@@ -683,6 +714,8 @@ ax.hist(df['age'], bins=20)
 <AgeFillHistogram />
 
 빈 나이 177개를 모두 29.7로 채워서 28.3~32.3세 막대만 261명으로 솟았어요. 평균이든 중앙값이든 한 값으로 채우면 분포가 그 한 곳으로 쏠려요.
+
+> **따라 하기:** 실습 노트북 8절의 칸을 실행해요. 30세 바로 앞 막대 하나(261명)가 솟은 히스토그램이 나오면 맞아요. 다 됐으면 노트북 맨 아래 혼자 치기 5문제를 풀어요(정답은 그 아래에 있어요).
 
 <details>
 <summary>자세히 보기</summary>
