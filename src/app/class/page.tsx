@@ -107,16 +107,14 @@ export default async function ClassHubPage({
     return classQuizProgress(slug, quiz.map((q) => q.id), attemptedKeys);
   }
 
-  // 달력 칸 데이터. 풀이 기록을 못 읽었으면 퀴즈 비율은 null(농도 없이 테두리만).
+  // 달력 칸 데이터. 퀴즈 진행은 달력에 싣지 않는다(2026-11-24 사용자 결정).
   const calendarDays = new Map<string, CalendarDay>();
   for (const lesson of lessons) {
-    const quiz = quizProgress(lesson.slug);
     const reviewCount = reviewRead?.ok ? (reviewRead.states.get(classReviewId(lesson.slug))?.reviewCount ?? 0) : 0;
     calendarDays.set(lesson.date, {
       session: lesson.session,
       href: lesson.permalink,
       title: lesson.title,
-      quizRatio: quiz && quiz.total > 0 ? quiz.done / quiz.total : null,
       graduated: reviewCount >= GRADUATE_COUNT,
     });
   }

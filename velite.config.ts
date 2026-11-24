@@ -467,7 +467,8 @@ export default defineConfig({
         .transform((data, { meta }) => ({
           ...data,
           permalink: `/class/${data.slug}`,
-          readingMinutes: estimateBookMinutes(meta.content ?? ""),
+          // 훑기 형태(2026-11-24): "자세히 보기"로 접은 칸은 빼고, 펼친 채 훑는 분량만 잰다.
+          readingMinutes: estimateBookMinutes((meta.content ?? "").replace(/<details>[\s\S]*?<\/details>/g, "")),
           // 회차 검색이 쓰는 소제목(## 줄). 본문 전체를 검색 색인에 넣지 않으려고 뽑아 둔다.
           headings: extractH2(meta.content ?? ""),
         })),
