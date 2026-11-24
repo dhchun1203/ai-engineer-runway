@@ -20,22 +20,6 @@ quiz:
       - "FROM, JOIN, HAVING, GROUP BY, SELECT, ORDER BY"
     answer: 1
     explain: "표를 준비하는 FROM 과 JOIN 이 먼저, 그다음 묶고(GROUP BY) 바구니를 거르고(HAVING), 그 뒤에야 SELECT 가 열과 별칭을 만들어요. ORDER BY 는 마지막이라 별칭 종목 을 쓸 수 있어요."
-  - id: having-cannot-use-alias
-    q: "HAVING 을 이렇게 바꾸면 결과는?"
-    code: |-
-      SELECT s.sport_name AS 종목, SUM(e.pay_amount) AS 매출
-      FROM sports s
-      LEFT JOIN courses c ON c.sport_id = s.sport_id
-      LEFT JOIN enrollments e ON e.course_id = c.course_id
-      GROUP BY s.sport_id, e.enroll_month
-      HAVING 매출 >= 1000000;
-    options:
-      - "그대로 4행이 나온다"
-      - "ERROR: column \"매출\" does not exist"
-      - "모든 그룹이 나온다"
-      - "오류 없이 0행이 나온다"
-    answer: 1
-    explain: "별칭은 SELECT 가 돌 때 생기는데, HAVING 은 SELECT 보다 먼저 돌아요. 그래서 아직 매출 이라는 이름이 없어요. HAVING SUM(e.pay_amount) >= 1000000 처럼 식을 다시 써요. ORDER BY 는 SELECT 다음이라 별칭을 쓸 수 있어요."
   - id: aggregate-in-where-error
     q: "100만 원 조건을 WHERE 에 썼어요. 결과는?"
     code: |-
@@ -79,23 +63,6 @@ quiz:
       - "ERROR 가 난다"
     answer: 2
     explain: "WHERE 는 다 이은 뒤에 걸러요. NULL 행의 status 는 NULL 이고, NULL 과 비교한 조건은 참이 되지 않아 빠져요. 189행이 188행이 되어 INNER JOIN 과 같아져요. LEFT JOIN 에서 오른쪽 표의 조건은 ON 에 써요."
-  - id: inner-join-on-or-where-same
-    q: "INNER JOIN 풀이에서 취소 조건을 WHERE 에 쓴 (가)와 ON 에 붙인 (나)의 행 수는?"
-    code: |-
-      -- (가)
-      FROM enrollments e
-      JOIN courses c ON e.course_id = c.course_id
-      WHERE e.status <> '취소'
-      -- (나)
-      FROM enrollments e
-      JOIN courses c ON e.course_id = c.course_id AND e.status <> '취소'
-    options:
-      - "(가) 188행, (나) 200행"
-      - "(가) 200행, (나) 188행"
-      - "둘 다 188행"
-      - "둘 다 200행"
-    answer: 2
-    explain: "INNER JOIN 은 짝이 없는 행을 어차피 버려서, 조건을 ON 에서 걸러도 WHERE 에서 걸러도 결과가 같아요. 수강 기록 200건 중 취소 12건이 빠져 188행이에요. 자리가 결과를 바꾸는 건 LEFT JOIN 일 때예요."
   - id: count-after-left-join
     q: "LEFT JOIN 풀이에서 수강월이 NULL 인 바구니(마스터즈반 행 1개)의 두 숫자는?"
     code: |-
@@ -112,39 +79,6 @@ quiz:
       - "그 바구니는 생기지 않는다"
     answer: 2
     explain: "COUNT(*)는 행 자체를 세서 NULL 행도 1이에요. COUNT(e.course_id)는 그 칸이 NULL 이라 건너뛰어 0이에요. LEFT JOIN 뒤에 몇 건인지 셀 때는 COUNT(오른쪽 열)을 써요."
-  - id: null-group-fails-having
-    q: "수강월이 NULL 인 바구니는 SUM(e.pay_amount)가 NULL 이에요. HAVING SUM(e.pay_amount) >= 1000000 을 거치면?"
-    options:
-      - "NULL 은 0으로 쳐서 탈락한다"
-      - "NULL >= 1000000 이 참이 아니라서 탈락한다"
-      - "NULL 은 비교할 수 없어 통과한다"
-      - "ERROR 가 난다"
-    answer: 1
-    explain: "NULL 과 비교하면 결과도 NULL(모름)이고, HAVING 은 참인 바구니만 남겨요. 그래서 LEFT JOIN 이 남긴 여분의 행은 최종 결과에 닿지 못해요. 0으로 바꿔 계산하는 것도 아니에요."
-  - id: group-by-unlisted-column
-    q: "종목, 월별 매출과 함께 강좌 이름도 보려고 했어요. 결과는?"
-    code: |-
-      SELECT s.sport_name, c.course_name, SUM(e.pay_amount)
-      FROM sports s
-      LEFT JOIN courses c ON c.sport_id = s.sport_id
-      LEFT JOIN enrollments e ON e.course_id = c.course_id
-      GROUP BY s.sport_id, e.enroll_month;
-    options:
-      - "바구니마다 첫 강좌 이름이 나온다"
-      - "ERROR: column \"c.course_name\" must appear in the GROUP BY clause or be used in an aggregate function"
-      - "ERROR: column \"s.sport_name\" must appear in the GROUP BY clause or be used in an aggregate function"
-      - "강좌마다 한 줄씩 나온다"
-    answer: 1
-    explain: "바구니 하나는 한 줄인데, 한 바구니에 강좌 이름이 여러 개라 무엇을 적을지 정할 수 없어요. s.sport_name 은 GROUP BY 에 없어도 괜찮아요. 묶은 s.sport_id 가 sports 의 기본 키라 이름도 하나로 정해지거든요."
-  - id: left-vs-inner-group-count
-    q: "GROUP BY 종목, 수강월 의 바구니가 LEFT JOIN 풀이는 17개, INNER JOIN 풀이는 16개예요. 하나 더 많은 이유는?"
-    options:
-      - "LEFT JOIN 은 취소 기록도 바구니로 만들어서"
-      - "LEFT JOIN 이 남긴 마스터즈반 NULL 행이 수강월 NULL 바구니가 되어서"
-      - "INNER JOIN 은 한 종목을 빼먹어서"
-      - "LEFT JOIN 은 ORDER BY 로 바구니가 늘어나서"
-    answer: 1
-    explain: "4종목에 4개월이라 16바구니는 같아요. LEFT JOIN 풀이에는 기록 없는 마스터즈반이 NULL 행으로 남고, 수강월이 NULL 이라 따로 한 바구니가 돼요. 그 바구니는 HAVING 에서 빠져서 최종 결과는 두 풀이가 같아요."
 commands:
   - cmd: "FROM 표A a JOIN 표B b ON a.키 = b.키"
     desc: "양쪽에 짝이 있는 행만 옆으로 잇기(INNER JOIN 과 같음)"

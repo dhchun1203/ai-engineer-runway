@@ -2,19 +2,6 @@
 # 문항의 코드와 출력은 맥에서 Python 3.14, pandas 3.1.1, NumPy 2.5.5, seaborn 0.13.2로 실제 실행해 확인했다.
 slug: 21-titanic-eda-missing-values
 quiz:
-  - id: info-non-null-count-missing
-    q: "df.info() 출력의 일부예요. age 열의 빈칸은 몇 개일까요?"
-    code: |-
-      RangeIndex: 891 entries, 0 to 890
-       #   Column       Non-Null Count  Dtype
-       3   age          714 non-null    float64
-    options:
-      - "714"
-      - "891"
-      - "177"
-      - "0"
-    answer: 2
-    explain: "Non-Null Count 는 빈칸이 아닌 칸의 수예요. 전체 891행에서 714를 빼면 177칸이 비어 있어요. df.isnull().sum() 으로 세어도 age 177 이 나와요."
   - id: fillna-returns-new-series
     q: "빈칸을 0으로 채운 뒤 빈칸을 다시 셌어요. 출력은?"
     code: |-
@@ -59,20 +46,6 @@ quiz:
       - "['C', 'C', 'B']"
     answer: 1
     explain: "category 는 들어갈 수 있는 값 목록(categories)이 정해진 타입이에요. 목록에 없는 'Unknown' 은 TypeError: Cannot setitem on a Categorical with a new category 로 거절돼요. deck.cat.add_categories('Unknown').fillna('Unknown') 처럼 목록부터 늘려요."
-  - id: str-first-char-keeps-nan
-    q: "글자마다 첫 글자를 꺼냈어요. 출력은?"
-    code: |-
-      import pandas as pd
-
-      town = pd.Series(["Southampton", None, "Cherbourg"])
-      print(town.str[0].tolist())
-    options:
-      - "['S', 'N', 'C']"
-      - "['S', nan, 'C']"
-      - "['S', '', 'C']"
-      - "TypeError"
-    answer: 1
-    explain: ".str[0] 은 문자열마다 첫 글자를 꺼내고, 원본이 빈칸(NaN)이면 결과도 NaN 이에요. 그래서 embark_town 을 먼저 채워야 embarked 도 채워져요."
   - id: iqr-upper-bound
     q: "IQR 규칙으로 상한선과 튀는 값의 수를 구했어요. 출력은?"
     code: |-
@@ -90,36 +63,6 @@ quiz:
       - "76.5 2"
     answer: 0
     explain: "Q1 은 25% 지점 9.0, Q3 은 75% 지점 36.0 이에요. IQR = 36 - 9 = 27, 상한선 = 36 + 1.5 × 27 = 76.5 예요. 76.5 를 넘는 값은 300 하나라 (fare > upper).sum() 이 1 이에요."
-  - id: filter-needs-reassign
-    q: "요금이 512 미만인 행만 남기려고 했어요. 출력은?"
-    code: |-
-      import pandas as pd
-
-      df = pd.DataFrame({"fare": [7.25, 71.28, 512.33, 8.05]})
-      df[df["fare"] < 512]
-      print(len(df))
-    options:
-      - "3"
-      - "4"
-      - "1"
-      - "KeyError"
-    answer: 1
-    explain: "df[조건] 은 조건에 맞는 행만 남긴 새 표를 돌려줄 뿐 df 를 바꾸지 않아요. 지우려면 df = df[df[\"fare\"] < 512].copy() 처럼 다시 넣어야 해요. 수업에서는 이렇게 891행이 888행이 됐어요."
-  - id: duplicated-first-row-false
-    q: "중복 행을 셌어요. 출력은?"
-    code: |-
-      import pandas as pd
-
-      d = pd.DataFrame({"sex": ["male", "male", "female", "male"],
-                        "age": [30, 30, 22, 30]})
-      print(d.duplicated().sum(), d.duplicated(keep=False).sum())
-    options:
-      - "3 3"
-      - "2 2"
-      - "2 3"
-      - "3 2"
-    answer: 2
-    explain: "duplicated() 는 앞에 모든 열이 같은 행이 있을 때 True 라 묶음의 첫 행(0번)은 False, 1번과 3번만 True 예요. keep=False 는 첫 행까지 묶음 전부를 True 로 보여 줘서 3이에요."
   - id: mean-fill-histogram-spike
     q: "나이 빈칸 177개를 모두 평균 29.7로 채운 뒤 히스토그램(bins=20)을 그렸어요. 어떤 모양이 될까요?"
     options:
@@ -129,15 +72,6 @@ quiz:
       - "막대가 20개에서 21개로 늘어난다"
     answer: 1
     explain: "177명이 모두 같은 값 29.7 이 되어 28.3~32.3세 구간에만 들어가요. 수업에서 그 막대가 261명으로 솟았고 다른 구간은 많아야 98명이었어요. 한 값으로 채우면 분포가 그 값 한 곳으로 쏠려요(중앙값 28 로 채워도 마찬가지)."
-  - id: deck-unknown-not-mode
-    q: "deck 열은 891행 중 688행(77%)이 비어 있어요. 수업에서 최빈값 대신 'Unknown'으로 채운 이유는?"
-    options:
-      - "category 열은 최빈값을 구할 수 없어서"
-      - "대부분이 빈칸이라 다른 값으로 채우면 없는 정보를 지어내게 되어서"
-      - "'Unknown'이 A~G 목록에 원래 있어서"
-      - "글자 열은 항상 'Unknown'으로 채우는 규칙이라서"
-    answer: 1
-    explain: "77% 가 빈 열을 최빈값 C 로 채우면 688명이 C 갑판에 있었다고 지어내는 셈이에요. 그래서 '모름'을 뜻하는 'Unknown' 으로 채웠어요. 'Unknown' 은 원래 목록에 없어서 cat.add_categories 로 먼저 넣어야 했어요. embark_town 처럼 빈칸이 2개뿐인 글자 열은 최빈값으로 채웠어요."
 commands:
   - cmd: "uv add seaborn matplotlib"
     desc: "시각화 도구 seaborn 과 그래프 바탕 도구 matplotlib 설치"

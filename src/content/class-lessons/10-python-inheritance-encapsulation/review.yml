@@ -2,60 +2,6 @@
 # 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
 slug: 10-python-inheritance-encapsulation
 quiz:
-  - id: init-typo-no-constructor
-    q: "다음 코드를 실행하면?"
-    code: |-
-      class Typo:
-          def __int__(self, nickname):
-              self.nickname = nickname
-
-      t = Typo("코딩왕")
-    options:
-      - "t.nickname 에 코딩왕 이 들어간다"
-      - "TypeError: Typo() takes no arguments"
-      - "AttributeError: 'Typo' object has no attribute 'nickname'"
-      - "아무 일도 일어나지 않는다"
-    answer: 1
-    explain: "생성자 이름은 정확히 __init__ 이어야 해요. __int__ 는 그냥 다른 메서드라 이 클래스에는 생성자가 없고, 값을 넘기면 \"인수를 받지 않는다\"는 TypeError 가 나요. 값 없이 Typo() 로 만들고 nickname 을 꺼내면 AttributeError 예요."
-  - id: missing-self-dot
-    q: "다음 코드를 실행하면?"
-    code: |-
-      class User:
-          def __init__(self, name):
-              name = name
-
-          def hello(self):
-              return self.name
-
-      print(User("코딩왕").hello())
-    options:
-      - "코딩왕"
-      - "None"
-      - "AttributeError: 'User' object has no attribute 'name'"
-      - "TypeError"
-    answer: 2
-    explain: "self. 없이 name = name 이라고 쓰면 지역 변수에 넣은 것이라 __init__ 이 끝나면 사라져요. 객체에는 name 속성이 생기지 않아서 self.name 을 읽을 때 AttributeError 가 나요."
-  - id: objects-keep-own-data
-    q: "다음 코드의 출력은?"
-    code: |-
-      class Account:
-          def __init__(self, balance):
-              self.balance = balance
-
-          def deposit(self, amount):
-              self.balance += amount
-
-      a = Account(7000)
-      b = Account(7000)
-      a.deposit(500)
-      print(a.balance, b.balance)
-    options:
-      - "7500 7500"
-      - "7500 7000"
-      - "7000 7000"
-      - "7000 7500"
-    answer: 1
-    explain: "같은 클래스로 만들어도 객체마다 balance 를 따로 가져요. a 에만 입금했으니 a 만 7500 이 되고 b 는 7000 그대로예요."
   - id: negative-withdraw-grows
     q: "다음 코드의 출력은?"
     code: |-
@@ -97,26 +43,6 @@ quiz:
       - "False False"
     answer: 1
     explain: "Dog 는 Animal 을 물려받았으니 Dog 로 만든 baduk 은 Animal 이기도 해서 True 예요. 상속은 한 방향이라 Animal 은 Dog 의 자식이 아니어서 issubclass(Animal, Dog) 는 False 예요."
-  - id: override-parent-unchanged
-    q: "다음 코드의 출력은?"
-    code: |-
-      class Animal:
-          def sound(self):
-              print("소리를 냅니다.")
-
-      class Cat(Animal):
-          def sound(self):
-              print("야옹 하고 웁니다.")
-
-      Cat().sound()
-      Animal().sound()
-    options:
-      - "야옹 하고 웁니다. 다음 줄에 소리를 냅니다."
-      - "야옹 하고 웁니다. 두 줄"
-      - "소리를 냅니다. 두 줄"
-      - "소리를 냅니다. 다음 줄에 야옹 하고 웁니다."
-    answer: 0
-    explain: "자식 Cat 에 같은 이름의 sound 가 있으니 Cat 객체는 자식 것을 실행해요(오버라이딩). 부모 Animal 은 바뀌지 않아서 Animal 객체는 원래 문장을 출력해요."
   - id: super-init-missing
     q: "다음 코드를 실행하면?"
     code: |-
@@ -136,22 +62,6 @@ quiz:
       - "AttributeError: 'Student' object has no attribute 'name'"
     answer: 3
     explain: "자식에 __init__ 을 만들면 부모의 __init__ 이 덮여서 실행되지 않아요. self.name 을 채우던 부모 코드가 돌지 않았으니 name 이 없어요. super().__init__(name) 을 먼저 불러야 해요."
-  - id: name-mangling-dict
-    q: "다음 코드의 출력은?"
-    code: |-
-      class Secret:
-          def __init__(self):
-              self.__password = "1234"
-
-      my_secret = Secret()
-      print(my_secret.__dict__)
-    options:
-      - "{'__password': '1234'}"
-      - "{'_Secret__password': '1234'}"
-      - "{'password': '1234'}"
-      - "{} (숨긴 속성은 보이지 않는다)"
-    answer: 1
-    explain: "클래스 안에서 밑줄 두 개로 시작한 속성은 _클래스이름__속성 으로 이름이 바뀌어 저장돼요(이름 변형). 숨겨지는 게 아니라 이름만 바뀌어서, 바뀐 이름을 알면 밖에서도 읽고 쓸 수 있어요."
   - id: fake-attribute-outside
     q: "다음 코드의 출력은?"
     code: |-

@@ -14,20 +14,6 @@ quiz:
       - "NULL"
     answer: 0
     explain: "sport_id 는 SERIAL 이라 열 목록에서 빼면 다음 번호 5를 받아요. RETURNING * 이 방금 넣은 행을 바로 보여 줘서 SELECT 를 다시 칠 필요가 없어요."
-  - id: insert-select-column-position
-    q: "INSERT 열 목록과 SELECT 열의 순서를 다르게 썼어요. 결과는?"
-    code: |-
-      INSERT INTO contact_lists (name, member_id, reason, request_date)
-      SELECT member_id, name, '이메일 미등록', CAST('2026-11-19' AS DATE)
-      FROM members
-      WHERE email IS NULL;
-    options:
-      - "열 이름이 같으니 알아서 맞는 칸에 들어간다"
-      - "ERROR: column \"member_id\" is of type integer but expression is of type character varying"
-      - "name 칸에 번호, member_id 칸에 이름이 그대로 들어간다"
-      - "INSERT 0 0"
-    answer: 1
-    explain: "INSERT ... SELECT 는 이름이 아니라 자리 순서로 짝을 지어요. 둘째 자리 member_id(정수) 칸에 둘째 SELECT 열 name(글자)이 들어가려다 타입이 안 맞아 멈춰요. 열 목록과 SELECT 열의 개수와 순서를 맞춰야 해요."
   - id: update-without-where-all-rows
     q: "courses 에 강좌가 14개 있어요. 이 문장을 실행하면?"
     code: |-
@@ -39,32 +25,6 @@ quiz:
       - "UPDATE 0, 아무것도 안 바뀐다"
     answer: 2
     explain: "UPDATE 와 DELETE 의 대상은 WHERE 가 정해요. 빼면 경고 없이 모든 행이 바뀌어요. 그래서 같은 WHERE 로 먼저 SELECT 하고, 연습할 때는 BEGIN 안에서 해서 ROLLBACK 으로 되돌릴 수 있게 해요."
-  - id: update-formula-runs-twice
-    q: "fee 가 70000 인 강좌에 이 문장을 실수로 두 번 실행했어요. fee 는?"
-    code: |-
-      UPDATE courses SET fee = fee * 1.05 WHERE course_id = 1;
-      UPDATE courses SET fee = fee * 1.05 WHERE course_id = 1;
-    options:
-      - "73500"
-      - "77000"
-      - "70000"
-      - "77175"
-    answer: 3
-    explain: "SET 오른쪽의 fee 는 실행할 때의 현재 값이에요. 첫 번째에 73500, 두 번째는 73500 에서 다시 5% 올라 77175 가 돼요. 계산식 UPDATE 는 한 번만 실행하고, 다시 하려면 시드 파일로 처음 상태를 만들어요."
-  - id: returning-no-order-by
-    q: "바뀐 행을 번호 순으로 보려고 RETURNING 뒤에 ORDER BY 를 붙였어요. 결과는?"
-    code: |-
-      UPDATE courses SET capacity = capacity + 5
-      WHERE course_id IN (2, 3, 4)
-      RETURNING course_id, capacity
-      ORDER BY course_id;
-    options:
-      - "번호 순으로 정렬돼 나온다"
-      - "ERROR: syntax error at or near \"ORDER\""
-      - "정원만 바뀌고 RETURNING 은 무시된다"
-      - "UPDATE 0"
-    answer: 1
-    explain: "RETURNING 에는 ORDER BY 를 쓸 수 없어서 문장 전체가 문법 오류로 멈춰요. RETURNING 의 행 순서는 정해져 있지 않으니, 순서가 필요하면 바꾼 뒤 SELECT ... ORDER BY 로 따로 조회해요."
   - id: not-exists-finds-no-match
     q: "이 쿼리가 고르는 회원은?"
     code: |-
@@ -94,32 +54,6 @@ quiz:
       - "번호가 겹쳐서 오류가 난다"
     answer: 2
     explain: "TRUNCATE 는 행만 비우고 SERIAL 의 번호표 기계는 그대로 둬요. 마지막으로 쓴 번호가 18이라 다음은 19예요. 1부터 다시 쓰려면 TRUNCATE contact_lists RESTART IDENTITY; 로 비워요."
-  - id: rollback-does-not-return-serial
-    q: "방금 RESTART IDENTITY 로 비운 contact_lists 에서 이렇게 했어요. 마지막 INSERT 가 보여 주는 request_id 는?"
-    code: |-
-      BEGIN;
-      INSERT INTO contact_lists (member_id, name, reason, request_date)
-      VALUES (2, '이준호', '이메일 미등록', '2026-11-19');
-      ROLLBACK;
-      INSERT INTO contact_lists (member_id, name, reason, request_date)
-      VALUES (2, '이준호', '이메일 미등록', '2026-11-19')
-      RETURNING request_id;
-    options:
-      - "1"
-      - "2"
-      - "0"
-      - "ROLLBACK 때문에 오류가 난다"
-    answer: 1
-    explain: "ROLLBACK 은 첫 INSERT 의 행을 되돌리지만, 그 행이 받은 번호 1은 돌려놓지 않아요. 그래서 다음 INSERT 는 2를 받아요. 번호에 빈틈이 생기는 흔한 이유예요."
-  - id: delete-truncate-drop-scope
-    q: "표 구조는 남기고 모든 행만 한 번에 비우는 명령은?"
-    options:
-      - "DROP TABLE contact_lists;"
-      - "TRUNCATE contact_lists;"
-      - "DELETE FROM contact_lists WHERE request_id = 1;"
-      - "TRUNCATE contact_lists WHERE reason = '이메일 미등록';"
-    answer: 1
-    explain: "TRUNCATE 는 모든 행을 한 번에 비우고 표 구조는 남겨요. DROP TABLE 은 표 자체를 지우고, DELETE 는 WHERE 로 고른 행만 지워요. TRUNCATE 에는 WHERE 를 쓸 수 없어서 마지막 보기는 문법 오류예요."
   - id: psycopg-params-need-tuple
     q: "이 파이썬 코드를 실행하면?"
     code: |-

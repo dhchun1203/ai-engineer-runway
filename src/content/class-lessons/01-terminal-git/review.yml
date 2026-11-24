@@ -2,15 +2,6 @@
 # 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
 slug: 01-terminal-git
 quiz:
-  - id: git-vs-github
-    q: Git과 GitHub에 대한 설명으로 맞는 것은?
-    options:
-      - GitHub에 연결하지 않으면 커밋을 만들 수 없다
-      - Git은 내 컴퓨터에서 동작하는 도구이고, GitHub는 저장소를 올려 두고 함께 쓰는 서비스다
-      - GitHub가 Git을 만들었고, 2005년에 공개했다
-      - Git은 인터넷에 연결되어 있어야 지난 커밋을 볼 수 있다
-    answer: 1
-    explain: Git은 분산형이라 내 컴퓨터의 로컬 저장소에 전체 이력이 있어요. 인터넷 없이도 커밋하고 이력을 볼 수 있어요. Git은 리누스 토발즈가 2005년에 만들었고, GitHub는 Git 저장소를 호스팅하는 서비스예요.
   - id: add-staging
     q: README.md를 고친 뒤 git add README.md를 실행했어요. 이 변경은 지금 어디에 있나요?
     options:
@@ -29,17 +20,6 @@ quiz:
       - .git 폴더를 지우고 처음부터 다시 만든다
     answer: 0
     explain: 공유된 이력은 revert로 고쳐요. 원래 커밋은 남겨 두고 정반대 변경을 새 커밋으로 쌓으니, 팀원은 pull만 하면 돼요. reset으로 이력을 지우면 팀원의 이력과 어긋나요.
-  - id: reset-soft
-    q: "다음 명령을 실행한 직후, 마지막 커밋에 들어 있던 변경은 어떻게 되나요?"
-    code: |-
-      git reset --soft HEAD~1
-    options:
-      - 완전히 사라진다
-      - 작업 폴더에만 남고 Staging Area에서는 빠진다
-      - 원격 저장소에서도 함께 지워진다
-      - Staging Area에 그대로 담겨 있다
-    answer: 3
-    explain: "--soft는 커밋만 취소하고 변경은 Staging Area에 그대로 둬요. 실제로 실행 후 git status --short를 보면 맨 앞에 M이 붙은 \"M  README.md\"가 보여요. 작업 폴더에만 남기는 건 --mixed, 변경까지 버리는 건 --hard예요."
   - id: ls-al-line
     q: ls -al 결과에 다음 줄이 보여요. 이 줄에서 알 수 있는 것은?
     code: "-rw-r--r--  1 user group 12 Oct 26 16:01 README.md"
@@ -50,33 +30,6 @@ quiz:
       - 일반 파일이고, 누구나 실행할 수 있다
     answer: 2
     explain: 첫 글자 -는 일반 파일이에요(d는 폴더, l은 링크). 다음 9글자를 셋씩 끊으면 소유자 rw-, 그룹 r--, 그 외 r--예요. 쓰기(w)는 소유자에게만 있고, 실행(x)은 아무에게도 없어요.
-  - id: echo-redirect
-    q: 다음을 차례로 실행하면 마지막 cat에서 무엇이 보이나요?
-    code: |-
-      echo "A" > note.txt
-      echo "B" >> note.txt
-      echo "C" > note.txt
-      cat note.txt
-    options:
-      - A, B, C 세 줄
-      - A, B 두 줄
-      - B, C 두 줄
-      - C 한 줄
-    answer: 3
-    explain: ">>는 파일 끝에 이어 쓰고, >는 파일을 새로 써요. 두 번째 줄까지는 A와 B 두 줄이었지만, 세 번째 줄의 >가 파일을 통째로 다시 써서 C 한 줄만 남아요."
-  - id: cd-dash
-    q: "다음을 차례로 실행하면 마지막 cd - 는 어디로 갈까요?"
-    code: |-
-      cd ~/projects
-      cd /tmp
-      cd -
-    options:
-      - 홈 폴더(~)로 간다
-      - ~/projects로 돌아간다
-      - 한 칸 위 폴더(/)로 간다
-      - 터미널이 종료된다
-    answer: 1
-    explain: cd -는 바로 전에 있던 폴더로 돌아가요. TV 리모컨의 "이전 채널" 버튼처럼 두 폴더를 오갈 때 편해요. 홈 폴더는 cd ~, 한 칸 위는 cd .. 예요.
   - id: diff-staged
     q: README.md를 고치고 git add까지 했어요. 이 변경 내용을 확인하려면?
     options:
@@ -95,15 +48,6 @@ quiz:
       - 앞선 커밋에 키가 남아 있으니, 키를 새로 발급해 바꿔야 한다
     answer: 3
     explain: 한 번 커밋된 내용은 이력에 남아요. 지우는 커밋을 더해도 앞선 커밋을 거슬러 보면 키가 보여요. 그래서 이미 올라간 키는 새로 발급해 바꾸는 게 안전하고, .gitignore는 저장소를 만들자마자 만들어 둬요.
-  - id: branch-pointer
-    q: 브랜치에 대한 설명으로 맞는 것은?
-    options:
-      - 특정 커밋을 가리키는 움직이는 포인터다
-      - 프로젝트 폴더를 통째로 복사한 사본이다
-      - 원격 저장소에만 만들 수 있다
-      - main 브랜치에서는 커밋할 수 없다
-    answer: 0
-    explain: 브랜치는 커밋을 가리키는 책갈피 같은 포인터예요. 새 커밋을 만들면 책갈피가 자동으로 그 커밋으로 옮겨가요. 폴더를 복사하지 않으니 가볍게 만들고 지울 수 있어요.
 commands:
   - cmd: brew search <검색어>
     desc: 설치할 패키지의 정확한 이름 찾기

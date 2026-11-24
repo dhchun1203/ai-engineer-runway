@@ -20,20 +20,6 @@ quiz:
       - "None"
     answer: 1
     explain: "이기는 세 가지만 검사하고 나머지는 모두 \"패배\"를 돌려줘요. 같은 손(2, 2)은 어느 승리 조건에도 안 맞으니 패배예요. 맨 앞에 if user_number == computer_number: return \"무승부\" 를 넣어야 비김이 따로 잡혀요."
-  - id: and-loop-condition
-    q: "다음 코드의 출력은?"
-    code: |-
-      GOAL_WINS = 2
-      my_wins = 2
-      computer_wins = 1
-      print(my_wins < GOAL_WINS and computer_wins < GOAL_WINS)
-    options:
-      - "True"
-      - "False"
-      - "2"
-      - "1"
-    answer: 1
-    explain: "and 는 양쪽이 모두 참일 때만 True 예요. my_wins < 2 가 거짓(2 < 2)이라 전체가 False 예요. 그래서 한쪽이 2승이 되면 while 반복이 끝나요."
   - id: return-ends-loop
     q: "다음 코드의 출력은?"
     code: |-
@@ -64,30 +50,6 @@ quiz:
       - "TypeError"
     answer: 1
     explain: "enumerate 는 (번호, 값) 묶음을 꺼내 주고, start=1 이라 번호가 1부터 시작해요. start 를 빼면 0판, 1판이 돼요. for number, record 는 그 튜플을 두 변수로 나눠 받아요."
-  - id: strip-lower-yes
-    q: "다음 코드의 출력은?"
-    code: |-
-      answer = "  Yes ".strip().lower()
-      print(answer == "yes" or answer == "y")
-    options:
-      - "True"
-      - "False"
-      - "yes"
-      - "AttributeError"
-    answer: 0
-    explain: ".strip() 이 앞뒤 공백을 지워 \"Yes\", 이어서 .lower() 가 소문자로 바꿔 \"yes\" 가 돼요. 그래서 비교가 True 예요. 대소문자와 공백이 섞인 입력도 받아 주는 방법이에요."
-  - id: conditional-expression-print
-    q: "다음 코드의 출력은?"
-    code: |-
-      for co_wins in [1, 0, 2]:
-          print(f"{co_wins} 연승") if co_wins > 0 else ""
-    options:
-      - "1 연승, 0 연승, 2 연승"
-      - "1 연승, 2 연승"
-      - "1 연승, (빈 줄), 2 연승"
-      - "SyntaxError"
-    answer: 1
-    explain: "조건 표현식은 조건이 참일 때만 print() 를 실행해요. 0 일 때는 빈 문자열 \"\" 이 만들어졌다가 버려질 뿐 아무것도 찍히지 않아요. 동작만 할 때는 평범한 if 가 더 읽기 쉬워요."
   - id: name-when-imported
     q: "greet.py 에 아래 한 줄이 있어요. 같은 폴더의 main.py 에 import greet 만 쓰고 uv run main.py 로 실행하면 출력은?"
     code: |-
@@ -100,21 +62,6 @@ quiz:
       - "아무것도 출력되지 않는다"
     answer: 1
     explain: "import 는 그 파일을 한 번 실행해서 print 가 돌아요. 직접 실행한 파일이 아니라 불러온 파일이라 __name__ 은 파일 이름 greet 예요. uv run greet.py 로 직접 실행하면 __main__ 이에요. 그래서 if __name__ == \"__main__\": 으로 감싸면 import 할 때는 게임이 시작되지 않아요."
-  - id: return-comparison-bool
-    q: "다음 코드의 출력은?"
-    code: |-
-      GOAL_WINS = 2
-      def finish(my_wins):
-          return my_wins == GOAL_WINS
-
-      print(finish(1), finish(2))
-    options:
-      - "1 2"
-      - "False True"
-      - "None None"
-      - "True False"
-    answer: 1
-    explain: "my_wins == GOAL_WINS 는 비교라서 결과가 True 나 False 예요. 1 == 2 는 False, 2 == 2 는 True 예요. 그래서 부르는 쪽에서 if my_won: 처럼 바로 조건에 쓸 수 있어요."
   - id: sibling-class-no-method
     q: "다음 코드를 실행하면?"
     code: |-
@@ -140,33 +87,6 @@ quiz:
       - "처음부터 AttributeError"
     answer: 2
     explain: "Cat 은 sound 를 오버라이딩해서 야옹 이 먼저 찍혀요. 그런데 bark 는 Dog 에만 있어요. 상속은 부모에서 자식으로만 흘러서, 같은 부모를 둔 형제 Cat 도 bark 를 갖고 있지 않아요."
-  - id: setter-plus-equals
-    q: "다음 코드의 출력은?"
-    code: |-
-      class Wallet:
-          def __init__(self):
-              self.__money = 1000
-
-          def get_money(self):
-              return self.__money
-
-          def set_money(self, amount):
-              if amount >= 0:
-                  self.__money += amount
-              else:
-                  print("잘못된 값입니다.")
-
-      wallet = Wallet()
-      wallet.set_money(500)
-      wallet.set_money(500)
-      print(wallet.get_money())
-    options:
-      - "500"
-      - "1000"
-      - "1500"
-      - "2000"
-    answer: 3
-    explain: "set_money 안이 = 가 아니라 += 라서 부를 때마다 더해져요. 1000 + 500 + 500 = 2000 이에요. 이름은 set(정하기)인데 동작은 더하기라 헷갈리니, = 로 바꾸거나 이름을 add_money 로 맞추는 게 좋아요."
 commands:
   - cmd: enumerate(리스트, start=1)
     desc: 값마다 번호를 붙여 (번호, 값) 묶음으로 꺼내기. start 가 없으면 0부터

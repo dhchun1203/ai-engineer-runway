@@ -42,18 +42,6 @@ quiz:
       - "ERROR: ... violates not-null constraint"
     answer: 2
     explain: "REFERENCES 는 가리키는 값이 저쪽 표에 실제로 있어야 한다는 약속이에요. sports 에 30번이 없으니 DETAIL: Key (sport_id)=(30) is not present in table \"sports\". 와 함께 거절돼요. 값이 비지 않았으니 not-null 오류는 아니에요."
-  - id: fk-delete-referenced-parent
-    q: "courses 에 수영(sport_id 1) 강좌가 있어요. 다음을 실행하면?"
-    code: |-
-      -- courses.sport_id INT NOT NULL REFERENCES sports (sport_id)   (ON DELETE CASCADE 없음)
-      DELETE FROM sports WHERE sport_id = 1;
-    options:
-      - "수영과 수영 강좌가 함께 지워진다"
-      - "수영만 지워지고 강좌의 sport_id 는 NULL 이 된다"
-      - "ERROR: ... is still referenced from table \"courses\" 로 막힌다"
-      - "DELETE 0 이 나온다"
-    answer: 2
-    explain: "외래 키는 넣을 때뿐 아니라 지울 때도 막아요. CASCADE 가 없는 FK 는 누가 가리키고 있는 행의 삭제를 거절해요. 함께 지워지는 건 ON DELETE CASCADE 를 붙였을 때예요."
   - id: unique-fk-one-to-one
     q: "사물함 101번이 회원 1번에게 배정돼 있어요. 다음 INSERT 의 결과는?"
     code: |-
@@ -71,35 +59,6 @@ quiz:
       - "ERROR: ... violates foreign key constraint \"lockers_member_id_fkey\""
     answer: 1
     explain: "member_id 에 UNIQUE 가 붙어 같은 회원 번호는 한 번만 나올 수 있어요. 그래서 1:1 이에요. 사물함 번호 102 는 새 번호라 PK 에는 안 걸리고, 회원 1번은 있으니 FK 도 통과해요. UNIQUE 가 없었다면 1:N 이라 들어갔을 거예요."
-  - id: cascade-deletes-child-row
-    q: "다음을 실행한 뒤 SELECT * FROM lockers 의 행은?"
-    code: |-
-      -- lockers.member_id ... UNIQUE REFERENCES members (member_id) ON DELETE CASCADE
-      INSERT INTO lockers VALUES (101, 1, '2026-11-01');
-      INSERT INTO lockers VALUES (102, 3, '2026-11-01');
-      DELETE FROM members WHERE member_id = 3;
-      SELECT * FROM lockers;
-    options:
-      - "101 과 102 두 행"
-      - "101 한 행"
-      - "아무 행도 없다"
-      - "DELETE 가 FK 오류로 막혀 두 행 그대로"
-    answer: 1
-    explain: "ON DELETE CASCADE 는 가리키던 회원이 지워지면 그 회원을 가리키는 행도 같이 지워요. 회원 3번의 사물함 102 배정만 사라지고 101 은 남아요. CASCADE 가 없었다면 DELETE 가 FK 오류로 막혔을 거예요."
-  - id: serial-never-reuses
-    q: "회원 1, 2, 3번이 있는 members 에서 다음을 실행하면, 최가람의 member_id 는?"
-    code: |-
-      -- member_id SERIAL PRIMARY KEY
-      DELETE FROM members WHERE member_id = 3;
-      INSERT INTO members (name, gender, birth_year, join_date)
-      VALUES ('최가람', 'F', 2001, '2026-11-16');
-    options:
-      - "3"
-      - "4"
-      - "1"
-      - "번호가 겹쳐 오류가 난다"
-    answer: 1
-    explain: "SERIAL 은 자동 번호표(시퀀스)에서 다음 번호를 꺼내는 기본값이에요. 번호표는 되돌아가지 않으니 3번을 지워도 다음 회원은 4번이에요. 번호는 겹치지 않는 것만 보장되고, 빈틈은 생길 수 있어요."
   - id: composite-pk-month
     q: "enrollments 에 (1, 1, '2026-09', '수료', 70000) 이 이미 있어요. 다음 중 들어가는 것은?"
     code: |-
@@ -118,35 +77,6 @@ quiz:
       - "넷 다 막힌다. member_id 1 이 이미 있으니까"
     answer: 1
     explain: "복합 PK 는 세 열의 조합이 겹치는 것만 막아요. 9월 같은 강좌는 세 열이 모두 같아 enrollments_pkey 위반이고, 10월은 월이 달라 들어가요. '2026-9-1' 은 8글자라 value too long for type character(7) 이에요. 열 하나하나는 겹쳐도 돼요."
-  - id: delete-blocked-whole-statement
-    q: "회원 1번에게 사물함 101번(lockers, ON DELETE CASCADE)과 수강 기록(enrollments, CASCADE 없음)이 있어요. 다음을 실행하면?"
-    code: |-
-      DELETE FROM members WHERE member_id = 1;
-    options:
-      - "회원과 사물함, 수강 기록이 모두 지워진다"
-      - "회원과 사물함은 지워지고 수강 기록만 남는다"
-      - "enrollments 의 FK 오류로 막히고, 사물함 101 배정도 그대로 남는다"
-      - "lockers 의 UNIQUE 오류로 막힌다"
-    answer: 2
-    explain: "lockers 는 CASCADE 라 막지 않지만 enrollments 의 FK 가 막아요(enrollments_member_id_fkey). 오류가 나면 문장 전체가 취소되니 사물함 배정을 지우는 일도 일어나지 않아요."
-  - id: cart-composite-unique
-    q: "과제의 고친 carts 에 (7, 사과), (7, 바나나), (8, 사과)를 담았어요. 다음 중 거절되는 것은?"
-    code: |-
-      CREATE TABLE carts (
-          cart_id       SERIAL  PRIMARY KEY,
-          cart_cust_id  INT     NOT NULL,
-          product_id    INT     NOT NULL REFERENCES products (product_id) ON DELETE CASCADE,
-          cart_qty      INT     NOT NULL,
-          UNIQUE(cart_cust_id, product_id)
-      );
-      -- 사과 = product_id 1, 바나나 = product_id 2
-    options:
-      - "8번 사용자가 바나나 담기: (8, 2)"
-      - "7번 사용자가 사과를 또 담기: (7, 1)"
-      - "9번 사용자가 사과 담기: (9, 1)"
-      - "모두 들어간다"
-    answer: 1
-    explain: "UNIQUE(cart_cust_id, product_id) 는 두 열의 조합이 겹치는 것만 막아요. (7, 1) 은 이미 있어서 carts_cart_cust_id_product_id_key 위반이에요. 처음 낸 SQL 처럼 cart_cust_id 에만 UNIQUE 를 걸면 7번이 바나나를 담는 것부터 막혀요."
 commands:
   - cmd: "docker --version / docker compose version"
     desc: "Docker 와 Compose 가 깔려 있는지 확인(docker compose 는 띄어쓰기가 현재 방식)"

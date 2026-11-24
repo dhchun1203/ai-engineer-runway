@@ -9,13 +9,44 @@ topic: "Python"
 preStudy: ["1-3-python-functions-and-io"]
 ---
 
-어제는 조건문과 반복문으로 프로그램이 갈라지고 되풀이하게 만들었어요. 그런데 같은 코드를 여러 곳에 붙여 넣다 보면, 고칠 때 전부 찾아서 고쳐야 해요.
+같은 코드를 여러 곳에 붙여 넣지 않으려고, 덩어리에 이름을 붙여 한 번 만들고 여러 번 부르는 **함수**를 배웠어요. 함수 안과 밖의 변수가 나뉘는 스코프, 이름 없는 한 줄 함수(람다식)도 보고, 마지막에 가위바위보 게임을 만들어 함수로 다시 짰어요.
 
-오늘은 그 덩어리에 이름을 붙여 한 번 만들고 여러 번 부르는 **함수**를 배웠어요. 함수 안과 밖의 변수가 어떻게 나뉘는지(스코프), 한 줄짜리 이름 없는 함수(람다식)도 배우고, 마지막에 가위바위보 게임을 만들어요.
+각 절의 "자세히 보기"를 펼치면 전체 코드와 출력이 있어요. 끝에 복습 퀴즈 5문항이 있어요.
 
-레슨 끝에 확인 퀴즈가 있어요. 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
+## 1. 함수: `def`로 한 번 만들고, 안 넘긴 자리는 기본값이 채운다
 
-## 1. 함수: 한 번 만들고 이름으로 여러 번 부른다
+함수는 반복되는 로직을 한데 묶어 이름을 붙인 거예요. 이미 써 온 `print()`, `len()`도 함수예요.
+
+함수를 한 번 부르면 늘 같은 순서로 일이 일어나요. 값을 넣고, 몸통이 돌고, 결과가 나와요. 아래는 3절에서 볼 `check_ord_number(10)` 한 번이에요.
+
+<Figure label="함수 한 번 부르기">
+  <Relay
+    legs={[
+      { fn: "인수 넘기기", desc: "부르는 쪽이 괄호 안에 값을 넣어요", ex: "check_ord_number(10)", value: "10" },
+      { fn: "매개변수가 받기", desc: "정의의 이름표 `number`에 10이 담겨요", ex: "def check_ord_number(number):", value: "number = 10" },
+      { fn: "몸통 실행", desc: "들여 쓴 줄들이 위에서부터 돌아요", ex: "10 > 0", value: "True" },
+      { fn: "return", desc: "결과를 들고 함수 밖으로 나가요", ex: "return '양수'", value: "'양수'" },
+    ]}
+  />
+</Figure>
+
+함수 이름은 snake_case로 짓고, 콜론과 들여쓰기가 범위예요. 매개변수에 값을 적어 두면 기본값이 돼요.
+
+```python
+def say_hello(name = "홍길동", age  = 30, point = 1000):
+    print(f"{name}님, 안녕하세요. 나이는 {age}입니다.")
+    print(f"초기 지급 포인트 {point}점이 지급되었습니다.")
+
+say_hello("Minji")   # Minji님, ... 나이는 30입니다.
+say_hello(age=25)    # 홍길동님, ... 나이는 25입니다.
+```
+
+그냥 넘기면 앞에서부터 차례로 들어가고, 가운데 하나만 바꾸려면 `age=25`처럼 이름을 붙여요(키워드 인수).
+
+<details>
+<summary>자세히 보기</summary>
+
+### 함수: 한 번 만들고 이름으로 여러 번 부른다
 
 함수는 **반복되는 로직을 한데 묶어 이름을 붙인 것**이에요. 한 번 만들어 두면 이름만 불러서 몇 번이고 다시 쓸 수 있어요(재사용성).
 
@@ -32,20 +63,7 @@ def 함수이름(매개변수):
 - 줄 끝 콜론(`:`)과 들여쓰기가 함수의 범위예요. 어제 배운 if, for와 같은 규칙이에요.
 - 함수 이름은 **snake_case**로 지어요. 소문자로 쓰고 단어 사이를 밑줄로 이어요(`say_hello`, `get_average`).
 
-함수를 한 번 부르면 늘 같은 순서로 일이 일어나요. 값을 넣고, 몸통이 돌고, 결과가 나와요. 아래는 5절에서 볼 `check_ord_number(10)` 한 번이에요.
-
-<Figure label="함수 한 번 부르기">
-  <Relay
-    legs={[
-      { fn: "인수 넘기기", desc: "부르는 쪽이 괄호 안에 값을 넣어요", ex: "check_ord_number(10)", value: "10" },
-      { fn: "매개변수가 받기", desc: "정의의 이름표 `number`에 10이 담겨요", ex: "def check_ord_number(number):", value: "number = 10" },
-      { fn: "몸통 실행", desc: "들여 쓴 줄들이 위에서부터 돌아요", ex: "10 > 0", value: "True" },
-      { fn: "return", desc: "결과를 들고 함수 밖으로 나가요", ex: "return '양수'", value: "'양수'" },
-    ]}
-  />
-</Figure>
-
-## 2. 기본값: 안 넘긴 자리는 미리 적어 둔 값이 채운다
+### 기본값: 안 넘긴 자리는 미리 적어 둔 값이 채운다
 
 ```python
 def say_hello(name = "홍길동", age  = 30, point = 1000):
@@ -92,7 +110,25 @@ say_hello(age=25)
 
 </Hint>
 
-## 3. *numbers: 몇 개를 넘기든 튜플 하나로 받는다
+</details>
+
+## 2. 별표: `*numbers`는 튜플로, `**data`는 딕셔너리로 받는다
+
+몇 개를 넘길지 모를 때 매개변수 앞에 별표를 붙여요. 관례로 `*args`, `**kwargs`라고 써요.
+
+| 표기 | 받는 모양 | 넘기는 법 |
+| --- | --- | --- |
+| `*numbers` | 튜플 | `add_all(1, 2, 3)` |
+| `**data` | 딕셔너리 | `user_info(name = "Minji")` |
+
+`add_all()`처럼 아무것도 안 넘기면 빈 튜플 `()`이라 `sum`이 `0`이에요. **매개변수**는 정의하는 쪽의 이름, **인수**는 호출할 때 넘기는 값이에요.
+
+<CallSimulator />
+
+<details>
+<summary>자세히 보기</summary>
+
+### *numbers: 몇 개를 넘기든 튜플 하나로 받는다
 
 몇 개를 넘길지 미리 정할 수 없을 때는 매개변수 앞에 `*`를 붙여요.
 
@@ -138,7 +174,7 @@ add_all()
 
 </Hint>
 
-## 4. **data: 이름 붙여 넘긴 값은 딕셔너리로 받는다
+### **data: 이름 붙여 넘긴 값은 딕셔너리로 받는다
 
 `*` 두 개를 붙이면 `이름 = 값` 모양으로 넘긴 인수를 **딕셔너리로** 받아요.
 
@@ -171,18 +207,11 @@ active:True
 
 별표 개수에 따라 받는 모양이 달라져요.
 
-| 표기 | 받는 모양 | 넘기는 법 |
-| --- | --- | --- |
-| `*numbers` | 튜플 | `add_all(1, 2, 3)` |
-| `**data` | 딕셔너리 | `user_info(name = "Minji")` |
-
 이름은 정해져 있지 않아요. 관례로 `*args`, `**kwargs`(keyword arguments)라고 많이 써요. 중요한 건 별표 개수예요.
 
-### 직접 불러 보기: 인수가 어느 칸에 들어가나
+#### 직접 불러 보기: 인수가 어느 칸에 들어가나
 
 호출 한 줄을 고르면, 넘긴 값이 매개변수 칸에 어떻게 들어가는지와 그때 찍히는 글자가 보여요. 출력 창의 글자는 파이썬으로 실제로 돌린 결과 그대로예요.
-
-<CallSimulator />
 
 <Hint>
 
@@ -190,7 +219,26 @@ active:True
 
 </Hint>
 
-## 5. return: 값을 들고 나가면서 함수를 끝낸다
+</details>
+
+## 3. `return`: 값을 들고 나가며 끝낸다, 없으면 `None`, 여러 개면 튜플
+
+`return` 아래 줄은 실행되지 않아요. `print`만 하는 함수는 `None`을 돌려주니, 결과를 다른 계산에 쓰려면 `return`해야 해요.
+
+```python
+def calc_value(a, b):
+    plus = a + b
+    minus = a - b
+    return plus, minus
+
+result1, result2 = calc_value(1,2)   # 3, -1 (언패킹)
+result = calc_value(10, 5)           # (15, 5), <class 'tuple'>
+```
+
+<details>
+<summary>자세히 보기</summary>
+
+### return: 값을 들고 나가면서 함수를 끝낸다
 
 ```python
 def check_ord_number(number):
@@ -225,7 +273,7 @@ print(after_return())
 
 직접 실행하면 `음수`예요. `0 > 0`은 거짓이라 `else`로 가요. 0은 양수도 음수도 아니니, 제대로 하려면 `elif number < 0:`을 넣고 마지막 `else`에서 `'0'`을 돌려주게 나눠야 해요.
 
-### return이 없으면 None
+#### return이 없으면 None
 
 `say_hello()`처럼 `print`만 하고 `return`이 없는 함수는 무엇을 돌려줄까요?
 
@@ -251,7 +299,7 @@ None
   />
 </Figure>
 
-## 6. 여러 개 반환: 쉼표로 묶여 튜플 하나로 돌아온다
+### 여러 개 반환: 쉼표로 묶여 튜플 하나로 돌아온다
 
 ```python
 def calc_value(a, b):
@@ -293,7 +341,22 @@ print(type(result))
 
 </Note>
 
-## 7. 함수 실습: 이상한 경우는 맨 앞에서 먼저 내보낸다
+</details>
+
+## 4. 함수 실습: 이상한 경우는 맨 앞에서 먼저 `return`으로 내보낸다
+
+```python
+def get_average(*args):
+    if len(args) == 0:
+        return 0
+    ...
+    return avg_num
+```
+
+인수가 없으면 바로 `0`을 돌려줘서 0으로 나누기를 막아요. `get_average(80, 90, 100)`은 `/`라서 `90.0`이에요. 미니 계산기의 `divide`도 `b == 0`이면 안내 문구를 먼저 돌려줘요.
+
+<details>
+<summary>자세히 보기</summary>
 
 ### 평균을 계산해서 반환하는 함수
 
@@ -382,7 +445,24 @@ print(f"나눗셈 연산 {a} / {b}: {divide(a, b)}")
 - `divide`는 `b`가 `0`이면 계산하지 않고 안내 문구를 돌려줘요. 평균 함수와 같은 "먼저 막고 내보내기"예요.
 - `input()`은 늘 문자열이라 `int()`로 바꿔요(어제 배운 것).
 
-## 8. 변수 스코프: 함수 안은 자기 방, 밖은 모두의 거실
+</details>
+
+## 5. 스코프: 함수 안에서 `=`는 새 지역 변수, 바꾸려면 `global`
+
+함수 안에서 만든 변수는 밖에서 쓸 수 없어요(`NameError`). 함수 안에서 같은 이름에 값을 넣으면 전역 변수는 그대로 두고 지역 변수가 새로 생겨요. 읽기만 하면 전역 값이 보여요.
+
+```python
+counter = 0
+
+def inc_counter():
+    global counter # 전역 변수를 참조하겠다고 선언
+    counter += 1
+```
+
+`global` 없이 `count2 += 1`을 쓰면 함수 전체에서 `count2`를 지역 변수로 봐서 `UnboundLocalError`가 나요.
+
+<details>
+<summary>자세히 보기</summary>
 
 변수를 **어디에서 만들었느냐**에 따라 쓸 수 있는 범위(유효범위)가 달라요. 함수 밖에서 만든 **전역 변수**(global)는 어디서나 읽을 수 있어요. 함수 안에서 만든 **지역 변수**(local)는 그 함수 안에서만 쓸 수 있어요.
 
@@ -528,7 +608,32 @@ bad()
 
 </Note>
 
-## 9. 람다식: 이름 없이 잠깐 건네는 한 줄 함수
+</details>
+
+## 6. 람다식: 다른 함수에 잠깐 건네는 한 줄 함수
+
+`lambda x: x + 5`는 `def add_five(x): return x + 5`와 같아요. 식 하나만 쓰고 그 결과가 반환값이에요.
+
+| 하는 일 | 람다 방식 | 리스트 컴프리헨션 |
+| --- | --- | --- |
+| 모든 요소를 바꾸기 | `list(map(lambda x : x + 10, numbers))` | `[x + 10 for x in numbers]` |
+| 조건에 맞는 요소만 | `list(filter(lambda x : x % 2 == 0, numbers))` | `[x for x in numbers if x % 2 == 0]` |
+
+```python
+numbers = [1,2,3,4,5]
+result = list(map(lambda x : x + 10, numbers))                # [11, 12, 13, 14, 15]
+filter_result = list(filter(lambda x : x % 2 == 0, numbers))  # [2, 4]
+```
+
+`map`, `filter`는 꾸러미를 돌려줘서 `list()`로 감싸야 보이고, 한 번 꺼내면 비어요. 정렬과 최댓값은 `key`로 비교 기준을 정해요(`players = [("손흥민", 95),("김민재",60),("이강인",80)]`).
+
+```python
+print(max(players, key = lambda p: p[1])) # ('손흥민', 95)
+print(max(players))                       # ('이강인', 80), key가 없으면 맨 앞 요소(이름)로 비교
+```
+
+<details>
+<summary>자세히 보기</summary>
 
 ```python
 lambda 매개변수 : 표현식
@@ -585,11 +690,6 @@ print([x for x in numbers if x % 2 == 0])
 `map(함수, 데이터)`는 모든 요소에 함수를 적용해요. `filter(함수, 데이터)`는 함수의 결과가 참인 요소만 남겨요. 그래서 `map`은 개수가 그대로(5개 그대로 `[11, 12, 13, 14, 15]`)이고, `filter`는 개수가 줄어요(`[2, 4]`).
 
 둘 다 같은 결과를 리스트 컴프리헨션으로도 만들 수 있어요. 출력이 서로 같아요.
-
-| 하는 일 | 람다 방식 | 리스트 컴프리헨션 |
-| --- | --- | --- |
-| 모든 요소를 바꾸기 | `list(map(lambda x : x + 10, numbers))` | `[x + 10 for x in numbers]` |
-| 조건에 맞는 요소만 | `list(filter(lambda x : x % 2 == 0, numbers))` | `[x for x in numbers if x % 2 == 0]` |
 
 리스트 컴프리헨션(list comprehension)은 `[만들 값 for 변수 in 데이터 if 조건]` 모양으로 대괄호 안에 for를 써서 새 리스트를 한 줄로 만드는 문법이에요. `if 조건`은 필요할 때만 붙여요.
 
@@ -701,14 +801,50 @@ print(sqr_number_over_20)
 
 `**`는 그제 배운 거듭제곱 연산자예요.
 
-## 10. 가위바위보 게임: 배운 것이 한 판에 다 모인다
+</details>
+
+## 7. 가위바위보: 배운 것이 한 판에 모이고, 함수로 다시 짜면 한 곳만 고친다
+
+3판 2선승제 가위바위보에 딕셔너리(`game_data`), `append`, 중첩 if, while, break가 다 들어갔어요. 번호에 `01`을 넣으면 `int("01")`로 범위 검사는 통과하고 `game_data["01"]`에서 `KeyError`예요. 검사한 값과 쓰는 값이 달라서 생긴 틈이에요.
+
+되풀이되던 "다시 묻기"와 "승패 가리기"를 함수 두 개로 뺐어요.
+
+```python
+beats = {"가위": "보", "바위": "가위", "보": "바위"}  # 키가 값을 이긴다
+
+def ask(prompt, allowed, warning):
+    answer = input(prompt).strip()
+    while answer not in allowed:
+        print(warning)
+        answer = input(prompt).strip()
+    return answer
+
+def judge(me, computer):
+    if me == computer:
+        return "비김"
+    if beats[me] == computer:
+        return "승리"
+    return "패배"
+```
+
+| 바뀐 곳 | 어떻게 |
+| --- | --- |
+| `ask` | 다시 묻는 `while`을 한 번만 써 두고 두 곳에서 불러요. 안내 문구만 인수로 바꿔 넘겨요. 이게 재사용이에요 |
+| `judge` | "무엇이 무엇을 이기나"를 `beats` 딕셔너리 한 줄로 적어 두고, 세 벌의 `if`를 대신해요 |
+| 점수 올리기 | `judge`가 돌려준 결과로 한 번만 처리해서, 아홉 갈래였던 점수 처리가 세 갈래로 줄었어요 |
+| 입력 버그 | `ask`가 허락된 값(`"1"`, `"2"`, `"3"`)인지 문자열 그대로 검사해서 `abc`, `01`은 다시 물어요. `.strip()`이 앞뒤 공백도 지워 줘서 ` 2`도 받아요 |
+| 재도전 버그 | `ask`가 `yes`나 `no`만 돌려주니, 다시 물어서 받은 `no`도 `bye bye`를 찍고 끝나요 |
+
+<details>
+<summary>자세히 보기</summary>
+
+### 가위바위보 게임: 배운 것이 한 판에 다 모인다
 
 `main.py`에 작성한 **3판 2선승제** 가위바위보예요. 먼저 2번 이기거나 2번 지면 끝나요.
 
 ```python
 import random
 # 가위 바위 보 게임 미니 프로젝트
-
 
 print("=" * 30)
 print("가위바위보 게임")
@@ -725,7 +861,6 @@ winning_streak_cnt = 0 # 연승 카운터
 lose_cnt = 0 # 패배 카운터
 game_record_list = [] # 경기 기록 리스트
 
-
 while retry_value == "yes" or retry_value == "":
     target_num = str(random.randint(1,3))
 
@@ -734,7 +869,6 @@ while retry_value == "yes" or retry_value == "":
     while int(input_num) < 1 or int(input_num) > 3:
         print("1 부터 3 까지의 숫자만 입력 가능합니다.")
         input_num = input("번호를 선택하세요. : ")
-
 
     print()
     print("[게임 결과]")
@@ -804,7 +938,7 @@ while retry_value == "yes" or retry_value == "":
         retry_value = input("다시 도전 (yes/no) : ")
 ```
 
-### 쓰인 것
+#### 쓰인 것
 
 | 변수 | 역할 |
 | --- | --- |
@@ -816,7 +950,7 @@ while retry_value == "yes" or retry_value == "":
 
 어제 배운 딕셔너리, 리스트의 `append`, 중첩 if, while, break가 한꺼번에 들어 있어요.
 
-### 흐름
+#### 흐름
 
 한 판은 이렇게 돌아요.
 
@@ -876,7 +1010,7 @@ Minji: 바위  vs  컴퓨터: 가위
 
 `\t`는 탭(넓은 띄어쓰기)이라 `최종 스코어`와 이름 사이가 벌어져 보여요.
 
-### 직접 넣어 보면 보이는 것
+#### 직접 넣어 보면 보이는 것
 
 | 입력 | 결과 |
 | --- | --- |
@@ -899,7 +1033,7 @@ Minji: 바위  vs  컴퓨터: 가위
 
 </TwistBox>
 
-## 11. 함수로 다시 짜기: 한 곳만 고치면 부르는 곳이 전부 바뀐다
+### 함수로 다시 짜기: 한 곳만 고치면 부르는 곳이 전부 바뀐다
 
 오늘 TIL의 셀프 체크 질문은 "함수를 재사용한다는 것이 의미하는 게 뭘까?"였고, 요약에는 "코드 더 개선해보자"라고 적었어요. 둘을 한 번에 풀어 볼게요.
 
@@ -924,7 +1058,6 @@ import random
 game_data = {"1": "가위", "2": "바위", "3": "보"}
 beats = {"가위": "보", "바위": "가위", "보": "바위"}  # 키가 값을 이긴다
 
-
 def ask(prompt, allowed, warning):
     answer = input(prompt).strip()
     while answer not in allowed:
@@ -932,14 +1065,12 @@ def ask(prompt, allowed, warning):
         answer = input(prompt).strip()
     return answer
 
-
 def judge(me, computer):
     if me == computer:
         return "비김"
     if beats[me] == computer:
         return "승리"
     return "패배"
-
 
 print("=" * 30)
 print("가위바위보 게임")
@@ -1015,14 +1146,6 @@ while True:
   />
 </Figure>
 
-| 바뀐 곳 | 어떻게 |
-| --- | --- |
-| `ask` | 다시 묻는 `while`을 한 번만 써 두고 두 곳에서 불러요. 안내 문구만 인수로 바꿔 넘겨요. 이게 재사용이에요 |
-| `judge` | "무엇이 무엇을 이기나"를 `beats` 딕셔너리 한 줄로 적어 두고, 세 벌의 `if`를 대신해요 |
-| 점수 올리기 | `judge`가 돌려준 결과로 한 번만 처리해서, 아홉 갈래였던 점수 처리가 세 갈래로 줄었어요 |
-| 입력 버그 | `ask`가 허락된 값(`"1"`, `"2"`, `"3"`)인지 문자열 그대로 검사해서 `abc`, `01`은 다시 물어요. `.strip()`이 앞뒤 공백도 지워 줘서 ` 2`도 받아요 |
-| 재도전 버그 | `ask`가 `yes`나 `no`만 돌려주니, 다시 물어서 받은 `no`도 `bye bye`를 찍고 끝나요 |
-
 직접 돌려 보니 같은 순서로 내면 원래 코드와 똑같이 `최종 스코어	Minji 2 : 1 컴퓨터`로 끝났어요. `judge`도 아홉 가지 조합을 모두 넣어 확인했어요.
 
 ```text
@@ -1034,6 +1157,8 @@ while True:
 (각 줄은 내가 낸 것, 대괄호 안은 컴퓨터가 가위, 바위, 보를 냈을 때의 결과예요.)
 
 함수로 나누면 좋은 점이 하나 더 있어요. `judge`는 입력도 출력도 없이 값만 받아 결과를 돌려주니, 위처럼 **따로 떼어 시험해 볼 수 있어요.** 게임을 처음부터 여러 판 하지 않아도 승패 규칙이 맞는지 바로 확인돼요.
+
+</details>
 
 ## 오늘 꼭 기억할 주의점
 

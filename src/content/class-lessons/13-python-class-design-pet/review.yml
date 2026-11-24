@@ -2,27 +2,6 @@
 # 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
 slug: 13-python-class-design-pet
 quiz:
-  - id: class-variable-shared
-    q: "다음 코드의 출력은?"
-    code: |-
-      class Pet:
-          count = 0
-
-          def __init__(self, name):
-              self.name = name
-              Pet.count += 1
-
-      a = Pet("초코")
-      b = Pet("두부")
-      c = Pet("콩이")
-      print(Pet.count, a.count)
-    options:
-      - "3 3"
-      - "3 1"
-      - "1 1"
-      - "0 3"
-    answer: 0
-    explain: "count 는 클래스 변수라 모든 펫이 함께 보는 값 하나예요. Pet.count += 1 이 세 번 실행돼 3 이고, a.count 로 읽어도 a 에는 count 가 없으니 클래스의 3 을 읽어요."
   - id: self-count-makes-instance-var
     q: "다음 코드의 출력은?"
     code: |-
@@ -43,55 +22,6 @@ quiz:
       - "0 0"
     answer: 1
     explain: "self.count += 1 은 self.count = self.count + 1 이에요. 읽을 때는 클래스의 0 을 읽지만, 쓸 때는 객체에 새 count 를 만들어 1 을 넣어요. 클래스의 count 는 그대로 0 이에요. 함께 쓰는 값은 Pet.count 로 바꿔야 해요."
-  - id: print-calls-str
-    q: "다음 코드의 출력은?"
-    code: |-
-      class Pet:
-          def __init__(self, name):
-              self.name = name
-
-          def __str__(self):
-              return f"{self.name} ^_^"
-
-      print(Pet("초코"))
-    options:
-      - "<__main__.Pet object at 0x...>"
-      - "초코"
-      - "초코 ^_^"
-      - "None"
-    answer: 2
-    explain: "print(객체) 는 그 객체의 __str__() 을 불러 돌려받은 문자열을 출력해요. __str__ 이 없을 때만 <__main__.Pet object at 0x...> 모양이 나와요."
-  - id: bar-floor-division
-    q: "다음 코드의 출력은?"
-    code: |-
-      def bar(value):
-          filled = value // 10
-          return "■" * filled + "□" * (10 - filled)
-
-      print(bar(45))
-    options:
-      - "■■■■□□□□□□"
-      - "■■■■■□□□□□"
-      - "■■■■"
-      - "TypeError"
-    answer: 0
-    explain: "// 는 몫만 남겨서 45 // 10 은 4 예요. 채운 칸 4개, 빈칸 10 - 4 = 6개라 ■ 4개 뒤에 □ 6개예요. 반올림하지 않으니 5칸이 아니에요."
-  - id: clamp-keeps-range
-    q: "다음 코드의 출력은?"
-    code: |-
-      def clamp(value):
-          if value < 0: return 0
-          if value > 100: return 100
-          return value
-
-      print(clamp(130), clamp(-5), clamp(50))
-    options:
-      - "130 -5 50"
-      - "100 0 50"
-      - "100 -5 50"
-      - "0 0 50"
-    answer: 1
-    explain: "0 보다 작으면 0, 100 보다 크면 100 으로 가두고, 그 사이는 그대로 돌려줘요. 그래서 130 은 100, -5 는 0, 50 은 50 이에요."
   - id: keyword-argument-default
     q: "다음 코드의 출력은?"
     code: |-
@@ -114,26 +44,6 @@ quiz:
       - "TypeError"
     answer: 1
     explain: "happy=15 처럼 이름을 붙여 넘기면 happy 에만 들어가고, hunger 는 기본값 0 이 쓰여 그대로 30 이에요. 이름 없이 p._change(15) 라고 하면 첫 매개변수 hunger 에 들어가 45 70 이 돼요."
-  - id: single-vs-double-underscore
-    q: "다음 코드를 실행하면?"
-    code: |-
-      class Toy:
-          def _hello(self):
-              return "안녕"
-
-          def __bye(self):
-              return "잘 가"
-
-      t = Toy()
-      print(t._hello())
-      print(t.__bye())
-    options:
-      - "안녕 다음 줄에 잘 가"
-      - "처음부터 AttributeError"
-      - "안녕 이 찍히고 AttributeError"
-      - "아무것도 출력되지 않는다"
-    answer: 2
-    explain: "밑줄 하나(_hello)는 안에서 쓰자는 약속일 뿐이라 밖에서도 불려요. 밑줄 둘(__bye)은 _Toy__bye 로 이름이 바뀌어서 원래 이름으로 부르면 AttributeError 가 나요."
   - id: feed-returns-none-on-success
     q: "다음 코드의 출력은?"
     code: |-

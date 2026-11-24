@@ -35,8 +35,12 @@ function codeBlocks(src) {
 
 function figures(src) {
   const out = [];
-  for (const m of src.matchAll(/<Figure\s+label="([^"]*)"/g)) out.push(`Figure:${m[1]}`);
-  for (const m of src.matchAll(/<([A-Z][A-Za-z]*(?:Simulator|Chart|Histogram|Toggle|Playground|Explorer|Checker))\b/g)) out.push(`Sim:${m[1]}`);
+  // 라벨은 큰따옴표, 작은따옴표 둘 다. 라벨 없는 그림은 그림 블록 전체를 공백 정규화해 비교한다.
+  for (const m of src.matchAll(/<Figure\b([^>]*)>([\s\S]*?)<\/Figure>/g)) {
+    const label = m[1].match(/label=(?:"([^"]*)"|'([^']*)')/);
+    out.push(label ? `Figure:${label[1] ?? label[2]}` : `Figure(무라벨):${norm(m[2]).slice(0, 80)}`);
+  }
+  for (const m of src.matchAll(/<([A-Z][A-Za-z]*(?:Simulator|Chart|Histogram|Toggle|Playground|Explorer|Checker|Replay))\b/g)) out.push(`Sim:${m[1]}`);
   return out;
 }
 

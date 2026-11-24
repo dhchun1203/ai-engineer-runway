@@ -2,39 +2,6 @@
 # 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
 slug: 09-python-class-instance
 quiz:
-  - id: init-auto-call
-    q: "다음 코드의 출력은?"
-    code: |-
-      class User:
-          def __init__(self, name):
-              print("생성:", name)
-              self.name = name
-
-      u = User("손흥민")
-    options:
-      - "생성: 손흥민"
-      - "아무것도 출력되지 않는다"
-      - "손흥민"
-      - "__init__ 을 부르지 않아 에러가 난다"
-    answer: 0
-    explain: "User(\"손흥민\") 으로 인스턴스를 만드는 순간 파이썬이 __init__ 을 자동으로 불러요. 그래서 직접 부르지 않아도 print 가 실행돼요."
-  - id: same-value-different-object
-    q: "다음 코드의 출력은?"
-    code: |-
-      class User:
-          def __init__(self, name):
-              self.name = name
-
-      a = User("손흥민")
-      b = User("손흥민")
-      print(a is b, a.name == b.name)
-    options:
-      - "True True"
-      - "False True"
-      - "False False"
-      - "True False"
-    answer: 1
-    explain: "같은 클래스, 같은 값으로 만들어도 a 와 b 는 서로 다른 객체라 is 는 False 예요. 안에 든 name 값은 둘 다 \"손흥민\" 이라 == 는 True 예요."
   - id: self-is-caller
     q: "다음 코드의 출력은?"
     code: |-
@@ -51,68 +18,6 @@ quiz:
       - "id 숫자 두 개"
     answer: 1
     explain: "monitor.check() 처럼 부르면 점 앞의 monitor 가 self 로 들어가요. 같은 객체라 id 가 같아서 True 예요."
-  - id: attribute-before-set
-    q: "다음 코드를 실행하면?"
-    code: |-
-      class Monitor:
-          def display_info(self):
-              self.resolution = "1920X1080"
-
-      monitor = Monitor()
-      print(monitor.resolution)
-    options:
-      - "1920X1080"
-      - "None"
-      - "AttributeError"
-      - "빈 줄이 출력된다"
-    answer: 2
-    explain: "resolution 은 display_info() 안의 self.resolution = ... 줄이 실행돼야 생겨요. 메서드를 부르기 전에 꺼내면 'Monitor' object has no attribute 'resolution' 에러가 나요. 생성자에서 속성을 미리 만들어 두는 이유예요."
-  - id: battery-per-instance
-    q: "다음 코드의 출력은?"
-    code: |-
-      class SmartPhone:
-          def __init__(self, model):
-              self.model = model
-              self.battery = 50
-
-          def charge(self, amount):
-              self.battery += amount
-              if self.battery > 100:
-                  self.battery = 100
-
-      phone_a = SmartPhone("아이폰")
-      phone_a.charge(30)
-      phone_a.charge(30)
-      phone_b = SmartPhone("갤럭시")
-      print(phone_a.battery, phone_b.battery)
-    options:
-      - "110 50"
-      - "100 100"
-      - "100 50"
-      - "80 50"
-    answer: 2
-    explain: "phone_a 는 50 에서 80, 다시 110 이 됐다가 100 을 넘어서 100 으로 맞춰져요. phone_b 는 새 인스턴스라 자기 battery 가 50 에서 시작해요."
-  - id: fstring-method-order
-    q: "다음 코드의 출력 순서는?"
-    code: |-
-      class BankAccount:
-          def __init__(self, balance):
-              self.balance = balance
-
-          def withdraw(self, amount):
-              self.balance -= amount
-              print(f"{amount:,}원 출금 완료")
-              return self.balance
-
-      account = BankAccount(600000)
-      print(f"잔액 : {account.withdraw(200000):,}원")
-    options:
-      - "잔액 : 400,000원 다음 줄에 200,000원 출금 완료"
-      - "200,000원 출금 완료 다음 줄에 잔액 : 400,000원"
-      - "잔액 : 400,000원 만 출력된다"
-      - "잔액 : 200,000원 출금 완료400,000원"
-    answer: 1
-    explain: "print 는 괄호 안의 문장을 다 만든 다음에 찍어요. 문장을 만들려면 f-string 안의 withdraw(200000) 부터 실행해야 해서, 메서드 안의 print 가 먼저 찍히고 돌려받은 400000 이 들어간 문장이 나중에 찍혀요."
   - id: none-return-format-error
     q: "잔액이 100,000원일 때 다음 줄을 실행하면?"
     code: |-

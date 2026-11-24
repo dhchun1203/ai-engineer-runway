@@ -9,22 +9,27 @@ topic: "Python"
 preStudy: ["1-3-python-variables-and-types", "1-3-python-lists-tuples-dicts"]
 ---
 
-지난 시간에 uv로 작업 공간을 만들고 노트북까지 열어 봤어요. 오늘은 그 노트북에서 **진짜 파이썬 문법**을 치기 시작했어요.
+노트북에서 진짜 파이썬 문법을 치기 시작한 날이에요. 값을 변수에 담고, 계산하고, f-string으로 보기 좋게 출력하고, 여러 개를 리스트와 튜플에 묶었어요.
 
-흐름은 단순해요. 값을 변수에 담고, 계산하고, 보기 좋게 출력하고, 여러 개를 한 변수에 묶어요. 중간에는 이걸 합쳐 영수증도 찍어 봐요.
+각 절의 "자세히 보기"를 펼치면 전체 코드와 출력이 있어요. 끝에 복습 퀴즈 5문항이 있어요.
 
-레슨 끝에 확인 퀴즈가 있어요. 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
+> **실습 노트북:** <a href="/downloads/class-06-python-variable-list-tuple.ipynb" download>class-06-python-variable-list-tuple.ipynb 내려받기</a> (약 13KB). uv 프로젝트 폴더에 넣고 `uv add --dev ipykernel`을 한 뒤, VS Code의 **Select Kernel**에서 `.venv`를 골라 맨 위 칸부터 `Shift + Enter`로 실행해요.
 
-> **실습 노트북:** <a href="/downloads/class-06-python-variable-list-tuple.ipynb" download>class-06-python-variable-list-tuple.ipynb 내려받기</a> (약 13KB)
->
-> 이 레슨의 코드를 칸별로 담았고, 맨 아래에 혼자 치기 다섯 문제와 정답이 있어요.
->
-> 1. 파일을 uv 프로젝트 폴더에 넣어요. 프로젝트가 없으면 지난 시간처럼 `uv init --no-package`로 만들어요.
-> 2. 터미널에서 `uv add --dev ipykernel`을 실행해요.
-> 3. VS Code로 파일을 열고 **Select Kernel**, **Python Environments**, **내 프로젝트**(`.venv`)를 차례로 골라요.
-> 4. 맨 위 칸부터 `Shift + Enter`로 실행해요.
+## 1. 변수는 상자가 아니라 이름표: 다시 넣으면 다른 객체로 옮겨 간다
 
-## 1. 변수 재할당: 변수는 상자가 아니라 이름표
+파이썬의 `=`는 "같다"가 아니라 **오른쪽을 계산해서 왼쪽에 넣어라**예요. 값을 다시 넣으면 이름표가 새 객체로 옮겨 가서 `id()`가 달라져요.
+
+```python
+money = 5000
+money = money + 2000
+print(money)
+# 7000
+```
+
+아무도 가리키지 않게 된 옛 객체는 가비지 컬렉터가 알아서 치워요.
+
+<details>
+<summary>자세히 보기</summary>
 
 ### 값을 다시 넣으면
 
@@ -135,7 +140,24 @@ print(id(a) == id(b))
 
 </TwistBox>
 
-## 2. 연산자: 계산하고, 비교하고, 참거짓을 묶는다
+</details>
+
+## 2. 연산자: `/`는 소수, `//`는 몫, `%`는 나머지
+
+| 식 | 의미 | 결과 |
+| --- | --- | --- |
+| `10*2` | 곱셈 | `20` |
+| `10/2` | 나눗셈 (결과는 소수) | `5.0` |
+| `10%3` | 나머지 | `1` |
+| `10//3` | 몫 | `3` |
+| `10**2` | 거듭제곱 | `100` |
+
+`10/2`는 나누어떨어져도 `5.0`(float)이에요. 줄여 쓰는 `score += 50`은 `score = score + 50`이에요.
+
+비교는 `==`, `!=`이고(값을 넣는 `=`와 달라요), 참거짓은 `and`(둘 다), `or`(하나라도), `not`(뒤집기)으로 묶어요.
+
+<details>
+<summary>자세히 보기</summary>
 
 ### 산술 연산자
 
@@ -147,14 +169,6 @@ print(10%3)
 print(10//3)
 print(10**2)
 ```
-
-| 식 | 의미 | 결과 |
-| --- | --- | --- |
-| `10*2` | 곱셈 | `20` |
-| `10/2` | 나눗셈 (결과는 소수) | `5.0` |
-| `10%3` | 나머지 | `1` |
-| `10//3` | 몫 | `3` |
-| `10**2` | 거듭제곱 | `100` |
 
 `10/2`가 `5`가 아니라 `5.0`인 게 눈에 띄어요. 나눗셈 `/`의 결과는 나누어떨어져도 **소수**(float)예요. 정수 몫이 필요하면 `//`를 써요.
 
@@ -221,7 +235,31 @@ print(not is_adult)             # False
 - `or`: 하나라도 참이면 참
 - `not`: 참과 거짓을 뒤집어요
 
-## 3. 단락 평가와 우선순위: 답이 정해지면 나머지는 안 본다
+</details>
+
+## 3. 단락 평가: 답이 정해지면 오른쪽은 안 본다
+
+<Figure label="오른쪽에 (10/0 > 1)을 둔 세 식">
+  <FanOut
+    call="print(왼쪽 and/or (10/0 > 1))"
+    tone="blue"
+    targets={[
+      { title: "`False and ...`", result: "False", why: "왼쪽이 `False`면 답이 이미 `False`예요. 오른쪽을 **안 봐서** 에러가 없어요" },
+      { title: "`False or ...`", result: "에러", why: "오른쪽을 봐야 답이 나와요. 계산하다가 `ZeroDivisionError`" },
+      { title: "`True or ...`", result: "True", why: "왼쪽이 `True`면 답이 정해졌어요. 오른쪽을 건너뛰어요" },
+    ]}
+  />
+</Figure>
+
+우선순위는 괄호, `**`, 곱셈 나눗셈(`*`, `/`, `//`, `%`는 같은 등급이라 왼쪽부터), 덧셈 뺄셈, 비교 순이에요.
+
+```python
+result = 10 + 2 * 5 > 25    # False
+result = (10 + 2) * 5 > 25  # True
+```
+
+<details>
+<summary>자세히 보기</summary>
 
 ### 단락 평가
 
@@ -236,18 +274,6 @@ print(False or (10/0 > 1))
 ```
 
 오른쪽에 0으로 나누는 식 `(10/0 > 1)`을 일부러 넣었어요. 오른쪽을 계산하면 에러가 나니까, 에러가 나는지만 보면 파이썬이 오른쪽을 봤는지 알 수 있어요.
-
-<Figure label="오른쪽에 (10/0 > 1)을 둔 세 식">
-  <FanOut
-    call="print(왼쪽 and/or (10/0 > 1))"
-    tone="blue"
-    targets={[
-      { title: "`False and ...`", result: "False", why: "왼쪽이 `False`면 답이 이미 `False`예요. 오른쪽을 **안 봐서** 에러가 없어요" },
-      { title: "`False or ...`", result: "에러", why: "오른쪽을 봐야 답이 나와요. 계산하다가 `ZeroDivisionError`" },
-      { title: "`True or ...`", result: "True", why: "왼쪽이 `True`면 답이 정해졌어요. 오른쪽을 건너뛰어요" },
-    ]}
-  />
-</Figure>
 
 - `and`는 왼쪽이 `False`면 답이 이미 `False`예요. 오른쪽을 안 봐서, 0으로 나누는 식이 있어도 에러가 안 나요.
 - `or`는 왼쪽이 `False`면 오른쪽을 봐야 답이 나와요. 그래서 계산하다가 `ZeroDivisionError`가 나요.
@@ -309,11 +335,27 @@ print(10 / 2 * 5)  # 25.0   (10/2 = 5.0, 5.0*5 = 25.0)
 
 </TwistBox>
 
-## 4. 문자열 포맷: 자리를 비워 두고 값으로 채운다
+</details>
+
+## 4. 문자열 포맷: f-string과 `{값:>10,}`, 그리고 영수증
+
+`%s`, `.format()`, f-string 세 가지 중 주로 f-string을 써요. 콜론 뒤에 `>`(오른쪽 정렬), 폭, `,`(천 단위 쉼표)를 적어요.
+
+```python
+print(f"금액: {15000:>8,}원")
+# 금액:   15,000원
+```
+
+이걸 `for menu, price, qty in orders`와 합쳐 영수증을 찍었어요. 소계를 `total_amount += subtotal`로 더해 합계 19,000원이 나와요. 한글은 터미널에서 두 칸을 차지해서 한글이 든 줄만 칸이 어긋나요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### 문자열 포맷: 자리를 비워 두고 값으로 채운다
 
 값을 문자열에 넣는 방법이 세 가지 나왔어요.
 
-### % 방식
+#### % 방식
 
 ```python
 print("선발 출전: %s, %d" % ("손흥민", 20))
@@ -334,7 +376,7 @@ print("소수점 표기 : %.2f" % (3.141592))
 | `%5d` | 정수를 폭 5칸에 넣기(남는 칸은 왼쪽 공백) |
 | `%.2f` | 소수점 아래 2자리 |
 
-### format 방식과 f-string 방식
+#### format 방식과 f-string 방식
 
 ```python
 name = "Cake"
@@ -364,7 +406,7 @@ print(format_str)
 
 </Note>
 
-### 콜론 뒤의 모양 지정
+#### 콜론 뒤의 모양 지정
 
 `{값:>10,}`에서 콜론 뒤가 **어떻게 보여 줄지**예요.
 
@@ -392,7 +434,7 @@ print(f"금액: {15000:>8,}원")
 # 금액:   15,000원
 ```
 
-## 5. 영수증 만들기: 오늘 배운 것을 한 장에
+### 영수증 만들기: 오늘 배운 것을 한 장에
 
 지금까지 배운 것을 합쳐요. 오늘 수업의 작은 완성품이에요.
 
@@ -442,7 +484,7 @@ Cake              6,000      6,000
 </Figure>
 
 - `"=" * 34`: 문자열을 34번 반복해요. 구분선을 이렇게 그려요.
-- `orders`: 값 세 개짜리 묶음(튜플)을 담은 리스트예요. 튜플은 6절에서 다뤄요.
+- `orders`: 값 세 개짜리 묶음(튜플)을 담은 리스트예요. 튜플은 5절에서 다뤄요.
 - `for menu, price, qty in orders`: 묶음을 하나씩 꺼내 세 변수에 나눠 담아요. 반복문은 아직 자세히 안 배웠으니 "한 줄씩 꺼내는구나" 정도로 봐요.
 - `total_amount += subtotal`: 소계를 더해 합계를 만들어요. 10,000 + 3,000 + 6,000 = 19,000이에요.
 
@@ -468,7 +510,27 @@ print(f"{'합계금액':<6}{total_amount:>24,}")
 
 </TwistBox>
 
-## 6. 리스트와 튜플: 고칠 수 있는 칸과 잠긴 칸
+</details>
+
+## 5. 리스트는 고칠 수 있고, 튜플은 잠겨 있다
+
+```python
+fruits = ["apple"]
+fruits.append("banana")     # ['apple', 'banana']
+fruits.insert(0, "kiwi")    # ['kiwi', 'apple', 'banana']
+fruits.remove("apple")      # ['kiwi', 'banana']
+
+axis = (38.123, 41.123)
+axis[0] = 36.1234           # TypeError: 'tuple' object does not support item assignment
+print(type((1,)))           # <class 'tuple'>
+```
+
+튜플을 만드는 건 괄호보다 **쉼표**예요. `(1)`은 그냥 `int`예요.
+
+`c = b`는 복사가 아니라 이름표를 하나 더 붙이는 거라, `c.append(3)` 하면 `b`도 `[1, 2, 3]`으로 보여요.
+
+<details>
+<summary>자세히 보기</summary>
 
 ### 괄호로 구분해요
 
@@ -638,7 +700,26 @@ print(b)  # [1, 2, 3]
 
 </TwistBox>
 
-## 7. 꺼내기: 번호는 0부터, 끝은 빼고
+</details>
+
+## 6. 꺼내기: 번호는 0부터, 슬라이싱의 끝은 빼고
+
+앞에서는 `[0]`부터, 뒤에서는 `[-1]`부터 세요. `[시작:끝:간격]`의 끝은 포함하지 않아요(`numbers = [0, 1, 2, 3, 4, 5]`).
+
+| 식 | 뜻 | 결과 |
+| --- | --- | --- |
+| `numbers[1:4]` | 1번부터 4번 미만까지 | `[1, 2, 3]` |
+| `numbers[::2]` | 2칸씩 간격으로 | `[0, 2, 4]` |
+| `numbers[::-1]` | 역순으로 | `[5, 4, 3, 2, 1, 0]` |
+| `numbers[:3]` | 앞에서 3개만 | `[0, 1, 2]` |
+| `numbers[3:]` | 3번부터 끝까지 | `[3, 4, 5]` |
+
+<SliceExplorer />
+
+없는 인덱스는 `IndexError`지만 슬라이싱은 범위를 넘어도 있는 만큼만 줘요. 2차원 리스트는 `matrix[1][2]`처럼 `[행][열]`로 꺼내요.
+
+<details>
+<summary>자세히 보기</summary>
 
 ### 인덱스
 
@@ -675,17 +756,7 @@ print([1, 2, 3][5])
 numbers = [0, 1, 2, 3, 4, 5]
 ```
 
-| 식 | 뜻 | 결과 |
-| --- | --- | --- |
-| `numbers[1:4]` | 1번부터 4번 미만까지 | `[1, 2, 3]` |
-| `numbers[::2]` | 2칸씩 간격으로 | `[0, 2, 4]` |
-| `numbers[::-1]` | 역순으로 | `[5, 4, 3, 2, 1, 0]` |
-| `numbers[:3]` | 앞에서 3개만 | `[0, 1, 2]` |
-| `numbers[3:]` | 3번부터 끝까지 | `[3, 4, 5]` |
-
 아래 탐색기에서 시작, 끝, 간격을 바꿔 보세요. 고른 칸이 꺼내지는 순서대로 번호가 붙고, 결과는 파이썬이 찍는 모양 그대로 나와요.
-
-<SliceExplorer />
 
 <Hint>
 
@@ -745,7 +816,20 @@ print(len(matrix), len(matrix[0]))
 
 정답은 `matrix[1][1]`이에요. 두 번째 행의 두 번째 값이에요.
 
-## 8. 세기와 확인하기: len은 몇 개, in은 있나 없나
+</details>
+
+## 7. 세기와 확인: `len`은 몇 개, `in`은 있나 없나
+
+```python
+user_roles = ["admin", "member", "guest"]
+print(len(user_roles))              # 3
+print("admin" not in user_roles)    # False
+```
+
+`len()`은 튜플(`len((10, 20, 30))`은 `3`)과 문자열(`len("hello")`는 `5`)에도 써요.
+
+<details>
+<summary>자세히 보기</summary>
 
 ```python
 user_roles = ["admin", "member", "guest"]
@@ -763,6 +847,8 @@ False
 - `"admin" in user_roles`는 `True`, `"owner" not in user_roles`도 `True`예요.
 
 `len()`은 리스트만의 기능이 아니에요. `len((10, 20, 30))`은 `3`, `len("hello")`는 `5`예요.
+
+</details>
 
 ## 오늘 꼭 기억할 주의점
 

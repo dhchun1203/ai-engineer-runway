@@ -9,11 +9,24 @@ topic: "Git"
 preStudy: ["1-2-git-branch-and-pr"]
 ---
 
-어제는 터미널에서 Git을 처음 한 바퀴 돌았어요. 오늘은 그 바퀴를 **내 저장소를 GitHub에 연결하는 데까지** 넓혔어요.
+1회차에 터미널에서 돈 Git 한 바퀴를, 오늘은 내 저장소를 GitHub에 연결하는 데까지 넓혔어요. `rm -rf`, `git config`, 훅, 상태 표시, `git log --all --graph`, detached HEAD, 첫 push, vim 탈출법까지 다뤘어요.
 
-어렵게 느껴져도 개발자라면 매일 쓰는 도구예요. 오늘 내용도 빠짐없이 다시 풀어 볼게요. 레슨 끝에 확인 퀴즈가 있고, 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
+각 절의 "자세히 보기"를 펼치면 전체 코드와 출력이 있어요. 끝에 복습 퀴즈 5문항이 있고, 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
 
 ## 1. `rm -rf`: 묻지도 않고, 휴지통도 없다
+
+`-r`은 폴더 안의 것까지 전부, `-f`는 확인 질문 없이 바로예요. 그래서 치기 전에 위치와 대상을 먼저 봐요.
+
+```bash
+pwd    # 지금 내가 어디 있는지
+ls     # 무엇이 지워질지
+rm -rf old-project/
+```
+
+`rm -rf .`처럼 점(지금 있는 폴더)을 주면 서 있는 폴더 안이 한 번에 사라져요.
+
+<details>
+<summary>자세히 보기</summary>
 
 먼저 VS Code 안에서 바로 터미널을 여는 법이에요. 단축키는 `` Ctrl + ` ``예요. 맥에서도 command가 아니라 **control** 키예요. 숫자 1 왼쪽에 있는 백틱(`` ` ``) 키를 함께 눌러요. 한글 상태에서 `₩`가 나오면 [맥 실습 환경](/class/mac-setup) 2절대로 한 번 바꿔 두면 돼요.
 
@@ -57,7 +70,22 @@ ls     # 무엇이 지워질지
   />
 </Figure>
 
+</details>
+
 ## 2. `git config`: 값이 두 개로 꼬이면 지우고 다시 쓴다
+
+보통은 같은 명령을 다시 치면 값이 바뀌어요. 값이 두 개 이상 들어가면 `cannot overwrite multiple values`로 거절당해요.
+
+```bash
+git config --global --unset-all user.name
+git config --global user.name "내 이름"
+git config --global --list
+```
+
+이메일은 GitHub 계정에 등록된 이메일과 같아야 커밋이 내 계정으로 잡혀요.
+
+<details>
+<summary>자세히 보기</summary>
 
 어제 처음 한 번 등록했던 그 설정이에요. 커밋마다 "누가 만들었는지"로 기록돼요.
 
@@ -103,7 +131,24 @@ git config --global --list
 
 `--global`을 붙이면 이 컴퓨터 전체에 적용된 설정만 보여 줘요. 빼고 `git config --list`라고 치면 저장소별 설정까지 섞여 나와요.
 
+</details>
+
 ## 3. .git/hooks: 커밋 직전의 보안 검색대
+
+훅은 커밋이나 push 직전에 자동으로 도는 스크립트예요. `.sample`을 지우고 실행 권한을 줘야 동작하고, `exit 1`로 끝나면 그 동작이 멈춰요.
+
+```bash
+git commit -m "update"
+# 커밋 메시지는 feat:, fix:, docs: 중 하나로 시작해야 해요   <- 커밋 안 됨
+
+git commit -m "fix: typo"
+# [main 15d9591] fix: typo                                     <- 통과
+```
+
+`.git` 안은 push해도 올라가지 않아서 훅은 내 컴퓨터에만 있어요. 팀이 함께 쓰려면 husky 같은 도구를 써요.
+
+<details>
+<summary>자세히 보기</summary>
 
 훅(hook)은 **Git의 특정 순간에 자동으로 실행되는 스크립트**예요. 공항 보안 검색대를 떠올려 보세요. 비행기를 타기 직전에 반드시 한 번 거치고, 걸리면 못 타요.
 
@@ -172,7 +217,36 @@ git commit -m "fix: typo"
 
 </Note>
 
-## 4. U, A, M, D: 파일 옆 글자는 지금 있는 칸을 알려 준다
+</details>
+
+## 4. 지금 상태와 모든 갈래: `git status --short`, `git log --all --graph`
+
+VS Code의 `U`, `A`, `M`, `D`는 파일이 지금 있는 칸이에요. 터미널의 `git status --short`에서는 글자가 앉은 칸이 곧 영역이에요.
+
+<Figure label="git status --short의 두 칸">
+  <Boxes
+    row={[
+      { title: "왼쪽 칸", note: "Staging에 올라간 것", tone: "rust", lines: ["`git add new.txt` 뒤의 `new.txt`는 왼쪽에 `A`"] },
+      { title: "오른쪽 칸", note: "아직 작업 폴더에만 있는 것", tone: "blue", lines: ["고치고 add 전인 `a.txt`는 오른쪽에 `M`"] },
+      { title: "??", note: "두 칸 모두 물음표", tone: "neutral", lines: ["Git이 아직 모르는 새 파일 (VS Code의 `U`)"] },
+    ]}
+  />
+</Figure>
+
+```bash
+git log --oneline --all --graph
+# * 0d6d2eb (feature) feature work
+# | * 95bb6a2 (HEAD -> main) main fix
+# |/
+# * 36259ec first
+```
+
+`--all` 없이 치면 HEAD에서 거슬러 올라가는 커밋만 보여서 `feature work`가 빠져요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### U, A, M, D: 파일 옆 글자는 지금 있는 칸을 알려 준다
 
 VS Code 왼쪽 파일 목록이나 소스 제어 탭을 보면, 파일 이름 옆에 알파벳이 붙어 있어요. 어제 배운 세 영역 중 어디에 있는지 알려 주는 표시예요.
 
@@ -198,17 +272,7 @@ git status --short
 
 터미널에서는 새 파일이 `U`가 아니라 `??`로 보여요. 그리고 글자가 앉은 칸이 곧 영역이에요.
 
-<Figure label="git status --short의 두 칸">
-  <Boxes
-    row={[
-      { title: "왼쪽 칸", note: "Staging에 올라간 것", tone: "rust", lines: ["`git add new.txt` 뒤의 `new.txt`는 왼쪽에 `A`"] },
-      { title: "오른쪽 칸", note: "아직 작업 폴더에만 있는 것", tone: "blue", lines: ["고치고 add 전인 `a.txt`는 오른쪽에 `M`"] },
-      { title: "??", note: "두 칸 모두 물음표", tone: "neutral", lines: ["Git이 아직 모르는 새 파일 (VS Code의 `U`)"] },
-    ]}
-  />
-</Figure>
-
-## 5. `git log --all --graph`: 모든 갈래를 한 장의 지도로
+### `git log --all --graph`: 모든 갈래를 한 장의 지도로
 
 `git log --oneline`은 **지금 있는 브랜치(HEAD)에서 거슬러 올라갈 수 있는 커밋만** 보여 줘요. 다른 브랜치에만 있는 커밋은 안 보여요.
 
@@ -254,7 +318,33 @@ git log --oneline --all --graph
   <Trail label="--all이어야 보이는 갈래:" values={["0d6d2eb feature work (feature)", "36259ec first"]} />
 </Figure>
 
-## 6. HEAD는 "지금 여기" 스티커: checkout으로 과거에 붙인다
+</details>
+
+## 5. HEAD는 "지금 여기" 스티커: 해시로 checkout하면 detached
+
+`git checkout <해시>`로 HEAD가 커밋에 직접 붙으면 detached HEAD예요. 구경은 괜찮지만, 그 상태로 커밋하고 떠나면 그 커밋을 가리키는 브랜치가 없어 길을 잃어요.
+
+<Figure label="길을 잃는 순서와 살리는 법">
+  <Seq
+    steps={[
+      { title: "detached HEAD에서 커밋.", body: "`8a1091b experiment`가 생기지만, 가리키는 건 `(HEAD)` 스티커뿐이에요." },
+      { title: "`git switch main`.", body: "스티커가 main으로 돌아가면서 `leaving 1 commit behind` 경고가 떠요. 이제 아무것도 `8a1091b`를 가리키지 않아요." },
+      { title: "그래프에서 사라짐.", body: "책갈피가 없으니 `--all`로도 안 보여요." },
+      { title: "책갈피 붙이기.", body: "경고에 나온 해시로 `git branch experiment 8a1091b`. 다시 그래프에 나타나요." },
+    ]}
+  />
+</Figure>
+
+```bash
+git checkout 46d0572
+# HEAD is now at 46d0572 first
+git branch experiment 8a1091b    # 경고에 나온 해시로 책갈피를 붙여 살리기
+```
+
+실험할 생각이면 커밋 전에 `git switch -c 새-브랜치`부터 해요. `switch`로 커밋에 가려면 `--detach`를 붙여야 해요.
+
+<details>
+<summary>자세히 보기</summary>
 
 HEAD는 앨범에 꽂아 둔 **"지금 여기" 스티커**예요. 평소에는 브랜치에 붙어 있어요. 그래서 그래프에 `HEAD -> main`처럼 보였죠. 브랜치가 새 커밋으로 움직이면, 거기 붙은 HEAD도 같이 따라가요.
 
@@ -347,17 +437,6 @@ git log --oneline --all --graph
 # * 46d0572 first
 ```
 
-<Figure label="길을 잃는 순서와 살리는 법">
-  <Seq
-    steps={[
-      { title: "detached HEAD에서 커밋.", body: "`8a1091b experiment`가 생기지만, 가리키는 건 `(HEAD)` 스티커뿐이에요." },
-      { title: "`git switch main`.", body: "스티커가 main으로 돌아가면서 `leaving 1 commit behind` 경고가 떠요. 이제 아무것도 `8a1091b`를 가리키지 않아요." },
-      { title: "그래프에서 사라짐.", body: "책갈피가 없으니 `--all`로도 안 보여요." },
-      { title: "책갈피 붙이기.", body: "경고에 나온 해시로 `git branch experiment 8a1091b`. 다시 그래프에 나타나요." },
-    ]}
-  />
-</Figure>
-
 처음부터 실험할 생각이었다면, 커밋하기 **전에** `git switch -c 새-브랜치`로 브랜치를 만들어 두는 게 가장 깔끔해요.
 
 브랜치로 돌아올 때는 이렇게 해요.
@@ -381,7 +460,25 @@ git switch 46d0572
 
 </TwistBox>
 
-## 7. GitHub 연결: 빈 저장소에 네 줄로 올린다
+</details>
+
+## 6. GitHub 연결: 빈 저장소에 네 줄, 그다음은 add, commit, push
+
+내 컴퓨터에 코드가 있으면 GitHub 저장소는 README 없이 빈 채로 만들어요. README를 같이 만들면 첫 push가 `rejected (fetch first)`로 거절돼요.
+
+```bash
+git remote add origin https://github.com/my-id/my-project.git
+git remote -v
+git branch -M main
+git push -u origin main
+```
+
+`-u`가 짝(upstream)을 기억시켜서, 다음부터는 `git status`, `git diff`, `git add`, `git commit` 뒤에 `git push`만 치면 돼요. 맥에서는 처음 push 전에 `gh auth login`으로 로그인해 둬요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### GitHub 연결: 빈 저장소에 네 줄로 올린다
 
 GitHub 웹사이트에서 New repository로 저장소를 만들어요. 이때 중요한 규칙이 하나 있어요. **내 컴퓨터에 이미 코드가 있다면, README와 .gitignore를 체크하지 말고 완전히 빈 저장소로 만들어요.**
 
@@ -438,7 +535,7 @@ git remote -v
 
 </Note>
 
-### `-u`는 짝을 기억시킨다
+#### `-u`는 짝을 기억시킨다
 
 `-u`는 "내 main은 앞으로 origin의 main과 짝이야"라고 기억시켜요. 처음 push할 때 이렇게 알려 줘요.
 
@@ -472,7 +569,7 @@ git push
 
 `--set-upstream`은 `-u`의 긴 이름이에요. 결국 처음 한 번은 짝을 정해 줘야 한다는 뜻이에요.
 
-### 연결 끊기
+#### 연결 끊기
 
 주소를 잘못 넣었거나 다른 저장소로 바꾸고 싶으면 연결을 지우고 다시 넣어요.
 
@@ -483,36 +580,7 @@ git remote -v       # 아무것도 안 나오면 끊긴 것
 
 연결만 끊는 거라서, 내 커밋이나 GitHub에 이미 올라간 내용은 그대로예요.
 
-## 8. vim: 모드를 바꿔야 글자가 써진다
-
-터미널에서 일하다 보면 vim이라는 편집기가 불쑥 열릴 때가 있어요. 예를 들어 `git commit`을 `-m` 없이 치면 메시지를 쓰라고 편집기가 열려요(기본 편집기를 vim으로 정해 둔 경우).
-
-처음 보면 글자도 안 써지고, 나가는 법도 몰라 당황해요. vim에는 **모드**가 있어서 그래요.
-
-<Figure>
-  <Boxes
-    row={[
-      { title: "명령 모드", note: "처음 열리면 여기", tone: "blue", lines: ["키를 누르면 글자가 아니라 명령으로 받아요", "`:w`, `:wq`, `:q`, `:q!`는 여기서 쳐요"] },
-      { arrow: "`i`를 누르면" },
-      { title: "입력 모드", note: "글자가 써져요", tone: "rust", lines: ["`Esc`를 누르면 다시 명령 모드로 돌아와요"] },
-    ]}
-  />
-</Figure>
-
-| 하고 싶은 것 | 키 |
-| --- | --- |
-| 입력 모드 들어가기 | `i` |
-| 입력 모드 나가기 | `Esc` |
-| 저장만 하기 | `:w` |
-| 저장하고 나가기 | `:wq` |
-| 나가기 (수정이 없을 때) | `:q` |
-| 저장하지 않고 강제로 나가기 | `:q!` |
-
-`:`로 시작하는 명령은 명령 모드에서 쳐요. 그래서 나갈 때는 **`Esc`를 먼저 누르고** `:wq`를 치고 Enter예요.
-
-`w`는 write(쓰기), `q`는 quit(나가기), `!`는 "묻지 말고"라는 뜻이에요. `rm -rf`의 `-f`와 비슷한 느낌이에요.
-
-## 9. 셀프 체크: 수정부터 push까지 말로 설명하기
+### 셀프 체크: 수정부터 push까지 말로 설명하기
 
 오늘 노트의 마지막 질문은 이거였어요. **"파일을 수정하고 원격 저장소에 올리기까지의 루틴을 설명할 수 있니?"**
 
@@ -556,6 +624,46 @@ git push
 </Figure>
 
 이 순서를 막힘없이 말할 수 있으면 오늘 수업의 핵심은 잡은 거예요.
+
+</details>
+
+## 7. vim: `Esc` 먼저, 그다음 `:wq` 또는 `:q!`
+
+`git commit`을 `-m` 없이 치면 vim이 열릴 수 있어요. 처음엔 명령 모드라 키가 글자로 써지지 않아요.
+
+`i`로 입력 모드에 들어가 쓰고, `Esc`로 나온 뒤 `:wq`(저장하고 나가기)나 `:q!`(버리고 나가기)를 치고 Enter예요.
+
+<details>
+<summary>자세히 보기</summary>
+
+터미널에서 일하다 보면 vim이라는 편집기가 불쑥 열릴 때가 있어요. 예를 들어 `git commit`을 `-m` 없이 치면 메시지를 쓰라고 편집기가 열려요(기본 편집기를 vim으로 정해 둔 경우).
+
+처음 보면 글자도 안 써지고, 나가는 법도 몰라 당황해요. vim에는 **모드**가 있어서 그래요.
+
+<Figure>
+  <Boxes
+    row={[
+      { title: "명령 모드", note: "처음 열리면 여기", tone: "blue", lines: ["키를 누르면 글자가 아니라 명령으로 받아요", "`:w`, `:wq`, `:q`, `:q!`는 여기서 쳐요"] },
+      { arrow: "`i`를 누르면" },
+      { title: "입력 모드", note: "글자가 써져요", tone: "rust", lines: ["`Esc`를 누르면 다시 명령 모드로 돌아와요"] },
+    ]}
+  />
+</Figure>
+
+| 하고 싶은 것 | 키 |
+| --- | --- |
+| 입력 모드 들어가기 | `i` |
+| 입력 모드 나가기 | `Esc` |
+| 저장만 하기 | `:w` |
+| 저장하고 나가기 | `:wq` |
+| 나가기 (수정이 없을 때) | `:q` |
+| 저장하지 않고 강제로 나가기 | `:q!` |
+
+`:`로 시작하는 명령은 명령 모드에서 쳐요. 그래서 나갈 때는 **`Esc`를 먼저 누르고** `:wq`를 치고 Enter예요.
+
+`w`는 write(쓰기), `q`는 quit(나가기), `!`는 "묻지 말고"라는 뜻이에요. `rm -rf`의 `-f`와 비슷한 느낌이에요.
+
+</details>
 
 ## 오늘 꼭 기억할 주의점
 

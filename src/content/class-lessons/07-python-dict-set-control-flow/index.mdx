@@ -9,13 +9,27 @@ topic: "Python"
 preStudy: ["1-3-python-lists-tuples-dicts", "1-3-python-variables-and-types"]
 ---
 
-어제는 리스트와 튜플로 값을 **순서대로** 묶었어요. 오늘은 값에 **이름**(키)을 붙여 묶는 딕셔너리와, 중복을 허락하지 않는 집합을 배웠어요.
+값에 이름(키)을 붙여 묶는 딕셔너리, 중복을 허락하지 않는 집합을 배우고, 후반에는 조건문과 반복문으로 프로그램이 갈라지고 되풀이하게 했어요. 마지막엔 둘을 합쳐 회원 명단을 거르고 숫자 맞추기 게임을 만들었어요.
 
-후반에는 프로그램이 갈라지고 되풀이하는 법, 조건문과 반복문을 배웠어요. 마지막에는 둘을 합쳐 회원 명단을 거르고 숫자 맞추기 게임을 만들어요.
+각 절의 "자세히 보기"를 펼치면 전체 코드와 출력이 있어요. 끝에 복습 퀴즈 5문항이 있어요.
 
-레슨 끝에 확인 퀴즈가 있어요. 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
+## 1. 딕셔너리: 키는 하나뿐, `d[키] = 값`은 수정이자 추가
 
-## 1. 딕셔너리(Dictionary): 단어(키)로 뜻(값)을 찾는 사전
+딕셔너리는 `{"키": 값}` 모양이에요. 키는 중복될 수 없어서 같은 키를 두 번 쓰면 뒤에 쓴 값만 남고, 넣은 순서는 유지돼요.
+
+```python
+user_info["age"] = 30        # 있던 키라 값을 바꿔요
+user_info["role"] = "Tutor"  # 없던 키라 새로 추가돼요
+del user_info["role"]        # 지우기
+age = user_info.pop("age")   # 지우면서 값을 돌려받기
+```
+
+`del`도 `pop`도 없는 키를 지우려 하면 `KeyError`예요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### 딕셔너리(Dictionary): 단어(키)로 뜻(값)을 찾는 사전
 
 딕셔너리는 `{"키": 값}` 모양으로 써요. 사전에서 단어(키)를 찾으면 뜻(값)이 나오는 것과 같아요.
 
@@ -49,9 +63,9 @@ print({"a": 1, "a": 2})
 
 </Note>
 
-## 2. 조회, 수정, 추가, 삭제: 키가 있으면 고치고, 없으면 새로 만든다
+### 조회, 수정, 추가, 삭제: 키가 있으면 고치고, 없으면 새로 만든다
 
-### 조회, 수정, 추가는 같은 문법
+#### 조회, 수정, 추가는 같은 문법
 
 ```python
 user_info = {
@@ -96,7 +110,7 @@ print(user_info)
   />
 </Figure>
 
-### 삭제: del과 pop
+#### 삭제: del과 pop
 
 ```python
 user_info = {
@@ -132,7 +146,24 @@ print(age, user_info)
 
 </Note>
 
-## 3. 딕셔너리 메서드: 키만, 값만, 짝으로 꺼낸다
+</details>
+
+## 2. 꺼내기: `[ ]`에는 자리 번호가 아니라 키, 없을 땐 `get`
+
+`keys()`, `values()`, `items()`로 키만, 값만, (키, 값) 짝으로 꺼내요. `menu[0]`은 0이라는 키를 찾다가 `KeyError: 0`이에요.
+
+```python
+menu = {"coffee": 4000, "tea": 4500}
+print("coffee" in menu)        # True
+print(4000 in menu)            # False
+print(4000 in menu.values())   # True
+price = menu.get("cake", 5000) # 5000, 기본값이 없으면 None
+```
+
+`in`은 **키**에서 찾고, `get`은 꺼내기만 할 뿐 키를 추가하지 않아요.
+
+<details>
+<summary>자세히 보기</summary>
 
 ### `keys()`, `values()`, `items()`
 
@@ -223,7 +254,24 @@ None
 
 `get`은 꺼내기만 해요. 마지막 출력에 `cake`가 없듯이, 딕셔너리에 키를 추가하지 않아요.
 
-## 4. 집합(Set): 중복은 들어오지 못하는 주머니
+</details>
+
+## 3. 집합: 중복은 못 들어오고, 빈 `{}`는 딕셔너리다
+
+```python
+print(set([1, 2, 2, 3, 3, 3]))   # {1, 2, 3}
+print(type({}))                  # <class 'dict'>, 빈 집합은 set()
+set_a = {1, 2, 3}
+set_b = {3, 4, 5}
+print(set_a & set_b)  # 교집합 {3}
+print(set_a | set_b)  # 합집합 {1, 2, 3, 4, 5}
+print(set_a - set_b)  # 차집합 {1, 2}
+```
+
+없는 값을 `remove`하면 `KeyError`, `discard`는 조용히 넘어가요. 리스트는 바뀔 수 있어서 집합 값이나 딕셔너리 키가 못 돼요(`unhashable type: 'list'`).
+
+<details>
+<summary>자세히 보기</summary>
 
 ### 만들기
 
@@ -341,7 +389,22 @@ print({(1, 2): "a"})
 
 </TwistBox>
 
-## 5. 중복 제거: 세 가지 방법, 순서가 다르다
+</details>
+
+## 4. 중복 제거: 순서를 지키려면 `dict.fromkeys`
+
+`raw_ids = ["kim", "lee", "kim"]`의 중복을 세 가지로 없앴어요.
+
+| 방법 | 중복 | 순서 |
+| --- | --- | --- |
+| `list(set(목록))` | 제거 | 보장 안 됨. 위 출력은 `lee`가 먼저 나왔어요 |
+| `list(dict.fromkeys(목록))` | 제거 | 처음 나온 순서 유지(`kim`, `lee`) |
+| `sorted(set(목록))` | 제거 | 정렬됨(`a`, `c`, `d`, `f`) |
+
+집합에는 순서가 없어서 다시 실행하면 순서가 바뀔 수 있어요. `dict.fromkeys`는 "키는 중복 불가"와 "넣은 순서 유지"가 함께 일해서 처음 나온 순서를 지켜요.
+
+<details>
+<summary>자세히 보기</summary>
 
 실무에서 자주 하는 일이에요. 회원 아이디 목록에 같은 아이디가 두 번 들어 있어요.
 
@@ -365,12 +428,6 @@ print(sorted(set(["c", "d", "a", "f", "a"])))
 ['kim', 'lee']
 ['a', 'c', 'd', 'f']
 ```
-
-| 방법 | 중복 | 순서 |
-| --- | --- | --- |
-| `list(set(목록))` | 제거 | 보장 안 됨. 위 출력은 `lee`가 먼저 나왔어요 |
-| `list(dict.fromkeys(목록))` | 제거 | 처음 나온 순서 유지(`kim`, `lee`) |
-| `sorted(set(목록))` | 제거 | 정렬됨(`a`, `c`, `d`, `f`) |
 
 가운데 방법이 어떻게 순서를 지키는지 속을 들여다봐요. `dict.fromkeys(목록)`은 목록의 값을 **키**로 쓰는 딕셔너리를 만들어요.
 
@@ -402,7 +459,26 @@ print(sorted(set(["c", "d", "a", "f", "a"])))
 
 </TwistBox>
 
-## 6. 조건문: 위에서부터 묻고, 처음 참인 곳에서 멈춘다
+</details>
+
+## 5. 조건문: 처음 참인 곳 하나만, 범위는 좁은 쪽부터
+
+`if`, `elif`, `else`는 위에서부터 물어서 처음 참인 곳 하나만 실행해요. 블록 범위는 들여쓰기로 정하고, 조건 끝에 `:`를 붙여요.
+
+<Figure label="score = 95, 첫 번째 묶음">
+  <GateFlow
+    gates={[
+      { q: "`score >= 80`?", code: "95 >= 80 은 참", out: "`B`를 찍고 빠져나와요", outTone: "amber" },
+      { q: "`score >= 90`?", code: "elif score >= 90:", out: "`A`. 하지만 95점은 여기까지 **오지도 못해요**", outTone: "neutral" },
+    ]}
+    pass={{ text: "둘 다 거짓이면 아무것도 안 찍어요" }}
+  />
+</Figure>
+
+95점인데 `score >= 80`을 먼저 물어서 `B`가 나와요. 90을 먼저 물어야 `A`예요. 빈 리스트 `[]`, `""`, `0`, `None`은 조건에서 거짓이에요.
+
+<details>
+<summary>자세히 보기</summary>
 
 ### 모양
 
@@ -504,16 +580,6 @@ B
 A
 ```
 
-<Figure label="score = 95, 첫 번째 묶음">
-  <GateFlow
-    gates={[
-      { q: "`score >= 80`?", code: "95 >= 80 은 참", out: "`B`를 찍고 빠져나와요", outTone: "amber" },
-      { q: "`score >= 90`?", code: "elif score >= 90:", out: "`A`. 하지만 95점은 여기까지 **오지도 못해요**", outTone: "neutral" },
-    ]}
-    pass={{ text: "둘 다 거짓이면 아무것도 안 찍어요" }}
-  />
-</Figure>
-
 95점인데 첫 묶음은 `B`가 나와요. `score >= 80`이 먼저 참이 되어서, 아래 `elif score >= 90`은 **보지도 않아요.**
 
 두 번째 묶음은 90을 먼저 검사해서 `A`가 나와요. 범위 조건은 **좁은 쪽**(큰 값)부터 써요.
@@ -544,9 +610,35 @@ x는 10 입니다.
 
 어제 배운 `and`가 여기서 쓰여요. 로그인했고 권한도 있을 때만 들어가요. 같은지 비교는 `=`가 아니라 `==`예요.
 
-## 7. 반복문: for는 하나씩 꺼내고, while은 참인 동안 돈다
+</details>
 
-### for: 하나씩 꺼내기
+## 6. 반복문: `for`는 하나씩 꺼내고, `while`은 참인 동안 돈다
+
+```python
+for name, price in menu.items():
+    print(f"{name} : {price}")
+
+print(list(range(5)))  # [0, 1, 2, 3, 4], 끝은 포함하지 않아요
+
+num = 1
+while num <= 3:
+    print(f"현재 숫자는 {num}")
+    num += 1           # 조건을 바꾸는 줄이 없으면 무한 루프
+```
+
+| 키워드 | 동작 |
+| --- | --- |
+| `break` | 반복문을 통째로 끝내요 |
+| `continue` | 이번 차례만 건너뛰고 다음 차례로 가요 |
+
+중첩 반복에서 `break`는 자기가 들어 있는 반복 하나만 끝내요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### 반복문: for는 하나씩 꺼내고, while은 참인 동안 돈다
+
+#### for: 하나씩 꺼내기
 
 ```python
 for 변수 in 반복할_데이터:
@@ -591,7 +683,7 @@ banana
 
 어제 영수증에서 본 `for menu, price, qty in orders`와 같은 방식이에요.
 
-### `range()`: 숫자 만들기
+#### `range()`: 숫자 만들기
 
 ```python
 for i in range(5):
@@ -625,7 +717,7 @@ range(0, 5)
 
 `print(range(5))`는 숫자 목록이 아니라 `range(0, 5)`가 나와요. range는 필요할 때 숫자를 하나씩 만들어 주는 물건이라서, 값을 다 보려면 `list()`로 바꿔요.
 
-### while: 조건이 참인 동안
+#### while: 조건이 참인 동안
 
 ```python
 while 조건식:
@@ -677,7 +769,7 @@ while count > 0:
 | 몇 번 돌지, 무엇을 돌지 알 때 | `for` |
 | 언제 끝날지 미리 모를 때(예: 정답을 맞힐 때까지) | `while` |
 
-## 8. 흐름 끊기: break는 통째로 끝내고, continue는 한 번 건너뛴다
+### 흐름 끊기: break는 통째로 끝내고, continue는 한 번 건너뛴다
 
 ```python
 for num in range(1, 6):
@@ -711,14 +803,9 @@ for num in range(1, 6):
   <Trail label="`continue` (짝수):" values={["1 출력", "2 건너뜀", "3 출력", "4 건너뜀", "5 출력"]} tone="ok" />
 </Figure>
 
-| 키워드 | 동작 |
-| --- | --- |
-| `break` | 반복문을 통째로 끝내요 |
-| `continue` | 이번 차례만 건너뛰고 다음 차례로 가요 |
-
 `num % 2 == 0`은 어제 배운 나머지 연산이에요. 2로 나눈 나머지가 0이면 짝수예요.
 
-### 중첩 반복: 구구단
+#### 중첩 반복: 구구단
 
 ```python
 for x in range(2, 10):
@@ -761,7 +848,44 @@ for x in range(2, 10):
 
 `break`는 자기가 들어 있는 반복 하나만 끝낸다고 기억해요.
 
-## 9. 종합 실습 1: 회원 데이터를 두 번 거른다
+</details>
+
+## 7. 종합 실습: 회원 명단 거르기와 숫자 맞추기
+
+딕셔너리를 담은 리스트를 `for`로 돌며 `if`로 활성 회원만 남기고, 안쪽 `if`로 등급을 나눴어요. VIP 포인트를 `+=`로 쌓아 `27,000`이 나왔어요.
+
+숫자 맞추기는 `while True` 안에서 문지기(`q`, 숫자 검사, 범위 검사)를 다 통과해야 정답과 비교해요. `input()`은 숫자를 쳐도 문자열이라 `int()`로 바꿔요.
+
+<Figure label="while True: 입력 한 번마다">
+  <GateFlow
+    gates={[
+      { q: "`q`를 쳤나?", code: "user_input == \"q\"", out: "정답을 알려 주고 `break`", outTone: "amber" },
+      { q: "숫자가 아닌가?", code: "not user_input.isdigit() and int(user_input) > 0", out: "`숫자로 입력해주세요.` 찍고 `continue`" },
+      { q: "범위 밖인가?", code: "int(user_input) <= 1 or int(user_input) >= 100", out: "범위 안내를 찍고 `continue`. 시도 횟수는 그대로" },
+    ]}
+    pass={{ text: "`try_count += 1` 하고 정답과 비교", code: "맞으면 break, 크면 '더 작은 수', 작으면 '더 큰 수'" }}
+  />
+</Figure>
+
+수업 코드의 `not user_input.isdigit() and int(user_input) > 0`은 `abc`가 들어오면 단락 평가 때문에 오른쪽 `int("abc")`까지 계산하다 `ValueError`로 멈춰요. 숫자 검사와 범위 검사를 나누면 고쳐져요.
+
+```python
+if not user_input.isdigit():
+    print("숫자로 입력해주세요.")
+    continue
+
+user_number = int(user_input)
+if not 1 <= user_number <= 100:
+    print(f"입력값 : {user_input} => 1 에서 100 사이의 값을 입력해주세요.")
+    continue
+```
+
+<GuessInputChecker />
+
+<details>
+<summary>자세히 보기</summary>
+
+### 종합 실습 1: 회원 데이터를 두 번 거른다
 
 딕셔너리를 담은 리스트를 `for`로 돌면서 `if`로 걸러요. 오늘 배운 것이 다 들어 있어요.
 
@@ -826,9 +950,9 @@ f-string을 작은따옴표로 열었기 때문에 안쪽 `user["name"]`은 큰�
 
 </Note>
 
-`if user['active'] == True:`는 `if user['active']:`로 줄여 써도 같아요. 6절에서 본 것처럼 조건 자리에는 참과 거짓으로 볼 수 있는 값을 그대로 쓰면 돼요.
+`if user['active'] == True:`는 `if user['active']:`로 줄여 써도 같아요. 5절에서 본 것처럼 조건 자리에는 참과 거짓으로 볼 수 있는 값을 그대로 쓰면 돼요.
 
-## 10. 종합 실습 2: 숫자 맞추기, 문지기를 통과해야 비교한다
+### 종합 실습 2: 숫자 맞추기, 문지기를 통과해야 비교한다
 
 ```python
 import random  # 난수 발생을 위한 모듈 임포트
@@ -868,20 +992,9 @@ while True:
         print(f"{user_number} : 더 큰 수 입니다.")
 ```
 
-### 흐름
+#### 흐름
 
 입력 한 번이 `while True` 한 바퀴예요. 문지기 세 명을 다 통과해야 정답과 비교해요.
-
-<Figure label="while True: 입력 한 번마다">
-  <GateFlow
-    gates={[
-      { q: "`q`를 쳤나?", code: "user_input == \"q\"", out: "정답을 알려 주고 `break`", outTone: "amber" },
-      { q: "숫자가 아닌가?", code: "not user_input.isdigit() and int(user_input) > 0", out: "`숫자로 입력해주세요.` 찍고 `continue`" },
-      { q: "범위 밖인가?", code: "int(user_input) <= 1 or int(user_input) >= 100", out: "범위 안내를 찍고 `continue`. 시도 횟수는 그대로" },
-    ]}
-    pass={{ text: "`try_count += 1` 하고 정답과 비교", code: "맞으면 break, 크면 '더 작은 수', 작으면 '더 큰 수'" }}
-  />
-</Figure>
 
 1. `random.randint(1, 100)`으로 1부터 100 사이 정답을 정해요. `randint`는 range와 달리 **끝값 100도 포함**해요.
 2. `while True`로 계속 입력을 받아요. 조건이 늘 참이라 `break`를 만나야만 끝나요.
@@ -902,7 +1015,7 @@ while True:
 8 : 정답입니다. 3 회 만에 성공했습니다.
 ```
 
-### 직접 넣어 보면 보이는 것
+#### 직접 넣어 보면 보이는 것
 
 | 입력 | 결과 |
 | --- | --- |
@@ -943,11 +1056,9 @@ if not 1 <= user_number <= 100:
 
 </TwistBox>
 
-### 직접 눌러 보기: 입력 검사기
+#### 직접 눌러 보기: 입력 검사기
 
 수업 코드와 고친 코드에 같은 입력을 넣고 나란히 비교해요. 정답은 8이라고 정해 뒀어요. 출력 창의 문장은 파이썬이 찍는 글자 그대로예요.
-
-<GuessInputChecker />
 
 <Hint>
 
@@ -955,7 +1066,22 @@ if not 1 <= user_number <= 100:
 
 </Hint>
 
-## 11. 딕셔너리를 자주 만나는 이유: 주고받는 데이터가 이 모양이다
+</details>
+
+## 8. 딕셔너리를 자주 만나는 이유: 주고받는 데이터가 이 모양이다
+
+웹 API의 JSON은 파이썬에서 딕셔너리가 되고, LLM API도 대화를 딕셔너리의 리스트로 보내요.
+
+```python
+messages = [{"role": "user", "content": "안녕"}]
+print(messages[0]["content"])
+# 안녕
+```
+
+리스트에서 `[0]`으로 딕셔너리를 꺼내고, 그 딕셔너리에서 `["content"]`로 값을 꺼내요.
+
+<details>
+<summary>자세히 보기</summary>
 
 오늘 TIL의 셀프 체크 질문은 "딕셔너리를 왜 사용하고 앞으로 왜 자주 만나게 될까?"였어요.
 
@@ -989,7 +1115,9 @@ print(messages[0]["content"])
   />
 </Figure>
 
-`messages[0]`은 리스트에서 첫 번째 딕셔너리를 꺼내고, `["content"]`는 그 딕셔너리에서 값을 꺼내요. 오늘 9절의 `user["name"]`과 같은 꺼내기예요.
+`messages[0]`은 리스트에서 첫 번째 딕셔너리를 꺼내고, `["content"]`는 그 딕셔너리에서 값을 꺼내요. 오늘 7절의 `user["name"]`과 같은 꺼내기예요.
+
+</details>
 
 ## 오늘 꼭 기억할 주의점
 

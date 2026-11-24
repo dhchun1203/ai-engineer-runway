@@ -42,56 +42,6 @@ quiz:
       - "1 1"
     answer: 1
     explain: "발급기를 먼저 올린 뒤 저장해서 첫 상품이 2번이 돼요. 1번부터 붙이려면 튜터 답안처럼 self.id = Product.next_id 로 먼저 저장하고, 그다음 Product.next_id += 1 로 올려요."
-  - id: number-not-saved
-    q: "다음 코드의 출력은?"
-    code: |-
-      class Product:
-          number = 0
-
-          def __init__(self, name):
-              Product.number = self.number + 1
-
-      a = Product("A")
-      b = Product("B")
-      c = Product("C")
-      print(a.number, b.number, c.number)
-    options:
-      - "1 2 3"
-      - "0 0 0"
-      - "3 3 3"
-      - "1 1 1"
-    answer: 2
-    explain: "클래스 변수만 올리고 객체에는 number 를 저장하지 않았어요. a.number 는 객체에 없으니 클래스의 Product.number 를 읽고, 그 값은 마지막에 3이에요. 셋 다 3이 나와요."
-  - id: instance-assign-shadows
-    q: "다음 코드의 출력은?"
-    code: |-
-      class Product:
-          next_id = 1
-
-      a = Product()
-      a.next_id = 99
-      print(Product.next_id, a.next_id)
-    options:
-      - "99 99"
-      - "1 99"
-      - "1 1"
-      - "AttributeError"
-    answer: 1
-    explain: "객체 이름으로 대입하면 클래스 변수가 바뀌지 않고, 그 객체에 같은 이름의 속성이 새로 생겨 클래스 변수를 가려요. 클래스 변수는 Product.next_id += 1 처럼 클래스 이름으로 바꿔요."
-  - id: dict-get-default
-    q: "다음 코드의 출력은?"
-    code: |-
-      items = {}
-      items["텀블러"] = items.get("텀블러", 0) + 9
-      items["텀블러"] = items.get("텀블러", 0) + 1
-      print(items)
-    options:
-      - "{'텀블러': 10}"
-      - "{'텀블러': 1}"
-      - "{'텀블러': 9, '텀블러': 1}"
-      - "KeyError"
-    answer: 0
-    explain: "get(키, 0) 은 키가 없으면 0을 돌려줘서 처음에는 0 + 9 = 9가 들어가요. 두 번째는 이미 있는 9를 꺼내 1을 더해 10이 돼요. 딕셔너리의 키는 하나뿐이라 같은 키에 대입하면 값이 바뀌어요. items[\"텀블러\"] 로 바로 읽었다면 처음에 KeyError 가 나요."
   - id: can-add-quantity
     q: "다음 코드의 출력은?"
     code: |-
@@ -110,26 +60,6 @@ quiz:
       - "재고가 부족합니다. (담을 수 있는 수량: 8개)"
     answer: 1
     explain: "담을 수 있는 수량은 재고에서 이미 담은 수량을 뺀 값이라 10 - 9 = 1이에요. 2는 1보다 커서 부족하다고 나와요. 재고는 결제 전까지 줄지 않으니 10 그대로 계산해요."
-  - id: rate-discount-cap
-    q: "다음 코드의 출력은?"
-    code: |-
-      class RateDiscount:
-          def __init__(self, rate, max_discount):
-              self.rate = rate
-              self.max_discount = max_discount
-
-          def discount_amount(self, total):
-              return min(int(total * self.rate), self.max_discount)
-
-      c = RateDiscount(0.1, 5000)
-      print(c.discount_amount(313000), c.discount_amount(15000))
-    options:
-      - "31300 1500"
-      - "5000 1500"
-      - "5000 5000"
-      - "31300 5000"
-    answer: 1
-    explain: "313,000원의 10%는 31,300원이지만 min() 이 5,000원을 넘지 않게 잘라요. 15,000원의 10%는 1,500원이라 그대로예요."
   - id: polymorphism-same-call
     q: "다음 코드의 출력은? (줄바꿈은 쉼표로 적었어요)"
     code: |-
@@ -174,24 +104,6 @@ quiz:
       - "32000"
     answer: 1
     explain: "배송비는 할인을 뺀 금액으로 정해요. 32,000 - 3,000 = 29,000원이라 30,000원보다 작아서 배송비 3,000원이 붙어요. 상품 합계만 보면 무료 배송처럼 보여서 헷갈려요."
-  - id: menu-loop-no-input
-    q: "다음 코드의 마지막 줄 출력은?"
-    code: |-
-      menu_choice = "x"
-      count = 0
-      while not menu_choice in ("1", "2", "q"):
-          print("메뉴 항목 중 하나를 선택해주세요.")
-          count += 1
-          if count == 3:
-              break
-      print(count)
-    options:
-      - "1"
-      - "3"
-      - "0"
-      - "메뉴 항목 중 하나를 선택해주세요."
-    answer: 1
-    explain: "while 안에서 menu_choice 가 바뀌지 않아서 조건이 계속 참이에요. 여기서는 count 가 3일 때 break 로 빠져나와 3이 찍혀요. break 도 input() 도 없으면 영원히 반복해요. 반복 안에서 input() 을 다시 받아야 해요."
 commands:
   - cmd: "uv run main.py"
     desc: "완성한 장바구니 프로그램 실행(가상환경을 켰다면 python main.py 도 돼요)"

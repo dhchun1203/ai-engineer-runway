@@ -9,13 +9,20 @@ topic: "SQL"
 preStudy: ["1-4-sql-queries-and-joins"]
 ---
 
-어제는 표 하나에서 열과 행을 골랐어요. 오늘은 표 세 개를 이어 붙이고, 행을 묶어 숫자로 요약하고, 그 숫자로 다시 걸렀어요.
+오늘은 표 세 개를 잇고, 바구니로 묶어 더하고, 그 합계로 걸렀어요. 문제는 "종목별로 월 매출이 100만 원을 넘은 달은?" 하나예요.
 
-이걸 따로따로 외우는 것보다 쿼리 하나가 도는 모습을 끝까지 따라가는 게 빨라요. 이 레슨은 "종목별로 월 매출이 100만 원을 넘은 달은?"이라는 문제 하나로 오늘 배운 문법을 모두 돌려 봐요.
+각 절의 "자세히 보기"를 펼치면 전체 쿼리와 출력이 있어요. 끝에 복습 퀴즈 5문항이 있어요.
 
-끝까지 읽고 아래 복습 퀴즈 10문항을 풀어 보세요.
+## 1. 오늘의 문제: 세 표를 잇고, 취소를 빼고, 묶어서 거른다
 
-## 1. 오늘의 문제: 종목별로 월 매출이 100만 원을 넘은 달은?
+매출은 `enrollments`, 종목 이름은 `sports`에 있고, `courses`가 둘을 이어 줘요. 다음을 누르면 지금 도는 절과 그 절을 거친 뒤의 행이 보여요.
+
+<QueryReplaySimulator />
+
+<details>
+<summary>자세히 보기</summary>
+
+### 오늘의 문제: 종목별로 월 매출이 100만 원을 넘은 달은?
 
 매출은 `enrollments`에 있고, 종목 이름은 `sports`에 있어요. 둘 사이를 `courses`가 이어 줘요. 수강 기록은 강좌 번호를, 강좌는 종목 번호를 들고 있거든요.
 
@@ -58,19 +65,17 @@ ORDER BY s.sport_name COLLATE "ko-x-icu", 수강월;
 
 `pay_amount`는 `NUMERIC(10,2)`라서 합계도 `.00`까지 나와요. 이 결과가 어떻게 나오는지 다음 절에서 한 단계씩 돌려 봐요.
 
-## 2. 쿼리 리플레이: 한 절씩 돌려 보기
+### 쿼리 리플레이: 한 절씩 돌려 보기
 
 다음을 누르면 지금 실행 중인 절에 노란 줄이 쳐지고, 아래에 그 절을 거친 뒤의 행이 나타나요. 자동 재생을 누르면 끝까지 알아서 넘어가요.
 
-<QueryReplaySimulator />
-
 <Hint>
-위쪽 버튼으로 INNER JOIN 풀이로 바꿔 보세요. 출발하는 표와 취소를 거르는 자리가 다른데, 최종 4행은 똑같아요. 10절에서 두 풀이를 나란히 비교해요.
+위쪽 버튼으로 INNER JOIN 풀이로 바꿔 보세요. 출발하는 표와 취소를 거르는 자리가 다른데, 최종 4행은 똑같아요. 7절에서 두 풀이를 나란히 비교해요.
 </Hint>
 
-## 3. 쓰는 순서와 도는 순서가 다르다
+</details>
 
-리플레이에서 노란 줄이 위에서 아래로 내려가지 않았죠. `SELECT`를 맨 위에 쓰지만, 실제로는 표를 준비하는 `FROM`부터 돌아요.
+## 2. SELECT는 맨 위에 쓰지만 거의 끝에 돈다
 
 <Figure label="SELECT 문이 실제로 도는 순서">
   <Seq
@@ -86,9 +91,32 @@ ORDER BY s.sport_name COLLATE "ko-x-icu", 수강월;
   />
 </Figure>
 
+그래서 별칭 `매출`은 `HAVING`에서 못 쓰고, `ORDER BY`에서는 써요.
+
+<details>
+<summary>자세히 보기</summary>
+
+리플레이에서 노란 줄이 위에서 아래로 내려가지 않았죠. `SELECT`를 맨 위에 쓰지만, 실제로는 표를 준비하는 `FROM`부터 돌아요.
+
 이 순서 하나로 오늘 만난 오류 두 개가 설명돼요. `HAVING`에서 별칭 `매출`을 쓰면 아직 별칭이 없어서 오류예요. `ORDER BY`에서 `수강월`을 쓰는 건 `SELECT` 다음이라 괜찮아요.
 
-## 4. `JOIN`은 `ON`의 짝 규칙으로 표를 옆으로 잇는다
+</details>
+
+## 3. JOIN은 ON의 짝 규칙으로 잇고, LEFT JOIN은 왼쪽을 다 살린다
+
+`ON`에는 외래 키와 기본 키가 같다는 규칙을 써요. 같은 이름의 열이 여러 표에 있으니 `s.sport_id`처럼 표 별칭을 붙여요.
+
+```sql
+FROM sports s
+LEFT JOIN courses c ON (c.sport_id = s.sport_id)
+```
+
+`LEFT JOIN`은 짝이 없어도 왼쪽 행을 남기고 빈 칸을 NULL로 채워요. 수강 기록이 없는 수영 마스터즈반도 NULL 행 1개로 남아요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### `JOIN`은 `ON`의 짝 규칙으로 표를 옆으로 잇는다
 
 `FROM sports s`의 `s`는 표 별칭이에요. 세 표를 함께 쓰면 `sport_id`처럼 같은 이름의 열이 여러 표에 있어서, `s.sport_id`, `c.sport_id`처럼 어느 표의 열인지 밝혀 줘요.
 
@@ -106,7 +134,7 @@ ORDER BY s.sport_name COLLATE "ko-x-icu", 수강월;
 
 별칭 없이 `SELECT sport_id`라고만 쓰면 `column reference "sport_id" is ambiguous` 오류가 나요. `sports`와 `courses` 둘 다에 있어서 어느 쪽인지 모르는 거예요.
 
-## 5. `LEFT JOIN`은 왼쪽을 다 살리고, 짝 없는 칸은 NULL로 채운다
+### `LEFT JOIN`은 왼쪽을 다 살리고, 짝 없는 칸은 NULL로 채운다
 
 그냥 `JOIN`(`INNER JOIN`과 같아요)은 양쪽에 짝이 있는 행만 남겨요. `LEFT JOIN`은 왼쪽 표의 행을 짝이 없어도 버리지 않아요.
 
@@ -123,7 +151,19 @@ ORDER BY s.sport_name COLLATE "ko-x-icu", 수강월;
 
 같은 원리로 `RIGHT JOIN`은 오른쪽 표를, `FULL OUTER JOIN`은 양쪽 표를 짝이 없어도 다 살려요. JOIN 종류는 "어느 표를 다 살릴까"로 골라요.
 
-## 6. 취소를 거르는 조건: `LEFT JOIN`이면 `ON`에 쓴다
+</details>
+
+## 4. LEFT JOIN에서 오른쪽 표의 조건은 ON에 쓴다
+
+```sql
+LEFT JOIN enrollments e ON (e.course_id = c.course_id
+                            AND e.status <> '취소')
+```
+
+`WHERE`로 옮기면 NULL 행의 `status`가 NULL이라 `NULL <> '취소'`가 참이 아니어서 빠지고(189행이 188행), `INNER JOIN`과 같아져요.
+
+<details>
+<summary>자세히 보기</summary>
 
 이 쿼리는 `e.status <> '취소'`를 `WHERE`가 아니라 `ON` 안에 `AND`로 붙였어요. 그래서 취소 기록은 짝짓기 단계에서 짝이 되지 못하고, 마스터즈반의 NULL 행은 그대로 남아요.
 
@@ -140,7 +180,21 @@ ORDER BY s.sport_name COLLATE "ko-x-icu", 수강월;
 
 이번 문제는 NULL 행이 어차피 `HAVING`에서 빠지니 결과가 같아요. 그래도 `LEFT JOIN`에서 오른쪽 표의 조건은 `ON`에 쓴다고 기억해요. `WHERE`에 쓰면 애써 살린 행이 조용히 사라져요.
 
-## 7. `GROUP BY`는 바구니를 만들고, 집계 함수는 바구니마다 센다
+</details>
+
+## 5. GROUP BY는 바구니를 만들고, COUNT(*)는 NULL 행도 센다
+
+종목과 수강월 조합마다 바구니가 하나라, 마스터즈반의 NULL 바구니까지 17바구니예요.
+
+```sql
+GROUP BY s.sport_id, e.enroll_month
+-- 수강월이 NULL인 바구니: COUNT(*)는 1, SUM(e.pay_amount)는 NULL
+```
+
+`SELECT`에는 묶은 열과 집계 함수만 와요.
+
+<details>
+<summary>자세히 보기</summary>
 
 `GROUP BY s.sport_id, e.enroll_month`는 종목과 수강월 조합이 같은 행끼리 한 바구니에 담아요. 바구니 하나가 결과의 한 줄이 돼요. 4종목에 4개월이라 16바구니에, 수강월이 NULL인 마스터즈반 바구니가 하나 더 생겨 17바구니예요.
 
@@ -167,7 +221,23 @@ ERROR:  column "c.course_name" must appear in the GROUP BY clause or be used in 
 
 그런데 `s.sport_name`은 `GROUP BY`에 없는데도 돼요. `s.sport_id`가 `sports`의 기본 키라서, 번호로 묶으면 이름도 하나로 정해지기 때문이에요. INNER JOIN 풀이처럼 `GROUP BY s.sport_name`으로 이름 자체를 묶어도 돼요.
 
-## 8. `HAVING`은 바구니를 거른다
+</details>
+
+## 6. 바구니는 HAVING으로 거르고, 별칭은 ORDER BY에서 쓴다
+
+`WHERE`는 묶기 전이라 집계 조건을 못 써요. 바구니 조건은 `HAVING`에 식 그대로 써요.
+
+```sql
+HAVING SUM(e.pay_amount) >= 1000000
+ORDER BY s.sport_name COLLATE "ko-x-icu", 수강월;
+```
+
+17바구니 중 4개만 통과하고, NULL 바구니는 여기서 빠져요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### `HAVING`은 바구니를 거른다
 
 행을 거르는 `WHERE`는 바구니를 만들기 전에 돌아요. 그래서 `WHERE SUM(e.pay_amount) >= 1000000`처럼 집계 조건을 쓰면 오류예요. 아직 더할 바구니가 없거든요.
 
@@ -189,7 +259,7 @@ ERROR:  aggregate functions are not allowed in WHERE
 
 `HAVING 매출 >= 1000000`처럼 별칭을 쓰면 `column "매출" does not exist` 오류가 나요. `HAVING`은 `SELECT`보다 먼저라 별칭이 아직 없어요. 식 `SUM(e.pay_amount)`를 그대로 다시 써요.
 
-## 9. `ORDER BY`에서는 별칭을 쓸 수 있다
+### `ORDER BY`에서는 별칭을 쓸 수 있다
 
 `SELECT`까지 끝난 결과는 순서가 정해져 있지 않아요. 리플레이에서도 정렬 전에는 수영 2026-11 행이 맨 위에 있었어요. 원하는 순서가 있으면 꼭 `ORDER BY`를 써요.
 
@@ -197,7 +267,16 @@ ERROR:  aggregate functions are not allowed in WHERE
 
 `COLLATE "ko-x-icu"`는 이 열을 한국어 규칙으로 정렬하라고 정해 주는 말이에요. 그래서 골프연습이 수영보다 앞에 와요.
 
-## 10. INNER JOIN 풀이와 비교하기
+</details>
+
+## 7. INNER JOIN 풀이도 결과는 같다, 그리고 오늘 만난 오류
+
+`enrollments`에서 출발해 `JOIN`으로 잇고 취소를 `WHERE`로 걸러도 최종 4행은 같아요. 매출 0인 종목까지 보여야 하면 `LEFT JOIN` 풀이가 필요해요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### INNER JOIN 풀이와 비교하기
 
 같은 문제를 수강 기록에서 출발해 풀 수도 있어요.
 
@@ -227,7 +306,7 @@ ORDER BY 종목, 수강월;
 
 `HAVING`이 100만 원 미만을 다 버리는 이 문제에서는 두 풀이의 결과가 같아요. 매출이 0인 종목이나 강좌까지 보여 줘야 하는 문제라면 `LEFT JOIN` 풀이가 필요해요.
 
-## 11. 오늘 만난 오류
+### 오늘 만난 오류
 
 | 메시지 | 원인 | 해결 |
 | --- | --- | --- |
@@ -236,6 +315,8 @@ ORDER BY 종목, 수강월;
 | `column "매출" does not exist` | `HAVING`에 별칭을 씀 | `HAVING SUM(e.pay_amount)`처럼 식을 다시 씀 |
 | `column reference "sport_id" is ambiguous` | 두 표에 같은 이름의 열 | `s.sport_id`처럼 표 별칭을 붙임 |
 | `LEFT JOIN`인데 NULL 행이 사라짐 | 오른쪽 표 조건을 `WHERE`에 씀 | 그 조건을 `ON`으로 옮김 |
+
+</details>
 
 ## 오늘 꼭 기억할 주의점
 

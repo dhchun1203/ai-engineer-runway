@@ -9,31 +9,37 @@ topic: "Git"
 preStudy: ["1-2-git-branch-and-pr"]
 ---
 
-어제는 내 저장소를 GitHub에 처음 연결했어요. 오늘은 그 저장소 안에서 **갈래를 나눠 일하고, 다시 합치고, 실수하면 되돌리는 법**을 배웠어요.
-
-1회차에서 이름만 들었던 reset, 브랜치, merge, GitFlow가 오늘 제대로 나와요. 앞에서 본 내용은 짧게 잇고, 새로 나온 것은 하나씩 직접 돌려 본 결과로 풀어 볼게요.
-
-레슨 끝에 확인 퀴즈가 있어요. 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
+2회차에 GitHub에 연결한 저장소 안에서, 오늘은 갈래를 나눠 일하고, 다시 합치고, 실수하면 되돌리는 법을 배웠어요. 실수의 안전망은 `git reset`으로 되감기와 `git reflog`로 되살리기예요(3, 4절).
 
 <Figure label="오늘 돌려 볼 한 바퀴">
   <Seq
     steps={[
-      { title: "갈래 나누기.", body: "`git checkout -b feature/login`으로 책갈피를 하나 더 꽂고, 그 위에서 커밋해요(8절)." },
-      { title: "잠깐 맡기기.", body: "급하게 다른 브랜치로 가야 하면 `git stash`로 하던 일을 서랍에 넣어요(9절)." },
-      { title: "합치기.", body: "main에 서서 `git merge feature/login`. 상황에 따라 Fast-forward나 3-way merge가 돼요(10절)." },
-      { title: "충돌 풀기.", body: "같은 줄을 서로 다르게 고쳤다면 직접 고른 뒤 `add`, `commit`으로 마무리해요(11절)." },
-      { title: "정리하기.", body: "합친 브랜치는 `git branch -d`로 지워요(13절)." },
+      { title: "갈래 나누기.", body: "`git checkout -b feature/login`으로 책갈피를 하나 더 꽂고, 그 위에서 커밋해요(5절)." },
+      { title: "잠깐 맡기기.", body: "급하게 다른 브랜치로 가야 하면 `git stash`로 하던 일을 서랍에 넣어요(5절)." },
+      { title: "합치기.", body: "main에 서서 `git merge feature/login`. 상황에 따라 Fast-forward나 3-way merge가 돼요(6절)." },
+      { title: "충돌 풀기.", body: "같은 줄을 서로 다르게 고쳤다면 직접 고른 뒤 `add`, `commit`으로 마무리해요(7절)." },
+      { title: "정리하기.", body: "합친 브랜치는 `git branch -d`로 지워요(8절)." },
     ]}
   />
 </Figure>
 
-<Hint>
+각 절의 "자세히 보기"를 펼치면 전체 코드와 출력이 있어요. 끝에 복습 퀴즈 5문항이 있고, 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
 
-실수했을 때 되감는 `git reset`과 날린 커밋을 되살리는 `git reflog`(6, 7절)가 이 한 바퀴의 안전망이에요. 1~5절은 커밋을 깔끔하게 쌓고 원격과 맞춰 보는 준비 운동이에요.
+## 1. 커밋 준비: `&&`로 잇고, `.gitignore`로 빼고, 타입으로 이름 붙인다
 
-</Hint>
+`&&`는 앞 명령이 성공해야 뒤를 실행해요. `.gitignore`는 아직 추적하지 않는 파일에만 통해서, 이미 커밋한 파일은 `git rm --cached`로 추적을 끊어요.
 
-## 1. 명령 이어 치기: &&는 앞이 잘 돼야 넘어간다
+```bash
+git add . && git commit -m "docs: README.md 추가"
+git rm --cached config.json   # 폴더의 파일은 그대로, 저장소에서만 빠질 예정(D)
+```
+
+`.gitignore`의 주석은 줄 맨 앞의 `#`만 쳐요. `!important.log   # 예외 처리`처럼 줄 끝에 달면 예외가 꺼져요. 커밋 메시지는 `feat`, `fix`, `docs`, `refactor` 같은 타입을 맨 앞에 붙여요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### 명령 이어 치기: &&는 앞이 잘 돼야 넘어간다
 
 add와 commit을 매번 두 줄로 치기 번거롭다면 한 줄로 이을 수 있어요.
 
@@ -64,7 +70,7 @@ git commit -m "again" ; echo "뒤 명령 실행됨"
 
 `&&`는 "앞이 잘 됐으면 그다음"이라서 안전해요. add가 실패했는데 commit이 엉뚱하게 돌아가는 일을 막아 줘요.
 
-## 2. .gitignore: Git이 못 본 척할 목록
+### .gitignore: Git이 못 본 척할 목록
 
 1회차에서 본 `.gitignore`는 **Git이 못 본 척할 파일 목록**이에요. 프로젝트 맨 위 폴더에 둬요. 쓰는 이유는 세 가지예요.
 
@@ -72,7 +78,7 @@ git commit -m "again" ; echo "뒤 명령 실행됨"
 - **쓸데없는 용량 빼기**: `node_modules/`, 빌드 결과물
 - **내 컴퓨터에만 있는 파일 빼기**: 로그, `.DS_Store`, 편집기(IDE) 설정
 
-### 쓰는 법
+#### 쓰는 법
 
 ```text
 # 주석은 # 로 시작하는 한 줄
@@ -126,12 +132,12 @@ Git은 두 번째 줄을 "`important.log   # 예외 처리`라는 이름의 파�
 
 </TwistBox>
 
-### 관리하는 법
+#### 관리하는 법
 
 - 프로젝트를 시작할 때 **가장 먼저** 만들어 두고, 뺄 게 새로 생기면 한 줄씩 더해요.
 - `.gitignore` 파일 자체는 커밋해서 팀과 같이 써요. 그래야 모두 같은 파일을 빼요.
 
-### 이미 추적 중인 파일은 계속 추적돼요
+#### 이미 추적 중인 파일은 계속 추적돼요
 
 `.gitignore`는 **아직 추적하지 않는 파일**에만 통해요. 이미 커밋한 파일은 나중에 목록에 넣어도 계속 추적돼요.
 
@@ -171,7 +177,7 @@ git status --short
 
 </Note>
 
-## 3. 커밋 메시지: 맨 앞 타입이 이름표다
+### 커밋 메시지: 맨 앞 타입이 이름표다
 
 커밋 메시지는 `타입: 제목` 꼴로 써요. 맨 앞 타입만 봐도 "이 커밋이 무슨 종류의 일인지" 알 수 있게요.
 
@@ -193,7 +199,25 @@ git status --short
 
 팀마다 타입 구성이 조금씩 달라요. 새 프로젝트에 들어가면 그 팀의 규칙부터 확인해요.
 
-## 4. `git clone`: 이력까지 통째로 복사해 온다
+</details>
+
+## 2. `git clone`과 `git log`: 내 main과 원격 main은 따로 움직인다
+
+`git clone`은 이력까지 통째로 복사하고 `origin`도 자동으로 연결해요. 거기서 커밋을 하나 더 하면 내 main이 원격보다 앞서요.
+
+```bash
+git log --oneline
+# fe2a9e6 (HEAD -> main) docs: Logs 폴더 제외
+# f99921f (origin/main) feat: .gitignore 파일 생성
+# 4bb7219 docs: README.md 추가
+```
+
+`HEAD -> main`이 `origin/main`보다 한 줄 위면 `git push`할 차례예요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### `git clone`: 이력까지 통째로 복사해 온다
 
 GitHub에 이미 있는 저장소를 내 컴퓨터로 가져올 때 써요.
 
@@ -218,7 +242,7 @@ git remote -v
 
 어제 배운 것과 정리하면 이래요. 이미 GitHub에 있으면 `clone`, 내 컴퓨터에서 먼저 만들었으면 `remote add`예요.
 
-## 5. `git log` 읽기: 내 main과 원격 main은 따로 움직인다
+### `git log` 읽기: 내 main과 원격 main은 따로 움직인다
 
 clone한 저장소에서 커밋을 하나 더 하고 log를 보면 이렇게 나와요.
 
@@ -256,16 +280,11 @@ git status
 
 </Hint>
 
-## 6. `git reset`: 세 옵션은 지우는 범위가 다르다
+</details>
 
-1회차에서 reset은 "시간을 되감기"라고 배웠어요. 오늘은 세 옵션이 **어디까지 되감는지**를 다시 정리했어요. 되감을 지점은 해시로 정해도 되고, 상대 위치로 정해도 돼요.
+## 3. `git reset`: 세 옵션은 지우는 범위가 다르다
 
-```bash
-git reset --soft 7ac7366     # 해시로 지점을 정해도 되고
-git reset --soft HEAD~1      # 상대 위치로 정해도 돼요
-```
-
-세 옵션 모두 HEAD(커밋)는 옮겨요. 차이는 **그 뒤로 얼마나 더 지우느냐**예요. 오른쪽으로 갈수록 많이 지워요.
+세 옵션 모두 커밋(HEAD)은 옮겨요. 차이는 그 뒤로 Staging과 작업 폴더를 얼마나 더 비우느냐예요.
 
 <Figure label="마지막 커밋을 취소했을 때 README.md의 변경은 어디에 남나">
   <Boxes
@@ -276,6 +295,20 @@ git reset --soft HEAD~1      # 상대 위치로 정해도 돼요
     ]}
   />
 </Figure>
+
+이미 push해서 팀원이 가져간 커밋은 reset 말고 `git revert`로 고쳐요.
+
+<details>
+<summary>자세히 보기</summary>
+
+1회차에서 reset은 "시간을 되감기"라고 배웠어요. 오늘은 세 옵션이 **어디까지 되감는지**를 다시 정리했어요. 되감을 지점은 해시로 정해도 되고, 상대 위치로 정해도 돼요.
+
+```bash
+git reset --soft 7ac7366     # 해시로 지점을 정해도 되고
+git reset --soft HEAD~1      # 상대 위치로 정해도 돼요
+```
+
+세 옵션 모두 HEAD(커밋)는 옮겨요. 차이는 **그 뒤로 얼마나 더 지우느냐**예요. 오른쪽으로 갈수록 많이 지워요.
 
 마지막 커밋 하나를 세 방식으로 각각 취소하고 상태를 봤어요.
 
@@ -307,7 +340,24 @@ git status --short
 
 </Note>
 
-## 7. `git reflog`: HEAD의 발자국 일지
+</details>
+
+## 4. `git reflog`: 날린 커밋은 HEAD의 발자국 일지에서 찾는다
+
+Git은 HEAD가 움직일 때마다 내 컴퓨터에 일지를 써요. `reset --hard`로 날린 커밋도 여기서 찾아 되살려요.
+
+```bash
+git reflog
+# fe2a9e6 HEAD@{0}: reset: moving to HEAD~1
+# c3224e8 HEAD@{1}: commit: docs: 중요한 내용 추가
+git reset --hard HEAD@{1}
+# HEAD is now at c3224e8 docs: 중요한 내용 추가
+```
+
+커밋한 적 없는 변경은 일지에 없어서 못 살려요.
+
+<details>
+<summary>자세히 보기</summary>
 
 `reset --hard`로 커밋을 날렸다고 끝이 아니에요. Git은 **HEAD가 움직일 때마다** 따로 일지를 써 둬요. 그게 `reflog`예요.
 
@@ -369,7 +419,22 @@ tail -1 README.md
 
 </Note>
 
-## 8. 브랜치: 책갈피를 하나 더 꽂는다
+</details>
+
+## 5. 브랜치와 stash: 책갈피를 꽂고, 하던 일은 서랍에 맡긴다
+
+`git branch 이름`은 책갈피만 꽂고, `git checkout -b 이름`은 꽂고 바로 옮겨 가요. 커밋하기 애매한 변경 때문에 브랜치 이동이 막히면 stash 서랍에 맡겨요.
+
+```bash
+git stash                    # 변경을 서랍에 넣기 (새 파일까지는 git stash -u)
+git checkout feature/login
+git stash pop                # 꺼내 적용하고 서랍에서 지우기 (apply는 남겨 둬요)
+```
+
+<details>
+<summary>자세히 보기</summary>
+
+### 브랜치: 책갈피를 하나 더 꽂는다
 
 1회차에서 브랜치는 **특정 커밋을 가리키는 움직이는 책갈피**(포인터)라고 했어요. 책갈피를 하나 더 꽂으면 독립된 작업 줄기가 생겨요. 따로 빼서 일하는 이유는 이래요.
 
@@ -378,7 +443,7 @@ tail -1 README.md
 - 기능 단위로 리뷰(PR)를 받고 합치기 쉬워요.
 - 실험하다 망해도 **브랜치를 버리면 그만**이에요.
 
-### 만들기만 할까, 만들고 옮겨 갈까
+#### 만들기만 할까, 만들고 옮겨 갈까
 
 ```bash
 git branch feature/login        # 만들기만 (이동은 안 함)
@@ -396,7 +461,7 @@ git branch
 
 `git branch 이름`은 책갈피만 꽂고 그 자리에 그대로 있어요. `git checkout -b`는 꽂고 바로 그 책갈피로 넘어가요. 1회차에서 본 `git switch -c`와 같은 일이에요.
 
-## 9. `git stash`: 하던 작업을 서랍에 맡긴다
+### `git stash`: 하던 작업을 서랍에 맡긴다
 
 작업하다가 **급하게 다른 브랜치로 가야 하는데**, 아직 커밋하기엔 애매할 때가 있어요. 그대로 옮기려 하면 Git이 막을 수 있어요.
 
@@ -428,7 +493,7 @@ git checkout feature/login
 # Switched to branch 'feature/login'     <- 이제 옮겨져요
 ```
 
-### 서랍 보기, 꺼내기
+#### 서랍 보기, 꺼내기
 
 ```bash
 git stash list
@@ -477,7 +542,24 @@ git status --short
 
 </Note>
 
-## 10. `git merge`: 받는 쪽에 서서 끌어온다
+</details>
+
+## 6. `git merge`: 받는 쪽에 서서, Fast-forward 아니면 3-way
+
+merge는 받는 쪽(보통 main)에 서서 쳐요. main에 새 커밋이 없으면 책갈피만 옮기는 Fast-forward, 양쪽에 새 커밋이 있으면 merge 커밋을 새로 만드는 3-way merge예요.
+
+```bash
+git checkout main
+git merge feature/login           # Fast-forward, 또는 Merge made by the 'ort' strategy.
+git merge --no-ff feature/login   # Fast-forward여도 merge 커밋을 남기기
+```
+
+<BranchMergeSimulator />
+
+바로 merge를 누르면 Fast-forward, `git commit -m "E"`를 먼저 누르면 merge 커밋 M이 생겨요.
+
+<details>
+<summary>자세히 보기</summary>
 
 merge는 "**다른 브랜치를 지금 내 브랜치로 가져와 합쳐**"라는 명령이에요. 그래서 합쳐질 대상(보통 main)으로 먼저 이동해요.
 
@@ -588,15 +670,30 @@ main에 서 있고, feature를 만든 뒤 main에는 커밋을 하나도 안 했
 
 위 실습과 같은 그림(main에 A, B, feature/login에 C, D)에서 시작해요. 버튼 하나가 명령 한 번이고, 출력 창의 글자는 위에서 실제로 돌린 결과 그대로예요. 뒤의 `#`는 왜 그렇게 됐는지예요.
 
-<BranchMergeSimulator />
-
 <Hint>
 
-해 볼 것: 바로 `git merge feature/login`을 누르면 Fast-forward예요. 처음부터 다시 해서 `git commit -m "E"`를 먼저 누르면 merge 커밋 M이 생겨요. 합치기 전에 `git branch -d feature/login`을 누르면 거절되는 것도 확인해 보세요(13절).
+해 볼 것: 바로 `git merge feature/login`을 누르면 Fast-forward예요. 처음부터 다시 해서 `git commit -m "E"`를 먼저 누르면 merge 커밋 M이 생겨요. 합치기 전에 `git branch -d feature/login`을 누르면 거절되는 것도 확인해 보세요(8절).
 
 </Hint>
 
-## 11. 충돌: 같은 줄을 서로 다르게 고치면 Git이 묻는다
+</details>
+
+## 7. 충돌: 표시를 지워 고치고, add, commit
+
+같은 파일의 같은 줄을 두 브랜치가 서로 다르게 고치면 Git이 멈추고 `both modified`로 알려요.
+
+```text
+<<<<<<< HEAD
+인사말: 환영합니다
+=======
+인사말: 로그인해 주세요
+>>>>>>> feature/login
+```
+
+위가 지금 내 브랜치, 아래가 가져오려는 브랜치예요. 표시 줄을 지워 최종 내용으로 고친 뒤 `git add`, `git commit`으로 마무리해요. 그만두려면 `git merge --abort`예요.
+
+<details>
+<summary>자세히 보기</summary>
 
 **같은 파일의 같은 부분을** 두 브랜치에서 서로 다르게 고친 뒤 merge하면, Git이 어느 쪽을 골라야 할지 몰라 멈춰요. 이게 충돌이에요.
 
@@ -679,7 +776,23 @@ cat README.md
 # 인사말: 환영합니다   <- merge 하기 전 main 내용 그대로
 ```
 
-## 12. GitFlow: 충돌은 develop으로 합치는 순간에 난다
+</details>
+
+## 8. GitFlow와 정리: 충돌은 develop으로 합칠 때, 지울 땐 `-d`
+
+GitFlow에서 feature는 develop에서 갈라져 나와 PR로 합쳐지고, 충돌은 대개 이 순간에 나요. feature가 오래 살수록 충돌이 커지니 develop을 자주 가져와 맞춰요.
+
+```bash
+git branch -d feature/login   # 병합이 끝난 브랜치만 지워져요
+git branch -D feature/try     # 정말 버려도 될 때만 강제로
+```
+
+`-d`는 아직 합치지 않은 브랜치(`not fully merged`)와 지금 서 있는 브랜치를 거절해요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### GitFlow: 충돌은 develop으로 합치는 순간에 난다
 
 1회차에서 GitFlow는 "브랜치를 나누는 팀의 약속"이라고 했어요. 오늘은 브랜치 종류를 다 봤어요.
 
@@ -708,13 +821,13 @@ feature 브랜치는 **develop에서** 갈라져 나오고, 다 만들면 PR을 
   />
 </Figure>
 
-### 줄이는 법
+#### 줄이는 법
 
 - feature 브랜치가 **오래 살수록 충돌이 커져요.** develop은 그동안 계속 앞으로 가니까요.
 - 그래서 develop의 새 변경을 내 feature로 **자주 가져와 맞춰요**(feature에 서서 develop을 merge).
 - 충돌은 보통 **PR을 올리기 전에 feature 쪽에서** 풀고, 깨끗한 상태로 리뷰를 받아요.
 
-## 13. 브랜치 삭제: `-d`는 조심성 있게, `-D`는 강제로
+### 브랜치 삭제: `-d`는 조심성 있게, `-D`는 강제로
 
 merge가 끝난 브랜치는 지워서 목록을 깔끔하게 해요.
 
@@ -755,6 +868,8 @@ git switch feature/login
 git branch -d feature/login
 # error: cannot delete branch 'feature/login' used by worktree at '.../my-project'
 ```
+
+</details>
 
 ## 오늘 꼭 기억할 주의점
 

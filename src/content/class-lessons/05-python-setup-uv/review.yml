@@ -2,33 +2,6 @@
 # 새 문항은 아무 자리에 넣어도 되지만 id는 회차 안에서 겹치면 안 된다.
 slug: 05-python-setup-uv
 quiz:
-  - id: interpreter-vs-compiler
-    q: "인터프리터 방식에 대한 설명으로 맞는 것은?"
-    options:
-      - "전체를 미리 번역한 뒤 실행한다"
-      - "실행하면서 차례대로 번역하고, 바로 실행해 볼 수 있다"
-      - "C 언어가 대표적인 예다"
-      - "실행 전에 반드시 빌드 단계가 필요하다"
-    answer: 1
-    explain: "인터프리터는 동시통역처럼 실행하면서 번역해요. 전체를 미리 번역하는 건 컴파일 방식이고 C 가 예예요. 파이썬(CPython)은 속에서 바이트코드라는 중간 단계를 거치지만, 보통 인터프리터 방식으로 분류해요."
-  - id: why-virtualenv
-    q: "가상환경을 쓰는 가장 큰 이유는?"
-    options:
-      - "파이썬 실행 속도를 높이려고"
-      - "프로젝트마다 설치 공간을 나눠 패키지 버전이 서로 부딪히지 않게 하려고"
-      - "코드를 GitHub 에 올리려고"
-      - "인터넷 없이 패키지를 쓰려고"
-    answer: 1
-    explain: "프로젝트마다 필요한 패키지와 버전이 달라요. 한 곳에 섞어 설치하면 한쪽 버전을 바꿀 때 다른 프로젝트가 깨질 수 있어서, 프로젝트마다 .venv 를 따로 둬요."
-  - id: uv-init-files
-    q: "빈 폴더에서 uv init --no-package 를 실행한 직후에는 아직 없는 것은?"
-    options:
-      - "pyproject.toml"
-      - "main.py"
-      - ".python-version"
-      - ".venv 와 uv.lock"
-    answer: 3
-    explain: "uv init 은 .git, .gitignore, .python-version, README.md, main.py, pyproject.toml 을 만들어요. .venv 와 uv.lock 은 uv add 나 uv run 을 실행할 때 생겨요."
   - id: uv-add-three-things
     q: "uv add fastapi 가 한 번에 하는 일이 아닌 것은?"
     options:
@@ -55,15 +28,6 @@ quiz:
       - "pyproject.toml 이 정확한 버전, uv.lock 이 범위다"
     answer: 0
     explain: "pyproject.toml 은 장보기 목록, uv.lock 은 영수증이에요. lock 이 있어서 팀원, 다른 컴퓨터, 서버가 같은 버전을 설치해요."
-  - id: sync-after-clone
-    q: "팀원의 저장소를 git clone 했어요. .venv 가 없는데 같은 환경을 만들려면?"
-    options:
-      - "uv init"
-      - "uv sync"
-      - "uv python pin"
-      - "pip freeze"
-    answer: 1
-    explain: ".venv 는 .gitignore 에 있어 저장소에 없어요. uv sync 가 pyproject.toml 과 uv.lock 대로 .venv 를 만들어요. pyproject.toml 을 손으로 고친 뒤에도 uv sync 예요."
   - id: sync-locked-error
     q: "pyproject.toml 에 패키지를 손으로 추가하고 lock 은 그대로 둔 채 uv sync --locked 를 실행하면?"
     options:
@@ -73,15 +37,6 @@ quiz:
       - "pyproject.toml 을 원래대로 되돌린다"
     answer: 1
     explain: "--locked 는 두 파일이 어긋나면 에러예요(The lockfile at `uv.lock` needs to be updated). 옵션 없는 uv sync 는 lock 을 다시 만들고, --frozen 은 lock 만 믿어 새 패키지를 설치하지 않아요."
-  - id: which-vs-virtualenv
-    q: "가상환경을 활성화한 터미널에서 which python 과 echo $VIRTUAL_ENV 가 보여 주는 것은?"
-    options:
-      - "둘 다 시스템 파이썬 경로"
-      - "which python 은 실행될 python 파일 경로(.venv/bin/python), $VIRTUAL_ENV 는 가상환경 폴더 경로(.venv)"
-      - "which python 은 파이썬 버전, $VIRTUAL_ENV 는 패키지 목록"
-      - "둘 다 빈 줄"
-    answer: 1
-    explain: "which python 은 python 을 쳤을 때 실행될 파일의 경로예요. 가상환경 폴더 자체는 $VIRTUAL_ENV 로 봐요. deactivate 하면 맥에서는 which python 이 다시 python not found 가 되고 $VIRTUAL_ENV 는 빈 줄이 돼요."
   - id: uv-run-no-activate
     q: "가상환경을 활성화하지 않은 터미널에서 다음을 실행하면?"
     code: |-

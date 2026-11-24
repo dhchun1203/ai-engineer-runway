@@ -9,17 +9,49 @@ topic: "Docker"
 preStudy: ["1-4-relational-db-basics"]
 ---
 
-어제까지 파이썬으로 장바구니 프로그램을 만들었어요. 그런데 이 프로그램을 친구 노트북이나 서버에서 돌리려면, 그쪽에도 파이썬과 uv와 패키지를 똑같이 맞춰 깔아야 해요. 하나만 어긋나도 "제 PC에서는 되는데요?"가 나와요.
+Docker로 프로그램을 이미지에 담아 어디서든 똑같이 켜는 법을 배운 날이었어요. 맥에서는 `colima start`로 켠 작은 리눅스 VM 위에서 컨테이너가 돌아요.
 
-오늘은 이 문제를 푸는 **Docker**를 배웠어요. 프로그램과 실행에 필요한 것을 한 상자에 담아 어디서든 똑같이 켜는 도구예요. 이 상자로 웹 서버(nginx)와 데이터베이스(MySQL, PostgreSQL, Redis)를 설치 없이 명령 한 줄로 띄워 봤어요.
+hello-world, Ubuntu, nginx로 컨테이너의 한살이와 포트, 볼륨을 익히고, Dockerfile, `compose.yaml`, nginx 리버스 프록시, MySQL, Redis, PostgreSQL까지 띄웠어요. 각 절의 "자세히 보기"를 펼치면 전체 명령과 출력이 있어요. 끝에 복습 퀴즈 5문항이 있어요.
 
-위에서부터 차례로 읽으면 도커 기초, 내 이미지와 Compose, 데이터베이스 순서로 이어져요. 레슨 끝에 확인 퀴즈가 있어요. 문항을 모두 풀면 [수업 복습](/class) 목록에 완료로 표시돼요.
+## 1. 도커: 앱을 이미지로 포장하고, VM 대신 격리된 프로세스로 돌린다
 
-## 1. 도커는 프로그램을 규격 컨테이너에 담아 옮긴다
+도커는 앱과 라이브러리, 설정, 런타임을 **이미지** 하나로 포장해서 어디서든 똑같은 **컨테이너**로 켜요. "제 PC에서는 되는데요?"를 없애는 도구예요.
+
+VM은 컴퓨터를 통째로 흉내 내서 VM마다 게스트 OS(수 GB)를 깔아요. 컨테이너는 호스트의 리눅스 커널을 함께 쓰는 격리된 프로세스라 1초 안팎으로 켜져요.
+
+<Figure>
+  <Layers
+    layers={[
+      [
+        { title: "앱 A, 앱 B, 앱 C", note: "가상 머신 (VM)", lines: ["라이브러리 x 3"] },
+        { title: "앱 A, 앱 B, 앱 C", note: "도커 컨테이너", tone: "blue", lines: ["라이브러리 x 3"] },
+      ],
+      [
+        { title: "게스트 OS x 3", tone: "red", lines: ["VM마다 커널까지 포함한 OS를 통째로 설치", "하나에 수 GB"] },
+        { title: "(게스트 OS 없음)", dashed: true, lines: ["앱이 격리된 프로세스로 바로 돌아요"] },
+      ],
+      [
+        { title: "하이퍼바이저", lines: ["VirtualBox, VMware, Hyper-V"] },
+        { title: "도커 엔진", tone: "blue" },
+      ],
+      [
+        { title: "호스트 OS + 하드웨어" },
+        { title: "호스트 OS + 하드웨어", tone: "blue", lines: ["**리눅스 커널을 모두가 함께 씀**"] },
+      ],
+    ]}
+  />
+</Figure>
+
+`docker` 명령은 내 터미널(클라이언트)이 데몬(`dockerd`)에 전달만 하고, 이미지 받기와 실행은 데몬이 해요. 이미지가 없으면 데몬이 Docker Hub에서 pull해요. 맥에서는 Colima가 꺼져 있으면 `docker` 명령이 일을 시킬 곳이 없어 실패해요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### 도커는 프로그램을 규격 컨테이너에 담아 옮긴다
 
 TIL 셀프 체크에 "도커가 왜 필요해?"라고 적었죠. 이 절이 그 답이에요.
 
-### "제 PC에서는 잘 되는데요?"
+#### "제 PC에서는 잘 되는데요?"
 
 개발자 PC, 동료 PC, 테스트 서버, 운영 서버는 OS 버전도 설치된 라이브러리도 설정도 조금씩 달라요. 그래서 같은 코드가 어디서는 돌고 어디서는 안 돌아요.
 
@@ -48,7 +80,7 @@ TIL 셀프 체크에 "도커가 왜 필요해?"라고 적었죠. 이 절이 그 
 | 깔끔한 정리 | 컨테이너를 지우면 끝이라 내 PC에 흔적이 남지 않아요 |
 | 가벼움 | VM보다 훨씬 작고 빠르게 실행돼요(다음 절) |
 
-### 도커는 언제 나왔을까
+#### 도커는 언제 나왔을까
 
 | 시기 | 사건 |
 | --- | --- |
@@ -65,34 +97,11 @@ TIL 셀프 체크에 "도커가 왜 필요해?"라고 적었죠. 이 절이 그 
 
 재미있는 건 도커를 처음 공개한 자리가 **파이썬 컨퍼런스**(PyCon)의 5분짜리 라이트닝 토크였다는 점이에요.
 
-## 2. VM은 컴퓨터를 통째로 흉내 내고, 컨테이너는 프로그램만 격리한다
+### VM은 컴퓨터를 통째로 흉내 내고, 컨테이너는 프로그램만 격리한다
 
 VM(가상 머신)도 "다른 환경을 흉내 내서 프로그램을 돌린다"는 점은 같아요. 차이는 **무엇을 흉내 내느냐**예요.
 
-아래 그림은 위층이 아래층 위에 올라앉은 구조예요. 왼쪽이 VM, 오른쪽이 컨테이너예요. 두 쪽에서 다른 칸은 가운데 두 층뿐이에요.
-
-<Figure>
-  <Layers
-    layers={[
-      [
-        { title: "앱 A, 앱 B, 앱 C", note: "가상 머신 (VM)", lines: ["라이브러리 x 3"] },
-        { title: "앱 A, 앱 B, 앱 C", note: "도커 컨테이너", tone: "blue", lines: ["라이브러리 x 3"] },
-      ],
-      [
-        { title: "게스트 OS x 3", tone: "red", lines: ["VM마다 커널까지 포함한 OS를 통째로 설치", "하나에 수 GB"] },
-        { title: "(게스트 OS 없음)", dashed: true, lines: ["앱이 격리된 프로세스로 바로 돌아요"] },
-      ],
-      [
-        { title: "하이퍼바이저", lines: ["VirtualBox, VMware, Hyper-V"] },
-        { title: "도커 엔진", tone: "blue" },
-      ],
-      [
-        { title: "호스트 OS + 하드웨어" },
-        { title: "호스트 OS + 하드웨어", tone: "blue", lines: ["**리눅스 커널을 모두가 함께 씀**"] },
-      ],
-    ]}
-  />
-</Figure>
+이 절 맨 위 그림은 위층이 아래층 위에 올라앉은 구조예요. 왼쪽이 VM, 오른쪽이 컨테이너예요. 두 쪽에서 다른 칸은 가운데 두 층뿐이에요.
 
 | 비교 | 가상 머신 (VM) | 도커 컨테이너 |
 | --- | --- | --- |
@@ -112,13 +121,13 @@ VM(가상 머신)도 "다른 환경을 흉내 내서 프로그램을 돌린다"�
 
 컨테이너는 리눅스 커널이 있어야 돌아요. 맥에는 리눅스 커널이 없어서 **Colima**가 안에 작은 리눅스 VM을 하나 띄워요. 컨테이너는 그 VM 안에서 돌아요.
 
-정리하면 맥에서는 **VM 한 개 위에 컨테이너 여러 개**가 올라가는 구조예요. 그래서 `colima start`로 VM을 켜 두지 않으면 `docker` 명령이 일을 시킬 곳이 없어 실패해요(19절 첫 오류). 설치와 켜고 끄기는 [맥 실습 환경](/class/mac-setup) 12절에 있어요.
+정리하면 맥에서는 **VM 한 개 위에 컨테이너 여러 개**가 올라가는 구조예요. 그래서 `colima start`로 VM을 켜 두지 않으면 `docker` 명령이 일을 시킬 곳이 없어 실패해요(8절 첫 오류). 설치와 켜고 끄기는 [맥 실습 환경](/class/mac-setup) 12절에 있어요.
 
 수업 교안은 윈도우의 Docker Desktop 기준이에요. 윈도우도 Docker Desktop이 WSL 2로 리눅스 VM을 띄우는 같은 구조예요.
 
 </TwistBox>
 
-## 3. 명령은 내 터미널이 내리고, 일은 데몬이 한다
+### 명령은 내 터미널이 내리고, 일은 데몬이 한다
 
 `docker` 명령을 치면 그 명령이 직접 일을 하는 게 아니에요. 세 쪽이 나눠서 일해요.
 
@@ -140,17 +149,11 @@ Git 수업의 `git clone`과 GitHub를 떠올리면 쉬워요. Docker Hub는 이
 
 </Hint>
 
-## 4. 이미지는 붕어빵 틀, 컨테이너는 붕어빵, 볼륨은 보관함
+</details>
 
-오늘 배운 것 중 가장 중요한 세 가지예요.
+## 2. 이미지는 틀, 컨테이너는 붕어빵: `run`은 칠 때마다 새로 찍는다
 
-| 이름 | 비유 | 만드는 명령 | 지우는 명령 |
-| --- | --- | --- | --- |
-| 이미지 | 붕어빵 틀(바뀌지 않음) | `docker pull`, `docker build -t 이름 .` | `docker rmi` |
-| 컨테이너 | 붕어빵(틀 하나로 여러 개) | `docker run` | `docker rm` |
-| 볼륨 | 붕어빵 밖 보관함 | `-v 이름:경로` | `docker volume rm` |
-
-셋은 이렇게 이어져요. 틀을 받아 오고, 틀로 붕어빵을 찍고, 붕어빵이 남길 것은 밖의 보관함에 둬요.
+이미지는 읽기 전용 틀(`이름:태그`, 태그를 빼면 `latest`)이고, 컨테이너는 그 위에 쓰기 레이어를 한 장 얹어 실행한 것이에요. 파이썬으로 치면 이미지는 클래스, 컨테이너는 객체예요.
 
 <Figure>
   <Boxes
@@ -165,7 +168,44 @@ Git 수업의 `git clone`과 GitHub를 떠올리면 쉬워요. Docker Hub는 이
   />
 </Figure>
 
-### 이미지 (Image)
+```bash
+docker run hello-world          # 칠 때마다 새 컨테이너
+docker ps                       # 비어 있어요(할 일을 끝내 Exited)
+docker ps -a                    # Exited (0) 컨테이너가 보여요
+docker run -it --name my-ubuntu ubuntu:24.04 bash   # exit하면 컨테이너도 정지
+docker start -ai my-ubuntu      # 다시 켜면 /root/hello.txt가 남아 있어요
+docker rm my-ubuntu             # 지우면 안의 파일도 사라져요
+```
+
+지울 때는 컨테이너 먼저(`docker rm`), 이미지는 나중(`docker rmi`)이에요. `docker run` 옵션은 이것만 기억하면 돼요.
+
+| 옵션 | 풀네임 | 의미 | 예시 |
+| --- | --- | --- | --- |
+| `-it` | `-i`: `--interactive`, `-t`: `--tty` | 터미널을 붙여 대화형으로 실행. `-i`는 키보드 입력을 열어 두고, `-t`는 가상 터미널(TTY)을 붙여 프롬프트가 보이게 해요 | `-it ubuntu bash` |
+| `-d` | `--detach` | 터미널에서 떼어 뒤에서 실행 | `-d nginx` |
+| `--name` | | 컨테이너 이름 정하기 | `--name my-nginx` |
+| `-p 호스트:컨테이너` | `--publish` | 포트 잇기(컨테이너 포트를 밖에 공개) | `-p 8080:80` |
+| `-e 키=값` | `--env` | 환경 변수 전달(environment variable) | `-e MYSQL_ROOT_PASSWORD=1234` |
+| `-v 볼륨:경로` | `--volume` | 볼륨 잇기(데이터 보존) | `-v pgdata:/var/lib/postgresql` |
+
+Ubuntu 컨테이너 안에서는 `apt update`부터 해야 `apt install`이 패키지를 찾아요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### 이미지는 붕어빵 틀, 컨테이너는 붕어빵, 볼륨은 보관함
+
+오늘 배운 것 중 가장 중요한 세 가지예요.
+
+| 이름 | 비유 | 만드는 명령 | 지우는 명령 |
+| --- | --- | --- | --- |
+| 이미지 | 붕어빵 틀(바뀌지 않음) | `docker pull`, `docker build -t 이름 .` | `docker rmi` |
+| 컨테이너 | 붕어빵(틀 하나로 여러 개) | `docker run` | `docker rm` |
+| 볼륨 | 붕어빵 밖 보관함 | `-v 이름:경로` | `docker volume rm` |
+
+셋은 이렇게 이어져요. 틀을 받아 오고, 틀로 붕어빵을 찍고, 붕어빵이 남길 것은 밖의 보관함에 둬요.
+
+#### 이미지 (Image)
 
 이미지는 컨테이너를 만드는 **읽기 전용 틀**(템플릿)이에요. 앱 실행에 필요한 파일(최소한의 OS 파일, 라이브러리, 실행 파일, 설정)과 "켜지면 무엇을 실행할지"가 들어 있어요.
 
@@ -176,7 +216,7 @@ Git 수업의 `git clone`과 GitHub를 떠올리면 쉬워요. Docker Hub는 이
 
 `docker pull`을 치면 줄마다 `Pull complete`가 찍혀요. 레이어를 하나씩 받는 과정이에요. 이미 받은 레이어는 `Already exists`로 나와요.
 
-### 컨테이너 (Container)
+#### 컨테이너 (Container)
 
 컨테이너는 이미지를 **실행한 것**(실행 인스턴스)이에요. 이미지 위에 쓰기 가능한 얇은 레이어를 한 장 덧붙여서, 격리된 프로세스로 돌려요.
 
@@ -209,7 +249,7 @@ Git 수업의 `git clone`과 GitHub를 떠올리면 쉬워요. Docker Hub는 이
 
 정지(`Exited`)된 컨테이너는 `docker ps`에는 안 보이고 `docker ps -a`에만 보여요. 할 일을 끝낸 컨테이너는 스스로 `Exited (0)`이 돼요.
 
-### 한 줄 정리와 파이썬 비유
+#### 한 줄 정리와 파이썬 비유
 
 | | 이미지 | 컨테이너 |
 | --- | --- | --- |
@@ -224,9 +264,9 @@ Git 수업의 `git clone`과 GitHub를 떠올리면 쉬워요. Docker Hub는 이
 
 클래스 하나로 객체를 여러 개 만들고 객체마다 자기 데이터를 갖듯이, `postgres:18` 이미지 하나로 컨테이너를 여러 개 만들고 컨테이너마다 자기 데이터를 가져요.
 
-## 5. hello-world: run은 칠 때마다 새 컨테이너를 찍는다
+### hello-world: run은 칠 때마다 새 컨테이너를 찍는다
 
-### 설치 확인
+#### 설치 확인
 
 ```bash
 docker --version
@@ -236,7 +276,7 @@ docker info
 
 `docker info`에서 오류가 나면 Colima가 켜져 있는지 `colima status`로 확인하고, 꺼져 있으면 `colima start`로 켜요.
 
-### 오늘 쓰는 명령과 옵션
+#### 오늘 쓰는 명령과 옵션
 
 | 명령 | 역할 |
 | --- | --- |
@@ -250,20 +290,9 @@ docker info
 | `docker stop` / `docker start` | 컨테이너 정지 / 다시 시작 |
 | `docker rm` / `docker rmi` | 컨테이너 삭제 / 이미지 삭제(rm: remove, rmi: remove image) |
 
-`docker run` 옵션은 이것만 기억하면 돼요.
-
-| 옵션 | 풀네임 | 의미 | 예시 |
-| --- | --- | --- | --- |
-| `-it` | `-i`: `--interactive`, `-t`: `--tty` | 터미널을 붙여 대화형으로 실행. `-i`는 키보드 입력을 열어 두고, `-t`는 가상 터미널(TTY)을 붙여 프롬프트가 보이게 해요 | `-it ubuntu bash` |
-| `-d` | `--detach` | 터미널에서 떼어 뒤에서 실행 | `-d nginx` |
-| `--name` | | 컨테이너 이름 정하기 | `--name my-nginx` |
-| `-p 호스트:컨테이너` | `--publish` | 포트 잇기(컨테이너 포트를 밖에 공개) | `-p 8080:80` |
-| `-e 키=값` | `--env` | 환경 변수 전달(environment variable) | `-e MYSQL_ROOT_PASSWORD=1234` |
-| `-v 볼륨:경로` | `--volume` | 볼륨 잇기(데이터 보존) | `-v pgdata:/var/lib/postgresql` |
-
 한 글자 옵션은 `-i -t`를 `-it`처럼 붙여 쓸 수 있어요. 풀네임은 `--interactive --tty`처럼 하이픈 두 개로 써요.
 
-### 이미지 받고 실행하기
+#### 이미지 받고 실행하기
 
 `hello-world`는 도커가 잘 도는지 확인하는 공식 테스트 이미지예요. 메시지를 한 번 찍고 끝나는 아주 작은 이미지예요.
 
@@ -284,7 +313,7 @@ This message shows that your installation appears to be working correctly.
 ...
 ```
 
-메시지 아래에는 방금 도커가 한 일이 4단계로 찍혀요. 3절 그림의 세 층을 그대로 오가요.
+메시지 아래에는 방금 도커가 한 일이 4단계로 찍혀요. 1절 그림의 세 층을 그대로 오가요.
 
 | 단계 | 의미 |
 | --- | --- |
@@ -306,7 +335,7 @@ docker ps -a
 
 `--name`을 안 줬기 때문에 `NAMES` 칸에는 도커가 아무렇게나 지은 이름(예: `happy_turing`)이 붙어 있어요.
 
-### 한 번 더 실행하면
+#### 한 번 더 실행하면
 
 ```bash
 docker run hello-world
@@ -315,7 +344,7 @@ docker ps -a
 
 이번에는 pull 과정 없이 바로 실행되고, `docker ps -a`에 컨테이너가 **2개**가 돼요. `run`은 칠 때마다 이미지 하나로 **새 컨테이너**를 만들어요. 클래스로 객체를 또 만든 것과 같아요.
 
-### 정리하기
+#### 정리하기
 
 컨테이너는 `docker ps -a`의 CONTAINER ID(앞 몇 글자만 써도 돼요)나 NAMES로 지정해 지워요. 여러 개를 한 번에 써도 돼요.
 
@@ -333,7 +362,7 @@ docker images
 
 </Note>
 
-## 6. Ubuntu: 주인 프로그램이 끝나면 컨테이너도 꺼진다
+### Ubuntu: 주인 프로그램이 끝나면 컨테이너도 꺼진다
 
 `-it`로 컨테이너 셸에 들어가서, 실행부터 종료, 재시작, 삭제까지 한 바퀴 돌아봐요.
 
@@ -350,7 +379,7 @@ docker run -it --name my-ubuntu ubuntu:24.04 bash
 
 `-it` 없이 `docker run ubuntu:24.04 bash`로 켜면 bash가 입력을 받지 못해 곧바로 끝나요. 직접 비교해 보세요.
 
-### 안에서 해 보기
+#### 안에서 해 보기
 
 ```bash
 cat /etc/os-release
@@ -381,7 +410,7 @@ exit
 
 </TwistBox>
 
-### 생명주기 확인
+#### 생명주기 확인
 
 `exit`로 나오면 컨테이너의 주인 프로그램(bash)이 끝났으니 컨테이너도 정지(Exited)돼요.
 
@@ -400,14 +429,50 @@ exit
 
 `-ai`는 켜면서 터미널에 붙고(`-a`: `--attach`) 입력도 잇는다(`-i`: `--interactive`)는 뜻이에요.
 
-컨테이너를 **정지해도 안의 데이터는 남아요.** 하지만 컨테이너를 **삭제하면 함께 사라져요.** `hello.txt`는 4절 그림의 쓰기 레이어에 있었거든요. 이 문제를 15절에서 볼륨으로 풀어요.
+컨테이너를 **정지해도 안의 데이터는 남아요.** 하지만 컨테이너를 **삭제하면 함께 사라져요.** `hello.txt`는 위 그림의 쓰기 레이어에 있었거든요. 이 문제를 7절에서 볼륨으로 풀어요.
 
 ```bash
 docker rm my-ubuntu
 docker ps -a
 ```
 
-## 7. nginx: `-p 바깥:안`으로 내 PC의 문을 컨테이너에 잇는다
+</details>
+
+## 3. nginx: `-p 바깥:안`으로 문을 잇고, 남길 파일은 `-v`로 밖에 둔다
+
+`-d`로 뒤에서 켜고 `-p 8080:80`으로 내 PC 8080번을 컨테이너 80번에 이어요. 왼쪽이 바깥(내 PC), 오른쪽이 안쪽(컨테이너)이에요.
+
+```bash
+docker run -d --name my-nginx -p 8080:80 nginx
+curl http://localhost:8080          # Welcome to nginx!
+docker exec -it my-nginx bash       # 켜진 컨테이너 안으로. exit해도 nginx는 계속 돌아요
+docker logs -f my-nginx             # 404는 파일 없음, 200은 성공
+docker rm -f my-nginx               # 정지와 삭제를 한 번에
+```
+
+<Figure label="요청은 바깥(내 PC)에서 안쪽(컨테이너)으로 들어가요">
+  <Boxes
+    row={[
+      { title: "내 PC 8080번", note: "바깥: 내가 고른 번호", lines: ["브라우저가 `localhost:8080`으로 와요"] },
+      { arrow: "`-p 8080:80`" },
+      { title: "my-nginx 80번", tone: "blue", note: "안쪽: 여기서 대기" },
+    ]}
+  />
+  <Boxes
+    row={[
+      { title: "내 PC 8081번", note: "바깥: 겹치면 안 돼요", lines: ["브라우저가 `localhost:8081`로 와요"] },
+      { arrow: "`-p 8081:80`" },
+      { title: "my-nginx2 80번", tone: "blue", note: "안쪽: 같아도 돼요" },
+    ]}
+  />
+</Figure>
+
+호스트 포트가 겹치면 `port is already allocated`이고, 포트는 컨테이너를 만들 때만 정할 수 있어요. 컨테이너 안에서 고친 파일은 지우면 사라지니 `-v cafe-html:/usr/share/nginx/html`(볼륨)이나 `-v ./site:/usr/share/nginx/html`(내 폴더)로 밖에 둬요. `./`를 빼면 오류 없이 `site`라는 빈 볼륨이 생겨요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### nginx: `-p 바깥:안`으로 내 PC의 문을 컨테이너에 잇는다
 
 `-d`, `-p`로 웹 서버를 띄우고, 실행 중인 컨테이너에 `exec`로 들어가 첫 페이지를 바꿔 봐요.
 
@@ -417,7 +482,7 @@ docker pull nginx
 
 태그를 빼서 `nginx:latest`를 받아요.
 
-### 웹 기본 상식: IP 주소와 포트
+#### 웹 기본 상식: IP 주소와 포트
 
 웹 서버를 띄우기 전에, 주소창의 `http://localhost:8080/index.html`이 무슨 뜻인지 짚고 가요.
 
@@ -447,7 +512,7 @@ docker pull nginx
 
 오늘 띄우는 컨테이너는 모두 `-p` 오른쪽에 이 번호들이 들어가요.
 
-### 컨테이너 켜기
+#### 컨테이너 켜기
 
 ```bash
 docker run -d --name my-nginx -p 8080:80 nginx
@@ -470,26 +535,9 @@ ba5cd077165e   nginx     "/docker-entrypoint.…"   Less than a second ago   Up 
 curl http://localhost:8080
 ```
 
-### 포트는 이렇게 이어져요
+#### 포트는 이렇게 이어져요
 
 컨테이너는 격리된 네트워크 안에 있어서, `-p` 없이 켜면 내 PC 브라우저로 들어갈 수 없어요. `-p 8080:80`은 "내 PC 8080번으로 온 요청을 컨테이너 80번으로 넘겨라"라는 뜻이에요(포트 포워딩).
-
-<Figure label="요청은 바깥(내 PC)에서 안쪽(컨테이너)으로 들어가요">
-  <Boxes
-    row={[
-      { title: "내 PC 8080번", note: "바깥: 내가 고른 번호", lines: ["브라우저가 `localhost:8080`으로 와요"] },
-      { arrow: "`-p 8080:80`" },
-      { title: "my-nginx 80번", tone: "blue", note: "안쪽: 여기서 대기" },
-    ]}
-  />
-  <Boxes
-    row={[
-      { title: "내 PC 8081번", note: "바깥: 겹치면 안 돼요", lines: ["브라우저가 `localhost:8081`로 와요"] },
-      { arrow: "`-p 8081:80`" },
-      { title: "my-nginx2 80번", tone: "blue", note: "안쪽: 같아도 돼요" },
-    ]}
-  />
-</Figure>
 
 `-p 8080:80`에서 왼쪽이 **바깥**(내 PC), 오른쪽이 **안쪽**(컨테이너)이에요. 컨테이너 포트(80)는 nginx 이미지가 정해 둔 값이고, 호스트 포트(8080)는 비어 있는 번호 중에 내가 골라요.
 
@@ -510,7 +558,7 @@ docker run -d --name my-nginx2 -p 8081:80 nginx
 
 </TwistBox>
 
-### 실행 중인 컨테이너에 들어가기
+#### 실행 중인 컨테이너에 들어가기
 
 ```bash
 docker exec -it my-nginx bash
@@ -518,9 +566,9 @@ docker exec -it my-nginx bash
 
 `exec`는 실행 중인 컨테이너 안에서 명령을 실행해요(execute). `run`은 **새 컨테이너를 만들고**, `exec`는 **이미 켜진 컨테이너 안에서** 명령을 돌려요.
 
-6절의 Ubuntu는 `exit`하면 꺼졌죠. `exec`로 들어간 bash는 주인 프로그램이 아니라 덤으로 띄운 것이라, **`exit`해도 컨테이너는 계속 돌아요.** nginx가 주인 프로그램이기 때문이에요.
+2절의 Ubuntu는 `exit`하면 꺼졌죠. `exec`로 들어간 bash는 주인 프로그램이 아니라 덤으로 띄운 것이라, **`exit`해도 컨테이너는 계속 돌아요.** nginx가 주인 프로그램이기 때문이에요.
 
-### 첫 페이지 바꾸기
+#### 첫 페이지 바꾸기
 
 ```bash
 cd /usr/share/nginx/html
@@ -532,7 +580,7 @@ exit
 
 `cd`는 change directory, `ls`는 list, `cat`은 concatenate(파일 내용 출력)예요. 브라우저를 새로고침하면 바뀐 페이지가 보여요.
 
-### 로그 보기
+#### 로그 보기
 
 ```bash
 docker logs my-nginx
@@ -548,7 +596,7 @@ TIL에 남긴 로그예요. 한 줄에 보낸 주소, 시각, 요청, 결과 번
 172.17.0.1 - - [12/Nov/2026:02:02:30 +0000] "GET /event.html HTTP/1.1" 200 53 "-" "curl/8.5.0" "-"
 ```
 
-### 정리하기
+#### 정리하기
 
 ```bash
 docker stop my-nginx
@@ -557,9 +605,9 @@ docker rm my-nginx
 
 `docker rm -f my-nginx` 한 줄로 정지와 삭제를 한 번에 할 수도 있어요(`-f`: `--force`, 강제).
 
-## 8. 남길 파일은 컨테이너 밖에 둔다: 볼륨과 내 폴더
+### 남길 파일은 컨테이너 밖에 둔다: 볼륨과 내 폴더
 
-7절에서 `index.html`을 컨테이너 안에서 고쳤죠. 그 컨테이너를 지우면 고친 파일도 함께 지워져요. 남겨야 하는 파일은 **컨테이너 밖**에 둬요. 방법은 두 가지예요.
+위에서 `index.html`을 컨테이너 안에서 고쳤죠. 그 컨테이너를 지우면 고친 파일도 함께 지워져요. 남겨야 하는 파일은 **컨테이너 밖**에 둬요. 방법은 두 가지예요.
 
 ```bash
 # 1) 도커가 관리하는 볼륨에 두기
@@ -598,7 +646,26 @@ docker run -d --name web -p 8080:80 -v ./site:/usr/share/nginx/html nginx
 
 </TwistBox>
 
-## 9. Dockerfile: 장바구니를 이미지로 굽는 레시피
+</details>
+
+## 4. Dockerfile로 내 이미지를 굽고, `compose.yaml`로 한 번에 켠다
+
+```dockerfile
+FROM astral/uv:python3.14-bookworm-slim
+WORKDIR /app
+COPY . .
+RUN uv sync
+CMD ["uv", "run", "main.py"]
+```
+
+앞의 네 줄은 `docker build -t cart .`할 때 한 번, `CMD`만 `docker run`할 때마다 실행돼요. 그래서 코드를 고치면 build부터 다시 하고, `.dockerignore`로 `.venv`, `__pycache__`, `.git`을 빼요. `input()`을 받는 메뉴는 `docker run --rm -it cart`로 켜요.
+
+Compose는 긴 `docker run` 옵션을 `compose.yaml`에 적어 두고 `docker compose up -d`로 켜요. `docker compose down`은 컨테이너와 네트워크만 지우고 볼륨은 남겨요(`down -v`는 볼륨까지). 포트는 `"5432:5432"`처럼 따옴표로 감싸요(`22:22`는 숫자 1342로 읽힐 수 있어요).
+
+<details>
+<summary>자세히 보기</summary>
+
+### Dockerfile: 장바구니를 이미지로 굽는 레시피
 
 지금까지는 남이 만든 이미지(nginx, ubuntu)를 받아 썼어요. 이번에는 어제 만든 장바구니 프로그램을 **내 이미지**로 만들어요. 어제 만든 장바구니가 여기서 쓰여요.
 
@@ -648,7 +715,7 @@ docker run --rm cart
 
 </TwistBox>
 
-### .dockerignore로 빼기
+#### .dockerignore로 빼기
 
 `COPY . .`는 폴더를 통째로 복사해요. 그러면 내 PC의 `.venv`, `__pycache__`, `.git`까지 이미지에 들어가요. 이미지가 커지고, 내 PC용 가상환경이 리눅스 컨테이너에 섞여 들어가요.
 
@@ -664,7 +731,7 @@ __pycache__
 
 <TwistBox title="input()을 받는 메뉴는 -it가 필요해요">
 
-장바구니 메뉴처럼 `input()`으로 키보드 입력을 받는 프로그램은 `docker run --rm cart`만으로는 입력할 수 없어요. 6절에서 본 것처럼 입력을 열어 두는 `-i`와 터미널을 붙이는 `-t`가 필요해요.
+장바구니 메뉴처럼 `input()`으로 키보드 입력을 받는 프로그램은 `docker run --rm cart`만으로는 입력할 수 없어요. 2절에서 본 것처럼 입력을 열어 두는 `-i`와 터미널을 붙이는 `-t`가 필요해요.
 
 ```bash
 docker run --rm -it cart
@@ -672,7 +739,7 @@ docker run --rm -it cart
 
 </TwistBox>
 
-## 10. Docker Compose: 긴 `docker run`을 파일 한 장에 적어 둔다
+### Docker Compose: 긴 `docker run`을 파일 한 장에 적어 둔다
 
 `docker run` 옵션이 점점 길어졌죠. 컨테이너가 두세 개가 되면 매번 치기 힘들어요.
 
@@ -686,7 +753,7 @@ docker run --rm -it cart
 | `-p 5432:5432`(`--publish`) | `ports:` |
 | `-v pgdata:/var/lib/postgresql`(`--volume`) | `volumes:` |
 
-### 기초 문법
+#### 기초 문법
 
 ```yaml
 services:                 # 실행할 컨테이너(서비스) 목록. 꼭 있어야 해요
@@ -729,7 +796,7 @@ YAML의 옛 규칙에서는 `22:22`처럼 콜론 뒤 숫자가 60보다 작으�
 
 </TwistBox>
 
-### 켜고 끄기
+#### 켜고 끄기
 
 `compose.yaml`이 있는 폴더에서 쳐요.
 
@@ -742,9 +809,33 @@ docker compose down
 - `down`: 컨테이너와 네트워크를 지워요. **볼륨은 남겨요.**
 - `down -v`: 볼륨까지 지워요(`--volumes`).
 
-16절에서 PostgreSQL과 Redis를 Compose로 함께 켜 보며 자세히 다뤄요.
+7절에서 PostgreSQL과 Redis를 Compose로 함께 켜 보며 자세히 다뤄요.
 
-## 11. nginx 리버스 프록시: 80번 문 하나로 받아 뒤의 앱에 넘긴다
+</details>
+
+## 5. nginx 리버스 프록시: 80번 하나로 받아 경로로 나눠 넘긴다
+
+```nginx
+server {
+    listen 80;
+
+    location / {
+        root /usr/share/nginx/html;
+        index index.html;
+    }
+
+    location /menu/ {
+        proxy_pass http://menu/;
+    }
+}
+```
+
+`/menu/`로 오는 요청은 `menu` 서비스로 넘기고, 끝의 `/` 때문에 `localhost/menu/list`는 `/list`로 바뀌어 가요. 컨테이너 안의 `localhost`는 nginx 자신이라 `proxy_pass http://localhost:8000/`은 `502 Bad Gateway`예요.
+
+설정을 고치면 `nginx -t`로 검사하고 `nginx -s reload`로 반영해요.
+
+<details>
+<summary>자세히 보기</summary>
 
 ### 웹 서버와 앱 서버
 
@@ -807,7 +898,7 @@ server {
 
 `proxy_pass http://localhost:8000/`처럼 쓰고 싶어지죠. 그런데 **컨테이너 안의 localhost는 nginx 컨테이너 자신**이에요. nginx 안에는 menu 앱이 없으니 연결에 실패하고 `502 Bad Gateway`가 나요.
 
-Compose로 함께 켠 서비스끼리는 **서비스 이름이 곧 주소**예요. 그래서 `http://menu/`처럼 서비스 이름을 적어요(16절에서 직접 확인해요).
+Compose로 함께 켠 서비스끼리는 **서비스 이름이 곧 주소**예요. 그래서 `http://menu/`처럼 서비스 이름을 적어요(7절에서 직접 확인해요).
 
 </TwistBox>
 
@@ -833,9 +924,35 @@ docker exec cafe-web-1 nginx -s reload    # 끄지 않고 설정 다시 읽기
 
 `cafe-web-1`은 Compose가 지어 준 컨테이너 이름이에요. `container_name`을 안 주면 **프로젝트(폴더) 이름, 서비스 이름, 번호**를 이어서 지어요. `cafe` 폴더의 `web` 서비스 첫 번째 컨테이너라는 뜻이에요.
 
-## 12. 데이터베이스: 꺼도 남는 표, 기본 키는 겹치지 않는 이름표
+</details>
 
-### 왜 데이터베이스일까
+## 6. 데이터베이스: SQL 네 문장, MySQL은 `-e` 비밀번호, Redis는 서버가 된 딕셔너리
+
+```sql
+CREATE DATABASE cafe;
+CREATE TABLE orders (id INT PRIMARY KEY, menu VARCHAR(20), qty INT);
+INSERT INTO orders VALUES (1, 'latte', 2);
+SELECT * FROM orders WHERE id = 1;
+```
+
+SQL은 `;`로 끝나고, 글자는 작은따옴표, 같다는 `=` 하나예요. 기본 키는 겹칠 수도(`duplicate key`) 비울 수도(`not-null constraint`) 없어요.
+
+```bash
+docker run -d --name my-mysql -e MYSQL_ROOT_PASSWORD=1234 -p 3306:3306 mysql:8.4
+docker logs -f my-mysql                      # ready for connections가 보이면
+docker exec -it my-mysql mysql -uroot -p     # 여기 -p는 비밀번호
+docker run -d --name my-redis -p 6379:6379 redis
+docker exec -it my-redis redis-cli           # SET, GET, INCR, EX 30, TTL
+```
+
+`MYSQL_ROOT_PASSWORD`를 빠뜨리면 컨테이너가 바로 꺼져요. Redis는 메모리에 키와 값을 두는 저장소라 꼭 필요한 환경 변수 없이 켜져요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### 데이터베이스: 꺼도 남는 표, 기본 키는 겹치지 않는 이름표
+
+#### 왜 데이터베이스일까
 
 어제 장바구니는 프로그램을 끄면 담은 게 다 사라졌죠. 변수는 메모리에 있어서예요. 데이터베이스는 이걸 해결해요.
 
@@ -843,7 +960,7 @@ docker exec cafe-web-1 nginx -s reload    # 끄지 않고 설정 다시 읽기
 - **여러 프로그램의 요청을 차례로 받아 지켜 줘요.** 여러 사람이 동시에 주문해도 데이터가 엉키지 않아요.
 - **조건으로 바로 찾아요.** "1번 주문", "재고 20개 미만"처럼 원하는 것만 꺼내요.
 
-### 구조
+#### 구조
 
 DB 컨테이너 안에서 데이터베이스 서버(DBMS)가 돌고, 그 안에 데이터베이스 `cafe`가, 그 안에 표 `orders`(`id`, `menu`, `qty`)가 들어 있어요. 엑셀에 빗대면 쉬워요.
 
@@ -860,7 +977,7 @@ DB 컨테이너 안에서 데이터베이스 서버(DBMS)가 돌고, 그 안에 
 | `INT` | 정수(integer) |
 | `VARCHAR(20)` | 최대 20자까지의 글자(variable character). 넘치면 오류예요 |
 
-### 기본 키 (Primary Key)
+#### 기본 키 (Primary Key)
 
 **기본 키**는 행마다 **겹치지 않고, 비울 수도 없는** 값이에요. 주문 번호처럼 그 행 하나를 콕 집는 이름표예요. Git의 커밋 해시가 커밋마다 하나뿐인 것과 비슷해요.
 
@@ -876,7 +993,7 @@ DB 컨테이너 안에서 데이터베이스 서버(DBMS)가 돌고, 그 안에 
   />
 </Figure>
 
-### SQL 네 문장
+#### SQL 네 문장
 
 SQL(Structured Query Language)은 데이터베이스에 일을 시키는 언어예요.
 
@@ -932,7 +1049,7 @@ MySQL에서 Enter를 쳤는데 결과 대신 프롬프트가 `->`(PostgreSQL은 
 
 </TwistBox>
 
-## 13. MySQL: `-e`로 비밀번호를 줘야 켜진다
+### MySQL: `-e`로 비밀번호를 줘야 켜진다
 
 `-e`로 꼭 필요한 환경 변수를 줘서 DB를 띄우고, 컨테이너 안의 `mysql` 클라이언트로 SQL을 실행해요.
 
@@ -942,7 +1059,7 @@ docker pull mysql:8.4
 
 8.4는 MySQL의 LTS(Long Term Support, 장기 지원) 버전이에요.
 
-### 켜기
+#### 켜기
 
 ```bash
 docker run -d --name my-mysql -e MYSQL_ROOT_PASSWORD=1234 -p 3306:3306 mysql:8.4
@@ -974,7 +1091,7 @@ docker logs -f my-mysql
 
 </Hint>
 
-### 들어가기
+#### 들어가기
 
 ```bash
 docker exec -it my-mysql mysql -uroot -p
@@ -993,7 +1110,7 @@ docker exec -it my-mysql mysql -uroot -p
 
 `exec`로 꼭 DB 클라이언트를 바로 띄울 필요는 없어요. `docker exec -it my-mysql bash`로 셸에 먼저 들어간 뒤 `mysql -uroot -p`를 쳐도 같아요.
 
-### 안에서 SQL 실행
+#### 안에서 SQL 실행
 
 ```sql
 SHOW DATABASES;
@@ -1014,7 +1131,7 @@ exit
 docker rm -f my-mysql
 ```
 
-### 수업에서 한 cafe 버전
+#### 수업에서 한 cafe 버전
 
 수업에서는 데이터베이스와 볼륨까지 한 번에 줬어요.
 
@@ -1027,7 +1144,7 @@ docker exec -it db mysql -u root -p cafe
 - `-v cafe-data:/var/lib/mysql`: MySQL이 데이터를 두는 폴더를 볼륨에 이어요
 - `mysql -u root -p cafe`: 맨 끝 `cafe`는 들어가자마자 쓸 데이터베이스예요(`USE cafe;`를 대신해요)
 
-12절의 네 문장으로 주문을 넣고 `SELECT * FROM orders;`를 친 결과예요(TIL).
+위의 네 문장으로 주문을 넣고 `SELECT * FROM orders;`를 친 결과예요(TIL).
 
 ```txt
 +----+-----------+------+
@@ -1039,7 +1156,7 @@ docker exec -it db mysql -u root -p cafe
 2 rows in set (0.00 sec)
 ```
 
-## 14. Redis: 서버가 된 파이썬 딕셔너리
+### Redis: 서버가 된 파이썬 딕셔너리
 
 Redis(REmote DIctionary Server)는 데이터를 **메모리**에 키와 값으로 두는 저장소예요. 파이썬 딕셔너리를 서버로 만든 것과 비슷해서 아주 빨라요. 로그인 세션, 캐시, 점수판에 많이 써요.
 
@@ -1109,7 +1226,50 @@ Redis와 같은 동작을 하는 파이썬 흉내 라이브러리로 결과를 �
 docker rm -f my-redis
 ```
 
-## 15. PostgreSQL: 데이터는 컨테이너가 아니라 볼륨에 산다
+</details>
+
+## 7. PostgreSQL: 데이터는 볼륨에 살고, Compose 안에서는 서비스 이름이 주소
+
+```bash
+docker volume create pgdata
+docker run -d --name my-pg -e POSTGRES_PASSWORD=1234 -p 5432:5432 -v pgdata:/var/lib/postgresql postgres:18
+docker cp products.sql my-pg:/tmp/products.sql
+docker exec -it my-pg psql -U postgres -f /tmp/products.sql   # INSERT 0 5
+```
+
+볼륨 없이 켜면, 지우고 다시 켰을 때 `relation "product" does not exist`예요. `pgdata`를 이으면 `my-pg`를 지우고 `my-pg2`를 만들어도 상품 5개가 그대로예요. PostgreSQL 18부터 경로는 `/var/lib/postgresql`이고, `-e` 비밀번호는 데이터 폴더가 비어 있을 때 처음 한 번만 읽어요.
+
+<PgVolumeSimulator />
+
+Compose에서는 `external: true`로 이 `pgdata`를 그대로 써요.
+
+```yaml
+services:
+  db:
+    image: postgres:18
+    container_name: lab-pg
+    environment:
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+  cache:
+    image: redis
+    container_name: lab-redis
+    ports:
+      - "6379:6379"
+volumes:
+  pgdata:
+    external: true
+```
+
+`docker compose exec db psql -U postgres`처럼 컨테이너 이름 대신 서비스 이름으로 들어가요. 같은 프로젝트 안에서는 서비스 이름(`db`, `cache`)이 곧 주소예요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### PostgreSQL: 데이터는 컨테이너가 아니라 볼륨에 산다
 
 먼저 볼륨 **없이** 데이터를 넣고 컨테이너를 지워서 데이터가 사라지는 걸 봐요. 그다음 볼륨을 만들어 같은 과정을 반복하며 데이터가 남는 걸 봐요.
 
@@ -1119,7 +1279,7 @@ docker rm -f my-redis
 docker pull postgres:18
 ```
 
-### 가져올 SQL 파일 준비 (내 PC에서)
+#### 가져올 SQL 파일 준비 (내 PC에서)
 
 실습 폴더를 만들고 들어가요. 이 절의 명령은 모두 이 폴더에서 쳐요.
 
@@ -1141,7 +1301,7 @@ INSERT INTO product (name, price, stock) VALUES
 
 실무에서도 처음 넣을 데이터나 테스트 데이터는 이렇게 SQL 파일로 관리하고 DB에 가져오는 경우가 많아요. 파일이라 Git으로 버전 관리도 돼요.
 
-### 1단계: 볼륨 없이
+#### 1단계: 볼륨 없이
 
 ```bash
 docker run -d --name my-pg -e POSTGRES_PASSWORD=1234 -p 5432:5432 postgres:18
@@ -1180,7 +1340,7 @@ CREATE TABLE product (id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL, price I
 | `\i 파일경로` | 컨테이너 안의 SQL 파일 실행(include) |
 | `\q` | 나가기(quit) |
 
-### 밖의 SQL 파일 가져오기
+#### 밖의 SQL 파일 가져오기
 
 `products.sql`은 내 PC에 있고 `psql`은 컨테이너 안에 있어요. 그래서 파일을 컨테이너로 복사한 뒤 실행해요.
 
@@ -1206,7 +1366,7 @@ docker exec -i my-pg psql -U postgres < products.sql
 
 </TwistBox>
 
-### 꺼내 보기
+#### 꺼내 보기
 
 ```bash
 docker exec -it my-pg psql -U postgres
@@ -1266,7 +1426,7 @@ SELECT name, price * stock AS stock_value FROM product ORDER BY stock_value DESC
 
 `AS`는 계산한 열에 이름(별칭, alias)을 붙여요. `ORDER BY ... DESC`는 큰 것부터(descending, 내림차순) 정렬해요. 모니터는 한 대가 비싸도 재고가 15개뿐이라 3등이에요.
 
-### 지우고 다시 켜면
+#### 지우고 다시 켜면
 
 <PredictPrompt />
 
@@ -1303,7 +1463,7 @@ docker volume prune
 
 `docker volume prune`은 어떤 컨테이너도 안 쓰는 익명 볼륨을 정리해요. 확인 질문에 `y`를 쳐요. prune은 가지치기라는 뜻이에요.
 
-### 2단계: 볼륨을 쓰면
+#### 2단계: 볼륨을 쓰면
 
 ```bash
 docker volume create pgdata
@@ -1381,13 +1541,11 @@ docker rm -f my-pg2
 
 `pgdata` 볼륨은 지우지 마세요. 다음 절 Compose 실습에서 다시 써요.
 
-### 직접 눌러 보기: 볼륨 시뮬레이터
+#### 직접 눌러 보기: 볼륨 시뮬레이터
 
 1단계와 2단계를 버튼으로 다시 따라가요. `run`, `stop`, `start`, `rm -f`, `volume prune`은 같은 이름의 docker 명령, 가져오기와 `SELECT`는 위의 `docker cp`와 `psql` 명령을 부르는 것과 같아요.
 
 출력 창의 문장은 위 실습에 나온 출력 그대로이고, 뒤의 `#`는 왜 그렇게 됐는지예요.
-
-<PgVolumeSimulator />
 
 <Hint>
 
@@ -1412,9 +1570,9 @@ docker rm -f my-pg2
 
 </TwistBox>
 
-## 16. Compose 안에서는 서비스 이름이 곧 주소다
+### Compose 안에서는 서비스 이름이 곧 주소다
 
-10절에서 배운 Compose로 PostgreSQL과 Redis를 함께 켜요. 15절의 `pg-lab` 폴더에서 나와 새 실습 폴더를 만들어요.
+4절에서 배운 Compose로 PostgreSQL과 Redis를 함께 켜요. 앞의 `pg-lab` 폴더에서 나와 새 실습 폴더를 만들어요.
 
 ```bash
 cd ..
@@ -1454,12 +1612,12 @@ volumes:
         { title: "db", note: "서비스 이름 = 주소", tone: "blue", lines: ["컨테이너 `lab-pg`, 이미지 `postgres:18`", "`\"5432:5432\"`, `POSTGRES_PASSWORD: 1234`"] },
         { title: "cache", note: "서비스 이름 = 주소", tone: "blue", lines: ["컨테이너 `lab-redis`, 이미지 `redis`", "`\"6379:6379\"`"] },
       ],
-      [{ title: "볼륨 pgdata", tone: "amber", note: "`external: true`", via: "db가 `/var/lib/postgresql`에 이어 써요", lines: ["15절에서 만든 **기존 볼륨**을 그대로 써요", "상품 5개가 들어 있어요"] }],
+      [{ title: "볼륨 pgdata", tone: "amber", note: "`external: true`", via: "db가 `/var/lib/postgresql`에 이어 써요", lines: ["앞에서 만든 **기존 볼륨**을 그대로 써요", "상품 5개가 들어 있어요"] }],
     ]}
   />
 </Figure>
 
-`external: true`는 "Compose가 새로 만들지 말고 15절에서 만든 **기존 `pgdata` 볼륨**을 그대로 써라"라는 뜻이에요.
+`external: true`는 "Compose가 새로 만들지 말고 앞에서 만든 **기존 `pgdata` 볼륨**을 그대로 써라"라는 뜻이에요.
 
 <Note title="external: true가 없으면 상품 5개가 안 보여요">
 
@@ -1467,7 +1625,7 @@ volumes:
 
 </Note>
 
-### 검사하고 켜기
+#### 검사하고 켜기
 
 ```bash
 docker compose config
@@ -1483,7 +1641,7 @@ docker compose logs db
 
 `docker run` 두 번 대신 명령 한 줄로 PostgreSQL과 Redis가 함께 켜져요.
 
-### 들어가 보기
+#### 들어가 보기
 
 Compose에서는 컨테이너 이름 대신 **서비스 이름**(`db`, `cache`)으로 들어가요.
 
@@ -1491,7 +1649,7 @@ Compose에서는 컨테이너 이름 대신 **서비스 이름**(`db`, `cache`)�
 docker compose exec db psql -U postgres -c "SELECT * FROM product;"
 ```
 
-`docker compose exec`는 기본으로 터미널이 붙어 있어서 `-it`를 안 써도 돼요. 15절에서 가져온 상품 5개가 그대로 보여요. Compose로 띄운 새 컨테이너도 같은 볼륨을 쓰기 때문이에요.
+`docker compose exec`는 기본으로 터미널이 붙어 있어서 `-it`를 안 써도 돼요. 앞에서 가져온 상품 5개가 그대로 보여요. Compose로 띄운 새 컨테이너도 같은 볼륨을 쓰기 때문이에요.
 
 ```bash
 docker compose exec cache redis-cli PING
@@ -1503,9 +1661,9 @@ docker compose exec cache redis-cli PING
 docker compose exec cache getent hosts db
 ```
 
-`getent hosts`는 호스트 이름을 IP로 바꿔 보여 줘요(get entries). `db`의 IP가 나오면 서로 이름으로 찾을 수 있다는 뜻이에요. 11절의 `proxy_pass http://menu/`가 동작하는 이유가 바로 이거예요.
+`getent hosts`는 호스트 이름을 IP로 바꿔 보여 줘요(get entries). `db`의 IP가 나오면 서로 이름으로 찾을 수 있다는 뜻이에요. 5절의 `proxy_pass http://menu/`가 동작하는 이유가 바로 이거예요.
 
-### 내리기
+#### 내리기
 
 ```bash
 docker compose down
@@ -1525,7 +1683,43 @@ docker volume ls
 | `docker compose down` | 컨테이너 + 네트워크 삭제(볼륨은 남김) |
 | `docker compose down -v` | 볼륨까지 삭제(`--volumes`). 단, `external` 볼륨은 안 지워요 |
 
-## 17. MySQL과 PostgreSQL: 같은 일, 다른 명령
+</details>
+
+## 8. MySQL과 PostgreSQL 차이, 정리 순서, 자주 나는 오류
+
+| | MySQL | PostgreSQL |
+| --- | --- | --- |
+| 이미지, 포트 | `mysql:8.4`, 3306 | `postgres:18`, 5432 |
+| 들어가기 | `mysql -u root -p` | `psql -U postgres` |
+| 나가기 | `exit` | `\q` |
+| 자동 번호 | `AUTO_INCREMENT` | `SERIAL` |
+
+정리는 `compose-lab` 폴더에서 `docker compose down`, `docker volume rm pgdata` 순서로 해요. 컨테이너 먼저, 볼륨과 이미지는 나중이에요.
+
+오류는 메시지가 곧 단서예요.
+
+| 메시지 | 원인 | 해결 |
+| --- | --- | --- |
+| `Cannot connect to the Docker daemon at unix://.../.colima/default/docker.sock` | Colima가 꺼져 있어요 | `colima start`를 치고 끝날 때까지 기다려요 |
+| `The container name "/web" is already in use` | 같은 이름의 컨테이너가 남아 있어요(꺼져 있어도) | `docker ps -a`로 보고 `docker rm`(켜져 있으면 `docker rm -f`) |
+| `port is already allocated` | 그 호스트 포트를 다른 컨테이너나 프로그램이 써요 | `docker ps`로 보고 정리하거나 `-p 8081:80`처럼 바꿔요 |
+| `container is running: stop the container before removing` | 켜진 컨테이너를 `rm`했어요 | `docker stop` 뒤 `docker rm` |
+| `E: Unable to locate package ...` | 컨테이너 안에서 `apt update`를 안 했어요 | `apt update`부터 |
+| `bash: executable file not found` | 셸(bash)이 없는 이미지예요(alpine 등) | `sh`를 써요 |
+| `502 Bad Gateway` | `proxy_pass`에 `localhost`를 적었어요 | 서비스 이름(`http://menu/`)으로 |
+| MySQL/PostgreSQL 컨테이너가 바로 꺼져요 | 꼭 필요한 환경 변수(`MYSQL_ROOT_PASSWORD`, `POSTGRES_PASSWORD`)가 없어요 | `docker logs`로 확인하고 `-e`로 줘요 |
+| MySQL 접속 때 `Can't connect` | 아직 처음 준비 중이에요 | `docker logs -f`로 `ready for connections`를 보고 다시 |
+| 새 비밀번호로 켰는데 접속 거부 | 볼륨에 예전 데이터가 남아 `-e`를 안 읽어요 | 예전 비밀번호로. 새로 하려면 볼륨 삭제 |
+| PostgreSQL 18 컨테이너가 안 켜지거나 데이터가 안 남아요 | 볼륨 경로가 예전 것이에요 | `/var/lib/postgresql`로 이어요 |
+| SQL 가져올 때 `No such file` / `could not find` | 다른 폴더에서 쳤거나 `docker cp` 경로가 틀렸어요 | `pg-lab` 폴더에서 쳤는지, 경로가 맞는지 확인 |
+| 가져온 한글이 깨져요 | 파일이 UTF-8로 저장되지 않았어요 | VS Code 오른쪽 아래가 `UTF-8`인지 보고 다시 저장해요 |
+| 프롬프트가 `->` 또는 `-#` | SQL 끝의 `;`가 빠졌어요 | `;`만 치고 Enter |
+| `external volume "pgdata" not found` | 7절의 볼륨이 없어요 | `docker volume create pgdata` |
+
+<details>
+<summary>자세히 보기</summary>
+
+### MySQL과 PostgreSQL: 같은 일, 다른 명령
 
 둘 다 같은 일을 하는 데이터베이스인데 명령이 조금씩 달라요.
 
@@ -1547,7 +1741,7 @@ docker volume ls
 
 </Note>
 
-## 18. 실습 정리: 컨테이너 먼저, 볼륨과 이미지는 나중
+### 실습 정리: 컨테이너 먼저, 볼륨과 이미지는 나중
 
 `docker compose` 명령은 `compose.yaml`이 있는 `compose-lab` 폴더에서 쳐야 해요.
 
@@ -1570,25 +1764,7 @@ docker rmi ubuntu:24.04 nginx mysql:8.4 redis postgres:18
 
 </Note>
 
-## 19. 자주 나는 오류: 메시지가 곧 단서다
-
-| 메시지 | 원인 | 해결 |
-| --- | --- | --- |
-| `Cannot connect to the Docker daemon at unix://.../.colima/default/docker.sock` | Colima가 꺼져 있어요 | `colima start`를 치고 끝날 때까지 기다려요 |
-| `The container name "/web" is already in use` | 같은 이름의 컨테이너가 남아 있어요(꺼져 있어도) | `docker ps -a`로 보고 `docker rm`(켜져 있으면 `docker rm -f`) |
-| `port is already allocated` | 그 호스트 포트를 다른 컨테이너나 프로그램이 써요 | `docker ps`로 보고 정리하거나 `-p 8081:80`처럼 바꿔요 |
-| `container is running: stop the container before removing` | 켜진 컨테이너를 `rm`했어요 | `docker stop` 뒤 `docker rm` |
-| `E: Unable to locate package ...` | 컨테이너 안에서 `apt update`를 안 했어요 | `apt update`부터 |
-| `bash: executable file not found` | 셸(bash)이 없는 이미지예요(alpine 등) | `sh`를 써요 |
-| `502 Bad Gateway` | `proxy_pass`에 `localhost`를 적었어요 | 서비스 이름(`http://menu/`)으로 |
-| MySQL/PostgreSQL 컨테이너가 바로 꺼져요 | 꼭 필요한 환경 변수(`MYSQL_ROOT_PASSWORD`, `POSTGRES_PASSWORD`)가 없어요 | `docker logs`로 확인하고 `-e`로 줘요 |
-| MySQL 접속 때 `Can't connect` | 아직 처음 준비 중이에요 | `docker logs -f`로 `ready for connections`를 보고 다시 |
-| 새 비밀번호로 켰는데 접속 거부 | 볼륨에 예전 데이터가 남아 `-e`를 안 읽어요 | 예전 비밀번호로. 새로 하려면 볼륨 삭제 |
-| PostgreSQL 18 컨테이너가 안 켜지거나 데이터가 안 남아요 | 볼륨 경로가 예전 것이에요 | `/var/lib/postgresql`로 이어요 |
-| SQL 가져올 때 `No such file` / `could not find` | 다른 폴더에서 쳤거나 `docker cp` 경로가 틀렸어요 | `pg-lab` 폴더에서 쳤는지, 경로가 맞는지 확인 |
-| 가져온 한글이 깨져요 | 파일이 UTF-8로 저장되지 않았어요 | VS Code 오른쪽 아래가 `UTF-8`인지 보고 다시 저장해요 |
-| 프롬프트가 `->` 또는 `-#` | SQL 끝의 `;`가 빠졌어요 | `;`만 치고 Enter |
-| `external volume "pgdata" not found` | 15절의 볼륨이 없어요 | `docker volume create pgdata` |
+</details>
 
 ## 오늘 꼭 기억할 주의점
 

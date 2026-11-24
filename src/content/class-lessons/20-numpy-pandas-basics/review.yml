@@ -14,34 +14,6 @@ quiz:
       - "9400"
     answer: 1
     explain: "리스트는 값 묶음이라 * 2 가 안의 숫자에 들어가지 않고 리스트를 두 번 이어 붙여요. 칸마다 2를 곱하려면 np.array(amounts) * 2 처럼 배열로 바꿔요. 리스트에 * 1.1 처럼 소수를 곱하면 그때는 TypeError 예요."
-  - id: mixed-array-becomes-text
-    q: "글자와 숫자를 한 배열에 넣고 두 금액을 더했어요. 출력은?"
-    code: |-
-      import numpy as np
-
-      mixed = np.array([["편의점", 3200], ["버스", 1500]])
-      print(mixed[0, 1] + mixed[1, 1])
-    options:
-      - "4700"
-      - "TypeError"
-      - "32001500"
-      - "[3200 1500]"
-    answer: 2
-    explain: "NumPy 배열은 한 가지 종류만 담아서 글자가 섞이면 숫자도 '3200', '1500' 같은 글자(<U21)가 돼요. 글자끼리 + 는 이어 붙이기라 32001500 이 나와요. 열마다 종류가 다른 표가 필요해서 pandas 를 써요."
-  - id: boolean-index-keeps-true
-    q: "출력은?"
-    code: |-
-      import numpy as np
-
-      arr = np.array([3200, 15000, 4800, 32000])
-      print(arr[arr >= 10000])
-    options:
-      - "[False  True False  True]"
-      - "[15000 32000]"
-      - "[1 3]"
-      - "2"
-    answer: 1
-    explain: "arr >= 10000 이 칸마다 True/False 를 만들고, 그 줄을 대괄호에 넣으면 True 인 칸의 값만 남아요(불리언 인덱싱). True/False 줄 자체가 나오는 건 대괄호 없이 arr >= 10000 만 썼을 때예요."
   - id: single-vs-double-bracket-shape
     q: "대괄호 한 겹과 두 겹으로 같은 열을 꺼냈어요. 출력은?"
     code: |-
@@ -70,38 +42,6 @@ quiz:
       - "빈 표가 나온다"
     answer: 1
     explain: "and 는 양쪽을 True 하나, False 하나로 보려는데 조건의 결과는 행마다 True/False 가 든 Series 라 하나로 정할 수 없어요. 행마다 잇는 & 를 써요. TypeError 는 & 를 쓰고 괄호를 뺐을 때 나는 오류예요."
-  - id: or-filter-rows
-    q: "출력되는 행은 몇 개일까요?"
-    code: |-
-      import pandas as pd
-
-      df = pd.DataFrame({
-          "shop": ["카페", "버스", "분식집", "영화관"],
-          "category": ["식비", "교통", "식비", "문화"],
-          "amount": [4800, 1500, 6500, 15000],
-      })
-      print(df[(df["category"] == "식비") | (df["amount"] >= 10000)])
-    options:
-      - "1개(영화관)"
-      - "2개(카페, 분식집)"
-      - "3개(카페, 분식집, 영화관)"
-      - "4개(모든 행)"
-    answer: 2
-    explain: "| 는 또는이라 두 조건 중 하나만 True 여도 남아요. 식비인 카페, 분식집과 10000원 이상인 영화관, 세 행이에요. 버스는 둘 다 False 라 빠져요. & 였다면 둘 다 맞는 행이 없어 빈 표예요."
-  - id: sort-keeps-original-index
-    q: "큰 금액 순으로 2건을 뽑았어요. 결과 왼쪽의 행 번호는?"
-    code: |-
-      import pandas as pd
-
-      df = pd.DataFrame({"shop": ["카페", "버스", "분식집", "영화관"], "amount": [4800, 1500, 6500, 15000]})
-      print(df.sort_values("amount", ascending=False).head(2))
-    options:
-      - "0, 1"
-      - "3, 2"
-      - "1, 2"
-      - "2, 3"
-    answer: 1
-    explain: "정렬은 행을 통째로 옮기고 원래 행 번호를 들고 가요. 영화관(3번)이 1위, 분식집(2번)이 2위라 3, 2 예요. 정렬 결과는 새 표라 df 의 순서는 그대로예요."
   - id: chained-assignment-use-loc
     q: "pandas 3.1.1 에서 실행했어요. 마지막 줄의 출력은?"
     code: |-
@@ -117,22 +57,6 @@ quiz:
       - "None"
     answer: 1
     explain: "pandas 3 부터 df[\"amount\"] 로 꺼낸 열은 복사본처럼 동작해서, 이어 붙인 대입은 복사본만 바꾸고 경고(ChainedAssignmentError)를 내요. 원래 표는 15000 그대로예요. 한 칸은 df.loc[0, \"amount\"] = 14000 으로 고쳐요. 옛 pandas 2 자료에서는 이 방식이 통했어요."
-  - id: computed-column-not-updated
-    q: "금액을 고친 뒤 point 를 출력했어요. 결과는?"
-    code: |-
-      import pandas as pd
-
-      df = pd.DataFrame({"shop": ["영화관", "버스"], "amount": [15000, 1500]})
-      df["point"] = df["amount"] // 100
-      df.loc[0, "amount"] = 14000
-      print(df.loc[0, "point"])
-    options:
-      - "140"
-      - "150"
-      - "14000"
-      - "NaN"
-    answer: 1
-    explain: "point 는 만들 때 계산해 둔 값이라 amount 를 바꿔도 저절로 바뀌지 않아요. 엑셀 수식과 다른 점이에요. 140 으로 만들려면 df[\"point\"] = df[\"amount\"] // 100 을 다시 실행해요."
   - id: groupby-sum-sorted
     q: "출력의 첫 줄(가장 위의 분류)은?"
     code: |-

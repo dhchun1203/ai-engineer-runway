@@ -2,18 +2,6 @@
 # SQL 문항의 결과는 PostgreSQL 엔진(PGlite)으로 직접 실행해 확인했다.
 slug: 14-docker-nginx-database
 quiz:
-  - id: hello-world-exited
-    q: "다음 명령을 차례로 친 뒤, 마지막 docker ps 에 hello-world 컨테이너가 보이지 않는 이유는?"
-    code: |-
-      docker run hello-world
-      docker ps
-    options:
-      - "메시지를 찍고 할 일을 끝내 스스로 정지(Exited)했기 때문"
-      - "run 이 이미지만 받고 컨테이너는 만들지 않기 때문"
-      - "컨테이너가 끝나면 자동으로 삭제되기 때문"
-      - "--name 을 주지 않아서 목록에 이름이 없기 때문"
-    answer: 0
-    explain: "hello-world 는 메시지를 한 번 찍고 끝나는 이미지라, 끝나면 컨테이너가 Exited (0) 이 돼요. docker ps 는 켜진 것만 보여 주고, 정지된 것까지 보려면 docker ps -a 를 써요. 자동 삭제는 --rm 을 줬을 때만이에요."
   - id: port-host-container
     q: "다음 명령으로 nginx 를 켰어요. 내 PC 브라우저에서 들어갈 주소는?"
     code: |-
@@ -41,17 +29,6 @@ quiz:
       - "컨테이너 이름이 겹쳐 두 번째 run 이 실패한다"
     answer: 1
     explain: "컨테이너 안에서 만든 파일은 그 컨테이너의 쓰기 레이어에 있어요. docker rm 으로 지우면 함께 사라지고, 새 컨테이너는 이미지 그대로 시작해요. 앞 컨테이너를 지웠으니 이름은 다시 쓸 수 있어요. stop 만 했다면 start -ai 로 다시 켰을 때 파일이 남아 있어요."
-  - id: volume-name-vs-folder
-    q: "내 PC의 site 폴더를 잇고 싶어서 다음처럼 쳤어요. 무슨 일이 생길까?"
-    code: |-
-      docker run -d --name web -p 8080:80 -v site:/usr/share/nginx/html nginx
-    options:
-      - "내 PC의 site 폴더가 그대로 이어진다"
-      - "경로가 잘못돼 오류가 나고 컨테이너가 안 만들어진다"
-      - "오류 없이 site 라는 이름의 볼륨이 새로 생기고, 내 폴더 파일은 안 보인다"
-      - "site 폴더가 내 PC에 새로 만들어진다"
-    answer: 2
-    explain: "./ 없이 이름만 쓰면 도커는 폴더가 아니라 볼륨 이름으로 읽어요. 그래서 오류 없이 빈 볼륨이 생겨요. 내 폴더를 이으려면 -v ./site:/usr/share/nginx/html 처럼 ./ 로 시작해요."
   - id: dockerfile-cmd-timing
     q: "다음 Dockerfile 에서 docker run 할 때마다 실행되는 줄은?"
     code: |-
@@ -67,15 +44,6 @@ quiz:
       - "다섯 줄 모두"
     answer: 2
     explain: "FROM, WORKDIR, COPY, RUN 은 docker build 할 때 한 번 실행되고 결과가 이미지에 담겨요. CMD 만 컨테이너를 켤 때마다 실행돼요. 그래서 main.py 를 고치면 COPY 가 새 코드를 담도록 build 부터 다시 해요."
-  - id: compose-down-volume
-    q: "compose.yaml 로 PostgreSQL 을 켜서 데이터를 넣었어요. 다음 중 볼륨의 데이터까지 지우는 명령은? (볼륨은 external 이 아니에요)"
-    options:
-      - "docker compose stop"
-      - "docker compose down"
-      - "docker compose down -v"
-      - "docker compose ps"
-    answer: 2
-    explain: "down 은 컨테이너와 네트워크만 지우고 볼륨은 남겨서, 다시 up -d 하면 데이터가 이어져요. down -v 는 볼륨까지 지워요. 단, external: true 로 가져다 쓴 볼륨은 down -v 로도 지워지지 않아요."
   - id: proxy-pass-service-name
     q: "Compose 로 nginx(web)와 menu 앱을 함께 켰어요. nginx 설정이 다음과 같을 때 localhost/menu/ 에 들어가면?"
     code: |-
@@ -103,33 +71,6 @@ quiz:
       - "id 가 자동으로 3 으로 바뀌어 들어간다"
     answer: 2
     explain: "기본 키는 행마다 겹칠 수 없어요. 직접 실행하면 duplicate key value violates unique constraint 오류가 나고 행이 들어가지 않아요. 값을 바꾸려면 UPDATE 를 써야 하고, 자동 번호는 AUTO_INCREMENT 나 SERIAL 을 줬을 때만이에요."
-  - id: where-stock-filter
-    q: "product 표에 다음 5개가 있어요. 아래 SELECT 의 결과는 몇 행일까?"
-    code: |-
-      -- (이름, 가격, 재고)
-      -- 무선 키보드 35000 120 / 게이밍 마우스 28000 85 / 27인치 모니터 259000 15
-      -- USB-C 허브 19900 200 / 노트북 거치대 24000 7
-      SELECT name, stock FROM product WHERE stock < 20;
-    options:
-      - "1행 (노트북 거치대)"
-      - "2행 (27인치 모니터, 노트북 거치대)"
-      - "3행"
-      - "5행 (WHERE 는 정렬만 한다)"
-    answer: 1
-    explain: "WHERE 는 조건에 맞는 행만 남겨요. 재고가 20보다 작은 건 15개인 모니터와 7개인 거치대 둘이에요. 정렬은 ORDER BY 가 해요."
-  - id: db-env-first-init
-    q: "pgdata 볼륨에 데이터가 이미 있는 상태에서 다음처럼 새 비밀번호로 켰어요. 접속할 때 맞는 비밀번호는?"
-    code: |-
-      # 처음에는 POSTGRES_PASSWORD=1234 로 켜서 데이터를 넣었다
-      docker rm -f my-pg
-      docker run -d --name my-pg -e POSTGRES_PASSWORD=abcd -p 5432:5432 -v pgdata:/var/lib/postgresql postgres:18
-    options:
-      - "abcd (새 비밀번호)"
-      - "1234 (예전 비밀번호)"
-      - "둘 다 된다"
-      - "비밀번호가 겹쳐 컨테이너가 안 켜진다"
-    answer: 1
-    explain: "-e 로 준 비밀번호와 init 폴더는 데이터 폴더가 비어 있을 때 처음 한 번만 읽어요. 볼륨에 예전 데이터가 남아 있으니 abcd 는 무시되고 1234 가 그대로예요. 새로 시작하려면 볼륨을 지워야 하고, 그러면 데이터도 사라져요."
 commands:
   - cmd: "docker --version / docker compose version / docker info"
     desc: "도커와 Compose 버전, 데몬이 켜져 있는지 확인"

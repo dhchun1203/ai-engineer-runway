@@ -14,30 +14,6 @@ quiz:
       - "에러가 난다"
     answer: 1
     explain: "변수는 값을 가리키는 이름표예요. 값을 다시 넣으면 이름표가 다른 객체로 옮겨 가서 id 값이 달라져요."
-  - id: arithmetic-results
-    q: "다음 코드의 출력을 순서대로 쓰면?"
-    code: |-
-      print(10 / 2)
-      print(10 % 3)
-      print(10 // 3)
-    options:
-      - "5, 1, 3"
-      - "5.0, 3, 1"
-      - "5.0, 1, 3"
-      - "5.0, 1, 3.3"
-    answer: 2
-    explain: "/ 의 결과는 나누어떨어져도 소수라 5.0 이에요. % 는 나머지 1, // 는 몫 3 이에요."
-  - id: string-compare-ord
-    q: "다음 코드의 결과와 이유로 맞는 것은?"
-    code: |-
-      print("apple" > "banana")
-    options:
-      - "True, 글자 수가 더 적어서"
-      - "False, 첫 글자 a(97)가 b(98)보다 번호가 작아서"
-      - "True, 사전에서 먼저 나와서"
-      - "에러, 문자열은 비교할 수 없어서"
-    answer: 1
-    explain: "문자열은 앞 글자부터 번호로 비교해요. ord(\"a\") 는 97, ord(\"b\") 는 98 이에요."
   - id: short-circuit-and-or
     q: "다음 두 줄을 각각 실행하면?"
     code: |-
@@ -61,29 +37,6 @@ quiz:
       - "10 번 반복하고 쉼표로 잇기"
     answer: 2
     explain: "> 는 오른쪽 정렬, 10 은 폭, 쉼표는 천 단위예요. 13,000 은 여섯 글자라 앞에 공백 네 칸이 붙어요."
-  - id: list-vs-tuple-change
-    q: "리스트와 튜플의 차이로 맞는 것은?"
-    options:
-      - "리스트는 순서가 있고 튜플은 순서가 없다"
-      - "리스트는 바꿀 수 있고, 튜플은 만든 뒤 바꾸면 TypeError 가 난다"
-      - "튜플이 리스트보다 항상 메모리를 더 쓴다"
-      - "튜플은 슬라이싱이 안 된다"
-    answer: 1
-    explain: "둘 다 순서가 있고 인덱스와 슬라이싱이 돼요. 가르는 건 바꿀 수 있는가예요. 크기는 같은 값이면 튜플이 더 작아요."
-  - id: list-methods-result
-    q: "다음 코드의 출력은?"
-    code: |-
-      fruits = ["apple"]
-      fruits.append("banana")
-      fruits.insert(0, "kiwi")
-      print(fruits)
-    options:
-      - "['apple', 'banana', 'kiwi']"
-      - "['banana', 'kiwi', 'apple']"
-      - "['kiwi', 'apple', 'banana']"
-      - "['kiwi', 'banana']"
-    answer: 2
-    explain: "append 는 맨 뒤에, insert(0, 값) 은 0번 자리에 넣어요. 없는 값을 remove 하면 ValueError 예요."
   - id: tuple-comma
     q: "다음 코드의 출력은?"
     code: |-
@@ -109,19 +62,6 @@ quiz:
       - "[1, 2, 3], [1, 0]"
     answer: 0
     explain: "끝 번호는 포함하지 않아 1번부터 4번 미만이에요. 간격 -1 은 역순이에요."
-  - id: matrix-row-col
-    q: "다음 코드의 출력 두 줄은?"
-    code: |-
-      matrix = [[1, 2, 3], [4, 5, 6]]
-      print(matrix[1][2])
-      print(len(matrix[0]))
-    options:
-      - "2, 2"
-      - "6, 3"
-      - "5, 2"
-      - "6, 2"
-    answer: 1
-    explain: "[행][열] 순서이고 0부터 세요. 두 번째 행의 세 번째 값은 6, 첫 행의 값 개수는 3 이에요. len(matrix) 는 행 개수 2 예요."
 commands:
   - cmd: type(값)
     desc: 값의 자료형 확인
