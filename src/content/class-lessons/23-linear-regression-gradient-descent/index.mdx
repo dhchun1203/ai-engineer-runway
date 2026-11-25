@@ -1,0 +1,819 @@
+---
+title: "정답 직선을 한 걸음씩 찾아가기: 선형회귀 복습, 경사하강법, 다중 회귀 준비"
+session: 23
+date: "2026-11-25"
+summary: "공부 시간 5명으로 선형회귀를 다시 학습해 기울기 10, 절편 35를 찾고 MAE, MSE, R²로 채점해요. 같은 직선을 SGDRegressor가 손실(MSE)을 줄이며 1000번 걸어서 찾아가는 경사하강법을 보고, 특징 세 개짜리 다중 선형회귀를 위해 상관계수 히트맵까지 그려요."
+slug: "23-linear-regression-gradient-descent"
+module: "1-5"
+topic: "머신러닝"
+preStudy: ["1-5-ml-model-types"]
+---
+
+어제 배운 선형회귀를 공부 시간 5명의 작은 데이터로 다시 해 보고, 모델이 그 직선을 어떻게 찾아가는지(경사하강법)를 본 날이에요. `LinearRegression`이 한 번에 계산한 답(기울기 10, 절편 35)을 `SGDRegressor`는 손실을 조금씩 줄이며 1000번 걸어서 찾아가요. 끝으로 특징이 셋인 다중 선형회귀를 위해 데이터를 그려 봤어요.
+
+직접 따라 하려면 1절의 준비를 하고 실습 노트북을 내려받아요. 절마다 "따라 하기"에 실행할 칸과 나와야 하는 결과를 적어 뒀어요. 각 절의 "자세히 보기"를 펼치면 전체 코드와 출력이 있어요(맥, Python 3.14, pandas 3.1.1, scikit-learn 1.9.1, seaborn 0.13.2로 직접 실행해 확인). 끝에 복습 퀴즈 5문항이 있어요.
+
+## 1. 준비: 어제 프로젝트를 그대로 열고 노트북만 바꾼다
+
+22회차의 `~/dev/my-pandas` 프로젝트에 필요한 도구가 다 있어요. 새로 설치할 것은 없어요.
+
+```bash
+cd ~/dev/my-pandas
+code .
+```
+
+> **실습 노트북:** <a href="/downloads/class-23-linear-regression-gradient-descent.ipynb" download>class-23-linear-regression-gradient-descent.ipynb 내려받기</a> (약 20KB). `my-pandas` 폴더에 넣고 VS Code에서 열어요. **Select Kernel**에서 `.venv`를 골라 맨 위 칸부터 `Shift + Enter`로 실행해요. 칸마다 위에 **나와야 하는 것**이 적혀 있어요. 오늘은 CSV 파일이 필요 없어요.
+
+첫 칸을 실행해 `pandas 3.1.1 sklearn 1.9.1 seaborn 0.13.2`처럼 버전 세 개가 나오면 준비 끝이에요. 노트북은 아래 순서로 흘러가요.
+
+<Figure label="오늘 노트북의 순서">
+  <Seq
+    steps={[
+      { title: "한 번에 풀기", body: "`LinearRegression`이 공부 시간 5명으로 기울기 10, 절편 35를 바로 계산해요." },
+      { title: "채점", body: "MAE 1.60, MSE 3.20, R² 0.98로 직선이 얼마나 맞는지 재요." },
+      { title: "손실 정하기", body: "틀린 정도를 MSE 하나의 숫자로 만들어요. 이 숫자를 줄이는 게 목표예요." },
+      { title: "한 걸음씩 풀기", body: "`SGDRegressor`가 MSE가 줄어드는 쪽으로 w, b를 1000번 고쳐요." },
+      { title: "다중 회귀 준비", body: "특징 세 개와 점수의 관계를 산점도와 히트맵으로 봐요." },
+    ]}
+  />
+</Figure>
+
+<details>
+<summary>자세히 보기</summary>
+
+### my-pandas 프로젝트가 없다면 처음부터
+
+20회차의 준비를 한 번에 하면 돼요. 빈 폴더에서 아래를 차례로 실행해 확인했어요.
+
+```bash
+mkdir -p ~/dev && cd ~/dev
+uv init --no-package --python 3.14 my-pandas
+cd my-pandas
+rm main.py
+uv add numpy pandas seaborn matplotlib scikit-learn
+uv add --dev ipykernel
+code .
+```
+
+`uv add --dev ipykernel`은 VS Code 노트북과 `.venv`를 이어 주는 부품이에요.
+
+### 막히면
+
+- `ModuleNotFoundError: No module named 'sklearn'`: 터미널에서 `uv add scikit-learn`을 하고, VS Code 위쪽 **Restart**로 커널을 다시 켜요.
+- **Select Kernel** 목록에 `.venv`가 없다: `uv add --dev ipykernel`을 하고 VS Code를 다시 열어요.
+- `NameError: name 'sgd' is not defined`: 5절의 모델 만드는 칸을 건너뛰었어요. 그 칸부터 다시 실행해요.
+- 5절의 숫자가 적어 둔 것과 다르다: 학습 칸을 두 번 실행하면 이어서 배워요. 모델 만드는 칸부터 다시 실행해요.
+- 그래프 한글이 네모로 나온다: 첫 칸의 `plt.rcParams["font.family"] = "AppleGothic"`을 먼저 실행해요.
+
+</details>
+
+## 2. 선형회귀 복습: 공부 시간 5명으로 기울기 10, 절편 35를 찾는다
+
+공부 시간(`hours`)으로 시험 점수(`scores`)를 예측해요. 어제처럼 입력 X는 표(대괄호 두 겹), 정답 y는 열 하나예요.
+
+```python
+data = {
+    "hours": [1, 2, 3, 4, 5],
+    "scores": [47, 53, 65, 73, 87]
+}
+df = pd.DataFrame(data)
+
+# 입력(특징, Feature): 2차원, 정답(Target): 1차원
+X = df[["hours"]]
+y = df["scores"]
+
+model = LinearRegression()
+model.fit(X, y)
+
+# 기울기 10.00, 절편 35.00
+print(f"기울기: {model.coef_[0]:.2f}")
+print(f"절편: {model.intercept_:.2f}")
+
+# 6시간 공부하면 95.00점
+new_data = pd.DataFrame({"hours": [6]})
+print(model.predict(new_data)[0])
+```
+
+> **따라 하기:** 실습 노트북 2절의 칸들을 실행해요. `기울기: 10.00`, `절편: 35.00`, `6시간 학습한 학생의 예상 성적: 95.00점`이 나오면 맞아요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### 수업 코드 그대로
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# 선형회귀 모델 임포트
+from sklearn.linear_model import LinearRegression
+
+# 한글 폰트 설정
+# plt.rcParams["font.family"] = "Malgun Gothic"   # 윈도우 사용자
+plt.rcParams["font.family"] = "AppleGothic"     # 맥 사용자
+
+# 데이터 (딕셔너리)
+data = {
+    "hours": [1, 2, 3, 4, 5],
+    "scores": [47, 53, 65, 73, 87]
+}
+
+# 판다스 데이터프레임으로 전환
+df = pd.DataFrame(data)
+df
+```
+
+```text
+   hours  scores
+0      1      47
+1      2      53
+2      3      65
+3      4      73
+4      5      87
+```
+
+```python
+# 입력 데이터 (피쳐:Feature) : 2차원 - 독립변수
+X = df[["hours"]]   # 공부시간
+
+# 출력 데이터 (Target) : 1차원 - 정답 : 종속변수
+y = df["scores"]    # 시험점수
+```
+
+입력을 **독립변수**, 정답을 **종속변수**라고도 불러요. 점수는 공부 시간에 따라 정해진다(종속)고 보는 거예요.
+
+```python
+# 선형회귀 모델 객체 생성
+model = LinearRegression()
+# 모델 학습
+model.fit(X, y)
+```
+
+```text
+LinearRegression()
+```
+
+```python
+# 다중 선형회귀의 경우 결과값이 배열로 리턴
+# 기울기는 배열 리턴
+print(f"기울기: {model.coef_[0]:.2f}")  # 기울기 Weight
+print(f"절편: {model.intercept_:.2f}")  # 절편 Bias
+```
+
+```text
+기울기: 10.00
+절편: 35.00
+```
+
+`coef_`는 특징마다 기울기가 하나씩 있어서 배열이에요. 오늘은 특징이 `hours` 하나라 `[0]`으로 꺼내요. 7절의 다중 회귀에서는 특징이 셋이라 기울기도 셋이 돼요.
+
+```python
+# 6시간 학습한 학생의 성적 예측
+new_data = pd.DataFrame({"hours": [6]}) # X 독립변수 1개 추가
+
+predicted_score = model.predict(new_data)
+print(f"6시간 학습한 학생의 예상 성적: {predicted_score[0]:.2f}점")
+```
+
+```text
+6시간 학습한 학생의 예상 성적: 95.00점
+```
+
+`10 × 6 + 35 = 95`예요. 예측할 새 입력도 학습 때와 같은 열 이름(`hours`)의 표로 만들어요.
+
+<Figure label="학습이 찾은 직선">
+  <Boxes
+    row={[
+      { title: "기울기 w = 10", tone: "blue", lines: ["1시간 더 공부하면", "10점 오른다"] },
+      { title: "절편 b = 35", tone: "neutral", lines: ["0시간일 때의", "출발 점수"] },
+      { title: "6시간 → 95점", tone: "rust", lines: ["10 × 6 + 35", "= 95"] },
+    ]}
+  />
+</Figure>
+
+</details>
+
+## 3. 채점: 학습한 데이터에 다시 넣어 보면 MAE 1.60, R² 0.98
+
+예측값 `[45, 55, 65, 75, 85]`와 실제 점수를 비교해요. 어제 배운 평가 함수를 그대로 써요.
+
+```python
+y_pred = model.predict(X)
+
+# 1.60: 평균 1.6점 틀린다
+mae = mean_absolute_error(y, y_pred)
+
+# 3.20: 오차를 제곱해 평균, 큰 오차에 민감
+mse = mean_squared_error(y, y_pred)
+
+# 0.98: 1에 가까울수록 잘 맞는다
+r2 = r2_score(y, y_pred)
+```
+
+> **따라 하기:** 실습 노트북 3절을 실행해요. 파란 점 5개를 지나는 빨간 직선과 6시간 위치의 초록 점이 보이고, `MAE: 1.60`, `MSE: 3.20`, `R^2: 0.98`이 나오면 맞아요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### 직선 그리기
+
+```python
+# 학습 데이터에 대한 예측값
+y_pred = model.predict(X)
+print("학습 데이터에 대한 예측값:", y_pred)
+
+plt.figure(figsize=(6, 3))
+
+# 실제 성적 (산점도)
+plt.scatter(X["hours"], y, color="blue", label="실제 성적")
+
+# 예측한 성적 (회귀직선)
+plt.plot(X["hours"], y_pred, color="red", label="예측 성적")
+
+# 6시간 학습한 학생의 예측 성적
+plt.scatter(6, predicted_score[0], color="green",
+            label="6시간 예측 성적")
+
+plt.title("공부시간 대비 성적 예측")
+plt.xlabel("공부 시간")
+plt.ylabel("성적")
+plt.legend()
+plt.show()
+```
+
+```text
+학습 데이터에 대한 예측값: [45. 55. 65. 75. 85.]
+```
+
+`hours`가 이미 1, 2, 3, 4, 5 순서라 어제처럼 `sort_values`로 줄 세우지 않아도 직선이 바로 그려져요.
+
+### 평가 지표
+
+```python
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+
+# MAE : 오차 절대 평균
+# 오차의 크기를 직관적으로 이해
+mae = mean_absolute_error(y, y_pred)
+print(f"학습데이터에 대한 평균 절대 오차(MAE): {mae:.2f}")
+
+# MSE : 오차 제곱 평균
+# 제곱하는 이유는 큰 오차에 대해서 민감하게 반응
+mse = mean_squared_error(y, y_pred)
+print(f"학습데이터에 대한 평균 제곱 오차(MSE): {mse:.2f}")
+
+# R2 Score : 결정계수
+# 모델이 실제 데이터를 얼마만큼 정확한지를 나타내는 지표
+# 0 <==> 1
+# 음수일 경우 학습 실패
+r2 = r2_score(y, y_pred)
+print(f"학습데이터에 대한 결정 계수(R^2): {r2:.2f}")
+```
+
+```text
+학습데이터에 대한 평균 절대 오차(MAE): 1.60
+학습데이터에 대한 평균 제곱 오차(MSE): 3.20
+학습데이터에 대한 결정 계수(R^2): 0.98
+```
+
+손으로 셈해 볼 수 있어요. 오차는 `47-45=2`, `53-55=-2`, `65-65=0`, `73-75=-2`, `87-85=2`예요.
+
+<Figure label="오차 다섯 개에서 MAE와 MSE까지">
+  <Seq
+    steps={[
+      { title: "오차", body: "2, -2, 0, -2, 2" },
+      { title: "MAE", body: "절댓값 평균: (2 + 2 + 0 + 2 + 2) ÷ 5 = 1.6" },
+      { title: "MSE", body: "제곱 평균: (4 + 4 + 0 + 4 + 4) ÷ 5 = 3.2" },
+    ]}
+  />
+</Figure>
+
+<Hint>
+학습한 데이터에 다시 넣어 채점하면 점수가 좋게 나오기 쉬워요. 모델이 처음 보는 데이터에서도 잘 맞는지는 따로 떼어 둔 데이터로 재야 해요.
+</Hint>
+
+</details>
+
+## 4. 손실 함수: 틀린 정도를 MSE 하나로 만들고, 그 숫자를 줄이는 쪽으로 걷는다
+
+모델이 얼마나 틀렸는지를 숫자 하나로 나타내는 것이 **손실 함수**(Loss Function)예요. 선형회귀는 보통 MSE를 써요.
+
+**MSE = (1/n) × Σ (실제 yᵢ − 예측 ŷᵢ)²**
+
+**경사하강법**(Gradient Descent)은 w, b를 아무 값에서 시작해, MSE가 줄어드는 방향으로 조금씩 고치기를 되풀이해요. 안개 낀 산에서 발밑의 기울기만 보고 한 걸음씩 내려가는 것과 같아요.
+
+```python
+import numpy as np
+
+hours = np.array([1, 2, 3, 4, 5])
+scores = np.array([47, 53, 65, 73, 87])
+
+# 손실(MSE) 계산 함수
+def mse(w, b):
+    return ((scores - (w * hours + b)) ** 2).mean()
+
+print(mse(0, 0))    # 4428.2: 시작점
+print(mse(12, 30))  # 12.2: 가까워졌다
+print(mse(10, 35))  # 3.2: 가장 낮은 곳
+```
+
+> **따라 하기:** 실습 노트북 4절의 칸을 실행해요. `4428.2`, `12.2`, `3.2`가 차례로 나오면 맞아요. 이 셋은 수업에 없던 칸으로, 손실이 무엇인지 숫자로 보려고 더했어요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### 한 걸음의 모양
+
+<Figure label="경사하강법 한 바퀴">
+  <Seq
+    steps={[
+      { title: "예측", body: "지금 w, b로 ŷ = w × x + b를 계산해요." },
+      { title: "오차", body: "ŷ − y가 양수면 너무 높게, 음수면 너무 낮게 예측한 거예요." },
+      { title: "기울기 계산", body: "오차가 커지는 방향(경사)을 구해요." },
+      { title: "한 걸음", body: "그 반대 방향으로 학습률만큼 w, b를 옮겨요." },
+      { title: "되풀이", body: "MSE가 더 줄지 않을 때까지 반복해요." },
+    ]}
+  />
+</Figure>
+
+한 걸음의 크기를 정하는 값이 **학습률**(Learning Rate)이에요. 너무 작으면 1000번을 걸어도 바닥에 못 닿고, 너무 크면 바닥을 지나쳐 왔다 갔다 해요.
+
+### 수업 노트의 숫자 하나
+
+수업 노트에 목표를 "기울기 10, 절편 35, 6시간 학습 96점"으로 적었는데, `10 × 6 + 35`는 95점이에요. 2절의 출력(`95.00점`)이 맞아요.
+
+### 전체를 보고 걸을까, 하나씩 보고 걸을까
+
+<Figure label="경사하강법 두 가지">
+  <Boxes
+    row={[
+      { title: "배치 경사하강법 (BGD)", tone: "blue", lines: ["데이터 전체로 기울기를 구해", "한 걸음", "정확하지만 데이터가 크면", "시간, 자원이 많이 든다"] },
+      { title: "확률적 경사하강법 (SGD)", tone: "rust", lines: ["데이터 1개씩 보고", "바로 한 걸음", "빠르지만 걸음이", "조금씩 흔들린다"] },
+    ]}
+  />
+</Figure>
+
+수업에서는 scikit-learn의 `SGDRegressor`(SGD, Stochastic Gradient Descent)를 썼어요.
+
+</details>
+
+## 5. SGDRegressor: partial_fit 한 번이 데이터 전체를 한 바퀴(1 epoch) 도는 것이다
+
+같은 데이터를 `SGDRegressor`로 학습해요. `partial_fit`을 부를 때마다 5명을 한 명씩 보며 w, b를 고쳐요. 이렇게 데이터 전체를 한 바퀴 도는 것을 **epoch**라고 해요.
+
+```python
+sgd = SGDRegressor(
+    loss="squared_error",
+    learning_rate="constant",
+    eta0=0.01,
+    max_iter=1000,
+    shuffle=False,
+    random_state=42
+)
+
+history = []
+for epoch in range(1000):
+    # 전체 데이터 1회 학습 (1 epoch)
+    sgd.partial_fit(X, y)
+    y_pred = sgd.predict(X)
+    history.append({
+        "epoch": epoch + 1,
+        "weight": sgd.coef_[0],
+        "bias": sgd.intercept_[0],
+        "mse": mean_squared_error(y, y_pred)
+    })
+```
+
+<GradientDescentSimulator />
+
+> **따라 하기:** 실습 노트북 5절의 칸들을 실행해요. 마지막 표에서 1 epoch는 `8.455225  2.731163  1369.816039`, 1000 epoch는 `10.129335  34.741238  3.250159`가 나오면 맞아요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### 목표 먼저 재 두기
+
+경사하강법이 도달하려는 답을 `LinearRegression`으로 먼저 구해 둬요.
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.linear_model import LinearRegression
+# 배치 경사하강법 (BGD) : 전체 데이터를 사용, 시간, 리소스 많이 사용
+# 확률적 경사하강법 (SGD) : 확률적을 1개의 데이터를 추출해서 하강 방법
+from sklearn.linear_model import SGDRegressor
+from sklearn.metrics import mean_squared_error
+
+# 학습 데이터 생성
+df = pd.DataFrame({
+    "hours": [1, 2, 3, 4, 5],
+    "scores": [47, 53, 65, 73, 87]
+})
+
+# 독립변수 (입력변수 : Feature)
+X = df[["hours"]]
+# 종속변수 (정답 : Target)
+y = df["scores"]
+```
+
+```python
+# 선형회귀
+model = LinearRegression()
+# 모델 학습
+model.fit(X, y)
+# 예측값
+y_pred = model.predict(X)
+# 결과값 : 경사하강법으로 도달하려는 목표
+print(f"Weight: {model.coef_[0]:.2f}")
+print(f"Bias: {model.intercept_:.2f}")
+print(f"MSE: {mean_squared_error(y, y_pred):.4f}")
+```
+
+```text
+Weight: 10.00
+Bias: 35.00
+MSE: 3.2000
+```
+
+### 모델 만들기
+
+```python
+sgd = SGDRegressor(
+    loss="squared_error",       # 제곱 오차 기반 손실함수
+    learning_rate="constant",   # 학습률을 일정하게 유지
+    eta0=0.01,                  # 초기 학습률
+    max_iter=1000,              # 학습횟수 fit() 반복 회수
+    shuffle=False,              # 학습 데이터 섞지 않음
+    random_state=42             # 난수 시드 설정
+)
+```
+
+| 설정 | 뜻 |
+| --- | --- |
+| `loss="squared_error"` | 손실을 제곱 오차(MSE)로 잰다 |
+| `learning_rate="constant"` | 학습률을 끝까지 같게 둔다 |
+| `eta0=0.01` | 학습률(한 걸음의 크기) |
+| `max_iter=1000` | `fit()`이 데이터를 도는 최대 횟수 |
+| `shuffle=False` | 한 바퀴마다 데이터 순서를 섞지 않는다 |
+| `random_state=42` | 난수 seed, 누가 돌려도 같은 결과 |
+
+### 1000 epoch 학습하고 기록하기
+
+```python
+# 전체 데이터를 기준으로 총 몇회 반복
+epochs = 1000
+
+# 학습과정 저장 리스트
+history = []
+
+for epoch in range(epochs):
+    # 전체 데이터 1회 학습 (1 epoch)
+    sgd.partial_fit(X, y)
+
+    # 1회 학습 후 예측
+    y_pred = sgd.predict(X)
+
+    # 현재 모델의 MSE 계산
+    mse = mean_squared_error(y, y_pred)
+
+    # 현재 학습 결과 저장(누적)
+    history.append({
+        "epoch": epoch + 1,
+        "weight": sgd.coef_[0],
+        "bias": sgd.intercept_[0],
+        "mse": mse
+    })
+
+# 학습 기록 => DataFrame 으로 변환
+history_df = pd.DataFrame(history)
+history_df
+```
+
+```text
+     epoch     weight       bias          mse
+0        1   8.455225   2.731163  1369.816039
+1        2  12.813586   4.270770   515.808449
+2        3  15.045308   5.190714   269.417813
+3        4  16.173242   5.787904   193.744630
+4        5  16.728403   6.216494   167.673523
+..     ...        ...        ...          ...
+995    996  10.129378  34.741070     3.250171
+996    997  10.129367  34.741113     3.250168
+997    998  10.129357  34.741155     3.250165
+998    999  10.129346  34.741197     3.250162
+999   1000  10.129335  34.741238     3.250159
+
+[1000 rows x 4 columns]
+```
+
+`history`는 딕셔너리를 한 줄씩 쌓은 리스트라, `pd.DataFrame(history)`에 넣으면 키가 열 이름이 돼요.
+
+### 고른 epoch만 보기
+
+```python
+steps = [1, 5, 10, 50, 100, 300, 500, 1000]
+history_df[history_df["epoch"].isin(steps)]
+```
+
+```text
+     epoch     weight       bias          mse
+0        1   8.455225   2.731163  1369.816039
+4        5  16.728403   6.216494   167.673523
+9       10  17.060518   7.615610   141.377004
+49      50  15.031795  15.629821    72.111791
+99     100  13.294764  22.401342    32.278720
+299    300  10.678818  32.599172     4.254356
+499    500  10.223895  34.372614     3.302220
+999   1000  10.129335  34.741238     3.250159
+```
+
+`isin(리스트)`는 값이 리스트 안에 있는 행만 `True`예요. 수업 코드는 리스트를 괄호 안에 바로 썼는데, 같은 결과예요.
+
+### 1 epoch를 손으로 따라가 보기
+
+w, b를 0에서 시작해 학생 다섯 명을 차례로 보며 고치면 1 epoch의 결과 `8.455225`, `2.731163`이 똑같이 나와요.
+
+```python
+w = 0.0
+b = 0.0
+eta = 0.01     # 학습률 eta0
+alpha = 0.0001 # SGDRegressor 기본 규제 세기
+
+for xi, yi in zip([1, 2, 3, 4, 5], [47, 53, 65, 73, 87]):
+    error = (w * xi + b) - yi
+    w = w * (1 - eta * alpha) - eta * error * xi
+    b = b - eta * error
+
+print(w, b)
+```
+
+```text
+8.455224781754193 2.731163490747725
+```
+
+오차가 음수(너무 낮게 예측)면 w, b가 올라가요. 첫 학생에서 오차는 `0 - 47 = -47`이라 b는 `0.47`, w도 `0.47`만큼 올라가요. 그다음 학생은 고친 w, b로 다시 예측해요. 이렇게 한 명씩 보고 바로 고치는 것이 SGD예요. `alpha`는 기울기가 너무 커지지 않게 살짝 줄이는 기본 설정(규제)으로, 이 데이터에서는 거의 차이가 없어요.
+
+<TwistBox title="partial_fit은 max_iter를 보지 않아요">
+수업 코드의 `max_iter=1000`은 `fit()`을 쓸 때 데이터를 최대 몇 바퀴 돌지 정하는 값이에요. `partial_fit`은 부를 때마다 딱 한 바퀴만 돌아서, 1000번을 돈 건 `for`문 덕분이에요. 같은 설정으로 `sgd.fit(X, y)`를 한 번 부르면 427바퀴째에 "더 나아지지 않는다"고 스스로 멈추고, 기울기 10.31, 절편 34.04가 나와요.
+</TwistBox>
+
+</details>
+
+## 6. 학습 곡선: MSE는 1369에서 3.25로 떨어지고, w와 b는 10과 35 근처로 모인다
+
+기록을 그래프로 그리면 손실이 처음에 크게 떨어지고 나중에는 천천히 줄어요. 1000 epoch 뒤의 모델은 기울기 10.13, 절편 34.74로 정답(10, 35)과 거의 같아요.
+
+```python
+print(f"기울기(w): {sgd.coef_[0]:.2f}")  # 10.13
+print(f"절편(b): {sgd.intercept_[0]:.2f}")  # 34.74
+
+new_data = pd.DataFrame({"hours": [6]})
+prediction = sgd.predict(new_data)
+
+# 95.52점 (LinearRegression은 95.00점)
+print(f"예측 성적: {prediction[0]:.2f}점")
+```
+
+> **따라 하기:** 실습 노트북 6절의 칸들을 실행해요. 왼쪽 위에서 뚝 떨어지는 파란 손실 곡선, 기울기와 절편 두 그래프, 그리고 `예측 성적: 95.52점`이 나오면 맞아요.
+
+<details>
+<summary>자세히 보기</summary>
+
+### 손실 곡선
+
+```python
+plt.figure(figsize=(10,5))
+
+# Epoch에 따른 MSE 변화
+plt.plot(
+    history_df["epoch"],
+    history_df["mse"],
+    color="blue",
+    label="학습 손실(Traing Loss)"
+)
+plt.xlabel("Loss")
+plt.ylabel("MSE")
+plt.grid(alpha=0.3)
+plt.show()
+```
+
+<Note title="수업 코드에서 고칠 것 두 가지">
+- 가로축은 epoch인데 이름이 `"Loss"`로 되어 있어요. 실습 노트북에서는 `plt.xlabel("Epoch")`로 고쳤어요.
+- `label`을 줬지만 `plt.legend()`가 없어서 범례가 안 나와요. 22회차에서 본 것처럼 둘 다 있어야 해요. 노트북에는 `plt.legend()`를 더했어요.
+</Note>
+
+MSE는 1 epoch에 1369.8, 10 epoch에 141.4, 100 epoch에 32.3, 300 epoch에 4.25, 1000 epoch에 3.25예요. 처음 10번 만에 거의 다 내려오고, 그 뒤로는 바닥 근처를 천천히 기어요. MSE가 처음 5 아래로 내려간 것은 266번째 epoch예요.
+
+### 기울기와 절편의 변화
+
+```python
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+# 기울기 변화
+axes[0].plot(
+    history_df["epoch"],
+    history_df["weight"],
+    color="blue"
+)
+axes[0].grid(alpha=0.3)
+axes[0].set_ylabel("Weight")
+
+# 절편 변화
+axes[1].plot(
+    history_df["epoch"],
+    history_df["bias"],
+    color="blue"
+)
+axes[1].grid(alpha=0.3)
+axes[1].set_ylabel("Bias")
+
+plt.show()
+```
+
+`plt.subplots(1, 2)`는 1행 2열, 그래프 칸 두 개를 만들고 `axes[0]`, `axes[1]`로 하나씩 그려요. 기울기는 처음 10번 사이에 17까지 치솟았다가 천천히 10으로 내려오고, 절편은 0에서 35를 향해 꾸준히 올라가요. 절편이 낮은 동안은 기울기를 키워서 점들을 따라잡으려 하기 때문이에요.
+
+### 최종 모델로 예측
+
+```python
+# 최종 학습된 기울기, 절편
+print(f"기울기(w): {sgd.coef_[0]:.2f}")
+print(f"절편(b): {sgd.intercept_[0]:.2f}")
+
+# 6시간 학습한 학생
+new_data = pd.DataFrame({"hours": [6]})
+
+# 경사하강법으로 학습한 모델로 예측
+prediction = sgd.predict(new_data)
+
+print(f"예측 성적: {prediction[0]:.2f}점")
+```
+
+```text
+기울기(w): 10.13
+절편(b): 34.74
+예측 성적: 95.52점
+```
+
+<TwistBox title="학습률을 0.001로 줄이면 1000번으로 모자라요">
+`eta0=0.001`로 같은 1000 epoch를 돌리면 기울기 13.53, 절편 22.17, MSE 33.13에서 멈춰요. 한 걸음이 열 배 작아서 아직 산 중턱이에요. 6시간 예측도 103.37점으로 크게 빗나가요. 학습률은 걸음 크기, epoch는 걸음 수라서 둘을 함께 정해야 해요.
+</TwistBox>
+
+</details>
+
+## 7. 다중 선형회귀 준비: 특징이 셋이면 무엇이 점수와 함께 움직이는지 먼저 본다
+
+공부 시간, 수면 시간, 문제 풀이 개수 세 가지로 점수를 예측하려고 해요. 특징이 여럿인 선형회귀를 **다중 선형회귀**라고 해요. 먼저 상관계수로 어떤 특징이 점수와 함께 움직이는지 봐요.
+
+```python
+df = pd.DataFrame({
+    "study_hours":    [1, 2, 3, 4, 5, 2, 3, 5, 4, 1],
+    "sleep_hours":    [6, 8, 5, 7, 8, 5, 8, 6, 6, 8],
+    "practice_count": [10, 15, 20, 25, 30, 12, 28, 22, 32, 8],
+    "score":          [47, 58, 60, 76, 87, 49, 73, 77, 79, 52]
+})
+
+# 마이너스 기호 깨짐 막기
+plt.rcParams["axes.unicode_minus"] = False
+
+# 모든 열 사이의 상관계수를 색으로
+sns.heatmap(df.corr(), annot=True, vmin=-1, vmax=1, fmt=".2f")
+plt.show()
+```
+
+> **따라 하기:** 실습 노트북 7절의 칸들을 실행해요. 산점도 세 개(공부 시간과 문제 풀이는 오른쪽 위로 올라가고 수면 시간은 흩어짐)와, `score` 줄에 `0.93`, `0.29`, `0.93`이 적힌 히트맵이 나오면 맞아요. 다 됐으면 노트북 맨 아래 혼자 치기 5문제를 풀어요(정답은 그 아래에 있어요).
+
+<details>
+<summary>자세히 보기</summary>
+
+### 데이터
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+
+# 데이터 생성
+df = pd.DataFrame({
+    "study_hours":    [1, 2, 3, 4, 5, 2, 3, 5, 4, 1],
+    "sleep_hours":    [6, 8, 5, 7, 8, 5, 8, 6, 6, 8],
+    "practice_count": [10, 15, 20, 25, 30, 12, 28, 22, 32, 8],
+    "score":          [47, 58, 60, 76, 87, 49, 73, 77, 79, 52]
+})
+
+df
+```
+
+```text
+   study_hours  sleep_hours  practice_count  score
+0            1            6              10     47
+1            2            8              15     58
+2            3            5              20     60
+3            4            7              25     76
+4            5            8              30     87
+5            2            5              12     49
+6            3            8              28     73
+7            5            6              22     77
+8            4            6              32     79
+9            1            8               8     52
+```
+
+### 산점도 세 개를 나란히
+
+```python
+# 1행 3열의 그래프 영역 생성
+fig, axes = plt.subplots(1, 3, figsize=(16,5))
+
+# 공부시간 + 성적
+sns.scatterplot(
+    data=df,
+    x="study_hours",
+    y="score",
+    ax=axes[0]
+)
+
+# 수면시간 + 성적
+sns.scatterplot(
+    data=df,
+    x="sleep_hours",
+    y="score",
+    ax=axes[1]
+)
+
+# 문제풀이 개수 + 성적
+sns.scatterplot(
+    data=df,
+    x="practice_count",
+    y="score",
+    ax=axes[2]
+)
+
+plt.show()
+```
+
+`sns.scatterplot`은 `data`에 표를 주고 `x`, `y`에 열 이름을 써요. `ax=axes[0]`처럼 어느 칸에 그릴지 정해요.
+
+### 상관계수 히트맵
+
+```python
+# 모든 컬럼 사이의 상관계수 확인
+corr = df.corr()
+
+plt.figure(figsize=(7,5))
+
+sns.heatmap(
+    corr,
+    annot=True,     # 상관계수 표시
+    vmin=-1,        # 최소값
+    vmax=1,         # 최대값
+    fmt=".2f"       # 소숫점 두자리
+)
+
+plt.show()
+```
+
+`df.corr()`는 모든 열 쌍의 상관계수를 표로 돌려줘요. 숫자로 찍으면 이래요.
+
+```text
+                study_hours  sleep_hours  practice_count  score
+study_hours            1.00         0.00            0.85   0.93
+sleep_hours            0.00         1.00            0.14   0.29
+practice_count         0.85         0.14            1.00   0.93
+score                  0.93         0.29            0.93   1.00
+```
+
+<Figure label="점수와 함께 움직이는 정도">
+  <Boxes
+    row={[
+      { title: "study_hours 0.93", tone: "blue", lines: ["공부를 많이 할수록", "점수가 높다"] },
+      { title: "practice_count 0.93", tone: "blue", lines: ["문제를 많이 풀수록", "점수가 높다"] },
+      { title: "sleep_hours 0.29", tone: "neutral", lines: ["약하게만", "함께 움직인다"] },
+    ]}
+  />
+</Figure>
+
+공부 시간과 문제 풀이 개수는 서로도 0.85로 강하게 함께 움직여요. 둘이 비슷한 정보를 담고 있다는 뜻이라, 다중 회귀에 둘 다 넣을 때 염두에 둬요.
+
+### 마이너스 기호 경고
+
+수업에서 히트맵을 그리면 `UserWarning: Glyph 8722 (\N{MINUS SIGN}) missing from font(s) AppleGothic.`이 떠요. 색 막대의 `-1.00` 같은 음수 눈금에 쓰는 수학용 마이너스 기호(−)가 AppleGothic 글꼴에 없어서예요. `plt.rcParams["axes.unicode_minus"] = False`를 글꼴 설정 옆에 두면 일반 하이픈(-)을 써서 경고가 사라져요. 직접 돌려 경고 0개를 확인했어요.
+
+</details>
+
+## 오늘 꼭 기억할 주의점
+
+- 입력 X는 표(`df[["hours"]]`), 정답 y는 열 하나(`df["scores"]`)예요. 입력은 독립변수, 정답은 종속변수라고도 해요.
+- `coef_`는 특징마다 기울기가 하나씩 든 배열이라 `[0]`으로 꺼내요. `intercept_`는 `LinearRegression`에서는 숫자, `SGDRegressor`에서는 배열이에요.
+- 손실 함수는 틀린 정도를 숫자 하나로 만든 것이고, 선형회귀는 보통 MSE를 써요.
+- 경사하강법은 손실이 줄어드는 방향으로 w, b를 조금씩 고치기를 되풀이해요. 한 걸음의 크기가 학습률이에요.
+- `partial_fit` 한 번은 데이터 전체를 한 바퀴(1 epoch) 돌아요. `max_iter`는 `fit()`에만 쓰여요.
+- 학습률이 너무 작으면 1000 epoch로도 바닥에 못 닿아요(0.001이면 MSE 33.13).
+- 그래프에 `label`을 줬으면 `legend()`도 불러요. 축 이름은 실제 값과 맞게 써요(가로축은 Epoch).
+- 히트맵의 마이너스 경고는 `plt.rcParams["axes.unicode_minus"] = False`로 없애요.

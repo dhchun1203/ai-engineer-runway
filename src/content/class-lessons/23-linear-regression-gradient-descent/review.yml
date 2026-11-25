@@ -1,0 +1,162 @@
+# 23-linear-regression-gradient-descent 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
+# 문항의 코드와 출력은 맥에서 Python 3.14, pandas 3.1.1, scikit-learn 1.9.1로 실제 실행해 확인했다.
+slug: 23-linear-regression-gradient-descent
+quiz:
+  - id: predict-seven-hours
+    q: "공부 시간 5명으로 학습한 뒤 7시간을 예측했어요. 출력은?"
+    code: |-
+      import pandas as pd
+      from sklearn.linear_model import LinearRegression
+
+      df = pd.DataFrame({"hours": [1, 2, 3, 4, 5],
+                         "scores": [47, 53, 65, 73, 87]})
+      model = LinearRegression()
+      model.fit(df[["hours"]], df["scores"])
+      print(model.predict(pd.DataFrame({"hours": [7]})))
+    options:
+      - "[105.]"
+      - "[95.]"
+      - "[87.]"
+      - "105.0"
+    answer: 0
+    explain: "학습한 직선은 기울기 10, 절편 35라서 10 × 7 + 35 = 105예요. predict는 입력 행마다 값을 하나씩 담은 배열을 돌려줘서 [105.]처럼 대괄호가 붙어요. 95는 6시간의 예측이고, 87은 5시간 학생의 실제 점수예요."
+  - id: mae-mse-by-hand
+    q: "실제 점수와 직선의 예측값을 비교했어요. 출력은?"
+    code: |-
+      from sklearn.metrics import mean_absolute_error, mean_squared_error
+
+      y = [47, 53, 65, 73, 87]
+      pred = [45, 55, 65, 75, 85]
+      print(mean_absolute_error(y, pred), mean_squared_error(y, pred))
+    options:
+      - "1.6 3.2"
+      - "1.6 1.6"
+      - "0.0 3.2"
+      - "8.0 16.0"
+    answer: 0
+    explain: "오차는 2, -2, 0, -2, 2예요. MAE는 절댓값의 평균이라 8 ÷ 5 = 1.6, MSE는 제곱의 평균이라 16 ÷ 5 = 3.2예요. 부호를 그대로 더하면 0이 되어 버려서 절댓값이나 제곱을 써요. 8.0과 16.0은 평균을 내기 전의 합이에요."
+  - id: partial-fit-one-epoch
+    q: "max_iter=1000으로 만든 모델에 partial_fit을 세 번 불렀어요. 출력은?"
+    code: |-
+      import pandas as pd
+      from sklearn.linear_model import SGDRegressor
+
+      df = pd.DataFrame({"hours": [1, 2, 3, 4, 5],
+                         "scores": [47, 53, 65, 73, 87]})
+      sgd = SGDRegressor(learning_rate="constant", eta0=0.01,
+                         max_iter=1000, shuffle=False, random_state=42)
+      for epoch in range(3):
+          sgd.partial_fit(df[["hours"]], df["scores"])
+      print(sgd.coef_.round(2))
+    options:
+      - "[15.05]"
+      - "[10.13]"
+      - "[10.]"
+      - "[8.46]"
+    answer: 0
+    explain: "partial_fit은 부를 때마다 데이터를 딱 한 바퀴(1 epoch)만 돌고 max_iter는 보지 않아요. 세 번 불렀으니 3 epoch 뒤의 기울기 15.05예요. 1000 epoch를 돌아야 10.13이 되고, 10은 LinearRegression의 답이에요. 8.46은 1 epoch 뒤의 값이에요."
+  - id: learning-rate-step-size
+    q: "SGDRegressor의 학습률 eta0을 0.01에서 0.001로 줄이고 같은 1000 epoch를 학습했어요. 맞는 설명은?"
+    options:
+      - "한 걸음이 작아져서 1000 epoch로는 정답(10, 35)에 못 닿는다. 기울기 13.53, 절편 22.17, MSE 33.13에서 멈춘다"
+      - "학습률이 작을수록 정확하니 1000 epoch 뒤에는 정확히 10, 35가 된다"
+      - "학습률은 epoch 수를 정하는 값이라 100 epoch만 돈다"
+      - "학습률이 작으면 바닥을 지나쳐 MSE가 커지기만 한다"
+    answer: 0
+    explain: "학습률은 한 번에 w, b를 얼마나 옮길지 정하는 걸음 크기예요. 열 배 작게 걸으면 같은 걸음 수로는 아직 산 중턱이라 MSE가 33.13이에요(0.01이면 3.25). 바닥을 지나쳐 흔들리는 것은 학습률이 너무 클 때 생기는 일이에요."
+  - id: heatmap-weakest-feature
+    q: "다중 선형회귀용 데이터의 상관계수 표예요. 점수(score)와 가장 약하게 함께 움직이는 특징은?"
+    code: |-
+      print(df.corr().round(2))
+      #                 study_hours  sleep_hours  practice_count  score
+      # study_hours            1.00         0.00            0.85   0.93
+      # sleep_hours            0.00         1.00            0.14   0.29
+      # practice_count         0.85         0.14            1.00   0.93
+      # score                  0.93         0.29            0.93   1.00
+    options:
+      - "sleep_hours (0.29)"
+      - "study_hours (0.93)"
+      - "practice_count (0.93)"
+      - "study_hours와 sleep_hours (0.00)"
+    answer: 0
+    explain: "score 줄(또는 열)을 보면 공부 시간과 문제 풀이는 0.93으로 강하고, 수면 시간은 0.29로 약해요. study_hours와 sleep_hours의 0.00은 두 특징끼리의 관계라 점수와는 상관없어요. 대각선의 1.00은 자기 자신과의 상관이에요."
+commands:
+  - cmd: "df[['hours']]"
+    desc: "입력 X(특징, 독립변수)를 2차원 표로 꺼내기"
+    group: pandas
+  - cmd: "df['scores']"
+    desc: "정답 y(타깃, 종속변수)를 열 하나로 꺼내기"
+    group: pandas
+  - cmd: "LinearRegression().fit(X, y)"
+    desc: "오차 제곱이 가장 작은 직선을 한 번에 계산해 학습"
+    group: scikit-learn
+  - cmd: "model.coef_[0]"
+    desc: "학습한 기울기(특징마다 하나씩 든 배열의 첫 값)"
+    group: scikit-learn
+  - cmd: "model.intercept_"
+    desc: "학습한 절편(LinearRegression은 숫자, SGDRegressor는 배열)"
+    group: scikit-learn
+  - cmd: "model.predict(pd.DataFrame({'hours': [6]}))"
+    desc: "같은 열 이름의 표로 새 입력을 만들어 예측"
+    group: scikit-learn
+  - cmd: "mean_absolute_error(y, y_pred)"
+    desc: "MAE, 오차 절댓값의 평균"
+    group: scikit-learn
+  - cmd: "mean_squared_error(y, y_pred)"
+    desc: "MSE, 오차 제곱의 평균(손실 함수로도 쓴다)"
+    group: scikit-learn
+  - cmd: "r2_score(y, y_pred)"
+    desc: "R², 1에 가까울수록 잘 맞는다(음수면 학습 실패)"
+    group: scikit-learn
+  - cmd: "SGDRegressor(loss='squared_error', learning_rate='constant', eta0=0.01)"
+    desc: "확률적 경사하강법 회귀 모델(제곱 오차, 고정 학습률 0.01)"
+    group: scikit-learn
+  - cmd: "sgd.partial_fit(X, y)"
+    desc: "데이터 전체를 한 바퀴(1 epoch)만 학습, 부를 때마다 이어서 배운다"
+    group: scikit-learn
+  - cmd: "sgd.fit(X, y)"
+    desc: "max_iter까지 여러 바퀴 학습, 나아지지 않으면 스스로 멈춘다"
+    group: scikit-learn
+  - cmd: "pd.DataFrame(history)"
+    desc: "딕셔너리를 쌓은 리스트를 표로(키가 열 이름)"
+    group: pandas
+  - cmd: "df[df['epoch'].isin([1, 5, 10])]"
+    desc: "값이 리스트 안에 있는 행만 고르기"
+    group: pandas
+  - cmd: "df.corr()"
+    desc: "모든 열 쌍의 상관계수 표"
+    group: pandas
+  - cmd: "plt.subplots(1, 2, figsize=(12, 5))"
+    desc: "1행 2열 그래프 칸 만들기, axes[0], axes[1]로 그린다"
+    group: matplotlib
+  - cmd: "plt.grid(alpha=0.3)"
+    desc: "옅은 격자선 그리기"
+    group: matplotlib
+  - cmd: "plt.rcParams['axes.unicode_minus'] = False"
+    desc: "한글 글꼴에서 마이너스 기호가 깨지는 경고 막기"
+    group: matplotlib
+  - cmd: "sns.scatterplot(data=df, x='study_hours', y='score', ax=axes[0])"
+    desc: "seaborn 산점도, 열 이름으로 x, y를 고르고 칸을 정한다"
+    group: seaborn
+  - cmd: "sns.heatmap(corr, annot=True, vmin=-1, vmax=1, fmt='.2f')"
+    desc: "상관계수 표를 색으로, 칸마다 소수 둘째 자리 숫자 표시"
+    group: seaborn
+terms:
+  - word: "독립변수와 종속변수"
+    definition: "예측에 쓰는 입력(특징, Feature)이 독립변수, 예측하려는 정답(Target)이 종속변수. 공부 시간이 독립변수, 점수가 종속변수다."
+  - word: "손실 함수 (Loss Function)"
+    definition: "모델의 예측이 정답과 얼마나 다른지를 숫자 하나로 나타내는 함수. 선형회귀는 보통 MSE를 쓰고, 학습은 이 숫자를 줄이는 일이다."
+  - word: "경사하강법 (Gradient Descent)"
+    definition: "w, b를 아무 값에서 시작해 손실이 줄어드는 방향으로 조금씩 고치기를 되풀이해 답을 찾는 방법."
+  - word: "학습률 (Learning Rate)"
+    definition: "경사하강법에서 한 번에 w, b를 얼마나 옮길지 정하는 걸음 크기. SGDRegressor의 eta0. 너무 작으면 느리고 너무 크면 바닥을 지나친다."
+  - word: "배치 경사하강법 (BGD)"
+    definition: "데이터 전체로 기울기를 구해 한 걸음 옮기는 방식. 정확하지만 데이터가 크면 시간과 자원이 많이 든다."
+  - word: "확률적 경사하강법 (SGD)"
+    definition: "데이터 하나씩 보고 바로 한 걸음 옮기는 방식(Stochastic Gradient Descent). 빠르지만 걸음이 조금씩 흔들린다."
+  - word: "에포크 (Epoch)"
+    definition: "학습 데이터 전체를 한 바퀴 도는 것. partial_fit 한 번이 1 epoch다."
+  - word: "다중 선형회귀 (Multiple Linear Regression)"
+    definition: "특징이 여러 개인 선형회귀. 특징마다 기울기가 하나씩 생겨 coef_에 여러 값이 든다."
+  - word: "히트맵 (Heatmap)"
+    definition: "표의 숫자를 색의 진하기로 보여 주는 그래프. 상관계수 표를 한눈에 볼 때 쓴다."
