@@ -1,6 +1,6 @@
 "use client";
 
-// 23회차(경사하강법) 공부 시간 5명 데이터로 SGDRegressor가 한 epoch씩 배우는 모습.
+// 23회차(경사하강법) 공부 시간 5개 케이스 데이터로 SGDRegressor가 한 epoch씩 배우는 모습.
 // 기록은 수업 코드(SGDRegressor squared_error, constant, eta0=0.01, shuffle=False, random_state=42,
 // partial_fit 1000회)를 Python 3.14 + scikit-learn 1.9.1로 직접 돌려 얻은 값이다.
 // 1~100번째는 모두, 그 뒤는 5번마다 남겼다. 목표 직선(10, 35)은 LinearRegression 결과.

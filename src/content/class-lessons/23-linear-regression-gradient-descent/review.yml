@@ -3,7 +3,7 @@
 slug: 23-linear-regression-gradient-descent
 quiz:
   - id: predict-seven-hours
-    q: "공부 시간 5명으로 학습한 뒤 7시간을 예측했어요. 출력은?"
+    q: "공부 시간 5개 케이스로 학습한 뒤 7시간을 예측했어요. 출력은?"
     code: |-
       import pandas as pd
       from sklearn.linear_model import LinearRegression
