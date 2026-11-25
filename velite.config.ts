@@ -19,6 +19,7 @@ import rehypeSlug from "rehype-slug";
 // 내부에서 같은 플러그인을 켠다(gfm 기본 on). @mdx-js/mdx의 compile은 아래
 // compileBookMdx에서 동적 import한다(velite 자신도 같은 방식으로 부른다).
 import remarkGfm from "remark-gfm";
+import { remarkTypeAlongDiff } from "./src/lib/remark-type-along-diff";
 import { terms } from "./src/content/terms";
 import { modules } from "./src/content/modules";
 
@@ -438,7 +439,8 @@ export default defineConfig({
           feature: s.string(), // 이 단원에서 가계부에 붙는 기능
           concepts: s.array(s.string()).default([]), // 필요한 개념 이름(칩)
           minutes: s.number().min(1), // 예상 시간(분)
-          code: s.mdx(),
+          // 직접 치기 칸에 시작 코드와 바뀐 줄을 표시한다(src/lib/remark-type-along-diff.ts)
+          code: s.mdx({ remarkPlugins: [remarkTypeAlongDiff] }),
         })
         .transform((data) => ({
           ...data,

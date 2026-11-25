@@ -1469,6 +1469,89 @@ code[data-theme*=" "] span {
   background-color: var(--color-code-bg-dark);
 }
 
+/* 파이썬 손풀기 직접 치기 칸: 어제 코드와 바뀐 줄 표시(GitHub 방식, 2026-11-25).
+   줄 ID는 src/lib/remark-type-along-diff.ts가 빌드 때 붙인다. add = 새로 치거나 바꿀 줄,
+   del = 지울 줄. 줄 앞 칸에 +, -를 찍고, 바뀌지 않은 줄도 같은 너비를 비워 들여쓰기를 맞춘다.
+   Shiki 규칙(code[data-theme] span)이 줄과 글자 조각마다 바탕을 칠하므로 그보다 구체적인
+   선택자로 줄 바탕을 칠하고 조각 바탕은 투명하게 둔다. 표시를 끄면(data-diff-on 없음) 지울 줄을 숨긴다. */
+[data-type-along] code[data-theme*=" "] {
+  min-width: max-content;
+}
+
+[data-type-along][data-diff-on] code[data-theme*=" "] > [data-line] {
+  padding-left: 0.5rem;
+}
+
+[data-type-along][data-diff-on] code[data-theme*=" "] > [data-line]::before {
+  content: " ";
+  display: inline-block;
+  width: 1.5em;
+  font-weight: 700;
+  user-select: none;
+}
+
+[data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="add"] {
+  background-color: color-mix(in srgb, var(--color-ok) 14%, transparent);
+  box-shadow: inset 3px 0 0 var(--color-ok);
+}
+
+[data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="add"]::before {
+  content: "+";
+  color: var(--color-ok);
+}
+
+[data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="del"] {
+  background-color: color-mix(in srgb, var(--color-destructive) 12%, transparent);
+  box-shadow: inset 3px 0 0 var(--color-destructive);
+}
+
+[data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="del"]::before {
+  content: "-";
+  color: var(--color-destructive);
+}
+
+[data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id] span {
+  background-color: transparent;
+}
+
+.dark [data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="add"] {
+  background-color: color-mix(in srgb, var(--color-ok-dark) 16%, transparent);
+  box-shadow: inset 3px 0 0 var(--color-ok-dark);
+}
+
+.dark [data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="add"]::before {
+  color: var(--color-ok-dark);
+}
+
+.dark [data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="del"] {
+  background-color: color-mix(in srgb, var(--color-destructive-dark) 14%, transparent);
+  box-shadow: inset 3px 0 0 var(--color-destructive-dark);
+}
+
+.dark [data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="del"]::before {
+  color: var(--color-destructive-dark);
+}
+
+[data-type-along]:not([data-diff-on]) code[data-theme*=" "] > [data-highlighted-line-id="del"] {
+  display: none;
+}
+
+[data-diff-chip="add"] {
+  color: var(--color-ok);
+}
+
+[data-diff-chip="del"] {
+  color: var(--color-destructive);
+}
+
+.dark [data-diff-chip="add"] {
+  color: var(--color-ok-dark);
+}
+
+.dark [data-diff-chip="del"] {
+  color: var(--color-destructive-dark);
+}
+
 /* 코드 복사 버튼 (src/components/code-block.tsx).
    이제 상단 크롬 바 안에 있으므로 상자(배경·테두리) 없이 아이콘만 있는 조용한 버튼이다 —
    헤더 자체가 이미 층을 만들어 코드와 분리해 준다. 크기(h-11 w-11 = 44px)는 컴포넌트의
