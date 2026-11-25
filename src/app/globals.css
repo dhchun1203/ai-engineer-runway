@@ -1473,16 +1473,17 @@ code[data-theme*=" "] span {
    줄 ID는 src/lib/remark-type-along-diff.ts가 빌드 때 붙인다. add = 새로 치거나 바꿀 줄,
    del = 지울 줄. 줄 앞 칸에 +, -를 찍고, 바뀌지 않은 줄도 같은 너비를 비워 들여쓰기를 맞춘다.
    Shiki 규칙(code[data-theme] span)이 줄과 글자 조각마다 바탕을 칠하므로 그보다 구체적인
-   선택자로 줄 바탕을 칠하고 조각 바탕은 투명하게 둔다. 표시를 끄면(data-diff-on 없음) 지울 줄을 숨긴다. */
-[data-type-along] code[data-theme*=" "] {
+   선택자로 줄 바탕을 칠하고 조각 바탕은 투명하게 둔다. 표시를 끄면(data-diff-on 없음) 지울 줄을 숨긴다.
+   고쳐 치기, 혼자 치기 정답 코드(CodeDiff)도 같은 틀([data-diff-frame])을 쓴다. */
+[data-diff-frame] code[data-theme*=" "] {
   min-width: max-content;
 }
 
-[data-type-along][data-diff-on] code[data-theme*=" "] > [data-line] {
+[data-diff-frame][data-diff-on] code[data-theme*=" "] > [data-line] {
   padding-left: 0.5rem;
 }
 
-[data-type-along][data-diff-on] code[data-theme*=" "] > [data-line]::before {
+[data-diff-frame][data-diff-on] code[data-theme*=" "] > [data-line]::before {
   content: " ";
   display: inline-block;
   width: 1.5em;
@@ -1490,49 +1491,49 @@ code[data-theme*=" "] span {
   user-select: none;
 }
 
-[data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="add"] {
+[data-diff-frame][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="add"] {
   background-color: color-mix(in srgb, var(--color-ok) 14%, transparent);
   box-shadow: inset 3px 0 0 var(--color-ok);
 }
 
-[data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="add"]::before {
+[data-diff-frame][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="add"]::before {
   content: "+";
   color: var(--color-ok);
 }
 
-[data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="del"] {
+[data-diff-frame][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="del"] {
   background-color: color-mix(in srgb, var(--color-destructive) 12%, transparent);
   box-shadow: inset 3px 0 0 var(--color-destructive);
 }
 
-[data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="del"]::before {
+[data-diff-frame][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="del"]::before {
   content: "-";
   color: var(--color-destructive);
 }
 
-[data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id] span {
+[data-diff-frame][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id] span {
   background-color: transparent;
 }
 
-.dark [data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="add"] {
+.dark [data-diff-frame][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="add"] {
   background-color: color-mix(in srgb, var(--color-ok-dark) 16%, transparent);
   box-shadow: inset 3px 0 0 var(--color-ok-dark);
 }
 
-.dark [data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="add"]::before {
+.dark [data-diff-frame][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="add"]::before {
   color: var(--color-ok-dark);
 }
 
-.dark [data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="del"] {
+.dark [data-diff-frame][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="del"] {
   background-color: color-mix(in srgb, var(--color-destructive-dark) 14%, transparent);
   box-shadow: inset 3px 0 0 var(--color-destructive-dark);
 }
 
-.dark [data-type-along][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="del"]::before {
+.dark [data-diff-frame][data-diff-on] code[data-theme*=" "] > [data-highlighted-line-id="del"]::before {
   color: var(--color-destructive-dark);
 }
 
-[data-type-along]:not([data-diff-on]) code[data-theme*=" "] > [data-highlighted-line-id="del"] {
+[data-diff-frame]:not([data-diff-on]) code[data-theme*=" "] > [data-highlighted-line-id="del"] {
   display: none;
 }
 

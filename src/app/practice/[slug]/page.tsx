@@ -7,7 +7,7 @@ import { MDXContent } from "@/components/mdx-content";
 import { ReadingAssistant } from "@/components/reading-assistant/reading-assistant";
 import { PageBookmark } from "@/components/page-bookmark";
 import { StageChips } from "@/components/stage-chips";
-import { TypeAlong } from "@/components/practice/type-along";
+import { TypeAlong, CodeDiff } from "@/components/practice/type-along";
 import { Hints, Hint } from "@/components/practice/hints";
 import {
   getAdjacentPracticeUnits,
@@ -22,6 +22,7 @@ const PRACTICE_ARTICLE_ID = "practice-article";
 
 const practiceComponents: Record<string, ComponentType> = {
   TypeAlong: TypeAlong as ComponentType,
+  CodeDiff: CodeDiff as ComponentType,
   Hints: Hints as ComponentType,
   Hint: Hint as ComponentType,
 };

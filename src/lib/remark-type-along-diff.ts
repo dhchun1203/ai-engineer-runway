@@ -5,9 +5,14 @@
 // 같은 인라인 코드로 정하고, 없으면 main.py다. 한 단원에 같은 파일의 직접 치기 칸이 또 나오면
 // 앞 칸이 직전 버전이 된다. 직전 버전이 없는 새 파일은 표시하지 않는다.
 //
+// 2026-11-25 추가: "고쳐 치기", "혼자 치기"의 정답 코드(<summary>정답 코드 보기...</summary> 접힌 칸)도
+// 같은 파일의 바로 앞 단계(따라 치기 코드, 고쳐 치기 정답)와 비교해 표시한다. 정답 칸의 파일 이름은
+// "정답 코드 보기: ui.py"처럼 summary 끝에 있거나 코드 앞 문단에 있다.
+//
 // 결과: 지울 줄을 제자리에 끼워 넣은 코드로 바꾸고, rehype-pretty-code의 줄 ID 메타
-// ({1,3-5}#add {2}#del)로 줄마다 data-highlighted-line-id를 붙인다. <TypeAlong>에는
-// added, removed 속성을 달아 범례와 끄고 켜기 버튼이 쓰게 한다(type-along.tsx).
+// ({1,3-5}#add {2}#del)로 줄마다 data-highlighted-line-id를 붙인다. 직접 치기 칸은 <TypeAlong>에,
+// 정답 코드는 새로 감싼 <CodeDiff>에 added, removed, base(무엇과 비교했나) 속성을 달아
+// 범례와 끄고 켜기 버튼이 쓰게 한다(src/components/practice/type-along.tsx).
 
 type Node = {
   type: string;
@@ -90,52 +95,96 @@ function ranges(nums: number[]): string {
 
 const splitLines = (code: string) => code.replace(/\n$/, "").split("\n");
 
-function collectStartCode(details: Node, files: Map<string, string>) {
-  const kids = details.children ?? [];
-  kids.forEach((child, idx) => {
-    if (child.type === "code" && child.lang === "python" && typeof child.value === "string") {
-      files.set(fileLabel(kids[idx - 1]) ?? DEFAULT_FILE, child.value);
-    }
-  });
+type Version = { code: string; base: string };
+type Files = Map<string, Version>;
+
+function attr(name: string, value: string) {
+  return { type: "mdxJsxAttribute", name, value };
 }
 
-function markTypeAlong(el: Node, label: string, files: Map<string, string>) {
-  const code = (el.children ?? []).find((c) => c.type === "code" && c.lang === "python");
-  if (!code || typeof code.value !== "string") return;
+// 코드 노드를 직전 버전과 비교해 줄 표시를 붙인다. 바뀐 줄이 있으면 [added, removed, base]를 돌려준다.
+function markCode(code: Node, label: string, files: Files, nextBase: string): string[] | null {
+  if (typeof code.value !== "string") return null;
   const finalCode = code.value;
-  const before = files.get(label);
-  files.set(label, finalCode);
-  if (before === undefined) return;
+  const prev = files.get(label);
+  files.set(label, { code: finalCode, base: nextBase });
+  if (!prev) return null;
 
-  const ops = diffLines(splitLines(before), splitLines(finalCode));
+  const ops = diffLines(splitLines(prev.code), splitLines(finalCode));
   const added: number[] = [];
   const removed: number[] = [];
   ops.forEach((op, idx) => {
     if (op.kind === "add") added.push(idx + 1);
     if (op.kind === "del") removed.push(idx + 1);
   });
-  if (added.length === 0 && removed.length === 0) return;
+  if (added.length === 0 && removed.length === 0) return null;
 
   code.value = ops.map((op) => op.line).join("\n");
   const meta = [code.meta ?? ""];
   if (added.length) meta.push(`{${ranges(added)}}#add`);
   if (removed.length) meta.push(`{${ranges(removed)}}#del`);
   code.meta = meta.join(" ").trim();
-
-  el.attributes = [
-    ...(el.attributes ?? []),
-    { type: "mdxJsxAttribute", name: "added", value: String(added.length) },
-    { type: "mdxJsxAttribute", name: "removed", value: String(removed.length) },
-  ];
+  return [String(added.length), String(removed.length), prev.base];
 }
 
-function walk(parent: Node, files: Map<string, string>) {
+function isPython(node: Node | undefined): boolean {
+  return node?.type === "code" && node.lang === "python";
+}
+
+function collectStartCode(details: Node, files: Files) {
+  const kids = details.children ?? [];
+  kids.forEach((child, idx) => {
+    if (isPython(child) && typeof child.value === "string") {
+      files.set(fileLabel(kids[idx - 1]) ?? DEFAULT_FILE, { code: child.value, base: "어제 코드" });
+    }
+  });
+}
+
+function markTypeAlong(el: Node, label: string, files: Files) {
+  const code = (el.children ?? []).find(isPython);
+  if (!code) return;
+  const result = markCode(code, label, files, "따라 치기 코드");
+  if (!result) return;
+  const [added, removed, base] = result;
+  el.attributes = [...(el.attributes ?? []), attr("added", added), attr("removed", removed), attr("base", base)];
+}
+
+// 정답 접힌 칸: 코드마다 바로 앞 단계와 비교하고, 바뀐 코드는 <CodeDiff>로 감싼다.
+function markAnswer(details: Node, summaryText: string, section: string, files: Files) {
+  const fromSummary = summaryText.match(/:\s*([\w./-]+\.py)\s*$/)?.[1] ?? null;
+  const nextBase = section.includes("혼자 치기") ? "혼자 치기 정답" : "고쳐 치기 정답";
+  const kids = details.children ?? [];
+  kids.forEach((child, idx) => {
+    if (!isPython(child)) return;
+    const label = fileLabel(kids[idx - 1]) ?? fromSummary ?? DEFAULT_FILE;
+    const result = markCode(child, label, files, nextBase);
+    if (!result) return;
+    const [added, removed, base] = result;
+    kids[idx] = {
+      type: "mdxJsxFlowElement",
+      name: "CodeDiff",
+      attributes: [attr("added", added), attr("removed", removed), attr("base", base)],
+      children: [child],
+    };
+  });
+}
+
+function walk(parent: Node, files: Files, state: { section: string }) {
   const kids = parent.children ?? [];
   kids.forEach((child, idx) => {
+    if (child.type === "heading" && (child as Node & { depth?: number }).depth === 2) {
+      state.section = textOf(child);
+      return;
+    }
     if (isJsx(child, "details")) {
       const summary = (child.children ?? []).find((c) => isJsx(c, "summary"));
-      if (summary && textOf(summary).includes("시작 코드")) {
+      const summaryText = summary ? textOf(summary) : "";
+      if (summaryText.includes("시작 코드")) {
         collectStartCode(child, files);
+        return;
+      }
+      if (summaryText.includes("정답 코드")) {
+        markAnswer(child, summaryText, state.section, files);
         return;
       }
     }
@@ -143,12 +192,12 @@ function walk(parent: Node, files: Map<string, string>) {
       markTypeAlong(child, fileLabel(kids[idx - 1]) ?? DEFAULT_FILE, files);
       return;
     }
-    if (child.children) walk(child, files);
+    if (child.children) walk(child, files, state);
   });
 }
 
 export function remarkTypeAlongDiff() {
   return (tree: Node) => {
-    walk(tree, new Map());
+    walk(tree, new Map(), { section: "" });
   };
 }

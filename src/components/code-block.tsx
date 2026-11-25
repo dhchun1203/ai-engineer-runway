@@ -76,7 +76,8 @@ export function CodeBlock({ children, ...props }: ComponentPropsWithoutRef<'pre'
     // rehype-pretty-code는 줄마다 [data-line]을 붙인다. 줄 단위로 textContent를
     // 모아야 줄바꿈이 정확히 살아난다 — innerText는 code의 display:grid 렌더링에
     // 의존하므로 폴백으로만 쓴다.
-    const lines = pre.querySelectorAll('[data-line]');
+    // 파이썬 손풀기 정답 코드의 "지울 줄"(바뀐 줄 표시, data-highlighted-line-id="del")은 복사에서 뺀다.
+    const lines = pre.querySelectorAll('[data-line]:not([data-highlighted-line-id="del"])');
     const text =
       lines.length > 0
         ? Array.from(lines, (line) => line.textContent ?? '').join('\n')
