@@ -317,6 +317,127 @@ const SPOT_ART = {
       <path className="il-thin" d="M52 84h56M52 92h40"/>
     </>
   ),
+  // 수업 복습: 이젤 위 칠판과 다 푼 퀴즈 카드
+  class: (
+    <>
+      <path className="il-stroke-orange" d="M8 28h8M12 24v8"/>
+      <path className="il-stroke-blue" d="M140 26h8M144 22v8"/>
+      <path className="il-ink" d="M44 82l-8 22M88 82l8 22"/>
+      <g className="il-shadow" transform="translate(5 5)">
+        <rect className="il-blue" x="24" y="16" width="96" height="60"/>
+      </g>
+      <rect className="il-blue" x="24" y="16" width="96" height="60"/>
+      <path className="il-stroke-paper" d="M36 32h44M36 44h60M36 56h30"/>
+      <rect className="il-solid" x="20" y="76" width="104" height="6"/>
+      <g className="il-shadow" transform="translate(5 5)">
+        <rect className="il-paper" x="102" y="60" width="40" height="44"/>
+      </g>
+      <rect className="il-paper" x="102" y="60" width="40" height="44"/>
+      <polyline className="il-stroke-orange il-thick" points="111,83 119,91 133,73"/>
+      <line className="il-ink" x1="8" y1="104" x2="152" y2="104"/>
+    </>
+  ),
+  // 파이썬 손풀기: 터미널 창과 키보드
+  practice: (
+    <>
+      <path className="il-stroke-blue" d="M8 30h8M12 26v8"/>
+      <path className="il-stroke-orange" d="M142 50h8M146 46v8"/>
+      <g className="il-shadow" transform="translate(5 5)">
+        <rect className="il-paper" x="30" y="12" width="100" height="58"/>
+      </g>
+      <rect className="il-paper" x="30" y="12" width="100" height="58"/>
+      <rect className="il-blue" x="30" y="12" width="100" height="12"/>
+      <rect className="il-paper-fill" x="36" y="16" width="4" height="4"/>
+      <rect className="il-paper-fill" x="44" y="16" width="4" height="4"/>
+      <polyline className="il-stroke-orange il-thick" points="42,34 51,42 42,50"/>
+      <path className="il-ink" d="M60 50h16"/>
+      <path className="il-thin" d="M60 36h46M42 60h60"/>
+      <g className="il-shadow" transform="translate(5 5)">
+        <rect className="il-orange" x="20" y="78" width="120" height="26"/>
+      </g>
+      <rect className="il-orange" x="20" y="78" width="120" height="26"/>
+      <rect className="il-paper-fill" x="28" y="84" width="8" height="6"/>
+      <rect className="il-paper-fill" x="40" y="84" width="8" height="6"/>
+      <rect className="il-paper-fill" x="52" y="84" width="8" height="6"/>
+      <rect className="il-paper-fill" x="64" y="84" width="8" height="6"/>
+      <rect className="il-paper-fill" x="76" y="84" width="8" height="6"/>
+      <rect className="il-paper-fill" x="88" y="84" width="8" height="6"/>
+      <rect className="il-paper-fill" x="100" y="84" width="8" height="6"/>
+      <rect className="il-paper-fill" x="112" y="84" width="8" height="6"/>
+      <rect className="il-paper-fill" x="124" y="84" width="8" height="6"/>
+      <rect className="il-paper-fill" x="28" y="93" width="8" height="6"/>
+      <rect className="il-paper-fill" x="40" y="93" width="8" height="6"/>
+      <rect className="il-paper-fill" x="52" y="93" width="56" height="6"/>
+      <rect className="il-paper-fill" x="112" y="93" width="8" height="6"/>
+      <rect className="il-paper-fill" x="124" y="93" width="8" height="6"/>
+    </>
+  ),
+  // 채널톡 로드맵: 접힌 지도 위 점선 경로와 도착 핀
+  roadmap: (
+    <>
+      <path className="il-stroke-blue" d="M10 22h8M14 18v8"/>
+      <path className="il-stroke-orange" d="M144 100h8M148 96v8"/>
+      <g className="il-shadow" transform="translate(5 5)">
+        <polygon className="il-paper" points="20,34 58,24 98,34 136,24 136,94 98,104 58,94 20,104"/>
+      </g>
+      <polygon className="il-paper" points="20,34 58,24 98,34 136,24 136,94 98,104 58,94 20,104"/>
+      <polygon className="il-soft-fill" points="59.5,26 96.5,35.5 96.5,102 59.5,92.5"/>
+      <path className="il-thin" d="M58 24v70M98 34v70"/>
+      <polyline className="il-dash" points="36,86 52,66 78,78 100,58 118,52"/>
+      <rect className="il-blue" x="30" y="80" width="12" height="12"/>
+      <rect className="il-solid" x="74.5" y="74.5" width="7" height="7"/>
+      <g className="il-shadow" transform="translate(5 5)">
+        <path className="il-orange" d="M120 54L111 36a10 10 0 1 1 18 0z"/>
+      </g>
+      <path className="il-orange" d="M120 54L111 36a10 10 0 1 1 18 0z"/>
+      <circle className="il-paper-fill" cx="120" cy="32" r="3.5"/>
+    </>
+  ),
+  // 오프라인 저장: 내려받는 태블릿과 저장 완료 표시
+  offline: (
+    <>
+      <path className="il-stroke-blue" d="M134 22h8M138 18v8"/>
+      <path className="il-dash" d="M8 46h26"/>
+      <path className="il-stroke-orange" d="M14 78h8M18 74v8"/>
+      <g className="il-shadow" transform="translate(5 5)">
+        <rect className="il-soft" x="42" y="10" width="72" height="94"/>
+      </g>
+      <rect className="il-soft" x="42" y="10" width="72" height="94"/>
+      <rect className="il-paper" x="50" y="18" width="56" height="70"/>
+      <rect className="il-solid" x="74" y="93" width="8" height="5"/>
+      <path className="il-stroke-blue il-thick" d="M78 30v32"/>
+      <polyline className="il-stroke-blue il-thick" points="64,50 78,64 92,50"/>
+      <path className="il-ink" d="M60 78h36"/>
+      <g className="il-shadow" transform="translate(5 5)">
+        <rect className="il-orange" x="100" y="68" width="36" height="36"/>
+      </g>
+      <rect className="il-orange" x="100" y="68" width="36" height="36"/>
+      <polyline className="il-stroke-paper il-thick" points="109,87 116,94 128,79"/>
+    </>
+  ),
+  // 소개(Making-of): 블록을 끼워 가며 짓는 화면
+  about: (
+    <>
+      <path className="il-stroke-orange" d="M8 24h8M12 20v8"/>
+      <path className="il-stroke-blue" d="M140 22h8M144 18v8"/>
+      <g className="il-shadow" transform="translate(5 5)">
+        <rect className="il-paper" x="22" y="18" width="96" height="78"/>
+      </g>
+      <rect className="il-paper" x="22" y="18" width="96" height="78"/>
+      <rect className="il-solid" x="22" y="18" width="96" height="11"/>
+      <rect className="il-paper-fill" x="28" y="21.5" width="4" height="4"/>
+      <rect className="il-paper-fill" x="36" y="21.5" width="4" height="4"/>
+      <rect className="il-blue" x="30" y="38" width="36" height="22"/>
+      <rect className="il-amber" x="72" y="38" width="38" height="10"/>
+      <path className="il-thin" d="M30 70h36M30 78h36M30 86h22"/>
+      <rect className="il-dash" x="74" y="58" width="34" height="28"/>
+      <g className="il-shadow" transform="translate(5 5)">
+        <rect className="il-orange" x="104" y="50" width="34" height="28" transform="rotate(-12 121 64)"/>
+      </g>
+      <rect className="il-orange" x="104" y="50" width="34" height="28" transform="rotate(-12 121 64)"/>
+      <path className="il-thin" d="M146 54h7M148 62h7"/>
+    </>
+  ),
   // 404: 방향을 묻는 표지판
   notfound: (
     <>

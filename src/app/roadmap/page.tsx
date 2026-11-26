@@ -12,6 +12,7 @@ import {
   talentTraits,
   roadmapSources,
 } from "@/content/channeltalk-roadmap";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 
 export const metadata: Metadata = {
   title: "채널톡 AI Engineer 로드맵",
@@ -39,17 +40,20 @@ export default async function RoadmapPage() {
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-14 px-4 py-12 sm:px-6 lg:px-8">
       {/* 머리글 — 이 트랙이 학습 진도, 일정과 별개임을 분명히 밝힌다. */}
-      <header className="flex flex-col gap-3">
-        <span className="chip w-fit text-label font-bold">취업 목표 로드맵</span>
-        <h1 className="text-display font-black break-keep">
-          채널톡 AI Engineer 진입 로드맵
-        </h1>
-        <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          채널톡(채널코퍼레이션)의 채용 공고와 기술블로그, CTO 인터뷰를 꼼꼼히
-          읽고, 이 회사가 실제로 원하는 역량을 여덟 단계의 로드맵으로 옮겼습니다.
-          정규 학습 일정이나 진행률과는 별개의 트랙이라, 순서에 매이지 않고
-          앞으로 스스로 채워나가는 살아있는 문서입니다.
-        </p>
+      <header className="flex items-end justify-between gap-6">
+        <div className="flex flex-col gap-3">
+          <span className="chip w-fit text-label font-bold">취업 목표 로드맵</span>
+          <h1 className="text-display font-black break-keep">
+            채널톡 AI Engineer 진입 로드맵
+          </h1>
+          <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            채널톡(채널코퍼레이션)의 채용 공고와 기술블로그, CTO 인터뷰를 꼼꼼히
+            읽고, 이 회사가 실제로 원하는 역량을 여덟 단계의 로드맵으로 옮겼습니다.
+            정규 학습 일정이나 진행률과는 별개의 트랙이라, 순서에 매이지 않고
+            앞으로 스스로 채워나가는 살아있는 문서입니다.
+          </p>
+        </div>
+        <SpotIllustration name="roadmap" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
 
       {/* AX Consultant 트랙(2026-11-17) — Applied AI Engineer 로드맵과 다른 직무 갈래. 교육과정과 별개로

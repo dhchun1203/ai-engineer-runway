@@ -16,6 +16,7 @@ import { ClassSearch } from "@/components/class/class-search";
 import { ClassPastLessonRow } from "@/components/class/class-past-lesson-row";
 import { MistakeNoteLink } from "@/components/mistake-note-link";
 import type { StepId } from "@/content/modules";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 
 export const metadata: Metadata = {
   title: "수업 복습",
@@ -129,13 +130,16 @@ export default async function ClassHubPage({
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-12 sm:px-6 lg:px-8">
-      <header className="flex flex-col gap-3">
-        <span className="chip-solid w-fit text-label font-bold">최우선</span>
-        <h1 className="text-display font-black break-keep">수업 복습</h1>
-        <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          개강 후 수업마다 배운 내용을 쉬운 말로 다시 풀어 썼어요. 레슨을 읽고 확인 퀴즈로 꺼내 보면서
-          그날 수업을 내 것으로 만들어요. 퀴즈를 다 풀면 그 수업은 완료로 표시돼요.
-        </p>
+      <header className="flex items-end justify-between gap-6">
+        <div className="flex flex-col gap-3">
+          <span className="chip-solid w-fit text-label font-bold">최우선</span>
+          <h1 className="text-display font-black break-keep">수업 복습</h1>
+          <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            개강 후 수업마다 배운 내용을 쉬운 말로 다시 풀어 썼어요. 레슨을 읽고 확인 퀴즈로 꺼내 보면서
+            그날 수업을 내 것으로 만들어요. 퀴즈를 다 풀면 그 수업은 완료로 표시돼요.
+          </p>
+        </div>
+        <SpotIllustration name="class" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
 
       <nav aria-label="수업 복습 도구" className="grid gap-3 sm:grid-cols-2">

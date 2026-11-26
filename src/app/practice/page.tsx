@@ -6,6 +6,7 @@ import { normalizeRepoUrl, PRACTICE_REPO_NOTE_ID } from "@/lib/practice-repo";
 import { PracticeRepoLink } from "@/components/practice/practice-repo-link";
 import { PracticeUnitList } from "@/components/practice/practice-unit-list";
 import { getOrderedPracticeUnits, PRACTICE_PROGRESS_PREFIX } from "@/content/practice-helpers";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 
 export const metadata: Metadata = {
   title: "파이썬 손풀기",
@@ -44,16 +45,19 @@ export default async function PracticeIndexPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      <header className="flex flex-col gap-3">
-        <span className="chip w-fit text-label font-bold">번외 실습</span>
-        <h1 className="text-display font-black break-keep">파이썬 손풀기</h1>
-        <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          개념은 짧게, 치는 시간은 길게. 하루 한 단원씩 VS Code에서 가계부 프로그램을 직접 키워요.
-        </p>
-        <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          따라 치기 칸에는 복사 버튼이 없어요. 손으로 쳐야 손에 남으니까요. 단계가 끝날 때마다 커밋하고, 단원이
-          끝나면 GitHub에 올려요.
-        </p>
+      <header className="flex items-end justify-between gap-6">
+        <div className="flex flex-col gap-3">
+          <span className="chip w-fit text-label font-bold">번외 실습</span>
+          <h1 className="text-display font-black break-keep">파이썬 손풀기</h1>
+          <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            개념은 짧게, 치는 시간은 길게. 하루 한 단원씩 VS Code에서 가계부 프로그램을 직접 키워요.
+          </p>
+          <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            따라 치기 칸에는 복사 버튼이 없어요. 손으로 쳐야 손에 남으니까요. 단계가 끝날 때마다 커밋하고, 단원이
+            끝나면 GitHub에 올려요.
+          </p>
+        </div>
+        <SpotIllustration name="practice" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
 
       <section className="panel flex flex-col gap-3 p-5">

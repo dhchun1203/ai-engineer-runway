@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ExternalLink } from "lucide-react";
 import { pages } from "#site/content";
 import { AboutContent } from "@/components/about-content";
+import { SpotIllustration } from "@/components/illustrations/spot-illustration";
 
 const GITHUB_REPO_URL = "https://github.com/dhchun1203/ai-engineer-runway";
 
@@ -16,7 +17,10 @@ export default function AboutPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
-      <h1 className="text-display font-black">{page?.title ?? "소개"}</h1>
+      <header className="flex items-center justify-between gap-6">
+        <h1 className="text-display font-black break-keep">{page?.title ?? "소개"}</h1>
+        <SpotIllustration name="about" className="hidden w-28 shrink-0 sm:block lg:w-36" />
+      </header>
 
       {page ? (
         <div

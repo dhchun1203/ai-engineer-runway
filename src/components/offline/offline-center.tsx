@@ -12,7 +12,7 @@
 // 누르면 offline-runtime.tsx가 전체 이동으로 바꿔 서비스 워커가 저장본을 준다.
 // 오프라인 모드를 끈 빌드(flag.ts)에서는 전체 받기와 저장본 지우기 대신 짧은 안내만 보인다.
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
 import { Download, Trash2 } from "lucide-react";
 import { parseLastLesson } from "@/components/continue-reading-card";
@@ -127,7 +127,7 @@ function describeAnnouncement(download: DownloadState): string {
   return describeResult(download);
 }
 
-export function OfflineCenter() {
+export function OfflineCenter({ illustration }: { illustration?: ReactNode }) {
   const online = useOnline();
   const pending = useQueueCount();
   const needsLogin = useNeedsLogin();
@@ -174,11 +174,14 @@ export function OfflineCenter() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-display font-black break-keep">오프라인 저장</h1>
-        <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
-          인터넷이 없을 때도 저장한 레슨을 읽고, 완료 체크와 메모를 남길 수 있어요. 연결되면 자동으로 서버와 맞춰요.
-        </p>
+      <header className="flex items-end justify-between gap-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-display font-black break-keep">오프라인 저장</h1>
+          <p className="max-w-2xl break-keep text-body font-normal leading-relaxed text-badge-neutral-text dark:text-badge-neutral-text-dark">
+            인터넷이 없을 때도 저장한 레슨을 읽고, 완료 체크와 메모를 남길 수 있어요. 연결되면 자동으로 서버와 맞춰요.
+          </p>
+        </div>
+        {illustration}
       </header>
 
       {from ? (
