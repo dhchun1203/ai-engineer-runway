@@ -371,10 +371,26 @@ git commit -m "refactor: 기능을 함수로 쪼개기"
 
 ## 4. 고쳐 치기
 
-두 가지를 고쳐요.
+계산하는 함수 두 개를 만들고, 목록 보기를 그 함수로 다시 써요.
 
-- 기록 하나의 부호 붙은 금액을 돌려주는 `signed_amount(entry)`, 잔액을 돌려주는 `balance(entries)` 함수를 만들어요. 둘 다 `print` 없이 `return`만 해요.
-- `show_list`를 이 함수들로 다시 써서, 금액이 먼저 나오게 해요.
+**요구사항**
+
+- **새 함수** `signed_amount(entry)`
+  - 받는 것: 기록 딕셔너리 하나
+  - 돌려주는 것: 부호 붙은 금액 **정수(int)**. 수입이면 `amount` 그대로, 지출이면 음수예요.
+  - 예: 지출 9000 기록이면 `-9000`, 수입 3000000 기록이면 `3000000`. `"-9,000"` 같은 글자가 아니라 숫자예요.
+- **새 함수** `balance(entries)`
+  - 받는 것: 기록 리스트
+  - 돌려주는 것: 잔액 **정수(int)**. 안에서 `signed_amount`를 불러 더해요. 기록이 없으면 `0`이에요.
+- **두 함수 공통**: `print` 없이 `return`만 해요. 쉼표나 `+`를 붙이는 일은 찍는 쪽(`show_list`)이 맡아요.
+- **고칠 함수** `show_list(entries)`: 기록 한 줄을 금액이 맨 앞인 세 조각으로 바꿔요.
+  1. 금액: 부호를 늘 붙이고(`+3,000,000`, `-9,000`), 천 단위 쉼표, **12칸에 오른쪽 맞춤**
+  2. `원` 다음에 칸 **두 개**
+  3. `[분류] 항목`
+- **잔액 줄**: 마지막 줄 `잔액: 2,974,500원`은 `balance(entries)`가 돌려준 값으로 찍어요.
+- **이름 조심**: 함수 안에서 `balance`라는 변수를 만들지 마세요. 함수 이름이 가려져서 `balance(entries)`를 부를 때 에러가 나요.
+
+나와야 하는 화면이에요. 12칸 오른쪽 맞춤이라 숫자 끝이 세로로 나란해요.
 
 ```text
 1. 기록 추가
@@ -544,9 +560,18 @@ git commit -m "feat: 금액 정렬과 잔액 함수"
 
 `main.py` 하나를 파일 세 개로 나눠요. **기능은 그대로**여야 해요.
 
-- `ledger.py`: 계산만 해요. `signed_amount`, `balance`, 그리고 새로 만드는 `biggest_expense(entries)`, `category_totals(entries)`예요. 뒤의 둘은 결과를 **돌려줘요**. 없으면 `biggest_expense`는 `None`을 돌려줘요.
-- `ui.py`: 입력과 출력을 해요. `ask_kind`, `ask_amount`, `add_entry`, `show_list`, `show_biggest`, `show_totals`예요. 맨 위에 `import ledger`가 있어요.
-- `main.py`: 메뉴만 남아요. 맨 위에 `import ui`가 있어요.
+**요구사항**
+
+- **`ledger.py`**: 계산만 해요. 이 파일에는 `print`와 `input`이 없어요.
+  - `signed_amount(entry)`, `balance(entries)`: 4절에서 만든 그대로 옮겨요.
+  - `biggest_expense(entries)` (새로): 지출 중 금액이 가장 큰 **기록 딕셔너리**를 돌려줘요. 지출이 없으면 `None`이에요.
+  - `category_totals(entries)` (새로): 지출만 분류별로 더한 **딕셔너리**를 돌려줘요. 예: `{"식비": 24000, "교통": 1500}`. 지출이 없으면 빈 딕셔너리 `{}`예요.
+- **`ui.py`**: 입력과 출력을 해요. 맨 위에 `import ledger`가 있어요.
+  - `ask_kind`, `ask_amount`, `add_entry`, `show_list`, `show_biggest`, `show_totals`가 이 파일로 와요.
+  - 계산은 `ledger.balance(entries)`처럼 `ledger.`를 붙여 불러요.
+  - `show_biggest`와 `show_totals`는 위 두 함수가 돌려준 값을 받아서, 지금과 똑같은 글자를 찍어요.
+- **`main.py`**: 메뉴만 남아요. 맨 위에 `import ui`가 있고, 메뉴를 고르면 `ui.show_list(entries)`처럼 불러요.
+- **그대로 둘 것**: 화면에 보이는 모든 글자, 메뉴 번호
 
 새 파일은 VS Code 탐색기에서 **새 파일** 아이콘으로 만들어요. 다 나눴으면 네 건을 넣고 2, 3, 4번이 전처럼 나오는지 봐요.
 
