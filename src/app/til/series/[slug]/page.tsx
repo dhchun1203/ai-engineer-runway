@@ -23,7 +23,7 @@ export default async function TilSeriesPage({
         <h1 className="text-display font-black break-keep">{s.data.title}</h1>
         {s.data.description ? <p className="text-body font-normal break-keep">{s.data.description}</p> : null}
       </header>
-      <ol className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <ol className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">
         {list.map((p) => (<li key={p.id}><TilCard post={p} /></li>))}
       </ol>
     </main>

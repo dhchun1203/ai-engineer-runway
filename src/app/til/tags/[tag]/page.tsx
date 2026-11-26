@@ -17,7 +17,7 @@ export default async function TilTagPage({
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="text-display font-black break-keep">#{decoded}</h1>
       {posts.length > 0 ? (
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <ul className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">
           {posts.map((p) => (
             <li key={p.id}><TilCard post={p} /></li>
           ))}
