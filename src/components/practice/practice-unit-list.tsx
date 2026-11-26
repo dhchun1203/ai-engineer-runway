@@ -4,10 +4,11 @@
 // 부른다. 실패하면 그 단원만 되돌리고 "실패"를 보인다. 오프라인 대기열은 쓰지 않는다(목록은
 // 개인 화면이라 오프라인 캐시 대상이 아니다, 베이스캠프 허브와 같은 판단).
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { togglePracticeUnit } from '@/app/practice/actions';
+import { practiceUnitAnchor } from '@/lib/practice-anchor';
 import { withToggled, withAdded, withRemoved } from '@/components/basecamp/toggle-set';
 
 export type PracticeUnitCard = {
@@ -32,7 +33,27 @@ export function PracticeUnitList({
   const [done, setDone] = useState<ReadonlySet<string>>(() => new Set(initialDone));
   const [pending, setPending] = useState<ReadonlySet<string>>(new Set());
   const [failed, setFailed] = useState<ReadonlySet<string>>(new Set());
+  const [arrived, setArrived] = useState<string | null>(null);
   const doneCount = units.filter((u) => done.has(u.slug)).length;
+
+  // 단원 페이지에서 /practice#unit-<slug>로 오면 그 카드를 화면 가운데로 올리고 잠깐 테를 두른다.
+  // 라우터의 해시 스크롤은 카드를 위 끝(고정 헤더 밑)에 붙이므로, 그다음 프레임에 가운데로 다시 맞춘다.
+  useEffect(() => {
+    const hash = decodeURIComponent(window.location.hash.slice(1));
+    const target = units.find((u) => practiceUnitAnchor(u.slug) === hash);
+    if (!target) return;
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        document.getElementById(hash)?.scrollIntoView({ block: 'center' });
+        setArrived(target.slug);
+      });
+    });
+    const clear = window.setTimeout(() => setArrived(null), 2200);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(clear);
+    };
+  }, [units]);
 
   async function toggle(slug: string) {
     if (pending.has(slug)) return;
@@ -75,7 +96,13 @@ export function PracticeUnitList({
         {units.map((u) => {
           const isDone = done.has(u.slug);
           return (
-            <li key={u.slug} className="flex items-stretch gap-2">
+            <li
+              key={u.slug}
+              id={practiceUnitAnchor(u.slug)}
+              className={`flex scroll-mt-24 items-stretch gap-2 outline-2 outline-offset-4 transition-[outline-color] duration-500 ${
+                arrived === u.slug ? 'outline-accent dark:outline-accent-dark' : 'outline-transparent'
+              } outline`}
+            >
               <Link
                 href={u.permalink}
                 className="card-interactive panel flex min-h-11 min-w-0 flex-1 flex-col gap-1 p-4"

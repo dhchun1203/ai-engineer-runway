@@ -14,6 +14,7 @@ import {
   getOrderedPracticeUnits,
   getPracticeUnitBySlug,
 } from "@/content/practice-helpers";
+import { practiceUnitAnchor } from "@/lib/practice-anchor";
 
 // 파이썬 손풀기 단원 리더. 완전 정적이다(수업 복습 레슨 리더와 같은 셸). 완료 체크는 개인
 // 진도를 읽어야 해서 목록(/practice)에 둔다.
@@ -61,7 +62,7 @@ export default async function PracticeUnitPage({
       <article className="flex flex-col gap-8">
         <header className="flex flex-col gap-3">
           <Link
-            href="/practice"
+            href={`/practice#${practiceUnitAnchor(unit.slug)}`}
             data-print-hide
             className="nav-link tap-feedback flex w-fit min-h-11 items-center gap-1.5 text-label font-bold text-muted dark:text-muted-dark"
           >
@@ -110,7 +111,7 @@ export default async function PracticeUnitPage({
             </div>
           ) : null}
           <Link
-            href="/practice"
+            href={`/practice#${practiceUnitAnchor(unit.slug)}`}
             className="card-interactive panel flex min-h-11 items-center justify-between gap-2 p-4 text-body font-bold"
           >
             목록에서 완료 체크하기
