@@ -1,0 +1,171 @@
+# 24-multiple-regression-split-scaling 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
+# 문항의 코드와 출력은 맥에서 Python 3.14, pandas 3.1.1, scikit-learn 1.9.1로 실제 실행해 확인했다.
+slug: 24-multiple-regression-split-scaling
+quiz:
+  - id: multi-predict-new-student
+    q: "특징 세 개로 다중 선형회귀를 학습한 뒤 새 학생을 예측했어요. 출력은?"
+    code: |-
+      import pandas as pd
+      from sklearn.linear_model import LinearRegression
+
+      df = pd.DataFrame({
+          "study_hours":    [1, 2, 3, 4, 5, 2, 3, 5, 4, 1],
+          "sleep_hours":    [6, 8, 5, 7, 8, 5, 8, 6, 6, 8],
+          "practice_count": [10, 15, 20, 25, 30, 12, 28, 22, 32, 8],
+          "score":          [47, 58, 60, 76, 87, 49, 73, 77, 79, 52]
+      })
+      features = ["study_hours", "sleep_hours", "practice_count"]
+
+      model = LinearRegression()
+      model.fit(df[features], df["score"])
+
+      new = pd.DataFrame({
+          "study_hours": [5],
+          "sleep_hours": [8],
+          "practice_count": [30]
+      })
+      print(round(model.predict(new)[0], 2))
+    options:
+      - "87.09"
+      - "87.0"
+      - "78.6"
+      - "[87.09]"
+    answer: 0
+    explain: "학습한 식은 5.80 × 공부 + 2.68 × 수면 + 0.63 × 문제 + 17.66이라 5.80 × 5 + 2.68 × 8 + 0.63 × 30 + 17.66 ≈ 87.09예요. 같은 값을 가진 4번 학생의 실제 점수는 87점이지만 모델은 87.09로 예측해요. 78.6은 공부 4, 수면 7, 문제 30인 학생이고, [0]으로 꺼냈으니 대괄호는 붙지 않아요."
+  - id: split-shapes
+    q: "학생 10명, 특징 3개인 X를 나눴어요. 출력은?"
+    code: |-
+      from sklearn.model_selection import train_test_split
+
+      # X: 10행 3열 표, y: 값 10개
+      X_train, X_test, y_train, y_test = train_test_split(
+          X,
+          y,
+          test_size=0.3,
+          random_state=42
+      )
+      print(X_train.shape, X_test.shape)
+    options:
+      - "(7, 3) (3, 3)"
+      - "(3, 3) (7, 3)"
+      - "(7,) (3,)"
+      - "(10, 3) (3, 3)"
+    answer: 0
+    explain: "test_size=0.3이라 10명 중 3명이 시험용, 7명이 학습용이에요. 열(특징) 3개는 그대로라 (7, 3)과 (3, 3)이에요. 돌려받는 순서는 X 학습, X 시험, y 학습, y 시험이고, (7,)과 (3,)은 y_train, y_test의 모양이에요."
+  - id: standardize-five-hours
+    q: "공부 시간 다섯 개만 표준화했어요. 출력은?"
+    code: |-
+      from sklearn.preprocessing import StandardScaler
+
+      hours = [[1], [2], [3], [4], [5]]
+      result = StandardScaler().fit_transform(hours)
+      print(result.ravel().round(2))
+    options:
+      - "[-1.41 -0.71  0.    0.71  1.41]"
+      - "[-2. -1.  0.  1.  2.]"
+      - "[0.   0.25 0.5  0.75 1.  ]"
+      - "[-1.  -0.5  0.   0.5  1. ]"
+    answer: 0
+    explain: "평균은 3, 표준편차는 √2 ≈ 1.41(StandardScaler는 n으로 나눠요)이라 (1 - 3) ÷ 1.41 = -1.41, (2 - 3) ÷ 1.41 = -0.71이에요. 평균만 빼면 -2~2가 되고, 0~1로 줄이는 것은 표준화가 아니라 다른 스케일링(최소, 최대 맞추기)이에요."
+  - id: transform-test-only
+    q: "학습용으로 scaler를 맞췄어요. 시험용 X_test를 바꾸는 올바른 줄은?"
+    code: |-
+      from sklearn.preprocessing import StandardScaler
+
+      scaler = StandardScaler()
+      X_train_scaled = scaler.fit_transform(X_train)
+
+      # X_test_scaled = ?
+    options:
+      - "X_test_scaled = scaler.transform(X_test)"
+      - "X_test_scaled = scaler.fit_transform(X_test)"
+      - "X_test_scaled = StandardScaler().fit_transform(X_test)"
+      - "X_test_scaled = X_test"
+    answer: 0
+    explain: "시험용은 학습용에서 잰 평균, 표준편차로 바꾸기만(transform) 해요. fit_transform을 쓰면 시험용 3명의 평균으로 다시 재서 학습 때와 다른 자로 바꾼 셈이 되고, 새 StandardScaler도 마찬가지예요. 그대로 두면 모델이 배운 숫자 크기와 맞지 않아 엉뚱한 값이 나와요."
+  - id: face-photo-numbers
+    q: "얼굴 사진 데이터의 크기를 찍었어요. 출력은?"
+    code: |-
+      from sklearn.datasets import fetch_olivetti_faces
+
+      faces = fetch_olivetti_faces(data_home="./datasets")
+      print(faces.images.shape, faces.data.shape)
+    options:
+      - "(400, 64, 64) (400, 4096)"
+      - "(400, 64, 64) (400, 64)"
+      - "(40, 64, 64) (40, 4096)"
+      - "(400, 4096) (400, 64, 64)"
+    answer: 0
+    explain: "40명이 10장씩 찍은 사진 400장이고, 한 장은 64 × 64 칸이에요. images는 사진 모양 그대로 (400, 64, 64), data는 한 장을 한 줄로 편 것이라 64 × 64 = 4096개씩 (400, 4096)이에요. 사람 수 40은 target의 서로 다른 값 개수예요."
+commands:
+  - cmd: "X = df[features]"
+    desc: "열 이름 목록으로 여러 특징을 한 번에 골라 입력 표 만들기"
+    group: pandas
+  - cmd: "model.coef_"
+    desc: "특징마다 하나씩 든 가중치 배열(features 순서)"
+    group: scikit-learn
+  - cmd: "w1, w2, w3 = model.coef_"
+    desc: "값이 셋인 배열을 변수 셋에 차례로 나눠 담기"
+    group: Python
+  - cmd: "plt.barh(coef_df['feature'], coef_df['weight'])"
+    desc: "가로 막대 그래프(세로축에 이름)"
+    group: matplotlib
+  - cmd: "df.copy()"
+    desc: "같은 내용의 새 표 만들기(원본을 건드리지 않는다)"
+    group: pandas
+  - cmd: "result_df['예측값'] = y_pred"
+    desc: "없는 열 이름에 넣으면 새 열이 생긴다"
+    group: pandas
+  - cmd: "train_test_split(X, y, test_size=0.3, random_state=42)"
+    desc: "학습용 70%, 시험용 30%로 나누기, X_train, X_test, y_train, y_test 순서로 돌려준다"
+    group: scikit-learn
+  - cmd: "X.describe()"
+    desc: "열마다 개수, 평균, 표준편차, 최솟값, 사분위수, 최댓값"
+    group: pandas
+  - cmd: "scaler.fit_transform(X_train)"
+    desc: "학습용으로 평균, 표준편차를 재고 바로 표준화"
+    group: scikit-learn
+  - cmd: "scaler.transform(X_test)"
+    desc: "학습용에서 잰 기준으로 바꾸기만(시험용, 새 입력)"
+    group: scikit-learn
+  - cmd: "scaler.mean_, scaler.scale_"
+    desc: "StandardScaler가 잰 열마다의 평균과 표준편차"
+    group: scikit-learn
+  - cmd: "sgd.n_iter_"
+    desc: "fit()이 실제로 돈 바퀴(epoch) 수"
+    group: scikit-learn
+  - cmd: "fetch_olivetti_faces(data_home='./datasets')"
+    desc: "얼굴 사진 400장 받기(처음 한 번 받고 다음부터는 저장한 파일을 읽는다)"
+    group: scikit-learn
+  - cmd: "np.unique(faces.target)"
+    desc: "겹치지 않는 값만 골라 정렬(사람 번호 0~39)"
+    group: NumPy
+  - cmd: "plt.imshow(img, cmap='gray', vmin=0, vmax=1)"
+    desc: "숫자 표를 흑백 사진으로 그리기(0 검정, 1 흰색)"
+    group: matplotlib
+  - cmd: "plt.axis('off')"
+    desc: "그래프의 축과 눈금 숨기기"
+    group: matplotlib
+  - cmd: "ax.text(col, row, '0.6')"
+    desc: "그래프의 (가로, 세로) 위치에 글자 쓰기"
+    group: matplotlib
+  - cmd: "faces.images[faces.target == 3]"
+    desc: "불리언 인덱싱으로 3번 사람의 사진만 고르기"
+    group: NumPy
+terms:
+  - word: "다중 선형회귀 (Multiple Linear Regression)"
+    definition: "특징이 여러 개인 선형회귀. 특징마다 가중치가 하나씩 생겨 예측은 w1 x1 + w2 x2 + w3 x3 + b가 된다."
+  - word: "가중치 (Weight)"
+    definition: "그 특징이 1 오를 때 예측이 얼마나 오르는지. 단위가 다른 특징끼리는 크기를 바로 비교할 수 없다."
+  - word: "학습 데이터와 테스트 데이터 (Train / Test)"
+    definition: "모델이 배우는 데 쓰는 데이터와, 처음 보는 척 채점하는 데 쓰려고 떼어 둔 데이터. 학습한 데이터로 채점하면 점수가 후하게 나온다."
+  - word: "특성 스케일링 (Feature Scaling)"
+    definition: "서로 다른 단위나 크기를 가진 특징을 비슷한 척도로 바꾸는 전처리."
+  - word: "표준화 (Standardization)"
+    definition: "(값 - 평균) ÷ 표준편차로 바꿔 열마다 평균 0, 표준편차 1로 맞추는 스케일링. scikit-learn의 StandardScaler."
+  - word: "fit_transform과 transform"
+    definition: "fit_transform은 기준(평균, 표준편차)을 재고 바로 바꾸고, transform은 재 둔 기준으로 바꾸기만 한다. 학습용에 fit_transform, 시험용과 새 입력에 transform."
+  - word: "픽셀 (Pixel)"
+    definition: "사진을 이루는 점 하나. 흑백 사진에서는 0(검정)~1(흰색) 밝기 숫자 하나로 나타낸다."
+  - word: "KNN (K-Nearest Neighbors)"
+    definition: "새 데이터와 가장 가까운 데이터 K개를 찾아 그들의 정답으로 답을 정하는 방법. 얼굴 사진이라면 숫자 줄이 가장 비슷한 사진의 사람을 고른다."

@@ -37,6 +37,7 @@ import { CafeApiPlayground } from "@/components/lesson-figures/cafe-api-playgrou
 import { AgeFillHistogram } from "@/components/lesson-figures/age-fill-histogram";
 import { OfficeRegressionSimulator } from "@/components/lesson-figures/office-regression-simulator";
 import { GradientDescentSimulator } from "@/components/lesson-figures/gradient-descent-simulator";
+import { ScalingSimulator } from "@/components/lesson-figures/scaling-simulator";
 
 // 레슨 본문 그림 부품 맵. 리더 페이지가 <MDXContent components={lessonFigureComponents} />로
 // 넘긴다. MDX에서 부르는 이름과 키가 정확히 같아야 한다. 레슨 전용 시뮬레이터(CartSimulator
@@ -79,4 +80,5 @@ export const lessonFigureComponents: Record<string, ComponentType> = {
   AgeFillHistogram: AgeFillHistogram as ComponentType,
   OfficeRegressionSimulator: OfficeRegressionSimulator as ComponentType,
   GradientDescentSimulator: GradientDescentSimulator as ComponentType,
+  ScalingSimulator: ScalingSimulator as ComponentType,
 };
