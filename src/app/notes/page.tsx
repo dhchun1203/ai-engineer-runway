@@ -23,7 +23,7 @@ function EmptyState({ message }: { message: string }) {
           <h1 className="text-display font-black">노트</h1>
           <p className="text-body font-normal">{message}</p>
         </div>
-        <SpotIllustration name="notes" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
+        <SpotIllustration name="notes" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
     </main>
   );
@@ -62,7 +62,7 @@ export default async function NotesPage() {
             열어주세요.
           </p>
         </div>
-        <SpotIllustration name="notes" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
+        <SpotIllustration name="notes" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
 
       <section className="flex flex-col gap-8">

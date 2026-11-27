@@ -17,7 +17,7 @@ function EmptyState({ message }: { message: string }) {
           <h1 className="text-display font-black">질문함</h1>
           <p className="text-body font-normal">{message}</p>
         </div>
-        <SpotIllustration name="inbox" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
+        <SpotIllustration name="inbox" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
     </main>
   );
@@ -46,7 +46,7 @@ export default async function InboxPage() {
             꺼내 쓸 수 있어요.
           </p>
         </div>
-        <SpotIllustration name="inbox" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
+        <SpotIllustration name="inbox" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
 
       <InboxPanel items={itemsRead.items} />

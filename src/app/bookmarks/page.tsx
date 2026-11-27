@@ -34,7 +34,7 @@ function EmptyState({ message }: { message: string }) {
           <h1 className="text-display font-black">북마크</h1>
           <p className="text-body font-normal">{message}</p>
         </div>
-        <SpotIllustration name="bookmarks" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
+        <SpotIllustration name="bookmarks" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
     </main>
   );
@@ -78,7 +78,7 @@ export default async function BookmarksPage() {
               : "전체 커리큘럼 목차예요. 아직 북마크가 없어요 — 레슨을 읽다가 왼쪽 아래 '책갈피 꽂기'를 누르면 그 위치가 여기 표시됩니다. 모듈을 눌러 목차를 펼쳐 볼 수 있어요."}
           </p>
         </div>
-        <SpotIllustration name="bookmarks" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
+        <SpotIllustration name="bookmarks" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
 
       <div className="flex flex-col gap-10">

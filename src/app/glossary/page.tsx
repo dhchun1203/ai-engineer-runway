@@ -30,7 +30,7 @@ export default function GlossaryPage() {
             레슨마다 다르게 쓰이면(다의어) 정의를 나눠 보여줍니다.
           </p>
         </div>
-        <SpotIllustration name="glossary" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
+        <SpotIllustration name="glossary" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
 
       {hasSections ? <JumpIndex korean={glossary.korean} latin={glossary.latin} /> : null}

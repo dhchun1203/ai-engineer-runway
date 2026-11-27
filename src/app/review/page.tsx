@@ -88,7 +88,7 @@ function EmptyState({ message }: { message: string }) {
           <h1 className="text-display font-black">복습</h1>
           <p className="text-body font-normal">{message}</p>
         </div>
-        <SpotIllustration name="review" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
+        <SpotIllustration name="review" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
     </main>
   );
@@ -205,7 +205,7 @@ export default async function ReviewPage() {
           </p>
           <MistakeNoteLink variant="link" label="객관식 오답 노트" />
         </div>
-        <SpotIllustration name="review" className="hidden w-24 lg:w-28 shrink-0 sm:block" />
+        <SpotIllustration name="review" className="hidden w-28 shrink-0 sm:block lg:w-36" />
       </header>
 
       {classCards.length > 0 ? <ClassDueSection cards={classCards} /> : null}
