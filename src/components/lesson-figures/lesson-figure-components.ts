@@ -37,6 +37,7 @@ import { CafeApiPlayground } from "@/components/lesson-figures/cafe-api-playgrou
 import { AgeFillHistogram } from "@/components/lesson-figures/age-fill-histogram";
 import { OfficeRegressionSimulator } from "@/components/lesson-figures/office-regression-simulator";
 import { GradientDescentSimulator } from "@/components/lesson-figures/gradient-descent-simulator";
+import { KnnVoteSimulator } from "@/components/lesson-figures/knn-vote-simulator";
 import { ScalingSimulator } from "@/components/lesson-figures/scaling-simulator";
 
 // 레슨 본문 그림 부품 맵. 리더 페이지가 <MDXContent components={lessonFigureComponents} />로
@@ -81,4 +82,5 @@ export const lessonFigureComponents: Record<string, ComponentType> = {
   OfficeRegressionSimulator: OfficeRegressionSimulator as ComponentType,
   GradientDescentSimulator: GradientDescentSimulator as ComponentType,
   ScalingSimulator: ScalingSimulator as ComponentType,
+  KnnVoteSimulator: KnnVoteSimulator as ComponentType,
 };

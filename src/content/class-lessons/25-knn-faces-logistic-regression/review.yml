@@ -1,0 +1,159 @@
+# 25-knn-faces-logistic-regression 복습 데이터. 퀴즈 id는 오답 기록 키(cl:<slug>:<id>)라 한 번 정하면 바꾸지 않는다.
+# 문항의 코드와 출력은 맥에서 Python 3.14, pandas 3.1.1, scikit-learn 1.9.1로 실제 실행해 확인했다.
+slug: 25-knn-faces-logistic-regression
+quiz:
+  - id: knn-majority-vote
+    q: "가까운 이웃 3명에게 투표를 받아 답을 정해요. 출력은?"
+    code: |-
+      from sklearn.neighbors import KNeighborsClassifier
+
+      X = [[1], [2], [3], [10], [11]]
+      y = ["A", "A", "B", "B", "B"]
+
+      model = KNeighborsClassifier(n_neighbors=3)
+      model.fit(X, y)
+      print(model.predict([[2.4]]))
+    options:
+      - "['A']"
+      - "['B']"
+      - "A"
+      - "[0]"
+    answer: 0
+    explain: "2.4와 가까운 순서는 2(거리 0.4, A), 3(거리 0.6, B), 1(거리 1.4, A)이에요. 세 명 중 A가 두 표라 A예요. B가 전체로는 셋이지만 10, 11은 멀어서 투표에 들지 못해요. predict는 입력 묶음마다 답을 담은 배열을 돌려줘서 대괄호가 붙어요."
+  - id: leave-one-out-mask
+    q: "2번 자리 하나만 빼는 불리언 배열을 만들었어요. 출력은?"
+    code: |-
+      import numpy as np
+
+      known = np.arange(5) != 2
+      print(known.sum(), np.arange(5)[known])
+    options:
+      - "4 [0 1 3 4]"
+      - "1 [2]"
+      - "5 [0 1 2 3 4]"
+      - "4 [0 1 2 3]"
+    answer: 0
+    explain: "np.arange(5)는 [0 1 2 3 4]이고, != 2는 2번 자리만 False예요. True는 1로 세서 sum이 4이고, 그 배열로 고르면 2를 뺀 [0 1 3 4]가 남아요. 수업에서 229번 사진을 뺀 399장을 만든 방법이에요."
+  - id: pass-column-count
+    q: "점수를 60점 기준 합격 열로 바꿔 합격자를 셌어요. 출력은?"
+    code: |-
+      import pandas as pd
+
+      df = pd.DataFrame({
+          "score": [47, 58, 60, 76, 87, 49, 73, 77, 79, 52]
+      })
+      y = df["score"] >= 60
+      print(y.sum())
+    options:
+      - "6"
+      - "4"
+      - "5"
+      - "10"
+    answer: 0
+    explain: "df[\"score\"] >= 60은 학생마다 True, False를 담은 열이고, sum은 True를 1로 세요. 60, 76, 87, 73, 77, 79가 True라 6명이에요. 60점도 >= 라서 합격이고, 4는 불합격자 수, 5는 > 60으로 셌을 때예요."
+  - id: proba-pass-column
+    q: "model.classes_가 [False, True]인 로지스틱 회귀예요. 새 학생 한 명의 합격(True) 확률을 꺼내는 코드는?"
+    code: |-
+      new_scaled = scaler.transform(new)
+
+      # 합격 확률 = ?
+    options:
+      - "model.predict_proba(new_scaled)[0, 1]"
+      - "model.predict_proba(new_scaled)[0, 0]"
+      - "model.predict(new_scaled)[0]"
+      - "model.predict_proba(new_scaled)[1, 0]"
+    answer: 0
+    explain: "predict_proba는 학생 한 줄마다 classes_ 순서대로 [False 확률, True 확률]을 돌려줘요. 0번째 학생의 1번째 칸이 합격 확률이에요(수업에서 92.58%). [0, 0]은 불합격 확률, predict는 확률이 아니라 True, False 답이고, 학생이 한 명이라 1번째 줄은 없어요."
+  - id: confusion-matrix-read
+    q: "실제 정답 4개와 예측 4개로 혼동 행렬을 만들었어요. 출력은(두 줄을 한 줄로 이어 적었어요)?"
+    code: |-
+      from sklearn.metrics import confusion_matrix
+
+      actual = [False, True, True, False]
+      pred = [False, True, False, False]
+      print(confusion_matrix(actual, pred, labels=[False, True]))
+    options:
+      - "[[2 0] [1 1]]"
+      - "[[2 1] [0 1]]"
+      - "[[1 1] [0 2]]"
+      - "[[3 1]]"
+    answer: 0
+    explain: "행이 실제, 열이 예측이에요. 실제 False 둘은 모두 False로 예측해 첫 행이 [2 0], 실제 True 둘 중 하나는 True, 하나는 False로 예측해 둘째 행이 [1 1]이에요. [[2 1] [0 1]]은 행과 열을 거꾸로 읽은 것이에요."
+commands:
+  - cmd: "fig, axes = plt.subplots(4, 10, figsize=(15, 8))"
+    desc: "4행 10열, 그래프 칸 40개 만들기"
+    group: matplotlib
+  - cmd: "for person, ax in enumerate(axes.flat):"
+    desc: "4 × 10 칸을 한 줄로 늘어놓고 0번부터 번호를 붙여 돌기"
+    group: matplotlib
+  - cmd: "ax.set_title(person, fontsize=10)"
+    desc: "그래프 칸 하나의 제목(글자 크기 10)"
+    group: matplotlib
+  - cmd: "plt.axis('off')"
+    desc: "축 숨기기. plt.axis = 'off'로 쓰면 함수를 덮어써 다음 호출에서 TypeError"
+    group: matplotlib
+  - cmd: "known = np.arange(400) != new_index"
+    desc: "한 자리만 False인 불리언 배열(그 사진만 빼고 고르기)"
+    group: NumPy
+  - cmd: "X_known[j].reshape(64, 64)"
+    desc: "숫자 4096개짜리 한 줄을 64 × 64 사진 표로 다시 접기"
+    group: NumPy
+  - cmd: "KNeighborsClassifier(n_neighbors=K)"
+    desc: "가까운 이웃 K개의 다수결로 답하는 분류 모델(기본 K는 5)"
+    group: scikit-learn
+  - cmd: "dist, idx = model.kneighbors([new_photo], n_neighbors=K)"
+    desc: "가장 가까운 K개의 거리와, 학습에 넣은 배열 안의 자리 번호"
+    group: scikit-learn
+  - cmd: "y_known[idx[0]]"
+    desc: "이웃 K개의 정답(사람 번호) 꺼내기"
+    group: NumPy
+  - cmd: "train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)"
+    desc: "정답 비율이 학습용과 시험용에 고르게 들어가게 나누기"
+    group: scikit-learn
+  - cmd: "model.score(X_test, y_test)"
+    desc: "분류 모델에서는 맞힌 비율(정확도)"
+    group: scikit-learn
+  - cmd: "df[['score']].assign(passed=y)"
+    desc: "원본은 두고 새 열을 붙인 표 돌려주기"
+    group: pandas
+  - cmd: "X.shape[1]"
+    desc: "열(특징) 개수"
+    group: pandas
+  - cmd: "X_train.iloc[0, 0]"
+    desc: "자리 번호로 0행 0열 값 꺼내기"
+    group: pandas
+  - cmd: "LogisticRegression(max_iter=1000)"
+    desc: "확률로 둘 중 하나를 고르는 분류 모델(걸음 수 기본 100)"
+    group: scikit-learn
+  - cmd: "model.classes_"
+    desc: "모델이 아는 답의 종류(predict_proba 칸 순서)"
+    group: scikit-learn
+  - cmd: "model.predict_proba(new_scaled)[0, 1]"
+    desc: "첫 입력의 두 번째 답(True) 확률"
+    group: scikit-learn
+  - cmd: "accuracy_score(y_test, test_pred)"
+    desc: "정답과 예측이 같은 비율"
+    group: scikit-learn
+  - cmd: "confusion_matrix(y_test, test_pred, labels=[False, True])"
+    desc: "행이 실제, 열이 예측인 맞힘, 틀림 표"
+    group: scikit-learn
+  - cmd: "sns.heatmap(cm, annot=True, cmap='Blues')"
+    desc: "표를 색 칸으로 그리고 칸마다 숫자 적기"
+    group: seaborn
+terms:
+  - word: "이웃 수 K (n_neighbors)"
+    definition: "KNN이 투표를 받을 가까운 데이터 개수. 너무 작으면 한두 장에 휘둘리고, 너무 크면 먼 데이터까지 섞여 정확도가 떨어진다."
+  - word: "유클리드 거리 (Euclidean Distance)"
+    definition: "같은 칸끼리 차이를 제곱해 모두 더하고 제곱근을 씌운 거리. KNN이 사진 두 장의 비슷함을 재는 기본 방법이다."
+  - word: "분류 (Classification)"
+    definition: "답이 정해진 몇 가지 중 하나인 문제. 사람 번호 맞히기, 합격 불합격 맞히기가 분류이고, 점수 자체를 맞히는 것은 회귀다."
+  - word: "로지스틱 회귀 (Logistic Regression)"
+    definition: "선형회귀처럼 가중합을 낸 뒤 시그모이드로 0~1 확률로 바꿔, 0.5를 기준으로 둘 중 하나를 고르는 분류 모델."
+  - word: "시그모이드 (Sigmoid)"
+    definition: "1 ÷ (1 + e^(-z)). 아무 크기의 값 z를 0~1 사이로 눌러 준다. z가 0이면 0.5다."
+  - word: "층화 나누기 (stratify)"
+    definition: "train_test_split에서 정답 종류의 비율이 학습용과 시험용에 고르게 들어가게 나누는 옵션."
+  - word: "정확도 (Accuracy)"
+    definition: "전체 중 맞힌 비율. 분류 모델의 score와 accuracy_score가 돌려준다."
+  - word: "혼동 행렬 (Confusion Matrix)"
+    definition: "행이 실제 정답, 열이 예측인 표. 대각선이 맞힌 수, 나머지 칸이 어떤 답을 어떤 답으로 헷갈렸는지다."
